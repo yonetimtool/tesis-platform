@@ -42,12 +42,20 @@ KurulumDurum _durum({
         sayi: tamam.contains(k) ? 3 : 0,
         tamam: tamam.contains(k),
         atlandi: atlanan.contains(k),
+        asgari: k == 'blok' || k == 'daire',
       ),
+  ];
+  final asgariEksik = [
+    for (final a in adimlar)
+      if (a.asgari && !a.tamam) a.kod,
   ];
   return KurulumDurum(
     adimlar: adimlar,
     toplam: adimlar.length,
     gecilen: adimlar.where((a) => a.tamam || a.atlandi).length,
+    calisir: asgariEksik.isEmpty,
+    asgariToplam: 2,
+    asgariEksikler: asgariEksik,
   );
 }
 
@@ -97,16 +105,53 @@ void main() {
       for (final baslik in ['Bloklar', 'Daireler', 'Personel', 'NFC noktaları']) {
         expect(find.text(baslik), findsOneWidget, reason: baslik);
       }
-      expect(find.byType(Card), findsNWidgets(_kodlar.length + 1)); // +ilerleme
+      expect(find.byType(Card), findsNWidgets(_kodlar.length + 1)); // +asgari
     });
 
-    testWidgets('ILERLEME SUNUCUDAN OKUNUR (istemci saymaz)', (tester) async {
+    // (P243 §6a/§6f) YUZDE CUBUGU KALKTI.
+    //
+    // Eski kilit "2/8 adım" ariyordu. O sayac tam da kaldirilan seydi:
+    // 19 adimin 7'si zorunluydu (kasa, gelir-gider tanimi, aidat dahil)
+    // ve yeni yonetici duyuru yapabilmek icin muhasebe kurmasi
+    // gerektigini saniyordu. Yerine ASGARI sayaci geldi: blok + daire.
+    testWidgets('ASGARI SAYACI SUNUCUDAN OKUNUR (istemci saymaz)', (
+      tester,
+    ) async {
+      _uzunEkran(tester);
+      await tester.pumpWidget(
+        _ekran(_SahteApi(baslangic: _durum(tamam: {'blok'}))),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Başlamak için gerekenler'), findsOneWidget);
+      expect(find.text('1/2 hazır'), findsOneWidget);
+      // ASGARI OLMAYAN adim bu kartta DEGIL.
+      expect(find.text('• Daireler'), findsOneWidget);
+      expect(find.text('• Personel'), findsNothing);
+    });
+
+    testWidgets('ASGARI TAMAMSA kart HIC cizilmez', (tester) async {
       _uzunEkran(tester);
       await tester.pumpWidget(
         _ekran(_SahteApi(baslangic: _durum(tamam: {'blok', 'daire'}))),
       );
       await tester.pumpAndSettle();
-      expect(find.text('2/8 adım'), findsOneWidget);
+      expect(find.text('Başlamak için gerekenler'), findsNothing);
+      // Ama "sunlari da yapabilirsiniz" DURUR: tesis calisiyor, yine de
+      // acilmamis yetenekler var.
+      expect(find.text('Şunları da yapabilirsiniz'), findsOneWidget);
+    });
+
+    testWidgets('SONRA BASLIGI BIR KEZ ve asgari adimlarin ALTINDA', (
+      tester,
+    ) async {
+      _uzunEkran(tester);
+      await tester.pumpWidget(_ekran(_SahteApi()));
+      await tester.pumpAndSettle();
+      expect(find.text('Şunları da yapabilirsiniz'), findsOneWidget);
+      // Baslik, ilk asgari-olmayan adimin (daire_tipi) USTUNDE durur.
+      final basY = tester.getTopLeft(find.text('Şunları da yapabilirsiniz')).dy;
+      expect(basY, greaterThan(tester.getTopLeft(find.text('Daireler')).dy));
+      expect(basY, lessThan(tester.getTopLeft(find.text('Daire tipleri')).dy));
     });
 
     testWidgets('UC DURUM AYIRT EDILIR: tamam / atlandi / bekliyor', (

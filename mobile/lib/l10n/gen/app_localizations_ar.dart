@@ -7267,4 +7267,23 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get topluAktarimBilgisayardan =>
       'يتم الاستيراد الجماعي من الحاسوب؛ لا يمكن التحقق من 200 صف على الهاتف.';
+
+  @override
+  String get kurulumAsgariBaslik => 'ما تحتاجه للبدء';
+
+  @override
+  String get kurulumAsgariAlt =>
+      'بمجرد إدخال المباني والوحدات يصبح المجمع جاهزًا للعمل: يمكنك نشر الإعلانات وإسناد المهام وإضافة الكاميرات. والباقي يمكن أن ينتظر.';
+
+  @override
+  String get kurulumSonraBaslik => 'يمكنك أيضًا القيام بما يلي';
+
+  @override
+  String get kurulumSonraAlt =>
+      'لا شيء من هذا إلزامي. كل عنصر يفتح إمكانية، ومكتوب بجانبه ما يفتحه.';
+
+  @override
+  String kurulumAsgariSayac(int tamam, int toplam) {
+    return '$tamam/$toplam جاهز';
+  }
 }

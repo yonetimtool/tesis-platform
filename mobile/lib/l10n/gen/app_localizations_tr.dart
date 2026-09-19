@@ -7016,4 +7016,23 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get topluAktarimBilgisayardan =>
       'Toplu aktarım bilgisayardan yapılır. 200 satırlık bir önizlemeyi telefonda doğrulamak mümkün değil.';
+
+  @override
+  String get kurulumAsgariBaslik => 'Başlamak için gerekenler';
+
+  @override
+  String get kurulumAsgariAlt =>
+      'Blokları ve daireleri girdiğinizde tesis çalışır hâle gelir: duyuru yapabilir, görev atayabilir, kamera ekleyebilirsiniz. Gerisi bekleyebilir.';
+
+  @override
+  String get kurulumSonraBaslik => 'Şunları da yapabilirsiniz';
+
+  @override
+  String get kurulumSonraAlt =>
+      'Hiçbiri zorunlu değil. Her biri bir yeteneği açar; yanında ne açtığı yazıyor.';
+
+  @override
+  String kurulumAsgariSayac(int tamam, int toplam) {
+    return '$tamam/$toplam hazır';
+  }
 }

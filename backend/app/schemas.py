@@ -276,6 +276,8 @@ class UserOut(BaseModel):
     ui_tema: str = "system"
     #: (P243 §4) `standart` | `buyuk`.
     ui_gorunum: str = "standart"
+    #: (P243 §6d) NULL = ilk giris turu HENUZ gosterilmedi.
+    tur_goruldu_at: datetime | None = None
 
 
 class OzellikBayraklari(BaseModel):
@@ -8269,6 +8271,11 @@ class KurulumAdimOut(BaseModel):
     #: (P193 §2) Adim MINIMUM CALISIR KURULUMUN parcasi mi. Karar sunucuda
     #: (bkz. `routers/kurulum.py::ADIMLAR`); istemci yalnizca cizer.
     zorunlu: bool = False
+    #: (P243 §6a) Adim ASGARI CALISIR KURULUMUN parcasi mi (blok/daire).
+    #: `zorunlu`dan DAR: `zorunlu` "eninde sonunda gerekir" der, `asgari`
+    #: "bu olmadan tesis hic calismaz" der. Istemci ikisini AYRI bolumde
+    #: cizer: "once sunlar" ve "sonra sunlari da yapabilirsiniz".
+    asgari: bool = False
 
 
 class KurulumDurumOut(BaseModel):
@@ -8283,8 +8290,13 @@ class KurulumDurumOut(BaseModel):
     #: (P193 §2) Tamamlanmamis zorunlu adimlarin KODLARI. ATLAMA burada
     #: sayilmaz: atlamak gostergeyi rahatlatir, gercegi degistirmez.
     eksik_zorunlular: list[str] = Field(default_factory=list)
-    #: (P193 §2) Tesis calisir hâlde mi (eksik zorunlu yok).
+    #: (P243 §6a) Tesis CALISIR hâlde mi — olcut ASGARI kurulumdur
+    #: (blok + daire). Onceki olcut yedi adimin hepsiydi ve yeni bir
+    #: yoneticiye "duyuru yapmak icin once muhasebe kur" demek oluyordu.
     calisir: bool = True
+    #: (P243 §6a) Asgari kurulumun adim sayisi ve eksikleri.
+    asgari_toplam: int = 0
+    asgari_eksikler: list[str] = Field(default_factory=list)
 
 
 class KurulumAtlaIstek(BaseModel):

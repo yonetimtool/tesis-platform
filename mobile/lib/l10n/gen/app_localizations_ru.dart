@@ -7286,4 +7286,23 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get topluAktarimBilgisayardan =>
       'Массовый импорт выполняется на компьютере: 200 строк на телефоне не проверить.';
+
+  @override
+  String get kurulumAsgariBaslik => 'Что нужно для начала';
+
+  @override
+  String get kurulumAsgariAlt =>
+      'Как только вы внесёте корпуса и квартиры, объект заработает: можно публиковать объявления, назначать задачи и добавлять камеры. Остальное может подождать.';
+
+  @override
+  String get kurulumSonraBaslik => 'Вы также можете сделать это';
+
+  @override
+  String get kurulumSonraAlt =>
+      'Ничего из этого не обязательно. Каждый пункт открывает возможность, и рядом написано какую.';
+
+  @override
+  String kurulumAsgariSayac(int tamam, int toplam) {
+    return '$tamam/$toplam готово';
+  }
 }

@@ -3596,5 +3596,20 @@
   "topluAktarimBilgisayardan": "Toplu aktarım bilgisayardan yapılır. 200 satırlık bir önizlemeyi telefonda doğrulamak mümkün değil.",
   "@topluAktarimBilgisayardan": {
     "description": "(P243 §3) Mobilde toplu aktarim yok"
+  },
+  "kurulumAsgariBaslik": "Başlamak için gerekenler",
+  "kurulumAsgariAlt": "Blokları ve daireleri girdiğinizde tesis çalışır hâle gelir: duyuru yapabilir, görev atayabilir, kamera ekleyebilirsiniz. Gerisi bekleyebilir.",
+  "kurulumSonraBaslik": "Şunları da yapabilirsiniz",
+  "kurulumSonraAlt": "Hiçbiri zorunlu değil. Her biri bir yeteneği açar; yanında ne açtığı yazıyor.",
+  "kurulumAsgariSayac": "{tamam}/{toplam} hazır",
+  "@kurulumAsgariSayac": {
+    "placeholders": {
+      "tamam": {
+        "type": "int"
+      },
+      "toplam": {
+        "type": "int"
+      }
+    }
   }
 }

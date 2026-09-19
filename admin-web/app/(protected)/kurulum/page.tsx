@@ -49,6 +49,8 @@ interface Adim {
   atlandi: boolean;
   /** Ayni dagitim gerekcesiyle OPSIYONEL (bkz. `Durum`). */
   zorunlu?: boolean;
+  /** (P243 §6a) Adim ASGARI calisir kurulumun parcasi mi. */
+  asgari?: boolean;
 }
 interface Durum {
   adimlar: Adim[];
@@ -66,6 +68,9 @@ interface Durum {
   /** Tamamlanmamis ZORUNLU adim kodlari — ATLAMA burada sayilmaz. */
   eksik_zorunlular?: string[];
   calisir?: boolean;
+  /** (P243 §6a) Asgari kurulumun adim sayisi ve eksikleri. */
+  asgari_toplam?: number;
+  asgari_eksikler?: string[];
 }
 
 const UC = "/api/panel/kurulum";
@@ -90,16 +95,34 @@ export default function KurulumPage() {
     }
   }
 
-  const yuzde = data ? Math.round((data.gecilen / data.toplam) * 100) : 0;
-  const bitti = data ? data.gecilen === data.toplam : false;
-  // (P193 §2) ZORUNLU SAYACI ilerleme cubugundan AYRI: "10/12" bir tesisin
-  // calisip calismadigini soylemez. Eksik olan tek adim kasaysa tesis
-  // %83 degil, KULLANILAMAZ durumdadir.
-  const eksikZorunlular = data?.eksik_zorunlular ?? [];
-  const zorunluToplam = data?.zorunlu_toplam ?? 0;
-  const zorunluTamam = zorunluToplam - eksikZorunlular.length;
-  const ozetVar = zorunluToplam > 0;
+  // (P243 §6a/§6f) ASGARI CALISIR KURULUM — ILERLEME BASKI YAPMAZ.
+  //
+  // OLCULEN KUSUR: 19 adimin 7'si "zorunlu"ydu ve aralarinda kasa,
+  // gelir-gider tanimi, aidat vardi. Yeni bir yonetici sihirbazi
+  // acinca "%16 tamam" goruyor ve DUYURU YAPMAK icin once muhasebe
+  // kurmasi gerektigini saniyordu. Yuzde, yapilmamis her seyi bir
+  // borc gibi gosteriyordu.
+  //
+  // YENI SUNUM: once "baslamak icin su ikisi" (blok + daire), sonra
+  // "sunlari da yapabilirsiniz". Ikincisinde sayac YOK ve her satir
+  // NE ACTIGINI yazar; yapilmamis olmak bir eksiklik degil, ACILMAMIS
+  // BIR YETENEKTIR.
+  const asgariToplam = data?.asgari_toplam ?? 0;
+  const asgariEksikler = data?.asgari_eksikler ?? [];
+  // Eski sunucu bu alanlari GONDERMEZ: o durumda asgari bolumu hic
+  // cizilmez (panel ve sunucu ayri dagitiliyor — P193 §2 dersi).
+  const asgariVar = asgariToplam > 0;
+  const asgariTamam = asgariToplam - asgariEksikler.length;
+  // Eski sunucu ozet alanlarini hic gondermez; o durumda OZET KARTI
+  // cizilmez (adim listesi calismaya devam eder).
+  const ozetVar = (data?.zorunlu_toplam ?? 0) > 0;
   const calisir = data?.calisir ?? true;
+  // (P243 §6b) SONRA YAPILABILECEKLER — asgari OLMAYAN, bitmemis ve
+  // atlanmamis adimlar. Atlanan ayri bolumde durur (P199): atlamak
+  // bilincli bir karardir, tekrar listeye yazmak sitem olurdu.
+  const sonraYapilacaklar = (data?.adimlar ?? []).filter(
+    (a) => !a.tamam && !a.atlandi && !a.asgari,
+  );
   // (P199) SONRAYA BIRAKILANLAR — ozetin ikinci yarisi.
   //
   // Zorunlu eksikler "tesis calismiyor" der. Atlanan ISTEGE BAGLI
@@ -126,32 +149,35 @@ export default function KurulumPage() {
       </div>
       <HataDurumu mesaj={hata ?? (error ? t("kurulumHata") : null)} />
 
-      {data && (
-        <section className="p-kart" aria-label={t("kurulumIlerleme")}>
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-sm font-medium text-metin-body">
-              {bitti ? t("kurulumTamamlandi") : t("kurulumIlerleme")}
-            </span>
+      {/* (P243 §6a) BASLAMAK ICIN GEREKENLER — sihirbazin ILK sozu.
+          Yuzde gostergesi buradan KALKTI: "%16 tamam" yapilmamis her
+          seyi borc gibi gosteriyor ve yeni yoneticiye muhasebe kurmadan
+          duyuru yapamayacagini sandiriyordu. */}
+      {data && asgariVar && !calisir && (
+        <section className="p-kart" data-testid="kurulum-asgari" aria-label={t("kurulumAsgariBaslik")}>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-medium text-metin-body">{t("kurulumAsgariBaslik")}</p>
             <span className="text-sm tabular-nums text-metin-muted">
-              {t("kurulumSayac", { gecilen: data.gecilen, toplam: data.toplam })}
+              {t("kurulumAsgariSayac", { tamam: asgariTamam, toplam: asgariToplam })}
             </span>
           </div>
-          {/* ILERLEME CUBUGU ekran okuyucuya da anlatilir: gorsel bir
-              dolgunun tek basina hicbir sey soylemedigi tek kullanici
-              grubu tam da bu. */}
-          <div
-            role="progressbar"
-            aria-valuenow={yuzde}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label={t("kurulumIlerleme")}
-            className="mt-2 h-2 w-full overflow-hidden rounded-full bg-yuzey-divider"
-          >
-            <div
-              className="h-full rounded-full bg-primary transition-all"
-              style={{ width: `${yuzde}%` }}
-            />
-          </div>
+          <p className="mt-1" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+            {t("kurulumAsgariAlt")}
+          </p>
+          <ul className="mt-2 space-y-1">
+            {asgariEksikler.map((kod) => {
+              const h = KURULUM_HEDEFLERI[kod];
+              if (!h) return null;
+              return (
+                <li key={kod} style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>
+                  <Link href={h.rota} className="odak-ic underline">
+                    {t(h.etiket)}
+                  </Link>{" "}
+                  <span style={{ color: "var(--yz-text-2)" }}>{t(h.aciklama)}</span>
+                </li>
+              );
+            })}
+          </ul>
         </section>
       )}
 
@@ -168,31 +194,36 @@ export default function KurulumPage() {
             <p className="text-sm font-medium text-metin-body">
               {calisir ? t("kurulumOzetHazir") : t("kurulumOzetEksik")}
             </p>
-            <span className="text-sm tabular-nums text-metin-muted">
-              {t("kurulumZorunluSayac", {
-                tamam: zorunluTamam,
-                toplam: zorunluToplam,
-              })}
-            </span>
+
           </div>
           <p className="mt-1" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
             {calisir ? t("kurulumOzetHazirAlt") : t("kurulumOzetEksikAlt")}
           </p>
-          {eksikZorunlular.length > 0 && (
-            <ul className="mt-2 space-y-1">
-              {eksikZorunlular.map((kod) => {
-                const h = KURULUM_HEDEFLERI[kod];
-                if (!h) return null;
-                return (
-                  <li key={kod} style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>
-                    <Link href={h.rota} className="odak-ic underline">
-                      {t(h.etiket)}
-                    </Link>{" "}
-                    <span style={{ color: "var(--yz-text-2)" }}>{t(h.engel)}</span>
-                  </li>
-                );
-              })}
-            </ul>
+          {/* (P243 §6b) SONRA YAPILABILECEKLER — "eksikler" DEGIL.
+              Baslik ve metin bilincli olarak sitem etmiyor: her satir
+              bir YETENEGI acar ve neyi actigini yazar. Yapmamak bir
+              hata degil, bir tercihtir. */}
+          {sonraYapilacaklar.length > 0 && (
+            <div className="mt-3 border-t border-yuzey-divider pt-3" data-testid="kurulum-sonra">
+              <p className="text-sm font-medium text-metin-body">{t("kurulumSonraBaslik")}</p>
+              <p className="mt-1" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                {t("kurulumSonraAlt")}
+              </p>
+              <ul className="mt-2 space-y-1">
+                {sonraYapilacaklar.map((a) => {
+                  const h = KURULUM_HEDEFLERI[a.kod];
+                  if (!h) return null;
+                  return (
+                    <li key={a.kod} style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>
+                      <Link href={h.rota} className="odak-ic underline">
+                        {t(h.etiket)}
+                      </Link>{" "}
+                      <span style={{ color: "var(--yz-text-2)" }}>{t(h.engel)}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           )}
           {atlananlar.length > 0 && (
             <div className="mt-3 border-t border-yuzey-divider pt-3" data-test="kurulum-atlananlar">

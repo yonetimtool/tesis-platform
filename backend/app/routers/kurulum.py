@@ -68,7 +68,11 @@ from ..models import (
     Unit,
     UnitTip,
 )
-from ..schemas import KurulumAtlaIstek, KurulumDurumOut, KurulumAdimOut
+from ..schemas import (
+    KurulumAtlaIstek,
+    KurulumDurumOut,
+    KurulumAdimOut,
+)
 
 router = APIRouter(prefix="/kurulum", tags=["kurulum"])
 
@@ -97,6 +101,23 @@ class _Adim:
     sayim: Callable[[], Select] | None = None
     zorunlu: bool = False
     olcu: Callable[[AsyncSession, Tenant], Awaitable[int]] | None = None
+    #: (P243 §6a) ASGARI CALISIR KURULUMUN parcasi mi.
+    #:
+    #: OLCULDU: 19 adimin 7'si "zorunlu" isaretliydi ve aralarinda kasa,
+    #: gelir-gider tanimi ve aidat da vardi. Yani yeni bir yonetici,
+    #: DUYURU YAPABILMEK icin once muhasebe kurmak zorundaymis gibi
+    #: gorunuyordu — sihirbaz "her seyi tamamla" hissi veriyordu.
+    #:
+    #: ASGARI = BLOK + DAIRE. Bu ikisiyle duyuru yapilir, kamera
+    #: eklenir, gorev atanir, devriye planlanir. Gerisi BIR YETENEGI
+    #: acar ve "yapilmazsa ne olmaz" metni ISTEMCIDE durur.
+    #:
+    #: NEDEN METIN BURADA DEGIL: her iki istemci de adim kodu -> "neyi
+    #: engelliyor" kaydini ZATEN tutuyor (`admin-web/lib/kurulum-
+    #: adimlari.ts`, `kurulum_screen.dart`) ve o kayitlar 19 adimin
+    #: HEPSINI kapsiyor. Sunucuya ikinci, eksik bir kopya koymak iki
+    #: kaynagi zamanla ayirirdi.
+    asgari: bool = False
 
 
 def _say(model, *kosullar) -> Callable[[], Select]:
@@ -170,8 +191,8 @@ async def _eposta_hazir(db: AsyncSession, tenant: Tenant) -> int:
 #: sirayi cizer; kullanici yine de istedigi adima gidebilir (adimlar
 #: KILITLI DEGIL — kilitlemek, yarim birakip devam edebilmeyi engellerdi).
 ADIMLAR: tuple[_Adim, ...] = (
-    _Adim("blok", _say(BuildingBlock), zorunlu=True),
-    _Adim("daire", _say(Unit), zorunlu=True),
+    _Adim("blok", _say(BuildingBlock), zorunlu=True, asgari=True),
+    _Adim("daire", _say(Unit), zorunlu=True, asgari=True),
     # (P193 §8) DAIRE TIPI ZORUNLU DEGIL — rehberle uyum.
     #
     # Ilk yazimda zorunlu isaretlenmisti; rehber ise "tahakkuku SABIT
@@ -269,6 +290,8 @@ ADIMLAR: tuple[_Adim, ...] = (
 #: sonundaki ozet bunu kullanir: "7 adimin 5'i tamam" degil, "calisir hâle
 #: gelmek icin SU 2 sey eksik ve sunu engelliyor".
 ZORUNLU_KODLAR = frozenset(a.kod for a in ADIMLAR if a.zorunlu)
+#: (P243 §6a) ASGARI CALISIR KURULUM — bu ikisi tamamsa tesis calisir.
+ASGARI_KODLAR = frozenset(a.kod for a in ADIMLAR if a.asgari)
 
 _KODLAR = frozenset(a.kod for a in ADIMLAR)
 
@@ -289,6 +312,7 @@ async def _durum(db: AsyncSession, tenant: Tenant) -> KurulumDurumOut:
                 tamam=sayi > 0,
                 atlandi=a.kod in atlanan,
                 zorunlu=a.zorunlu,
+                asgari=a.asgari,
             )
         )
     # ILERLEME: atlanan adim da "gecilmis" sayilir. Aksi hâlde bilincli
@@ -302,13 +326,28 @@ async def _durum(db: AsyncSession, tenant: Tenant) -> KurulumDurumOut:
     # tesis, yonetici adimi atladi diye tahsilat yapamaz. Ozet bu yuzden
     # yalniz `tamam`a bakar.
     eksik = [a.kod for a in adimlar if a.zorunlu and not a.tamam]
+    # (P243 §6a) ASGARI CALISIR KURULUM — blok + daire.
+    #
+    # `calisir` ARTIK BUNU olcuyor: yeni bir yonetici duyuru yapmak,
+    # kamera eklemek ve gorev atamak icin muhasebe kurmak zorunda
+    # degil. Onceki tanim (yedi zorunlu adimin hepsi) sihirbaza "her
+    # seyi tamamla" hissi veriyordu ve esik yaratiyordu.
+    #
+    # ESKI TANIM KAYBOLMADI: `eksik_zorunlular` duruyor; istemci onu
+    # artik "eksik" degil "HENUZ ACILMAMIS YETENEK" diye sunuyor.
+    asgari_eksik = [
+        a.kod for a in adimlar
+        if a.kod in ASGARI_KODLAR and not a.tamam
+    ]
     return KurulumDurumOut(
         adimlar=adimlar,
         toplam=len(adimlar),
         gecilen=gecilen,
         zorunlu_toplam=len(ZORUNLU_KODLAR),
         eksik_zorunlular=eksik,
-        calisir=not eksik,
+        calisir=not asgari_eksik,
+        asgari_toplam=len(ASGARI_KODLAR),
+        asgari_eksikler=asgari_eksik,
     )
 
 

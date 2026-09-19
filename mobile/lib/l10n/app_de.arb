@@ -2467,5 +2467,20 @@
   "panikKategoriDiger": "Sonstiges",
   "panikKategoriSiteGeneli": "Geht an die ganze Anlage",
   "panikKategoriEkip": "Geht an Verwaltung und Sicherheit",
-  "topluAktarimBilgisayardan": "Massenimport erfolgt am Computer. Eine Vorschau mit 200 Zeilen lässt sich am Telefon nicht prüfen."
+  "topluAktarimBilgisayardan": "Massenimport erfolgt am Computer. Eine Vorschau mit 200 Zeilen lässt sich am Telefon nicht prüfen.",
+  "kurulumAsgariBaslik": "Was Sie zum Start brauchen",
+  "kurulumAsgariAlt": "Sobald Blöcke und Wohnungen erfasst sind, ist die Anlage einsatzbereit: Sie können Ankündigungen veröffentlichen, Aufgaben zuweisen und Kameras hinzufügen. Der Rest kann warten.",
+  "kurulumSonraBaslik": "Das können Sie außerdem tun",
+  "kurulumSonraAlt": "Nichts davon ist Pflicht. Jeder Punkt schaltet eine Funktion frei; daneben steht, welche.",
+  "kurulumAsgariSayac": "{tamam}/{toplam} bereit",
+  "@kurulumAsgariSayac": {
+    "placeholders": {
+      "tamam": {
+        "type": "int"
+      },
+      "toplam": {
+        "type": "int"
+      }
+    }
+  }
 }

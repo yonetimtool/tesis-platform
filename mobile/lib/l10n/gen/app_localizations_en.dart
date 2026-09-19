@@ -7214,4 +7214,23 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get topluAktarimBilgisayardan =>
       'Bulk import is done on a computer. A 200-row preview cannot be verified on a phone.';
+
+  @override
+  String get kurulumAsgariBaslik => 'What you need to start';
+
+  @override
+  String get kurulumAsgariAlt =>
+      'Once you enter blocks and units the site is up and running: you can post announcements, assign tasks and add cameras. The rest can wait.';
+
+  @override
+  String get kurulumSonraBaslik => 'You can also do these';
+
+  @override
+  String get kurulumSonraAlt =>
+      'None of these are required. Each one unlocks a capability, and what it unlocks is written next to it.';
+
+  @override
+  String kurulumAsgariSayac(int tamam, int toplam) {
+    return '$tamam/$toplam ready';
+  }
 }

@@ -3144,4 +3144,10 @@ export const fr: Sozluk = {
   iceAktarimBosTablo: "Saisissez des données ou collez depuis Excel.",
   iceAktarimMobilUyari: "L’import en masse se fait sur ordinateur. Un aperçu de 200 lignes n’est pas vérifiable sur téléphone.",
   iceAktarimKip: "Méthode de saisie",
+  // (P243 §6a/§6b/§6f) KURULUM — ASGARI / SONRA YAPILABILECEKLER
+  kurulumAsgariBaslik: "Ce qu'il faut pour commencer",
+  kurulumAsgariAlt: "Dès que les blocs et les logements sont saisis, le site fonctionne : vous pouvez publier des annonces, attribuer des tâches et ajouter des caméras. Le reste peut attendre.",
+  kurulumAsgariSayac: "{tamam}/{toplam} prêts",
+  kurulumSonraBaslik: "Vous pouvez aussi faire ceci",
+  kurulumSonraAlt: "Rien n'est obligatoire. Chaque élément débloque une fonction, indiquée à côté.",
 };

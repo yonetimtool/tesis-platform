@@ -2467,5 +2467,20 @@
   "panikKategoriDiger": "Другое",
   "panikKategoriSiteGeneli": "Уходит всему комплексу",
   "panikKategoriEkip": "Уходит управлению и охране",
-  "topluAktarimBilgisayardan": "Массовый импорт выполняется на компьютере: 200 строк на телефоне не проверить."
+  "topluAktarimBilgisayardan": "Массовый импорт выполняется на компьютере: 200 строк на телефоне не проверить.",
+  "kurulumAsgariBaslik": "Что нужно для начала",
+  "kurulumAsgariAlt": "Как только вы внесёте корпуса и квартиры, объект заработает: можно публиковать объявления, назначать задачи и добавлять камеры. Остальное может подождать.",
+  "kurulumSonraBaslik": "Вы также можете сделать это",
+  "kurulumSonraAlt": "Ничего из этого не обязательно. Каждый пункт открывает возможность, и рядом написано какую.",
+  "kurulumAsgariSayac": "{tamam}/{toplam} готово",
+  "@kurulumAsgariSayac": {
+    "placeholders": {
+      "tamam": {
+        "type": "int"
+      },
+      "toplam": {
+        "type": "int"
+      }
+    }
+  }
 }

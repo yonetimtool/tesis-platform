@@ -3144,4 +3144,10 @@ export const es: Sozluk = {
   iceAktarimBosTablo: "Introduzca datos o pegue desde Excel.",
   iceAktarimMobilUyari: "La importación masiva se hace en el ordenador. No se puede verificar 200 filas en el móvil.",
   iceAktarimKip: "Método de entrada",
+  // (P243 §6a/§6b/§6f) KURULUM — ASGARI / SONRA YAPILABILECEKLER
+  kurulumAsgariBaslik: "Lo necesario para empezar",
+  kurulumAsgariAlt: "En cuanto introduzca bloques y viviendas, la comunidad funciona: podrá publicar avisos, asignar tareas y añadir cámaras. Lo demás puede esperar.",
+  kurulumAsgariSayac: "{tamam}/{toplam} listos",
+  kurulumSonraBaslik: "También puede hacer esto",
+  kurulumSonraAlt: "Nada es obligatorio. Cada elemento activa una función, indicada al lado.",
 };

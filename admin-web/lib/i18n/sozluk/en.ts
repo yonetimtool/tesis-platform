@@ -3144,4 +3144,10 @@ export const en: Sozluk = {
   iceAktarimBosTablo: "Enter data or paste from Excel.",
   iceAktarimMobilUyari: "Bulk import is done on a computer. A 200-row preview cannot be verified on a phone.",
   iceAktarimKip: "Input method",
+  // (P243 §6a/§6b/§6f) KURULUM — ASGARI / SONRA YAPILABILECEKLER
+  kurulumAsgariBaslik: "What you need to start",
+  kurulumAsgariAlt: "Once you enter blocks and units the site is up and running: you can post announcements, assign tasks and add cameras. The rest can wait.",
+  kurulumAsgariSayac: "{tamam}/{toplam} ready",
+  kurulumSonraBaslik: "You can also do these",
+  kurulumSonraAlt: "None of these are required. Each one unlocks a capability, and what it unlocks is written next to it.",
 };

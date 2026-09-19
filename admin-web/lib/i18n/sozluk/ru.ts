@@ -3144,4 +3144,10 @@ export const ru: Sozluk = {
   iceAktarimBosTablo: "Введите данные или вставьте из Excel.",
   iceAktarimMobilUyari: "Массовый импорт выполняется на компьютере: 200 строк на телефоне не проверить.",
   iceAktarimKip: "Способ ввода",
+  // (P243 §6a/§6b/§6f) KURULUM — ASGARI / SONRA YAPILABILECEKLER
+  kurulumAsgariBaslik: "Что нужно для начала",
+  kurulumAsgariAlt: "Как только вы внесёте корпуса и квартиры, объект заработает: можно публиковать объявления, назначать задачи и добавлять камеры. Остальное может подождать.",
+  kurulumAsgariSayac: "{tamam}/{toplam} готово",
+  kurulumSonraBaslik: "Вы также можете сделать это",
+  kurulumSonraAlt: "Ничего из этого не обязательно. Каждый пункт открывает возможность, и рядом написано какую.",
 };

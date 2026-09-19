@@ -3144,4 +3144,10 @@ export const ar: Sozluk = {
   iceAktarimBosTablo: "أدخل البيانات أو الصق من Excel.",
   iceAktarimMobilUyari: "يتم الاستيراد الجماعي من الحاسوب؛ لا يمكن التحقق من 200 صف على الهاتف.",
   iceAktarimKip: "طريقة الإدخال",
+  // (P243 §6a/§6b/§6f) KURULUM — ASGARI / SONRA YAPILABILECEKLER
+  kurulumAsgariBaslik: "ما تحتاجه للبدء",
+  kurulumAsgariAlt: "بمجرد إدخال المباني والوحدات يصبح المجمع جاهزًا للعمل: يمكنك نشر الإعلانات وإسناد المهام وإضافة الكاميرات. والباقي يمكن أن ينتظر.",
+  kurulumAsgariSayac: "{tamam}/{toplam} جاهز",
+  kurulumSonraBaslik: "يمكنك أيضًا القيام بما يلي",
+  kurulumSonraAlt: "لا شيء من هذا إلزامي. كل عنصر يفتح إمكانية، ومكتوب بجانبه ما يفتحه.",
 };

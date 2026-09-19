@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy import func, select, text
@@ -95,6 +96,7 @@ def _user_out(user: AppUser) -> UserOut:
         avatar_url=presign_get(user.avatar_key) if user.avatar_key else None,
         ui_tema=user.ui_tema,
         ui_gorunum=user.ui_gorunum,
+        tur_goruldu_at=user.tur_goruldu_at,
     )
 
 
@@ -150,6 +152,29 @@ async def gorunum_guncelle(
     user.ui_gorunum = body.gorunum
     user.updated_at = func.now()
     await db.flush()
+    return _user_out(user)
+
+
+@router.post("/me/tur-goruldu", response_model=UserOut)
+async def tur_goruldu(
+    user: AppUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_tenant_db),
+) -> UserOut:
+    """(P243 §6d) Ilk giris turu gosterildi — BIR KEZ.
+
+    KULLANICI BASINA, tesis basina DEGIL: tur yeni bir INSANA urunu
+    tanitir. Tesis basina tutulsaydi ayni siteye eklenen ikinci
+    yoneticiye HIC gosterilmezdi.
+
+    TEKRAR CAGRILABILIR (idempotent): "atla" ve "sonuna kadar izle"
+    ayni sonucu yazar — ikisi de "gordu" demektir.
+    """
+    if user.tur_goruldu_at is None:
+        # DAMGAYI PYTHON URETIR, `func.now()` DEGIL: SQL ifadesi flush
+        # sonrasi niteligi "expired" birakir ve yanit kurulurken TEMBEL
+        # bir SELECT tetikler -> async oturumda MissingGreenlet (olctuk).
+        user.tur_goruldu_at = datetime.now(timezone.utc)
+        await db.flush()
     return _user_out(user)
 
 

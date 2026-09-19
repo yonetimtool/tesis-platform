@@ -303,6 +303,16 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     # KENDI kaydina yazar, tesisin defterine dokunmaz. Rol kapisi yok;
     # denetci dahil herkes kendi temasini secebilmeli (kozmetik tercih).
     ("PATCH", "/me/tema"),
+    # --- (P243 §4) Gorunum olcegi (standart/buyuk) — tema ile AYNI
+    # sinif ve ayni gerekce: erisilebilirlik tercihi kisinin kendi
+    # kaydinda durur. Rol kapisi konsaydi gozu iyi gormeyen denetci
+    # arayuzu buyutemezdi.
+    ("PATCH", "/me/gorunum"),
+    # --- (P243 §6d) Ilk giris turu isareti — ayni sinif: kisinin KENDI
+    # kaydindaki "urunu bir kez tanidim" damgasi. Rol kapisi konsaydi
+    # turu goren ama isaretleyemeyen bir rol her giriste turu yeniden
+    # gorurdu.
+    ("POST", "/me/tur-goruldu"),
 })
 
 #: Denetcinin OKUYABILDIGI uclardan ornekler (davranissal olcum).

@@ -3144,4 +3144,10 @@ export const de: Sozluk = {
   iceAktarimBosTablo: "Daten eingeben oder aus Excel einfügen.",
   iceAktarimMobilUyari: "Massenimport erfolgt am Computer. Eine Vorschau mit 200 Zeilen lässt sich am Telefon nicht prüfen.",
   iceAktarimKip: "Eingabemethode",
+  // (P243 §6a/§6b/§6f) KURULUM — ASGARI / SONRA YAPILABILECEKLER
+  kurulumAsgariBaslik: "Was Sie zum Start brauchen",
+  kurulumAsgariAlt: "Sobald Blöcke und Wohnungen erfasst sind, ist die Anlage einsatzbereit: Sie können Ankündigungen veröffentlichen, Aufgaben zuweisen und Kameras hinzufügen. Der Rest kann warten.",
+  kurulumAsgariSayac: "{tamam}/{toplam} bereit",
+  kurulumSonraBaslik: "Das können Sie außerdem tun",
+  kurulumSonraAlt: "Nichts davon ist Pflicht. Jeder Punkt schaltet eine Funktion frei; daneben steht, welche.",
 };

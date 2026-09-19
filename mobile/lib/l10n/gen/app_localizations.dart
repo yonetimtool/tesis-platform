@@ -12478,6 +12478,36 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Toplu aktarım bilgisayardan yapılır. 200 satırlık bir önizlemeyi telefonda doğrulamak mümkün değil.'**
   String get topluAktarimBilgisayardan;
+
+  /// No description provided for @kurulumAsgariBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlamak için gerekenler'**
+  String get kurulumAsgariBaslik;
+
+  /// No description provided for @kurulumAsgariAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Blokları ve daireleri girdiğinizde tesis çalışır hâle gelir: duyuru yapabilir, görev atayabilir, kamera ekleyebilirsiniz. Gerisi bekleyebilir.'**
+  String get kurulumAsgariAlt;
+
+  /// No description provided for @kurulumSonraBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şunları da yapabilirsiniz'**
+  String get kurulumSonraBaslik;
+
+  /// No description provided for @kurulumSonraAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hiçbiri zorunlu değil. Her biri bir yeteneği açar; yanında ne açtığı yazıyor.'**
+  String get kurulumSonraAlt;
+
+  /// No description provided for @kurulumAsgariSayac.
+  ///
+  /// In tr, this message translates to:
+  /// **'{tamam}/{toplam} hazır'**
+  String kurulumAsgariSayac(int tamam, int toplam);
 }
 
 class _AppLocalizationsDelegate

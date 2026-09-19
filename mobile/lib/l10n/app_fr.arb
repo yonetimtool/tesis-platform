@@ -2467,5 +2467,20 @@
   "panikKategoriDiger": "Autre",
   "panikKategoriSiteGeneli": "Envoyé à toute la résidence",
   "panikKategoriEkip": "Envoyé à la gestion et à la sécurité",
-  "topluAktarimBilgisayardan": "L’import en masse se fait sur ordinateur. Un aperçu de 200 lignes n’est pas vérifiable sur téléphone."
+  "topluAktarimBilgisayardan": "L’import en masse se fait sur ordinateur. Un aperçu de 200 lignes n’est pas vérifiable sur téléphone.",
+  "kurulumAsgariBaslik": "Ce qu'il faut pour commencer",
+  "kurulumAsgariAlt": "Dès que les blocs et les logements sont saisis, le site fonctionne : vous pouvez publier des annonces, attribuer des tâches et ajouter des caméras. Le reste peut attendre.",
+  "kurulumSonraBaslik": "Vous pouvez aussi faire ceci",
+  "kurulumSonraAlt": "Rien n'est obligatoire. Chaque élément débloque une fonction, indiquée à côté.",
+  "kurulumAsgariSayac": "{tamam}/{toplam} prêts",
+  "@kurulumAsgariSayac": {
+    "placeholders": {
+      "tamam": {
+        "type": "int"
+      },
+      "toplam": {
+        "type": "int"
+      }
+    }
+  }
 }

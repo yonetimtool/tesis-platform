@@ -7214,4 +7214,23 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get topluAktarimBilgisayardan =>
       'Massenimport erfolgt am Computer. Eine Vorschau mit 200 Zeilen lässt sich am Telefon nicht prüfen.';
+
+  @override
+  String get kurulumAsgariBaslik => 'Was Sie zum Start brauchen';
+
+  @override
+  String get kurulumAsgariAlt =>
+      'Sobald Blöcke und Wohnungen erfasst sind, ist die Anlage einsatzbereit: Sie können Ankündigungen veröffentlichen, Aufgaben zuweisen und Kameras hinzufügen. Der Rest kann warten.';
+
+  @override
+  String get kurulumSonraBaslik => 'Das können Sie außerdem tun';
+
+  @override
+  String get kurulumSonraAlt =>
+      'Nichts davon ist Pflicht. Jeder Punkt schaltet eine Funktion frei; daneben steht, welche.';
+
+  @override
+  String kurulumAsgariSayac(int tamam, int toplam) {
+    return '$tamam/$toplam bereit';
+  }
 }

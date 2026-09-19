@@ -15955,6 +15955,26 @@ paths:
       responses:
         "200": { description: kullanici }
         "422": { description: gecersiz deger }
+  /me/tur-goruldu:
+    post:
+      tags: [me]
+      summary: Ilk giris turu gosterildi
+      description: |
+        (P243 §6d) Tanitim turunun gosterildigini KALICI isaretler.
+
+        KULLANICI BASINA, tesis basina DEGIL: tur yeni bir INSANA urunu
+        tanitir; tesis basina tutulsaydi ayni siteye sonradan eklenen
+        ikinci yoneticiye hic gosterilmezdi.
+
+        Cihazda (localStorage) tutulmaz: ofiste atlayan yonetici evde
+        turu yeniden gorurdu.
+
+        IDEMPOTENT: "atla" ve "sonuna kadar izle" ayni seydir — ikisi de
+        "gordu" demektir; ikinci cagri damgayi DEGISTIRMEZ.
+
+        Rol kapisi yoktur: her rolun kendi turu vardir.
+      responses:
+        "200": { description: kullanici }
   /me/avatar:
     patch:
       tags: [me]

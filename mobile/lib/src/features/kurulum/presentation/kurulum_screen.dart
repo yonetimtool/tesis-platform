@@ -123,6 +123,14 @@ class _KurulumScreenState extends ConsumerState<KurulumScreen> {
     }
   }
 
+  /// Baslik BU satirin onune mi gelir: `i` asgari-olmayan, bitmemis ve
+  /// atlanmamis ILK adim mi. Baslik listede BIR KEZ cikar.
+  bool _sonraBasligiBurada(List<KurulumAdim> adimlar, int i) {
+    bool sonra(KurulumAdim a) => !a.asgari && !a.tamam && !a.atlandi;
+    if (!sonra(adimlar[i])) return false;
+    return !adimlar.take(i).any(sonra);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -144,7 +152,17 @@ class _KurulumScreenState extends ConsumerState<KurulumScreen> {
             children: [
               Text(l10n.kurulumAlt, style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 12),
-              _Ilerleme(durum: d, l10n: l10n),
+              // (P243 §6a/§6f) YUZDE CUBUGU KALKTI, yerine ASGARI KART.
+              //
+              // OLCULEN KUSUR: 19 adimin 7'si "zorunlu"ydu (kasa,
+              // gelir-gider tanimi ve aidat dahil) ve ilerleme cubugu
+              // "%16" diyordu. Yeni bir yonetici, DUYURU YAPABILMEK icin
+              // once muhasebe kurmasi gerektigini saniyordu. Cubuk,
+              // yapilmamis her seyi bir borc gibi gosteriyordu.
+              //
+              // ESKI SUNUCU (`asgari_toplam == 0`) kart cizilmez: "0/0
+              // hazır" anlamsiz bir sayac olurdu.
+              if (d.asgariToplam > 0 && !d.calisir) _AsgariKart(durum: d, l10n: l10n),
               if (_hata != null) ...[
                 const SizedBox(height: 12),
                 Text(
@@ -153,7 +171,28 @@ class _KurulumScreenState extends ConsumerState<KurulumScreen> {
                 ),
               ],
               const SizedBox(height: 12),
-              for (var i = 0; i < d.adimlar.length; i++)
+              for (var i = 0; i < d.adimlar.length; i++) ...[
+                // (P243 §6b) "SUNLARI DA YAPABILIRSINIZ" BASLIGI — ilk
+                // asgari-olmayan bitmemis adimin ONUNDE. Baslik bilincli
+                // olarak sitem etmiyor: bu adimlar eksik degil, HENUZ
+                // ACILMAMIS yeteneklerdir.
+                if (_sonraBasligiBurada(d.adimlar, i))
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, bottom: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.kurulumSonraBaslik,
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        Text(
+                          l10n.kurulumSonraAlt,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
                 _AdimKarti(
                   sira: i + 1,
                   adim: d.adimlar[i],
@@ -161,6 +200,7 @@ class _KurulumScreenState extends ConsumerState<KurulumScreen> {
                   bekliyor: _bekleyen == d.adimlar[i].kod,
                   onAtla: (atla) => _atla(d.adimlar[i].kod, atla: atla),
                 ),
+              ],
             ],
           ),
         ),
@@ -195,14 +235,18 @@ class _Hata extends StatelessWidget {
   );
 }
 
-class _Ilerleme extends StatelessWidget {
-  const _Ilerleme({required this.durum, required this.l10n});
+/// (P243 §6a) BASLAMAK ICIN GEREKENLER — sihirbazin ilk sozu.
+///
+/// Yuzde yerine "0/2 hazır": iki adimlik bir sayac bir sitem degil, bir
+/// yol tarifidir. Tesis calisir duruma gelince kart HIC cizilmez.
+class _AsgariKart extends StatelessWidget {
+  const _AsgariKart({required this.durum, required this.l10n});
   final KurulumDurum durum;
   final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
-    final oran = durum.toplam == 0 ? 0.0 : durum.gecilen / durum.toplam;
+    final tamam = durum.asgariToplam - durum.asgariEksikler.length;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -212,27 +256,32 @@ class _Ilerleme extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  durum.bitti ? l10n.kurulumTamamlandi : l10n.kurulumIlerleme,
-                  style: Theme.of(context).textTheme.titleSmall,
+                Expanded(
+                  child: Text(
+                    l10n.kurulumAsgariBaslik,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
                 ),
                 Text(
-                  l10n.kurulumSayac(durum.gecilen, durum.toplam),
+                  l10n.kurulumAsgariSayac(tamam, durum.asgariToplam),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            // ILERLEME CUBUGU ekran okuyucuya da anlatilir: gorsel bir
-            // dolgu tek basina hicbir sey soylemez.
-            Semantics(
-              label: l10n.kurulumIlerleme,
-              value: l10n.kurulumSayac(durum.gecilen, durum.toplam),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(value: oran, minHeight: 8),
-              ),
+            const SizedBox(height: 4),
+            Text(
+              l10n.kurulumAsgariAlt,
+              style: Theme.of(context).textTheme.bodySmall,
             ),
+            for (final kod in durum.asgariEksikler)
+              if (_hedefler[kod] != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    '• ${_hedefler[kod]!.baslik(l10n)}',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
           ],
         ),
       ),

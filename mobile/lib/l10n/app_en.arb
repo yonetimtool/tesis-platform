@@ -2467,5 +2467,20 @@
   "panikKategoriDiger": "Other",
   "panikKategoriSiteGeneli": "Goes to the whole site",
   "panikKategoriEkip": "Goes to management and security",
-  "topluAktarimBilgisayardan": "Bulk import is done on a computer. A 200-row preview cannot be verified on a phone."
+  "topluAktarimBilgisayardan": "Bulk import is done on a computer. A 200-row preview cannot be verified on a phone.",
+  "kurulumAsgariBaslik": "What you need to start",
+  "kurulumAsgariAlt": "Once you enter blocks and units the site is up and running: you can post announcements, assign tasks and add cameras. The rest can wait.",
+  "kurulumSonraBaslik": "You can also do these",
+  "kurulumSonraAlt": "None of these are required. Each one unlocks a capability, and what it unlocks is written next to it.",
+  "kurulumAsgariSayac": "{tamam}/{toplam} ready",
+  "@kurulumAsgariSayac": {
+    "placeholders": {
+      "tamam": {
+        "type": "int"
+      },
+      "toplam": {
+        "type": "int"
+      }
+    }
+  }
 }

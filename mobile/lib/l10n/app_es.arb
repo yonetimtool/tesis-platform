@@ -2467,5 +2467,20 @@
   "panikKategoriDiger": "Otro",
   "panikKategoriSiteGeneli": "Se envía a toda la comunidad",
   "panikKategoriEkip": "Se envía a administración y seguridad",
-  "topluAktarimBilgisayardan": "La importación masiva se hace en el ordenador. No se pueden verificar 200 filas en el móvil."
+  "topluAktarimBilgisayardan": "La importación masiva se hace en el ordenador. No se pueden verificar 200 filas en el móvil.",
+  "kurulumAsgariBaslik": "Lo necesario para empezar",
+  "kurulumAsgariAlt": "En cuanto introduzca bloques y viviendas, la comunidad funciona: podrá publicar avisos, asignar tareas y añadir cámaras. Lo demás puede esperar.",
+  "kurulumSonraBaslik": "También puede hacer esto",
+  "kurulumSonraAlt": "Nada es obligatorio. Cada elemento activa una función, indicada al lado.",
+  "kurulumAsgariSayac": "{tamam}/{toplam} listos",
+  "@kurulumAsgariSayac": {
+    "placeholders": {
+      "tamam": {
+        "type": "int"
+      },
+      "toplam": {
+        "type": "int"
+      }
+    }
+  }
 }

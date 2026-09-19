@@ -675,6 +675,10 @@ class AppUser(Base):
     ui_gorunum: Mapped[str] = mapped_column(
         Text, nullable=False, server_default=text("'standart'")
     )
+    #: (P243 §6d, goc 0148) ILK GIRIS TURUNU ne zaman gordu.
+    #: NULL = hic gormedi. Damga cunku ileride tur degisirse "su
+    #: tarihten once gorenlere yeniden goster" denebilir.
+    tur_goruldu_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     # Rol-bazli arama rizasi (C1a): numara YALNIZ riza=true iken ve yetkili
     # arayan role /call-target ile aciklanir (KVKK — amaç-sınırlı).
     #: (P36) Pazarlama izinleri — UC AYRI KANAL, tek bayrak DEGIL: kisi

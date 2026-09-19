@@ -7193,4 +7193,23 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get topluAktarimBilgisayardan =>
       'La importación masiva se hace en el ordenador. No se pueden verificar 200 filas en el móvil.';
+
+  @override
+  String get kurulumAsgariBaslik => 'Lo necesario para empezar';
+
+  @override
+  String get kurulumAsgariAlt =>
+      'En cuanto introduzca bloques y viviendas, la comunidad funciona: podrá publicar avisos, asignar tareas y añadir cámaras. Lo demás puede esperar.';
+
+  @override
+  String get kurulumSonraBaslik => 'También puede hacer esto';
+
+  @override
+  String get kurulumSonraAlt =>
+      'Nada es obligatorio. Cada elemento activa una función, indicada al lado.';
+
+  @override
+  String kurulumAsgariSayac(int tamam, int toplam) {
+    return '$tamam/$toplam listos';
+  }
 }

@@ -3207,4 +3207,10 @@ export const tr = {
   iceAktarimBosTablo: "Tabloya veri girin ya da Excel'den yapıştırın.",
   iceAktarimMobilUyari: "Toplu aktarım bilgisayardan yapılır. 200 satırlık bir önizlemeyi telefonda doğrulamak mümkün değil.",
   iceAktarimKip: "Giriş yöntemi",
+  // (P243 §6a/§6b/§6f) KURULUM — ASGARI / SONRA YAPILABILECEKLER
+  kurulumAsgariBaslik: "Başlamak için gerekenler",
+  kurulumAsgariAlt: "Blokları ve daireleri girdiğinizde tesis çalışır hâle gelir: duyuru yapabilir, görev atayabilir, kamera ekleyebilirsiniz. Gerisi bekleyebilir.",
+  kurulumAsgariSayac: "{tamam}/{toplam} hazır",
+  kurulumSonraBaslik: "Şunları da yapabilirsiniz",
+  kurulumSonraAlt: "Hiçbiri zorunlu değil. Her biri bir yeteneği açar; yanında ne açtığı yazıyor.",
 } as const;
