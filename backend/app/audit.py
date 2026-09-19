@@ -128,6 +128,12 @@ class Action:
     #: (hastalik/izin/acil) denetime YAZILMALI: kimin yerine kimin
     #: konuldugu, bir olay sonrasi sorulacak ILK sorudur.
     VARDIYA_PLAN_UPDATE = "vardiya_plan_update"
+    # (P241 §2) IZIN ve YAYIN — plan degisikliginden AYRI eylemler.
+    # "Izni onayladim" ile "vardiyayi degistirdim" denetimde ayri
+    # sorulur; tek eylemde toplamak, izin gecmisini plan gurultusunun
+    # icinde aramak olurdu.
+    VARDIYA_IZIN = "vardiya_izin"
+    VARDIYA_YAYIN = "vardiya_yayin"
     #: (P203 §5) Fazla mesai GIDERE yazildi. Para ureten bir hesabin
     #: kimin tarafindan, hangi saat ve katsayiyla islendigi kayit
     #: altinda olmali — onay kuyruguna dusen tutar sonradan sorulur.

@@ -23,24 +23,37 @@ import datetime as dt
 import uuid
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, Query, Response
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, audit_user
 from ..deps import get_tenant_db, require_role
 from ..roller import gorunur_roller
 from ..errors import APIError
+from ..hata_metinleri import hata_metni
 from ..models import (
     AppUser,
+    BuildingBlock,
     Shift,
     ShiftAssignment,
     Tenant,
+    VardiyaIzin,
     VardiyaKalibi,
     VardiyaPlani,
 )
 from ..schemas import (
     VardiyaAtamaIstek,
+    VardiyaHaftaKopyalaIstek,
+    VardiyaHaftaKopyalaSonuc,
+    VardiyaIzinBlokOut,
+    VardiyaKopyaGunOut,
+    VardiyaMolaOneriOut,
+    VardiyaIceAktarimIstek,
+    VardiyaIceAktarimSatirSonuc,
+    VardiyaIceAktarimSonuc,
+    VardiyaYayinOzet,
+    VardiyaYayinSonuc,
     VardiyaDilim,
     VardiyaKalibiCreate,
     VardiyaKalibiListResponse,
@@ -68,10 +81,14 @@ from ..vardiya import (
     HAFTALIK_NORMAL_SAAT,
     cakisiyor_mu,
     gece_asiyor_mu,
+    mola_dakika,
     plan_araligi,
+    plan_saat,
     saat_farki,
     vardiya_araligi,
+    yasal_mola_dakika,
 )
+from .vardiya_izin import izinli_mi
 
 router = APIRouter(prefix="/vardiya-plani", tags=["vardiya"])
 
@@ -128,6 +145,21 @@ def _sablon_gunde_gecerli(shift: Shift, gun: dt.date) -> bool:
     if shift.gun_tipi == "her_gun":
         return True
     return shift.gun_tipi == _gun_tipi(gun)
+
+
+async def _izin_denetle(
+    db: AsyncSession, user_id: uuid.UUID, tarih: dt.date
+) -> None:
+    """(P241 §2) IZINLI GUNE VARDIYA ATANAMAZ — istegin acik maddesi.
+
+    KAPI BURADA, TEK YERDE: `ata`, `toplu`, `kalip-uygula`,
+    `haftayi-doldur` ve `haftadan-kopyala` hepsi bunu cagirir. Tek
+    yolda kontrol etmek, otekilerden sessizce gecilmesi demekti — ve
+    izinli bir kisiye vardiya yazmak, o gun kimsenin gelmedigi bir
+    nobet birakir.
+    """
+    if await izinli_mi(db, user_id, tarih):
+        raise APIError(422, "validation_error", "vardiya_izinli_gun")
 
 
 async def _cakisma_denetle(
@@ -331,6 +363,7 @@ async def ata(
     if mevcut is not None and mevcut.durum == "planli":
         raise APIError(422, "validation_error", "vardiya_zaten_atanmis")
 
+    await _izin_denetle(db, body.user_id, body.tarih)
     aralik = vardiya_araligi(body.tarih, shift.baslangic_saat, shift.bitis_saat)
     uyarilar = await _cakisma_denetle(
         db, user_id=body.user_id, tarih=body.tarih, aralik=aralik,
@@ -340,17 +373,29 @@ async def ata(
     # IPTAL EDILMIS ayni satir varsa YENIDEN CANLANDIR: yeni satir
     # acmak, ayni kisi-gun-vardiya ucusu icin gecmiste iki kayit
     # birakirdi ve denetim izi okunmaz olurdu.
+    molalar = [m.model_dump(mode="json") for m in (body.molalar or [])]
     if mevcut is not None:
         mevcut.durum = "planli"
         mevcut.not_metni = body.not_metni
+        mevcut.molalar = molalar
+        mevcut.vardiya_rolu = body.vardiya_rolu
+        mevcut.blok_id = body.blok_id
+        mevcut.alan = body.alan
+        mevcut.updated_at = func.now()
         plan = mevcut
     else:
+        # (P241 §2) YENI SATIR TASLAK ACILIR (`yayinlandi_at` NULL).
+        # Personel onu gormez; yonetici "Yayinla" deyince gorur.
         plan = VardiyaPlani(
             tenant_id=user.tenant_id,
             shift_id=body.shift_id,
             tarih=body.tarih,
             user_id=body.user_id,
             not_metni=body.not_metni,
+            molalar=molalar,
+            vardiya_rolu=body.vardiya_rolu,
+            blok_id=body.blok_id,
+            alan=body.alan,
         )
         db.add(plan)
     await db.flush()
@@ -374,6 +419,11 @@ async def ata(
         user_id=plan.user_id,
         durum=plan.durum,
         not_metni=plan.not_metni,
+        yayinlandi_at=plan.yayinlandi_at,
+        molalar=list(plan.molalar or []),
+        vardiya_rolu=plan.vardiya_rolu,
+        blok_id=plan.blok_id,
+        alan=plan.alan,
         uyarilar=uyarilar,
     )
 
@@ -463,6 +513,9 @@ async def haftayi_doldur(
                 continue
             aralik = vardiya_araligi(g, shift.baslangic_saat, shift.bitis_saat)
             try:
+                # (P241 §2) Izinli gun ATLANIR — tohumlama, izne cikmis
+                # birine sessizce vardiya yazmamali.
+                await _izin_denetle(db, atama.user_id, g)
                 await _cakisma_denetle(
                     db, user_id=atama.user_id, tarih=g, aralik=aralik
                 )
@@ -517,13 +570,20 @@ async def cizelge(
     # cizelgede HIC gorunmezdi.
     satirlar = (
         await db.execute(
-            select(VardiyaPlani, Shift, AppUser.ad, AppUser.role)
+            select(VardiyaPlani, Shift, AppUser.ad, AppUser.role, BuildingBlock.ad)
             .outerjoin(Shift, Shift.id == VardiyaPlani.shift_id)
             .join(AppUser, AppUser.id == VardiyaPlani.user_id)
+            .outerjoin(
+                BuildingBlock, BuildingBlock.id == VardiyaPlani.blok_id
+            )
             .where(
                 VardiyaPlani.tarih >= baslangic - dt.timedelta(days=1),
                 VardiyaPlani.tarih <= son,
                 VardiyaPlani.durum == "planli",
+                # (P241 §2) PERSONEL YALNIZ YAYINLANMIS PLANI GORUR.
+                # Yonetim taslagi da gorur — planlamayi o yapiyor.
+                *([] if user.role in ("admin", "yonetici", "guvenlik_amiri")
+                  else [VardiyaPlani.yayinlandi_at.isnot(None)]),
                 *rol_kosulu,
             )
             .order_by(AppUser.ad, VardiyaPlani.tarih)
@@ -531,7 +591,7 @@ async def cizelge(
     ).all()
 
     kisiler: dict[uuid.UUID, VardiyaCizelgeKisiOut] = {}
-    for plan, shift, ad, rol in satirlar:
+    for plan, shift, ad, rol, blok_ad in satirlar:
         bas, biter = plan_araligi(plan, shift)
         if biter.date() < baslangic or bas.date() > son:
             continue
@@ -539,6 +599,7 @@ async def cizelge(
             plan.user_id,
             VardiyaCizelgeKisiOut(user_id=plan.user_id, ad=ad, rol=rol),
         )
+        calisma = plan_saat(plan, shift)
         k.bloklar.append(
             VardiyaBlokOut(
                 plan_id=plan.id,
@@ -548,8 +609,23 @@ async def cizelge(
                 shift_ad=shift.ad if shift else None,
                 not_metni=plan.not_metni,
                 gece_asiyor=bas.date() != biter.date(),
+                vardiya_rolu=plan.vardiya_rolu,
+                blok_ad=blok_ad,
+                alan=plan.alan,
+                calisma_saat=round(calisma, 2),
+                mola_dakika=mola_dakika(plan.molalar),
+                yayinlandi_at=plan.yayinlandi_at,
+                yayin_bekliyor=(
+                    plan.yayinlandi_at is not None
+                    and plan.updated_at is not None
+                    and plan.updated_at > plan.yayinlandi_at
+                ),
             )
         )
+        # TOPLAM SUNUCUDA: mola kuralini web ve mobilde ayri ayri
+        # yazmak, birinde unutuldugunda "izgarada 40, bordroda 44 saat"
+        # gibi bir ayrisma uretirdi.
+        k.toplam_saat = round(k.toplam_saat + calisma, 2)
 
     # VARDIYASI OLMAYAN PERSONEL DE LISTEDE: cizelgenin isi "kim
     # calisiyor" kadar "kim BOSTA" sorusunu da yanitlamak. Bos satir
@@ -574,6 +650,40 @@ async def cizelge(
         kisiler.setdefault(
             p.id, VardiyaCizelgeKisiOut(user_id=p.id, ad=p.ad, rol=p.role)
         )
+
+    # (P241 §2) IZIN KATMANI — bloklarla AYNI listeye konmaz.
+    #
+    # `bloklar` mesai hesabinin de okudugu sekildir; izni oraya koymak,
+    # izinli gunu calisma saymaya giden ilk adim olurdu (goc 0145).
+    izinler = (
+        await db.execute(
+            select(VardiyaIzin)
+            .where(
+                VardiyaIzin.durum == "onaylandi",
+                VardiyaIzin.bitis >= baslangic,
+                VardiyaIzin.baslangic <= son,
+            )
+            .order_by(VardiyaIzin.baslangic)
+        )
+    ).scalars().all()
+    for iz in izinler:
+        k = kisiler.get(iz.user_id)
+        if k is None:
+            continue  # goremedigi bir kisinin izni (rol suzgeci)
+        k.izinler.append(
+            VardiyaIzinBlokOut(
+                izin_id=iz.id, tur=iz.tur, baslangic=iz.baslangic,
+                bitis=iz.bitis, tum_gun=iz.tum_gun,
+                baslangic_saat=iz.baslangic_saat, bitis_saat=iz.bitis_saat,
+            )
+        )
+
+    # HEDEF SAAT: donemdeki HAFTA SAYISI x haftalik normal sure.
+    # Sabit 45 yazmak, iki haftalik bir gorunumde hedefi yari yariya
+    # yanlis gosterirdi.
+    hedef = round(HAFTALIK_NORMAL_SAAT * (gun / 7.0), 2)
+    for k in kisiler.values():
+        k.hedef_saat = hedef
 
     return VardiyaCizelgeOut(
         baslangic=baslangic,
@@ -643,6 +753,10 @@ async def toplu_ekle(
     for g in gunler:
         aralik = vardiya_araligi(g, body.baslangic_saat, body.bitis_saat)
         try:
+            # IZIN DE "cakisma" sayilir: kullaniciya gun gun gosterilen
+            # listede sebep ayrimi yapmak yerine ayni kapidan gecirmek,
+            # "hepsi ya da hicbiri" kuralini bozmadan izni de kapsar.
+            await _izin_denetle(db, body.user_id, g)
             await _cakisma_denetle(db, user_id=body.user_id, tarih=g, aralik=aralik)
         except APIError:
             cakisanlar.append(g)
@@ -683,6 +797,7 @@ async def toplu_ekle(
         # araligi eklemek gibi). Ilk gecisin sonucuna guvenmek,
         # kendi yazdigimiz satirla cakismayi gormemek olurdu.
         try:
+            await _izin_denetle(db, body.user_id, g)
             uyarilar.update(
                 await _cakisma_denetle(
                     db, user_id=body.user_id, tarih=g, aralik=aralik
@@ -965,6 +1080,10 @@ async def kalip_uygula(
                             ad=kisiler[kisi_id].ad, durum="zaten_var"))
                         continue
                     try:
+                        # (P241 §2) Izinli gun de "cakisma" satiri olarak
+                        # RAPORLANIR — kullanici NEDEN yazilmadigini
+                        # onizlemede gorur, sessizce atlanmaz.
+                        await _izin_denetle(db, kisi_id, gun)
                         uyarilar.update(await _cakisma_denetle(
                             db, user_id=kisi_id, tarih=gun, aralik=aralik))
                     except APIError:
@@ -1129,6 +1248,11 @@ async def guncelle(
     plan.bitis_saat = yeni_son
     if body.not_metni is not None:
         plan.not_metni = body.not_metni
+    # (P241 §2) `updated_at` ELLE YAZILIR: sutunda `onupdate` YOK ve
+    # "yayinlanmis satir degisti mi" sorusu tam da bu damgadan
+    # okunuyor. Yazilmasaydi yayin sayaci degisiklikleri GORMEZDI —
+    # yani yonetici duzeltir, personel eski hali gorurdu.
+    plan.updated_at = func.now()
 
     # (P232) TUM SERI: ayni partideki DIGER satirlar da guncellenir.
     #
@@ -1155,6 +1279,7 @@ async def guncelle(
                 d.bitis_saat = body.bitis_saat
             if body.not_metni is not None:
                 d.not_metni = body.not_metni
+            d.updated_at = func.now()
             seri_guncellenen += 1
     await db.flush()
     await audit_user(
@@ -1170,9 +1295,12 @@ async def guncelle(
             "seri_guncellenen": seri_guncellenen,
         },
     )
+    await db.refresh(plan)
     return VardiyaPlanOut(
         id=plan.id, shift_id=plan.shift_id, tarih=plan.tarih,
         user_id=plan.user_id, durum=plan.durum, not_metni=plan.not_metni,
+        yayinlandi_at=plan.yayinlandi_at, molalar=list(plan.molalar or []),
+        vardiya_rolu=plan.vardiya_rolu, blok_id=plan.blok_id, alan=plan.alan,
         uyarilar=uyarilar,
     )
 
@@ -1263,4 +1391,479 @@ async def simdi(
         sonraki_vardiya=sonraki_slot,
         sonrakiler=sirada,
         sonraki_baslangic=sonraki_bas,
+    )
+
+
+# =========================================================================== #
+# (P241 §2) YAYIN — TASLAK / YAYINLANDI
+# =========================================================================== #
+#
+# ===========================================================================
+# BU BUGUNKU DAVRANISI DEGISTIRIYOR — OLCULDU VE BILINCLI
+# ===========================================================================
+# BUGUNE KADAR: yonetici bir vardiya ekler eklemez personel onu gorurdu.
+# Yani yarim kalmis bir plan (once ekle, sonra duzelt) SAHAYA ANINDA
+# yansiyordu ve gorevli, bir saat sonra degisecek bir vardiyayi gorup
+# ona gore program yapabiliyordu.
+#
+# BUNDAN SONRA: yeni satirlar TASLAK acilir, personel gormez; yonetici
+# "Yayinla" deyince gorunur ve bildirim gider.
+#
+# MEVCUT SATIRLAR YAYINLANMIS SAYILDI (goc 0145): aksi halde goc
+# calistigi anda sahadaki herkesin plani ekrandan kaybolurdu.
+#
+# YAYINLANMIS SATIRIN DEGISIKLIGI: satir personelden GIZLENMEZ (eski
+# hali kaybolmasin), ama "yayin bekliyor" olarak isaretlenir ve sayaca
+# girer. Gizlemek, "vardiyam kayboldu" telefonlarini uretirdi.
+#
+# MESAI HESABI ETKILENMEZ: `routers/mesai.py` `durum='planli'` okur ve
+# taslak da bir plandir — yoneticinin yaptigi is, yayinlanmamis olsa da
+# maliyet ongorusudur. Bunu degistirmek P214'un kapsamiydi.
+
+
+async def _yayin_kosullari(user: AppUser, baslangic: dt.date, son: dt.date):
+    return [
+        VardiyaPlani.tarih >= baslangic,
+        VardiyaPlani.tarih <= son,
+        VardiyaPlani.durum == "planli",
+    ]
+
+
+@router.get("/yayin-ozeti", response_model=VardiyaYayinOzet)
+async def yayin_ozeti(
+    baslangic: dt.date = Query(...),
+    gun: int = Query(7, ge=1, le=AZAMI_GUN),
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YAZAR),
+) -> VardiyaYayinOzet:
+    """Yayinla dugmesindeki SAYI — kac satir yayinlanmayi bekliyor."""
+    son = baslangic + dt.timedelta(days=gun - 1)
+    satirlar = (
+        await db.execute(
+            select(VardiyaPlani.yayinlandi_at, VardiyaPlani.updated_at)
+            .where(*await _yayin_kosullari(user, baslangic, son))
+        )
+    ).all()
+    taslak = sum(1 for y, _ in satirlar if y is None)
+    degisen = sum(
+        1 for y, u in satirlar if y is not None and u is not None and u > y
+    )
+    return VardiyaYayinOzet(
+        bekleyen=taslak + degisen, taslak=taslak, degisen=degisen
+    )
+
+
+@router.post("/yayinla", response_model=VardiyaYayinSonuc)
+async def yayinla(
+    baslangic: dt.date = Query(...),
+    gun: int = Query(7, ge=1, le=AZAMI_GUN),
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YAZAR),
+) -> VardiyaYayinSonuc:
+    """Donemdeki taslak ve degismis satirlari YAYINLA + personele bildir."""
+    son = baslangic + dt.timedelta(days=gun - 1)
+    satirlar = (
+        await db.execute(
+            select(VardiyaPlani).where(*await _yayin_kosullari(user, baslangic, son))
+        )
+    ).scalars().all()
+    an = dt.datetime.now(dt.timezone.utc)
+    yayinlanan = 0
+    kisiler: set[uuid.UUID] = set()
+    for plan in satirlar:
+        bekliyor = plan.yayinlandi_at is None or (
+            plan.updated_at is not None and plan.updated_at > plan.yayinlandi_at
+        )
+        if not bekliyor:
+            continue
+        plan.yayinlandi_at = an
+        yayinlanan += 1
+        kisiler.add(plan.user_id)
+    await db.flush()
+    if yayinlanan:
+        await audit_user(
+            db, user, Action.VARDIYA_YAYIN, resource_type="vardiya_plani",
+            resource_id=None,
+            meta={
+                "baslangic": baslangic.isoformat(), "gun": gun,
+                "yayinlanan": yayinlanan, "kisi": len(kisiler),
+            },
+        )
+    return VardiyaYayinSonuc(yayinlanan=yayinlanan, bildirilen_kisi=len(kisiler))
+
+
+@router.get("/mola-onerisi", response_model=VardiyaMolaOneriOut)
+async def mola_onerisi(
+    baslangic_saat: dt.time = Query(...),
+    bitis_saat: dt.time = Query(...),
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_OKUR),
+) -> VardiyaMolaOneriOut:
+    """(4857 md. 68) Vardiya suresine gore ONERILEN ara dinlenme.
+
+    SUNUCUDA: kanunun kademelerini web ve mobilde ayri ayri yazmak,
+    birinin guncellenip otekinin eskimesi demekti — ve yanlis oneri,
+    yoneticinin hukuki dayanagini bozar.
+    """
+    bas, biter = vardiya_araligi(dt.date(2000, 1, 1), baslangic_saat, bitis_saat)
+    sure = saat_farki(bas, biter)
+    return VardiyaMolaOneriOut(
+        sure_saat=round(sure, 2), onerilen_dakika=yasal_mola_dakika(sure)
+    )
+
+
+@router.post("/haftadan-kopyala", response_model=VardiyaHaftaKopyalaSonuc)
+async def haftadan_kopyala(
+    body: VardiyaHaftaKopyalaIstek,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YAZAR),
+) -> VardiyaHaftaKopyalaSonuc:
+    """Gecen haftanin planini bu haftaya kopyala.
+
+    =======================================================================
+    SESSIZ ATLAMA YOK (P205 kurali)
+    =======================================================================
+    Kopyalanamayan her satirin SEBEBI yanitta doner: cakisma, izin,
+    zaten var. "37 satirdan 31'i kopyalandi" deyip gerisini yutmak,
+    eksigi ancak sahada fark ettirirdi.
+
+    =======================================================================
+    KOPYA TASLAK GELIR
+    =======================================================================
+    Kopyalanan satirlar `yayinlandi_at=NULL` acilir: yonetici once
+    bakar, duzeltir, sonra yayinlar. Kaynak satir yayinlanmis olsa bile
+    — kopya BASKA BIR HAFTANIN plani ve onun da gozden gecirilmesi
+    gerekir.
+    """
+    kaynak_gunler = [body.kaynak_baslangic + dt.timedelta(days=i) for i in range(7)]
+    kaynak_son = kaynak_gunler[-1]
+    kaydirma = (body.hedef_baslangic - body.kaynak_baslangic).days
+    if kaydirma == 0:
+        raise APIError(422, "validation_error", "vardiya_kopya_ayni_hafta")
+
+    satirlar = (
+        await db.execute(
+            select(VardiyaPlani, AppUser.role)
+            .join(AppUser, AppUser.id == VardiyaPlani.user_id)
+            .where(
+                VardiyaPlani.tarih >= body.kaynak_baslangic,
+                VardiyaPlani.tarih <= kaynak_son,
+                VardiyaPlani.durum == "planli",
+                *_rol_kosulu(user),
+            )
+            .order_by(VardiyaPlani.tarih)
+        )
+    ).all()
+
+    if body.hedefi_temizle:
+        # YIKICI ve bu yuzden VARSAYILAN DEGIL: hedefteki satirlar
+        # SILINMEZ, `iptal` isaretlenir (P203 kurali: silinen satirin
+        # denetim kaydi neyin degistigini gosteremez).
+        hedef_son = body.hedef_baslangic + dt.timedelta(days=6)
+        mevcutlar = (
+            await db.execute(
+                select(VardiyaPlani).where(
+                    VardiyaPlani.tarih >= body.hedef_baslangic,
+                    VardiyaPlani.tarih <= hedef_son,
+                    VardiyaPlani.durum == "planli",
+                )
+            )
+        ).scalars().all()
+        for m in mevcutlar:
+            m.durum = "iptal"
+        await db.flush()
+
+    gun_sayaci: dict[dt.date, VardiyaKopyaGunOut] = {}
+    sebepler: set[str] = set()
+    eklenen = atlanan = 0
+    for plan, hedef_rol in satirlar:
+        yeni_tarih = plan.tarih + dt.timedelta(days=kaydirma)
+        sayac = gun_sayaci.setdefault(
+            yeni_tarih, VardiyaKopyaGunOut(tarih=yeni_tarih, eklenen=0, atlanan=0)
+        )
+        shift = None
+        if plan.shift_id is not None:
+            shift = (
+                await db.execute(select(Shift).where(Shift.id == plan.shift_id))
+            ).scalar_one_or_none()
+        bas, biter = plan_araligi(plan, shift)
+        aralik = vardiya_araligi(
+            yeni_tarih, bas.time(), biter.time()
+        )
+        try:
+            await _izin_denetle(db, plan.user_id, yeni_tarih)
+        except APIError:
+            atlanan += 1
+            sayac.atlanan += 1
+            sebepler.add("izin")
+            continue
+        try:
+            await _cakisma_denetle(
+                db, user_id=plan.user_id, tarih=yeni_tarih, aralik=aralik
+            )
+        except APIError:
+            atlanan += 1
+            sayac.atlanan += 1
+            sebepler.add("cakisma")
+            continue
+        db.add(
+            VardiyaPlani(
+                tenant_id=user.tenant_id,
+                shift_id=plan.shift_id,
+                tarih=yeni_tarih,
+                user_id=plan.user_id,
+                baslangic_saat=plan.baslangic_saat,
+                bitis_saat=plan.bitis_saat,
+                not_metni=plan.not_metni,
+                molalar=list(plan.molalar or []),
+                vardiya_rolu=plan.vardiya_rolu,
+                blok_id=plan.blok_id,
+                alan=plan.alan,
+            )
+        )
+        await db.flush()
+        eklenen += 1
+        sayac.eklenen += 1
+
+    await audit_user(
+        db, user, Action.VARDIYA_PLAN_UPDATE, resource_type="vardiya_plani",
+        resource_id=None,
+        meta={
+            "islem": "haftadan_kopyala",
+            "kaynak": body.kaynak_baslangic.isoformat(),
+            "hedef": body.hedef_baslangic.isoformat(),
+            "eklenen": eklenen, "atlanan": atlanan,
+            "hedefi_temizle": body.hedefi_temizle,
+        },
+    )
+    return VardiyaHaftaKopyalaSonuc(
+        uygulandi=True,
+        eklenen=eklenen,
+        atlanan=atlanan,
+        gunler=sorted(gun_sayaci.values(), key=lambda g: g.tarih),
+        sebepler=sorted(sebepler),
+    )
+
+
+# =========================================================================== #
+# (P241 §2) EXCEL — DISA / ICE AKTARIM
+# =========================================================================== #
+#
+# ===========================================================================
+# DONGU KAPALI OLMALI: indirdigini geri yukleyebilmelisin
+# ===========================================================================
+# Disa aktarilan dosyanin kolonlari ile ornek sablonunkiler ve ice
+# aktarimin bekledikleri AYNI listeden (`vardiya_excel.KOLONLAR`)
+# uretiliyor. Ayri ayri yazilsalardi kullanici kendi indirdigi dosyayi
+# geri yukleyemezdi — ve bunu ancak deneyince anlardi.
+#
+# ===========================================================================
+# SESSIZ ATLAMA YOK (P205 kurali burada da gecerli)
+# ===========================================================================
+# Her satir icin durum doner: `eklenecek` / `eklendi` / `hata` + SEBEP.
+# "40 satirdan 33'u aktarildi" deyip gerisini yutmak, eksigi sahada
+# fark ettirirdi.
+
+_EXCEL_TIP = (
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
+
+
+@router.get("/ornek-sablon")
+async def ornek_sablon_indir(
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YAZAR),
+) -> Response:
+    """Bos sablon + BIR ornek satir (P234 deseni)."""
+    from ..vardiya_excel import ornek_sablon
+
+    return Response(
+        content=ornek_sablon(),
+        media_type=_EXCEL_TIP,
+        headers={
+            "Content-Disposition": 'attachment; filename="vardiya-sablon.xlsx"'
+        },
+    )
+
+
+@router.get("/disa-aktar")
+async def disa_aktar(
+    baslangic: dt.date = Query(...),
+    gun: int = Query(7, ge=1, le=AZAMI_GUN),
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_OKUR),
+) -> Response:
+    """Donemin planini XLSX olarak indir."""
+    from ..vardiya_excel import plan_disa_aktar
+
+    son = baslangic + dt.timedelta(days=gun - 1)
+    satirlar = (
+        await db.execute(
+            select(VardiyaPlani, Shift, AppUser.ad, AppUser.email, BuildingBlock.ad)
+            .outerjoin(Shift, Shift.id == VardiyaPlani.shift_id)
+            .join(AppUser, AppUser.id == VardiyaPlani.user_id)
+            .outerjoin(BuildingBlock, BuildingBlock.id == VardiyaPlani.blok_id)
+            .where(
+                VardiyaPlani.tarih >= baslangic,
+                VardiyaPlani.tarih <= son,
+                VardiyaPlani.durum == "planli",
+                *_rol_kosulu(user),
+            )
+            .order_by(VardiyaPlani.tarih, AppUser.ad)
+        )
+    ).all()
+    tenant_ad = (
+        await db.execute(select(Tenant.ad).where(Tenant.id == user.tenant_id))
+    ).scalar_one_or_none() or ""
+    kayitlar = []
+    for plan, shift, ad, eposta, blok_ad in satirlar:
+        bas, biter = plan_araligi(plan, shift)
+        kayitlar.append(
+            {
+                "tarih": plan.tarih.isoformat(),
+                "eposta": eposta or "",
+                "ad": ad,
+                "baslangic_saat": bas.strftime("%H:%M"),
+                "bitis_saat": biter.strftime("%H:%M"),
+                "mola_dakika": mola_dakika(plan.molalar) or "",
+                "vardiya_rolu": plan.vardiya_rolu or "",
+                "alan": blok_ad or plan.alan or "",
+                "not": plan.not_metni or "",
+            }
+        )
+    return Response(
+        content=plan_disa_aktar(kayitlar, tenant_ad),
+        media_type=_EXCEL_TIP,
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="vardiya-{baslangic.isoformat()}.xlsx"'
+            )
+        },
+    )
+
+
+@router.post("/ice-aktar", response_model=VardiyaIceAktarimSonuc)
+async def ice_aktar(
+    body: VardiyaIceAktarimIstek,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YAZAR),
+) -> VardiyaIceAktarimSonuc:
+    """Excel'den plan yukle — ONIZLEME varsayilan.
+
+    `yalniz_dogrula=true` (varsayilan) HICBIR SEY YAZMAZ: yanlis bir
+    dosyayi yuzlerce satir boyunca uygulamak, geri almasi pahali bir
+    hatadir.
+    """
+    from ..vardiya_excel import saat_coz, tarih_coz
+
+    # Personel BIR KEZ okunur: satir basina sorgu, 2000 satirlik bir
+    # dosyada 2000 gidis-donus demekti.
+    personel = {
+        (e or "").lower(): (uid, ad, rol)
+        for uid, ad, e, rol in (
+            await db.execute(
+                select(AppUser.id, AppUser.ad, AppUser.email, AppUser.role).where(
+                    AppUser.is_active.is_(True)
+                )
+            )
+        ).all()
+    }
+
+    sonuclar: list[VardiyaIceAktarimSatirSonuc] = []
+    yazilacak: list[dict] = []
+    for satir in body.satirlar:
+        d = {k: (v or "").strip() for k, v in satir.degerler.items()}
+        tarih = tarih_coz(d.get("tarih", ""))
+        bas = saat_coz(d.get("baslangic_saat", ""))
+        bit = saat_coz(d.get("bitis_saat", ""))
+        kisi = personel.get(d.get("eposta", "").lower())
+
+        def _hata(kimlik: str) -> None:
+            sonuclar.append(
+                VardiyaIceAktarimSatirSonuc(
+                    satir_no=satir.satir_no, durum="hata",
+                    mesaj=hata_metni(kimlik, "tr"), tarih=tarih,
+                    kisi_ad=kisi[1] if kisi else None,
+                )
+            )
+
+        if tarih is None:
+            _hata("vardiya_ice_tarih_gecersiz")
+            continue
+        if kisi is None:
+            _hata("vardiya_ice_personel_yok")
+            continue
+        if bas is None or bit is None:
+            _hata("vardiya_ice_saat_gecersiz")
+            continue
+        try:
+            _hedef_gorunur(user, kisi[2])
+        except APIError:
+            _hata("vardiya_yalniz_kendi_ekibin")
+            continue
+        try:
+            await _izin_denetle(db, kisi[0], tarih)
+        except APIError:
+            _hata("vardiya_izinli_gun")
+            continue
+        aralik = vardiya_araligi(tarih, bas, bit)
+        try:
+            await _cakisma_denetle(db, user_id=kisi[0], tarih=tarih, aralik=aralik)
+        except APIError:
+            _hata("vardiya_cakisiyor")
+            continue
+
+        try:
+            dk = int(d.get("mola_dakika") or 0)
+        except ValueError:
+            dk = 0
+        yazilacak.append(
+            {
+                "tarih": tarih, "user_id": kisi[0], "bas": bas, "bit": bit,
+                "mola": dk, "rol": d.get("vardiya_rolu") or None,
+                "alan": d.get("alan") or None, "not": d.get("not") or None,
+                "satir_no": satir.satir_no, "ad": kisi[1],
+            }
+        )
+        sonuclar.append(
+            VardiyaIceAktarimSatirSonuc(
+                satir_no=satir.satir_no, durum="eklenecek", tarih=tarih,
+                kisi_ad=kisi[1],
+            )
+        )
+
+    hatali = sum(1 for s in sonuclar if s.durum == "hata")
+    if body.yalniz_dogrula:
+        return VardiyaIceAktarimSonuc(
+            uygulandi=False, toplam=len(body.satirlar),
+            basarili=len(yazilacak), hatali=hatali, satirlar=sonuclar,
+        )
+
+    for y in yazilacak:
+        db.add(
+            VardiyaPlani(
+                tenant_id=user.tenant_id,
+                shift_id=None,
+                tarih=y["tarih"],
+                user_id=y["user_id"],
+                baslangic_saat=y["bas"],
+                bitis_saat=y["bit"],
+                molalar=[{"tur": "yasal", "dakika": y["mola"]}] if y["mola"] else [],
+                vardiya_rolu=y["rol"],
+                alan=y["alan"],
+                not_metni=y["not"],
+            )
+        )
+        await db.flush()
+    for s in sonuclar:
+        if s.durum == "eklenecek":
+            s.durum = "eklendi"
+    await audit_user(
+        db, user, Action.VARDIYA_PLAN_UPDATE, resource_type="vardiya_plani",
+        resource_id=None,
+        meta={"islem": "ice_aktar", "eklenen": len(yazilacak), "hatali": hatali},
+    )
+    return VardiyaIceAktarimSonuc(
+        uygulandi=True, toplam=len(body.satirlar), basarili=len(yazilacak),
+        hatali=hatali, satirlar=sonuclar,
     )

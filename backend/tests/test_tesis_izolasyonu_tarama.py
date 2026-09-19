@@ -72,6 +72,12 @@ TESIS_UCLARI: tuple[str, ...] = (
     "/panik",
     # (P240 §2) Diyafon listesi — ayni gerekce.
     "/diyafon",
+    # (P241 §2) Izin listesi — tesis-kapsamli.
+    "/vardiya-izin",
+    # (P241 §1) Yillik bakim ozeti de tesis verisi tasir (ekipman adlari).
+    "/bakim/ozet",
+    # (P240 §3) Bolum anahtarlari tesise aittir.
+    "/akilli-ev/bolumler",
     # (P241 §1) Bakim ekipmanlari + kayitlari — tesis-kapsamli.
     "/bakim/ekipmanlar",
     "/bakim/kayitlar",
@@ -173,6 +179,8 @@ _PARAMETRELER: dict[str, dict] = {
     "/arama": {"q": "__IZ__"},
     # (P192 §5.4) Butce karsilastirmasi yil ZORUNLU ister.
     "/budget/karsilastirma": {"yil": 2026},
+    # (P241 §1) Yillik bakim ozeti yil ZORUNLU ister.
+    "/bakim/ozet": {"yil": 2026},
 }
 
 

@@ -2236,6 +2236,14 @@ class VardiyaAtamaIstek(BaseModel):
     tarih: date
     user_id: uuid.UUID
     not_metni: str | None = Field(None, max_length=500)
+    # --- (P241 §2) MOLA / ROL / LOKASYON ---------------------------------- #
+    #: Molalar CALISMA SURESINDEN DUSER (4857 md. 68/son).
+    molalar: list["VardiyaMola"] | None = None
+    #: BU VARDIYADAKI rol — hesabin rolu degil (`app_user.role`).
+    vardiya_rolu: str | None = Field(None, max_length=60)
+    #: Lokasyon: blok BAGI ya da serbest alan (otopark, bahce, kapi).
+    blok_id: uuid.UUID | None = None
+    alan: str | None = Field(None, max_length=200)
 
 
 class VardiyaPlanOut(BaseModel):
@@ -2246,6 +2254,12 @@ class VardiyaPlanOut(BaseModel):
     user_id: uuid.UUID
     durum: str
     not_metni: str | None = None
+    #: (P241 §2) NULL = TASLAK; personel gormez.
+    yayinlandi_at: datetime | None = None
+    molalar: list[dict] = []
+    vardiya_rolu: str | None = None
+    blok_id: uuid.UUID | None = None
+    alan: str | None = None
     #: (4857/63) Haftalik 45 saat asildiysa UYARI doner — RED DEGIL.
     #: Ustu FAZLA MESAIDIR: yasal (md. 41) ama maliyetli. Engellemek,
     #: sistemin desteklemesi gereken mesru bir durumu imkansiz kilardi.
@@ -2268,6 +2282,17 @@ class VardiyaBlokOut(BaseModel):
     #: Sablondan geliyorsa adi; serbest vardiyada YOK.
     shift_ad: str | None = None
     not_metni: str | None = None
+    #: (P241 §2) Hucrede yazan rol etiketi ve lokasyon.
+    vardiya_rolu: str | None = None
+    blok_ad: str | None = None
+    alan: str | None = None
+    #: Mola DUSULMUS calisma suresi — hucre bunu gosterir.
+    calisma_saat: float = 0.0
+    mola_dakika: int = 0
+    #: NULL = TASLAK (personel gormez, izgarada isaretli cizilir).
+    yayinlandi_at: datetime | None = None
+    #: Yayinlanmis ama SONRADAN DEGISMIS satir.
+    yayin_bekliyor: bool = False
     #: (§2.2) 22:00-05:00 gibi ERTESI GUNE tasan vardiya. Istemci bunu
     #: `baslar`/`biter`den de cikarabilir ama cizelge bunu IKI GUNDE
     #: cizmek zorunda ve bayragi tek yerde uretmek, iki yuzeyde ayri
@@ -2275,11 +2300,34 @@ class VardiyaBlokOut(BaseModel):
     gece_asiyor: bool = False
 
 
+class VardiyaIzinBlokOut(BaseModel):
+    """Izgarada "izinli" yazan gun — blok DEGIL, ayri bir katman.
+
+    Vardiya blogu ile ayni listeye koymak, mesai hesabinin izni calisma
+    saymasina giden ilk adim olurdu (goc 0145).
+    """
+
+    izin_id: uuid.UUID
+    tur: str
+    baslangic: date
+    bitis: date
+    tum_gun: bool
+    baslangic_saat: time | None = None
+    bitis_saat: time | None = None
+
+
 class VardiyaCizelgeKisiOut(BaseModel):
     user_id: uuid.UUID
     ad: str
     rol: str
     bloklar: list[VardiyaBlokOut] = []
+    #: (P241 §2) ONAYLI izinler — izgarada farkli renkte cizilir.
+    izinler: list[VardiyaIzinBlokOut] = []
+    #: (P241 §2) Donem icindeki CALISMA saati (mola dusulmus) ve hedef.
+    #: SUNUCUDA hesaplanir: istemcide hesaplamak, mola kuralini web ve
+    #: mobilde ayri ayri yazmak olurdu.
+    toplam_saat: float = 0.0
+    hedef_saat: float = 0.0
 
 
 class VardiyaCizelgeOut(BaseModel):
@@ -9523,3 +9571,156 @@ class BakimYillikOzet(BaseModel):
     #: Yasal zorunlu ekipmanlardan yil icinde HIC bakim gormeyenler —
     #: denetimin ilk soracagi sey budur.
     yasal_eksik: list[str]
+
+
+# --------------------------------------------------------------------------- #
+# (P241 §2) VARDIYA: IZIN, MOLA, LOKASYON, YAYIN
+# --------------------------------------------------------------------------- #
+IzinTuru = Literal["yillik", "mazeret", "hastalik", "ucretsiz", "resmi_tatil"]
+
+
+class VardiyaIzinCreate(BaseModel):
+    """Izin kaydi. Saatlik izin TEK GUNE aittir (DB CHECK ile ayni kural)."""
+
+    user_id: uuid.UUID
+    tur: IzinTuru
+    baslangic: date
+    bitis: date
+    tum_gun: bool = True
+    baslangic_saat: time | None = None
+    bitis_saat: time | None = None
+    not_metni: str | None = Field(None, max_length=1000)
+
+    @model_validator(mode="after")
+    def _tutarli(self) -> "VardiyaIzinCreate":
+        if self.bitis < self.baslangic:
+            raise ValueError("izin_tarih_araligi_ters")
+        if self.tum_gun:
+            if self.baslangic_saat is not None or self.bitis_saat is not None:
+                raise ValueError("izin_tum_gun_saat_almaz")
+        else:
+            if self.baslangic_saat is None or self.bitis_saat is None:
+                raise ValueError("izin_saat_gerekli")
+            if self.bitis != self.baslangic:
+                # Cok gunlu saatlik izin ("her gun 09-11") BASKA bir
+                # kavramdir ve uydurulmadi.
+                raise ValueError("izin_saatlik_tek_gun")
+            if self.bitis_saat <= self.baslangic_saat:
+                raise ValueError("izin_saat_araligi_ters")
+        return self
+
+
+class VardiyaIzinOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    user_id: uuid.UUID
+    kisi_ad: str | None = None
+    tur: str
+    baslangic: date
+    bitis: date
+    tum_gun: bool
+    baslangic_saat: time | None = None
+    bitis_saat: time | None = None
+    durum: str
+    not_metni: str | None = None
+    onaylayan_user_id: uuid.UUID | None = None
+    onay_at: datetime | None = None
+
+
+class VardiyaIzinListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[VardiyaIzinOut]
+
+
+class VardiyaMola(BaseModel):
+    """Tek mola. `baslangic` NULL = SERBEST (saati sabit degil)."""
+
+    tur: Literal["yasal", "sirket"] = "yasal"
+    baslangic: time | None = None
+    dakika: int = Field(..., ge=1, le=600)
+
+
+class VardiyaMolaOneriOut(BaseModel):
+    """4857 md. 68'e gore ONERILEN ara dinlenme."""
+
+    sure_saat: float
+    onerilen_dakika: int
+
+
+class VardiyaYayinOzet(BaseModel):
+    """Yayin dugmesindeki sayi: kac satir yayinlanmayi bekliyor."""
+
+    bekleyen: int
+    taslak: int
+    degisen: int
+
+
+class VardiyaYayinSonuc(BaseModel):
+    yayinlanan: int
+    bildirilen_kisi: int
+
+
+class VardiyaHaftaKopyalaIstek(BaseModel):
+    """Bir haftanin planini baska bir haftaya kopyala."""
+
+    kaynak_baslangic: date
+    hedef_baslangic: date
+    #: Hedefte var olan satirlar SILINSIN mi. Varsayilan HAYIR:
+    #: kopyalama yikici olmamali; uzerine yazmak ACIK bir karar olsun.
+    hedefi_temizle: bool = False
+
+
+class VardiyaKopyaGunOut(BaseModel):
+    tarih: date
+    eklenen: int
+    atlanan: int
+
+
+class VardiyaHaftaKopyalaSonuc(BaseModel):
+    uygulandi: bool
+    eklenen: int
+    atlanan: int
+    gunler: list[VardiyaKopyaGunOut]
+    #: Atlama SEBEPLERI — sessiz atlama YOK (P205 kurali).
+    sebepler: list[str] = []
+
+
+class VardiyaIceAktarimSatir(BaseModel):
+    """Istemcinin Excel'den okudugu HAM satir — degerler metin gelir.
+
+    Tip cevrimi SUNUCUDA: "02.03.2026" gibi bir tarihi istemcide
+    cozmek, web ve mobilde ayni kurali iki kez yazmak olurdu.
+    """
+
+    satir_no: int = Field(..., ge=1)
+    #: DEGER `None` OLABILIR: Excel'de bos hucre `None` okunur ve
+    #: istemciyi bunu "" yapmaya zorlamak, her istemcide tekrar eden
+    #: bir temizlik adimi olurdu (ve biri unuttugunda 422 gelirdi).
+    degerler: dict[str, str | None] = Field(default_factory=dict)
+
+
+class VardiyaIceAktarimIstek(BaseModel):
+    satirlar: list[VardiyaIceAktarimSatir] = Field(
+        ..., min_length=1, max_length=2000
+    )
+    #: Onizleme: HICBIR SEY YAZILMAZ, yalniz ne olacagi raporlanir.
+    yalniz_dogrula: bool = True
+
+
+class VardiyaIceAktarimSatirSonuc(BaseModel):
+    satir_no: int
+    #: `eklenecek` | `eklendi` | `hata`
+    durum: str
+    #: Hata KIMLIGI degil CUMLESI: satir satir listede gosterilecek.
+    mesaj: str | None = None
+    tarih: date | None = None
+    kisi_ad: str | None = None
+
+
+class VardiyaIceAktarimSonuc(BaseModel):
+    uygulandi: bool
+    toplam: int
+    basarili: int
+    hatali: int
+    satirlar: list[VardiyaIceAktarimSatirSonuc]

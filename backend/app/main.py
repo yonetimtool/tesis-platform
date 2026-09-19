@@ -62,6 +62,7 @@ from .routers import gurultu_uc as gurultu_router
 from .routers import anketler as anketler_router
 from .routers import akilli_ev as akilli_ev_router
 from .routers import bakim as bakim_router
+from .routers import vardiya_izin as vardiya_izin_router
 from .routers import diyafon as diyafon_router
 from .routers import panik as panik_router
 from .routers import ice_aktarim as ice_aktarim_router
@@ -235,6 +236,7 @@ app.include_router(panik_router.router)
 app.include_router(diyafon_router.router)
 app.include_router(akilli_ev_router.router)
 app.include_router(bakim_router.router)
+app.include_router(vardiya_izin_router.router)
 app.include_router(kurulum_router.router)
 # (P167 Asama 2) Takvim + kisisel hatirlatma + pano tercihi.
 app.include_router(takvim_router.router)

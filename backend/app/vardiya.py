@@ -119,3 +119,88 @@ def plan_araligi(plan, shift) -> tuple[dt.datetime, dt.datetime]:
 def gece_asiyor_mu(bas: dt.time, son: dt.time) -> bool:
     """22:00-05:00 gibi ERTESI GUNE tasan vardiya mi?"""
     return son <= bas
+
+
+# =========================================================================== #
+# (P241 §2) MOLALAR — ara dinlenme
+# =========================================================================== #
+#
+# ===========================================================================
+# YASAL TABAN: 4857 md. 68
+# ===========================================================================
+# "Dort saat veya daha kisa surelı islerde YIRMIBES dakika, dort saatten
+# fazla ve yedibucuk saate kadar (yedibucuk saat dahil) surelı islerde
+# OTUZ dakika, yedibucuk saatten fazla surelı islerde BIR SAAT ara
+# dinlenmesi verilir."
+#
+# ISTEKTEKI SAYILAR FARKLIYDI ("4 saate kadar 15 dk") ve BILINCLI OLARAK
+# KANUN METNI ALINDI: 15 dakika kanunun altindadir ve yazilimin onerdigi
+# bir sayi, yoneticinin hukuki dayanagi olur. Eksik oneri, onu ihlale
+# yaklastirirdi. Sayi zaten YALNIZ ONERIDIR — yonetici degistirebilir.
+#
+# ===========================================================================
+# ARA DINLENME CALISMA SURESINDEN SAYILMAZ (md. 68/son)
+# ===========================================================================
+# Bu yuzden `plan_saat` molayi DUSER ve mesai hesabi da oradan gecer.
+# Bugune kadar 12 saatlik bir vardiyanin 1 saatlik molasi da fazla mesai
+# olarak ucretlendiriliyordu.
+
+#: Vardiya suresi (saat) -> onerilen ara dinlenme (dakika).
+YASAL_MOLA_KADEMELERI: tuple[tuple[float, int], ...] = (
+    (4.0, 25),
+    (7.5, 30),
+)
+#: 7,5 saatin ustu.
+YASAL_MOLA_UST = 60
+
+
+def yasal_mola_dakika(sure_saat: float) -> int:
+    """4857 md. 68'e gore ONERILEN ara dinlenme.
+
+    ONERI, ZORLAMA DEGIL: yonetici azaltabilir de artirabilir de.
+    Zorlamak, yarim gunluk bir nobet icin bile mola yazmaya mecbur
+    birakirdi; hic onermemek ise kanunu kullanicinin hafizasina
+    birakmak olurdu.
+    """
+    if sure_saat <= 0:
+        return 0
+    for esik, dakika in YASAL_MOLA_KADEMELERI:
+        if sure_saat <= esik:
+            return dakika
+    return YASAL_MOLA_UST
+
+
+def mola_dakika(molalar) -> int:
+    """Molalarin toplam dakikasi. Bozuk satir SESSIZCE ATLANMAZ, 0 sayilir.
+
+    JSONB serbest bicimli; elle yazilmis bir kaydin `dakika` alani metin
+    gelebilir. `int()` patlarsa TUM hesap duserdi — bu yuzden alan
+    bazinda korunuyor, ama sayilmayan bir mola SURE UZATIR (kisinin
+    lehine degil, isverenin aleyhine) ve sessiz kalmasi tercih edilir:
+    eksik mola, fazla ODENMIS mesai demektir; ters yonu eksik odenmis
+    ucrettir.
+    """
+    toplam = 0
+    for m in molalar or []:
+        if not isinstance(m, dict):
+            continue
+        try:
+            dk = int(m.get("dakika") or 0)
+        except (TypeError, ValueError):
+            continue
+        if 0 < dk <= 24 * 60:
+            toplam += dk
+    return toplam
+
+
+def plan_saat(plan, shift) -> float:
+    """Bir vardiya satirinin CALISMA suresi — mola DUSULMUS.
+
+    TEK KAYNAK: izgaradaki haftalik toplam, gunluk/haftalik uyari
+    esikleri ve mesai hesabi hep buradan gecer. Ayri ayri hesaplansaydi
+    "izgarada 40 saat, bordroda 44 saat" gibi bir ayrisma kacinilmazdi.
+    """
+    bas, son = plan_araligi(plan, shift)
+    ham = saat_farki(bas, son)
+    dusen = mola_dakika(getattr(plan, "molalar", None)) / 60.0
+    return max(0.0, ham - dusen)

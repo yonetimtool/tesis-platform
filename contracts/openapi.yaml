@@ -14308,6 +14308,223 @@ paths:
           schema: { type: integer, minimum: 2000, maximum: 2200 }
       responses:
         "200": { description: ozet }
+  /vardiya-izin:
+    get:
+      tags: [vardiya]
+      summary: Izinler — tarih araligi KESISIMI ile suzulur
+      description: |
+        (P241 §2) Kesisim sart: "1-20 Agustos" izni, 10-16 Agustos
+        haftasini soran izgarada GORUNMELI. Yalniz baslangica bakmak
+        onu kacirirdi.
+
+        (P231 §2) Guvenlik amiri YALNIZ guvenlik personelinin iznini
+        gorur — vardiya planiyla AYNI kural ve ayni kaynak
+        (`gorunur_roller`). Kendi iznini her zaman gorur.
+      parameters:
+        - in: query
+          name: baslangic
+          schema: { type: string, format: date }
+        - in: query
+          name: bitis
+          schema: { type: string, format: date }
+        - in: query
+          name: user_id
+          schema: { type: string, format: uuid }
+        - in: query
+          name: durum
+          schema: { type: string, enum: [onay_bekliyor, onaylandi, reddedildi] }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200": { description: izinler }
+    post:
+      tags: [vardiya]
+      summary: Izin gir ya da TALEP ac
+      description: |
+        ONAY KIM OLUSTURDUYSA ONA GORE:
+
+        * YONETIM (admin/yonetici) ya da amir kendi ekibi icin girerse
+          kayit DOGRUDAN `onaylandi` acilir — onaylayacak makam zaten
+          odur, kendi girdigini ayrica onaylatmak bos bir tiklama olurdu.
+        * PERSONEL kendisi icin girerse `onay_bekliyor` acilir: bu bir
+          TALEPTIR. Baskasi adina izin giremez (**403**).
+
+        SAATLIK IZIN TEK GUNE aittir; cok gunlu saatlik izin ("her gun
+        09-11") baska bir kavramdir ve uydurulmadi (**422**).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VardiyaIzinCreate" }
+      responses:
+        "201": { description: izin }
+        "403": { description: baskasi adina girilemez }
+        "422": { description: tarih/saat tutarsiz }
+  /vardiya-izin/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    delete:
+      tags: [vardiya]
+      summary: Izni sil (yonetim) ya da KENDI bekleyen talebini geri cek
+      description: >
+        Onaylanmis bir izni personelin kendi silmesi, yoneticinin
+        verdigi karari sessizce geri almasi olurdu — bu yuzden personel
+        YALNIZ `onay_bekliyor` durumundaki kendi talebini siler.
+      responses:
+        "204": { description: silindi }
+  /vardiya-izin/{id}/onayla:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [vardiya]
+      summary: Izin talebini onayla (admin + yonetici + amir)
+      description: >
+        Karar verilmis bir talep yeniden karara baglanamaz (**409**):
+        kaydi sessizce degistirmek olurdu.
+      responses:
+        "200": { description: izin }
+        "409": { description: karar zaten verilmis }
+  /vardiya-izin/{id}/reddet:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [vardiya]
+      summary: Izin talebini reddet (admin + yonetici + amir)
+      responses:
+        "200": { description: izin }
+        "409": { description: karar zaten verilmis }
+  /vardiya-plani/yayin-ozeti:
+    get:
+      tags: [vardiya]
+      summary: Yayinla dugmesindeki SAYI — kac satir bekliyor
+      description: >
+        `taslak` (hic yayinlanmamis) + `degisen` (yayinlanmis ama
+        sonradan duzenlenmis) = `bekleyen`.
+      parameters:
+        - in: query
+          name: baslangic
+          required: true
+          schema: { type: string, format: date }
+        - in: query
+          name: gun
+          schema: { type: integer, minimum: 1, maximum: 31 }
+      responses:
+        "200": { description: ozet }
+  /vardiya-plani/yayinla:
+    post:
+      tags: [vardiya]
+      summary: Donemin taslak/degismis satirlarini YAYINLA
+      description: |
+        (P241 §2) BU BUGUNKU DAVRANISI DEGISTIRIR ve bilinclidir: yeni
+        satirlar TASLAK acilir, personel gormez. Onceden yonetici bir
+        vardiya ekler eklemez saha onu goruyordu — yani yarim kalmis
+        bir plan aninda yansiyordu.
+
+        MEVCUT SATIRLAR goc 0145'te YAYINLANMIS sayildi; aksi halde goc
+        calistigi anda sahadaki herkesin plani ekrandan kaybolurdu.
+
+        Yayinlanmis bir satirin DEGISIKLIGI personelden GIZLENMEZ
+        (eski hali kaybolmasin), yalniz sayaca girer.
+      parameters:
+        - in: query
+          name: baslangic
+          required: true
+          schema: { type: string, format: date }
+        - in: query
+          name: gun
+          schema: { type: integer, minimum: 1, maximum: 31 }
+      responses:
+        "200": { description: sonuc }
+  /vardiya-plani/mola-onerisi:
+    get:
+      tags: [vardiya]
+      summary: Vardiya suresine gore ONERILEN ara dinlenme (4857 md. 68)
+      description: |
+        4 saate kadar 25 dk, 7,5 saate kadar 30 dk, ustu 60 dk.
+
+        SAYILAR KANUN METNINDEN: istekte "4 saate kadar 15 dk"
+        yaziyordu; 15 dakika kanunun ALTINDADIR ve yazilimin onerdigi
+        sayi yoneticinin hukuki dayanagi olur. Oneri baglayici degil —
+        yonetici degistirebilir.
+      parameters:
+        - in: query
+          name: baslangic_saat
+          required: true
+          schema: { type: string, format: time }
+        - in: query
+          name: bitis_saat
+          required: true
+          schema: { type: string, format: time }
+      responses:
+        "200": { description: oneri }
+  /vardiya-plani/haftadan-kopyala:
+    post:
+      tags: [vardiya]
+      summary: Gecen haftanin planini bu haftaya kopyala
+      description: |
+        SESSIZ ATLAMA YOK (P205 kurali): kopyalanamayan her satirin
+        SEBEBI doner (`izin` / `cakisma`).
+
+        Kopyalar TASLAK gelir: kopya baska bir haftanin planidir ve
+        gozden gecirilmeden yayinlanmamali.
+
+        `hedefi_temizle` YIKICIDIR ve varsayilan degildir; actiginda
+        hedefteki satirlar SILINMEZ, `iptal` isaretlenir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VardiyaHaftaKopyalaIstek" }
+      responses:
+        "200": { description: sonuc }
+        "422": { description: kaynak ve hedef ayni hafta }
+  /vardiya-plani/ornek-sablon:
+    get:
+      tags: [vardiya]
+      summary: Excel ornek sablonu (admin + yonetici)
+      description: >
+        Bos sablon + BIR ornek satir. Bos bir sablon "tarih nasil
+        yazilacak" sorusunu yanitlamaz (P234'te olculen desen).
+      responses:
+        "200": { description: xlsx }
+  /vardiya-plani/disa-aktar:
+    get:
+      tags: [vardiya]
+      summary: Donemin planini Excel olarak indir
+      description: >
+        Kolonlar ornek sablonla ve ice aktarimla AYNI listeden uretilir
+        — indirdigin dosya geri yuklenebilmeli. Saatler METIN yazilir:
+        Excel saat hucresi 08:00'i 0,3333 diye saklar ve bicim kayar.
+      parameters:
+        - in: query
+          name: baslangic
+          required: true
+          schema: { type: string, format: date }
+        - in: query
+          name: gun
+          schema: { type: integer, minimum: 1, maximum: 31 }
+      responses:
+        "200": { description: xlsx }
+  /vardiya-plani/ice-aktar:
+    post:
+      tags: [vardiya]
+      summary: Excel'den plan yukle — ONIZLEME varsayilan
+      description: |
+        `yalniz_dogrula=true` (varsayilan) HICBIR SEY YAZMAZ. Her satir
+        icin durum ve SEBEP doner: `eklenecek` / `eklendi` / `hata`.
+
+        Kimlik E-POSTAYLA tasinir, adla degil: "Ali Veli" benzersiz
+        degildir, e-posta tesis icinde benzersizdir.
+
+        BELIRSIZ TARIH REDDEDILIR: `03/02/2026` ay mi gun mu belli
+        degil ve yanlis tahmin vardiyayi baska bir gune yazardi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VardiyaIceAktarimIstek" }
+      responses:
+        "200": { description: sonuc }
   /integrations:
     get:
       tags: [integrations]
@@ -19080,6 +19297,59 @@ components:
           format: date
           nullable: true
           description: Verilmezse periyottan hesaplanir.
+    VardiyaIzinCreate:
+      type: object
+      required: [user_id, tur, baslangic, bitis]
+      properties:
+        user_id: { type: string, format: uuid }
+        tur:
+          type: string
+          enum: [yillik, mazeret, hastalik, ucretsiz, resmi_tatil]
+        baslangic: { type: string, format: date }
+        bitis: { type: string, format: date }
+        tum_gun:
+          type: boolean
+          default: true
+          description: >
+            SAATLIK IZIN VARDIYAYI ENGELLEMEZ: iki saatlik mazeret izni
+            o gunku vardiyayi imkansiz kilmaz. Yalniz TUM GUN izin
+            atamayi engeller.
+        baslangic_saat: { type: string, format: time, nullable: true }
+        bitis_saat: { type: string, format: time, nullable: true }
+        not_metni: { type: string, nullable: true, maxLength: 1000 }
+    VardiyaHaftaKopyalaIstek:
+      type: object
+      required: [kaynak_baslangic, hedef_baslangic]
+      properties:
+        kaynak_baslangic: { type: string, format: date }
+        hedef_baslangic: { type: string, format: date }
+        hedefi_temizle:
+          type: boolean
+          default: false
+          description: >
+            YIKICI: hedefteki satirlar `iptal` isaretlenir. Varsayilan
+            kapali — kopyalama uzerine yazmamali, uzerine yazmak ACIK
+            bir karar olmali.
+    VardiyaIceAktarimIstek:
+      type: object
+      required: [satirlar]
+      properties:
+        satirlar:
+          type: array
+          minItems: 1
+          maxItems: 2000
+          items:
+            type: object
+            required: [satir_no]
+            properties:
+              satir_no: { type: integer, minimum: 1 }
+              degerler:
+                type: object
+                additionalProperties: { type: string, nullable: true }
+        yalniz_dogrula:
+          type: boolean
+          default: true
+          description: ONIZLEME — hicbir sey yazilmaz.
     PanikOlustur:
       type: object
       required: [tip]

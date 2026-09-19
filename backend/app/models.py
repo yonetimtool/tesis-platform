@@ -135,6 +135,8 @@ NOTIFICATION_TIP = ENUM(
     # söyle" tercihini imkânsız kılardı; geciken bakım yasal sorumluluk
     # doğurabilir, yaklaşan ise yalnızca planlama bilgisidir.
     "bakim_yaklasti", "bakim_bugun", "bakim_gecikti",
+    # (P241 §2, göç 0145) Vardiya planı YAYINLANDI — personele duyuru.
+    "vardiya_yayinlandi",
     name="notification_tip", create_type=False,
 )
 ASSET_KATEGORI = ENUM(
@@ -4898,6 +4900,80 @@ class VardiyaPlani(Base):
     #: liste sahadaki sebepleri kapsamaz ve "diger" bilgiyi yine metne
     #: iterdi.
     not_metni: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: (P241 §2, goc 0145) MOLALAR — `[{tur, baslangic, dakika}]`.
+    #:
+    #: Ara dinlenme CALISMA SURESINDEN SAYILMAZ (4857 md. 68/son), bu
+    #: yuzden `vardiya.plan_saat` bunu duser ve mesai hesabi da oradan
+    #: gecer.
+    molalar: Mapped[list] = mapped_column(
+        JSONB, nullable=False, server_default=text("'[]'::jsonb")
+    )
+    #: BU VARDIYADAKI rol. `app_user.role` DEGIL: ayni kisi bir gun
+    #: guvenlik, ertesi gun temizlik vardiyasi alabilir.
+    vardiya_rolu: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: Lokasyon: blok BAGI ya da serbest alan (otopark, bahce, kapi).
+    blok_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    alan: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: NULL = TASLAK. Doluysa yayinlanmis; `updated_at > yayinlandi_at`
+    #: ise yayinlanmamis DEGISIKLIK var (goc 0145).
+    yayinlandi_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+IZIN_TURU = ENUM(
+    "yillik", "mazeret", "hastalik", "ucretsiz", "resmi_tatil",
+    name="izin_turu", create_type=False,
+)
+IZIN_DURUM = ENUM(
+    "onay_bekliyor", "onaylandi", "reddedildi",
+    name="izin_durum", create_type=False,
+)
+
+
+class VardiyaIzin(Base):
+    """(P241 §2, goc 0145) IZIN — vardiya satirindan AYRI tablo.
+
+    Ayni tabloya "tur=izin" diye yazilsaydi mesai hesabi
+    (`routers/mesai.py`, `durum='planli'` okur) izni CALISMA sayar ve
+    izne cikan kisiye fazla mesai yazardi.
+    """
+
+    __tablename__ = "vardiya_izin"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_vardiya_izin_id_tenant"),
+        ForeignKeyConstraint(
+            ["user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_izin_user",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    tur: Mapped[str] = mapped_column(IZIN_TURU, nullable=False)
+    baslangic = mapped_column(Date, nullable=False)
+    bitis = mapped_column(Date, nullable=False)
+    tum_gun: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    baslangic_saat = mapped_column(Time, nullable=True)
+    bitis_saat = mapped_column(Time, nullable=True)
+    durum: Mapped[str] = mapped_column(
+        IZIN_DURUM, nullable=False, server_default=text("'onay_bekliyor'")
+    )
+    not_metni: Mapped[str | None] = mapped_column(Text, nullable=True)
+    olusturan_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    onaylayan_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    onay_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     created_at = _created_at()
     updated_at = _created_at()
 
