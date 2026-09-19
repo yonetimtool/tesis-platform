@@ -3117,4 +3117,12 @@ export const es: Sozluk = {
   vardiyaMesai: "Turno",
   bildirimTipVardiyaYayinlandi: "Plan de turnos publicado",
   bildirimGit: "Abrir",
+  // (P243 §1) VARDIYA MODALI
+  vardiyaRotasyonAylik: "Mensual (mes natural)",
+  vardiyaRotasyonAylikIpucu: "Los equipos rotan un turno cada mes: marzo de día, abril de noche.",
+  vardiyaRolSuzgeci: "Rol (filtro)",
+  vardiyaRolSuzgeciIpucu: "Acota la lista de personal; no se guarda en el turno.",
+  vardiyaGrupKalipli: "{ad} — {n} días",
+  vardiyaSerbestSaatKisa: "Horario libre",
+  vardiyaGunSecilmedi: "Seleccione al menos un día en el calendario.",
 };

@@ -3117,4 +3117,12 @@ export const ru: Sozluk = {
   vardiyaMesai: "Смена",
   bildirimTipVardiyaYayinlandi: "План смен опубликован",
   bildirimGit: "Открыть",
+  // (P243 §1) VARDIYA MODALI
+  vardiyaRotasyonAylik: "Ежемесячно (календарный месяц)",
+  vardiyaRotasyonAylikIpucu: "Команды смещаются на одну смену каждый месяц: март — день, апрель — ночь.",
+  vardiyaRolSuzgeci: "Роль (фильтр)",
+  vardiyaRolSuzgeciIpucu: "Сужает список персонала; в смене не сохраняется.",
+  vardiyaGrupKalipli: "{ad} — {n} дн.",
+  vardiyaSerbestSaatKisa: "Свободные часы",
+  vardiyaGunSecilmedi: "Выберите хотя бы один день в календаре.",
 };

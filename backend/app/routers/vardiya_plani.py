@@ -655,6 +655,23 @@ async def cizelge(
             p.id, VardiyaCizelgeKisiOut(user_id=p.id, ad=p.ad, rol=p.role)
         )
 
+    # (P243 §2) VARDIYA DUZENINE DAHIL OLANLAR — "Atanmamis"in olcutu.
+    #
+    # Donem disindaki satirlar da sayilir: bu hafta vardiyasi olmayan
+    # ama gecen hafta calismis biri TAM DA "atanmamis" olandir. Yalniz
+    # donem icine bakmak, olcutu tanimin kendisiyle celistirirdi.
+    duzendekiler = set(
+        (
+            await db.execute(select(VardiyaPlani.user_id).distinct())
+        ).scalars().all()
+    ) | set(
+        (
+            await db.execute(select(ShiftAssignment.user_id).distinct())
+        ).scalars().all()
+    )
+    for uid, k in kisiler.items():
+        k.vardiya_duzeninde = uid in duzendekiler
+
     # (P241 §2) IZIN KATMANI — bloklarla AYNI listeye konmaz.
     #
     # `bloklar` mesai hesabinin de okudugu sekildir; izni oraya koymak,
@@ -1057,10 +1074,16 @@ async def kalip_uygula(
             continue
         ilk_gun = gunler[0]
         for gun in gunler:
-            hafta = (gun - ilk_gun).days // 7
+            # (P243 §1e) DONEM INDISI: haftalikta gun farkindan, aylikta
+            # TAKVIM AYI farkindan. Aylik icin de "28 gunde bir" saymak,
+            # rotasyonu ayin ortasinda kaydirirdi (bkz. sema gerekcesi).
+            if body.rotasyon == "aylik":
+                donem = (gun.year - ilk_gun.year) * 12 + (gun.month - ilk_gun.month)
+            else:
+                donem = (gun - ilk_gun).days // 7
             atama = (
-                _rotasyonlu_atama(atamalar, len(dilimler), hafta)
-                if body.rotasyon == "haftalik"
+                _rotasyonlu_atama(atamalar, len(dilimler), donem)
+                if body.rotasyon in ("haftalik", "aylik")
                 else atamalar
             )
             for sira, dilim in enumerate(dilimler):
@@ -1125,6 +1148,9 @@ async def kalip_uygula(
             baslangic_saat=dilim.baslangic,
             bitis_saat=dilim.bitis,
             not_metni=body.not_metni,
+            # (P243 §1) MOLALAR bu yoldan da yazilir: web modali artik
+            # TEK YOLDAN buraya geliyor.
+            molalar=[m.model_dump(mode="json") for m in (body.molalar or [])],
             parti_id=parti_id,
         ))
     await db.flush()

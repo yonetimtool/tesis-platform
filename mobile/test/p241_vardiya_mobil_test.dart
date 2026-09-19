@@ -236,7 +236,7 @@ void main() {
     expect(istek.first.govde['tum_gun'], isTrue);
   });
 
-  testWidgets('MOLA / ROL / LOKASYON govdede gider', (tester) async {
+  testWidgets('MOLA govdede gider (P243: rol/lokasyon KALKTI)', (tester) async {
     // GENIS YUZEY: ekleme dialogu uzun ve varsayilan 800x600 test
     // yuzeyinde kisi secici gorunur alanin disinda kaliyor. Olculen sey
     // YERLESIM DEGIL govde; yuzeyi buyutmek olcumu bozmuyor.
@@ -247,9 +247,10 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byKey(const Key('vardiya-ekle-mola')), '45');
-    await tester.enterText(find.byKey(const Key('vardiya-ekle-rol')), 'guvenlik');
-    await tester.enterText(
-        find.byKey(const Key('vardiya-ekle-lokasyon')), 'A Blok');
+    // (P243 §1a/§1b) ROL ve LOKASYON ALANLARI KALDIRILDI: rol kisi
+    // eklenirken zaten belirleniyor, lokasyonun bizde karsiligi yok.
+    expect(find.byKey(const Key('vardiya-ekle-rol')), findsNothing);
+    expect(find.byKey(const Key('vardiya-ekle-lokasyon')), findsNothing);
     // Kisi secimi — once GORUNUR YAP: dialog icerigi kayabiliyor ve
     // ekran disindaki bir widget'a dokunmak vurus testinde duser.
     await tester.ensureVisible(find.byKey(const Key('vardiya-ekle-kisi')));
@@ -267,8 +268,8 @@ void main() {
         tel.istekler.where((i) => i.yol == '/vardiya-plani/toplu').toList();
     expect(istek.isNotEmpty, isTrue, reason: 'toplu ucu cagrilmadi');
     final govde = istek.last.govde;
-    expect(govde['vardiya_rolu'], 'guvenlik');
-    expect(govde['alan'], 'A Blok');
+    expect(govde['vardiya_rolu'], isNull);
+    expect(govde['alan'], isNull);
     expect((govde['molalar'] as List).first['dakika'], 45);
   });
 }

@@ -3117,4 +3117,12 @@ export const de: Sozluk = {
   vardiyaMesai: "Dienst",
   bildirimTipVardiyaYayinlandi: "Schichtplan veröffentlicht",
   bildirimGit: "Öffnen",
+  // (P243 §1) VARDIYA MODALI
+  vardiyaRotasyonAylik: "Monatlich (Kalendermonat)",
+  vardiyaRotasyonAylikIpucu: "Die Teams rücken je Kalendermonat um eine Schicht: März Tag, April Nacht.",
+  vardiyaRolSuzgeci: "Rolle (Filter)",
+  vardiyaRolSuzgeciIpucu: "Schränkt die Personalliste ein; wird nicht gespeichert.",
+  vardiyaGrupKalipli: "{ad} — {n} Tage",
+  vardiyaSerbestSaatKisa: "Freie Zeiten",
+  vardiyaGunSecilmedi: "Wählen Sie mindestens einen Tag im Kalender.",
 };

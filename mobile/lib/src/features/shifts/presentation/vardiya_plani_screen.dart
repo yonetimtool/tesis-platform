@@ -501,8 +501,6 @@ class _HizliEkleDialoguState extends ConsumerState<_HizliEkleDialogu> {
   final _notCtrl = TextEditingController();
   // (P241 §2) MOLA / ROL / LOKASYON denetleyicileri.
   final _molaCtrl = TextEditingController();
-  final _rolCtrl = TextEditingController();
-  final _alanCtrl = TextEditingController();
   /// Sunucudan gelen YASAL mola onerisi (4857 md. 68).
   int? _molaOnerisi;
   List<String>? _cakisanlar;
@@ -517,8 +515,6 @@ class _HizliEkleDialoguState extends ConsumerState<_HizliEkleDialogu> {
     // icindeki `dispose` cagrilarini TANIMIYOR (P240 §2'de olculdu).
     _notCtrl.dispose();
     _molaCtrl.dispose();
-    _rolCtrl.dispose();
-    _alanCtrl.dispose();
     super.dispose();
   }
 
@@ -629,9 +625,6 @@ class _HizliEkleDialoguState extends ConsumerState<_HizliEkleDialogu> {
             // ayni uc. Mobilde eksik birakmak, ayni plani iki yuzeyde
             // farkli ayrintiyla tutmak olurdu.
             molaDakika: int.tryParse(_molaCtrl.text.trim()),
-            vardiyaRolu:
-                _rolCtrl.text.trim().isEmpty ? null : _rolCtrl.text.trim(),
-            alan: _alanCtrl.text.trim().isEmpty ? null : _alanCtrl.text.trim(),
           );
       if (!mounted) return;
       if (!sonuc.uygulandi) {
@@ -727,48 +720,12 @@ class _HizliEkleDialoguState extends ConsumerState<_HizliEkleDialogu> {
               ),
             ),
             const SizedBox(height: 8),
-            if (_seciliGunler.isEmpty) ...[
-            ListTile(
-              key: const Key('vardiya-ekle-bas-tarih'),
-              dense: true,
-              title: Text(l10n.vardiyaBaslangicTarihi),
-              subtitle: Text(_g(_bas)),
-              trailing: const Icon(Icons.event_outlined),
-              onTap: () async {
-                final d = await showDatePicker(
-                  context: context,
-                  initialDate: _bas,
-                  firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                  lastDate: DateTime.now().add(const Duration(days: 365)),
-                );
-                if (d == null) return;
-                setState(() {
-                  _bas = d;
-                  // BITIS BASLANGICI TAKIP EDER: ters aralik sunucuda
-                  // 422 aliyor ve kullaniciya bunu HATA olarak
-                  // gostermek, onun yapmadigi bir hatayi ona yuklemek
-                  // olurdu.
-                  if (_son.isBefore(d)) _son = d;
-                });
-              },
-            ),
-            ListTile(
-              key: const Key('vardiya-ekle-son-tarih'),
-              dense: true,
-              title: Text(l10n.vardiyaBitisTarihi),
-              subtitle: Text(_g(_son)),
-              trailing: const Icon(Icons.event_outlined),
-              onTap: () async {
-                final d = await showDatePicker(
-                  context: context,
-                  initialDate: _son,
-                  firstDate: _bas,
-                  lastDate: _bas.add(const Duration(days: 30)),
-                );
-                if (d != null) setState(() => _son = d);
-              },
-            ),
-            ],
+            // (P243 §1c) BASLANGIC/BITIS TARIHI ALANLARI KALDIRILDI.
+            //
+            // Ustte ZATEN takvim var. Iki yol birden acikken hangisinin
+            // gecerli oldugu belirsizdi; web'de ayni belirsizlik
+            // ONIZLEMEYI olduruyordu. Saatler KALDI — takvimden
+            // turetilemezler.
             ListTile(
               key: const Key('vardiya-ekle-bas-saat'),
               dense: true,
@@ -812,16 +769,11 @@ class _HizliEkleDialoguState extends ConsumerState<_HizliEkleDialogu> {
                 helperMaxLines: 2,
               ),
             ),
-            TextField(
-              key: const Key('vardiya-ekle-rol'),
-              controller: _rolCtrl,
-              decoration: InputDecoration(labelText: l10n.vardiyaRolEtiketi),
-            ),
-            TextField(
-              key: const Key('vardiya-ekle-lokasyon'),
-              controller: _alanCtrl,
-              decoration: InputDecoration(labelText: l10n.vardiyaLokasyon),
-            ),
+            // (P243 §1a/§1b) "BU VARDIYADAKI ROL" ve "LOKASYON"
+            // KALDIRILDI: rol kisi eklenirken zaten belirleniyor,
+            // lokasyon ise referanstaki "sube"nin karsiligiydi ve
+            // bizde karsiligi yok. Sutunlar SILINMEDI — P241'de
+            // yazilmis kayitlar duruyor.
             TextField(
               key: const Key('vardiya-ekle-not'),
               controller: _notCtrl,

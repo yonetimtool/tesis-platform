@@ -89,6 +89,8 @@ type CizelgeKisi = {
   izinler: IzinBlok[];
   toplam_saat: number;
   hedef_saat: number;
+  /** (P243 §2) Kisi vardiya duzenine dahil mi — "Atanmamis"in olcutu. */
+  vardiya_duzeninde: boolean;
 };
 type Cizelge = { baslangic: string; bitis: string; personel: CizelgeKisi[] };
 type Personel = { id: string; ad: string; role: string };
@@ -308,7 +310,17 @@ export default function VardiyaPlaniSayfasi() {
     const roller = new Map<string, CizelgeKisi[]>();
     for (const k of suzulmus) {
       if ((k.bloklar ?? []).length === 0) {
-        atanmamis.push(k);
+        // (P243 §2) YALNIZ VARDIYA DUZENINDEKILER.
+        //
+        // OLCULEN KUSUR: bolum TUM aktif personeli (yonetici dahil)
+        // listeliyordu, cunku olcut "bu donemde blogu yok"tu. Boyle
+        // bir bolum bir PERSONEL REHBERIDIR ve asil soruyu ("bu hafta
+        // kimi atamayi unuttum") gorunmez kilar.
+        //
+        // Olcut SUNUCUDA (`vardiya_duzeninde`): kadro uyesi ya da
+        // herhangi bir tarihte vardiyasi olan kisi. Hic vardiya
+        // girilmemis bir sitede bolum BOS kalir — istegin sarti.
+        if (k.vardiya_duzeninde) atanmamis.push(k);
         continue;
       }
       const liste = roller.get(k.rol) ?? [];

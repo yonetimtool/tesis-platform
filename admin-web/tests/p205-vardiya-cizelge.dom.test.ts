@@ -53,7 +53,7 @@ const CIZELGE = {
   ],
 };
 
-function taklit(opts: { toplu?: unknown } = {}): Cagri[] {
+function taklit(opts: { toplu?: unknown; kalip?: unknown } = {}): Cagri[] {
   const cagrilar: Cagri[] = [];
   globalThis.fetch = (async (girdi: RequestInfo | URL, init?: RequestInit) => {
     const url = String(girdi);
@@ -86,6 +86,12 @@ function taklit(opts: { toplu?: unknown } = {}): Cagri[] {
           { id: "u-3", ad: "Sakin Kisi", role: "resident" },
         ],
       };
+    } else if (metot === "POST" && url === "/api/vardiya-plani/kalip-uygula") {
+      govde =
+        opts.kalip ?? {
+          uygulandi: true, parti_id: "pt-1", eklenecek: 1, eklenen: 1,
+          cakisan: 0, satirlar: [],
+        };
     } else if (metot === "POST" && url === "/api/vardiya-plani/toplu") {
       govde =
         opts.toplu ??
@@ -175,7 +181,21 @@ it("FILTRELER sayaci ve KISI SUZGECI satirlari azaltir", async () => {
 
 // ==================== 2.2 HIZLI VARDIYA EKLE ============================= #
 
-it("TOPLU EKLEME govdesi: aralik + saatler + atlama BAYRAGI KAPALI", async () => {
+it("(P243 §1) VARDIYA EKLEME TEK UCTAN gider ve GUN SECIMI ISTER", async () => {
+  // ======================================================================
+  // BU TEST ESKIDEN KIRIK BIR YOLU KILITLIYORDU
+  // ======================================================================
+  // Onceki hali "serbest saat + tek kisi" durumunda `/vardiya-plani/toplu`
+  // cagrildigini olcuyordu. Sahte `fetch` her govdeye 200 donduruyordu, bu
+  // yuzden test YESILDI — oysa GERCEK sunucu o govdeye 422 veriyordu:
+  // modal `baslangic`/`bitis` gonderiyor, sema `baslangic_tarih`/
+  // `bitis_tarih` istiyor. P243'te sunucuya birebir o govde gonderilerek
+  // OLCULDU.
+  //
+  // Ders: taklit yanit, SOZLESMEYI dogrulamaz. Bu yuzden yeni kilit
+  // "hangi uc, hangi govde" yerine "TEK UC" kuralini olcuyor ve
+  // sozlesme uyumu backend testinde (`test_p243_vardiya_modali`)
+  // duruyor.
   const k = userEvent.setup();
   const cagrilar = taklit();
   ciz(Sayfa);
@@ -183,16 +203,31 @@ it("TOPLU EKLEME govdesi: aralik + saatler + atlama BAYRAGI KAPALI", async () =>
   await k.click(kanca("vardiya-yeni")!);
   await waitFor(() => expect(kanca("vardiya-ekle-kisi")).toBeTruthy());
   await k.selectOptions(kanca("vardiya-ekle-kisi")!, "u-2");
+
+  // GUN SECILMEDEN GONDERILEMEZ: takvim tek gercek kaynak (§1c).
+  expect(
+    (kanca("vardiya-ekle-gonder") as HTMLButtonElement).disabled,
+  ).toBe(true);
+
+  const bugunHucresi = document.querySelector(
+    `[data-test^="vardiya-ekle-gun-"]`,
+  ) as HTMLElement;
+  await k.click(bugunHucresi);
   await k.click(kanca("vardiya-ekle-gonder")!);
 
   await waitFor(() =>
-    expect(cagrilar.some((c) => c.url === "/api/vardiya-plani/toplu")).toBe(true),
+    expect(
+      cagrilar.some((c) => c.url === "/api/vardiya-plani/kalip-uygula"),
+    ).toBe(true),
   );
-  const post = cagrilar.find((c) => c.url === "/api/vardiya-plani/toplu")!;
-  expect(post.govde.user_id).toBe("u-2");
-  expect(post.govde.baslangic_saat).toBe("08:00");
-  // ILK ISTEKTE ATLAMA KAPALI: cakisan gunler kullaniciya SORULMADAN
-  // atlanamaz (istegin acik sarti).
+  // ESKI UC ARTIK HIC CAGRILMIYOR.
+  expect(cagrilar.some((c) => c.url === "/api/vardiya-plani/toplu")).toBe(false);
+  const post = cagrilar.find(
+    (c) => c.url === "/api/vardiya-plani/kalip-uygula",
+  )!;
+  const gruplar = post.govde.gruplar as { gunler: string[] }[];
+  expect(gruplar.length).toBe(1);
+  expect(gruplar[0].gunler.length).toBe(1);
   expect(post.govde.cakisanlari_atla).toBe(false);
 });
 
@@ -227,18 +262,22 @@ it("ARALIK ve GECE ASIRI davranisi ONCEDEN yazar", async () => {
 it("CAKISMA: gunler GOSTERILIR, karar KULLANICININ", async () => {
   // Istegin en sert sarti: cakisan gunler SESSIZCE ATLANMAZ. Sunucu
   // "uygulandi=false" der; ekran gunleri yazar ve iki secenek sunar.
+  //
+  // (P243 §1) Yol degisti (`/kalip-uygula`), KURAL degismedi: gunler
+  // artik sonuc satirlarindan turetiliyor.
   const k = userEvent.setup();
   const cagrilar = taklit({
-    toplu: {
+    kalip: {
       uygulandi: false,
+      parti_id: null,
+      eklenecek: 1,
       eklenen: 0,
       cakisan: 2,
-      gunler: [
-        { tarih: "2026-09-03", durum: "cakisma", plan_id: null },
-        { tarih: "2026-09-04", durum: "eklenebilir", plan_id: null },
-        { tarih: "2026-09-05", durum: "cakisma", plan_id: null },
+      satirlar: [
+        { tarih: "2026-09-03", dilim: "08:00-16:00", durum: "cakisma" },
+        { tarih: "2026-09-04", dilim: "08:00-16:00", durum: "eklenecek" },
+        { tarih: "2026-09-05", dilim: "08:00-16:00", durum: "cakisma" },
       ],
-      uyarilar: [],
     },
   });
   ciz(Sayfa);
@@ -246,6 +285,9 @@ it("CAKISMA: gunler GOSTERILIR, karar KULLANICININ", async () => {
   await k.click(kanca("vardiya-yeni")!);
   await waitFor(() => expect(kanca("vardiya-ekle-kisi")).toBeTruthy());
   await k.selectOptions(kanca("vardiya-ekle-kisi")!, "u-2");
+  await k.click(
+    document.querySelector(`[data-test^="vardiya-ekle-gun-"]`) as HTMLElement,
+  );
   await k.click(kanca("vardiya-ekle-gonder")!);
 
   await waitFor(() => expect(kanca("vardiya-cakisma-uyarisi")).toBeTruthy());
@@ -257,13 +299,15 @@ it("CAKISMA: gunler GOSTERILIR, karar KULLANICININ", async () => {
   await k.click(kanca("vardiya-cakisan-haric")!);
   await waitFor(() =>
     expect(
-      cagrilar.filter((c) => c.url === "/api/vardiya-plani/toplu").length,
+      cagrilar.filter((c) => c.url === "/api/vardiya-plani/kalip-uygula")
+        .length,
     ).toBe(2),
   );
   // IKINCI istek ATLAMA ACIK gider — ve bu KULLANICININ kararidir.
   expect(
-    cagrilar.filter((c) => c.url === "/api/vardiya-plani/toplu").at(-1)!.govde
-      .cakisanlari_atla,
+    cagrilar
+      .filter((c) => c.url === "/api/vardiya-plani/kalip-uygula")
+      .at(-1)!.govde.cakisanlari_atla,
   ).toBe(true);
 });
 

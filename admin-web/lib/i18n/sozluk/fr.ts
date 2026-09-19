@@ -3117,4 +3117,12 @@ export const fr: Sozluk = {
   vardiyaMesai: "Service",
   bildirimTipVardiyaYayinlandi: "Planning publié",
   bildirimGit: "Ouvrir",
+  // (P243 §1) VARDIYA MODALI
+  vardiyaRotasyonAylik: "Mensuelle (mois calendaire)",
+  vardiyaRotasyonAylikIpucu: "Les équipes décalent d’un créneau chaque mois : mars en journée, avril de nuit.",
+  vardiyaRolSuzgeci: "Rôle (filtre)",
+  vardiyaRolSuzgeciIpucu: "Réduit la liste du personnel ; non enregistré sur le service.",
+  vardiyaGrupKalipli: "{ad} — {n} jours",
+  vardiyaSerbestSaatKisa: "Horaires libres",
+  vardiyaGunSecilmedi: "Sélectionnez au moins un jour dans le calendrier.",
 };

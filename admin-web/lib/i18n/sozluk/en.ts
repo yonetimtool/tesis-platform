@@ -3117,4 +3117,12 @@ export const en: Sozluk = {
   vardiyaMesai: "Shift",
   bildirimTipVardiyaYayinlandi: "Shift plan published",
   bildirimGit: "Open",
+  // (P243 §1) VARDIYA MODALI
+  vardiyaRotasyonAylik: "Monthly (calendar month)",
+  vardiyaRotasyonAylikIpucu: "Teams shift by one slot each calendar month: March days, April nights.",
+  vardiyaRolSuzgeci: "Role (filter)",
+  vardiyaRolSuzgeciIpucu: "Narrows the staff list; it is not saved on the shift.",
+  vardiyaGrupKalipli: "{ad} — {n} days",
+  vardiyaSerbestSaatKisa: "Custom hours",
+  vardiyaGunSecilmedi: "Select at least one day from the calendar.",
 };

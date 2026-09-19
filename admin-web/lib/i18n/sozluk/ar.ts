@@ -3117,4 +3117,12 @@ export const ar: Sozluk = {
   vardiyaMesai: "مناوبة",
   bildirimTipVardiyaYayinlandi: "تم نشر خطة المناوبات",
   bildirimGit: "فتح",
+  // (P243 §1) VARDIYA MODALI
+  vardiyaRotasyonAylik: "شهريًا (شهر تقويمي)",
+  vardiyaRotasyonAylikIpucu: "تتنقل الفرق مناوبة واحدة كل شهر: مارس نهارًا وأبريل ليلًا.",
+  vardiyaRolSuzgeci: "الدور (تصفية)",
+  vardiyaRolSuzgeciIpucu: "يُضيّق قائمة الموظفين ولا يُحفظ في المناوبة.",
+  vardiyaGrupKalipli: "{ad} — {n} يوم",
+  vardiyaSerbestSaatKisa: "ساعات حرة",
+  vardiyaGunSecilmedi: "اختر يومًا واحدًا على الأقل من التقويم.",
 };

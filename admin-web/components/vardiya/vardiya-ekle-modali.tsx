@@ -55,11 +55,13 @@ import {
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
+import { rolAdi } from "@/lib/roles";
 
 /** JSX ucluda sabit metin yazilamaz (`sabit-metin` taramasi). */
 const IKINCIL = "ikincil" as const;
 const ROTASYON_YOK = "yok" as const;
 const ROTASYON_HAFTALIK = "haftalik" as const;
+const ROTASYON_AYLIK = "aylik" as const;
 /** "Kayitli kalip degil, serbest saat" secimi. */
 const SERBEST = "" as const;
 const BIRINCIL = "birincil" as const;
@@ -79,6 +81,8 @@ type Grup = {
   gunler: string[];
   dilimler: Dilim[];
   atamalar: Record<number, string[]>;
+  /** (P243 §1f) Kalip GRUBA ait — coklu kalip boyle olur. */
+  kalip_id: string | null;
 };
 type Satir = {
   tarih: string;
@@ -156,14 +160,14 @@ export function VardiyaEkleModali({
   }, [acik, onSecilenGunler]);
   const [kalipId, setKalipId] = useState<string>(SERBEST);
   const [userId, setUserId] = useState("");
-  // (P235 §1) ARALIK KIPI — mobildeki fallback'in AYNISI.
-  //
-  // Takvim BOSKEN bas/son tarih kullanilir ve istek `/toplu`ya gider.
-  // Iki kipi ayni modalda tutmak mobilde bilincli bir karardi ("ayri bir
-  // toplu ekle ekrani, cakisma akisini IKINCI KEZ yazmak demekti");
-  // web'de de oyle.
-  const [basTarih, setBasTarih] = useState(baslangicAyi);
-  const [sonTarih, setSonTarih] = useState(baslangicAyi);
+  /**
+   * (P243 §1d) ROL SUZGECI — KAYDEDILEN BIR ALAN DEGIL.
+   *
+   * Personel listesi uzun bir sitede "Ali"yi bulmak icin once rolu
+   * secmek dogal yol. Secilmezse TUM personel gorunur: suzgec bir
+   * KISITLAMA degil, bir KOLAYLIK.
+   */
+  const [rolSuzgeci, setRolSuzgeci] = useState("");
   const [basSaat, setBasSaat] = useState("08:00");
   const [sonSaat, setSonSaat] = useState("16:00");
   const [dilimAtama, setDilimAtama] = useState<Record<number, string>>({});
@@ -221,6 +225,16 @@ export function VardiyaEkleModali({
     }
   }
 
+  /** Sistemdeki personel ROLLERI — listeden turer, elle yazilmaz. */
+  const roller = useMemo(
+    () => [...new Set(personel.map((p) => p.role))].sort(),
+    [personel],
+  );
+  const suzulmusPersonel = useMemo(
+    () => (rolSuzgeci ? personel.filter((p) => p.role === rolSuzgeci) : personel),
+    [personel, rolSuzgeci],
+  );
+
   const kalip = (kaliplar?.items ?? []).find((k) => k.id === kalipId);
   const dilimler: Dilim[] = kalip
     ? kalip.dilimler
@@ -253,6 +267,14 @@ export function VardiyaEkleModali({
       gunler: Array.from(seciliGunler).sort(),
       dilimler,
       atamalar,
+      // (P243 §1f) KALIP GRUBA AIT — COKLU KALIP BOYLE OLUR.
+      //
+      // Olculdu: `VardiyaGunGrubu` ZATEN `kalip_id` tasiyor (P232).
+      // "Birden cok kalip" icin yeni bir kavram gerekmiyordu; eksik
+      // olan, modalin kalibi GRUBA degil formun tamamina baglamasiydi.
+      // Artik her "Gruba ekle" kendi kalibini tasir: pazartesi
+      // 2-vardiyali kalip, cumartesi 3-vardiyali kalip.
+      kalip_id: kalipId || null,
     };
   }
 
@@ -265,61 +287,22 @@ export function VardiyaEkleModali({
     setSeciliGunler(new Set());
     setSonuc(null);
   }
-
-  /** (P235 §1) TEKIL KIP — mobildeki `_gonder`in AYNISI: `/toplu`.
-   *
-   * Grup YOKKEN ve kalip secilmemisken buraya duser. Aralik alanlari
-   * (bas/son tarih) yalniz burada anlamli; takvimden gun secildiyse
-   * `gunler` olarak gider ve aralik YOK SAYILIR — sunucu semasi ikisini
-   * de kabul ediyor (`VardiyaTopluIstek.gunler`).
-   */
-  async function tekilGonder(atla: boolean) {
-    if (!userId) return;
-    setBekliyor(true);
-    setHata(null);
-    try {
-      const y = (await apiSend("/api/vardiya-plani/toplu", "POST", {
-        user_id: userId,
-        baslangic: basTarih,
-        bitis: sonTarih,
-        baslangic_saat: basSaat,
-        bitis_saat: sonSaat,
-        not_metni: not || null,
-        cakisanlari_atla: atla,
-        // (P241 §2) MOLA / ROL / LOKASYON — ayni uctan gider.
-        molalar: molaDakika
-          ? [{ tur: "yasal", dakika: Number(molaDakika) }]
-          : null,
-        vardiya_rolu: vardiyaRolu || null,
-        alan: lokasyon || null,
-        gunler:
-          seciliGunler.size > 0 ? Array.from(seciliGunler).sort() : null,
-      })) as {
-        uygulandi: boolean;
-        eklenen: number;
-        gunler?: { tarih: string; durum: string }[];
-      };
-      if (!y.uygulandi) {
-        // KARAR KULLANICININ: HANGI GUNLERDE cakisma oldugunu GORUR.
-        // "Bir yerde cakisma var" demek, kullaniciyi tek tek aramaya
-        // gondermek olurdu. Sunucu TUM gunleri durumuyla doner; yalniz
-        // `cakisma` olanlar yazilir.
-        setCakisanGunler(
-          (y.gunler ?? [])
-            .filter((g) => g.durum === "cakisma")
-            .map((g) => g.tarih),
-        );
-        return;
-      }
-      toast.success(t("vardiyaEklendiSayi", { n: y.eklenen }));
-      onBitti();
-      onKapat();
-    } catch (e) {
-      setHata(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBekliyor(false);
-    }
-  }
+  // (P243 §1) TEKIL YOL SILINDI — VE ZATEN KIRIKTI.
+  //
+  // =====================================================================
+  // OLCULEN KUSUR
+  // =====================================================================
+  // Modal, "serbest saat + tek kisi" durumunda `/vardiya-plani/toplu`
+  // ucuna `baslangic`/`bitis` gonderiyordu; SEMA `baslangic_tarih` /
+  // `bitis_tarih` istiyor. Yani web'in EN SIK yapilan islemi P235'ten
+  // beri 422 aliyordu. Sunucuya birebir o govde gonderilerek olculdu:
+  // `422 baslangic_tarih: Field required`.
+  //
+  // Duzeltme alan adlarini yamalamak DEGIL, IKINCI YOLU KALDIRMAK
+  // oldu: `/kalip-uygula` serbest saati ZATEN tek dilimli bir grup
+  // olarak isliyor ve cakisma akisi, onizleme, parti kimligi ve
+  // rotasyon hep orada. Iki yol demek bu kurallarin iki kopyasi
+  // demekti — ve biri sessizce eskimisti.
 
   async function gonder(kuru: boolean, atla: boolean) {
     // Ekranda kurulmakta olan grup da dahil: kullanicinin "gruba ekle"ye
@@ -338,6 +321,21 @@ export function VardiyaEkleModali({
         cakisanlari_atla: atla,
       })) as Sonuc;
       setSonuc(y);
+      // (P243 §1) CAKISAN GUNLER TEK YOLDAN: tekil yol silindigi icin
+      // bu liste artik kalip sonucundan turetiliyor. Turetilmeseydi
+      // "hangi gunler cakisti" bilgisi kaybolur ve kullanici yine tek
+      // tek aramak zorunda kalirdi (P205'in acik sarti).
+      if (!kuru && !y.uygulandi) {
+        setCakisanGunler([
+          ...new Set(
+            (y.satirlar ?? [])
+              .filter((r) => r.durum === "cakisma")
+              .map((r) => r.tarih),
+          ),
+        ]);
+      } else if (!kuru) {
+        setCakisanGunler(null);
+      }
       if (!kuru && y.uygulandi) {
         toast.success(t("vardiyaKalipUygulandi", { n: y.eklenen }));
         onParti?.(y.parti_id);
@@ -351,11 +349,13 @@ export function VardiyaEkleModali({
     }
   }
 
-  // MOBILDEKI KOSUL: grup varsa ya da ekranda kurulmus bir secim varsa
-  // gonderilebilir. TEKIL KIPTE takvim bos olabilir (aralik kipi) —
-  // orada yeterli sart KISININ secilmis olmasi.
-  const gonderilebilir =
-    gruplar.length > 0 || buGrup() !== null || (!kalip && Boolean(userId));
+  // (P243 §1c) TAKVIM TEK GERCEK KAYNAK: gun secilmeden gonderilemez.
+  //
+  // Onceki kosul "tekil kipte takvim bos olabilir" diyordu; o kip
+  // (aralik alanlari) kaldirildi, cunku ZATEN sunucuda 422 aliyordu ve
+  // ayni zamanda onizlemeyi de olduruyordu (§1g): grup SECILI
+  // GUNLERDEN kuruluyor, gun yoksa grup da yok.
+  const gonderilebilir = gruplar.length > 0 || buGrup() !== null;
 
   // (P241 §2) IKI SEKME: MESAI ve IZIN — referansin "Mesai ekle"
   // penceresinin bizdeki karsiligi. Izni AYRI BIR EKRANA koymak,
@@ -397,14 +397,9 @@ export function VardiyaEkleModali({
             type="button"
             disabled={!gonderilebilir || bekliyor}
             data-test="vardiya-ekle-gonder"
-            // MOBILDEKI KOSULUN AYNISI: grup yoksa `/toplu` (tekil kip),
-            // varsa `/kalip-uygula` (cok gruplu). Iki uc de yasiyor;
-            // birini kapatmak yayindaki mobil surumleri kirardi.
-            onClick={() =>
-              void (gruplar.length === 0 && !kalip
-                ? tekilGonder(false)
-                : gonder(false, false))
-            }
+            // (P243 §1) TEK YOL: serbest saat de kalip da AYNI uctan
+            // gider. Kosullu ikinci yol kaldirildi (yukaridaki gerekce).
+            onClick={() => void gonder(false, false)}
           >
             {t("vardiyaEkleGonder")}
           </Dugme>
@@ -617,27 +612,21 @@ export function VardiyaEkleModali({
           </Dugme>
         </div>
 
-        <AlanSarmal etiket={t("vardiyaRolEtiketi")}>
-          {(baglar) => (
-            <Alan
-              {...baglar}
-              data-test="vardiya-ekle-rol"
-              value={vardiyaRolu}
-              onChange={(e) => setVardiyaRolu(e.target.value)}
-            />
-          )}
-        </AlanSarmal>
-        <AlanSarmal etiket={t("vardiyaLokasyon")} ipucu={t("vardiyaLokasyonIpucu")}>
-          {(baglar) => (
-            <Alan
-              {...baglar}
-              data-test="vardiya-ekle-lokasyon"
-              value={lokasyon}
-              onChange={(e) => setLokasyon(e.target.value)}
-            />
-          )}
-        </AlanSarmal>
+        {/* (P243 §1a/§1b) "BU VARDIYADAKI ROL" ve "LOKASYON" KALDIRILDI.
 
+            ROL: kisi sisteme eklenirken rolu ZATEN belirleniyor
+            (guvenlik / tesis gorevlisi / yonetim). Vardiya basina
+            tekrar sormak ayni bilgiyi ikinci kez istemekti — ve iki
+            kaynak birbirinden sapabilirdi.
+
+            LOKASYON: referanstaki "sube" kavraminin karsiligiydi;
+            bizde sube YOK. Doldurulmayan bir alan, formu uzatmaktan
+            baska bir sey yapmiyordu.
+
+            SUTUNLAR SILINMEDI (goc 0145): P241'de yazilmis kayitlar
+            duruyor ve izgara onlari hâlâ gosteriyor. Sutunu dusurmek
+            var olan veriyi silmek olurdu; yapilan sey YENI KAYITTA
+            SORMAMAK. */}
         {/* 2) KALIP — serbest saat ya da kayitli kalip.
             `kalip-modali.tsx`ten TASINDI: gun icinde birden cok dilim
             (gunduz+gece) yalniz orada yapilabiliyordu. */}
@@ -694,6 +683,41 @@ export function VardiyaEkleModali({
           </div>
         ) : (
           <div className="flex flex-wrap gap-2">
+            {/* (P243 §1d) ROL SUZGECI — KAYDEDILEN BIR ALAN DEGIL.
+                Personel listesi uzun bir sitede once rolu secmek dogal
+                yol; secilmezse TUM personel gorunur. */}
+            <AlanSarmal
+              etiket={t("vardiyaRolSuzgeci")}
+              ipucu={t("vardiyaRolSuzgeciIpucu")}
+            >
+              {(baglar) => (
+                <Secim
+                  {...baglar}
+                  value={rolSuzgeci}
+                  data-test="vardiya-ekle-rol-suzgeci"
+                  onChange={(e) => {
+                    setRolSuzgeci(e.target.value);
+                    // SECILI KISI SUZGECIN DISINDA KALDIYSA DUSURULUR:
+                    // gorunmeyen bir kisiyle vardiya olusturmak,
+                    // kullanicinin gormedigi bir sonuc uretirdi.
+                    if (
+                      e.target.value &&
+                      personel.find((p) => p.id === userId)?.role !==
+                        e.target.value
+                    ) {
+                      setUserId("");
+                    }
+                  }}
+                >
+                  <option value="">{t("ortakTumu")}</option>
+                  {roller.map((r) => (
+                    <option key={r} value={r}>
+                      {rolAdi(t, r)}
+                    </option>
+                  ))}
+                </Secim>
+              )}
+            </AlanSarmal>
             <AlanSarmal etiket={t("vardiyaPersonel")}>
               {(baglar) => (
                 <Secim
@@ -703,7 +727,7 @@ export function VardiyaEkleModali({
                   onChange={(e) => setUserId(e.target.value)}
                 >
                   <option value="">{t("ortakSeciniz")}</option>
-                  {personel.map((p) => (
+                  {suzulmusPersonel.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.ad}
                     </option>
@@ -711,28 +735,17 @@ export function VardiyaEkleModali({
                 </Secim>
               )}
             </AlanSarmal>
-            <AlanSarmal etiket={t("vardiyaBaslangicTarihi")}>
-              {(baglar) => (
-                <Alan
-                  {...baglar}
-                  type="date"
-                  value={basTarih}
-                  data-test="vardiya-ekle-bas-tarih"
-                  onChange={(e) => setBasTarih(e.target.value)}
-                />
-              )}
-            </AlanSarmal>
-            <AlanSarmal etiket={t("vardiyaBitisTarihi")}>
-              {(baglar) => (
-                <Alan
-                  {...baglar}
-                  type="date"
-                  value={sonTarih}
-                  data-test="vardiya-ekle-son-tarih"
-                  onChange={(e) => setSonTarih(e.target.value)}
-                />
-              )}
-            </AlanSarmal>
+            {/* (P243 §1c) BASLANGIC/BITIS TARIHI ALANLARI KALDIRILDI.
+
+                Ustte ZATEN takvim var ve gunler oradan seciliyor. Iki
+                yol birden acik oldugunda hangisinin gecerli oldugu
+                belirsizdi — ve bu belirsizlik ONIZLEMEYI OLDURUYORDU
+                (§1g): tarih alanlarini doldurup takvimden gun secmeyen
+                kullanicinin "Onizle" dugmesi SESSIZCE hicbir sey
+                yapmiyordu, cunku onizleme grup uzerinden gidiyor ve
+                grup SECILI GUNLERDEN kuruluyor.
+
+                Saatler KALDI: onlar takvimden turetilemez. */}
             <AlanSarmal etiket={t("vardiyaBaslangicSaati")}>
               {(baglar) => (
                 <Alan
@@ -791,7 +804,14 @@ export function VardiyaEkleModali({
           )}
         </div>
 
-        <AlanSarmal etiket={t("vardiyaRotasyon")}>
+        <AlanSarmal
+          etiket={t("vardiyaRotasyon")}
+          ipucu={
+            rotasyon === ROTASYON_AYLIK
+              ? t("vardiyaRotasyonAylikIpucu")
+              : undefined
+          }
+        >
           {(baglar) => (
             <Secim
               {...baglar}
@@ -802,6 +822,13 @@ export function VardiyaEkleModali({
               <option value={ROTASYON_YOK}>{t("vardiyaRotasyonYok")}</option>
               <option value={ROTASYON_HAFTALIK}>
                 {t("vardiyaRotasyonHaftalik")}
+              </option>
+              {/* (P243 §1e) AYLIK = TAKVIM AYI, "dort haftalik dongu"
+                  DEGIL: dongu ayin ortasinda kayar ve yoneticinin
+                  takviminde karsiligi yoktur; takvim ayi ise
+                  SOYLENEBILIR bir sey ("mart gunduz, nisan gece"). */}
+              <option value={ROTASYON_AYLIK}>
+                {t("vardiyaRotasyonAylik")}
               </option>
             </Secim>
           )}
@@ -843,7 +870,7 @@ export function VardiyaEkleModali({
                 boy="kucuk"
                 disabled={bekliyor}
                 data-test="vardiya-cakisan-haric"
-                onClick={() => void tekilGonder(true)}
+                onClick={() => void gonder(false, true)}
               >
                 {t("vardiyaCakisanHaric")}
               </Dugme>

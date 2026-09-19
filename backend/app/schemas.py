@@ -2323,6 +2323,18 @@ class VardiyaCizelgeKisiOut(BaseModel):
     bloklar: list[VardiyaBlokOut] = []
     #: (P241 §2) ONAYLI izinler — izgarada farkli renkte cizilir.
     izinler: list[VardiyaIzinBlokOut] = []
+    #: (P243 §2) KISI VARDIYA DUZENINE DAHIL MI.
+    #:
+    #: "Atanmamis" bolumunun olcutu budur. Iki kosuldan biri yeter:
+    #:   * VARSAYILAN KADRO uyesi (`shift_assignment`), ya da
+    #:   * HERHANGI bir tarihte vardiya satiri var.
+    #:
+    #: Ikisi de yoksa kisi "atanmamis" DEGILDIR — vardiya planlamasinin
+    #: DISINDADIR. Ayrimi yapmadan once izgara TUM personeli (yonetici
+    #: dahil) "Atanmamis" basligi altinda listeliyordu; bu, bolumu bir
+    #: PERSONEL REHBERINE ceviriyor ve asil soruyu ("bu hafta kimi
+    #: atamayi unuttum") gorunmez kiliyordu.
+    vardiya_duzeninde: bool = False
     #: (P241 §2) Donem icindeki CALISMA saati (mola dusulmus) ve hedef.
     #: SUNUCUDA hesaplanir: istemcide hesaplamak, mola kuralini web ve
     #: mobilde ayri ayri yazmak olurdu.
@@ -2496,9 +2508,22 @@ class VardiyaKalipUygulaIstek(BaseModel):
     #: dilim sirasi -> o dilime atanacak personel kimlikleri.
     #: Bos birakilan dilim ATLANIR (o gun o vardiya BOS kalir).
     atamalar: dict[int, list[uuid.UUID]] = Field(default_factory=dict)
-    #: `yok` | `haftalik`. Rotasyon, dilim atamalarini HAFTA BASINA
-    #: bir kaydirir (A ekibi gunduz -> gece, B ekibi gece -> gunduz).
-    rotasyon: Literal["yok", "haftalik"] = "yok"
+    #: `yok` | `haftalik` | `aylik`. Rotasyon, dilim atamalarini bir
+    #: DONEM basina bir kaydirir (A ekibi gunduz -> gece, B ekibi
+    #: gece -> gunduz).
+    #:
+    #: (P243 §1e) AYLIK = TAKVIM AYI, "dort haftalik dongu" DEGIL.
+    #: Gerekce: dort haftalik dongu ayin ortasinda kayar ("15 Mart'tan
+    #: sonra A ekibi geceye gecti") ve yoneticinin takviminde bir
+    #: karsiligi yoktur; takvim ayi ise SOYLENEBILIR bir seydir —
+    #: "Mart gunduz, Nisan gece". Personel de vardiyasini ay adiyla
+    #: hatirlar.
+    rotasyon: Literal["yok", "haftalik", "aylik"] = "yok"
+    #: (P243 §1) MOLALAR — `/toplu` ile ayni alan.
+    #:
+    #: Buraya EKLENDI cunku web modali artik TEK YOLDAN (bu uctan)
+    #: gonderiyor; olmasaydi mola girisi sessizce kaybolurdu.
+    molalar: list["VardiyaMola"] | None = None
     not_metni: str | None = Field(None, max_length=500)
     #: TRUE ise HICBIR SEY YAZILMAZ — yalnizca onizleme doner.
     kuru: bool = False

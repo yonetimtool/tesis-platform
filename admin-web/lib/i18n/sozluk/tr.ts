@@ -3180,4 +3180,12 @@ export const tr = {
   vardiyaMesai: "Mesai",
   bildirimTipVardiyaYayinlandi: "Vardiya planı yayınlandı",
   bildirimGit: "Git",
+  // (P243 §1) VARDIYA MODALI
+  vardiyaRotasyonAylik: "Aylık (takvim ayı)",
+  vardiyaRotasyonAylikIpucu: "Her takvim ayında ekipler bir vardiya kayar: mart gündüz, nisan gece.",
+  vardiyaRolSuzgeci: "Rol (süzgeç)",
+  vardiyaRolSuzgeciIpucu: "Personel listesini daraltır; vardiyaya kaydedilmez.",
+  vardiyaGrupKalipli: "{ad} — {n} gün",
+  vardiyaSerbestSaatKisa: "Serbest saat",
+  vardiyaGunSecilmedi: "Takvimden en az bir gün seçin.",
 } as const;
