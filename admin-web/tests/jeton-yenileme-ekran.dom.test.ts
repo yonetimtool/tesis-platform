@@ -39,10 +39,12 @@ vi.mock("next/navigation", () => ({
 
 afterEach(() => vi.unstubAllGlobals());
 
+// (P243 §6f) Adim sayaci kaldirildigi icin cizimin kaniti bir ADIM
+// SATIRI oldu: bos `adimlar` ile ekranda olculecek hicbir sey kalmazdi.
 const DURUM = {
   gecilen: 2,
   toplam: 5,
-  adimlar: [] as unknown[],
+  adimlar: [{ kod: "blok", sayi: 7, tamam: true, atlandi: false }],
 };
 
 const HATA_METNI = /Kurulum durumu alınamadı/i;
@@ -62,7 +64,9 @@ describe("kurulum sihirbazi — jeton yenilendikten sonra", () => {
 
     ciz(KurulumPage);
 
-    await waitFor(() => expect(screen.queryByText(/2 \/ 5|2\/5/)).not.toBeNull());
+    // (P243 §6f) "2/5" adim sayaci kaldirildi; cizimin kaniti artik
+    // tamamlanan adimin KAYIT SAYISI.
+    await waitFor(() => expect(screen.queryByText(/kayıt$/)).not.toBeNull());
     expect(screen.queryByText(HATA_METNI)).toBeNull();
   });
 
@@ -96,6 +100,6 @@ describe("kurulum sihirbazi — jeton yenilendikten sonra", () => {
       () => expect(screen.queryByText(HATA_METNI)).toBeNull(),
       { timeout: 12000 },
     );
-    expect(screen.queryByText(/2 \/ 5|2\/5/)).not.toBeNull();
+    expect(screen.queryByText(/kayıt$/)).not.toBeNull();
   }, 20000);
 });

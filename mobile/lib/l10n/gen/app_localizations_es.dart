@@ -7260,4 +7260,55 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get vardiyaTanimYokAlt =>
       'No hay turnos definidos. Al definir turnos como día y noche podrá asignar personal al cuadrante.';
+
+  @override
+  String get turBaslik => 'Bienvenido a Yönetio';
+
+  @override
+  String get turAtla => 'Omitir el recorrido';
+
+  @override
+  String get turGeri => 'Atrás';
+
+  @override
+  String get turIleri => 'Siguiente';
+
+  @override
+  String get turBitir => 'Empecemos';
+
+  @override
+  String get turTekrarAc => 'Volver a ver el recorrido';
+
+  @override
+  String get tur1Baslik => 'Primero bloques y viviendas';
+
+  @override
+  String get tur1Metin =>
+      'Con estos dos datos su comunidad funciona: podrá publicar avisos, asignar tareas y añadir cámaras. Lo demás, contabilidad incluida, puede esperar.';
+
+  @override
+  String get tur2Baslik => 'Las personas entran por invitación';
+
+  @override
+  String get tur2Metin =>
+      'Al añadir residentes y personal se envía un correo de invitación. Usted no reparte contraseñas; cada persona crea la suya.';
+
+  @override
+  String get tur3Baslik => 'Cuotas y cobros, cuando esté listo';
+
+  @override
+  String get tur3Metin =>
+      'Tras crear una caja y las partidas de ingresos/gastos podrá generar cuotas y registrar cobros. Nada de esto hace falta para empezar; puede hacerlo después.';
+
+  @override
+  String get tur4Baslik => 'El asistente de configuración le acompaña';
+
+  @override
+  String get tur4Metin =>
+      'Puede volver al asistente de configuración desde el menú, ver qué activa cada paso y repetir este recorrido allí.';
+
+  @override
+  String turSayac(int sira, int toplam) {
+    return '$sira/$toplam';
+  }
 }

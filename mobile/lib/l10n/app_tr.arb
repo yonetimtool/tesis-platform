@@ -3623,5 +3623,30 @@
   "ihlalListeBosAlt": "Kayıtlı ihlal yok. Kural ihlali bildirildiğinde burada tarih ve daireyle birlikte görünür.",
   "anketYokAlt": "Açık anket yok. Yönetim anket başlattığında burada oy verebilirsiniz.",
   "anprListeBosAlt": "Kayıtlı plaka okuma yok. Plaka tanıma kamerası bağlandığında geçişler burada listelenir.",
-  "vardiyaTanimYokAlt": "Vardiya tanımı yok. Gündüz, gece gibi vardiyaları tanımlayınca personeli çizelgeye yerleştirebilirsiniz."
+  "vardiyaTanimYokAlt": "Vardiya tanımı yok. Gündüz, gece gibi vardiyaları tanımlayınca personeli çizelgeye yerleştirebilirsiniz.",
+  "turBaslik": "Yönetio'ya hoş geldiniz",
+  "turAtla": "Turu atla",
+  "turGeri": "Geri",
+  "turIleri": "İleri",
+  "turBitir": "Başlayalım",
+  "turTekrarAc": "Tanıtım turunu tekrar göster",
+  "tur1Baslik": "Önce bloklar ve daireler",
+  "tur1Metin": "Bu ikisini girdiğinizde tesis çalışır hâle gelir: duyuru yapabilir, görev atayabilir, kamera ekleyebilirsiniz. Muhasebe dahil diğer her şey bekleyebilir.",
+  "tur2Baslik": "Kişiler davetle girer",
+  "tur2Metin": "Sakinleri ve personeli eklediğinizde uygulamaya davet e-postası gider. Kimseye şifre iletmeniz gerekmez; herkes kendi şifresini kurar.",
+  "tur3Baslik": "Aidat ve tahsilat, hazır olunca",
+  "tur3Metin": "Kasa ve gelir-gider tanımlarını yaptıktan sonra aidat tahakkuku oluşturup tahsilat işleyebilirsiniz. Bunlar başlangıç için gerekli değil; sonra da yapabilirsiniz.",
+  "tur4Baslik": "Kurulum sihirbazı yanınızda",
+  "tur4Metin": "Menüden kurulum sihirbazına her zaman dönebilir, hangi adımın neyi açtığını orada görebilir ve bu turu oradan yeniden başlatabilirsiniz.",
+  "turSayac": "{sira}/{toplam}",
+  "@turSayac": {
+    "placeholders": {
+      "sira": {
+        "type": "int"
+      },
+      "toplam": {
+        "type": "int"
+      }
+    }
+  }
 }

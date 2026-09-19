@@ -12580,6 +12580,96 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Vardiya tanımı yok. Gündüz, gece gibi vardiyaları tanımlayınca personeli çizelgeye yerleştirebilirsiniz.'**
   String get vardiyaTanimYokAlt;
+
+  /// No description provided for @turBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetio\'ya hoş geldiniz'**
+  String get turBaslik;
+
+  /// No description provided for @turAtla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Turu atla'**
+  String get turAtla;
+
+  /// No description provided for @turGeri.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geri'**
+  String get turGeri;
+
+  /// No description provided for @turIleri.
+  ///
+  /// In tr, this message translates to:
+  /// **'İleri'**
+  String get turIleri;
+
+  /// No description provided for @turBitir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlayalım'**
+  String get turBitir;
+
+  /// No description provided for @turTekrarAc.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tanıtım turunu tekrar göster'**
+  String get turTekrarAc;
+
+  /// No description provided for @tur1Baslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Önce bloklar ve daireler'**
+  String get tur1Baslik;
+
+  /// No description provided for @tur1Metin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu ikisini girdiğinizde tesis çalışır hâle gelir: duyuru yapabilir, görev atayabilir, kamera ekleyebilirsiniz. Muhasebe dahil diğer her şey bekleyebilir.'**
+  String get tur1Metin;
+
+  /// No description provided for @tur2Baslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kişiler davetle girer'**
+  String get tur2Baslik;
+
+  /// No description provided for @tur2Metin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakinleri ve personeli eklediğinizde uygulamaya davet e-postası gider. Kimseye şifre iletmeniz gerekmez; herkes kendi şifresini kurar.'**
+  String get tur2Metin;
+
+  /// No description provided for @tur3Baslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aidat ve tahsilat, hazır olunca'**
+  String get tur3Baslik;
+
+  /// No description provided for @tur3Metin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kasa ve gelir-gider tanımlarını yaptıktan sonra aidat tahakkuku oluşturup tahsilat işleyebilirsiniz. Bunlar başlangıç için gerekli değil; sonra da yapabilirsiniz.'**
+  String get tur3Metin;
+
+  /// No description provided for @tur4Baslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kurulum sihirbazı yanınızda'**
+  String get tur4Baslik;
+
+  /// No description provided for @tur4Metin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Menüden kurulum sihirbazına her zaman dönebilir, hangi adımın neyi açtığını orada görebilir ve bu turu oradan yeniden başlatabilirsiniz.'**
+  String get tur4Metin;
+
+  /// No description provided for @turSayac.
+  ///
+  /// In tr, this message translates to:
+  /// **'{sira}/{toplam}'**
+  String turSayac(int sira, int toplam);
 }
 
 class _AppLocalizationsDelegate

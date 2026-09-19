@@ -2494,5 +2494,30 @@
   "ihlalListeBosAlt": "No violations recorded. A reported breach appears here with its date and unit.",
   "anketYokAlt": "No open polls. You can vote here when management starts one.",
   "anprListeBosAlt": "No plate reads recorded. Passages are listed here once a plate-recognition camera is connected.",
-  "vardiyaTanimYokAlt": "No shifts defined. Once you define shifts such as day and night you can place staff on the roster."
+  "vardiyaTanimYokAlt": "No shifts defined. Once you define shifts such as day and night you can place staff on the roster.",
+  "turBaslik": "Welcome to Yönetio",
+  "turAtla": "Skip tour",
+  "turGeri": "Back",
+  "turIleri": "Next",
+  "turBitir": "Let's start",
+  "turTekrarAc": "Show the intro tour again",
+  "tur1Baslik": "Blocks and units first",
+  "tur1Metin": "Once these two are entered your site works: you can post announcements, assign tasks and add cameras. Everything else, accounting included, can wait.",
+  "tur2Baslik": "People join by invitation",
+  "tur2Metin": "When you add residents and staff, an invitation e-mail goes out. You never hand out passwords; each person sets their own.",
+  "tur3Baslik": "Dues and collection, when you're ready",
+  "tur3Metin": "After setting up a cash account and income/expense definitions you can create dues and record payments. None of this is needed to start — you can do it later.",
+  "tur4Baslik": "The setup wizard is right there",
+  "tur4Metin": "You can return to the setup wizard from the menu at any time, see what each step unlocks, and replay this tour from there.",
+  "turSayac": "{sira}/{toplam}",
+  "@turSayac": {
+    "placeholders": {
+      "sira": {
+        "type": "int"
+      },
+      "toplam": {
+        "type": "int"
+      }
+    }
+  }
 }

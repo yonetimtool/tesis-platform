@@ -7281,4 +7281,55 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get vardiyaTanimYokAlt =>
       'No shifts defined. Once you define shifts such as day and night you can place staff on the roster.';
+
+  @override
+  String get turBaslik => 'Welcome to Yönetio';
+
+  @override
+  String get turAtla => 'Skip tour';
+
+  @override
+  String get turGeri => 'Back';
+
+  @override
+  String get turIleri => 'Next';
+
+  @override
+  String get turBitir => 'Let\'s start';
+
+  @override
+  String get turTekrarAc => 'Show the intro tour again';
+
+  @override
+  String get tur1Baslik => 'Blocks and units first';
+
+  @override
+  String get tur1Metin =>
+      'Once these two are entered your site works: you can post announcements, assign tasks and add cameras. Everything else, accounting included, can wait.';
+
+  @override
+  String get tur2Baslik => 'People join by invitation';
+
+  @override
+  String get tur2Metin =>
+      'When you add residents and staff, an invitation e-mail goes out. You never hand out passwords; each person sets their own.';
+
+  @override
+  String get tur3Baslik => 'Dues and collection, when you\'re ready';
+
+  @override
+  String get tur3Metin =>
+      'After setting up a cash account and income/expense definitions you can create dues and record payments. None of this is needed to start — you can do it later.';
+
+  @override
+  String get tur4Baslik => 'The setup wizard is right there';
+
+  @override
+  String get tur4Metin =>
+      'You can return to the setup wizard from the menu at any time, see what each step unlocks, and replay this tour from there.';
+
+  @override
+  String turSayac(int sira, int toplam) {
+    return '$sira/$toplam';
+  }
 }

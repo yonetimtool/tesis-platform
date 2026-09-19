@@ -7275,4 +7275,55 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get vardiyaTanimYokAlt =>
       'Aucun poste défini. Après avoir défini des postes (jour, nuit…), vous pourrez planifier le personnel.';
+
+  @override
+  String get turBaslik => 'Bienvenue sur Yönetio';
+
+  @override
+  String get turAtla => 'Passer la visite';
+
+  @override
+  String get turGeri => 'Retour';
+
+  @override
+  String get turIleri => 'Suivant';
+
+  @override
+  String get turBitir => 'C\'est parti';
+
+  @override
+  String get turTekrarAc => 'Revoir la visite guidée';
+
+  @override
+  String get tur1Baslik => 'D\'abord les blocs et les logements';
+
+  @override
+  String get tur1Metin =>
+      'Une fois ces deux éléments saisis, votre site fonctionne : annonces, tâches et caméras sont possibles. Le reste, comptabilité comprise, peut attendre.';
+
+  @override
+  String get tur2Baslik => 'Les personnes entrent sur invitation';
+
+  @override
+  String get tur2Metin =>
+      'Lorsque vous ajoutez résidents et employés, un e-mail d\'invitation part. Vous ne distribuez aucun mot de passe : chacun crée le sien.';
+
+  @override
+  String get tur3Baslik => 'Charges et encaissement, quand vous serez prêt';
+
+  @override
+  String get tur3Metin =>
+      'Après avoir créé une caisse et les natures de recettes/dépenses, vous pourrez générer les charges et saisir les encaissements. Rien de tout cela n\'est requis pour démarrer.';
+
+  @override
+  String get tur4Baslik => 'L\'assistant de configuration est là';
+
+  @override
+  String get tur4Metin =>
+      'Vous pouvez revenir à l\'assistant de configuration depuis le menu, voir ce que chaque étape débloque et relancer cette visite.';
+
+  @override
+  String turSayac(int sira, int toplam) {
+    return '$sira/$toplam';
+  }
 }

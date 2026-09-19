@@ -98,6 +98,15 @@ def test_TUR_BIR_KEZ_ve_KULLANICI_BASINA(client, world):
     assert client.get("/me", headers=yonetici).json()["tur_goruldu_at"] is None
 
 
+def test_TUR_ISARETI_PROFILDE_DE_DONER(client, world):
+    """Kabuk zaten `/me/profile`i cekiyor; turu cizmek icin IKINCI bir
+    istek atmak her sayfa yuklemesinde bedava bir gidis-donus olurdu."""
+    admin = _h(client, world["slug_a"], world["admin_a"])
+    assert client.get("/me/profile", headers=admin).json()["tur_goruldu_at"] is None
+    client.post("/me/tur-goruldu", headers=admin)
+    assert client.get("/me/profile", headers=admin).json()["tur_goruldu_at"]
+
+
 def test_TUR_OTURUMLAR_ARASI_KALIR(client, world):
     """`localStorage` olsaydi ofiste atlayan yonetici evde yeniden
     gorurdu."""

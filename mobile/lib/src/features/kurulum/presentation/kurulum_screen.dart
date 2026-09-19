@@ -6,6 +6,7 @@ import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../routing/app_router.dart';
 import '../data/kurulum_api.dart';
+import 'ilk_giris_turu.dart';
 import '../domain/kurulum_models.dart';
 
 /// (P166 §8.2) KURULUM SIHIRBAZI — MOBIL.
@@ -137,7 +138,19 @@ class _KurulumScreenState extends ConsumerState<KurulumScreen> {
     final durum = ref.watch(kurulumDurumProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.kurulumBaslik)),
+      appBar: AppBar(
+        title: Text(l10n.kurulumBaslik),
+        actions: [
+          // (P243 §6d) TANITIM TURUNU TEKRAR AC — "bir kez gosterilir"
+          // ile "bir daha asla ulasilamaz" ayni sey degil. Yeri sihirbaz,
+          // cunku "bana bastan anlat" isteyen kullanici buraya bakar.
+          IconButton(
+            onPressed: () => turuGoster(context, ref),
+            icon: const Icon(Icons.help_outline),
+            tooltip: l10n.turTekrarAc,
+          ),
+        ],
+      ),
       body: durum.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _Hata(

@@ -7281,4 +7281,55 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get vardiyaTanimYokAlt =>
       'Keine Schichten definiert. Nach dem Anlegen von Schichten wie Tag und Nacht können Sie Personal einplanen.';
+
+  @override
+  String get turBaslik => 'Willkommen bei Yönetio';
+
+  @override
+  String get turAtla => 'Tour überspringen';
+
+  @override
+  String get turGeri => 'Zurück';
+
+  @override
+  String get turIleri => 'Weiter';
+
+  @override
+  String get turBitir => 'Los geht\'s';
+
+  @override
+  String get turTekrarAc => 'Einführungstour erneut anzeigen';
+
+  @override
+  String get tur1Baslik => 'Zuerst Blöcke und Wohnungen';
+
+  @override
+  String get tur1Metin =>
+      'Sobald diese beiden erfasst sind, funktioniert Ihre Anlage: Ankündigungen, Aufgaben und Kameras sind möglich. Alles andere, auch die Buchhaltung, kann warten.';
+
+  @override
+  String get tur2Baslik => 'Personen kommen per Einladung';
+
+  @override
+  String get tur2Metin =>
+      'Wenn Sie Bewohner und Personal anlegen, wird eine Einladungs-E-Mail verschickt. Sie geben keine Passwörter aus; jede Person legt ihr eigenes fest.';
+
+  @override
+  String get tur3Baslik => 'Beiträge und Inkasso, wenn Sie so weit sind';
+
+  @override
+  String get tur3Metin =>
+      'Nach dem Anlegen von Kasse und Einnahmen-/Ausgabenarten können Sie Beiträge erstellen und Zahlungen erfassen. Für den Start ist das nicht nötig — es geht auch später.';
+
+  @override
+  String get tur4Baslik => 'Der Einrichtungsassistent ist zur Stelle';
+
+  @override
+  String get tur4Metin =>
+      'Über das Menü gelangen Sie jederzeit zum Einrichtungsassistenten, sehen dort, was jeder Schritt freischaltet, und können diese Tour erneut starten.';
+
+  @override
+  String turSayac(int sira, int toplam) {
+    return '$sira/$toplam';
+  }
 }

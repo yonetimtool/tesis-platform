@@ -9,6 +9,7 @@ import '../../profile/data/profile_api.dart';
 import '../../tenant/data/tenant_api.dart';
 import '../../tenant/presentation/setup_tenant_screen.dart';
 import '../../../routing/splash_screen.dart';
+import '../../kurulum/presentation/ilk_giris_turu.dart';
 import '../../kurulum/presentation/kurulum_hatirlatici.dart';
 import 'denetci_yonlendirme_screen.dart';
 import 'resident_home_screen.dart';
@@ -52,8 +53,14 @@ class HomeGate extends ConsumerWidget {
     }
     // Platform admini yonetim duzenini gorur (brief: admin→yönetici varyanti).
     if (role == UserRole.admin) {
-      return const KurulumHatirlatici(
-        child: YoneticiHomeScreen(role: UserRole.admin),
+      // (P243 §6d) TUR, HATIRLATICININ DISINDA: once "bu urun nasil
+      // calisir" anlatilir, sonra "kurulumu tamamlayin" hatirlatilir.
+      // Ters sirada olsaydi yeni yonetici once bir gorev listesi gorur,
+      // ne ise yaradigini sonra ogrenirdi.
+      return const IlkGirisTuru(
+        child: KurulumHatirlatici(
+          child: YoneticiHomeScreen(role: UserRole.admin),
+        ),
       );
     }
     // (P139.2) DENETCI ACIK UCTA KALIYORDU. Bu dal `denetci`yi de yutuyor
@@ -78,7 +85,9 @@ class HomeGate extends ConsumerWidget {
     // profil gelince kapi acilir.
     final birincil = ref.watch(profileProvider).value?.birincil ?? false;
     if (!birincil) {
-      return const KurulumHatirlatici(child: YoneticiHomeScreen());
+      return const IlkGirisTuru(
+        child: KurulumHatirlatici(child: YoneticiHomeScreen()),
+      );
     }
 
     // Birincil yonetici: kurulum durumunu getir. Kapi ZAMAN SINIRLIDIR
@@ -114,10 +123,18 @@ class HomeGate extends ConsumerWidget {
           // `SetupTenantScreen` zaten bir kurulum adimidir; onun ustune
           // ikinci bir kurulum diyalogu bindirmek, kullaniciyi ayni anda
           // iki ise cagirmakti.
+          // (P243 §6d) TUR, `SetupTenantScreen` dalinda ACILMAZ: tesis
+          // adlandirma zaten bir kurulum adimidir ve ustune tanitim
+          // penceresi bindirmek, kullaniciyi ayni anda iki ise
+          // cagirmakti (hatirlaticinin ayni gerekcesi).
           data: (kurulumGerekli) => kurulumGerekli
               ? const SetupTenantScreen()
-              : const KurulumHatirlatici(child: YoneticiHomeScreen()),
-          error: (_, _) => const KurulumHatirlatici(child: YoneticiHomeScreen()),
+              : const IlkGirisTuru(
+                  child: KurulumHatirlatici(child: YoneticiHomeScreen()),
+                ),
+          error: (_, _) => const IlkGirisTuru(
+            child: KurulumHatirlatici(child: YoneticiHomeScreen()),
+          ),
           loading: () => const SplashScreen(),
         );
   }

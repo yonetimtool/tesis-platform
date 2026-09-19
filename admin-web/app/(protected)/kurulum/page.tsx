@@ -8,6 +8,7 @@ import {
   Dugme,
   HataDurumu,
 } from "@/components/ui";
+import { ilkGirisTurunuAc } from "@/components/IlkGirisTuru";
 import { kurulumHatirlaticiyiAc } from "@/components/KurulumHatirlatici";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -258,7 +259,7 @@ export default function KurulumPage() {
               hatirlatma bir daha CIKMIYORDU. Yeri de burasi: kullanici
               hatirlatmayi ariyorsa sihirbaza bakar, platform ayarlarina
               degil. */}
-          <div className="mt-3">
+          <div className="mt-3 flex flex-wrap gap-2">
             <Dugme
               type="button"
               boy="kucuk"
@@ -268,6 +269,13 @@ export default function KurulumPage() {
               }}
             >
               {t("kurulumTekrarGoster")}
+            </Dugme>
+            {/* (P243 §6d) TANITIM TURU BURADAN DA ACILIR: "bir kez
+                gosterilir" ile "bir daha asla ulasilamaz" ayni sey
+                degil. Yeri hatirlatici dugmesinin yani, cunku ikisi de
+                "bana bastan anlat" istegine cevap veriyor. */}
+            <Dugme type="button" boy="kucuk" onClick={ilkGirisTurunuAc}>
+              {t("turTekrarAc")}
             </Dugme>
           </div>
         </section>

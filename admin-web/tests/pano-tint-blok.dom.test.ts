@@ -96,7 +96,12 @@ describe("(P133.2) SERT SINIR — 1 kahraman + 4 ikincil", () => {
     await waitFor(() => expect(screen.getByText("Geciken okutma")).toBeInTheDocument());
     const halkalar = screen.getAllByText(/^[^:]+: \d+%?$/);
     expect(halkalar.length).toBe(3);
-    expect(screen.queryByText(/Tahsilat/)).toBeNull();
+    // OLCUT HALKA, KELIME DEGIL. Eski desen (`/Tahsilat/`) sayfadaki
+    // HERHANGI bir "tahsilat" gecisini yakaliyordu; P243 §6c'de kasa
+    // bos durumuna "Tahsilat bir kasaya yazılır…" rehberi eklenince
+    // test, halka cizilmedigi hâlde dustu. Halka etiketi
+    // "<ad>: <deger>" bicimindedir ve aranan tam olarak odur.
+    expect(screen.queryByText(/^Tahsilat: /)).toBeNull();
   });
 
   it("HALKA DEKORATIF, gercek deger sr-only metinde", async () => {

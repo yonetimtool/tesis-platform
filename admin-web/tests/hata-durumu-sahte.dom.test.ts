@@ -93,7 +93,13 @@ describe("kurulum sihirbazi — sahte hata YOK", () => {
     ciz(KurulumPage);
 
     // Veri cizilmis olmali...
-    expect(await screen.findByText(/3\s*\/\s*8/)).toBeTruthy();
+    //
+    // (P243 §6f) ESKI OLCUT "3/8" IDI ve o sayac kaldirildi: yuzde/adim
+    // gostergesi yapilmamis her seyi bir borc gibi sayiyordu (bkz.
+    // `kurulum-ozet.dom.test.ts`). Olculen sey degismedi — "veri
+    // cizildi mi" — yalnizca bakilan isaret degisti: tamamlanan bir
+    // adimin KAYIT SAYISI, ancak yanit islendiyse gorunur.
+    expect(await screen.findByText(/38 kayıt/)).toBeTruthy();
     // ...ve hata karti OLMAMALI. Kusurda ikisi BIRLIKTE gorunuyordu.
     expect(screen.queryByText(GENEL)).toBeNull();
     expect(screen.queryByText(/Kurulum durumu alınamadı/i)).toBeNull();

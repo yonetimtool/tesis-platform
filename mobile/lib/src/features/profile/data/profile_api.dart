@@ -22,6 +22,18 @@ class ProfileApi {
     }
   }
 
+  /// (P243 §6d) `POST /me/tur-goruldu` — ilk giris turu gosterildi.
+  ///
+  /// IDEMPOTENT: "atla" ile "sonuna kadar izle" ayni seydir; ikisi de
+  /// "gordu" demektir ve ikinci cagri damgayi degistirmez.
+  Future<void> turGoruldu() async {
+    try {
+      await _dio.post<Map<String, dynamic>>('/me/tur-goruldu');
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   /// `PATCH /me/password` — mevcut parola dogrulanir; 204 doner.
   Future<void> changePassword({
     required String currentPassword,

@@ -2494,5 +2494,30 @@
   "ihlalListeBosAlt": "Keine Verstöße erfasst. Ein gemeldeter Verstoß erscheint hier mit Datum und Wohnung.",
   "anketYokAlt": "Keine offenen Umfragen. Sobald die Verwaltung eine startet, können Sie hier abstimmen.",
   "anprListeBosAlt": "Keine Kennzeichenlesungen erfasst. Sobald eine Kennzeichenkamera verbunden ist, erscheinen die Durchfahrten hier.",
-  "vardiyaTanimYokAlt": "Keine Schichten definiert. Nach dem Anlegen von Schichten wie Tag und Nacht können Sie Personal einplanen."
+  "vardiyaTanimYokAlt": "Keine Schichten definiert. Nach dem Anlegen von Schichten wie Tag und Nacht können Sie Personal einplanen.",
+  "turBaslik": "Willkommen bei Yönetio",
+  "turAtla": "Tour überspringen",
+  "turGeri": "Zurück",
+  "turIleri": "Weiter",
+  "turBitir": "Los geht's",
+  "turTekrarAc": "Einführungstour erneut anzeigen",
+  "tur1Baslik": "Zuerst Blöcke und Wohnungen",
+  "tur1Metin": "Sobald diese beiden erfasst sind, funktioniert Ihre Anlage: Ankündigungen, Aufgaben und Kameras sind möglich. Alles andere, auch die Buchhaltung, kann warten.",
+  "tur2Baslik": "Personen kommen per Einladung",
+  "tur2Metin": "Wenn Sie Bewohner und Personal anlegen, wird eine Einladungs-E-Mail verschickt. Sie geben keine Passwörter aus; jede Person legt ihr eigenes fest.",
+  "tur3Baslik": "Beiträge und Inkasso, wenn Sie so weit sind",
+  "tur3Metin": "Nach dem Anlegen von Kasse und Einnahmen-/Ausgabenarten können Sie Beiträge erstellen und Zahlungen erfassen. Für den Start ist das nicht nötig — es geht auch später.",
+  "tur4Baslik": "Der Einrichtungsassistent ist zur Stelle",
+  "tur4Metin": "Über das Menü gelangen Sie jederzeit zum Einrichtungsassistenten, sehen dort, was jeder Schritt freischaltet, und können diese Tour erneut starten.",
+  "turSayac": "{sira}/{toplam}",
+  "@turSayac": {
+    "placeholders": {
+      "sira": {
+        "type": "int"
+      },
+      "toplam": {
+        "type": "int"
+      }
+    }
+  }
 }

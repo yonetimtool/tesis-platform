@@ -7334,4 +7334,55 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get vardiyaTanimYokAlt =>
       'لا توجد ورديات معرّفة. بعد تعريف ورديات كالنهار والليل يمكنك توزيع الموظفين على الجدول.';
+
+  @override
+  String get turBaslik => 'مرحبًا بك في Yönetio';
+
+  @override
+  String get turAtla => 'تخطي الجولة';
+
+  @override
+  String get turGeri => 'رجوع';
+
+  @override
+  String get turIleri => 'التالي';
+
+  @override
+  String get turBitir => 'لنبدأ';
+
+  @override
+  String get turTekrarAc => 'إعادة عرض الجولة التعريفية';
+
+  @override
+  String get tur1Baslik => 'المباني والوحدات أولًا';
+
+  @override
+  String get tur1Metin =>
+      'بمجرد إدخال هذين العنصرين يعمل مجمعك: يمكنك نشر الإعلانات وإسناد المهام وإضافة الكاميرات. وكل ما عداهما، بما في ذلك المحاسبة، يمكن أن ينتظر.';
+
+  @override
+  String get tur2Baslik => 'ينضم الأشخاص بالدعوة';
+
+  @override
+  String get tur2Metin =>
+      'عند إضافة السكان والموظفين تُرسل رسالة دعوة بالبريد. لا توزّع كلمات مرور؛ كل شخص ينشئ كلمته بنفسه.';
+
+  @override
+  String get tur3Baslik => 'الرسوم والتحصيل، عندما تكون جاهزًا';
+
+  @override
+  String get tur3Metin =>
+      'بعد إنشاء صندوق وتعريفات الإيرادات والمصروفات يمكنك إنشاء الرسوم وتسجيل التحصيل. لا شيء من هذا مطلوب للبدء؛ يمكنك فعله لاحقًا.';
+
+  @override
+  String get tur4Baslik => 'معالج الإعداد في متناولك';
+
+  @override
+  String get tur4Metin =>
+      'يمكنك العودة إلى معالج الإعداد من القائمة في أي وقت، ورؤية ما تفتحه كل خطوة، وإعادة تشغيل هذه الجولة من هناك.';
+
+  @override
+  String turSayac(int sira, int toplam) {
+    return '$sira/$toplam';
+  }
 }

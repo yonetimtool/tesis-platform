@@ -7353,4 +7353,55 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get vardiyaTanimYokAlt =>
       'Смены не заданы. Задав смены (день, ночь), вы сможете расставить персонал в графике.';
+
+  @override
+  String get turBaslik => 'Добро пожаловать в Yönetio';
+
+  @override
+  String get turAtla => 'Пропустить тур';
+
+  @override
+  String get turGeri => 'Назад';
+
+  @override
+  String get turIleri => 'Далее';
+
+  @override
+  String get turBitir => 'Начать';
+
+  @override
+  String get turTekrarAc => 'Показать вводный тур снова';
+
+  @override
+  String get tur1Baslik => 'Сначала корпуса и квартиры';
+
+  @override
+  String get tur1Metin =>
+      'Как только внесены эти два пункта, объект работает: можно публиковать объявления, назначать задачи и добавлять камеры. Остальное, включая бухгалтерию, подождёт.';
+
+  @override
+  String get tur2Baslik => 'Люди входят по приглашению';
+
+  @override
+  String get tur2Metin =>
+      'Когда вы добавляете жильцов и сотрудников, им уходит письмо-приглашение. Пароли раздавать не нужно — каждый задаёт свой.';
+
+  @override
+  String get tur3Baslik => 'Взносы и сборы — когда будете готовы';
+
+  @override
+  String get tur3Metin =>
+      'После создания кассы и статей доходов/расходов можно начислять взносы и принимать платежи. Для старта это не нужно — сделаете позже.';
+
+  @override
+  String get tur4Baslik => 'Мастер настройки рядом';
+
+  @override
+  String get tur4Metin =>
+      'Вернуться к мастеру настройки можно в любой момент через меню: там видно, что открывает каждый шаг, и оттуда же запускается этот тур.';
+
+  @override
+  String turSayac(int sira, int toplam) {
+    return '$sira/$toplam';
+  }
 }

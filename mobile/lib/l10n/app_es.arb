@@ -2494,5 +2494,30 @@
   "ihlalListeBosAlt": "No hay infracciones registradas. Una infracción notificada aparece aquí con su fecha y vivienda.",
   "anketYokAlt": "No hay encuestas abiertas. Podrá votar aquí cuando la administración inicie una.",
   "anprListeBosAlt": "No hay lecturas de matrícula. Los pasos se listan aquí cuando se conecte una cámara de reconocimiento.",
-  "vardiyaTanimYokAlt": "No hay turnos definidos. Al definir turnos como día y noche podrá asignar personal al cuadrante."
+  "vardiyaTanimYokAlt": "No hay turnos definidos. Al definir turnos como día y noche podrá asignar personal al cuadrante.",
+  "turBaslik": "Bienvenido a Yönetio",
+  "turAtla": "Omitir el recorrido",
+  "turGeri": "Atrás",
+  "turIleri": "Siguiente",
+  "turBitir": "Empecemos",
+  "turTekrarAc": "Volver a ver el recorrido",
+  "tur1Baslik": "Primero bloques y viviendas",
+  "tur1Metin": "Con estos dos datos su comunidad funciona: podrá publicar avisos, asignar tareas y añadir cámaras. Lo demás, contabilidad incluida, puede esperar.",
+  "tur2Baslik": "Las personas entran por invitación",
+  "tur2Metin": "Al añadir residentes y personal se envía un correo de invitación. Usted no reparte contraseñas; cada persona crea la suya.",
+  "tur3Baslik": "Cuotas y cobros, cuando esté listo",
+  "tur3Metin": "Tras crear una caja y las partidas de ingresos/gastos podrá generar cuotas y registrar cobros. Nada de esto hace falta para empezar; puede hacerlo después.",
+  "tur4Baslik": "El asistente de configuración le acompaña",
+  "tur4Metin": "Puede volver al asistente de configuración desde el menú, ver qué activa cada paso y repetir este recorrido allí.",
+  "turSayac": "{sira}/{toplam}",
+  "@turSayac": {
+    "placeholders": {
+      "sira": {
+        "type": "int"
+      },
+      "toplam": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -2494,5 +2494,30 @@
   "ihlalListeBosAlt": "Aucune infraction enregistrée. Un manquement signalé apparaît ici avec sa date et le logement.",
   "anketYokAlt": "Aucun sondage ouvert. Vous pourrez voter ici dès que la gestion en lancera un.",
   "anprListeBosAlt": "Aucune lecture de plaque enregistrée. Les passages s'affichent ici dès qu'une caméra LAPI est connectée.",
-  "vardiyaTanimYokAlt": "Aucun poste défini. Après avoir défini des postes (jour, nuit…), vous pourrez planifier le personnel."
+  "vardiyaTanimYokAlt": "Aucun poste défini. Après avoir défini des postes (jour, nuit…), vous pourrez planifier le personnel.",
+  "turBaslik": "Bienvenue sur Yönetio",
+  "turAtla": "Passer la visite",
+  "turGeri": "Retour",
+  "turIleri": "Suivant",
+  "turBitir": "C'est parti",
+  "turTekrarAc": "Revoir la visite guidée",
+  "tur1Baslik": "D'abord les blocs et les logements",
+  "tur1Metin": "Une fois ces deux éléments saisis, votre site fonctionne : annonces, tâches et caméras sont possibles. Le reste, comptabilité comprise, peut attendre.",
+  "tur2Baslik": "Les personnes entrent sur invitation",
+  "tur2Metin": "Lorsque vous ajoutez résidents et employés, un e-mail d'invitation part. Vous ne distribuez aucun mot de passe : chacun crée le sien.",
+  "tur3Baslik": "Charges et encaissement, quand vous serez prêt",
+  "tur3Metin": "Après avoir créé une caisse et les natures de recettes/dépenses, vous pourrez générer les charges et saisir les encaissements. Rien de tout cela n'est requis pour démarrer.",
+  "tur4Baslik": "L'assistant de configuration est là",
+  "tur4Metin": "Vous pouvez revenir à l'assistant de configuration depuis le menu, voir ce que chaque étape débloque et relancer cette visite.",
+  "turSayac": "{sira}/{toplam}",
+  "@turSayac": {
+    "placeholders": {
+      "sira": {
+        "type": "int"
+      },
+      "toplam": {
+        "type": "int"
+      }
+    }
+  }
 }

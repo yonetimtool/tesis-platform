@@ -7083,4 +7083,55 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get vardiyaTanimYokAlt =>
       'Vardiya tanımı yok. Gündüz, gece gibi vardiyaları tanımlayınca personeli çizelgeye yerleştirebilirsiniz.';
+
+  @override
+  String get turBaslik => 'Yönetio\'ya hoş geldiniz';
+
+  @override
+  String get turAtla => 'Turu atla';
+
+  @override
+  String get turGeri => 'Geri';
+
+  @override
+  String get turIleri => 'İleri';
+
+  @override
+  String get turBitir => 'Başlayalım';
+
+  @override
+  String get turTekrarAc => 'Tanıtım turunu tekrar göster';
+
+  @override
+  String get tur1Baslik => 'Önce bloklar ve daireler';
+
+  @override
+  String get tur1Metin =>
+      'Bu ikisini girdiğinizde tesis çalışır hâle gelir: duyuru yapabilir, görev atayabilir, kamera ekleyebilirsiniz. Muhasebe dahil diğer her şey bekleyebilir.';
+
+  @override
+  String get tur2Baslik => 'Kişiler davetle girer';
+
+  @override
+  String get tur2Metin =>
+      'Sakinleri ve personeli eklediğinizde uygulamaya davet e-postası gider. Kimseye şifre iletmeniz gerekmez; herkes kendi şifresini kurar.';
+
+  @override
+  String get tur3Baslik => 'Aidat ve tahsilat, hazır olunca';
+
+  @override
+  String get tur3Metin =>
+      'Kasa ve gelir-gider tanımlarını yaptıktan sonra aidat tahakkuku oluşturup tahsilat işleyebilirsiniz. Bunlar başlangıç için gerekli değil; sonra da yapabilirsiniz.';
+
+  @override
+  String get tur4Baslik => 'Kurulum sihirbazı yanınızda';
+
+  @override
+  String get tur4Metin =>
+      'Menüden kurulum sihirbazına her zaman dönebilir, hangi adımın neyi açtığını orada görebilir ve bu turu oradan yeniden başlatabilirsiniz.';
+
+  @override
+  String turSayac(int sira, int toplam) {
+    return '$sira/$toplam';
+  }
 }

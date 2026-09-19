@@ -700,6 +700,12 @@ class MeProfileOut(BaseModel):
     # kalanini `/me/profile`dan cekmek her ekranda IKI istek ve iki ayri
     # onbellek demekti; ikisi ayrisinca avatar bir yerde eski kalirdi.
     avatar_url: str | None = None
+    #: (P243 §6d) Ilk giris turu ne zaman gosterildi (`None` = hic).
+    #:
+    #: `/me/profile`da DA duruyor cunku kabuk zaten bu kaydi cekiyor:
+    #: turu cizmek icin ikinci bir istek atmak, her sayfa yuklemesinde
+    #: bedava bir gidis-donus olurdu.
+    tur_goruldu_at: datetime | None = None
 
 
 class BildirimTercihleri(BaseModel):

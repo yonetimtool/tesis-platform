@@ -2,6 +2,7 @@ import { cookies, headers } from "next/headers";
 
 import { AppShell } from "@/components/AppShell";
 import { DonusCubugu } from "@/components/DonusCubugu";
+import { IlkGirisTuru } from "@/components/IlkGirisTuru";
 import { PanikAlarmi } from "@/components/panik/panik-alarmi";
 import { SunucuDurumu } from "@/components/SunucuDurumu";
 import { ToastProvider } from "@/components/Toast";
@@ -64,6 +65,11 @@ export default async function ProtectedLayout({
             bilgisayar basindaki yoneticiye alarmin ULASMASI, onun
             alarmi BASLATMASINDAN bagimsiz bir ihtiyac. */}
         <PanikAlarmi />
+        {/* (P243 §6d) ILK GIRIS TURU — DUZENDE TEK KEZ.
+            Hangi sayfadan girilirse girilsin cikar (yeni yonetici
+            dogrudan `/dashboard`a duser, `/kurulum`a degil) ve rol
+            kapisini kendi icinde uygular. */}
+        <IlkGirisTuru />
       </AppShell>
     </ToastProvider>
   );

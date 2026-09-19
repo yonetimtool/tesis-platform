@@ -141,6 +141,11 @@ describe("sozluk butunlugu", () => {
     // gidecegim" sorusunu bulaniklastirir.
     "iPhone (App Store)",
     "Android (Google Play)",
+    // (P243 §6d) "{sira}/{toplam}" — TEK KELIME BILE YOK: iki yer
+    // tutucu ve bir egik cizgi. Yedi dilde de ayni; "cevirmek" ancak
+    // rakamlarin sirasini degistirmek olurdu ve bu bir sayfa sayaci
+    // icin yanlis olurdu.
+    "{sira}/{toplam}",
   ]);
 
   // KALAN ACIK (durustce): ne bu olcum ne `TR_HARF`, ic/ig/is harfi

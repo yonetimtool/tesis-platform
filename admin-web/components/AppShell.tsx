@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { DilSecici } from "@/components/DilSecici";
+import { EkranYardimi } from "@/components/EkranYardimi";
 import { GlobalArama } from "@/components/GlobalArama";
 import { KurulumHatirlatici } from "@/components/KurulumHatirlatici";
 import { SayfaEylemYuvasi } from "@/components/SayfaEylemleri";
@@ -944,6 +945,9 @@ export function AppShell({
               menuden kalktigi icin cekmecede karsiligi yok — buraya
               koymasaydik mobil kullanicinin hesabina hicbir yol kalmazdi. */}
           <div className="flex items-center gap-2">
+            {/* (P243 §6e) BAGLAM ICI YARDIM — mobil ust cubukta da var:
+                dar ekranda kullanicinin kaybolma ihtimali daha yuksek. */}
+            <EkranYardimi />
             <BildirimMerkezi />
             <DilSecici />
             <KullaniciMenusu />
@@ -1015,6 +1019,8 @@ export function AppShell({
                   dar ekranda `display:none` ama DOM'da duruyordu, portal
                   hedefi buluyor ve sayfa eylemleri GORUNMEZ kaliyordu. */}
               {genisBant && <SayfaEylemYuvasi />}
+              {/* (P243 §6e) "Bu ekran ne ise yarar" — rotadan cozulur. */}
+              <EkranYardimi />
               <BildirimMerkezi />
               <DilSecici />
               <KullaniciMenusu />
