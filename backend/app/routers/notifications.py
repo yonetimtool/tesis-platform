@@ -7,7 +7,7 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, Header, Query
-from sqlalchemy import func, select, update
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, audit_user
@@ -30,7 +30,14 @@ router = APIRouter(prefix="/notifications", tags=["notifications"])
 # (P35) Amir P34 alarmlarinin MUHATABIDIR: gormezse turu devralamaz.
 # (P147) `resident` EKLENDI — ama AYNI SATIRLARI GORMEZ, bkz. `_kapsam`.
 _VIEWER = require_role(
-    "admin", "yonetici", "security", "guvenlik_amiri", "resident"
+    "admin", "yonetici", "security", "guvenlik_amiri", "resident",
+    # (P241 §2e) `tesis_gorevlisi` EKLENDI — OLCULEN KUSUR.
+    #
+    # Uc ona 403 doniyordu, yani kendisine ATANAN GOREVIN bildirimini
+    # (P191 §2'de eklenen `gorev_atandi`) hicbir zaman goremiyordu:
+    # satir yaziliyordu, push gidiyordu, ama in-app liste kapaliydi.
+    # Push'u kaciran kisi olayi listede bulamiyordu.
+    "tesis_gorevlisi",
 )
 
 # Yonetim alarmlarini goren roller. Sakin BURADA YOK.
@@ -52,7 +59,21 @@ def _kapsam(user: AppUser):
     `_YONETIM_GOZU`ne girmedikce KENDI satirlarini gorur.
     """
     if user.role in _YONETIM_GOZU:
-        return Notification.user_id.is_(None)
+        # (P241 §2e) KENDI SATIRI DA GORUNUR — OLCULEN KUSUR.
+        #
+        # Once yalniz `user_id IS NULL` donuyordu ve bunun bedeli sessizdi:
+        # `security` ya da `guvenlik_amiri` bir GOREVE ATANDIGINDA
+        # (`gorev_atandi`, P191 §2) satir yaziliyor ama LISTEDE HIC
+        # GORUNMUYORDU. Olculdu: kendi bildirimi yazilmis bir guvenlik
+        # gorevlisinin listesi BOS donuyordu.
+        #
+        # GIZLILIK BOZULMAZ: eklenen sey "KENDI satirim", "baskasinin
+        # satiri" degil. `test_yonetim_KISISEL_akisi_gormez` (sakinin
+        # akisi yonetime kapali) AYNEN gecerli — o satirin `user_id`si
+        # baskasinin.
+        return or_(
+            Notification.user_id.is_(None), Notification.user_id == user.id
+        )
     return Notification.user_id == user.id
 
 

@@ -45,6 +45,16 @@ void main() {
     expect(bildirimRotasi(_b('entegrasyon_koptu')), AppRoutes.integrations);
   });
 
+  test('(P241) BAKIM ve VARDIYA YAYINI kendi ekranina gider', () {
+    // P240'takinin AYNISI: yeni bildirim ailesi eklenip beyaz liste
+    // guncellenmezse push'a dokunan kullanici HICBIR YERE gitmez ve
+    // kaynak testleri bunu goremez ("bilinmeyen tipe null" TASARIM).
+    for (final t in ['bakim_yaklasti', 'bakim_bugun', 'bakim_gecikti']) {
+      expect(bildirimRotasi(_b(t)), AppRoutes.bakim, reason: t);
+    }
+    expect(bildirimRotasi(_b('vardiya_yayinlandi')), AppRoutes.vardiyaPlani);
+  });
+
   test('bilinmeyen tip UYDURMA hedefe gitmez — null doner', () {
     expect(bildirimRotasi(_b('bir_gun_eklenecek')), isNull);
   });

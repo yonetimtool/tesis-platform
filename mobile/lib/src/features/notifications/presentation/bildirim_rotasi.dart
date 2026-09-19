@@ -35,7 +35,17 @@ String? bildirimRotasi(AppNotification b) {
     'talep_is_emri' || 'talep_cozuldu' || 'talep_reddedildi' =>
       AppRoutes.complaints,
     // Is emri atamasi (saha personeline): gorev listesi.
-    'is_emri_atandi' => AppRoutes.tasks,
+    // (P241 §2e) `gorev_atandi` ve arkadaslari EKLENDI — iki yuzeyin
+    // haritasi karsilastirilinca eksik olduklari gorundu. `gorev_atandi`
+    // P191'den beri gonderiliyordu ve dokununca HICBIR YERE
+    // gitmiyordu.
+    'is_emri_atandi' ||
+    'gorev_atandi' ||
+    'gorev_tamamlandi' ||
+    'gorev_adim_ilerleme' =>
+      AppRoutes.tasks,
+    // Uzak okutma da bir DEVRIYE alarmi — otekilerle ayni ekran.
+    'uzak_okutma' => AppRoutes.patrolTracking,
     // (P147) SAKININ KENDI olaylari — her biri ILGILI ekrana gider.
     // "Kargonuz geldi" -> kargo sayfasi, "sikayetiniz sonuclandirildi" ->
     // sikayetlerim. Hedefi olmayan tipe uydurma bir ekran verilmez.
@@ -53,6 +63,15 @@ String? bildirimRotasi(AppNotification b) {
     'akilli_ev_kacak' || 'akilli_ev_yangin' => AppRoutes.akilliEv,
     // (P240 §4) Kopan entegrasyon -> entegrasyon listesi (saglik sutunu).
     'entegrasyon_koptu' => AppRoutes.integrations,
+    // (P241 §1) Bakim hatirlatmalari -> bakim takibi.
+    'bakim_yaklasti' || 'bakim_bugun' || 'bakim_gecikti' => AppRoutes.bakim,
+    // (P241 §2e) Vardiya plani yayinlandi -> PLAN ekrani.
+    //
+    // P240'ta ayni kusur yasandi: yeni bildirim ailesi eklenmis, bu
+    // beyaz liste guncellenmemisti ve push'a dokunan kullanici hicbir
+    // yere gitmiyordu. Yeni tip eklerken BURASI da guncellenir —
+    // `p241_bildirim_rotasi_test` iki yuzeyin haritasini karsilastirir.
+    'vardiya_yayinlandi' => AppRoutes.vardiyaPlani,
     _ => null,
   };
   if (tipten != null) return tipten;

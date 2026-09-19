@@ -870,6 +870,32 @@ METINLER: dict[str, PushMetni] = {
         },
         params=('cihaz', 'yer'),
     ),
+    # (P241 §2e) VARDIYA PLANI YAYINLANDI — ETKILENEN KISIYE.
+    #
+    # Sayi KISIYE OZEL: "18 vardiya yayinlandi" herkese ayni gitseydi,
+    # kisiye kendi planiyla ilgisiz bir sayi verirdi. Tarih araligi da
+    # o kisinin yayinlanan vardiyalarinin araligidir.
+    "vardiya_yayinlandi": PushMetni(
+        baslik={
+            "tr": "Vardiya planın güncellendi",
+            "en": "Your shift plan was updated",
+            "ar": "تم تحديث خطة مناوباتك",
+            "ru": "Ваш график смен обновлён",
+            "de": "Ihr Schichtplan wurde aktualisiert",
+            "fr": "Votre planning a été mis à jour",
+            "es": "Su plan de turnos se actualizó",
+        },
+        govde={
+            "tr": "{n} vardiya yayınlandı ({aralik})",
+            "en": "{n} shifts published ({aralik})",
+            "ar": "تم نشر {n} مناوبة ({aralik})",
+            "ru": "Опубликовано смен: {n} ({aralik})",
+            "de": "{n} Schichten veröffentlicht ({aralik})",
+            "fr": "{n} services publiés ({aralik})",
+            "es": "{n} turnos publicados ({aralik})",
+        },
+        params=("n", "aralik"),
+    ),
     # (P241 §1) PERIYODIK BAKIM — UC KADEME AYRI METIN.
     #
     # Ucunu tek metne indirmek ("bakim hatirlatmasi") en onemli ayrimi

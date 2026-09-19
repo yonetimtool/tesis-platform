@@ -3116,4 +3116,5 @@ export const ar: Sozluk = {
   vardiyaRolGrupSayisi: "{n} أشخاص",
   vardiyaMesai: "مناوبة",
   bildirimTipVardiyaYayinlandi: "تم نشر خطة المناوبات",
+  bildirimGit: "فتح",
 };

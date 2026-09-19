@@ -80,7 +80,8 @@ void main() {
 
     // 8 kart basligi.
     for (final baslik in [
-      'Vardiyalar', // (P144) kanonik ad = /vardiyalar ekraninin basligi
+      // (P241 §2d) kanonik ad = /vardiya-plani ekraninin basligi.
+      'Vardiya planı',
       'Kargo',
       'Ziyaretçiler', // (P144) kanonik ad = /visitors ekraninin basligi
       'Araç Plaka',

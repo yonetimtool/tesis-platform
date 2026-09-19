@@ -3179,4 +3179,5 @@ export const tr = {
   vardiyaRolGrupSayisi: "{n} kişi",
   vardiyaMesai: "Mesai",
   bildirimTipVardiyaYayinlandi: "Vardiya planı yayınlandı",
+  bildirimGit: "Git",
 } as const;

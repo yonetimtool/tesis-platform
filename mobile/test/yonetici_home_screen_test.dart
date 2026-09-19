@@ -158,7 +158,7 @@ void main() {
     // dizeye yigilan iki AYRI seyi ayirdi ve olcumu keskinlestirdi:
     // izgara karosu "Vardiyalar" (rota /vardiyalar), bolum basligi ise
     // hala "Vardiya Durumu" — bolum basligi karo degil, P144 disinda.
-    expect(find.text('Vardiyalar'), findsOneWidget); // izgara karosu
+    expect(find.text('Vardiya planı'), findsOneWidget); // izgara karosu
     expect(find.text('Vardiya Durumu'), findsOneWidget); // bolum basligi
     // Ayni ayrisma "Raporlar"da: karo "Aylık raporlar" (/reports),
     // "Raporlar" ise alt-bar sekmesi.
@@ -318,7 +318,7 @@ void main() {
     await tester.pumpWidget(_app());
     await tester.pumpAndSettle();
     expect(find.text('Vardiya Durumu'), findsNothing);
-    expect(find.text('Vardiyalar'), findsOneWidget); // yalniz izgara karti
+    expect(find.text('Vardiya planı'), findsOneWidget); // yalniz izgara karti
   });
 
   testWidgets('Son Hareketler TEK uctan (/activity) cizilir — istemci '

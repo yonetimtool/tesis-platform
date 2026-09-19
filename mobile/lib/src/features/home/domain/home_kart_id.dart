@@ -66,8 +66,12 @@ String kartBasligi(AppLocalizations l10n, HomeKartId id) => switch (id) {
       // Once ayni ekrana farkli adlarla giriliyordu (or. /vardiyalar UC
       // ad tasiyordu: "Vardiya Durum", "Vardiya Durumu", "Vardiyalar").
       // Artik hepsi gidilen ekranin AppBar basligini kullanir.
-      HomeKartId.vardiyaDurum => l10n.vardiyaBaslik,
-      HomeKartId.vardiyaDurumu => l10n.vardiyaBaslik,
+      // (P241 §2d) KART ARTIK PLAN EKRANINA GIDIYOR, adi da onun adi
+      // olmali: P144'un kurali "kanonik ad = gidilen ekranin basligi".
+      // Rota degistirilip ad birakilsaydi, `karo_adi_hedefle_uyusur`
+      // kilidi hakli olarak duserdi (ve dustu).
+      HomeKartId.vardiyaDurum => l10n.vardiyaPlaniBaslik,
+      HomeKartId.vardiyaDurumu => l10n.vardiyaPlaniBaslik,
       HomeKartId.kargo => l10n.karBaslik,
       HomeKartId.ziyaretci => l10n.modulZiyaretciler,
       HomeKartId.aracPlaka => l10n.kartAracPlaka,

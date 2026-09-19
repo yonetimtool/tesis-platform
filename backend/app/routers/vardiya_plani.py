@@ -30,10 +30,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..audit import Action, audit_user
 from ..deps import get_tenant_db, require_role
 from ..roller import gorunur_roller
+from ..sakin_bildirimi import sakin_bildirimi_yaz
+from ..scheduler.notify import dispatch_external
+from ..push_metinleri import push_govdesi
 from ..errors import APIError
 from ..hata_metinleri import hata_metni
 from ..models import (
     AppUser,
+    Notification,
     BuildingBlock,
     Shift,
     ShiftAssignment,
@@ -1473,7 +1477,10 @@ async def yayinla(
     ).scalars().all()
     an = dt.datetime.now(dt.timezone.utc)
     yayinlanan = 0
-    kisiler: set[uuid.UUID] = set()
+    # KISI BASINA: kac vardiya ve HANGI TARIH ARALIGI. Toplam sayiyi
+    # herkese ayni gondermek ("18 vardiya yayinlandi") kisiye kendi
+    # planiyla ilgisiz bir sayi vermek olurdu.
+    kisiler: dict[uuid.UUID, dict] = {}
     for plan in satirlar:
         bekliyor = plan.yayinlandi_at is None or (
             plan.updated_at is not None and plan.updated_at > plan.yayinlandi_at
@@ -1482,8 +1489,19 @@ async def yayinla(
             continue
         plan.yayinlandi_at = an
         yayinlanan += 1
-        kisiler.add(plan.user_id)
+        kayit = kisiler.setdefault(
+            plan.user_id, {"adet": 0, "ilk": plan.tarih, "son": plan.tarih}
+        )
+        kayit["adet"] += 1
+        kayit["ilk"] = min(kayit["ilk"], plan.tarih)
+        kayit["son"] = max(kayit["son"], plan.tarih)
     await db.flush()
+
+    bildirilen = 0
+    for uid, kayit in kisiler.items():
+        if await _yayin_bildir(db, user, uid, kayit, an):
+            bildirilen += 1
+
     if yayinlanan:
         await audit_user(
             db, user, Action.VARDIYA_YAYIN, resource_type="vardiya_plani",
@@ -1491,9 +1509,125 @@ async def yayinla(
             meta={
                 "baslangic": baslangic.isoformat(), "gun": gun,
                 "yayinlanan": yayinlanan, "kisi": len(kisiler),
+                "bildirilen": bildirilen,
             },
         )
-    return VardiyaYayinSonuc(yayinlanan=yayinlanan, bildirilen_kisi=len(kisiler))
+    return VardiyaYayinSonuc(yayinlanan=yayinlanan, bildirilen_kisi=bildirilen)
+
+
+# =========================================================================== #
+# (P241 §2e) YAYIN BILDIRIMI
+# =========================================================================== #
+#
+# ===========================================================================
+# BILDIRIM OLMADAN TASLAK/YAYIN AYRIMI ISLEVSIZ
+# ===========================================================================
+# Ayrimin amaci personelin plandan HABERDAR OLMASI. Yonetici "Yayinla"
+# deyip kimse gormezse, ayrim yalnizca bir gecikme katmani olurdu.
+#
+# ===========================================================================
+# BILDIRIM YORGUNLUGU: GUNLUK OZET DEGIL, PATLAMA BIRLESTIRME
+# ===========================================================================
+# Istek sordu: "her yayinlamada mi, gunde bir mi?"
+#
+# GUNDE BIR OZET REDDEDILDI: yayin ELLE yapilan bir eylemdir ve bilgi
+# ZAMANA DUYARLIDIR — "yarin 08:00 nobetin var" haberini aksama
+# ertelemek, ozelligin varlik sebebini gotururdu. (Bakim hatirlatmasi
+# farkliydi: orada tarih gun cozunurluklu ve bekleyebilir.)
+#
+# AMA HER YAYINLAMADA KOSULSUZ GONDERMEK DE YANLIS: yonetici plani
+# duzenlerken bes dakikada uc kez "Yayinla"ya basabilir ve ayni kisiye
+# uc bildirim gider.
+#
+# COZUM — PATLAMA BIRLESTIRME: ayni kisinin AYNI TIPTEKI OKUNMAMIS
+# bildirimi son `YAYIN_BIRLESTIRME_DK` dakika icinde yazilmissa YENI
+# SATIR ACILMAZ; var olan satir GUNCELLENIR (sayi toplanir, tarih
+# araligi genisler) ve IKINCI PUSH GONDERILMEZ.
+#
+# NEDEN "OKUNMAMIS" SARTI: okunmus bir bildirimi degistirmek, kisinin
+# gordugu metni arkasindan degistirmek olurdu. Okunmussa yeni satir
+# acilir — cunku kisi artik ilkini "islemis" sayilir.
+#
+# BILGI KAYBI YOK: birlestirme sayilari TOPLAR ve araligi GENISLETIR.
+
+#: Ayni kisiye pes pese yayin bildirimi gonderme penceresi (dakika).
+YAYIN_BIRLESTIRME_DK = 15
+
+
+async def _yayin_bildir(
+    db: AsyncSession,
+    user: AppUser,
+    hedef_id: uuid.UUID,
+    kayit: dict,
+    an: dt.datetime,
+) -> bool:
+    """Bir kisiye yayin bildirimi yaz/birlestir. Donus: PUSH gitti mi."""
+    aralik = (
+        kayit["ilk"].isoformat()
+        if kayit["ilk"] == kayit["son"]
+        else f"{kayit['ilk'].isoformat()} — {kayit['son'].isoformat()}"
+    )
+    veri = {"n": str(kayit["adet"]), "aralik": aralik}
+
+    esik = an - dt.timedelta(minutes=YAYIN_BIRLESTIRME_DK)
+    onceki = (
+        await db.execute(
+            select(Notification)
+            .where(
+                Notification.user_id == hedef_id,
+                Notification.tip == "vardiya_yayinlandi",
+                Notification.okundu.is_(False),
+                Notification.silindi_at.is_(None),
+                Notification.created_at >= esik,
+            )
+            .order_by(Notification.created_at.desc())
+            .limit(1)
+        )
+    ).scalars().first()
+
+    if onceki is not None:
+        # BIRLESTIR: sayi toplanir, aralik genisler.
+        eski = dict(onceki.mesaj_veri or {})
+        try:
+            toplam = int(eski.get("n", 0)) + kayit["adet"]
+        except (TypeError, ValueError):
+            toplam = kayit["adet"]
+        eski_aralik = str(eski.get("aralik") or "")
+        genis = aralik
+        if eski_aralik:
+            parcalar = sorted(
+                {p.strip() for p in eski_aralik.split("—")}
+                | {kayit["ilk"].isoformat(), kayit["son"].isoformat()}
+            )
+            genis = (
+                parcalar[0]
+                if len(parcalar) == 1
+                else f"{parcalar[0]} — {parcalar[-1]}"
+            )
+        yeni_veri = {"n": str(toplam), "aralik": genis}
+        onceki.mesaj_veri = yeni_veri
+        onceki.mesaj = push_govdesi("vardiya_yayinlandi", "tr", yeni_veri)
+        await db.flush()
+        return False
+
+    sakin_bildirimi_yaz(
+        db,
+        tenant_id=user.tenant_id,
+        tip="vardiya_yayinlandi",
+        user_ids=(hedef_id,),
+        veri=veri,
+    )
+    await db.flush()
+    # PUSH KISIYE: rol uzerinden gonderilseydi TUM guvenlik ekibi,
+    # plani degismeyenler dahil, ayni haberi alirdi.
+    dispatch_external(
+        "vardiya_yayinlandi",
+        tenant_id=user.tenant_id,
+        target_user_ids=(hedef_id,),
+        params=veri,
+        data={"tip": "vardiya_yayinlandi"},
+    )
+    return True
 
 
 @router.get("/mola-onerisi", response_model=VardiyaMolaOneriOut)

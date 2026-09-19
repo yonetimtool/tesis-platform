@@ -36,7 +36,7 @@ void main() {
         onSec: (_) {},
       )));
 
-      expect(find.text('Vardiyalar'), findsOneWidget);
+      expect(find.text('Vardiya planı'), findsOneWidget);
       expect(find.text('Kargo'), findsOneWidget);
       // Taban SAYI TASIMAZ: bes kartin tamami gercek uca baglidir, sayac
       // gelene kadar iskelet cizilir ('Yakında' etiketi KALMADI).
@@ -86,7 +86,7 @@ void main() {
       )));
 
       for (final baslik in [
-        'Vardiyalar',
+        'Vardiya planı',
         'Görev Yönetimi',
         'Finansal özet',
         'Otopark',

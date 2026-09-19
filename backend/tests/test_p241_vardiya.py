@@ -638,3 +638,206 @@ def test_ICE_AKTARIM_HATALI_SATIR_SEBEBIYLE_RAPORLANIR(client, world):
     assert "02.03.2026" in mesajlar[2]
     assert "personel" in mesajlar[3].lower() or "staff" in mesajlar[3].lower()
     assert "08:00" in mesajlar[4]
+
+
+# ========================== (§2e) YAYIN BILDIRIMI ========================== #
+#
+# Taslak/yayin ayriminin AMACI personelin plandan haberdar olmasi.
+# Bildirim gitmezse ayrim yalnizca bir gecikme katmanidir.
+
+
+def _bildirimler(client, headers, tip: str | None = None):
+    r = client.get("/notifications", headers=headers, params={"limit": 50})
+    assert r.status_code == 200, r.text
+    items = r.json()["items"]
+    return [b for b in items if tip is None or b["tip"] == tip]
+
+
+def test_SAHA_PERSONELI_KENDI_BILDIRIMINI_GORUR(client, world, owner_conn):
+    """OLCULEN KUSUR (P241 §2e): goremiyordu.
+
+    `notifications._kapsam` yonetim gozlu rollere (security dahil)
+    YALNIZ `user_id IS NULL` satirlarini gosteriyordu. Yani bir guvenlik
+    gorevlisi bir GOREVE ATANDIGINDA (`gorev_atandi`, P191 §2) satir
+    yaziliyor, push gidiyor, ama IN-APP LISTEDE HIC GORUNMUYORDU.
+    Olculdu: listesi BOS donuyordu.
+    """
+    guard = _h(client, world["slug_a"], world["guard_a"])
+    me = client.get("/me", headers=guard).json()
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO notification (tenant_id, user_id, tip, mesaj, "
+            " mesaj_kimlik) VALUES (%s,%s,'gorev_atandi','X','gorev_atandi')",
+            (world["a"], me["id"]),
+        )
+    assert _bildirimler(client, guard, "gorev_atandi"), "kendi satirini GORMELI"
+    # TESIS GOREVLISI de uca erisebilmeli (once 403 aliyordu).
+    gorevli = _h(client, world["slug_a"], world["gorevli_a"])
+    assert client.get("/notifications", headers=gorevli).status_code == 200
+
+
+def test_YAYIN_ETKILENEN_KISIYE_BILDIRIM_GONDERIR(client, world, personel):
+    admin = _h(client, world["slug_a"], world["admin_a"])
+    guard = _h(client, world["slug_a"], world["guard_a"])
+    s = _sablon(client, admin)
+    gun = _pazartesi(30)
+    for i in (0, 1):
+        client.post(
+            "/vardiya-plani", headers=admin,
+            json={"shift_id": s["id"], "tarih": str(gun + timedelta(days=i)),
+                  "user_id": personel["id"]},
+        )
+    onceki = len(_bildirimler(client, guard, "vardiya_yayinlandi"))
+
+    r = client.post(
+        "/vardiya-plani/yayinla", headers=admin,
+        params={"baslangic": str(gun), "gun": 7},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["yayinlanan"] == 2
+    assert r.json()["bildirilen_kisi"] == 1
+
+    yeni = _bildirimler(client, guard, "vardiya_yayinlandi")
+    assert len(yeni) == onceki + 1
+    # SAYI ve TARIH ARALIGI mesajda: "ne kadar, ne zaman" sorusu
+    # bildirimin kendisinde yanitlanmali.
+    b = yeni[0]
+    assert "2" in b["mesaj"]
+    assert str(gun) in b["mesaj"] and str(gun + timedelta(days=1)) in b["mesaj"]
+
+
+def test_BILDIRIM_KISIYE_OZEL_SAYI_TASIR(client, world, personel):
+    """Iki kisi yayinlandiginda herkes KENDI sayisini gorur."""
+    admin = _h(client, world["slug_a"], world["admin_a"])
+    guard = _h(client, world["slug_a"], world["guard_a"])
+    amir_kisi = client.get(
+        "/users", headers=admin, params={"limit": 200}
+    ).json()["items"]
+    amir = next(
+        u for u in amir_kisi if u["email"] == world["amir_a"]["email"]
+    )
+    s = _sablon(client, admin)
+    gun = _pazartesi(31)
+    # Guvenlige UC, amire BIR vardiya.
+    for i in (0, 1, 2):
+        client.post(
+            "/vardiya-plani", headers=admin,
+            json={"shift_id": s["id"], "tarih": str(gun + timedelta(days=i)),
+                  "user_id": personel["id"]},
+        )
+    client.post(
+        "/vardiya-plani", headers=admin,
+        json={"shift_id": s["id"], "tarih": str(gun), "user_id": amir["id"]},
+    )
+    r = client.post(
+        "/vardiya-plani/yayinla", headers=admin,
+        params={"baslangic": str(gun), "gun": 7},
+    )
+    assert r.json()["bildirilen_kisi"] == 2
+
+    b = _bildirimler(client, guard, "vardiya_yayinlandi")[0]
+    assert "3" in b["mesaj"], b["mesaj"]
+    amir_h = _h(client, world["slug_a"], world["amir_a"])
+    ab = _bildirimler(client, amir_h, "vardiya_yayinlandi")[0]
+    assert "1" in ab["mesaj"], ab["mesaj"]
+
+
+def test_PATLAMA_BIRLESTIRILIR_okunmamis_satir_GUNCELLENIR(
+    client, world, personel
+):
+    """Bildirim yorgunlugu: bes dakikada uc yayin = UC bildirim DEGIL."""
+    admin = _h(client, world["slug_a"], world["admin_a"])
+    guard = _h(client, world["slug_a"], world["guard_a"])
+    s = _sablon(client, admin)
+    gun = _pazartesi(32)
+    client.post(
+        "/vardiya-plani", headers=admin,
+        json={"shift_id": s["id"], "tarih": str(gun), "user_id": personel["id"]},
+    )
+    client.post(
+        "/vardiya-plani/yayinla", headers=admin,
+        params={"baslangic": str(gun), "gun": 7},
+    )
+    ilk = _bildirimler(client, guard, "vardiya_yayinlandi")
+    assert len(ilk) >= 1
+
+    # IKINCI YAYIN, AYNI PENCEREDE: yeni satir ACILMAZ.
+    client.post(
+        "/vardiya-plani", headers=admin,
+        json={"shift_id": s["id"], "tarih": str(gun + timedelta(days=1)),
+              "user_id": personel["id"]},
+    )
+    r = client.post(
+        "/vardiya-plani/yayinla", headers=admin,
+        params={"baslangic": str(gun), "gun": 7},
+    )
+    # PUSH GITMEZ (kisi ilkini henuz acmadi) ama BILGI KAYBOLMAZ.
+    assert r.json()["bildirilen_kisi"] == 0
+    ikinci = _bildirimler(client, guard, "vardiya_yayinlandi")
+    assert len(ikinci) == len(ilk), "yeni satir ACILMAMALI"
+    # SAYI TOPLANIR ve ARALIK GENISLER.
+    birlesik = ikinci[0]["mesaj"]
+    assert "2" in birlesik, birlesik
+    assert str(gun + timedelta(days=1)) in birlesik
+
+
+def test_OKUNMUS_BILDIRIM_BIRLESTIRILMEZ(client, world, personel):
+    """Okunmus bir satiri degistirmek, gorulen metni arkadan degistirmekti."""
+    admin = _h(client, world["slug_a"], world["admin_a"])
+    guard = _h(client, world["slug_a"], world["guard_a"])
+    s = _sablon(client, admin)
+    gun = _pazartesi(33)
+    client.post(
+        "/vardiya-plani", headers=admin,
+        json={"shift_id": s["id"], "tarih": str(gun), "user_id": personel["id"]},
+    )
+    client.post(
+        "/vardiya-plani/yayinla", headers=admin,
+        params={"baslangic": str(gun), "gun": 7},
+    )
+    ilk = _bildirimler(client, guard, "vardiya_yayinlandi")
+    client.patch(
+        f"/notifications/{ilk[0]['id']}", headers=guard, json={"okundu": True}
+    )
+
+    client.post(
+        "/vardiya-plani", headers=admin,
+        json={"shift_id": s["id"], "tarih": str(gun + timedelta(days=1)),
+              "user_id": personel["id"]},
+    )
+    r = client.post(
+        "/vardiya-plani/yayinla", headers=admin,
+        params={"baslangic": str(gun), "gun": 7},
+    )
+    assert r.json()["bildirilen_kisi"] == 1, "okunmussa YENI satir acilmali"
+
+
+def test_DEGISMEYEN_KISIYE_BILDIRIM_GITMEZ(client, world, personel):
+    """Plani degismeyen birine haber vermek gurultu olurdu."""
+    admin = _h(client, world["slug_a"], world["admin_a"])
+    amir_h = _h(client, world["slug_a"], world["amir_a"])
+    s = _sablon(client, admin)
+    gun = _pazartesi(34)
+    onceki = len(_bildirimler(client, amir_h, "vardiya_yayinlandi"))
+    client.post(
+        "/vardiya-plani", headers=admin,
+        json={"shift_id": s["id"], "tarih": str(gun), "user_id": personel["id"]},
+    )
+    client.post(
+        "/vardiya-plani/yayinla", headers=admin,
+        params={"baslangic": str(gun), "gun": 7},
+    )
+    assert len(_bildirimler(client, amir_h, "vardiya_yayinlandi")) == onceki
+
+
+def test_YAYINLANACAK_SEY_YOKSA_BILDIRIM_YOK(client, world, personel):
+    admin = _h(client, world["slug_a"], world["admin_a"])
+    guard = _h(client, world["slug_a"], world["guard_a"])
+    gun = _pazartesi(35)
+    onceki = len(_bildirimler(client, guard, "vardiya_yayinlandi"))
+    r = client.post(
+        "/vardiya-plani/yayinla", headers=admin,
+        params={"baslangic": str(gun), "gun": 7},
+    )
+    assert r.json() == {"yayinlanan": 0, "bildirilen_kisi": 0}
+    assert len(_bildirimler(client, guard, "vardiya_yayinlandi")) == onceki

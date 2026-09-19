@@ -97,6 +97,9 @@ void main() {
     // (P144) Serit karti artik "Vardiyalar" — kisalan kanonik ad 320dp'de
     // KIRPILMADAN sigiyor (eskiden "Vardiya Durum"a kirpiliyordu).
     expect(find.text('Vardiya Durumu'), findsNothing); // bolum yok
-    expect(find.text('Vardiyalar'), findsOneWidget); // serit karti
+    // (P241 §2d) KANONIK AD DEGISTI: kart artik /vardiya-plani'ya gidiyor
+    // (gunluk soru), /vardiyalar'a degil (kurulum). P144 kurali geregi ad
+    // da gidilen ekranin basligi: "Vardiya plani".
+    expect(find.text('Vardiya planı'), findsOneWidget); // serit karti
   });
 }

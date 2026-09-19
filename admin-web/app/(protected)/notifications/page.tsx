@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import useSWR, { mutate as globalMutate } from "swr";
 
@@ -20,6 +21,7 @@ import { useRol } from "@/lib/rol-kullan";
 import { BILDIRIM_TIP, enumAdi } from "@/lib/enum-adlari";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import type { AppNotification, NotificationList } from "@/lib/types";
+import { bildirimRotasi } from "@/lib/bildirim-rotasi";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
@@ -358,11 +360,34 @@ export default function NotificationsPage() {
                     {formatDateTime(n.created_at)}
                   </span>
                 </div>
-                {!n.okundu && (
-                  <Dugme boy="kucuk" onClick={() => void markRead(n.id)}>
-                    {t("bildirimOkunduIsaretle")}
-                  </Dugme>
-                )}
+                <div className="flex shrink-0 items-start gap-2">
+                  {/* (P241 §2e) HEDEF EKRAN — mobildeki yonlendirmenin
+                      web ikizi. Hedefi olmayan tipte dugme CIZILMEZ:
+                      bos bir "Git" dugmesi, gotureceginden fazlasini
+                      vaat ederdi. */}
+                  {/* `useRouter` DEGIL `<Link>`: depoda gezinmenin
+                      kurulu deseni bu (dashboard) ve GERCEK BIR
+                      BAGLANTI olmasi kullaniciya orta tik / yeni
+                      sekmede ac imkani verir — bir dugme bunu
+                      veremezdi. Okundu isaretlemesi tiklamada yan
+                      etki olarak gider. */}
+                  {bildirimRotasi(n.tip) && (
+                    <Link
+                      href={bildirimRotasi(n.tip)!}
+                      data-test={`bildirim-git-${n.id}`}
+                      className="odak-ic rounded-btn px-2 py-1 text-satiralt underline"
+                      style={{ color: "var(--yz-accent-ink)" }}
+                      onClick={() => void markRead(n.id)}
+                    >
+                      {t("bildirimGit")}
+                    </Link>
+                  )}
+                  {!n.okundu && (
+                    <Dugme boy="kucuk" onClick={() => void markRead(n.id)}>
+                      {t("bildirimOkunduIsaretle")}
+                    </Dugme>
+                  )}
+                </div>
               </Kart>
             </li>
           ))}

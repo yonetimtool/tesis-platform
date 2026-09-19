@@ -3116,4 +3116,5 @@ export const de: Sozluk = {
   vardiyaRolGrupSayisi: "{n} Personen",
   vardiyaMesai: "Dienst",
   bildirimTipVardiyaYayinlandi: "Schichtplan veröffentlicht",
+  bildirimGit: "Öffnen",
 };

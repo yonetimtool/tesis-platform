@@ -367,3 +367,107 @@ gidiyor; şablon ekranı plan ekranının içinden açılıyor (web'deki
 * **Takvim görünümü 42 hücreyi çiziyor**; yoğun bir ayda (günde 10+
   vardiya) hücre içi kaydırma davranışı gerçek veriyle denenmedi.
 * Mobil **emülatörde** çalıştırılmadı (bu makinede emülatör yok).
+
+---
+
+## §2e — YAYIN BİLDİRİMİ (açık maddenin kapatılması)
+
+§2d teslim edilirken açıkça yazılmıştı: *"`vardiya_yayinlandi` bildirim
+tipi göçte açıldı ama gönderim bu turda yapılmadı — yayınlama şu an
+sessiz."* Kullanıcı haklı olarak itiraz etti: bildirim gitmezse
+taslak/yayınla ayrımı yalnızca bir gecikme katmanıdır.
+
+### §2e.0 ÖNCE ÖLÇÜM — ve iki kusur çıktı
+
+Bildirimi yazmadan önce "saha personeli kendi bildirimini görüyor mu"
+diye ölçtüm. **Görmüyordu:**
+
+| Ölçüm | Sonuç |
+|---|---|
+| `security`ye kişisel bildirim yazıldı, listesi soruldu | **0 satır** |
+| `tesis_gorevlisi` `/notifications` çağırdı | **403** |
+
+Kök neden `routers/notifications._kapsam`: `security` ve
+`guvenlik_amiri` "yönetim gözü" sayıldığı için **yalnızca**
+`user_id IS NULL` satırlarını görüyordu; `tesis_gorevlisi` ise uca hiç
+erişemiyordu.
+
+**Bunun bedeli P241'den eskiydi:** P191 §2'de eklenen `gorev_atandi`
+bildirimi saha personeline yazılıyor ve push gönderiliyordu, ama
+**in-app listede hiç görünmüyordu** — push'u kaçıran kişi olayı listede
+bulamıyordu.
+
+Düzeltme: yönetim gözlü roller artık `user_id IS NULL` **veya kendi**
+satırlarını görüyor; `tesis_gorevlisi` `_VIEWER`a eklendi. **Gizlilik
+bozulmadı:** eklenen şey "kendi satırım", "başkasının satırı" değil —
+`test_yonetim_KISISEL_akisi_gormez` (sakinin akışı yönetime kapalı)
+aynen geçiyor.
+
+### §2e.1 Bildirim yorgunluğu: günde bir özet REDDEDİLDİ
+
+İstek sordu: "her yayınlamada mı, günde bir mi?"
+
+**Günlük özet reddedildi.** Yayın **elle** yapılan bir eylemdir ve bilgi
+zamana duyarlıdır: "yarın 08:00 nöbetin var" haberini akşama ertelemek,
+özelliğin varlık sebebini götürürdü. (Bakım hatırlatması farklıydı:
+orada tarih gün çözünürlüklü ve bekleyebilir — bu yüzden orada haftalık
+tekrar seçildi.)
+
+**Ama koşulsuz göndermek de yanlış:** yönetici planı düzenlerken beş
+dakikada üç kez "Yayınla"ya basabilir.
+
+**Çözüm — patlama birleştirme:** aynı kişinin aynı tipteki **okunmamış**
+bildirimi son **15 dakika** içinde yazılmışsa yeni satır açılmaz; var
+olan satır güncellenir (**sayı toplanır, tarih aralığı genişler**) ve
+ikinci push gönderilmez.
+
+* **Neden "okunmamış" şartı:** okunmuş bir bildirimi değiştirmek,
+  kişinin gördüğü metni arkasından değiştirmek olurdu. Okunmuşsa yeni
+  satır açılır.
+* **Bilgi kaybı yok:** birleştirme sayıları toplar, aralığı genişletir.
+
+### §2e.2 İçerik ve hedef
+
+* **Sayı kişiye özel:** "18 vardiya yayınlandı" herkese aynı gitseydi,
+  kişiye kendi planıyla ilgisiz bir sayı verirdi. Herkes **kendi**
+  vardiya sayısını ve **kendi** tarih aralığını görür.
+* **Push kişiye gider**, role değil: rol üzerinden gönderilseydi planı
+  değişmeyenler dahil tüm güvenlik ekibi aynı haberi alırdı.
+* **Değişmeyen kişiye bildirim gitmez** (ölçüldü).
+
+### §2e.3 Yönlendirme — P240 kusurunu YAPISAL olarak engelledim
+
+İstek bunu özellikle uyardı. P240'ta beyaz liste güncellenmediği için
+panik push'una dokunan kullanıcı hiçbir yere gitmiyordu; kaynak
+testleri göremiyordu çünkü "bilinmeyen tipe `null` dönmek" tasarımın
+kendisi — yani **kusur, çalışan koddan ayırt edilemez**.
+
+Bu yüzden yalnızca yeni tipi eklemekle yetinmedim: **iki yüzeyin
+haritasını karşılaştıran bir kilit** yazdım
+(`tests/p241-bildirim-rotasi.test.ts`). Kilit üç şeyi ölçüyor: her tip
+iki yüzeyde de var mı, haritadaki her tip sunucuda tanımlı mı, ve
+bileşenler boşa geçmiyor mu.
+
+**Kilit yazılır yazılmaz gerçek bir ayrışma yakaladı** (ikisi de P241
+öncesinden):
+
+| Yüzey | Eksik olan |
+|---|---|
+| Mobil | `gorev_atandi`, `gorev_tamamlandi`, `gorev_adim_ilerleme`, `uzak_okutma` |
+| Web | `kargo`, `ziyaretci`, `rezervasyon`, `sikayet_cozuldu` |
+
+Yani **`gorev_atandi` bildirimine dokunmak P191'den beri hiçbir yere
+gitmiyordu.** İkisi de kapatıldı.
+
+Ayrıca web'de bildirime tıklayınca yönlendirme **hiç yoktu** (hiçbir tip
+için); satıra hedefi olan tiplerde "Git" düğmesi eklendi. Hedefi olmayan
+tipte düğme çizilmiyor — boş bir "Git", götüreceğinden fazlasını vaat
+ederdi.
+
+### §2e.4 ÖLÇEMEDİĞİM
+
+* **Gerçek push cihaza düşmedi** (dev'de kayıtlı cihaz yok). Ölçülen:
+  bildirim satırı, `dispatch_external` çağrısının doğru kişiye gitmesi
+  ve birleştirme davranışı.
+* **15 dakikalık pencere gerçek kullanımla kalibre edilmedi** — yalnızca
+  testte (damga geriye alınarak) sürüldü.

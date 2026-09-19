@@ -155,7 +155,7 @@ void main() {
       expect(find.text('24°C'), findsNothing);
 
       // Referans serit kartlari.
-      expect(find.text('Vardiyalar'), findsOneWidget);
+      expect(find.text('Vardiya planı'), findsOneWidget);
       expect(find.text('Kargo'), findsOneWidget);
       expect(find.text('Ziyaretçiler'), findsOneWidget);
 
@@ -260,7 +260,7 @@ void main() {
       // sekme.
       expect(find.text('Görevlerim'), findsNWidgets(2));
 
-      expect(find.text('Vardiyalar'), findsOneWidget); // serit karti
+      expect(find.text('Vardiya planı'), findsOneWidget); // serit karti
       expect(find.text('Vardiya Durumu'), findsOneWidget); // bolum basligi
       expect(find.text('Son Hareketler'), findsOneWidget);
       expect(find.text('Görev Tamamlandı'), findsOneWidget);
@@ -276,7 +276,7 @@ void main() {
       expect(find.text('Vardiya Durumu'), findsNothing); // bolum basligi yok
       expect(find.text('Ali Veli'), findsNothing);
       expect(find.text('Kerem Aşçı'), findsNothing); // mock yonetici karti yok
-      expect(find.text('Vardiyalar'), findsOneWidget); // serit karti durur
+      expect(find.text('Vardiya planı'), findsOneWidget); // serit karti durur
     });
 
     testWidgets('Son Hareketler HATASI: "Yüklenemedi" + yeniden dene',
