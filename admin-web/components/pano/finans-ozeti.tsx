@@ -261,7 +261,7 @@ export function PanoFinansOzeti() {
         {!kasalar ? (
           <IskeletMetin satir={2} />
         ) : (kasalar.items ?? []).length === 0 ? (
-          <BosDurum baslik={t("panoKasaYok")} />
+          <BosDurum baslik={t("panoKasaYok")} aciklama={t("panoKasaYokAlt")} />
         ) : (
           <ul className="mt-3 space-y-1">
             {(kasalar.items ?? []).map((k) => (

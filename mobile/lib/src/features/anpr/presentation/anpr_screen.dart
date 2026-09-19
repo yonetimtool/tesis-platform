@@ -7,6 +7,7 @@ import '../../../core/i18n/l10n.dart';
 import '../../../core/theme/home_tokens.dart';
 import '../domain/anpr_models.dart';
 import 'anpr_controller.dart';
+import '../../../core/ui/bos_durum.dart';
 
 /// Durum/yon ADLARI — enum GORUNEN METIN TASIMAZ (README §15). `switch`in
 /// `default` dali YOKTUR: yeni bir durum eklenirse derleyici ceviriyi zorlar.
@@ -161,7 +162,11 @@ class _Govde extends StatelessWidget {
       return ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          Center(child: Text(l10n.anprListeBos, textAlign: TextAlign.center)),
+          BosDurum(
+            ikon: Icons.directions_car_outlined,
+            baslik: l10n.anprListeBos,
+            aciklama: l10n.anprListeBosAlt,
+          ),
         ],
       );
     }

@@ -401,7 +401,7 @@ export default function KameralarPage() {
         </Kart>
       ) : gorunen.length === 0 ? (
         <Kart>
-          <BosDurum baslik={t("kameraYokWeb")} />
+          <BosDurum baslik={t("kameraYokWeb")} aciklama={t("kameraYokWebAlt")} />
         </Kart>
       ) : null}
 

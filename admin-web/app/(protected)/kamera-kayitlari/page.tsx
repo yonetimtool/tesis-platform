@@ -140,7 +140,7 @@ export default function KameraKayitlariPage() {
       </h1>
 
       {kameralar.length === 0 ? (
-        <BosDurum baslik={t("kamKayitKameraYok")} />
+        <BosDurum baslik={t("kamKayitKameraYok")} aciklama={t("kamKayitKameraYokAlt")} />
       ) : (
         <>
           <Kart>

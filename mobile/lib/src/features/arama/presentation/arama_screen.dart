@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../routing/app_router.dart';
 import '../data/arama_api.dart';
+import '../../../core/ui/bos_durum.dart';
 
 /// (P230 §3) MOBIL GENEL ARAMA.
 ///
@@ -156,8 +157,11 @@ class _AramaScreenState extends ConsumerState<AramaScreen> {
     if (sonuc.isEmpty) {
       // "BULUNAMADI" ACIKCA SOYLENIR: bos bir liste, kullaniciya
       // aramanin CALISMADIGI izlenimi verirdi.
-      return Center(
-        child: Text(l10n.aramaSonucYok, key: const Key('arama-bos')),
+      return BosDurum(
+        key: const Key('arama-bos'),
+        ikon: Icons.search_off_outlined,
+        baslik: l10n.aramaSonucYok,
+        aciklama: l10n.aramaSonucYokAlt,
       );
     }
     return ListView.separated(

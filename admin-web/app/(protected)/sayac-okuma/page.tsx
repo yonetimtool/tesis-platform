@@ -314,7 +314,7 @@ export default function SayacOkumaPage() {
           ) : bolumler.length === 0 ? (
             // BOS LISTE SESSIZ GECILMEZ: bos bir 3. adimdan "ileri" demek,
             // hicbir daireyi borclandirmayan bir istek atmak olurdu.
-            <BosDurum baslik={t("sayacBolumYok")} />
+            <BosDurum baslik={t("sayacBolumYok")} aciklama={t("sayacBolumYokAlt")} />
           ) : (
             <div className="space-y-2">
               {bolumler.map((b) => (

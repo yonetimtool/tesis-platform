@@ -254,7 +254,7 @@ export default function DisHizmetlerPage() {
           </Kart>
         ) : kayitlar.length === 0 ? (
           <Kart>
-            <BosDurum baslik={t("disHizmetYok")} />
+            <BosDurum baslik={t("disHizmetYok")} aciklama={t("disHizmetYokAlt")} />
           </Kart>
         ) : (
           kayitlar.map((h) => (

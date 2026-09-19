@@ -7286,4 +7286,52 @@ class AppLocalizationsAr extends AppLocalizations {
   String kurulumAsgariSayac(int tamam, int toplam) {
     return '$tamam/$toplam جاهز';
   }
+
+  @override
+  String get bakimEkipmanYokAlt =>
+      'لا توجد معدات متابَعة للصيانة. أضف الأصول كالمصاعد والمولدات وحدّد دورياتها.';
+
+  @override
+  String get panikAlarmYokAlt =>
+      'لا توجد إنذارات استغاثة مسجلة. سيظهر إنذار هنا فور إرسال ساكن أو موظف نداء استغاثة.';
+
+  @override
+  String get aramaSonucYokAlt =>
+      'جرّب كلمة أخرى: يمكنك البحث برقم الوحدة أو الاسم أو الهاتف أو رقم اللوحة.';
+
+  @override
+  String get daireTanimYokAlt =>
+      'لم تُعرَّف أنواع الوحدات. بعد تعريف أنواع مثل 1+1 أو 2+1 يمكنك تحديد رسوم مختلفة لكل وحدة.';
+
+  @override
+  String get butHareketYokAlt =>
+      'لا توجد حركات في هذه الميزانية. استخدم الزر أسفل اليمين لإضافة أول إيراد أو مصروف.';
+
+  @override
+  String get butKategoriYokAlt =>
+      'لا توجد فئات للميزانية. تجمع الفئات الإيرادات والمصروفات لتصبح التقارير ذات معنى.';
+
+  @override
+  String get sikayetYokSakinAlt =>
+      'لم تفتح أي طلب بعد. أبلغ من هنا عن الأعطال والاقتراحات والشكاوى.';
+
+  @override
+  String get duyuruYokAlt =>
+      'لا توجد إعلانات منشورة. عندما تنشر الإدارة إعلانًا ستراه هنا وفي إشعاراتك.';
+
+  @override
+  String get ihlalListeBosAlt =>
+      'لا توجد مخالفات مسجلة. تظهر المخالفة المبلّغ عنها هنا مع تاريخها والوحدة.';
+
+  @override
+  String get anketYokAlt =>
+      'لا توجد استطلاعات مفتوحة. يمكنك التصويت هنا عندما تبدأ الإدارة استطلاعًا.';
+
+  @override
+  String get anprListeBosAlt =>
+      'لا توجد قراءات لوحات مسجلة. تُدرج الحركات هنا بعد توصيل كاميرا تمييز اللوحات.';
+
+  @override
+  String get vardiyaTanimYokAlt =>
+      'لا توجد ورديات معرّفة. بعد تعريف ورديات كالنهار والليل يمكنك توزيع الموظفين على الجدول.';
 }

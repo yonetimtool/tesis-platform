@@ -77,7 +77,7 @@ function Makbuzlar() {
           ekranda ayirt edilebilir kalir. */}
       {error ? <HataDurumu mesaj={t("aidatimMakbuzHata")} /> : null}
       {!error && makbuzlar.length === 0 ? (
-        <BosDurum baslik={t("aidatimMakbuzYok")} />
+        <BosDurum baslik={t("aidatimMakbuzYok")} aciklama={t("aidatimMakbuzYokAlt")} />
       ) : null}
       {makbuzlar.length > 0 ? (
         <div className="overflow-x-auto">
@@ -136,7 +136,7 @@ export default function AidatimPage() {
       ) : null}
 
       {!isLoading && !error && daireler.length === 0 ? (
-        <BosDurum baslik={t("aidatimYok")} />
+        <BosDurum baslik={t("aidatimYok")} aciklama={t("aidatimYokAlt")} />
       ) : null}
 
       {daireler.map((d) => (

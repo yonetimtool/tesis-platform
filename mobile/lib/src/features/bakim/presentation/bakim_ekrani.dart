@@ -106,6 +106,7 @@ class _BakimEkraniState extends ConsumerState<BakimEkrani> {
                   return BosDurum(
                     ikon: Icons.build_outlined,
                     baslik: l10n.bakimEkipmanYok,
+                    aciklama: l10n.bakimEkipmanYokAlt,
                   );
                 }
                 return RefreshIndicator(

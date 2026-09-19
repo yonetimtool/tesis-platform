@@ -7305,4 +7305,52 @@ class AppLocalizationsRu extends AppLocalizations {
   String kurulumAsgariSayac(int tamam, int toplam) {
     return '$tamam/$toplam готово';
   }
+
+  @override
+  String get bakimEkipmanYokAlt =>
+      'Нет оборудования на обслуживании. Добавьте объекты — лифты, генераторы — и задайте периодичность.';
+
+  @override
+  String get panikAlarmYokAlt =>
+      'Сигналов SOS нет. Сигнал появится здесь, как только житель или сотрудник его отправит.';
+
+  @override
+  String get aramaSonucYokAlt =>
+      'Попробуйте другой запрос: можно искать по номеру квартиры, имени, телефону или госномеру.';
+
+  @override
+  String get daireTanimYokAlt =>
+      'Типы квартир не заданы. Задав типы вроде 1+1 или 2+1, вы сможете назначить отдельный взнос каждой квартире.';
+
+  @override
+  String get butHareketYokAlt =>
+      'В этом бюджете нет операций. Кнопкой внизу справа добавьте первый доход или расход.';
+
+  @override
+  String get butKategoriYokAlt =>
+      'Категорий бюджета нет. Категории группируют доходы и расходы, делая отчёты осмысленными.';
+
+  @override
+  String get sikayetYokSakinAlt =>
+      'Вы ещё не создавали обращений. Здесь можно сообщить о неисправности, предложении или жалобе.';
+
+  @override
+  String get duyuruYokAlt =>
+      'Объявлений нет. Когда управление опубликует объявление, вы увидите его здесь и в уведомлениях.';
+
+  @override
+  String get ihlalListeBosAlt =>
+      'Нарушений нет. Сообщённое нарушение появится здесь с датой и квартирой.';
+
+  @override
+  String get anketYokAlt =>
+      'Открытых опросов нет. Вы сможете проголосовать здесь, когда управление начнёт опрос.';
+
+  @override
+  String get anprListeBosAlt =>
+      'Считываний номеров нет. Проезды появятся здесь после подключения камеры распознавания.';
+
+  @override
+  String get vardiyaTanimYokAlt =>
+      'Смены не заданы. Задав смены (день, ночь), вы сможете расставить персонал в графике.';
 }

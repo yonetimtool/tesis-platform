@@ -41,7 +41,7 @@ export default function SiteKurallariPage() {
       ) : null}
       {!isLoading && !error && kurallar.length === 0 ? (
         <Kart>
-          <BosDurum baslik={t("sakinKurallarYok")} />
+          <BosDurum baslik={t("sakinKurallarYok")} aciklama={t("sakinKurallarYokAlt")} />
         </Kart>
       ) : null}
       <ol className="space-y-3">

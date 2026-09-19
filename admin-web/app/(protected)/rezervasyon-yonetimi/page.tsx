@@ -171,7 +171,7 @@ function AlanlarSekmesi() {
       {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
       {isLoading ? <IskeletMetin satir={3} /> : null}
       {!isLoading && !error && alanlar.length === 0 ? (
-        <BosDurum baslik={t("rezYonAlanYok")} />
+        <BosDurum baslik={t("rezYonAlanYok")} aciklama={t("rezYonAlanYokAlt")} />
       ) : null}
 
       <div className="space-y-3">
@@ -334,7 +334,7 @@ function RezervasyonlarSekmesi() {
       {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
       {isLoading ? <IskeletMetin satir={3} /> : null}
       {!isLoading && !error && kayitlar.length === 0 ? (
-        <BosDurum baslik={t("rezYonRezYok")} />
+        <BosDurum baslik={t("rezYonRezYok")} aciklama={t("rezYonRezYokAlt")} />
       ) : null}
 
       <div className="space-y-3">

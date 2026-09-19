@@ -143,7 +143,10 @@ export default function RezervasyonlarimPage() {
           <IskeletMetin satir={3} />
         ) : null}
         {!isLoading && !error && kayitlar.length === 0 ? (
-          <BosDurum baslik={gecmisMi ? t("rezervasyonGecmisYok") : t("rezervasyonYok")} />
+          <BosDurum
+            baslik={gecmisMi ? t("rezervasyonGecmisYok") : t("rezervasyonYok")}
+            aciklama={gecmisMi ? t("rezervasyonGecmisYokAlt") : t("rezervasyonYokAlt")}
+          />
         ) : null}
         {kayitlar.map((r) => (
           <Kart key={r.id} className="space-y-1">

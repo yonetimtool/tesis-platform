@@ -7227,4 +7227,52 @@ class AppLocalizationsFr extends AppLocalizations {
   String kurulumAsgariSayac(int tamam, int toplam) {
     return '$tamam/$toplam prêts';
   }
+
+  @override
+  String get bakimEkipmanYokAlt =>
+      'Aucun équipement suivi en maintenance. Ajoutez des actifs (ascenseur, générateur…) et définissez leurs périodicités.';
+
+  @override
+  String get panikAlarmYokAlt =>
+      'Aucune alerte de panique enregistrée. Elle apparaît ici dès qu\'un résident ou un employé envoie un SOS.';
+
+  @override
+  String get aramaSonucYokAlt =>
+      'Essayez un autre terme : vous pouvez chercher par numéro de logement, nom, téléphone ou plaque.';
+
+  @override
+  String get daireTanimYokAlt =>
+      'Aucun type de logement défini. Après avoir défini des types (1+1, 2+1…), vous pourrez fixer un montant de charges par logement.';
+
+  @override
+  String get butHareketYokAlt =>
+      'Aucun mouvement dans ce budget. Utilisez le bouton en bas à droite pour saisir la première recette ou dépense.';
+
+  @override
+  String get butKategoriYokAlt =>
+      'Aucune catégorie budgétaire. Les catégories regroupent recettes et dépenses pour rendre les rapports lisibles.';
+
+  @override
+  String get sikayetYokSakinAlt =>
+      'Vous n\'avez pas encore ouvert de demande. Signalez ici pannes, suggestions et réclamations.';
+
+  @override
+  String get duyuruYokAlt =>
+      'Aucune annonce publiée. Lorsque la gestion en publie une, vous la verrez ici et dans vos notifications.';
+
+  @override
+  String get ihlalListeBosAlt =>
+      'Aucune infraction enregistrée. Un manquement signalé apparaît ici avec sa date et le logement.';
+
+  @override
+  String get anketYokAlt =>
+      'Aucun sondage ouvert. Vous pourrez voter ici dès que la gestion en lancera un.';
+
+  @override
+  String get anprListeBosAlt =>
+      'Aucune lecture de plaque enregistrée. Les passages s\'affichent ici dès qu\'une caméra LAPI est connectée.';
+
+  @override
+  String get vardiyaTanimYokAlt =>
+      'Aucun poste défini. Après avoir défini des postes (jour, nuit…), vous pourrez planifier le personnel.';
 }

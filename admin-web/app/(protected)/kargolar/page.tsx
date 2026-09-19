@@ -196,7 +196,7 @@ export default function KargolarPage() {
           <IskeletMetin satir={3} />
         ) : null}
         {!isLoading && !error && kayitlar.length === 0 ? (
-          <BosDurum baslik={t("kargoYok")} />
+          <BosDurum baslik={t("kargoYok")} aciklama={t("kargoYokAlt")} />
         ) : null}
         {kayitlar.map((k) => (
           <Kart key={k.id} className="space-y-1">

@@ -2482,5 +2482,17 @@
         "type": "int"
       }
     }
-  }
+  },
+  "bakimEkipmanYokAlt": "No hay equipos en seguimiento de mantenimiento. Añada activos como ascensores o generadores y defina sus periodos.",
+  "panikAlarmYokAlt": "No hay alertas de pánico registradas. Aparecerá una aquí en cuanto un residente o empleado envíe un SOS.",
+  "aramaSonucYokAlt": "Pruebe otro término: puede buscar por número de vivienda, nombre, teléfono o matrícula.",
+  "daireTanimYokAlt": "No hay tipos de vivienda definidos. Al definir tipos como 1+1 o 2+1 podrá fijar una cuota distinta por vivienda.",
+  "butHareketYokAlt": "No hay movimientos en este presupuesto. Use el botón inferior derecho para añadir el primer ingreso o gasto.",
+  "butKategoriYokAlt": "No hay categorías presupuestarias. Las categorías agrupan ingresos y gastos para que los informes tengan sentido.",
+  "sikayetYokSakinAlt": "Todavía no ha abierto una solicitud. Comunique aquí averías, sugerencias y quejas.",
+  "duyuruYokAlt": "No hay comunicados publicados. Cuando la administración publique uno lo verá aquí y en sus notificaciones.",
+  "ihlalListeBosAlt": "No hay infracciones registradas. Una infracción notificada aparece aquí con su fecha y vivienda.",
+  "anketYokAlt": "No hay encuestas abiertas. Podrá votar aquí cuando la administración inicie una.",
+  "anprListeBosAlt": "No hay lecturas de matrícula. Los pasos se listan aquí cuando se conecte una cámara de reconocimiento.",
+  "vardiyaTanimYokAlt": "No hay turnos definidos. Al definir turnos como día y noche podrá asignar personal al cuadrante."
 }

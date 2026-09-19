@@ -3611,5 +3611,17 @@
         "type": "int"
       }
     }
-  }
+  },
+  "bakimEkipmanYokAlt": "Bakımı izlenecek ekipman yok. Asansör, jeneratör gibi demirbaşları ekleyip periyot tanımlayın.",
+  "panikAlarmYokAlt": "Kayıtlı panik alarmı yok. Bir sakin veya personel SOS gönderdiğinde burada görünür.",
+  "aramaSonucYokAlt": "Farklı bir kelime deneyin: daire numarası, ad, telefon veya plaka ile arayabilirsiniz.",
+  "daireTanimYokAlt": "Daire tipi tanımlanmadı. 1+1, 2+1 gibi tipleri tanımlayınca her daireye ayrı aidat tutarı verebilirsiniz.",
+  "butHareketYokAlt": "Bu bütçede hareket yok. Sağ alttaki düğmeyle ilk gelir veya gider kaydını girin.",
+  "butKategoriYokAlt": "Bütçe kategorisi yok. Kategoriler, gelir ve giderleri gruplayarak raporları anlamlı hâle getirir.",
+  "sikayetYokSakinAlt": "Henüz bir talep açmadınız. Arıza, öneri ve şikâyetlerinizi buradan iletebilirsiniz.",
+  "duyuruYokAlt": "Yayımlanmış duyuru yok. Yönetim duyuru yaptığında burada ve bildirimlerde görürsünüz.",
+  "ihlalListeBosAlt": "Kayıtlı ihlal yok. Kural ihlali bildirildiğinde burada tarih ve daireyle birlikte görünür.",
+  "anketYokAlt": "Açık anket yok. Yönetim anket başlattığında burada oy verebilirsiniz.",
+  "anprListeBosAlt": "Kayıtlı plaka okuma yok. Plaka tanıma kamerası bağlandığında geçişler burada listelenir.",
+  "vardiyaTanimYokAlt": "Vardiya tanımı yok. Gündüz, gece gibi vardiyaları tanımlayınca personeli çizelgeye yerleştirebilirsiniz."
 }

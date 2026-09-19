@@ -7212,4 +7212,52 @@ class AppLocalizationsEs extends AppLocalizations {
   String kurulumAsgariSayac(int tamam, int toplam) {
     return '$tamam/$toplam listos';
   }
+
+  @override
+  String get bakimEkipmanYokAlt =>
+      'No hay equipos en seguimiento de mantenimiento. Añada activos como ascensores o generadores y defina sus periodos.';
+
+  @override
+  String get panikAlarmYokAlt =>
+      'No hay alertas de pánico registradas. Aparecerá una aquí en cuanto un residente o empleado envíe un SOS.';
+
+  @override
+  String get aramaSonucYokAlt =>
+      'Pruebe otro término: puede buscar por número de vivienda, nombre, teléfono o matrícula.';
+
+  @override
+  String get daireTanimYokAlt =>
+      'No hay tipos de vivienda definidos. Al definir tipos como 1+1 o 2+1 podrá fijar una cuota distinta por vivienda.';
+
+  @override
+  String get butHareketYokAlt =>
+      'No hay movimientos en este presupuesto. Use el botón inferior derecho para añadir el primer ingreso o gasto.';
+
+  @override
+  String get butKategoriYokAlt =>
+      'No hay categorías presupuestarias. Las categorías agrupan ingresos y gastos para que los informes tengan sentido.';
+
+  @override
+  String get sikayetYokSakinAlt =>
+      'Todavía no ha abierto una solicitud. Comunique aquí averías, sugerencias y quejas.';
+
+  @override
+  String get duyuruYokAlt =>
+      'No hay comunicados publicados. Cuando la administración publique uno lo verá aquí y en sus notificaciones.';
+
+  @override
+  String get ihlalListeBosAlt =>
+      'No hay infracciones registradas. Una infracción notificada aparece aquí con su fecha y vivienda.';
+
+  @override
+  String get anketYokAlt =>
+      'No hay encuestas abiertas. Podrá votar aquí cuando la administración inicie una.';
+
+  @override
+  String get anprListeBosAlt =>
+      'No hay lecturas de matrícula. Los pasos se listan aquí cuando se conecte una cámara de reconocimiento.';
+
+  @override
+  String get vardiyaTanimYokAlt =>
+      'No hay turnos definidos. Al definir turnos como día y noche podrá asignar personal al cuadrante.';
 }

@@ -8,6 +8,7 @@ import '../domain/unit_complaint_models.dart';
 import 'my_complaints_controller.dart';
 import 'kategori_adi.dart';
 import '../../../core/theme/home_tokens.dart';
+import '../../../core/ui/bos_durum.dart';
 
 /// "Şikayetlerim" (D-viz Rev-1.1) — sakin KENDI actigi daire sikayetlerini
 /// (gitti mi geri bildirimi) gorur: hedef daire + kategori + tarih + durum.
@@ -62,8 +63,10 @@ class _Body extends StatelessWidget {
       return ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          Center(
-            child: Text(l10n.sikayetYokSakin, textAlign: TextAlign.center),
+          BosDurum(
+            ikon: Icons.support_agent_outlined,
+            baslik: l10n.sikayetYokSakin,
+            aciklama: l10n.sikayetYokSakinAlt,
           ),
         ],
       );

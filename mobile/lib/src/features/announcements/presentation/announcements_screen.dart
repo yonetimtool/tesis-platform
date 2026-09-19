@@ -18,6 +18,7 @@ import '../domain/announcement_models.dart';
 import 'announcements_controller.dart';
 import '../../../core/ui/gorsel_cozme.dart';
 import '../../../core/ui/merkez_diyalog.dart';
+import '../../../core/ui/bos_durum.dart';
 
 /// "Duyurular" — tum roller okur; admin/yonetici olusturur/duzenler/siler
 /// (FAB + kart menusu yalniz onlarda gorunur; gercek yetki backend'de).
@@ -108,7 +109,13 @@ class _Body extends ConsumerWidget {
     if (state.items.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(24),
-        children: [Center(child: Text(l10n.duyuruYok))],
+        children: [
+          BosDurum(
+            ikon: Icons.campaign_outlined,
+            baslik: l10n.duyuruYok,
+            aciklama: l10n.duyuruYokAlt,
+          ),
+        ],
       );
     }
     return ListView.builder(

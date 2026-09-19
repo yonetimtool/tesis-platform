@@ -670,7 +670,7 @@ function GuvenlikVeGiris() {
           {!cihazlar ? (
             <IskeletMetin satir={2} />
           ) : cihazlar.length === 0 ? (
-            <BosDurum baslik={t("profilCihazYok")} />
+            <BosDurum baslik={t("profilCihazYok")} aciklama={t("profilCihazYokAlt")} />
           ) : (
             <ul className="space-y-2">
               {cihazlar.map((c) => (
@@ -719,7 +719,7 @@ function GuvenlikVeGiris() {
           {!etkinlik ? (
             <IskeletMetin satir={3} />
           ) : etkinlik.length === 0 ? (
-            <BosDurum baslik={t("profilEtkinlikYok")} />
+            <BosDurum baslik={t("profilEtkinlikYok")} aciklama={t("profilEtkinlikYokAlt")} />
           ) : (
             <ul className="space-y-1">
               {etkinlik.map((e) => (

@@ -7035,4 +7035,52 @@ class AppLocalizationsTr extends AppLocalizations {
   String kurulumAsgariSayac(int tamam, int toplam) {
     return '$tamam/$toplam hazır';
   }
+
+  @override
+  String get bakimEkipmanYokAlt =>
+      'Bakımı izlenecek ekipman yok. Asansör, jeneratör gibi demirbaşları ekleyip periyot tanımlayın.';
+
+  @override
+  String get panikAlarmYokAlt =>
+      'Kayıtlı panik alarmı yok. Bir sakin veya personel SOS gönderdiğinde burada görünür.';
+
+  @override
+  String get aramaSonucYokAlt =>
+      'Farklı bir kelime deneyin: daire numarası, ad, telefon veya plaka ile arayabilirsiniz.';
+
+  @override
+  String get daireTanimYokAlt =>
+      'Daire tipi tanımlanmadı. 1+1, 2+1 gibi tipleri tanımlayınca her daireye ayrı aidat tutarı verebilirsiniz.';
+
+  @override
+  String get butHareketYokAlt =>
+      'Bu bütçede hareket yok. Sağ alttaki düğmeyle ilk gelir veya gider kaydını girin.';
+
+  @override
+  String get butKategoriYokAlt =>
+      'Bütçe kategorisi yok. Kategoriler, gelir ve giderleri gruplayarak raporları anlamlı hâle getirir.';
+
+  @override
+  String get sikayetYokSakinAlt =>
+      'Henüz bir talep açmadınız. Arıza, öneri ve şikâyetlerinizi buradan iletebilirsiniz.';
+
+  @override
+  String get duyuruYokAlt =>
+      'Yayımlanmış duyuru yok. Yönetim duyuru yaptığında burada ve bildirimlerde görürsünüz.';
+
+  @override
+  String get ihlalListeBosAlt =>
+      'Kayıtlı ihlal yok. Kural ihlali bildirildiğinde burada tarih ve daireyle birlikte görünür.';
+
+  @override
+  String get anketYokAlt =>
+      'Açık anket yok. Yönetim anket başlattığında burada oy verebilirsiniz.';
+
+  @override
+  String get anprListeBosAlt =>
+      'Kayıtlı plaka okuma yok. Plaka tanıma kamerası bağlandığında geçişler burada listelenir.';
+
+  @override
+  String get vardiyaTanimYokAlt =>
+      'Vardiya tanımı yok. Gündüz, gece gibi vardiyaları tanımlayınca personeli çizelgeye yerleştirebilirsiniz.';
 }

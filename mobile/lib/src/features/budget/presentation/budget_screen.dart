@@ -10,6 +10,7 @@ import '../data/budget_api.dart';
 import '../domain/budget_models.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 import 'butce_tip_adi.dart';
+import '../../../core/ui/bos_durum.dart';
 
 /// Butce ekrani (Wave 2A — yonetici):
 ///   * Ozet: gelir / gider / kasa (donem filtresiyle),
@@ -334,7 +335,11 @@ class _EntriesTab extends ConsumerWidget {
         label: Text(l10n.butYeniHareket),
       ),
       body: entries.isEmpty
-          ? Center(child: Text(l10n.butHareketYok))
+          ? BosDurum(
+              ikon: Icons.receipt_long_outlined,
+              baslik: l10n.butHareketYok,
+              aciklama: l10n.butHareketYokAlt,
+            )
           : ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
               itemCount: entries.length,
@@ -582,7 +587,11 @@ class _CategoriesTab extends ConsumerWidget {
         label: Text(l10n.butYeniKategori),
       ),
       body: categories.isEmpty
-          ? Center(child: Text(l10n.butKategoriYok))
+          ? BosDurum(
+              ikon: Icons.category_outlined,
+              baslik: l10n.butKategoriYok,
+              aciklama: l10n.butKategoriYokAlt,
+            )
           : ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
               itemCount: categories.length,

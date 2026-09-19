@@ -9,6 +9,7 @@ import '../../../core/para.dart';
 import '../data/unit_tanim_api.dart';
 import '../domain/unit_tanim_models.dart';
 import '../../../core/ui/merkez_diyalog.dart';
+import '../../../core/ui/bos_durum.dart';
 
 /// "Bağımsız Bölüm Tanımları" (P26) — TIPLER + GRUPLAR, iki sekme.
 ///
@@ -85,8 +86,10 @@ class _TanimListesi extends ConsumerWidget {
               ? ListView(
                   padding: const EdgeInsets.all(24),
                   children: [
-                    Center(
-                      child: Text(l10n.daireTanimYok, textAlign: TextAlign.center),
+                    BosDurum(
+                      ikon: Icons.home_work_outlined,
+                      baslik: l10n.daireTanimYok,
+                      aciklama: l10n.daireTanimYokAlt,
                     ),
                   ],
                 )

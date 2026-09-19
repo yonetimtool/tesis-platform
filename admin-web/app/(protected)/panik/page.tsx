@@ -132,7 +132,7 @@ export default function PanikPage() {
             DUSMUSSE liste bos gelir ve "kayit yok" yazmak, hatayi
             "veri yok" gibi gosterirdi (depo kilidi `hata-mesaji`). */}
         {!isLoading && !error && satirlar.length === 0 ? (
-          <BosDurum ikon="alert" baslik={t("panikAlarmYok")} />
+          <BosDurum ikon="alert" baslik={t("panikAlarmYok")} aciklama={t("panikAlarmYokAlt")} />
         ) : (
           <Tablo>
             <TabloBasligi>

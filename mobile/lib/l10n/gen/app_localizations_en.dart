@@ -7233,4 +7233,52 @@ class AppLocalizationsEn extends AppLocalizations {
   String kurulumAsgariSayac(int tamam, int toplam) {
     return '$tamam/$toplam ready';
   }
+
+  @override
+  String get bakimEkipmanYokAlt =>
+      'No equipment is tracked for maintenance. Add assets such as lifts or generators and define their intervals.';
+
+  @override
+  String get panikAlarmYokAlt =>
+      'No panic alerts recorded. One appears here as soon as a resident or staff member sends an SOS.';
+
+  @override
+  String get aramaSonucYokAlt =>
+      'Try a different term: you can search by unit number, name, phone or licence plate.';
+
+  @override
+  String get daireTanimYokAlt =>
+      'No unit types defined. Once you define types such as 1+1 or 2+1 you can set a separate dues amount per unit.';
+
+  @override
+  String get butHareketYokAlt =>
+      'No entries in this budget. Use the button at the bottom right to add the first income or expense.';
+
+  @override
+  String get butKategoriYokAlt =>
+      'No budget categories. Categories group income and expenses so the reports make sense.';
+
+  @override
+  String get sikayetYokSakinAlt =>
+      'You haven\'t opened a request yet. Report faults, suggestions and complaints here.';
+
+  @override
+  String get duyuruYokAlt =>
+      'No announcements published. When management posts one you\'ll see it here and in your notifications.';
+
+  @override
+  String get ihlalListeBosAlt =>
+      'No violations recorded. A reported breach appears here with its date and unit.';
+
+  @override
+  String get anketYokAlt =>
+      'No open polls. You can vote here when management starts one.';
+
+  @override
+  String get anprListeBosAlt =>
+      'No plate reads recorded. Passages are listed here once a plate-recognition camera is connected.';
+
+  @override
+  String get vardiyaTanimYokAlt =>
+      'No shifts defined. Once you define shifts such as day and night you can place staff on the roster.';
 }

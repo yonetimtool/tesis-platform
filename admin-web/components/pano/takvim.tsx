@@ -639,7 +639,7 @@ function AjandaListesi({
     kap.scrollTop = hedef.offsetTop - kap.offsetTop;
   }, [gunler]);
 
-  if (gunler.length === 0) return <BosDurum baslik={t("takvimOlayYok")} />;
+  if (gunler.length === 0) return <BosDurum baslik={t("takvimOlayYok")} aciklama={t("takvimOlayYokAlt")} />;
 
   return (
     <div
@@ -715,7 +715,7 @@ function GunListesi({
   zamanOnde?: boolean;
 }) {
   const t = useT();
-  if (ogeler.length === 0) return <BosDurum baslik={t("takvimOlayYok")} />;
+  if (ogeler.length === 0) return <BosDurum baslik={t("takvimOlayYok")} aciklama={t("takvimOlayYokAlt")} />;
   return (
     <ul className="space-y-1">
       {ogeler.map((o, i) => (

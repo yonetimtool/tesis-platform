@@ -358,7 +358,7 @@ export default function AnketlerPage() {
           <h3 className="text-base font-medium">{t("anketOyDokumu")}</h3>
           {secili.anonim ? (
             /* ANONIMDE ISTEK HIC ATILMAZ: veri YOK, "yetkiniz yok" degil. */
-            <BosDurum baslik={t("anketOyDokumuAnonim")} />
+            <BosDurum baslik={t("anketOyDokumuAnonim")} aciklama={t("anketOyDokumuAnonimAlt")} />
           ) : (
             <div className="overflow-hidden rounded-lg border kart-kenar">
               <div className="odak-ic overflow-x-auto" tabIndex={0}>
@@ -381,7 +381,7 @@ export default function AnketlerPage() {
                     {dokum && dokum.items.length === 0 ? (
                       <tr>
                         <Td colSpan={3}>
-                          <BosDurum baslik={t("denetimKayitYok")} />
+                          <BosDurum baslik={t("denetimKayitYok")} aciklama={t("denetimKayitYokAlt")} />
                         </Td>
                       </tr>
                     ) : null}

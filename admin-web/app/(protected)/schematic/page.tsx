@@ -353,7 +353,7 @@ export default function SchematicPage() {
 
           {data && data.bloklar.length === 0 && (data.unplaced?.length ?? 0) === 0 && (
             <Kart>
-              <BosDurum baslik={t("haritaDaireYok")} />
+              <BosDurum baslik={t("haritaDaireYok")} aciklama={t("haritaDaireYokAlt")} />
             </Kart>
           )}
         </div>

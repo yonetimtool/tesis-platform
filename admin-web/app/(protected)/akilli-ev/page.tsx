@@ -357,7 +357,7 @@ export default function AkilliEvPage() {
         </Dugme>
       </div>
       {kopruListe.length === 0 ? (
-        <BosDurum baslik={t("akilliEvKopruYok")} />
+        <BosDurum baslik={t("akilliEvKopruYok")} aciklama={t("akilliEvKopruYokAlt")} />
       ) : (
         <Tablo>
           <TabloBasligi>
@@ -435,7 +435,7 @@ export default function AkilliEvPage() {
         )}
       </div>
       {cihazListe.length === 0 ? (
-        <BosDurum baslik={t("akilliEvCihazYok")} />
+        <BosDurum baslik={t("akilliEvCihazYok")} aciklama={t("akilliEvCihazYokAlt")} />
       ) : (
         <Tablo>
           <TabloBasligi>
@@ -514,7 +514,7 @@ export default function AkilliEvPage() {
         )}
       </div>
       {senaryoListe.length === 0 ? (
-        <BosDurum baslik={t("akilliEvSenaryoYok")} />
+        <BosDurum baslik={t("akilliEvSenaryoYok")} aciklama={t("akilliEvSenaryoYokAlt")} />
       ) : (
         <Tablo>
           <TabloBasligi>

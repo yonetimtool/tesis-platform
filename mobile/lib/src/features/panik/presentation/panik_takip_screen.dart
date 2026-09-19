@@ -29,6 +29,7 @@ class PanikTakipScreen extends ConsumerWidget {
             return BosDurum(
               ikon: Icons.emergency_outlined,
               baslik: l10n.panikAlarmYok,
+              aciklama: l10n.panikAlarmYokAlt,
             );
           }
           return RefreshIndicator(

@@ -54,7 +54,7 @@ export default function YonetimIletisimPage() {
 
       {!isLoading && !error && yoneticiler.length === 0 ? (
         <Kart>
-          <BosDurum baslik={t("yonetimIletisimYok")} />
+          <BosDurum baslik={t("yonetimIletisimYok")} aciklama={t("yonetimIletisimYokAlt")} />
         </Kart>
       ) : null}
 

@@ -317,7 +317,7 @@ export default function NotificationsPage() {
         </Kart>
       ) : items.length === 0 ? (
         <Kart>
-          <BosDurum baslik={t("bildirimYok")} />
+          <BosDurum baslik={t("bildirimYok")} aciklama={t("bildirimYokAlt")} />
         </Kart>
       ) : (
         <ul className="space-y-2">

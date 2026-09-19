@@ -9,6 +9,7 @@ import '../data/anket_api.dart';
 import '../domain/anket_models.dart';
 import 'anket_form.dart';
 import 'anket_oy_dokumu_screen.dart';
+import '../../../core/ui/bos_durum.dart';
 
 /// Anket ekrani — SAKIN oy verir, YONETIM acar/kapatir.
 ///
@@ -49,7 +50,11 @@ class AnketScreen extends ConsumerWidget {
           ),
         ),
         data: (liste) => liste.isEmpty
-            ? Center(child: Text(l10n.anketYok))
+            ? BosDurum(
+                ikon: Icons.how_to_vote_outlined,
+                baslik: l10n.anketYok,
+                aciklama: l10n.anketYokAlt,
+              )
             : RefreshIndicator(
                 onRefresh: () async => ref.invalidate(anketlerProvider),
                 child: ListView.builder(

@@ -256,7 +256,7 @@ export default function EtkinlikYonetimPage() {
       {isLoading && !data ? <Iskelet className="h-24 w-full" /> : null}
       {!isLoading && !error && etkinlikler.length === 0 ? (
         <Kart>
-          <BosDurum baslik={t("etkinlikYonetimBos")} />
+          <BosDurum baslik={t("etkinlikYonetimBos")} aciklama={t("etkinlikYonetimBosAlt")} />
         </Kart>
       ) : null}
 

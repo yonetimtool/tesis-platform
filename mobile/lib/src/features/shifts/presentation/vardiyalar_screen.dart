@@ -10,6 +10,7 @@ import '../domain/shift_models.dart';
 import 'gun_tipi_adi.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/ui/merkez_diyalog.dart';
+import '../../../core/ui/bos_durum.dart';
 
 /// Vardiyalar ekrani (WP-E) — tum vardiya tanimlari + atanan personel.
 /// admin/yonetici her vardiyaya "Personel Ata" ile saha personeli atar
@@ -42,7 +43,11 @@ class VardiyalarScreen extends ConsumerWidget {
         ),
         data: (vardiyalar) {
           if (vardiyalar.isEmpty) {
-            return Center(child: Text(l10n.vardiyaTanimYok));
+            return BosDurum(
+              ikon: Icons.schedule_outlined,
+              baslik: l10n.vardiyaTanimYok,
+              aciklama: l10n.vardiyaTanimYokAlt,
+            );
           }
           return ListView.separated(
             padding: const EdgeInsets.all(12),

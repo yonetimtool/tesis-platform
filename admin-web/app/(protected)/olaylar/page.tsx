@@ -177,7 +177,7 @@ export default function OlaylarPage() {
           <IskeletMetin satir={3} />
         ) : null}
         {!isLoading && !error && kayitlar.length === 0 ? (
-          <BosDurum baslik={t("olayYok")} />
+          <BosDurum baslik={t("olayYok")} aciklama={t("olayYokAlt")} />
         ) : null}
         {kayitlar.map((o) => (
           <Kart key={o.id} className="space-y-1">

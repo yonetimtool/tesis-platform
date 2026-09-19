@@ -46,7 +46,7 @@ export default function EtkinliklerPage() {
       ) : null}
       {!isLoading && !error && kayitlar.length === 0 ? (
         <Kart>
-          <BosDurum baslik={t("sakinEtkinlikYok")} />
+          <BosDurum baslik={t("sakinEtkinlikYok")} aciklama={t("sakinEtkinlikYokAlt")} />
         </Kart>
       ) : null}
       {kayitlar.map((e) => (

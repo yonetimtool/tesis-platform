@@ -703,7 +703,7 @@ export default function DashboardPage() {
         return isLoading && !data ? (
           <Yukleniyor satir={3} />
         ) : gruplar.length === 0 ? (
-          <BosDurum baslik={t("pano2AlarmYokBaslik")} />
+          <BosDurum baslik={t("pano2AlarmYokBaslik")} aciklama={t("pano2AlarmYokBaslikAlt")} />
         ) : (
           <div className="space-y-2">
             {gruplar.map((g) => (
@@ -830,7 +830,7 @@ export default function DashboardPage() {
           KALAN alanina birakmak, tepsiden gelen bir bolumu geri getirir (gizli
           bayragini kaldirir). Normal modda hicbir surukle davranisi baglanmaz. */}
       {gorunurSatirlar.length === 0 && !duzenlemede ? (
-        <BosDurum baslik={t("panoTumBolumlerGizli")} />
+        <BosDurum baslik={t("panoTumBolumlerGizli")} aciklama={t("panoTumBolumlerGizliAlt")} />
       ) : (
         <div
           className="space-y-bolum"

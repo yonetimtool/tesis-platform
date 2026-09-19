@@ -8,6 +8,7 @@ import '../../../core/theme/home_tokens.dart';
 import '../domain/violation_models.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 import 'violations_controller.dart';
+import '../../../core/ui/bos_durum.dart';
 
 /// Durum/kaynak ADLARI — enum GORUNEN METIN TASIMAZ (README §15), etiket
 /// cizim aninda burada cozulur. `switch`in `default` dali YOKTUR: yeni bir
@@ -168,7 +169,11 @@ class _Govde extends StatelessWidget {
       return ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          Center(child: Text(l10n.ihlalListeBos, textAlign: TextAlign.center)),
+          BosDurum(
+            ikon: Icons.gavel_outlined,
+            baslik: l10n.ihlalListeBos,
+            aciklama: l10n.ihlalListeBosAlt,
+          ),
         ],
       );
     }

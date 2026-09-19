@@ -89,6 +89,7 @@ export function Grafik({
   dilimler,
   bicimle,
   bosBaslik,
+  bosAciklama,
   eylem,
   tur = "otomatik",
 }: {
@@ -97,6 +98,14 @@ export function Grafik({
   /** Degeri metne cevirir (para/yuzde). Verilmezse duz sayi. */
   bicimle?: (n: number) => string;
   bosBaslik: string;
+  /**
+   * (P243 §6c) BOS GRAFIGIN REHBERI.
+   *
+   * Verilmezse genel bir yol tarifi cizilir ("tarih araligini
+   * genislet"): bos bir grafikte kullanicinin ilk sorusu "bozuk mu"
+   * olur ve tek basina bir baslik bunu yanitlamaz.
+   */
+  bosAciklama?: string;
   eylem?: ReactNode;
   /**
    * (P223 §4) Veri turune UYGUN gosterim.
@@ -120,7 +129,7 @@ export function Grafik({
       </div>
 
       {dilimler.length === 0 ? (
-        <BosDurum baslik={bosBaslik} />
+        <BosDurum baslik={bosBaslik} aciklama={bosAciklama ?? t("grafikVeriYokAlt")} />
       ) : (
         <>
           {/* GRAFIK DEKORDUR: rakamlar asagidaki tabloda. */}

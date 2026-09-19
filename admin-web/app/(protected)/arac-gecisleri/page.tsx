@@ -48,7 +48,7 @@ export default function AracGecisleriPage() {
       ) : null}
       {!isLoading && !error && kayitlar.length === 0 ? (
         <Kart>
-          <BosDurum baslik={t("aracYok")} />
+          <BosDurum baslik={t("aracYok")} aciklama={t("aracYokAlt")} />
         </Kart>
       ) : null}
       {kayitlar.map((g) => (

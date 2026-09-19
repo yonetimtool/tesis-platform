@@ -758,7 +758,7 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
       {/* (P61) `!error` SART: yukleme dustugunde de liste bostur ve sayfa
           "Kayit yok" derdi — ustundeki hata kutusuyla celiserek. */}
       {!isLoading && !error && kayitlar.length === 0 ? (
-        <BosDurum baslik={t("tanimKayitYok")} />
+        <BosDurum baslik={t("tanimKayitYok")} aciklama={t("tanimKayitYokAlt")} />
       ) : null}
       {/* (P154 / Asama 6.2) ORTAK LISTE. Elle yazilmis `<table>` kalkti;
           siralama, kolon suzgeci, sayfa basina kayit ve sayfalama artik

@@ -87,7 +87,7 @@ export default function GorevlerimPage() {
         <IskeletMetin satir={3} />
       ) : null}
       {!isLoading && !error && gorevler.length === 0 ? (
-        <BosDurum baslik={t("gorevimYok")} />
+        <BosDurum baslik={t("gorevimYok")} aciklama={t("gorevimYokAlt")} />
       ) : null}
 
       {gorevler.map((g) => (

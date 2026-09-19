@@ -12508,6 +12508,78 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'{tamam}/{toplam} hazır'**
   String kurulumAsgariSayac(int tamam, int toplam);
+
+  /// No description provided for @bakimEkipmanYokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bakımı izlenecek ekipman yok. Asansör, jeneratör gibi demirbaşları ekleyip periyot tanımlayın.'**
+  String get bakimEkipmanYokAlt;
+
+  /// No description provided for @panikAlarmYokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıtlı panik alarmı yok. Bir sakin veya personel SOS gönderdiğinde burada görünür.'**
+  String get panikAlarmYokAlt;
+
+  /// No description provided for @aramaSonucYokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Farklı bir kelime deneyin: daire numarası, ad, telefon veya plaka ile arayabilirsiniz.'**
+  String get aramaSonucYokAlt;
+
+  /// No description provided for @daireTanimYokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire tipi tanımlanmadı. 1+1, 2+1 gibi tipleri tanımlayınca her daireye ayrı aidat tutarı verebilirsiniz.'**
+  String get daireTanimYokAlt;
+
+  /// No description provided for @butHareketYokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu bütçede hareket yok. Sağ alttaki düğmeyle ilk gelir veya gider kaydını girin.'**
+  String get butHareketYokAlt;
+
+  /// No description provided for @butKategoriYokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bütçe kategorisi yok. Kategoriler, gelir ve giderleri gruplayarak raporları anlamlı hâle getirir.'**
+  String get butKategoriYokAlt;
+
+  /// No description provided for @sikayetYokSakinAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz bir talep açmadınız. Arıza, öneri ve şikâyetlerinizi buradan iletebilirsiniz.'**
+  String get sikayetYokSakinAlt;
+
+  /// No description provided for @duyuruYokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yayımlanmış duyuru yok. Yönetim duyuru yaptığında burada ve bildirimlerde görürsünüz.'**
+  String get duyuruYokAlt;
+
+  /// No description provided for @ihlalListeBosAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıtlı ihlal yok. Kural ihlali bildirildiğinde burada tarih ve daireyle birlikte görünür.'**
+  String get ihlalListeBosAlt;
+
+  /// No description provided for @anketYokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açık anket yok. Yönetim anket başlattığında burada oy verebilirsiniz.'**
+  String get anketYokAlt;
+
+  /// No description provided for @anprListeBosAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıtlı plaka okuma yok. Plaka tanıma kamerası bağlandığında geçişler burada listelenir.'**
+  String get anprListeBosAlt;
+
+  /// No description provided for @vardiyaTanimYokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vardiya tanımı yok. Gündüz, gece gibi vardiyaları tanımlayınca personeli çizelgeye yerleştirebilirsiniz.'**
+  String get vardiyaTanimYokAlt;
 }
 
 class _AppLocalizationsDelegate

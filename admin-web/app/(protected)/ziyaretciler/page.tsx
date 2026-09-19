@@ -182,7 +182,7 @@ export default function ZiyaretcilerPage() {
           <IskeletMetin satir={3} />
         ) : null}
         {!isLoading && !error && kayitlar.length === 0 ? (
-          <BosDurum baslik={t("ziyaretciYok")} />
+          <BosDurum baslik={t("ziyaretciYok")} aciklama={t("ziyaretciYokAlt")} />
         ) : null}
         {kayitlar.map((z) => (
           <Kart key={z.id} className="space-y-1">

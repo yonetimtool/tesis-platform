@@ -955,7 +955,7 @@ export default function TasksPage() {
                 {completions && completions.items.length === 0 && (
                   <tr>
                     <Td colSpan={5}>
-                      <BosDurum baslik={t("denetimKayitYok")} />
+                      <BosDurum baslik={t("denetimKayitYok")} aciklama={t("denetimKayitYokAlt")} />
                     </Td>
                   </tr>
                 )}

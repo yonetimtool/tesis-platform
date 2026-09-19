@@ -7233,4 +7233,52 @@ class AppLocalizationsDe extends AppLocalizations {
   String kurulumAsgariSayac(int tamam, int toplam) {
     return '$tamam/$toplam bereit';
   }
+
+  @override
+  String get bakimEkipmanYokAlt =>
+      'Keine Ausrüstung in der Wartungsverfolgung. Legen Sie Anlagen wie Aufzüge oder Generatoren an und definieren Sie Intervalle.';
+
+  @override
+  String get panikAlarmYokAlt =>
+      'Keine Notrufe erfasst. Sobald ein Bewohner oder Mitarbeiter einen SOS sendet, erscheint er hier.';
+
+  @override
+  String get aramaSonucYokAlt =>
+      'Versuchen Sie einen anderen Begriff: Sie können nach Wohnungsnummer, Name, Telefon oder Kennzeichen suchen.';
+
+  @override
+  String get daireTanimYokAlt =>
+      'Keine Wohnungstypen definiert. Nach dem Anlegen von Typen wie 1+1 oder 2+1 können Sie je Wohnung einen eigenen Beitrag festlegen.';
+
+  @override
+  String get butHareketYokAlt =>
+      'Keine Buchungen in diesem Budget. Erfassen Sie mit der Schaltfläche unten rechts die erste Einnahme oder Ausgabe.';
+
+  @override
+  String get butKategoriYokAlt =>
+      'Keine Budgetkategorien. Kategorien gruppieren Einnahmen und Ausgaben und machen die Berichte aussagekräftig.';
+
+  @override
+  String get sikayetYokSakinAlt =>
+      'Sie haben noch keine Anfrage erstellt. Melden Sie hier Störungen, Vorschläge und Beschwerden.';
+
+  @override
+  String get duyuruYokAlt =>
+      'Keine Ankündigungen veröffentlicht. Sobald die Verwaltung eine veröffentlicht, sehen Sie sie hier und in den Benachrichtigungen.';
+
+  @override
+  String get ihlalListeBosAlt =>
+      'Keine Verstöße erfasst. Ein gemeldeter Verstoß erscheint hier mit Datum und Wohnung.';
+
+  @override
+  String get anketYokAlt =>
+      'Keine offenen Umfragen. Sobald die Verwaltung eine startet, können Sie hier abstimmen.';
+
+  @override
+  String get anprListeBosAlt =>
+      'Keine Kennzeichenlesungen erfasst. Sobald eine Kennzeichenkamera verbunden ist, erscheinen die Durchfahrten hier.';
+
+  @override
+  String get vardiyaTanimYokAlt =>
+      'Keine Schichten definiert. Nach dem Anlegen von Schichten wie Tag und Nacht können Sie Personal einplanen.';
 }

@@ -47,7 +47,7 @@ export default function DuyurularPage() {
       ) : null}
       {!isLoading && !error && kayitlar.length === 0 ? (
         <Kart>
-          <BosDurum baslik={t("sakinDuyurularYok")} />
+          <BosDurum baslik={t("sakinDuyurularYok")} aciklama={t("sakinDuyurularYokAlt")} />
         </Kart>
       ) : null}
       {kayitlar.map((d) => (

@@ -148,7 +148,7 @@ export function GorevAdimlari({
       ) : null}
 
       {adimlar.length === 0 ? (
-        <BosDurum baslik={t("gorevAdimYok")} />
+        <BosDurum baslik={t("gorevAdimYok")} aciklama={t("gorevAdimYokAlt")} />
       ) : (
         <ul className="space-y-2">
           {adimlar.map((a) => (

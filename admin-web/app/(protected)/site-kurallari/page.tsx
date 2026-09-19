@@ -332,7 +332,7 @@ export default function SiteKurallariYonetimPage() {
       {isLoading && !data ? <Iskelet className="h-24 w-full" /> : null}
       {!isLoading && !error && kurallar.length === 0 ? (
         <Kart>
-          <BosDurum baslik={t("kuralYonetimBos")} />
+          <BosDurum baslik={t("kuralYonetimBos")} aciklama={t("kuralYonetimBosAlt")} />
         </Kart>
       ) : null}
 

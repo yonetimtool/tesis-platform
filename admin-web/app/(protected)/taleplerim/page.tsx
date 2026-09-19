@@ -180,7 +180,7 @@ export default function TaleplerimPage() {
           <IskeletMetin satir={3} />
         ) : null}
         {!isLoading && !error && talepler.length === 0 ? (
-          <BosDurum baslik={t("talebimYok")} />
+          <BosDurum baslik={t("talebimYok")} aciklama={t("talebimYokAlt")} />
         ) : null}
         {talepler.map((c) => (
           <article key={c.id} className="space-y-1">

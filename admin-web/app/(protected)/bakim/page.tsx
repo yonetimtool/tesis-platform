@@ -272,7 +272,7 @@ export default function BakimPage() {
       </div>
 
       {liste.length === 0 ? (
-        <BosDurum baslik={t("bakimEkipmanYok")} />
+        <BosDurum baslik={t("bakimEkipmanYok")} aciklama={t("bakimEkipmanYokAlt")} />
       ) : (
         <Tablo>
           <TabloBasligi>
@@ -367,7 +367,7 @@ export default function BakimPage() {
   const gecmisIcerik = (
     <Kart>
       {(kayitlar.data?.items ?? []).length === 0 ? (
-        <BosDurum baslik={t("bakimGecmisYok")} />
+        <BosDurum baslik={t("bakimGecmisYok")} aciklama={t("bakimGecmisYokAlt")} />
       ) : (
         <Tablo>
           <TabloBasligi>
