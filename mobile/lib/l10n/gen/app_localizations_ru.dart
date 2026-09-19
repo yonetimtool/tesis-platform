@@ -7245,4 +7245,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String vardiyaCalismaSaati(Object n) {
     return '$n ч работы';
   }
+
+  @override
+  String get vardiyaSablonlari => 'Шаблоны смен';
 }

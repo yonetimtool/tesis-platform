@@ -7173,4 +7173,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String vardiyaCalismaSaati(Object n) {
     return '$n Std. Arbeit';
   }
+
+  @override
+  String get vardiyaSablonlari => 'Schichtvorlagen';
 }

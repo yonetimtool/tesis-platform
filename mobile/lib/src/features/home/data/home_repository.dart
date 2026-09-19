@@ -57,7 +57,19 @@ class MockHomeRepository implements HomeRepository {
       id: HomeKartId.vardiyaDurum,
       accent: HomeTokens.primary,
       altMetin: null, // GET /shifts
-      rota: AppRoutes.vardiyalar,
+      // (P241 §2d) KART ARTIK PLAN EKRANINA GIDIYOR.
+      //
+      // OLCULEN KUSUR — P232'de MENUDE duzeltilen seyin AYNISI ANA
+      // EKRANDA duruyordu: "Vardiya Durumu" karti (gunluk soru: "su an
+      // kim gorevde") SABLON ekranini aciyordu (ayda bir yapilan is:
+      // "gece vardiyasi kac-kac"). Kullanici gunluk sorusunu sorup
+      // kurulum ekraniyla karsilasiyordu.
+      //
+      // Sablon ekrani SILINMEDI: kadro atamasi orada yasiyor ve
+      // "Haftayi doldur" onu tuketiyor. Artik plan ekraninin
+      // ICINDEN aciliyor (web'deki "Vardiya sablonlari" bolumuyle
+      // ayni karar).
+      rota: AppRoutes.vardiyaPlani,
     ),
     HizliErisimKart(
       ikon: Icons.inventory_2,
@@ -128,7 +140,19 @@ class MockHomeRepository implements HomeRepository {
       id: HomeKartId.vardiyaDurum,
       accent: HomeTokens.primary,
       altMetin: null, // GET /shifts
-      rota: AppRoutes.vardiyalar,
+      // (P241 §2d) KART ARTIK PLAN EKRANINA GIDIYOR.
+      //
+      // OLCULEN KUSUR — P232'de MENUDE duzeltilen seyin AYNISI ANA
+      // EKRANDA duruyordu: "Vardiya Durumu" karti (gunluk soru: "su an
+      // kim gorevde") SABLON ekranini aciyordu (ayda bir yapilan is:
+      // "gece vardiyasi kac-kac"). Kullanici gunluk sorusunu sorup
+      // kurulum ekraniyla karsilasiyordu.
+      //
+      // Sablon ekrani SILINMEDI: kadro atamasi orada yasiyor ve
+      // "Haftayi doldur" onu tuketiyor. Artik plan ekraninin
+      // ICINDEN aciliyor (web'deki "Vardiya sablonlari" bolumuyle
+      // ayni karar).
+      rota: AppRoutes.vardiyaPlani,
     ),
     HizliErisimKart(
       ikon: Icons.task_alt,
@@ -253,7 +277,19 @@ class MockHomeRepository implements HomeRepository {
       id: HomeKartId.vardiyaDurumu,
       accent: HomeTokens.primary,
       altMetin: null, // GET /shifts
-      rota: AppRoutes.vardiyalar,
+      // (P241 §2d) KART ARTIK PLAN EKRANINA GIDIYOR.
+      //
+      // OLCULEN KUSUR — P232'de MENUDE duzeltilen seyin AYNISI ANA
+      // EKRANDA duruyordu: "Vardiya Durumu" karti (gunluk soru: "su an
+      // kim gorevde") SABLON ekranini aciyordu (ayda bir yapilan is:
+      // "gece vardiyasi kac-kac"). Kullanici gunluk sorusunu sorup
+      // kurulum ekraniyla karsilasiyordu.
+      //
+      // Sablon ekrani SILINMEDI: kadro atamasi orada yasiyor ve
+      // "Haftayi doldur" onu tuketiyor. Artik plan ekraninin
+      // ICINDEN aciliyor (web'deki "Vardiya sablonlari" bolumuyle
+      // ayni karar).
+      rota: AppRoutes.vardiyaPlani,
     ),
     HizliErisimKart(
       ikon: Icons.assignment_turned_in_outlined,

@@ -2454,5 +2454,6 @@
   "vardiyaMolaDuser": "Pausen werden von der Arbeitszeit abgezogen.",
   "vardiyaRolEtiketi": "Rolle in dieser Schicht",
   "vardiyaLokasyon": "Ort",
-  "vardiyaCalismaSaati": "{n} Std. Arbeit"
+  "vardiyaCalismaSaati": "{n} Std. Arbeit",
+  "vardiyaSablonlari": "Schichtvorlagen"
 }

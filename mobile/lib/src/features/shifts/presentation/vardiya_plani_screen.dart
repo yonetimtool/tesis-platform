@@ -31,6 +31,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'widgets/gun_takvimi.dart';
 import 'izin_formu.dart';
+import '../../../routing/app_router.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 
 import '../../../core/error/api_exception.dart';
@@ -125,6 +126,18 @@ class VardiyaPlaniScreen extends ConsumerWidget {
                   ? null
                   : () => _yayinla(context, ref),
               child: Text(l10n.vardiyaYayinlaSayili(bekleyen)),
+            ),
+          if (yonetici)
+            // (P237 §1 KURALI) BASKA EKRANA GOTUREN eylem ADINI
+            // GORUNUR TASIR: tooltip uzun basmayi gerektirir ve
+            // kullanici simgenin ne oldugunu ONCEDEN bilmek zorunda
+            // kalirdi.
+            TextButton.icon(
+              key: const Key('vardiya-sablonlar'),
+              icon: const Icon(Icons.schedule_outlined),
+              label: Text(l10n.vardiyaSablonlari),
+              onPressed: () =>
+                  Navigator.of(context).pushNamed(AppRoutes.vardiyalar),
             ),
           if (yonetici)
             IconButton(

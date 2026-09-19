@@ -7173,4 +7173,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String vardiyaCalismaSaati(Object n) {
     return '$n h of work';
   }
+
+  @override
+  String get vardiyaSablonlari => 'Shift templates';
 }

@@ -2454,5 +2454,6 @@
   "vardiyaMolaDuser": "Breaks are deducted from working time.",
   "vardiyaRolEtiketi": "Role in this shift",
   "vardiyaLokasyon": "Location",
-  "vardiyaCalismaSaati": "{n} h of work"
+  "vardiyaCalismaSaati": "{n} h of work",
+  "vardiyaSablonlari": "Shift templates"
 }

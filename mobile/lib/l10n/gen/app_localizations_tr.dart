@@ -6975,4 +6975,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String vardiyaCalismaSaati(Object n) {
     return '$n saat çalışma';
   }
+
+  @override
+  String get vardiyaSablonlari => 'Vardiya şablonları';
 }

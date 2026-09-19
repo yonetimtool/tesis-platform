@@ -2454,5 +2454,6 @@
   "vardiyaMolaDuser": "Los descansos se descuentan del tiempo de trabajo.",
   "vardiyaRolEtiketi": "Rol en este turno",
   "vardiyaLokasyon": "Ubicación",
-  "vardiyaCalismaSaati": "{n} h de trabajo"
+  "vardiyaCalismaSaati": "{n} h de trabajo",
+  "vardiyaSablonlari": "Plantillas de turno"
 }

@@ -199,3 +199,171 @@ Denetimin ilk soracağı şey budur ve bir toplamın içinde kaybolmamalı.
   olmasın diye).
 * Ekipman **fotoğrafının** MinIO'ya yüklenmesi ölçülmedi; ölçülen şey ek
   mekanizmasının bakım kaydını **kabul ettiği** (not eki ile sürüldü).
+
+---
+
+# §2 — VARDİYA EKRANI YENİDEN TASARIM
+
+## §2.0 ÖNCE ÖLÇÜM — bugün ne var
+
+| Sorulan | Ölçülen |
+|---|---|
+| Izgara var mı? | **Var ve zaten kişi eksenli**: `/vardiya-plani/cizelge` → `personel[] × bloklar[]`, vardiyası olmayan personel de dönüyor (P205 §2). |
+| Görünümler? | gün / hafta / ay (yatay zaman şeridi). **Takvim yok.** |
+| Vardiya ekleme? | **Tek modal** (P235): takvim → kişi/saat → grup → önizleme. Kalıp + rotasyon içinde. **Mola, rol etiketi, lokasyon yok.** |
+| Araçlar? | "Haftayı kadrodan doldur" (P203), "Kalıp uygula" (P207), şablon bölümü (P232). **Haftadan kopyala yok.** |
+| Excel? | **Yok.** |
+| Filtre? | Rol + kişi araması var. **Takım / yalnızca vardiyalı / sorunlu yok.** |
+| Toplu işlem? | Ay görünümünde **gün** seçimi var (kalıp uygulamak için). **Hücre seçimi yok.** |
+| Taslak/yayınla? | **Yok** — eklenen vardiya anında sahaya yansıyor. |
+| İzin? | **Yok.** |
+
+Yani izgaranın **omurgası zaten vardı**; eksik olan gruplama, saat
+toplamı, izin, yayın ve araçlardı. Sıfırdan yazmak, test edilmiş bir
+ekranı atmak olurdu.
+
+## §2.1 Referans körü körüne kopyalanmadı
+
+| Referansta | Bizde | Gerekçe |
+|---|---|---|
+| Şube seçimi | **Blok / ortak alan** | Bizde şube yok; site var. Vardiya "A Blok"ta ya da "Otopark"ta geçer. |
+| Çalışanı sıfırdan ekle | **Kayıtlı personelden seç** | Personel zaten `app_user`. İkinci bir kişi kaydı, aynı insanı iki kez tutmak olurdu. |
+| "Takımlar / Kişiler / Roller" görünüm seçici | **Rol grupları + Atanmamış** | Bizde takım = rol. Ayrı bir "takım" kavramı uydurmak, doldurulmayan bir alan üretirdi. |
+
+## §2.2 İzin — ayrı tablo, ayrı uç
+
+`vardiya_plani`ya "tür=izin" yazmak kolay görünürdü ve **mesai hesabını
+sessizce bozardı**: `routers/mesai.py` `durum='planli'` satırları okuyor;
+izinli gün **çalışma sayılır** ve izne çıkan kişiye fazla mesai yazılırdı.
+
+**Onay — istekteki soruların yanıtı:**
+* Yönetim (admin/yönetici) ya da amir kendi ekibi için girerse kayıt
+  **doğrudan `onaylandi`**: onaylayacak makam zaten odur.
+* Personel kendisi için girerse **`onay_bekliyor`** — bu bir *talep*tir.
+* **Başkası adına giremez** (403). Sessizce kendi adına yazmak daha kötü
+  olurdu: kayıt görünür ama yanlış kişide.
+* Onaylayan: admin/yönetici her zaman; güvenlik amiri yalnız güvenlik
+  personeli için (P231 ile aynı sınır, `gorunur_roller` tek kaynak).
+
+**İzinli güne vardiya atanamaz** — kapı `ata` / `toplu` / `kalip-uygula`
+/ `haftayi-doldur` / `haftadan-kopyala` yollarının **hepsinde**, tek bir
+yardımcıyla. Tek yolda kontrol etmek, ötekilerden sessizce geçilmesi
+demekti.
+
+İki istisna, ikisi de bilinçli:
+* **Saatlik izin engellemez**: iki saatlik mazeret izni o günkü vardiyayı
+  imkânsız kılmaz; kişi izinden sonra işe gelir.
+* **Bekleyen talep engellemez**: onaylanmamış bir talep henüz bir gerçek
+  değildir; onu engel saymak, yöneticiyi kendi onaylamadığı bir şeyle
+  bağlı tutardı.
+
+## §2.3 Molalar — kanun metni, isteğin sayıları değil
+
+İstek "4 saate kadar 15 dk" diyordu. **4857 md. 68 şöyle diyor:** dört
+saate kadar **25 dk**, dört–yedi buçuk arası **30 dk**, üstü **1 saat**.
+
+Kanun metni alındı çünkü 15 dakika **kanunun altındadır** ve yazılımın
+önerdiği sayı yöneticinin hukuki dayanağı olur. Eksik bir öneri, onu
+ihlale yaklaştırırdı. Sayı zaten **yalnızca öneri**; yönetici
+değiştirebilir.
+
+**Mola çalışma süresinden düşer** (md. 68/son). Bu yalnızca ızgaradaki
+toplamı değil **mesai hesabını da** düzeltiyor: bugüne kadar 12 saatlik
+bir vardiyanın 1 saatlik molası da fazla mesai olarak ücretlendiriliyordu.
+Tek kaynak `vardiya.plan_saat`.
+
+## §2.4 Taslak / Yayınla — bugünkü davranış değişiyor
+
+İstek sordu: "Bu, bugünkü davranışı değiştirir mi?"
+
+**Evet, değiştiriyor.** Bugüne kadar yönetici bir vardiya ekler eklemez
+personel onu görüyordu; yarım kalmış bir plan (önce ekle, sonra düzelt)
+sahaya anında yansıyordu ve görevli bir saat sonra değişecek bir
+vardiyaya göre program yapabiliyordu.
+
+Bundan sonra yeni satırlar **taslak** açılır, personel görmez, yönetici
+"Yayınla" deyince görünür.
+
+Üç koruma:
+1. **Mevcut satırlar göçte yayınlanmış sayıldı** — aksi hâlde göç
+   çalıştığı anda sahadaki herkesin planı ekrandan kaybolurdu.
+2. **Yayınlanmış satırın değişikliği gizlenmez**, yalnız sayaca girer.
+   Gizlemek "vardiyam kayboldu" telefonları üretirdi.
+3. **Mesai hesabı etkilenmez**: taslak da bir plandır ve yöneticinin
+   yaptığı iş, yayınlanmamış olsa da maliyet öngörüsüdür.
+
+**Enum değil zaman damgası:** `yayinlandi_at` NULL = taslak;
+`updated_at > yayinlandi_at` = "tekrar yayınlanmalı". Tek sütun, iki
+soruya yanıt.
+
+## §2.5 Sürükle-bırak — yine açılmadı
+
+İstek "masaüstünde açılsın mı?" diye sordu. **Hayır.**
+
+P205'teki gerekçe hâlâ geçerli ve masaüstüne özel bir kapı açmak onu
+yarı yarıya delerdi: aynı ekranı hem dokunmatik hem fare ile kullanan
+bir yönetici, birinde çalışan bir hareketin ötekinde çalışmadığını
+öğrenmek zorunda kalırdı. Bedel de aynı: yanlışlıkla bırakılan bir blok,
+kimsenin fark etmediği bir vardiya değişikliği üretir — ve saat = maaş.
+
+Toplu işlem yerine **açık seçim**: Ctrl/Shift ile hücre seçilir, altta
+çubuk açılır. Sade tıklama ayrıntı açar (tersi olsaydı tek vardiyayı
+düzenlemek isteyen önce seçim moduna girerdi). **Toplu silme tek tek
+gider**: her satırın kendi denetim kaydı oluşsun.
+
+## §2.6 Mobil — web'in küçültülmüşü değil
+
+**Izgara mobile getirilmedi** ve bu P205 kararının sürdürülmesi: 360 dp'de
+24 saatlik eksen 15 px/saat'e düşer, dokunma hedefleri 44 dp'nin altına
+iner. Sahadaki soru "bugün kim var"dır; **gün gün liste** bunu tek bakışta
+yanıtlar.
+
+Mobile eklenenler: taslak rozeti (**yazıyla** — sahada güneş altında renk
+farkı kaybolur), rol + lokasyon + mola düşülmüş çalışma saati, o gün
+izinli olanlar **ayrı satır**, sayılı "Yayınla" düğmesi, izin formu,
+ekleme akışında mola/rol/lokasyon.
+
+Filtreleme mobilde **bilinçli olarak sade**: rol süzgeci zaten menüde
+değil listenin kendisinde anlamlı değil — günlük listede yedi günün
+tamamı zaten ekranda. Web'deki dört süzgeci mobile taşımak, üç satırlık
+bir listeyi süzmek için üç ekranlık bir form açmak olurdu.
+
+## §2.7 Eski ekranlar
+
+**Hiçbir ekran ölü kalmadı** — ölçüldü:
+* Web `/shifts` zaten P232'de yönlendirmeye dönüşmüştü (yer imleri 404
+  olmasın diye silinmedi).
+* Mobil `/vardiyalar` **şablon + varsayılan kadro** ekranı ve hâlâ
+  gerekli: "Haftayı doldur" onu tüketiyor.
+
+**Ama bir giriş noktası yanlış yere gidiyordu ve düzeltildi:** ana
+ekrandaki "Vardiya Durumu" kartı (*günlük* soru: şu an kim görevde)
+**şablon** ekranını açıyordu (*ayda bir* yapılan iş). P232 aynı kusuru
+menüde düzeltmişti, ana ekranda kalmıştı. Kart artık plan ekranına
+gidiyor; şablon ekranı plan ekranının içinden açılıyor (web'deki
+"Vardiya şablonları" bölümüyle aynı karar).
+
+## §2.8 Korunacaklar — her biri ölçüldü
+
+| Kural | Ölçüm |
+|---|---|
+| Gün aşırı vardiya (P205) | `test_KORUNDU_gun_asiri_vardiya` — 20:00–08:00, `gece_asiyor=true`, 12 saat |
+| Çakışma kesin red (P205) | `test_KORUNDU_cakisma_KESIN_RED` |
+| Sessiz atlama yok (P205) | `haftadan-kopyala` ve `ice-aktar` satır satır sebep döner |
+| Planlanan/gerçekleşen (P214) | Mesai ucu ayakta; mola artık doğru düşülüyor |
+| Amir yalnız güvenliği görür (P231) | `test_KORUNDU_amir_YALNIZ_guvenligi_gorur` — izinde de aynı sınır |
+| Çok gruplu plan (P232) | `kalip-uygula` dokunulmadı; modal hâlâ grup biriktiriyor |
+| Parti geri alma (P207) | `test_KORUNDU_parti_geri_alma` |
+
+## §2.9 ÖLÇEMEDİĞİM
+
+* **Gerçek Excel dosyası bir tarayıcıda seçilip yüklenmedi.** Sunucu
+  tarafı (sablon üretimi, satır doğrulama, uygulama) testlerle sürüldü;
+  istemcideki dosya okuma `lib/xlsx-oku` ile yapılıyor ve o modülün kendi
+  testleri var, ama **uçtan uca tarayıcı akışı ölçülmedi**.
+* **Yayınlanan planın push bildirimi gönderilmedi**: `vardiya_yayinlandi`
+  bildirim tipi göçte açıldı ama gönderim bu turda **yapılmadı** —
+  yayınlama şu an sessiz. Açık madde.
+* **Takvim görünümü 42 hücreyi çiziyor**; yoğun bir ayda (günde 10+
+  vardiya) hücre içi kaydırma davranışı gerçek veriyle denenmedi.
+* Mobil **emülatörde** çalıştırılmadı (bu makinede emülatör yok).

@@ -2454,5 +2454,6 @@
   "vardiyaMolaDuser": "Les pauses sont déduites du temps de travail.",
   "vardiyaRolEtiketi": "Rôle dans ce service",
   "vardiyaLokasyon": "Emplacement",
-  "vardiyaCalismaSaati": "{n} h de travail"
+  "vardiyaCalismaSaati": "{n} h de travail",
+  "vardiyaSablonlari": "Modèles de service"
 }

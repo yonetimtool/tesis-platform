@@ -2454,5 +2454,6 @@
   "vardiyaMolaDuser": "تُخصم الاستراحات من وقت العمل.",
   "vardiyaRolEtiketi": "الدور في هذه المناوبة",
   "vardiyaLokasyon": "الموقع",
-  "vardiyaCalismaSaati": "{n} ساعة عمل"
+  "vardiyaCalismaSaati": "{n} ساعة عمل",
+  "vardiyaSablonlari": "قوالب المناوبات"
 }

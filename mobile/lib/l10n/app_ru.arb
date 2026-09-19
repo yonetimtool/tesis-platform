@@ -2454,5 +2454,6 @@
   "vardiyaMolaDuser": "Перерывы вычитаются из рабочего времени.",
   "vardiyaRolEtiketi": "Роль в этой смене",
   "vardiyaLokasyon": "Место",
-  "vardiyaCalismaSaati": "{n} ч работы"
+  "vardiyaCalismaSaati": "{n} ч работы",
+  "vardiyaSablonlari": "Шаблоны смен"
 }

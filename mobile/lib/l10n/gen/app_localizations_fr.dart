@@ -7167,4 +7167,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String vardiyaCalismaSaati(Object n) {
     return '$n h de travail';
   }
+
+  @override
+  String get vardiyaSablonlari => 'Modèles de service';
 }

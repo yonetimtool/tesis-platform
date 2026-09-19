@@ -3544,5 +3544,9 @@
         "type": "Object"
       }
     }
+  },
+  "vardiyaSablonlari": "Vardiya şablonları",
+  "@vardiyaSablonlari": {
+    "description": "(P241 §2d) Sablon ekrani girisi"
   }
 }

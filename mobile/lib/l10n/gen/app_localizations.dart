@@ -12400,6 +12400,12 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'{n} saat çalışma'**
   String vardiyaCalismaSaati(Object n);
+
+  /// (P241 §2d) Sablon ekrani girisi
+  ///
+  /// In tr, this message translates to:
+  /// **'Vardiya şablonları'**
+  String get vardiyaSablonlari;
 }
 
 class _AppLocalizationsDelegate

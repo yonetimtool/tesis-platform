@@ -7227,4 +7227,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String vardiyaCalismaSaati(Object n) {
     return '$n ساعة عمل';
   }
+
+  @override
+  String get vardiyaSablonlari => 'قوالب المناوبات';
 }
