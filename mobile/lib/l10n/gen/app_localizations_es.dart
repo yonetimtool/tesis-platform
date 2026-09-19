@@ -7081,4 +7081,75 @@ class AppLocalizationsEs extends AppLocalizations {
   String bakimGecikmeGun(int n) {
     return '$n días de retraso';
   }
+
+  @override
+  String get vardiyaTaslak => 'Borrador';
+
+  @override
+  String get vardiyaTaslakAciklama =>
+      'El personal no ve los borradores; aparecen al publicar.';
+
+  @override
+  String vardiyaYayinlaSayili(Object n) {
+    return 'Publicar ($n)';
+  }
+
+  @override
+  String vardiyaYayinlandiMesaj(Object n) {
+    return '$n turnos publicados';
+  }
+
+  @override
+  String get vardiyaIzinli => 'De permiso';
+
+  @override
+  String get vardiyaIzinEkle => 'Añadir permiso';
+
+  @override
+  String get vardiyaIzinTuru => 'Tipo de permiso';
+
+  @override
+  String get vardiyaIzinYillik => 'Vacaciones';
+
+  @override
+  String get vardiyaIzinMazeret => 'Permiso personal';
+
+  @override
+  String get vardiyaIzinHastalik => 'Baja por enfermedad';
+
+  @override
+  String get vardiyaIzinUcretsiz => 'Permiso sin sueldo';
+
+  @override
+  String get vardiyaIzinResmiTatil => 'Festivo';
+
+  @override
+  String get vardiyaIzinTalepGonderildi =>
+      'Su solicitud de permiso fue enviada';
+
+  @override
+  String get vardiyaIzinKaydedildi => 'Permiso guardado';
+
+  @override
+  String get vardiyaMolaDakika => 'Descanso (minutos)';
+
+  @override
+  String vardiyaMolaOnerisi(Object n) {
+    return 'Sugerencia legal: $n min';
+  }
+
+  @override
+  String get vardiyaMolaDuser =>
+      'Los descansos se descuentan del tiempo de trabajo.';
+
+  @override
+  String get vardiyaRolEtiketi => 'Rol en este turno';
+
+  @override
+  String get vardiyaLokasyon => 'Ubicación';
+
+  @override
+  String vardiyaCalismaSaati(Object n) {
+    return '$n h de trabajo';
+  }
 }

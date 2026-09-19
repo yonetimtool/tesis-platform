@@ -137,6 +137,12 @@ class VardiyaBlok {
     this.shiftAd,
     this.notMetni,
     this.geceAsiyor = false,
+    this.vardiyaRolu,
+    this.blokAd,
+    this.alan,
+    this.calismaSaat = 0,
+    this.molaDakika = 0,
+    this.yayinlandiAt,
   });
 
   final String planId;
@@ -151,7 +157,27 @@ class VardiyaBlok {
   /// 22:00-05:00 gibi ERTESI GUNE tasan vardiya.
   final bool geceAsiyor;
 
+  // --------------------- (P241 §2) YENI ALANLAR ------------------------ //
+  /// BU VARDIYADAKI rol (`app_user.role` DEGIL).
+  final String? vardiyaRolu;
+  final String? blokAd;
+  final String? alan;
+
+  /// MOLA DUSULMUS calisma suresi — SUNUCUDAN. Istemcide hesaplamak,
+  /// kanunun mola kuralini ikinci kez yazmak olurdu.
+  final double calismaSaat;
+  final int molaDakika;
+
+  /// NULL = TASLAK. Personel taslagi zaten GORMEZ (sunucu suzuyor);
+  /// yonetim mobilde de isaretli gorur.
+  final String? yayinlandiAt;
+
+  bool get taslak => yayinlandiAt == null;
+
   String get saatAraligi => '${_ss(baslar)}–${_ss(biter)}';
+
+  /// Hucrede yazan yer bilgisi: blok ya da serbest alan.
+  String? get yer => blokAd ?? alan;
 
   static String _ss(DateTime d) =>
       '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
@@ -164,8 +190,42 @@ class VardiyaBlok {
         shiftAd: j['shift_ad'] as String?,
         notMetni: j['not_metni'] as String?,
         geceAsiyor: (j['gece_asiyor'] as bool?) ?? false,
+        vardiyaRolu: j['vardiya_rolu'] as String?,
+        blokAd: j['blok_ad'] as String?,
+        alan: j['alan'] as String?,
+        calismaSaat: (j['calisma_saat'] as num?)?.toDouble() ?? 0,
+        molaDakika: (j['mola_dakika'] as num?)?.toInt() ?? 0,
+        yayinlandiAt: j['yayinlandi_at'] as String?,
       );
 }
+
+/// (P241 §2) ONAYLI izin — vardiya blogundan AYRI katman.
+class VardiyaIzinBlok {
+  const VardiyaIzinBlok({
+    required this.izinId,
+    required this.tur,
+    required this.baslangic,
+    required this.bitis,
+    this.tumGun = true,
+  });
+
+  final String izinId;
+  final String tur;
+  final String baslangic;
+  final String bitis;
+  final bool tumGun;
+
+  bool kapsar(String gun) => baslangic.compareTo(gun) <= 0 && bitis.compareTo(gun) >= 0;
+
+  factory VardiyaIzinBlok.fromJson(Map<String, dynamic> j) => VardiyaIzinBlok(
+        izinId: j['izin_id'] as String,
+        tur: j['tur'] as String? ?? 'yillik',
+        baslangic: j['baslangic'] as String? ?? '',
+        bitis: j['bitis'] as String? ?? '',
+        tumGun: j['tum_gun'] as bool? ?? true,
+      );
+}
+
 
 class VardiyaCizelgeKisi {
   const VardiyaCizelgeKisi({
@@ -173,12 +233,20 @@ class VardiyaCizelgeKisi {
     required this.ad,
     required this.rol,
     this.bloklar = const [],
+    this.izinler = const [],
+    this.toplamSaat = 0,
+    this.hedefSaat = 0,
   });
 
   final String userId;
   final String ad;
   final String rol;
   final List<VardiyaBlok> bloklar;
+
+  /// (P241 §2) Onayli izinler ve donem toplami — SUNUCUDAN.
+  final List<VardiyaIzinBlok> izinler;
+  final double toplamSaat;
+  final double hedefSaat;
 
   factory VardiyaCizelgeKisi.fromJson(Map<String, dynamic> j) =>
       VardiyaCizelgeKisi(
@@ -189,6 +257,12 @@ class VardiyaCizelgeKisi {
             .whereType<Map>()
             .map((m) => VardiyaBlok.fromJson(Map<String, dynamic>.from(m)))
             .toList(),
+        izinler: ((j['izinler'] as List?) ?? const [])
+            .whereType<Map>()
+            .map((m) => VardiyaIzinBlok.fromJson(Map<String, dynamic>.from(m)))
+            .toList(),
+        toplamSaat: (j['toplam_saat'] as num?)?.toDouble() ?? 0,
+        hedefSaat: (j['hedef_saat'] as num?)?.toDouble() ?? 0,
       );
 }
 

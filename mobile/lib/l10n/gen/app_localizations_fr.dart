@@ -7096,4 +7096,75 @@ class AppLocalizationsFr extends AppLocalizations {
   String bakimGecikmeGun(int n) {
     return '$n jours de retard';
   }
+
+  @override
+  String get vardiyaTaslak => 'Brouillon';
+
+  @override
+  String get vardiyaTaslakAciklama =>
+      'Le personnel ne voit pas les brouillons ; ils apparaissent à la publication.';
+
+  @override
+  String vardiyaYayinlaSayili(Object n) {
+    return 'Publier ($n)';
+  }
+
+  @override
+  String vardiyaYayinlandiMesaj(Object n) {
+    return '$n services publiés';
+  }
+
+  @override
+  String get vardiyaIzinli => 'En congé';
+
+  @override
+  String get vardiyaIzinEkle => 'Ajouter un congé';
+
+  @override
+  String get vardiyaIzinTuru => 'Type de congé';
+
+  @override
+  String get vardiyaIzinYillik => 'Congé annuel';
+
+  @override
+  String get vardiyaIzinMazeret => 'Congé personnel';
+
+  @override
+  String get vardiyaIzinHastalik => 'Congé maladie';
+
+  @override
+  String get vardiyaIzinUcretsiz => 'Congé sans solde';
+
+  @override
+  String get vardiyaIzinResmiTatil => 'Jour férié';
+
+  @override
+  String get vardiyaIzinTalepGonderildi =>
+      'Votre demande de congé a été envoyée';
+
+  @override
+  String get vardiyaIzinKaydedildi => 'Congé enregistré';
+
+  @override
+  String get vardiyaMolaDakika => 'Pause (minutes)';
+
+  @override
+  String vardiyaMolaOnerisi(Object n) {
+    return 'Suggestion légale : $n min';
+  }
+
+  @override
+  String get vardiyaMolaDuser =>
+      'Les pauses sont déduites du temps de travail.';
+
+  @override
+  String get vardiyaRolEtiketi => 'Rôle dans ce service';
+
+  @override
+  String get vardiyaLokasyon => 'Emplacement';
+
+  @override
+  String vardiyaCalismaSaati(Object n) {
+    return '$n h de travail';
+  }
 }

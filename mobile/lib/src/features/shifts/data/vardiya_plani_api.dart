@@ -76,6 +76,10 @@ class VardiyaPlaniApi {
     // (yayindaki istemciler onlari gonderiyor) ve opsiyonel yapmak
     // eski surumleri kirardi.
     List<String>? gunler,
+    // (P241 §2) MOLA / ROL / LOKASYON — web ile AYNI uc, ayni alanlar.
+    int? molaDakika,
+    String? vardiyaRolu,
+    String? alan,
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
@@ -89,6 +93,12 @@ class VardiyaPlaniApi {
           'bitis_saat': bitisSaat,
           'not_metni': not,
           'cakisanlari_atla': cakisanlariAtla,
+          if (molaDakika != null && molaDakika > 0)
+            'molalar': [
+              {'tur': 'yasal', 'dakika': molaDakika},
+            ],
+          'vardiya_rolu': vardiyaRolu,
+          'alan': alan,
         },
       );
       return VardiyaTopluSonuc.fromJson(res.data!);
@@ -152,6 +162,92 @@ class VardiyaPlaniApi {
       '${d.year.toString().padLeft(4, '0')}-'
       '${d.month.toString().padLeft(2, '0')}-'
       '${d.day.toString().padLeft(2, '0')}';
+
+  // ===================== (P241 §2) YAYIN / IZIN / MOLA ================== //
+
+  /// Yayin dugmesindeki sayi.
+  Future<({int bekleyen, int taslak, int degisen})> yayinOzeti(
+    DateTime baslangic, {
+    int gun = 7,
+  }) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/vardiya-plani/yayin-ozeti',
+        queryParameters: {'baslangic': _tarih(baslangic), 'gun': gun},
+      );
+      final d = res.data ?? const {};
+      return (
+        bekleyen: (d['bekleyen'] as num?)?.toInt() ?? 0,
+        taslak: (d['taslak'] as num?)?.toInt() ?? 0,
+        degisen: (d['degisen'] as num?)?.toInt() ?? 0,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// Donemin taslak/degismis satirlarini yayinla.
+  Future<int> yayinla(DateTime baslangic, {int gun = 7}) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/vardiya-plani/yayinla',
+        queryParameters: {'baslangic': _tarih(baslangic), 'gun': gun},
+      );
+      return (res.data?['yayinlanan'] as num?)?.toInt() ?? 0;
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (4857 md. 68) Onerilen ara dinlenme — SUNUCUDAN.
+  ///
+  /// Kademeleri istemcide yazmak, kanunu iki yuzeye kopyalamak olurdu.
+  Future<int> molaOnerisi(String baslangicSaat, String bitisSaat) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/vardiya-plani/mola-onerisi',
+        queryParameters: {
+          'baslangic_saat': baslangicSaat,
+          'bitis_saat': bitisSaat,
+        },
+      );
+      return (res.data?['onerilen_dakika'] as num?)?.toInt() ?? 0;
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// Izin kaydi/talebi olustur.
+  ///
+  /// YONETIM girerse sunucu DOGRUDAN onayli acar; personel kendisi icin
+  /// girerse TALEP olur (karar sunucuda, istemci tahmin etmez).
+  Future<Map<String, dynamic>> izinEkle({
+    required String userId,
+    required String tur,
+    required String baslangic,
+    required String bitis,
+    bool tumGun = true,
+    String? baslangicSaat,
+    String? bitisSaat,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/vardiya-izin',
+        data: {
+          'user_id': userId,
+          'tur': tur,
+          'baslangic': baslangic,
+          'bitis': bitis,
+          'tum_gun': tumGun,
+          'baslangic_saat': baslangicSaat,
+          'bitis_saat': bitisSaat,
+        },
+      );
+      return res.data ?? const {};
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
 }
 
 final vardiyaPlaniApiProvider =

@@ -6906,4 +6906,73 @@ class AppLocalizationsTr extends AppLocalizations {
   String bakimGecikmeGun(int n) {
     return '$n gün gecikti';
   }
+
+  @override
+  String get vardiyaTaslak => 'Taslak';
+
+  @override
+  String get vardiyaTaslakAciklama =>
+      'Taslak vardiyaları personel görmez; \"Yayınla\" dediğinizde görünür.';
+
+  @override
+  String vardiyaYayinlaSayili(Object n) {
+    return 'Yayınla ($n)';
+  }
+
+  @override
+  String vardiyaYayinlandiMesaj(Object n) {
+    return '$n vardiya yayınlandı';
+  }
+
+  @override
+  String get vardiyaIzinli => 'İzinli';
+
+  @override
+  String get vardiyaIzinEkle => 'İzin ekle';
+
+  @override
+  String get vardiyaIzinTuru => 'İzin türü';
+
+  @override
+  String get vardiyaIzinYillik => 'Yıllık izin';
+
+  @override
+  String get vardiyaIzinMazeret => 'Mazeret izni';
+
+  @override
+  String get vardiyaIzinHastalik => 'Hastalık izni';
+
+  @override
+  String get vardiyaIzinUcretsiz => 'Ücretsiz izin';
+
+  @override
+  String get vardiyaIzinResmiTatil => 'Resmi tatil';
+
+  @override
+  String get vardiyaIzinTalepGonderildi => 'İzin talebiniz onaya gönderildi';
+
+  @override
+  String get vardiyaIzinKaydedildi => 'İzin kaydedildi';
+
+  @override
+  String get vardiyaMolaDakika => 'Mola (dakika)';
+
+  @override
+  String vardiyaMolaOnerisi(Object n) {
+    return 'Yasal öneri: $n dakika';
+  }
+
+  @override
+  String get vardiyaMolaDuser => 'Molalar çalışma süresinden düşülür.';
+
+  @override
+  String get vardiyaRolEtiketi => 'Bu vardiyadaki rol';
+
+  @override
+  String get vardiyaLokasyon => 'Lokasyon';
+
+  @override
+  String vardiyaCalismaSaati(Object n) {
+    return '$n saat çalışma';
+  }
 }

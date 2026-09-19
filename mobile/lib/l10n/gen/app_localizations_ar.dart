@@ -7158,4 +7158,73 @@ class AppLocalizationsAr extends AppLocalizations {
   String bakimGecikmeGun(int n) {
     return 'تأخرت $n يومًا';
   }
+
+  @override
+  String get vardiyaTaslak => 'مسودة';
+
+  @override
+  String get vardiyaTaslakAciklama =>
+      'لا يرى الموظفون المسودات؛ تظهر عند النشر.';
+
+  @override
+  String vardiyaYayinlaSayili(Object n) {
+    return 'نشر ($n)';
+  }
+
+  @override
+  String vardiyaYayinlandiMesaj(Object n) {
+    return 'تم نشر $n مناوبة';
+  }
+
+  @override
+  String get vardiyaIzinli => 'في إجازة';
+
+  @override
+  String get vardiyaIzinEkle => 'إضافة إجازة';
+
+  @override
+  String get vardiyaIzinTuru => 'نوع الإجازة';
+
+  @override
+  String get vardiyaIzinYillik => 'إجازة سنوية';
+
+  @override
+  String get vardiyaIzinMazeret => 'إجازة عارضة';
+
+  @override
+  String get vardiyaIzinHastalik => 'إجازة مرضية';
+
+  @override
+  String get vardiyaIzinUcretsiz => 'إجازة بدون أجر';
+
+  @override
+  String get vardiyaIzinResmiTatil => 'عطلة رسمية';
+
+  @override
+  String get vardiyaIzinTalepGonderildi => 'أُرسل طلب إجازتك للموافقة';
+
+  @override
+  String get vardiyaIzinKaydedildi => 'تم حفظ الإجازة';
+
+  @override
+  String get vardiyaMolaDakika => 'الاستراحة (دقائق)';
+
+  @override
+  String vardiyaMolaOnerisi(Object n) {
+    return 'الاقتراح القانوني: $n دقيقة';
+  }
+
+  @override
+  String get vardiyaMolaDuser => 'تُخصم الاستراحات من وقت العمل.';
+
+  @override
+  String get vardiyaRolEtiketi => 'الدور في هذه المناوبة';
+
+  @override
+  String get vardiyaLokasyon => 'الموقع';
+
+  @override
+  String vardiyaCalismaSaati(Object n) {
+    return '$n ساعة عمل';
+  }
 }

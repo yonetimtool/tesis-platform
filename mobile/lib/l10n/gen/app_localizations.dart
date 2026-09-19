@@ -12280,6 +12280,126 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'{n} gün gecikti'**
   String bakimGecikmeGun(int n);
+
+  /// (P241 §2) Vardiya yeniden
+  ///
+  /// In tr, this message translates to:
+  /// **'Taslak'**
+  String get vardiyaTaslak;
+
+  /// (P241 §2) Vardiya yeniden
+  ///
+  /// In tr, this message translates to:
+  /// **'Taslak vardiyaları personel görmez; \"Yayınla\" dediğinizde görünür.'**
+  String get vardiyaTaslakAciklama;
+
+  /// (P241 §2) Vardiya yeniden
+  ///
+  /// In tr, this message translates to:
+  /// **'Yayınla ({n})'**
+  String vardiyaYayinlaSayili(Object n);
+
+  /// (P241 §2) Vardiya yeniden
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} vardiya yayınlandı'**
+  String vardiyaYayinlandiMesaj(Object n);
+
+  /// (P241 §2) Vardiya yeniden
+  ///
+  /// In tr, this message translates to:
+  /// **'İzinli'**
+  String get vardiyaIzinli;
+
+  /// (P241 §2) Vardiya yeniden
+  ///
+  /// In tr, this message translates to:
+  /// **'İzin ekle'**
+  String get vardiyaIzinEkle;
+
+  /// (P241 §2) Vardiya yeniden
+  ///
+  /// In tr, this message translates to:
+  /// **'İzin türü'**
+  String get vardiyaIzinTuru;
+
+  /// (P241 §2) Vardiya yeniden
+  ///
+  /// In tr, this message translates to:
+  /// **'Yıllık izin'**
+  String get vardiyaIzinYillik;
+
+  /// (P241 §2) Vardiya yeniden
+  ///
+  /// In tr, this message translates to:
+  /// **'Mazeret izni'**
+  String get vardiyaIzinMazeret;
+
+  /// (P241 §2) Vardiya yeniden
+  ///
+  /// In tr, this message translates to:
+  /// **'Hastalık izni'**
+  String get vardiyaIzinHastalik;
+
+  /// (P241 §2) Vardiya yeniden
+  ///
+  /// In tr, this message translates to:
+  /// **'Ücretsiz izin'**
+  String get vardiyaIzinUcretsiz;
+
+  /// (P241 §2) Vardiya yeniden
+  ///
+  /// In tr, this message translates to:
+  /// **'Resmi tatil'**
+  String get vardiyaIzinResmiTatil;
+
+  /// (P241 §2) Vardiya yeniden
+  ///
+  /// In tr, this message translates to:
+  /// **'İzin talebiniz onaya gönderildi'**
+  String get vardiyaIzinTalepGonderildi;
+
+  /// (P241 §2) Vardiya yeniden
+  ///
+  /// In tr, this message translates to:
+  /// **'İzin kaydedildi'**
+  String get vardiyaIzinKaydedildi;
+
+  /// (P241 §2) Vardiya yeniden
+  ///
+  /// In tr, this message translates to:
+  /// **'Mola (dakika)'**
+  String get vardiyaMolaDakika;
+
+  /// (P241 §2) Vardiya yeniden
+  ///
+  /// In tr, this message translates to:
+  /// **'Yasal öneri: {n} dakika'**
+  String vardiyaMolaOnerisi(Object n);
+
+  /// (P241 §2) Vardiya yeniden
+  ///
+  /// In tr, this message translates to:
+  /// **'Molalar çalışma süresinden düşülür.'**
+  String get vardiyaMolaDuser;
+
+  /// (P241 §2) Vardiya yeniden
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu vardiyadaki rol'**
+  String get vardiyaRolEtiketi;
+
+  /// (P241 §2) Vardiya yeniden
+  ///
+  /// In tr, this message translates to:
+  /// **'Lokasyon'**
+  String get vardiyaLokasyon;
+
+  /// (P241 §2) Vardiya yeniden
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} saat çalışma'**
+  String vardiyaCalismaSaati(Object n);
 }
 
 class _AppLocalizationsDelegate

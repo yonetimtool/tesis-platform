@@ -30,6 +30,8 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'widgets/gun_takvimi.dart';
+import 'izin_formu.dart';
+import '../../../core/ui/merkez_diyalog.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/error/akis_hatasi.dart';
@@ -81,6 +83,19 @@ final vardiyaSimdiProvider = FutureProvider<VardiyaSimdi>((ref) async {
   return ref.read(vardiyaPlaniApiProvider).simdi();
 });
 
+/// (P241 §2) Yayin bekleyen satir sayisi — YALNIZ yonetim cagirir.
+///
+/// Saha rolu bu ucu cagirsaydi 403 alirdi; ekranda gorunmeyen bir
+/// sayinin hatasini gostermek gurultu olurdu.
+final vardiyaYayinOzetiProvider =
+    FutureProvider.autoDispose<({int bekleyen, int taslak, int degisen})>(
+  (ref) async {
+    return ref
+        .read(vardiyaPlaniApiProvider)
+        .yayinOzeti(_haftaBasi(DateTime.now()));
+  },
+);
+
 class VardiyaPlaniScreen extends ConsumerWidget {
   const VardiyaPlaniScreen({super.key});
 
@@ -92,8 +107,34 @@ class VardiyaPlaniScreen extends ConsumerWidget {
     final rol = ref.watch(currentUserRoleProvider).value ?? UserRole.unknown;
     final yonetici = rol == UserRole.admin || rol == UserRole.yonetici;
 
+    final yayin = yonetici ? ref.watch(vardiyaYayinOzetiProvider) : null;
+    final bekleyen = yayin?.asData?.value.bekleyen ?? 0;
+
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.vardiyaPlaniBaslik)),
+      appBar: AppBar(
+        title: Text(l10n.vardiyaPlaniBaslik),
+        actions: [
+          if (yonetici)
+            // (P237 §1 kurali) BASKA EKRANA GOTURMUYOR, YERINDE IS
+            // YAPIYOR: metinli dugme sart degil, ama SAYI tasidigi icin
+            // yine de METINLI — "Yayinla (3)" bir tooltip'in
+            // anlatamayacagi bir bilgi.
+            TextButton(
+              key: const Key('vardiya-yayinla'),
+              onPressed: bekleyen == 0
+                  ? null
+                  : () => _yayinla(context, ref),
+              child: Text(l10n.vardiyaYayinlaSayili(bekleyen)),
+            ),
+          if (yonetici)
+            IconButton(
+              key: const Key('vardiya-izin-ac'),
+              icon: const Icon(Icons.beach_access_outlined),
+              tooltip: l10n.vardiyaIzinEkle,
+              onPressed: () => _izinEkle(context, ref),
+            ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(vardiyaCizelgeProvider);
@@ -170,6 +211,20 @@ class VardiyaPlaniScreen extends ConsumerWidget {
                                 style: Theme.of(context).textTheme.titleSmall,
                               ),
                             ),
+                            // (P241 §2) O GUN IZINLI OLANLAR — vardiya
+                            // satiri DEGIL, ayri bir satir. Ayni listeye
+                            // koymak, izinli kisiyi "calisiyor" gibi
+                            // gosterirdi.
+                            for (final k in c.personel)
+                              if (k.izinler.any((iz) => iz.kapsar(g)))
+                                ListTile(
+                                  key: Key('vardiya-izinli-${k.userId}-$g'),
+                                  dense: true,
+                                  leading:
+                                      const Icon(Icons.beach_access_outlined),
+                                  title: Text(k.ad),
+                                  subtitle: Text(l10n.vardiyaIzinli),
+                                ),
                             for (final s in gunler[g]!)
                               ListTile(
                                 key: Key('vardiya-blok-${s.blok.planId}'),
@@ -183,11 +238,38 @@ class VardiyaPlaniScreen extends ConsumerWidget {
                                       ? Icons.nightlight_outlined
                                       : Icons.schedule_outlined,
                                 ),
-                                title: Text(s.kisi.ad),
+                                title: Row(
+                                  children: [
+                                    Flexible(child: Text(s.kisi.ad)),
+                                    // (P241 §2) TASLAK ISARETI — YAZIYLA.
+                                    // Renk tek basina anlam tasimamali;
+                                    // sahada gunes altinda renk farki
+                                    // zaten kayboluyor.
+                                    if (s.blok.taslak) ...[
+                                      const SizedBox(width: 6),
+                                      Chip(
+                                        key: Key(
+                                            'vardiya-taslak-${s.blok.planId}'),
+                                        label: Text(l10n.vardiyaTaslak),
+                                        visualDensity: VisualDensity.compact,
+                                      ),
+                                    ],
+                                  ],
+                                ),
                                 subtitle: Text(
-                                  s.blok.shiftAd == null
-                                      ? s.blok.saatAraligi
-                                      : '${s.blok.shiftAd}  ${s.blok.saatAraligi}',
+                                  [
+                                    if (s.blok.shiftAd != null) s.blok.shiftAd!,
+                                    s.blok.saatAraligi,
+                                    // ROL ETIKETI ve LOKASYON (§2).
+                                    if (s.blok.vardiyaRolu != null)
+                                      s.blok.vardiyaRolu!,
+                                    if (s.blok.yer != null) s.blok.yer!,
+                                    // MOLA DUSULMUS CALISMA SURESI —
+                                    // sunucudan; istemci hesaplamaz.
+                                    if (s.blok.molaDakika > 0)
+                                      l10n.vardiyaCalismaSaati(
+                                          s.blok.calismaSaat),
+                                  ].join('  ·  '),
                                 ),
                                 // BASIT DEGISIKLIK: yalniz YONETICI ve
                                 // yalniz CIKARMA. Cikarma acil durumun
@@ -252,6 +334,37 @@ class VardiyaPlaniScreen extends ConsumerWidget {
     if (eklendi == true) {
       ref.invalidate(vardiyaCizelgeProvider);
       ref.invalidate(vardiyaSimdiProvider);
+    }
+  }
+
+  /// (P241 §2) Donemdeki taslak/degismis satirlari yayinla.
+  Future<void> _yayinla(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
+    try {
+      final n = await ref
+          .read(vardiyaPlaniApiProvider)
+          .yayinla(_haftaBasi(DateTime.now()));
+      ref.invalidate(vardiyaYayinOzetiProvider);
+      ref.invalidate(vardiyaCizelgeProvider);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.vardiyaYayinlandiMesaj(n))),
+      );
+    } on ApiException catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
+    }
+  }
+
+  /// (P241 §2) Izin ekleme — yonetim icin DOGRUDAN onayli.
+  Future<void> _izinEkle(BuildContext context, WidgetRef ref) async {
+    final eklendi = await merkezSayfaAc<bool>(
+      context,
+      builder: (_) => const IzinFormu(),
+    );
+    if (eklendi == true) {
+      ref.invalidate(vardiyaCizelgeProvider);
     }
   }
 
@@ -373,6 +486,12 @@ class _HizliEkleDialoguState extends ConsumerState<_HizliEkleDialogu> {
   /// ayri catisma kontrolu ve geri alirken AYRI BIR ISTEK.
   final List<VardiyaGunGrubu> _gruplar = [];
   final _notCtrl = TextEditingController();
+  // (P241 §2) MOLA / ROL / LOKASYON denetleyicileri.
+  final _molaCtrl = TextEditingController();
+  final _rolCtrl = TextEditingController();
+  final _alanCtrl = TextEditingController();
+  /// Sunucudan gelen YASAL mola onerisi (4857 md. 68).
+  int? _molaOnerisi;
   List<String>? _cakisanlar;
   /// (P232) Onizleme sonucu — kaydetmeden once kac vardiya olusacagi.
   VardiyaKalipSonuc? _onizleme;
@@ -381,8 +500,28 @@ class _HizliEkleDialoguState extends ConsumerState<_HizliEkleDialogu> {
 
   @override
   void dispose() {
+    // HER DENETLEYICI AYRI SATIRDA: `denetleyici_atma_test` dongu
+    // icindeki `dispose` cagrilarini TANIMIYOR (P240 §2'de olculdu).
     _notCtrl.dispose();
+    _molaCtrl.dispose();
+    _rolCtrl.dispose();
+    _alanCtrl.dispose();
     super.dispose();
+  }
+
+  /// Saat degisince YASAL ONERIYI SUNUCUDAN sor.
+  ///
+  /// Kademeleri istemcide yazmak, kanunu iki yuzeye kopyalamak ve
+  /// birini guncelleyip otekini unutmak demekti.
+  Future<void> _molaOneriGetir() async {
+    try {
+      final n = await ref
+          .read(vardiyaPlaniApiProvider)
+          .molaOnerisi(_s(_basSaat), _s(_sonSaat));
+      if (mounted) setState(() => _molaOnerisi = n);
+    } on ApiException {
+      // ONERI BIR KOLAYLIKTIR: alinamamasi formu kirmamali.
+    }
   }
 
   String _g(DateTime d) =>
@@ -473,6 +612,13 @@ class _HizliEkleDialoguState extends ConsumerState<_HizliEkleDialogu> {
             gunler: _seciliGunler.isEmpty
                 ? null
                 : (_seciliGunler.toList()..sort()),
+            // (P241 §2) MOLA / ROL / LOKASYON — web ile AYNI alanlar,
+            // ayni uc. Mobilde eksik birakmak, ayni plani iki yuzeyde
+            // farkli ayrintiyla tutmak olurdu.
+            molaDakika: int.tryParse(_molaCtrl.text.trim()),
+            vardiyaRolu:
+                _rolCtrl.text.trim().isEmpty ? null : _rolCtrl.text.trim(),
+            alan: _alanCtrl.text.trim().isEmpty ? null : _alanCtrl.text.trim(),
           );
       if (!mounted) return;
       if (!sonuc.uygulandi) {
@@ -619,7 +765,10 @@ class _HizliEkleDialoguState extends ConsumerState<_HizliEkleDialogu> {
               onTap: () async {
                 final v = await showTimePicker(
                     context: context, initialTime: _basSaat);
-                if (v != null) setState(() => _basSaat = v);
+                if (v != null) {
+                  setState(() => _basSaat = v);
+                  await _molaOneriGetir();
+                }
               },
             ),
             ListTile(
@@ -631,8 +780,34 @@ class _HizliEkleDialoguState extends ConsumerState<_HizliEkleDialogu> {
               onTap: () async {
                 final v = await showTimePicker(
                     context: context, initialTime: _sonSaat);
-                if (v != null) setState(() => _sonSaat = v);
+                if (v != null) {
+                  setState(() => _sonSaat = v);
+                  await _molaOneriGetir();
+                }
               },
+            ),
+            // ---------------- (P241 §2) MOLA / ROL / LOKASYON ----------
+            TextField(
+              key: const Key('vardiya-ekle-mola'),
+              controller: _molaCtrl,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: l10n.vardiyaMolaDakika,
+                helperText: _molaOnerisi == null
+                    ? l10n.vardiyaMolaDuser
+                    : l10n.vardiyaMolaOnerisi(_molaOnerisi!),
+                helperMaxLines: 2,
+              ),
+            ),
+            TextField(
+              key: const Key('vardiya-ekle-rol'),
+              controller: _rolCtrl,
+              decoration: InputDecoration(labelText: l10n.vardiyaRolEtiketi),
+            ),
+            TextField(
+              key: const Key('vardiya-ekle-lokasyon'),
+              controller: _alanCtrl,
+              decoration: InputDecoration(labelText: l10n.vardiyaLokasyon),
             ),
             TextField(
               key: const Key('vardiya-ekle-not'),

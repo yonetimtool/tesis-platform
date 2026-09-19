@@ -7175,4 +7175,74 @@ class AppLocalizationsRu extends AppLocalizations {
   String bakimGecikmeGun(int n) {
     return 'Просрочено на $n дн.';
   }
+
+  @override
+  String get vardiyaTaslak => 'Черновик';
+
+  @override
+  String get vardiyaTaslakAciklama =>
+      'Черновики персонал не видит — они появляются после публикации.';
+
+  @override
+  String vardiyaYayinlaSayili(Object n) {
+    return 'Опубликовать ($n)';
+  }
+
+  @override
+  String vardiyaYayinlandiMesaj(Object n) {
+    return 'Опубликовано смен: $n';
+  }
+
+  @override
+  String get vardiyaIzinli => 'В отпуске';
+
+  @override
+  String get vardiyaIzinEkle => 'Добавить отпуск';
+
+  @override
+  String get vardiyaIzinTuru => 'Тип отпуска';
+
+  @override
+  String get vardiyaIzinYillik => 'Ежегодный отпуск';
+
+  @override
+  String get vardiyaIzinMazeret => 'Отгул';
+
+  @override
+  String get vardiyaIzinHastalik => 'Больничный';
+
+  @override
+  String get vardiyaIzinUcretsiz => 'Отпуск без содержания';
+
+  @override
+  String get vardiyaIzinResmiTatil => 'Праздник';
+
+  @override
+  String get vardiyaIzinTalepGonderildi =>
+      'Заявка на отпуск отправлена на согласование';
+
+  @override
+  String get vardiyaIzinKaydedildi => 'Отпуск сохранён';
+
+  @override
+  String get vardiyaMolaDakika => 'Перерыв (мин.)';
+
+  @override
+  String vardiyaMolaOnerisi(Object n) {
+    return 'По закону: $n мин.';
+  }
+
+  @override
+  String get vardiyaMolaDuser => 'Перерывы вычитаются из рабочего времени.';
+
+  @override
+  String get vardiyaRolEtiketi => 'Роль в этой смене';
+
+  @override
+  String get vardiyaLokasyon => 'Место';
+
+  @override
+  String vardiyaCalismaSaati(Object n) {
+    return '$n ч работы';
+  }
 }

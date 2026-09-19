@@ -3444,5 +3444,105 @@
         "type": "int"
       }
     }
+  },
+  "vardiyaTaslak": "Taslak",
+  "@vardiyaTaslak": {
+    "description": "(P241 §2) Vardiya yeniden"
+  },
+  "vardiyaTaslakAciklama": "Taslak vardiyaları personel görmez; \"Yayınla\" dediğinizde görünür.",
+  "@vardiyaTaslakAciklama": {
+    "description": "(P241 §2) Vardiya yeniden"
+  },
+  "vardiyaYayinlaSayili": "Yayınla ({n})",
+  "@vardiyaYayinlaSayili": {
+    "description": "(P241 §2) Vardiya yeniden",
+    "placeholders": {
+      "n": {
+        "type": "Object"
+      }
+    }
+  },
+  "vardiyaYayinlandiMesaj": "{n} vardiya yayınlandı",
+  "@vardiyaYayinlandiMesaj": {
+    "description": "(P241 §2) Vardiya yeniden",
+    "placeholders": {
+      "n": {
+        "type": "Object"
+      }
+    }
+  },
+  "vardiyaIzinli": "İzinli",
+  "@vardiyaIzinli": {
+    "description": "(P241 §2) Vardiya yeniden"
+  },
+  "vardiyaIzinEkle": "İzin ekle",
+  "@vardiyaIzinEkle": {
+    "description": "(P241 §2) Vardiya yeniden"
+  },
+  "vardiyaIzinTuru": "İzin türü",
+  "@vardiyaIzinTuru": {
+    "description": "(P241 §2) Vardiya yeniden"
+  },
+  "vardiyaIzinYillik": "Yıllık izin",
+  "@vardiyaIzinYillik": {
+    "description": "(P241 §2) Vardiya yeniden"
+  },
+  "vardiyaIzinMazeret": "Mazeret izni",
+  "@vardiyaIzinMazeret": {
+    "description": "(P241 §2) Vardiya yeniden"
+  },
+  "vardiyaIzinHastalik": "Hastalık izni",
+  "@vardiyaIzinHastalik": {
+    "description": "(P241 §2) Vardiya yeniden"
+  },
+  "vardiyaIzinUcretsiz": "Ücretsiz izin",
+  "@vardiyaIzinUcretsiz": {
+    "description": "(P241 §2) Vardiya yeniden"
+  },
+  "vardiyaIzinResmiTatil": "Resmi tatil",
+  "@vardiyaIzinResmiTatil": {
+    "description": "(P241 §2) Vardiya yeniden"
+  },
+  "vardiyaIzinTalepGonderildi": "İzin talebiniz onaya gönderildi",
+  "@vardiyaIzinTalepGonderildi": {
+    "description": "(P241 §2) Vardiya yeniden"
+  },
+  "vardiyaIzinKaydedildi": "İzin kaydedildi",
+  "@vardiyaIzinKaydedildi": {
+    "description": "(P241 §2) Vardiya yeniden"
+  },
+  "vardiyaMolaDakika": "Mola (dakika)",
+  "@vardiyaMolaDakika": {
+    "description": "(P241 §2) Vardiya yeniden"
+  },
+  "vardiyaMolaOnerisi": "Yasal öneri: {n} dakika",
+  "@vardiyaMolaOnerisi": {
+    "description": "(P241 §2) Vardiya yeniden",
+    "placeholders": {
+      "n": {
+        "type": "Object"
+      }
+    }
+  },
+  "vardiyaMolaDuser": "Molalar çalışma süresinden düşülür.",
+  "@vardiyaMolaDuser": {
+    "description": "(P241 §2) Vardiya yeniden"
+  },
+  "vardiyaRolEtiketi": "Bu vardiyadaki rol",
+  "@vardiyaRolEtiketi": {
+    "description": "(P241 §2) Vardiya yeniden"
+  },
+  "vardiyaLokasyon": "Lokasyon",
+  "@vardiyaLokasyon": {
+    "description": "(P241 §2) Vardiya yeniden"
+  },
+  "vardiyaCalismaSaati": "{n} saat çalışma",
+  "@vardiyaCalismaSaati": {
+    "description": "(P241 §2) Vardiya yeniden",
+    "placeholders": {
+      "n": {
+        "type": "Object"
+      }
+    }
   }
 }

@@ -7103,4 +7103,74 @@ class AppLocalizationsEn extends AppLocalizations {
   String bakimGecikmeGun(int n) {
     return '$n days overdue';
   }
+
+  @override
+  String get vardiyaTaslak => 'Draft';
+
+  @override
+  String get vardiyaTaslakAciklama =>
+      'Staff do not see draft shifts; they appear when you publish.';
+
+  @override
+  String vardiyaYayinlaSayili(Object n) {
+    return 'Publish ($n)';
+  }
+
+  @override
+  String vardiyaYayinlandiMesaj(Object n) {
+    return '$n shifts published';
+  }
+
+  @override
+  String get vardiyaIzinli => 'On leave';
+
+  @override
+  String get vardiyaIzinEkle => 'Add leave';
+
+  @override
+  String get vardiyaIzinTuru => 'Leave type';
+
+  @override
+  String get vardiyaIzinYillik => 'Annual leave';
+
+  @override
+  String get vardiyaIzinMazeret => 'Personal leave';
+
+  @override
+  String get vardiyaIzinHastalik => 'Sick leave';
+
+  @override
+  String get vardiyaIzinUcretsiz => 'Unpaid leave';
+
+  @override
+  String get vardiyaIzinResmiTatil => 'Public holiday';
+
+  @override
+  String get vardiyaIzinTalepGonderildi =>
+      'Your leave request was sent for approval';
+
+  @override
+  String get vardiyaIzinKaydedildi => 'Leave saved';
+
+  @override
+  String get vardiyaMolaDakika => 'Break (minutes)';
+
+  @override
+  String vardiyaMolaOnerisi(Object n) {
+    return 'Statutory suggestion: $n minutes';
+  }
+
+  @override
+  String get vardiyaMolaDuser => 'Breaks are deducted from working time.';
+
+  @override
+  String get vardiyaRolEtiketi => 'Role in this shift';
+
+  @override
+  String get vardiyaLokasyon => 'Location';
+
+  @override
+  String vardiyaCalismaSaati(Object n) {
+    return '$n h of work';
+  }
 }

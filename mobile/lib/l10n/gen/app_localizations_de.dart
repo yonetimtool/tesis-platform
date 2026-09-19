@@ -7103,4 +7103,74 @@ class AppLocalizationsDe extends AppLocalizations {
   String bakimGecikmeGun(int n) {
     return '$n Tage überfällig';
   }
+
+  @override
+  String get vardiyaTaslak => 'Entwurf';
+
+  @override
+  String get vardiyaTaslakAciklama =>
+      'Entwürfe sieht das Personal nicht; sie erscheinen beim Veröffentlichen.';
+
+  @override
+  String vardiyaYayinlaSayili(Object n) {
+    return 'Veröffentlichen ($n)';
+  }
+
+  @override
+  String vardiyaYayinlandiMesaj(Object n) {
+    return '$n Schichten veröffentlicht';
+  }
+
+  @override
+  String get vardiyaIzinli => 'Im Urlaub';
+
+  @override
+  String get vardiyaIzinEkle => 'Urlaub eintragen';
+
+  @override
+  String get vardiyaIzinTuru => 'Urlaubsart';
+
+  @override
+  String get vardiyaIzinYillik => 'Jahresurlaub';
+
+  @override
+  String get vardiyaIzinMazeret => 'Sonderurlaub';
+
+  @override
+  String get vardiyaIzinHastalik => 'Krankheit';
+
+  @override
+  String get vardiyaIzinUcretsiz => 'Unbezahlter Urlaub';
+
+  @override
+  String get vardiyaIzinResmiTatil => 'Feiertag';
+
+  @override
+  String get vardiyaIzinTalepGonderildi =>
+      'Ihr Urlaubsantrag wurde zur Freigabe gesendet';
+
+  @override
+  String get vardiyaIzinKaydedildi => 'Urlaub gespeichert';
+
+  @override
+  String get vardiyaMolaDakika => 'Pause (Minuten)';
+
+  @override
+  String vardiyaMolaOnerisi(Object n) {
+    return 'Gesetzlicher Vorschlag: $n Min.';
+  }
+
+  @override
+  String get vardiyaMolaDuser => 'Pausen werden von der Arbeitszeit abgezogen.';
+
+  @override
+  String get vardiyaRolEtiketi => 'Rolle in dieser Schicht';
+
+  @override
+  String get vardiyaLokasyon => 'Ort';
+
+  @override
+  String vardiyaCalismaSaati(Object n) {
+    return '$n Std. Arbeit';
+  }
 }
