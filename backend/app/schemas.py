@@ -9008,6 +9008,12 @@ class PanikOlustur(BaseModel):
     """
 
     tip: str
+    #: (P243 §5c) NE OLDUGU — `tip`in yerine GECMEZ, yanina gelir.
+    #: `tip` kimin tetikledigini, kategori ne oldugunu soyler.
+    kategori: Literal[
+        "deprem", "yangin", "gaz", "tahliye", "saglik",
+        "guvenlik_tehdidi", "diger",
+    ] | None = None
     #: Sakin paniginde daire; verilmezse sunucu kullanicinin dairesinden
     #: DOLDURUR (istemcinin bilmesi gerekmez).
     unit_id: uuid.UUID | None = None
@@ -9052,6 +9058,8 @@ class PanikAlarmOut(BaseModel):
 
     id: uuid.UUID
     tip: str
+    #: (P243 §5c) NULL = P240 doneminde acilmis alarm (kategori yok).
+    kategori: str | None = None
     durum: str
     olusturan_user_id: uuid.UUID | None = None
     olusturan_ad: str | None = None

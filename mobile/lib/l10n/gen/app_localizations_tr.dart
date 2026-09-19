@@ -6978,4 +6978,38 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get vardiyaSablonlari => 'Vardiya şablonları';
+
+  @override
+  String get panikKategoriSec => 'Ne oluyor?';
+
+  @override
+  String get panikKategoriSecAciklama =>
+      'Kategori seçin; alarmı alan kişi ne yapacağını görsün.';
+
+  @override
+  String get panikKategoriDeprem => 'Deprem';
+
+  @override
+  String get panikKategoriYangin => 'Yangın';
+
+  @override
+  String get panikKategoriGaz => 'Gaz kaçağı';
+
+  @override
+  String get panikKategoriTahliye => 'Tahliye';
+
+  @override
+  String get panikKategoriSaglik => 'Sağlık';
+
+  @override
+  String get panikKategoriGuvenlikTehdidi => 'Güvenlik tehdidi';
+
+  @override
+  String get panikKategoriDiger => 'Diğer';
+
+  @override
+  String get panikKategoriSiteGeneli => 'Tüm siteye gider';
+
+  @override
+  String get panikKategoriEkip => 'Yönetim ve güvenliğe gider';
 }

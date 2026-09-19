@@ -2455,5 +2455,16 @@
   "vardiyaRolEtiketi": "Role in this shift",
   "vardiyaLokasyon": "Location",
   "vardiyaCalismaSaati": "{n} h of work",
-  "vardiyaSablonlari": "Shift templates"
+  "vardiyaSablonlari": "Shift templates",
+  "panikKategoriSec": "What is happening?",
+  "panikKategoriSecAciklama": "Pick a category so the people receiving it know what to do.",
+  "panikKategoriDeprem": "Earthquake",
+  "panikKategoriYangin": "Fire",
+  "panikKategoriGaz": "Gas leak",
+  "panikKategoriTahliye": "Evacuation",
+  "panikKategoriSaglik": "Medical",
+  "panikKategoriGuvenlikTehdidi": "Security threat",
+  "panikKategoriDiger": "Other",
+  "panikKategoriSiteGeneli": "Goes to the whole site",
+  "panikKategoriEkip": "Goes to management and security"
 }

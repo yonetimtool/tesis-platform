@@ -7176,4 +7176,38 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get vardiyaSablonlari => 'Schichtvorlagen';
+
+  @override
+  String get panikKategoriSec => 'Was ist passiert?';
+
+  @override
+  String get panikKategoriSecAciklama =>
+      'Wählen Sie eine Kategorie, damit Empfänger wissen, was zu tun ist.';
+
+  @override
+  String get panikKategoriDeprem => 'Erdbeben';
+
+  @override
+  String get panikKategoriYangin => 'Feuer';
+
+  @override
+  String get panikKategoriGaz => 'Gasleck';
+
+  @override
+  String get panikKategoriTahliye => 'Evakuierung';
+
+  @override
+  String get panikKategoriSaglik => 'Medizin';
+
+  @override
+  String get panikKategoriGuvenlikTehdidi => 'Sicherheitsbedrohung';
+
+  @override
+  String get panikKategoriDiger => 'Sonstiges';
+
+  @override
+  String get panikKategoriSiteGeneli => 'Geht an die ganze Anlage';
+
+  @override
+  String get panikKategoriEkip => 'Geht an Verwaltung und Sicherheit';
 }

@@ -870,6 +870,144 @@ METINLER: dict[str, PushMetni] = {
         },
         params=('cihaz', 'yer'),
     ),
+    # ===================================================================== #
+    # (P243 §5c) PANIK KATEGORILERI — HER BIRI KENDI TALIMATIYLA
+    # ===================================================================== #
+    #
+    # NEDEN AYRI METINLER: alan kisi NE YAPACAGINI bilmeli. Deprem ile
+    # gaz kacagi BIRBIRINI DISLAYAN talimatlar tasir — depremde asansor
+    # yasak, gazda ELEKTRIK DUGMESI yasak. Tek bir "acil durum var"
+    # cumlesi, dogru davranisi kullanicinin tahminine birakirdi.
+    #
+    # KAYNAK: AFAD "Cok - Kapan - Tutun" temel hareketi ve deprem
+    # sonrasi "asansor kullanmayin, merdiveni kullanin" yonergesi;
+    # dogal gaz dagitim sirketlerinin (or. IGDAS) kacak talimati
+    # "ates yakmayin, elektrik dugmelerine dokunmayin, havalandirin,
+    # binayi terk edin"; itfaiye tahliye yonergesi "asansor kullanmayin".
+    # UYDURULMADI: her cumle bu yonergelerin kisaltilmis halidir.
+    #
+    # KISA TUTULDU: bildirim ekraninda TAM OKUNMALI. Uzun bir metin
+    # "..." ile kesilir ve kesilen yer tam da talimatin oldugu yerdir.
+    "panik_kategori_deprem": PushMetni(
+        baslik={
+            "tr": "DEPREM", "en": "EARTHQUAKE", "ar": "زلزال",
+            "ru": "ЗЕМЛЕТРЯСЕНИЕ", "de": "ERDBEBEN", "fr": "SÉISME",
+            "es": "TERREMOTO",
+        },
+        govde={
+            "tr": "Çök, kapan, tutun. Sarsıntı bitince merdivenle çıkın; asansör kullanmayın.",
+            "en": "Drop, cover, hold on. When shaking stops use the stairs; do not use the lift.",
+            "ar": "انبطح، احتمِ، تمسّك. بعد توقف الهزة استخدم الدرج ولا تستخدم المصعد.",
+            "ru": "Упади, укройся, держись. После толчков — по лестнице, лифтом не пользуйтесь.",
+            "de": "Ducken, schützen, festhalten. Danach Treppe nehmen, keinen Aufzug.",
+            "fr": "Baissez-vous, protégez-vous, accrochez-vous. Ensuite l’escalier, pas l’ascenseur.",
+            "es": "Agáchese, cúbrase, sujétese. Después use las escaleras, no el ascensor.",
+        },
+        params=(),
+    ),
+    "panik_kategori_yangin": PushMetni(
+        baslik={
+            "tr": "YANGIN", "en": "FIRE", "ar": "حريق", "ru": "ПОЖАР",
+            "de": "FEUER", "fr": "INCENDIE", "es": "INCENDIO",
+        },
+        govde={
+            "tr": "Binayı merdivenden terk edin. Asansör kullanmayın, kapıları kapatın.",
+            "en": "Leave the building by the stairs. Do not use the lift; close doors behind you.",
+            "ar": "غادر المبنى عبر الدرج. لا تستخدم المصعد وأغلق الأبواب خلفك.",
+            "ru": "Покиньте здание по лестнице. Лифтом не пользуйтесь, закрывайте двери.",
+            "de": "Gebäude über die Treppe verlassen. Keinen Aufzug, Türen schließen.",
+            "fr": "Quittez le bâtiment par l’escalier. Pas d’ascenseur, fermez les portes.",
+            "es": "Salga por las escaleras. No use el ascensor y cierre las puertas.",
+        },
+        params=(),
+    ),
+    "panik_kategori_gaz": PushMetni(
+        baslik={
+            "tr": "GAZ KAÇAĞI", "en": "GAS LEAK", "ar": "تسرب غاز",
+            "ru": "УТЕЧКА ГАЗА", "de": "GASLECK", "fr": "FUITE DE GAZ",
+            "es": "FUGA DE GAS",
+        },
+        govde={
+            "tr": "Ateş yakmayın, elektrik düğmelerine dokunmayın. Binayı terk edin.",
+            "en": "No flames, do not touch light switches. Leave the building.",
+            "ar": "لا تشعل نارًا ولا تلمس مفاتيح الكهرباء. غادر المبنى.",
+            "ru": "Не зажигайте огонь, не трогайте выключатели. Покиньте здание.",
+            "de": "Kein Feuer, keine Lichtschalter berühren. Gebäude verlassen.",
+            "fr": "Pas de flamme, ne touchez pas les interrupteurs. Quittez le bâtiment.",
+            "es": "Sin llamas, no toque los interruptores. Salga del edificio.",
+        },
+        params=(),
+    ),
+    "panik_kategori_tahliye": PushMetni(
+        baslik={
+            "tr": "TAHLİYE", "en": "EVACUATION", "ar": "إخلاء",
+            "ru": "ЭВАКУАЦИЯ", "de": "EVAKUIERUNG", "fr": "ÉVACUATION",
+            "es": "EVACUACIÓN",
+        },
+        govde={
+            "tr": "Binayı derhal terk edin. Asansör kullanmayın, toplanma alanına gidin.",
+            "en": "Leave the building now. Do not use the lift; go to the assembly point.",
+            "ar": "غادر المبنى فورًا. لا تستخدم المصعد وتوجّه إلى نقطة التجمع.",
+            "ru": "Немедленно покиньте здание. Без лифта, идите к месту сбора.",
+            "de": "Gebäude sofort verlassen. Kein Aufzug, zum Sammelpunkt gehen.",
+            "fr": "Quittez le bâtiment immédiatement. Pas d’ascenseur, point de rassemblement.",
+            "es": "Salga del edificio ya. Sin ascensor, vaya al punto de reunión.",
+        },
+        params=(),
+    ),
+    "panik_kategori_saglik": PushMetni(
+        baslik={
+            "tr": "SAĞLIK ACİLİ", "en": "MEDICAL EMERGENCY",
+            "ar": "حالة طبية طارئة", "ru": "МЕДИЦИНСКАЯ ПОМОЩЬ",
+            "de": "MEDIZINISCHER NOTFALL", "fr": "URGENCE MÉDICALE",
+            "es": "EMERGENCIA MÉDICA",
+        },
+        govde={
+            "tr": "Sağlık acili. 112 arandı mı kontrol edin, ekibi kapıda karşılayın.",
+            "en": "Medical emergency. Check the ambulance was called and meet it at the gate.",
+            "ar": "حالة طبية طارئة. تأكد من طلب الإسعاف واستقبله عند البوابة.",
+            "ru": "Медицинский случай. Проверьте вызов скорой и встретьте её у ворот.",
+            "de": "Medizinischer Notfall. Rettungsdienst gerufen? Am Tor empfangen.",
+            "fr": "Urgence médicale. Vérifiez l’appel des secours et accueillez-les à l’entrée.",
+            "es": "Emergencia médica. Verifique la llamada al 112 y reciba a la ambulancia.",
+        },
+        params=(),
+    ),
+    "panik_kategori_guvenlik_tehdidi": PushMetni(
+        baslik={
+            "tr": "GÜVENLİK TEHDİDİ", "en": "SECURITY THREAT",
+            "ar": "تهديد أمني", "ru": "УГРОЗА БЕЗОПАСНОСТИ",
+            "de": "SICHERHEITSBEDROHUNG", "fr": "MENACE DE SÉCURITÉ",
+            "es": "AMENAZA DE SEGURIDAD",
+        },
+        govde={
+            "tr": "Güvenlik tehdidi. Bulunduğunuz yerde kalın, kapıyı kilitleyin, 155'i arayın.",
+            "en": "Security threat. Stay where you are, lock the door, call the police.",
+            "ar": "تهديد أمني. ابقَ مكانك، أغلق الباب، واتصل بالشرطة.",
+            "ru": "Угроза безопасности. Оставайтесь на месте, заприте дверь, звоните в полицию.",
+            "de": "Sicherheitsbedrohung. Bleiben Sie, Tür verriegeln, Polizei rufen.",
+            "fr": "Menace de sécurité. Restez sur place, verrouillez, appelez la police.",
+            "es": "Amenaza de seguridad. Quédese donde está, cierre con llave y llame a la policía.",
+        },
+        params=(),
+    ),
+    "panik_kategori_diger": PushMetni(
+        baslik={
+            "tr": "ACİL DURUM", "en": "EMERGENCY", "ar": "حالة طارئة",
+            "ru": "ЧРЕЗВЫЧАЙНАЯ СИТУАЦИЯ", "de": "NOTFALL", "fr": "URGENCE",
+            "es": "EMERGENCIA",
+        },
+        govde={
+            "tr": "Acil durum bildirildi. Takip ekranından ayrıntıya bakın.",
+            "en": "An emergency was reported. Open the tracking screen for details.",
+            "ar": "تم الإبلاغ عن حالة طارئة. افتح شاشة المتابعة للتفاصيل.",
+            "ru": "Сообщено о ЧС. Откройте экран отслеживания для деталей.",
+            "de": "Ein Notfall wurde gemeldet. Details im Verfolgungsbildschirm.",
+            "fr": "Une urgence a été signalée. Voir l’écran de suivi.",
+            "es": "Se notificó una emergencia. Consulte la pantalla de seguimiento.",
+        },
+        params=(),
+    ),
     # (P241 §2e) VARDIYA PLANI YAYINLANDI — ETKILENEN KISIYE.
     #
     # Sayi KISIYE OZEL: "18 vardiya yayinlandi" herkese ayni gitseydi,

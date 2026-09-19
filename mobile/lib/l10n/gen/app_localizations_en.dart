@@ -7176,4 +7176,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get vardiyaSablonlari => 'Shift templates';
+
+  @override
+  String get panikKategoriSec => 'What is happening?';
+
+  @override
+  String get panikKategoriSecAciklama =>
+      'Pick a category so the people receiving it know what to do.';
+
+  @override
+  String get panikKategoriDeprem => 'Earthquake';
+
+  @override
+  String get panikKategoriYangin => 'Fire';
+
+  @override
+  String get panikKategoriGaz => 'Gas leak';
+
+  @override
+  String get panikKategoriTahliye => 'Evacuation';
+
+  @override
+  String get panikKategoriSaglik => 'Medical';
+
+  @override
+  String get panikKategoriGuvenlikTehdidi => 'Security threat';
+
+  @override
+  String get panikKategoriDiger => 'Other';
+
+  @override
+  String get panikKategoriSiteGeneli => 'Goes to the whole site';
+
+  @override
+  String get panikKategoriEkip => 'Goes to management and security';
 }

@@ -69,6 +69,8 @@ const CIZELGE = {
       ad: "Veli Bos",
       rol: "tesis_gorevlisi",
       bloklar: [],
+      // (P243 §2) Duzende olan ama BU DONEMDE atanmamis kisi.
+      vardiya_duzeninde: true,
       izinler: [
         {
           izin_id: "i-1",

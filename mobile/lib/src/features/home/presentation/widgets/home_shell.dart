@@ -122,28 +122,15 @@ class HomeShell extends ConsumerWidget {
         titleSpacing: 0,
         title: const HomeMarka(),
         actions: [
-          // (P240 §1) ACIL — UST BARDA, HER SEKMEDE, TEK DOKUNUS.
+          // (P243 §5b) ACIL DUGMESI UST BARDAN KALDIRILDI.
           //
-          // NEREDE DURACAGI KARARI (istek: "karar ver ve gerekcelendir"):
+          // Istek onu SOL MENUNUN UST SAGINA aldi (bkz. `home_drawer`).
+          // P240'ta buraya konmasinin gerekcesi "tek dokunus"tu; o
+          // gerekce §5c ile DUSTU: alarm artik once KATEGORI seciyor,
+          // yani tek dokunusla zaten gitmiyor.
           //
-          //   * ALT CUBUKTA 6. YUVA olarak DEGIL. Cubukta bes yuva var ve
-          //     320 dp'de her biri ~64 dp; altinciyi eklemek ~53 dp'ye
-          //     duserdi ve 48 dp dokunma hedefi kilidi (P220) kirilirdi.
-          //     Kirilmasa bile etiketler okunmaz olurdu.
-          //   * AYRI BIR YUZEN DUGME olarak DEGIL: cubugun ORTASINDA
-          //     zaten bir FAB var ("+"). Ikinci bir yuzen dugme hem
-          //     gorsel olarak onunla yarisir hem de icerigin uzerini
-          //     kapatir.
-          //   * ANA EKRANDA SABIT KART olarak DEGIL: istek "tek dokunus"
-          //     diyor; kart yalniz ana ekranda olurdu ve kullanici baska
-          //     sekmedeyken once ana sekmeye donmesi gerekirdi.
-          //
-          // UST BAR bes sekmenin HEPSINDE ayni yerde duruyor ve dokunma
-          // hedefi 48 dp. SIMGE TEK BASINA DEGIL: yaninda "ACİL" yazar
-          // (P237'nin kurali — bir eylemin tek girisi etiketsiz bir ikon
-          // olmamali).
-          _PanikButonu(onTap: () => context.push(AppRoutes.panik)),
-          const SizedBox(width: 4),
+          // IKI GIRIS BIRAKILMADI: ayni eylemin iki kapisi, hangisinin
+          // "gercek" oldugu sorusunu dogurur (P232'de olculen desen).
           // (P168 §6) KISAYOL IZGARASI — referans ust barin "izgara"
           // dugmesi. Ana ekran karolarini duzenleme ekrani ZATEN VARDI
           // (`/ana-ekran-duzenle`) ama ona yalnizca menuden ulasilabiliyordu;
@@ -552,45 +539,3 @@ class _FabSlot extends StatelessWidget {
 ///
 /// Kirmizi dolgu + metin: acil durumda goz once RENGI bulur, sonra
 /// yaziyi okur. Dokunma hedefi 48 dp (P220 kilidi).
-class _PanikButonu extends StatelessWidget {
-  const _PanikButonu({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final renk = Theme.of(context).colorScheme.error;
-    return Semantics(
-      button: true,
-      label: l10n.panikBaslik,
-      child: Tooltip(
-        message: l10n.panikBaslik,
-        child: InkWell(
-          key: const Key('panik-ac'),
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: renk,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  l10n.panikKisa,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onError,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

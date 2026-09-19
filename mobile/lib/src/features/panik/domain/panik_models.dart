@@ -4,6 +4,34 @@ library;
 /// Tetiklenebilecek alarm tipleri — sunucudaki `TETIKLEYEBILIR` AYNASI.
 enum PanikTip { sakin, guvenlik, yoneticiAnons }
 
+/// (P243 §5c) ALARMIN NE OLDUGU — `PanikTip`in yerine GECMEZ.
+///
+/// `tip` kimin tetikledigini ve kapsami soyler, kategori NE OLDUGUNU.
+/// Her kategorinin KENDI TALIMATI var: depremde asansor yasak, gazda
+/// elektrik dugmesi yasak — birbirini disliyorlar ve tek bir "acil
+/// durum" cumlesi dogru davranisi kullanicinin tahminine birakirdi.
+enum PanikKategori {
+  deprem,
+  yangin,
+  gaz,
+  tahliye,
+  saglik,
+  guvenlikTehdidi,
+  diger,
+}
+
+extension PanikKategoriKimlik on PanikKategori {
+  String get kimlik => switch (this) {
+        PanikKategori.deprem => 'deprem',
+        PanikKategori.yangin => 'yangin',
+        PanikKategori.gaz => 'gaz',
+        PanikKategori.tahliye => 'tahliye',
+        PanikKategori.saglik => 'saglik',
+        PanikKategori.guvenlikTehdidi => 'guvenlik_tehdidi',
+        PanikKategori.diger => 'diger',
+      };
+}
+
 extension PanikTipKimlik on PanikTip {
   /// Sunucu kimligi (`tip` alani).
   String get kimlik => switch (this) {

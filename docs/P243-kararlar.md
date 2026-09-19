@@ -123,3 +123,108 @@ doğal olarak çıkıyor (ölçüldü).
 * Gerçek tarayıcıda modal açılıp tıklanmadı; DOM testi jsdom üzerinde.
 * Aylık rotasyon **bir yıllık** gerçek planla denenmedi; ölçüm üç günlük
   ayırt edici bir kurulumla yapıldı.
+
+---
+
+# §5 — SOS DÜZENLEMESİ
+
+## §5a Web'den tetikleme kaldırıldı
+
+**Gerekçe (isteğin kendi cümlesi):** acil durumda kimse bilgisayar
+başına koşmaz, telefon elde olur. P240'ta düğme her sayfaya konmuştu
+("alarm geç kalmasın") — ama **yanlış yüzeyde hızlı olmak, hızlı olmak
+değildir**.
+
+**Kalan:** alarm **takibi** (`/panik` sayfası: gördüm / müdahale /
+kapat) **ve gelen alarm katmanı** (`PanikAlarmi`). Bilgisayar başındaki
+yöneticiye alarmın **ulaşması**, onun alarmı **başlatmasından** bağımsız
+bir ihtiyaç.
+
+`components/panik/panik-dugmesi.tsx` **silindi**. Kilit, dosyanın geri
+gelmediğini ve düzenin onu çizmediğini ölçüyor.
+
+## §5b Mobilde konum
+
+**Ölçüm — şu an neredeydi:** üst app bar'da, ızgara/zil/arama
+simgelerinin solunda (P240 §1'de oraya konmuştu, gerekçesi "tek
+dokunuş"tu).
+
+**Yeni yer:** sol menünün (drawer) **üst sağı**, marka logosunun
+yanında, 48 dp dokunma hedefi ve **görünür "SOS" etiketiyle** (P237:
+başka ekrana götüren eylem adını görünür taşır).
+
+**BEDELİ AÇIKÇA:** içerik ekranından SOS'a ulaşmak artık **iki hareket**
+(menüyü aç + dokun). Bunu kabul edilebilir kılan şey §5c: alarm artık
+tek dokunuşla **gitmiyor** — önce kategori seçiliyor. Yani "tek dokunuşta
+ateş" zaten tasarım gereği yok; menüde **ilk ekranda, kaydırmadan, tek
+dokunuşla** açılıyor.
+
+**İki giriş bırakılmadı:** aynı eylemin iki kapısı "hangisi gerçek"
+sorusunu doğurur (P232'de ölçülen desen).
+
+## §5c Kategoriler
+
+Yedi kategori: deprem, yangın, gaz, tahliye, sağlık, güvenlik tehdidi,
+diğer. Göç 0146 (`panik_kategori` enum + `panik_alarm.kategori`).
+
+**`tip` kaldırılmadı, kategori onun yerine geçmez:** `tip` *kimin*
+tetiklediğini ve kapsamı, kategori *ne olduğunu* söyler. "Sakin,
+dairesinde yangın" ile "yönetici, site geneli tahliye" aynı kategoriyi
+taşıyabilir ama aynı alarm değildir.
+
+**Kategori NULL kalabilir:** P240'ta yazılmış alarmların kategorisi yok;
+uydurmak, olmayan bir bilgiyi kayda geçirmek olurdu. Kategorisiz alarm
+eski metni kullanır.
+
+**Zorunlu da değil:** acil durumda kategori seçmeye zorlamak alarmı
+geciktirirdi.
+
+### Metinler — uydurulmadı
+
+| Kategori | Talimat (tr) | Dayanak |
+|---|---|---|
+| Deprem | "Çök, kapan, tutun. Sarsıntı bitince merdivenle çıkın; asansör kullanmayın." | AFAD'ın temel hareketi "Çök–Kapan–Tutun" ve deprem sonrası asansör yasağı |
+| Yangın | "Binayı merdivenden terk edin. Asansör kullanmayın, kapıları kapatın." | İtfaiye tahliye yönergesi (asansör yasağı, kapıları kapatarak yayılımı yavaşlatma) |
+| Gaz | "Ateş yakmayın, elektrik düğmelerine dokunmayın. Binayı terk edin." | Doğal gaz dağıtım şirketlerinin kaçak talimatı (kıvılcım kaynağı yasağı) |
+| Tahliye | "Binayı derhal terk edin. Asansör kullanmayın, toplanma alanına gidin." | Tahliye yönergesi |
+| Sağlık | "112 arandı mı kontrol edin, ekibi kapıda karşılayın." | Ambulansın siteye girişini hızlandıran pratik adım |
+| Güvenlik tehdidi | "Bulunduğunuz yerde kalın, kapıyı kilitleyin, 155'i arayın." | Yerinde sığınma (shelter-in-place) yaklaşımı |
+
+**Talimatlar birbirini dışlıyor** ve kilit bunu ölçüyor: depremde
+"asansör", gazda "elektrik", tahliyede "terk"; güvenlik tehdidinde
+**"terk edin" geçmiyor** (dışarı çıkmak riski artırır).
+
+**Kısa tutuldu** (≤110 karakter, her dilde ölçülü): bildirim ekranında
+tam okunmalı; uzun metin "..." ile kesilir ve kesilen yer tam da
+talimatın olduğu yerdir.
+
+### Kategoriye göre farklı davranış — değerlendirildi, EVET
+
+| Kategori | Kime |
+|---|---|
+| Deprem, yangın, gaz, tahliye | **Tüm site** (sakinler dahil) |
+| Sağlık, güvenlik tehdidi, diğer | Yönetim + güvenlik |
+
+* **Bina geneli tehlikede herkesin yapacağı bir şey var** — bilgiyi
+  yalnız görevlilere vermek, bilmesi gerekenleri dışarıda bırakmaktı.
+* **Sağlık kişisel veridir**; "3. katta sağlık acili" duyurusu gereksiz
+  bir ifşadır.
+* **Güvenlik tehdidinde** sakinleri koridora çıkaracak bir duyuru riski
+  artırır; metin zaten "yerinde kal" diyor. Yönetici gerekirse
+  `yonetici_anons` ile siteye ayrıca seslenir — **o karar insanın**.
+
+**Kategori kümeyi yalnız GENİŞLETİR, daraltmaz.** Daraltabilseydi
+"sakin paniği + sağlık" gibi bir bileşke, alarmı güvenlikten de
+gizleyebilir — yani çağrıyı sessizleştirebilirdi.
+
+**Kapsam seçim anında yazılı:** kullanıcı "deprem" derken tüm siteye
+seslendiğini **göndermeden önce** görür.
+
+## §5 ÖLÇEMEDİĞİM
+
+* **Gerçek cihazda push düşmedi** (dev'de kayıtlı cihaz yok); ölçülen
+  bildirim satırı, alıcı kümesi ve metin kimliği.
+* Metinlerin **resmî kurum onayı** alınmadı: yönergelerin özeti
+  yazıldı, kurumlara doğrulatılmadı. Sitenin kendi acil durum planı
+  farklıysa metinler gözden geçirilmeli.
+* Drawer'daki SOS **gerçek telefonda** denenmedi (emülatör yok).

@@ -19357,6 +19357,30 @@ components:
         tip:
           type: string
           enum: [sakin, guvenlik, yonetici_anons]
+        kategori:
+          type: string
+          nullable: true
+          enum: [deprem, yangin, gaz, tahliye, saglik, guvenlik_tehdidi, diger]
+          description: |
+            (P243 §5c) ALARMIN NE OLDUGU — `tip`in yerine GECMEZ.
+            `tip` kimin tetikledigini, kategori ne oldugunu soyler.
+
+            IKI SEYI BELIRLER:
+              * METIN — her kategorinin KENDI talimati var (depremde
+                asansor yasak, gazda elektrik dugmesi yasak; birbirini
+                disliyorlar ve tek bir "acil durum" cumlesi dogru
+                davranisi kullanicinin tahminine birakirdi),
+              * ALICI KUMESI — bina geneli tehlikeler (deprem/yangin/
+                gaz/tahliye) TUM SITEYE gider; saglik ve guvenlik
+                tehdidi YALNIZ yonetim+guvenlige (saglik KISISEL
+                VERIDIR; saldirgan ihtimalinde sakinleri koridora
+                cikarmak RISKI ARTIRIR).
+
+            KATEGORI KUMEYI YALNIZ GENISLETIR, daraltmaz: daraltabilseydi
+            bir bileske alarm cagriyi sessizlestirebilirdi.
+
+            OPSIYONEL: acil durumda kategori secmeye zorlamak alarmi
+            geciktirirdi. Bos birakilirsa eski metin kullanilir.
         unit_id: { type: string, format: uuid, nullable: true }
         checkpoint_id: { type: string, format: uuid, nullable: true }
         gps_lat:

@@ -40,12 +40,15 @@ class _SahtePanikApi extends PanikApi {
   @override
   Future<PanikAlarm> tetikle(
     PanikTip tip, {
+    PanikKategori? kategori,
     double? gpsLat,
     double? gpsLng,
     String? checkpointId,
     String? aciklama,
   }) async {
-    cagrilar.add('tetikle:${tip.kimlik}');
+    // (P243 §5c) KATEGORI de kaydedilir: hangi talimatin gidecegini o
+    // belirliyor ve testler bunu olcebilmeli.
+    cagrilar.add('tetikle:${tip.kimlik}:${kategori?.kimlik ?? "-"}');
     return _alarm();
   }
 
@@ -161,12 +164,12 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
       expect(find.byKey(const Key('panik-geri-sayim')), findsOneWidget);
-      expect(api.cagrilar, ['tetikle:sakin']);
+      expect(api.cagrilar, ['tetikle:sakin:-']);
 
       await tester.tap(find.byKey(const Key('panik-iptal')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
-      expect(api.cagrilar, ['tetikle:sakin', 'iptal']);
+      expect(api.cagrilar, ['tetikle:sakin:-', 'iptal']);
     });
 
     testWidgets('SAYIM BITINCE ISTEMCI IKINCI ISTEK ATMAZ', (tester) async {
@@ -181,7 +184,8 @@ void main() {
       for (var i = 0; i < 8; i++) {
         await tester.pump(const Duration(seconds: 1));
       }
-      expect(api.cagrilar, ['tetikle:sakin'], reason: 'ikinci istek ATILMAMALI');
+      expect(api.cagrilar, ['tetikle:sakin:-'],
+          reason: 'ikinci istek ATILMAMALI');
     });
   });
 

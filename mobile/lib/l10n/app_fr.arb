@@ -2455,5 +2455,16 @@
   "vardiyaRolEtiketi": "Rôle dans ce service",
   "vardiyaLokasyon": "Emplacement",
   "vardiyaCalismaSaati": "{n} h de travail",
-  "vardiyaSablonlari": "Modèles de service"
+  "vardiyaSablonlari": "Modèles de service",
+  "panikKategoriSec": "Que se passe-t-il ?",
+  "panikKategoriSecAciklama": "Choisissez une catégorie pour que les destinataires sachent quoi faire.",
+  "panikKategoriDeprem": "Séisme",
+  "panikKategoriYangin": "Incendie",
+  "panikKategoriGaz": "Fuite de gaz",
+  "panikKategoriTahliye": "Évacuation",
+  "panikKategoriSaglik": "Médical",
+  "panikKategoriGuvenlikTehdidi": "Menace de sécurité",
+  "panikKategoriDiger": "Autre",
+  "panikKategoriSiteGeneli": "Envoyé à toute la résidence",
+  "panikKategoriEkip": "Envoyé à la gestion et à la sécurité"
 }

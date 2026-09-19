@@ -68,6 +68,56 @@ ALICI_ROLLERI: Final[dict[str, frozenset[str]]] = {
     ),
 }
 
+#: (P243 §5c) KATEGORILER — alarmin NE OLDUGU.
+#:
+#: `tip` KIMIN tetikledigini soyler, kategori NE OLDUGUNU. Ikisi ayri
+#: sorulardir (goc 0146).
+KATEGORILER: Final[tuple[str, ...]] = (
+    "deprem", "yangin", "gaz", "tahliye", "saglik", "guvenlik_tehdidi",
+    "diger",
+)
+
+#: BINA GENELI TEHLIKELER — TUM SITEYE gider.
+#:
+#: Deprem, yangin, gaz ve tahliyede HERKESIN yapacagi bir sey var
+#: (cok-kapan-tutun / merdivenden in / ates yakma / binayi terk et).
+#: Bu bilgiyi yalniz gorevlilere vermek, tehlikeyi bilmesi gereken
+#: kisileri disarida birakmakti.
+SITE_GENELI: Final[frozenset[str]] = frozenset(
+    {"deprem", "yangin", "gaz", "tahliye"}
+)
+
+#: Kategori -> EK ALICI ROLLERI (tipin kendi kumesine EKLENIR).
+#:
+#: SAGLIK ve GUVENLIK TEHDIDI siteye YAYILMAZ:
+#:   * saglik durumu KISISEL VERIDIR; "3. katta saglik acili" duyurusu
+#:     gereksiz bir ifsadir,
+#:   * guvenlik tehdidinde sakinleri koridora cikaracak bir duyuru
+#:     RISKI ARTIRIR (yerinde kal talimati zaten metinde). Yonetici
+#:     gerekirse `yonetici_anons` ile siteye ayrica seslenir — o karar
+#:     INSANIN, otomatigin degil.
+KATEGORI_ALICI: Final[dict[str, frozenset[str]]] = {
+    k: frozenset(
+        {"resident", "security", "guvenlik_amiri", "tesis_gorevlisi",
+         "yonetici", "admin"}
+    )
+    for k in SITE_GENELI
+}
+
+
+def kategori_alicilari(tip: str, kategori: str | None) -> frozenset[str]:
+    """Alarmin gidecegi ROLLER — tip kumesi + kategori genislemesi.
+
+    BIRLESIM, DEGISTIRME DEGIL: kategori kumeyi yalniz GENISLETEBILIR.
+    Daraltabilseydi, "sakin panigi + saglik" gibi bir bileske alarmi
+    guvenlikten de gizleyebilirdi — yani cagriyi sessizlestirebilirdi.
+    """
+    taban = ALICI_ROLLERI.get(tip, frozenset())
+    if kategori is None:
+        return taban
+    return taban | KATEGORI_ALICI.get(kategori, frozenset())
+
+
 #: Alarm LISTESINI gorebilen roller (takip ekrani).
 #:
 #: `resident` LISTEYI GORMEZ: baska dairelerin acil durumlari kisisel

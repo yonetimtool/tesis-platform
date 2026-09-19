@@ -2455,5 +2455,16 @@
   "vardiyaRolEtiketi": "الدور في هذه المناوبة",
   "vardiyaLokasyon": "الموقع",
   "vardiyaCalismaSaati": "{n} ساعة عمل",
-  "vardiyaSablonlari": "قوالب المناوبات"
+  "vardiyaSablonlari": "قوالب المناوبات",
+  "panikKategoriSec": "ماذا يحدث؟",
+  "panikKategoriSecAciklama": "اختر فئة ليعرف المستلمون ما العمل.",
+  "panikKategoriDeprem": "زلزال",
+  "panikKategoriYangin": "حريق",
+  "panikKategoriGaz": "تسرب غاز",
+  "panikKategoriTahliye": "إخلاء",
+  "panikKategoriSaglik": "طبية",
+  "panikKategoriGuvenlikTehdidi": "تهديد أمني",
+  "panikKategoriDiger": "أخرى",
+  "panikKategoriSiteGeneli": "تُرسل إلى المجمّع كله",
+  "panikKategoriEkip": "تُرسل إلى الإدارة والأمن"
 }

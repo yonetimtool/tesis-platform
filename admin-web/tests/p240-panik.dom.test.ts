@@ -13,10 +13,12 @@
 //   5. TAM EKRAN ALARM: kapatma dugmesi YOK; yalniz gordum/gidiyorum.
 import { waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { PanikAlarmi } from "@/components/panik/panik-alarmi";
-import { PanikDugmesi } from "@/components/panik/panik-dugmesi";
 
 import { ciz } from "./yardimci";
 
@@ -60,91 +62,39 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("(P240 §1) panik dugmesi — rol kapisi", () => {
-  it("SAKIN yalniz 'evde acil durum'u gorur", async () => {
-    taklit();
-    ciz(() => PanikDugmesi({ rol: "resident" }));
-    await userEvent.click(el("panik-ac") as HTMLElement);
-    expect(el("panik-tip-sakin")).toBeTruthy();
-    // Sakin site geneline anons YAPAMAZ; dugmeyi gostermek, basinca
-    // 403 alacagi bir yol sunmak olurdu.
-    expect(el("panik-tip-yonetici_anons")).toBeNull();
-    expect(el("panik-tip-guvenlik")).toBeNull();
+// ===========================================================================
+// (P243 §5a) SOS TETIKLEME WEB'DEN KALDIRILDI
+// ===========================================================================
+// Eski testler `PanikDugmesi`nin rol kapisini ve 5 saniyelik iptal
+// penceresini olcuyordu. Dugme ARTIK YOK: acil durumda kimse bilgisayar
+// basina kosmaz, telefon elde olur. Ayni kurallar MOBILDE olculuyor
+// (`test/p240_panik_test.dart`) ve SUNUCUDA (`test_p240_panik.py`) —
+// yani kaldirilan sey kapi degil, YANLIS YUZEYDEKI KOPYASI.
+//
+// Asagidaki kilit, dugmenin GERI GELMEDIGINI ve takibin DURDUGUNU
+// olcer.
+describe("(P243 §5a) web'de TETIKLEME yok, TAKIP var", () => {
+  it("panik dugmesi DOSYASI depoda YOK, alarm katmani VAR", () => {
+    // DOSYA SISTEMINDEN olculur: dinamik `import` TypeScript'i de
+    // memnun etmez (olmayan modulun tipi cozulemez) ve testi
+    // derlenmez hale getirir.
+    const kok = join(process.cwd(), "components", "panik");
+    expect(existsSync(join(kok, "panik-alarmi.tsx"))).toBe(true);
+    expect(
+      existsSync(join(kok, "panik-dugmesi.tsx")),
+      "tetikleme dugmesi geri gelmemeli",
+    ).toBe(false);
   });
 
-  it("GUVENLIK yalniz 'guvenlik acili'ni gorur", async () => {
-    taklit();
-    ciz(() => PanikDugmesi({ rol: "security" }));
-    await userEvent.click(el("panik-ac") as HTMLElement);
-    expect(el("panik-tip-guvenlik")).toBeTruthy();
-    expect(el("panik-tip-sakin")).toBeNull();
-  });
-
-  it("YONETICI ikisini gorur, 'sakin panigi'ni GORMEZ", async () => {
-    // Yoneticinin dairesi yoktur; onun actigi sakin panigi gidilecek
-    // ADRES tasimazdi (sunucu da 403 verir).
-    taklit();
-    ciz(() => PanikDugmesi({ rol: "yonetici" }));
-    await userEvent.click(el("panik-ac") as HTMLElement);
-    expect(el("panik-tip-guvenlik")).toBeTruthy();
-    expect(el("panik-tip-yonetici_anons")).toBeTruthy();
-    expect(el("panik-tip-sakin")).toBeNull();
-  });
-
-  it("DENETCI dugmeyi HIC gormez", async () => {
-    taklit();
-    ciz(() => PanikDugmesi({ rol: "denetci" }));
-    expect(el("panik-ac")).toBeNull();
-  });
-});
-
-describe("(P240 §1) iptal penceresi", () => {
-  it("YASAL UYARI dugmelerden ONCE gorunur", async () => {
-    // "112 yerine gecmez" cumlesi alarmi BASTIKTAN SONRA gosterilseydi
-    // en kritik anda okunmazdi.
-    taklit();
-    ciz(() => PanikDugmesi({ rol: "resident" }));
-    await userEvent.click(el("panik-ac") as HTMLElement);
-    const uyari = el("panik-yasal") as HTMLElement;
-    expect(uyari).toBeTruthy();
-    expect(uyari.textContent).toMatch(/112/);
-  });
-
-  it("TETIKLEYINCE geri sayim cizilir ve IPTAL istegi gider", async () => {
-    taklit();
-    ciz(() => PanikDugmesi({ rol: "resident" }));
-    await userEvent.click(el("panik-ac") as HTMLElement);
-    await userEvent.click(el("panik-tip-sakin") as HTMLElement);
-
-    await waitFor(() => expect(el("panik-geri-sayim")).toBeTruthy());
-    expect(cagrilar.filter((c) => c.metot === "POST")).toHaveLength(1);
-
-    await userEvent.click(el("panik-iptal") as HTMLElement);
-    await waitFor(() =>
-      expect(cagrilar.some((c) => c.url === "/api/panik/p1/iptal")).toBe(true),
+  it("DUZENDE tetikleme bileseni CIZILMIYOR", () => {
+    const duzen = readFileSync(
+      join(process.cwd(), "app", "(protected)", "layout.tsx"),
+      "utf8",
     );
+    expect(duzen).not.toContain("PanikDugmesi");
+    // Takip katmani duruyor.
+    expect(duzen).toContain("PanikAlarmi");
   });
-
-  it("GERI SAYIM BITINCE ISTEMCI IKINCI ISTEK ATMAZ", async () => {
-    // Yayin, sunucudaki gecikmeli gorevin isi. Istemciye baglamak,
-    // sekme kapaninca alarmin HIC gitmemesi demekti.
-    //
-    // SAHTE ZAMANLAYICI KULLANILMIYOR: `userEvent` gercek zamanlayici
-    // bekliyor ve ikisini birlikte kurmak testi 5 sn'de zaman asimina
-    // ugratti (olculdu). Bunun yerine GERI SAYIM SURESINDEN UZUN
-    // gercek bir bekleme yapilir — sayim 5 sn, bekleme 5.5 sn.
-    taklit();
-    ciz(() => PanikDugmesi({ rol: "resident" }));
-    await userEvent.click(el("panik-ac") as HTMLElement);
-    await userEvent.click(el("panik-tip-sakin") as HTMLElement);
-    await waitFor(() => expect(el("panik-geri-sayim")).toBeTruthy());
-
-    await new Promise((c) => setTimeout(c, 5_500));
-    // Sayim BITTI (metin "Gönderildi"ye dondu) ama ISTEMCI ikinci bir
-    // istek ATMADI.
-    expect(el("panik-geri-sayim")?.textContent).toContain("Gönderildi");
-    expect(cagrilar.filter((c) => c.metot === "POST")).toHaveLength(1);
-  }, 15_000);
 });
 
 describe("(P240 §1) gelen alarm — tam ekran", () => {

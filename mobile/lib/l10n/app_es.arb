@@ -2455,5 +2455,16 @@
   "vardiyaRolEtiketi": "Rol en este turno",
   "vardiyaLokasyon": "Ubicación",
   "vardiyaCalismaSaati": "{n} h de trabajo",
-  "vardiyaSablonlari": "Plantillas de turno"
+  "vardiyaSablonlari": "Plantillas de turno",
+  "panikKategoriSec": "¿Qué ocurre?",
+  "panikKategoriSecAciklama": "Elija una categoría para que quien reciba sepa qué hacer.",
+  "panikKategoriDeprem": "Terremoto",
+  "panikKategoriYangin": "Incendio",
+  "panikKategoriGaz": "Fuga de gas",
+  "panikKategoriTahliye": "Evacuación",
+  "panikKategoriSaglik": "Sanitario",
+  "panikKategoriGuvenlikTehdidi": "Amenaza de seguridad",
+  "panikKategoriDiger": "Otro",
+  "panikKategoriSiteGeneli": "Se envía a toda la comunidad",
+  "panikKategoriEkip": "Se envía a administración y seguridad"
 }

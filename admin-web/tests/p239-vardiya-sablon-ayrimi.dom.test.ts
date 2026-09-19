@@ -47,8 +47,21 @@ function taklit() {
         meta: { limit: 200, offset: 0, total: 1 },
         items: [{ id: "u-1", ad: "Ali Guvenlik", role: "security" }],
       };
-    } else if (metot === "POST" && url === "/api/vardiya-plani/toplu") {
-      govde = { uygulandi: true, eklenen: 3, cakisan: 0, gunler: [] };
+    } else if (
+      metot === "POST" &&
+      url === "/api/vardiya-plani/kalip-uygula"
+    ) {
+      // (P243 §1) UC DEGISTI: modal artik TEK yoldan gonderiyor.
+      // Eski `/toplu` yolu sunucuda 422 aliyordu (olculdu) ve
+      // kaldirildi.
+      govde = {
+        uygulandi: true,
+        parti_id: "pt-1",
+        eklenecek: 1,
+        eklenen: 1,
+        cakisan: 0,
+        satirlar: [],
+      };
     }
     return new Response(JSON.stringify(govde), {
       status: 200,
@@ -123,7 +136,9 @@ it("ATAMADAN SONRA CIZELGE YENIDEN CEKILIR", async () => {
   await waitFor(() =>
     expect(
       cagrilar.some(
-        (c) => c.metot === "POST" && c.url === "/api/vardiya-plani/toplu",
+        (c) =>
+          c.metot === "POST" &&
+          c.url === "/api/vardiya-plani/kalip-uygula",
       ),
     ).toBe(true),
   );

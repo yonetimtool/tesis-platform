@@ -533,8 +533,6 @@ class _HizliEkleDialoguState extends ConsumerState<_HizliEkleDialogu> {
     }
   }
 
-  String _g(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
   String _s(TimeOfDay t) =>
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 

@@ -2455,5 +2455,16 @@
   "vardiyaRolEtiketi": "Rolle in dieser Schicht",
   "vardiyaLokasyon": "Ort",
   "vardiyaCalismaSaati": "{n} Std. Arbeit",
-  "vardiyaSablonlari": "Schichtvorlagen"
+  "vardiyaSablonlari": "Schichtvorlagen",
+  "panikKategoriSec": "Was ist passiert?",
+  "panikKategoriSecAciklama": "Wählen Sie eine Kategorie, damit Empfänger wissen, was zu tun ist.",
+  "panikKategoriDeprem": "Erdbeben",
+  "panikKategoriYangin": "Feuer",
+  "panikKategoriGaz": "Gasleck",
+  "panikKategoriTahliye": "Evakuierung",
+  "panikKategoriSaglik": "Medizin",
+  "panikKategoriGuvenlikTehdidi": "Sicherheitsbedrohung",
+  "panikKategoriDiger": "Sonstiges",
+  "panikKategoriSiteGeneli": "Geht an die ganze Anlage",
+  "panikKategoriEkip": "Geht an Verwaltung und Sicherheit"
 }

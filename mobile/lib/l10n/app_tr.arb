@@ -3548,5 +3548,49 @@
   "vardiyaSablonlari": "Vardiya şablonları",
   "@vardiyaSablonlari": {
     "description": "(P241 §2d) Sablon ekrani girisi"
+  },
+  "panikKategoriSec": "Ne oluyor?",
+  "@panikKategoriSec": {
+    "description": "(P243 §5c) Panik kategorileri"
+  },
+  "panikKategoriSecAciklama": "Kategori seçin; alarmı alan kişi ne yapacağını görsün.",
+  "@panikKategoriSecAciklama": {
+    "description": "(P243 §5c) Panik kategorileri"
+  },
+  "panikKategoriDeprem": "Deprem",
+  "@panikKategoriDeprem": {
+    "description": "(P243 §5c) Panik kategorileri"
+  },
+  "panikKategoriYangin": "Yangın",
+  "@panikKategoriYangin": {
+    "description": "(P243 §5c) Panik kategorileri"
+  },
+  "panikKategoriGaz": "Gaz kaçağı",
+  "@panikKategoriGaz": {
+    "description": "(P243 §5c) Panik kategorileri"
+  },
+  "panikKategoriTahliye": "Tahliye",
+  "@panikKategoriTahliye": {
+    "description": "(P243 §5c) Panik kategorileri"
+  },
+  "panikKategoriSaglik": "Sağlık",
+  "@panikKategoriSaglik": {
+    "description": "(P243 §5c) Panik kategorileri"
+  },
+  "panikKategoriGuvenlikTehdidi": "Güvenlik tehdidi",
+  "@panikKategoriGuvenlikTehdidi": {
+    "description": "(P243 §5c) Panik kategorileri"
+  },
+  "panikKategoriDiger": "Diğer",
+  "@panikKategoriDiger": {
+    "description": "(P243 §5c) Panik kategorileri"
+  },
+  "panikKategoriSiteGeneli": "Tüm siteye gider",
+  "@panikKategoriSiteGeneli": {
+    "description": "(P243 §5c) Panik kategorileri"
+  },
+  "panikKategoriEkip": "Yönetim ve güvenliğe gider",
+  "@panikKategoriEkip": {
+    "description": "(P243 §5c) Panik kategorileri"
   }
 }

@@ -38,7 +38,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
 from .models import AppUser, Diyafon, Notification, PanikAlarm, PanikAlici, Unit
-from .panik import ALICI_ROLLERI
+from .panik import ALICI_ROLLERI, kategori_alicilari
 from .push_metinleri import push_govdesi
 from .scheduler.notify import dispatch_external
 
@@ -57,8 +57,20 @@ def _simdi() -> dt.datetime:
     return dt.datetime.now(dt.timezone.utc)
 
 
+def kategori_kimligi(kategori: str | None) -> str:
+    """(P243 §5c) Kategoriye gore push metni kimligi.
+
+    Kategori YOKSA eski metin (`panik_alarm`) kullanilir: P240'ta
+    yazilmis alarmlarin kategorisi yok ve onlara uydurma bir talimat
+    yazmak, olmayan bir bilgiyi kullaniciya soylemek olurdu.
+    """
+    return f"panik_kategori_{kategori}" if kategori else "panik_alarm"
+
+
 async def _alicilar(db: AsyncSession, alarm: PanikAlarm) -> list[AppUser]:
-    roller = ALICI_ROLLERI[alarm.tip]
+    # (P243 §5c) ALICI KUMESI KATEGORIDEN DE TURER: bina geneli
+    # tehlikeler (deprem/yangin/gaz/tahliye) TUM SITEYE gider.
+    roller = kategori_alicilari(alarm.tip, alarm.kategori)
     kisiler = list(
         (
             await db.execute(
@@ -109,6 +121,9 @@ async def yayinla_senkron(db: AsyncSession, alarm: PanikAlarm) -> int:
     kisiler = await _alicilar(db, alarm)
     veri = await _veri(db, alarm)
     veri["tip"] = alarm.tip
+    # METIN KIMLIGI KATEGORIDEN: deprem uyarisiyla gaz kacagi uyarisi
+    # ayni cumleyi kullanamaz (goc 0146).
+    kimlik = kategori_kimligi(alarm.kategori)
 
     for k in kisiler:
         var = (
@@ -129,8 +144,10 @@ async def yayinla_senkron(db: AsyncSession, alarm: PanikAlarm) -> int:
                 tenant_id=alarm.tenant_id,
                 user_id=k.id,
                 tip="panik_alarm",
-                mesaj=push_govdesi("panik_alarm", "tr", veri),
-                mesaj_kimlik="panik_alarm",
+                mesaj=push_govdesi(kimlik, "tr", veri),
+                # BILDIRIM TIPI HALA `panik_alarm`: okundu/sil akislari
+                # ve yonlendirme ona bagli. Degisen sey METIN.
+                mesaj_kimlik=kimlik,
                 mesaj_veri=veri,
             )
         )
@@ -141,12 +158,13 @@ async def yayinla_senkron(db: AsyncSession, alarm: PanikAlarm) -> int:
     await db.flush()
 
     dispatch_external(
-        "panik_alarm",
+        kimlik,
         tenant_id=alarm.tenant_id,
         target_user_ids=[k.id for k in kisiler],
         params=veri,
         data={"tip": "panik_alarm", "panik_id": str(alarm.id),
-              "panik_tip": alarm.tip},
+              "panik_tip": alarm.tip,
+              "panik_kategori": alarm.kategori or ""},
     )
     _sms_gonder(alarm, kisiler, veri)
     await _diyafon_anons(db, alarm, veri)

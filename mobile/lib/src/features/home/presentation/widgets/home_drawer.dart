@@ -8,6 +8,7 @@ import '../../../../routing/app_router.dart';
 import '../../../../core/theme/home_tokens.dart';
 import '../../../auth/domain/user_role.dart';
 import '../../../auth/presentation/rol_adi.dart';
+import '../../../panik/presentation/panik_sayfasi.dart' show panikGorunur;
 import '../../data/menu_bolum_tercihi.dart';
 import '../../domain/home_menu.dart';
 import '../module_card_spec.dart';
@@ -55,9 +56,38 @@ class HomeDrawer extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: HomeMarka(),
+            // (P243 §5b) SOS — SOL MENUNUN UST SAGINDA.
+            //
+            // ONCE NEREDEYDI (olculdu): ust app bar'da, izgara/zil/arama
+            // simgelerinin solunda. Istek onu menu basligina aldi.
+            //
+            // BEDELI ACIKCA YAZILIYOR: icerik ekranindan SOS'a ulasmak
+            // artik IKI hareket (menuyu ac + dokun). Bunu kabul
+            // edilebilir kilan sey §5c: alarm artik TEK DOKUNUSLA
+            // GITMIYOR — once KATEGORI seciliyor. Yani "tek dokunusta
+            // ates" zaten tasarim geregi yok; menude ilk ekranda,
+            // kaydirmadan, tek dokunusla ACILIYOR.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+              child: Row(
+                children: [
+                  const Expanded(child: HomeMarka()),
+                  if (panikGorunur(role))
+                    TextButton.icon(
+                      key: const Key('drawer-sos'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Theme.of(context).colorScheme.error,
+                        // DOKUNMA HEDEFI 48 dp (P220 kilidi).
+                        minimumSize: const Size(48, 48),
+                      ),
+                      icon: const Icon(Icons.sos_outlined),
+                      // SIMGE TEK BASINA DEGIL (P237 kurali): baska bir
+                      // ekrana goturen eylem adini GORUNUR tasir.
+                      label: Text(context.l10n.panikKisa),
+                      onPressed: () => onModul(AppRoutes.panik),
+                    ),
+                ],
+              ),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),

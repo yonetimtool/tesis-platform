@@ -40,6 +40,46 @@ List<PanikTip> tetiklenebilirTipler(UserRole rol) => switch (rol) {
       UserRole.denetci || UserRole.unknown => const [],
     };
 
+/// (P243 §5c) Kategori adi — aktif dilden.
+String panikKategoriAdi(AppLocalizations l10n, PanikKategori k) =>
+    switch (k) {
+      PanikKategori.deprem => l10n.panikKategoriDeprem,
+      PanikKategori.yangin => l10n.panikKategoriYangin,
+      PanikKategori.gaz => l10n.panikKategoriGaz,
+      PanikKategori.tahliye => l10n.panikKategoriTahliye,
+      PanikKategori.saglik => l10n.panikKategoriSaglik,
+      PanikKategori.guvenlikTehdidi => l10n.panikKategoriGuvenlikTehdidi,
+      PanikKategori.diger => l10n.panikKategoriDiger,
+    };
+
+/// Kategorinin SIMGESI — metin okunmadan once taninsin.
+IconData panikKategoriIkonu(PanikKategori k) => switch (k) {
+      PanikKategori.deprem => Icons.vibration,
+      PanikKategori.yangin => Icons.local_fire_department_outlined,
+      PanikKategori.gaz => Icons.gas_meter_outlined,
+      PanikKategori.tahliye => Icons.directions_run_outlined,
+      PanikKategori.saglik => Icons.medical_services_outlined,
+      PanikKategori.guvenlikTehdidi => Icons.shield_outlined,
+      PanikKategori.diger => Icons.report_outlined,
+    };
+
+/// Kategori KIME gidiyor — secim aninda YAZILI.
+///
+/// Kullanici "deprem" derken tum siteye seslendigini BILMELI; bunu
+/// gondermeden once soylemek, gonderdikten sonra soylemekten baska bir
+/// seydir.
+bool panikSiteGeneli(PanikKategori k) => const {
+      PanikKategori.deprem,
+      PanikKategori.yangin,
+      PanikKategori.gaz,
+      PanikKategori.tahliye,
+    }.contains(k);
+
+/// Rol SOS girisini gorur mu — `tetiklenebilirTipler`in tek satirlik
+/// aynasi. Ayri bir liste tutmak, birinin guncellenip otekinin eskimesi
+/// demekti (denetci ve bilinmeyen rol tetikleyemez).
+bool panikGorunur(UserRole rol) => tetiklenebilirTipler(rol).isNotEmpty;
+
 String panikTipAdi(AppLocalizations l10n, PanikTip tip) => switch (tip) {
       PanikTip.sakin => l10n.panikTipSakin,
       PanikTip.guvenlik => l10n.panikTipGuvenlik,
@@ -66,13 +106,17 @@ class _PanikSayfasiState extends ConsumerState<PanikSayfasi> {
     super.dispose();
   }
 
+  /// (P243 §5c) SECILI KATEGORI — tetiklemeden ONCE secilir.
+  PanikKategori? _kategori;
+
   Future<void> _tetikle(PanikTip tip) async {
     setState(() {
       _mesgul = true;
       _hata = null;
     });
     try {
-      final alarm = await ref.read(panikApiProvider).tetikle(tip);
+      final alarm =
+          await ref.read(panikApiProvider).tetikle(tip, kategori: _kategori);
       if (!mounted) return;
       setState(() {
         _alarm = alarm;
@@ -147,6 +191,51 @@ class _PanikSayfasiState extends ConsumerState<PanikSayfasi> {
                 key: const Key('panik-yasal'),
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
+              const SizedBox(height: 16),
+              // (P243 §5c) KATEGORI SECIMI — TIPLERDEN ONCE.
+              //
+              // Once "ne oluyor" sorulur, sonra alarm basilir. Tersi
+              // olsaydi (once bas, sonra kategori sor) alarm ZATEN
+              // gitmis olurdu ve kategori metni artik kimseye
+              // ulasmazdi.
+              Text(
+                l10n.panikKategoriSec,
+                key: const Key('panik-kategori-baslik'),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              Text(
+                l10n.panikKategoriSecAciklama,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final k in PanikKategori.values)
+                    ChoiceChip(
+                      key: Key('panik-kategori-${k.kimlik}'),
+                      avatar: Icon(panikKategoriIkonu(k), size: 18),
+                      label: Text(panikKategoriAdi(l10n, k)),
+                      selected: _kategori == k,
+                      onSelected: (secildi) =>
+                          setState(() => _kategori = secildi ? k : null),
+                    ),
+                ],
+              ),
+              if (_kategori != null) ...[
+                const SizedBox(height: 8),
+                // KIME GIDECEGI SECIM ANINDA YAZILI: gonderdikten sonra
+                // soylemek, kullaniciyi bilmedigi bir karara ortak
+                // etmekti.
+                Text(
+                  panikSiteGeneli(_kategori!)
+                      ? l10n.panikKategoriSiteGeneli
+                      : l10n.panikKategoriEkip,
+                  key: const Key('panik-kategori-kapsam'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
               const SizedBox(height: 16),
               for (final tip in tipler)
                 Padding(

@@ -7248,4 +7248,38 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get vardiyaSablonlari => 'Шаблоны смен';
+
+  @override
+  String get panikKategoriSec => 'Что происходит?';
+
+  @override
+  String get panikKategoriSecAciklama =>
+      'Выберите категорию, чтобы получатели знали, что делать.';
+
+  @override
+  String get panikKategoriDeprem => 'Землетрясение';
+
+  @override
+  String get panikKategoriYangin => 'Пожар';
+
+  @override
+  String get panikKategoriGaz => 'Утечка газа';
+
+  @override
+  String get panikKategoriTahliye => 'Эвакуация';
+
+  @override
+  String get panikKategoriSaglik => 'Медицинская';
+
+  @override
+  String get panikKategoriGuvenlikTehdidi => 'Угроза безопасности';
+
+  @override
+  String get panikKategoriDiger => 'Другое';
+
+  @override
+  String get panikKategoriSiteGeneli => 'Уходит всему комплексу';
+
+  @override
+  String get panikKategoriEkip => 'Уходит управлению и охране';
 }

@@ -2455,5 +2455,16 @@
   "vardiyaRolEtiketi": "Роль в этой смене",
   "vardiyaLokasyon": "Место",
   "vardiyaCalismaSaati": "{n} ч работы",
-  "vardiyaSablonlari": "Шаблоны смен"
+  "vardiyaSablonlari": "Шаблоны смен",
+  "panikKategoriSec": "Что происходит?",
+  "panikKategoriSecAciklama": "Выберите категорию, чтобы получатели знали, что делать.",
+  "panikKategoriDeprem": "Землетрясение",
+  "panikKategoriYangin": "Пожар",
+  "panikKategoriGaz": "Утечка газа",
+  "panikKategoriTahliye": "Эвакуация",
+  "panikKategoriSaglik": "Медицинская",
+  "panikKategoriGuvenlikTehdidi": "Угроза безопасности",
+  "panikKategoriDiger": "Другое",
+  "panikKategoriSiteGeneli": "Уходит всему комплексу",
+  "panikKategoriEkip": "Уходит управлению и охране"
 }

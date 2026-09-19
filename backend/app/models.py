@@ -5017,6 +5017,12 @@ PANIK_DURUM = ENUM(
     "beklemede", "acik", "mudahale", "kapandi", "iptal", "yanlis_alarm",
     name="panik_durum", create_type=False,
 )
+#: (P243 §5c, goc 0146) Alarmin KATEGORISI — her birinin kendi talimati var.
+PANIK_KATEGORI = ENUM(
+    "deprem", "yangin", "gaz", "tahliye", "saglik", "guvenlik_tehdidi",
+    "diger",
+    name="panik_kategori", create_type=False,
+)
 
 
 class PanikAlarm(Base):
@@ -5043,6 +5049,9 @@ class PanikAlarm(Base):
         UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
     )
     tip: Mapped[str] = mapped_column(PANIK_TIP, nullable=False)
+    #: (P243 §5c, goc 0146) NE OLDUGU — `tip`in yerine gecmez.
+    #: NULL = P240 doneminde acilmis alarm.
+    kategori: Mapped[str | None] = mapped_column(PANIK_KATEGORI, nullable=True)
     durum: Mapped[str] = mapped_column(
         PANIK_DURUM, nullable=False, server_default=text("'beklemede'")
     )

@@ -246,6 +246,7 @@ async def tetikle(
     alarm = PanikAlarm(
         tenant_id=user.tenant_id,
         tip=body.tip,
+        kategori=body.kategori,
         durum="beklemede",
         olusturan_user_id=user.id,
         unit_id=unit_id,

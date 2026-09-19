@@ -7155,4 +7155,38 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get vardiyaSablonlari => 'Plantillas de turno';
+
+  @override
+  String get panikKategoriSec => '¿Qué ocurre?';
+
+  @override
+  String get panikKategoriSecAciklama =>
+      'Elija una categoría para que quien reciba sepa qué hacer.';
+
+  @override
+  String get panikKategoriDeprem => 'Terremoto';
+
+  @override
+  String get panikKategoriYangin => 'Incendio';
+
+  @override
+  String get panikKategoriGaz => 'Fuga de gas';
+
+  @override
+  String get panikKategoriTahliye => 'Evacuación';
+
+  @override
+  String get panikKategoriSaglik => 'Sanitario';
+
+  @override
+  String get panikKategoriGuvenlikTehdidi => 'Amenaza de seguridad';
+
+  @override
+  String get panikKategoriDiger => 'Otro';
+
+  @override
+  String get panikKategoriSiteGeneli => 'Se envía a toda la comunidad';
+
+  @override
+  String get panikKategoriEkip => 'Se envía a administración y seguridad';
 }

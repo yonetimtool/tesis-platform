@@ -17,6 +17,7 @@ class PanikApi {
 
   Future<PanikAlarm> tetikle(
     PanikTip tip, {
+    PanikKategori? kategori,
     double? gpsLat,
     double? gpsLng,
     String? checkpointId,
@@ -25,6 +26,8 @@ class PanikApi {
     try {
       final res = await _dio.post<Map<String, dynamic>>('/panik', data: {
         'tip': tip.kimlik,
+        // (P243 §5c) KATEGORI: alici kumesini de metni de bu belirler.
+        if (kategori != null) 'kategori': kategori.kimlik,
         // IKISI BIRLIKTE ya da HIC: tek basina enlem bir konum degildir
         // (sunucu da ayni kurali zorluyor).
         if (gpsLat != null && gpsLng != null) 'gps_lat': gpsLat,

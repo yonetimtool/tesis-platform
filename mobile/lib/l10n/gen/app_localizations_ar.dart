@@ -7230,4 +7230,37 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get vardiyaSablonlari => 'قوالب المناوبات';
+
+  @override
+  String get panikKategoriSec => 'ماذا يحدث؟';
+
+  @override
+  String get panikKategoriSecAciklama => 'اختر فئة ليعرف المستلمون ما العمل.';
+
+  @override
+  String get panikKategoriDeprem => 'زلزال';
+
+  @override
+  String get panikKategoriYangin => 'حريق';
+
+  @override
+  String get panikKategoriGaz => 'تسرب غاز';
+
+  @override
+  String get panikKategoriTahliye => 'إخلاء';
+
+  @override
+  String get panikKategoriSaglik => 'طبية';
+
+  @override
+  String get panikKategoriGuvenlikTehdidi => 'تهديد أمني';
+
+  @override
+  String get panikKategoriDiger => 'أخرى';
+
+  @override
+  String get panikKategoriSiteGeneli => 'تُرسل إلى المجمّع كله';
+
+  @override
+  String get panikKategoriEkip => 'تُرسل إلى الإدارة والأمن';
 }

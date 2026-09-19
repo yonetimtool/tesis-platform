@@ -49,7 +49,18 @@ const CIZELGE = {
     },
     // VARDIYASI OLMAYAN personel de satirda durur: "kim BOSTA" da bir
     // plan sorusudur ve atanacak kisi ekranda gorunmeli.
-    { user_id: "u-2", ad: "Veli Bos", rol: "tesis_gorevlisi", bloklar: [] },
+    // (P243 §2) `vardiya_duzeninde` SART: "Atanmamis" bolumu artik
+    // yalniz vardiya duzenine dahil kisileri cizer (kadro uyesi ya da
+    // herhangi bir tarihte vardiyasi olan). Bayraksiz bir kisi
+    // izgarada HIC gorunmez — ve bu bilincli: onceden bolum TUM
+    // personeli listeleyip bir rehbere donusuyordu.
+    {
+      user_id: "u-2",
+      ad: "Veli Bos",
+      rol: "tesis_gorevlisi",
+      bloklar: [],
+      vardiya_duzeninde: true,
+    },
   ],
 };
 

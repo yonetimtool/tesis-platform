@@ -12406,6 +12406,72 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Vardiya şablonları'**
   String get vardiyaSablonlari;
+
+  /// (P243 §5c) Panik kategorileri
+  ///
+  /// In tr, this message translates to:
+  /// **'Ne oluyor?'**
+  String get panikKategoriSec;
+
+  /// (P243 §5c) Panik kategorileri
+  ///
+  /// In tr, this message translates to:
+  /// **'Kategori seçin; alarmı alan kişi ne yapacağını görsün.'**
+  String get panikKategoriSecAciklama;
+
+  /// (P243 §5c) Panik kategorileri
+  ///
+  /// In tr, this message translates to:
+  /// **'Deprem'**
+  String get panikKategoriDeprem;
+
+  /// (P243 §5c) Panik kategorileri
+  ///
+  /// In tr, this message translates to:
+  /// **'Yangın'**
+  String get panikKategoriYangin;
+
+  /// (P243 §5c) Panik kategorileri
+  ///
+  /// In tr, this message translates to:
+  /// **'Gaz kaçağı'**
+  String get panikKategoriGaz;
+
+  /// (P243 §5c) Panik kategorileri
+  ///
+  /// In tr, this message translates to:
+  /// **'Tahliye'**
+  String get panikKategoriTahliye;
+
+  /// (P243 §5c) Panik kategorileri
+  ///
+  /// In tr, this message translates to:
+  /// **'Sağlık'**
+  String get panikKategoriSaglik;
+
+  /// (P243 §5c) Panik kategorileri
+  ///
+  /// In tr, this message translates to:
+  /// **'Güvenlik tehdidi'**
+  String get panikKategoriGuvenlikTehdidi;
+
+  /// (P243 §5c) Panik kategorileri
+  ///
+  /// In tr, this message translates to:
+  /// **'Diğer'**
+  String get panikKategoriDiger;
+
+  /// (P243 §5c) Panik kategorileri
+  ///
+  /// In tr, this message translates to:
+  /// **'Tüm siteye gider'**
+  String get panikKategoriSiteGeneli;
+
+  /// (P243 §5c) Panik kategorileri
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetim ve güvenliğe gider'**
+  String get panikKategoriEkip;
 }
 
 class _AppLocalizationsDelegate
