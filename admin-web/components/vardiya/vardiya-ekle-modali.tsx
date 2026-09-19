@@ -62,6 +62,15 @@ const ROTASYON_YOK = "yok" as const;
 const ROTASYON_HAFTALIK = "haftalik" as const;
 /** "Kayitli kalip degil, serbest saat" secimi. */
 const SERBEST = "" as const;
+const BIRINCIL = "birincil" as const;
+/** (P241 §2) Izin turleri — sozluk anahtarlariyla. */
+const IZIN_TURLERI = [
+  { kod: "yillik", anahtar: "vardiyaIzinYillik" },
+  { kod: "mazeret", anahtar: "vardiyaIzinMazeret" },
+  { kod: "hastalik", anahtar: "vardiyaIzinHastalik" },
+  { kod: "ucretsiz", anahtar: "vardiyaIzinUcretsiz" },
+  { kod: "resmi_tatil", anahtar: "vardiyaIzinResmiTatil" },
+] as const;
 
 type Dilim = { ad: string; baslangic: string; bitis: string };
 type Kalip = { id: string; ad: string; dilimler: Dilim[]; aktif: boolean };
@@ -165,6 +174,52 @@ export function VardiyaEkleModali({
   const [cakisanGunler, setCakisanGunler] = useState<string[] | null>(null);
   const [hata, setHata] = useState<string | null>(null);
   const [bekliyor, setBekliyor] = useState(false);
+  // --------------------- (P241 §2) IZIN SEKMESI ------------------------- #
+  const [sekme, setSekme] = useState<"mesai" | "izin">("mesai");
+  const [izinKisi, setIzinKisi] = useState("");
+  const [izinTur, setIzinTur] = useState<string>(IZIN_TURLERI[0].kod);
+  const [izinBas, setIzinBas] = useState(() => baslangicAyi);
+  const [izinBit, setIzinBit] = useState(() => baslangicAyi);
+  const [izinTumGun, setIzinTumGun] = useState(true);
+  const [izinBasSaat, setIzinBasSaat] = useState("09:00");
+  const [izinBitSaat, setIzinBitSaat] = useState("11:00");
+  // --------------------- (P241 §2) MOLA / ROL / LOKASYON ---------------- #
+  const [molaDakika, setMolaDakika] = useState("");
+  /**
+   * Yasal mola onerisi SUNUCUDAN (4857 md. 68). Saat degistikce yeniden
+   * sorulur; istemcide hesaplamak, kanunun kademelerini web ve mobilde
+   * ayri ayri yazmak olurdu.
+   */
+  const { data: molaOneri } = useSWR<{ onerilen_dakika: number }>(
+    basSaat && sonSaat
+      ? `/api/vardiya-plani/mola-onerisi?baslangic_saat=${basSaat}&bitis_saat=${sonSaat}`
+      : null,
+    jsonFetcher,
+  );
+  const molaOnerisi = molaOneri?.onerilen_dakika ?? null;
+  const [vardiyaRolu, setVardiyaRolu] = useState("");
+  const [lokasyon, setLokasyon] = useState("");
+
+  async function izinKaydet() {
+    setBekliyor(true);
+    setHata(null);
+    try {
+      await apiSend("/api/vardiya-izin", "POST", {
+        user_id: izinKisi,
+        tur: izinTur,
+        baslangic: izinBas,
+        bitis: izinTumGun ? izinBit : izinBas,
+        tum_gun: izinTumGun,
+        baslangic_saat: izinTumGun ? null : izinBasSaat,
+        bitis_saat: izinTumGun ? null : izinBitSaat,
+      });
+      onBitti();
+    } catch (e) {
+      setHata(e instanceof Error ? e.message : t("ortakHataOlustu"));
+    } finally {
+      setBekliyor(false);
+    }
+  }
 
   const kalip = (kaliplar?.items ?? []).find((k) => k.id === kalipId);
   const dilimler: Dilim[] = kalip
@@ -231,6 +286,12 @@ export function VardiyaEkleModali({
         bitis_saat: sonSaat,
         not_metni: not || null,
         cakisanlari_atla: atla,
+        // (P241 §2) MOLA / ROL / LOKASYON — ayni uctan gider.
+        molalar: molaDakika
+          ? [{ tur: "yasal", dakika: Number(molaDakika) }]
+          : null,
+        vardiya_rolu: vardiyaRolu || null,
+        alan: lokasyon || null,
         gunler:
           seciliGunler.size > 0 ? Array.from(seciliGunler).sort() : null,
       })) as {
@@ -296,6 +357,12 @@ export function VardiyaEkleModali({
   const gonderilebilir =
     gruplar.length > 0 || buGrup() !== null || (!kalip && Boolean(userId));
 
+  // (P241 §2) IKI SEKME: MESAI ve IZIN — referansin "Mesai ekle"
+  // penceresinin bizdeki karsiligi. Izni AYRI BIR EKRANA koymak,
+  // yoneticinin "bu hafta Ali yok" bilgisini girmek icin baska bir
+  // yere gitmesi demekti; oysa karar AYNI anda veriliyor.
+  const izinSekmesi = sekme === "izin";
+
   return (
     <Modal
       acik={acik}
@@ -306,6 +373,17 @@ export function VardiyaEkleModali({
           <Dugme type="button" tur={IKINCIL} onClick={onKapat}>
             {t("ortakIptal")}
           </Dugme>
+          {izinSekmesi ? (
+            <Dugme
+              type="button"
+              disabled={!izinKisi || bekliyor}
+              data-test="vardiya-izin-kaydet"
+              onClick={() => void izinKaydet()}
+            >
+              {t("vardiyaIzinEkle")}
+            </Dugme>
+          ) : (
+            <>
           <Dugme
             type="button"
             tur={IKINCIL}
@@ -330,11 +408,132 @@ export function VardiyaEkleModali({
           >
             {t("vardiyaEkleGonder")}
           </Dugme>
+            </>
+          )}
         </>
       }
     >
       <div className="space-y-3">
         <HataDurumu mesaj={hata} />
+
+        {/* SEKME SECICI — MESAI / IZIN */}
+        <div className="flex gap-1" role="group" aria-label={t("vardiyaYeni")}>
+          {(["mesai", "izin"] as const).map((x) => (
+            <Dugme
+              key={x}
+              type="button"
+              boy="kucuk"
+              tur={sekme === x ? BIRINCIL : IKINCIL}
+              aria-pressed={sekme === x}
+              data-test={`vardiya-sekme-${x}`}
+              onClick={() => setSekme(x)}
+            >
+              {x === "izin" ? t("vardiyaIzin") : t("vardiyaMesai")}
+            </Dugme>
+          ))}
+        </div>
+
+        {izinSekmesi && (
+          <div className="space-y-3" data-test="vardiya-izin-formu">
+            <AlanSarmal etiket={t("vardiyaPersonel")}>
+              {(baglar) => (
+                <Secim
+                  {...baglar}
+                  value={izinKisi}
+                  data-test="vardiya-izin-kisi"
+                  onChange={(e) => setIzinKisi(e.target.value)}
+                >
+                  <option value="" />
+                  {personel.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.ad}
+                    </option>
+                  ))}
+                </Secim>
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("vardiyaIzinTuru")}>
+              {(baglar) => (
+                <Secim
+                  {...baglar}
+                  value={izinTur}
+                  data-test="vardiya-izin-tur"
+                  onChange={(e) => setIzinTur(e.target.value)}
+                >
+                  {IZIN_TURLERI.map((x) => (
+                    <option key={x.kod} value={x.kod}>
+                      {t(x.anahtar)}
+                    </option>
+                  ))}
+                </Secim>
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("vardiyaIzinBaslangic")}>
+              {(baglar) => (
+                <Alan
+                  {...baglar}
+                  type="date"
+                  data-test="vardiya-izin-bas"
+                  value={izinBas}
+                  onChange={(e) => setIzinBas(e.target.value)}
+                />
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("vardiyaIzinBitis")}>
+              {(baglar) => (
+                <Alan
+                  {...baglar}
+                  type="date"
+                  data-test="vardiya-izin-bit"
+                  value={izinBit}
+                  onChange={(e) => setIzinBit(e.target.value)}
+                />
+              )}
+            </AlanSarmal>
+            <label
+              className="flex items-center gap-2"
+              style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}
+            >
+              <input
+                type="checkbox"
+                className="h-4 w-4"
+                data-test="vardiya-izin-tumgun"
+                checked={izinTumGun}
+                onChange={(e) => setIzinTumGun(e.target.checked)}
+              />
+              {t("vardiyaIzinTumGun")}
+            </label>
+            {!izinTumGun && (
+              <div className="flex gap-2">
+                <AlanSarmal etiket={t("vardiyaBaslangicSaati")}>
+                  {(baglar) => (
+                    <Alan
+                      {...baglar}
+                      type="time"
+                      data-test="vardiya-izin-bas-saat"
+                      value={izinBasSaat}
+                      onChange={(e) => setIzinBasSaat(e.target.value)}
+                    />
+                  )}
+                </AlanSarmal>
+                <AlanSarmal etiket={t("vardiyaBitisSaati")}>
+                  {(baglar) => (
+                    <Alan
+                      {...baglar}
+                      type="time"
+                      data-test="vardiya-izin-bit-saat"
+                      value={izinBitSaat}
+                      onChange={(e) => setIzinBitSaat(e.target.value)}
+                    />
+                  )}
+                </AlanSarmal>
+              </div>
+            )}
+          </div>
+        )}
+
+        {!izinSekmesi && (
+        <>
 
         {/* 1) TAKVIM ONCE — mobildeki sira. Vardiya planlamak gun secmekle
             baslar; "baslangic-bitis tarihi" duzensiz secimi anlatamiyordu. */}
@@ -381,6 +580,63 @@ export function VardiyaEkleModali({
             </Dugme>
           </div>
         </div>
+
+        {/* (P241 §2) MOLALAR — YASAL ONERI SUNUCUDAN.
+            Kademe sayilarini burada yazmak, kanunu istemciye kopyalamak
+            olurdu; guncellenmesi gerektiginde web ve mobil ayri ayri
+            degistirilirdi. */}
+        <div className="flex flex-wrap items-end gap-2" data-test="vardiya-mola">
+          <AlanSarmal etiket={t("vardiyaMolaDakika")} ipucu={t("vardiyaMolaDuser")}>
+            {(baglar) => (
+              <Alan
+                {...baglar}
+                inputMode="numeric"
+                data-test="vardiya-ekle-mola"
+                value={molaDakika}
+                onChange={(e) => setMolaDakika(e.target.value)}
+              />
+            )}
+          </AlanSarmal>
+          {molaOnerisi !== null && (
+            <span
+              data-test="vardiya-mola-onerisi"
+              style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
+            >
+              {t("vardiyaMolaOnerisi", { n: molaOnerisi })}
+            </span>
+          )}
+          <Dugme
+            type="button"
+            boy="kucuk"
+            tur={IKINCIL}
+            disabled={molaOnerisi === null}
+            data-test="vardiya-mola-uygula"
+            onClick={() => setMolaDakika(String(molaOnerisi ?? ""))}
+          >
+            {t("vardiyaMolaEkle")}
+          </Dugme>
+        </div>
+
+        <AlanSarmal etiket={t("vardiyaRolEtiketi")}>
+          {(baglar) => (
+            <Alan
+              {...baglar}
+              data-test="vardiya-ekle-rol"
+              value={vardiyaRolu}
+              onChange={(e) => setVardiyaRolu(e.target.value)}
+            />
+          )}
+        </AlanSarmal>
+        <AlanSarmal etiket={t("vardiyaLokasyon")} ipucu={t("vardiyaLokasyonIpucu")}>
+          {(baglar) => (
+            <Alan
+              {...baglar}
+              data-test="vardiya-ekle-lokasyon"
+              value={lokasyon}
+              onChange={(e) => setLokasyon(e.target.value)}
+            />
+          )}
+        </AlanSarmal>
 
         {/* 2) KALIP — serbest saat ya da kayitli kalip.
             `kalip-modali.tsx`ten TASINDI: gun icinde birden cok dilim
@@ -642,6 +898,8 @@ export function VardiyaEkleModali({
               </>
             )}
           </div>
+        )}
+        </>
         )}
       </div>
     </Modal>

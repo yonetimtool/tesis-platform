@@ -2360,6 +2360,15 @@ class VardiyaTopluIstek(BaseModel):
     bitis_saat: time
     not_metni: str | None = Field(None, max_length=500)
     cakisanlari_atla: bool = False
+    # --- (P241 §2) MOLA / ROL / LOKASYON --------------------------------- #
+    #
+    # AYNI UCA EKLENDI, YENI UC ACILMADI: cakisma denetimi, "hepsi ya da
+    # hicbiri" iki gecisi ve denetim kaydi burada. Ikinci bir uc,
+    # o kurallarin ikinci bir kopyasi demekti.
+    molalar: list["VardiyaMola"] | None = None
+    vardiya_rolu: str | None = Field(None, max_length=60)
+    blok_id: uuid.UUID | None = None
+    alan: str | None = Field(None, max_length=200)
 
     # (P229 §2) KEYFI GUN LISTESI — bitisik olmayan secim.
     #

@@ -65,6 +65,8 @@ export const BILDIRIM_TIP: EnumHarita = {
   bakim_yaklasti: "bildirimTipBakimYaklasti",
   bakim_bugun: "bildirimTipBakimBugun",
   bakim_gecikti: "bildirimTipBakimGecikti",
+  // (P241 §2) Vardiya plani yayinlandi.
+  vardiya_yayinlandi: "bildirimTipVardiyaYayinlandi",
   aidat_borc: "bildirimTipAidatBorc",
   // (P191 §4) Banka eslestirmesi odemeyi isledi -> "odemeniz alindi".
   aidat_odendi: "bildirimTipAidatOdendi",

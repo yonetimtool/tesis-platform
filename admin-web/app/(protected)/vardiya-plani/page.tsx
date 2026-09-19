@@ -14,6 +14,8 @@ import {
   Rozet,
   Secim,
 } from "@/components/ui";
+import { AraclarCubugu } from "@/components/vardiya/araclar-cubugu";
+import { TakvimGorunumu } from "@/components/vardiya/takvim-gorunumu";
 import { VardiyaEkleModali } from "@/components/vardiya/vardiya-ekle-modali";
 import { SablonBolumu } from "@/components/vardiya/sablon-bolumu";
 import { KisiModali, type KisiOzeti } from "@/components/vardiya/kisi-modali";
@@ -63,8 +65,31 @@ type Blok = {
   shift_ad: string | null;
   not_metni: string | null;
   gece_asiyor: boolean;
+  // (P241 §2)
+  vardiya_rolu: string | null;
+  blok_ad: string | null;
+  alan: string | null;
+  calisma_saat: number;
+  mola_dakika: number;
+  yayinlandi_at: string | null;
+  yayin_bekliyor: boolean;
 };
-type CizelgeKisi = { user_id: string; ad: string; rol: string; bloklar: Blok[] };
+type IzinBlok = {
+  izin_id: string;
+  tur: string;
+  baslangic: string;
+  bitis: string;
+  tum_gun: boolean;
+};
+type CizelgeKisi = {
+  user_id: string;
+  ad: string;
+  rol: string;
+  bloklar: Blok[];
+  izinler: IzinBlok[];
+  toplam_saat: number;
+  hedef_saat: number;
+};
 type Cizelge = { baslangic: string; bitis: string; personel: CizelgeKisi[] };
 type Personel = { id: string; ad: string; role: string };
 type Slot = {
@@ -88,9 +113,20 @@ type TopluSonuc = {
   uyarilar: string[];
 };
 
-type Gorunum = "gun" | "hafta" | "ay";
-const GUN_SAYISI: Record<Gorunum, number> = { gun: 1, hafta: 7, ay: 31 };
-const GORUNUMLER: Gorunum[] = ["gun", "hafta", "ay"];
+/**
+ * (P241 §2) TAKVIM DORDUNCU GORUNUM olarak eklendi.
+ *
+ * NEDEN "AY" YETMIYORDU: `ay` gorunumu YATAY bir seritte 31 sutundur ve
+ * "Ali bu ay hangi gunler calisiyor" sorusunu yanitlar. Takvim ise
+ * KLASIK AY IZGARASIDIR ve baska bir soruyu yanitlar: "12 Mart'ta KIMLER
+ * var". Birincisi kisi eksenli, ikincisi GUN eksenli — ayni veriden
+ * turer ama ayni cizimle gosterilemez.
+ */
+type Gorunum = "gun" | "hafta" | "ay" | "takvim";
+const GUN_SAYISI: Record<Gorunum, number> = {
+  gun: 1, hafta: 7, ay: 31, takvim: 31,
+};
+const GORUNUMLER: Gorunum[] = ["gun", "hafta", "ay", "takvim"];
 /** Gorunum -> sozluk anahtari. JSX icinde ucluyla secilseydi
  *  `sabit-metin` taramasi anahtarlari CEVRILMEMIS METIN sanardi
  *  (hakli bir tarama, yanlis bir eslesme). */
@@ -98,14 +134,23 @@ const GORUNUM_ANAHTARI = {
   gun: "vardiyaGorunumGun",
   hafta: "vardiyaGorunumHafta",
   ay: "vardiyaGorunumAy",
+  takvim: "vardiyaGorunumTakvim",
 } as const;
 
 /** Saat basina piksel — GUN ICI genis, HAFTA dar. Haftada 24 px/saat
  *  4032 px'lik bir tuval demekti; 12 px/saat ile hafta bir ekrana iki
  *  kaydirmada sigar ve bloklar hâlâ ayirt edilebilir. */
-const PX_SAAT: Record<Gorunum, number> = { gun: 56, hafta: 12, ay: 0 };
+const PX_SAAT: Record<Gorunum, number> = { gun: 56, hafta: 12, ay: 0, takvim: 0 };
 /** AY gorunumunde eksen GUNDUR. */
 const PX_GUN_AY = 34;
+/** "Atanmamis" grubunun anahtari — rol degil, bu yuzden ayri sabit. */
+const ATANMAMIS = "__atanmamis__";
+/** CSS degerleri de ucluda SABIT sayilir (`sabit-metin` taramasi);
+ *  adlandirilir. */
+const KENAR_TASLAK = "var(--yz-warning-edge)";
+const ZEMIN_SECILI = "var(--yz-accent)";
+const CIZGI_DUZ = "solid";
+const CIZGI_KESIK = "dashed";
 
 const SAATLER = Array.from({ length: 24 }, (_, i) => i);
 
@@ -165,6 +210,15 @@ export default function VardiyaPlaniSayfasi() {
   const [baslangic, setBaslangic] = useState(() => isoGun(new Date()));
   const [rolSuzgeci, setRolSuzgeci] = useState("");
   const [aramaSuzgeci, setAramaSuzgeci] = useState("");
+  const [yalnizVardiyali, setYalnizVardiyali] = useState(false);
+  const [yalnizSorunlu, setYalnizSorunlu] = useState(false);
+  // (P241 §2) TOPLU SECIM — hucre (blok) kimlikleri.
+  //
+  // SURUKLE-BIRAK ACILMADI ve bu P205'teki kararin SURDURULMESIDIR:
+  // dokunmatikte kaydirma ile surukleme ayni harekettir ve yanlislikla
+  // birakilan blok, kimsenin fark etmedigi bir vardiya degisikligi
+  // uretir. Toplu islem ACIK bir secim + ACIK bir dugme ile yapilir.
+  const [seciliBloklar, setSeciliBloklar] = useState<Set<string>>(new Set());
   const [filtrelerAcik, setFiltrelerAcik] = useState(false);
   const [ekleAcik, setEkleAcik] = useState(false);
   const [secili, setSecili] = useState<{ kisi: CizelgeKisi; blok: Blok } | null>(
@@ -220,13 +274,57 @@ export default function VardiyaPlaniSayfasi() {
   const bugun = isoGun(simdi);
   const suzulmus = useMemo(() => {
     const ara = aramaSuzgeci.trim().toLocaleLowerCase("tr");
-    return (data?.personel ?? []).filter(
-      (k) =>
-        (!rolSuzgeci || k.rol === rolSuzgeci) &&
-        (!ara || k.ad.toLocaleLowerCase("tr").includes(ara)),
-    );
-  }, [data, rolSuzgeci, aramaSuzgeci]);
-  const suzgecSayisi = (rolSuzgeci ? 1 : 0) + (aramaSuzgeci.trim() ? 1 : 0);
+    return (data?.personel ?? []).filter((k) => {
+      if (rolSuzgeci && k.rol !== rolSuzgeci) return false;
+      if (ara && !k.ad.toLocaleLowerCase("tr").includes(ara)) return false;
+      if (yalnizVardiyali && (k.bloklar ?? []).length === 0) return false;
+      if (yalnizSorunlu) {
+        // SORUNLU = yayin bekleyen ya da hedefi asan. "Cakisma" burada
+        // ARANMAZ: sunucu cakismayi zaten YAZDIRMIYOR (kesin red), yani
+        // izgarada cakisan bir satir OLAMAZ. Olmayan bir seyi suzgece
+        // koymak, kullaniciyi hic dolmayan bir listeye bakmaya iterdi.
+        const bekleyen = (k.bloklar ?? []).some((b) => b.yayin_bekliyor || !b.yayinlandi_at);
+        const asim = (k.hedef_saat ?? 0) > 0 && (k.toplam_saat ?? 0) > (k.hedef_saat ?? 0);
+        if (!bekleyen && !asim) return false;
+      }
+      return true;
+    });
+  }, [data, rolSuzgeci, aramaSuzgeci, yalnizVardiyali, yalnizSorunlu]);
+  const suzgecSayisi =
+    (rolSuzgeci ? 1 : 0) +
+    (aramaSuzgeci.trim() ? 1 : 0) +
+    (yalnizVardiyali ? 1 : 0) +
+    (yalnizSorunlu ? 1 : 0);
+
+  /**
+   * (P241 §2) ROL GRUPLARI — istegin maddesi.
+   *
+   * ATANMAMIS AYRI GRUP: referansta da oyle ve sebebi su — vardiyasi
+   * olmayan kisi rol grubunun icinde kaybolur; oysa yoneticinin
+   * aradigi tam olarak odur ("kimi atayabilirim").
+   */
+  const gruplar = useMemo(() => {
+    const atanmamis: CizelgeKisi[] = [];
+    const roller = new Map<string, CizelgeKisi[]>();
+    for (const k of suzulmus) {
+      if ((k.bloklar ?? []).length === 0) {
+        atanmamis.push(k);
+        continue;
+      }
+      const liste = roller.get(k.rol) ?? [];
+      liste.push(k);
+      roller.set(k.rol, liste);
+    }
+    const cikti = [...roller.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([rol, kisiler]) => ({ anahtar: rol, rol, kisiler }));
+    if (atanmamis.length > 0) {
+      // EN SONDA: atanmamislar listenin basini kaplamamali; once
+      // calisan ekip, sonra bosluk.
+      cikti.push({ anahtar: ATANMAMIS, rol: ATANMAMIS, kisiler: atanmamis });
+    }
+    return cikti;
+  }, [suzulmus]);
 
   const genislik =
     gorunum === "ay" ? gun * PX_GUN_AY : gun * 24 * PX_SAAT[gorunum];
@@ -399,6 +497,18 @@ export default function VardiyaPlaniSayfasi() {
         >
           {t("vardiyaTazele")}
         </Dugme>
+        {/* (P241 §2) ARACLAR + EXCEL + YAYINLA. */}
+        <AraclarCubugu
+          baslangic={baslangic}
+          gun={gun}
+          onDegisti={() => void mutate()}
+          onKalipAc={() => setKalipAcik(true)}
+          onSablonlaraGit={() =>
+            document
+              .querySelector('[data-test="vardiya-sablon-bolumu"]')
+              ?.scrollIntoView({ behavior: "smooth" })
+          }
+        />
       </div>
 
       {/* (P207 §1) SECIM ARAC CUBUGU — yalniz AY gorunumunde.
@@ -505,6 +615,81 @@ export default function VardiyaPlaniSayfasi() {
                 />
               )}
             </AlanSarmal>
+            <label
+              className="flex items-center gap-2"
+              style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}
+            >
+              <input
+                type="checkbox"
+                className="h-4 w-4"
+                data-test="vardiya-suzgec-vardiyali"
+                checked={yalnizVardiyali}
+                onChange={(e) => setYalnizVardiyali(e.target.checked)}
+              />
+              {t("vardiyaSuzgecYalnizVardiyali")}
+            </label>
+            <label
+              className="flex items-center gap-2"
+              style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}
+              title={t("vardiyaSuzgecSorunluIpucu")}
+            >
+              <input
+                type="checkbox"
+                className="h-4 w-4"
+                data-test="vardiya-suzgec-sorunlu"
+                checked={yalnizSorunlu}
+                onChange={(e) => setYalnizSorunlu(e.target.checked)}
+              />
+              {t("vardiyaSuzgecSorunlu")}
+            </label>
+          </div>
+        </Kart>
+      )}
+
+      {/* (P241 §2) TOPLU ISLEM CUBUGU — YALNIZ SECIM VARKEN.
+          Bos bir cubugu her zaman cizmek, ekranin altinda hicbir sey
+          yapmayan bir serit birakirdi. */}
+      {seciliBloklar.size > 0 && (
+        <Kart>
+          <div
+            className="flex flex-wrap items-center gap-3"
+            data-test="vardiya-toplu-cubuk"
+          >
+            <span style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>
+              {t("vardiyaSeciliVardiya", { n: seciliBloklar.size })}
+            </span>
+            <Dugme
+              type="button"
+              boy="kucuk"
+              tur="tehlike"
+              disabled={bekliyor}
+              data-test="vardiya-toplu-sil"
+              onClick={() =>
+                void calistir(async () => {
+                  // TEK TEK SILINIR (toplu uc YOK) ve bu bilincli:
+                  // silme zaten `iptal` isaretliyor ve her satirin
+                  // KENDI denetim kaydi olusuyor. Toplu bir uc, otuz
+                  // degisikligi tek satirda ozetleyip "hangisi neydi"
+                  // sorusunu yanitsiz birakirdi.
+                  for (const id of seciliBloklar) {
+                    await apiSend(`/api/vardiya-plani/${id}`, "DELETE");
+                  }
+                  toast.success(t("vardiyaCikarildi"));
+                  setSeciliBloklar(new Set());
+                })
+              }
+            >
+              {t("vardiyaSecilenleriSil")}
+            </Dugme>
+            <Dugme
+              type="button"
+              boy="kucuk"
+              tur={IKINCIL}
+              data-test="vardiya-toplu-secimi-temizle"
+              onClick={() => setSeciliBloklar(new Set())}
+            >
+              {t("vardiyaSecimiTemizle")}
+            </Dugme>
           </div>
         </Kart>
       )}
@@ -590,20 +775,58 @@ export default function VardiyaPlaniSayfasi() {
         </div>
       </Kart>
 
+      {/* ---------------- (P241 §2) TAKVIM GORUNUMU ---------------------
+          Klasik ay izgarasi: her gunde O GUNUN vardiyalari. `ay`
+          gorunumunden farkli bir soruyu yanitlar ("12 Mart'ta KIMLER
+          var"); ayni veriden turer ama ayni cizimle gosterilemez. */}
+      {gorunum === "takvim" && (
+        <Kart>
+          <TakvimGorunumu<Blok, CizelgeKisi>
+            baslangic={baslangic}
+            personel={suzulmus}
+            bugun={bugun}
+            onBlok={(kisi, blok) => setSecili({ kisi, blok })}
+          />
+        </Kart>
+      )}
+
       {/* ------------------------- ZAMAN CIZELGESI ------------------------ */}
       {/* (P138) ELLE `<table>` YAZILMAZ. Bu zaten bir veri tablosu
           DEGIL: hucreler saat eksenine gore KONUMLANIR, sutunlara
           bolunmez. `VeriTablosu`ya sokmak kolon uydurmak olurdu. */}
+      {gorunum !== "takvim" && (
       <Kart>
         <div className="flex">
           {/* SOL SUTUN SABIT: yatay kaydirmada isim kaybolursa hangi
               satira baktigin anlasilmaz. */}
-          <div className="w-40 shrink-0">
+          <div className="w-52 shrink-0">
             <div
               className="h-8 border-b"
               style={{ borderColor: "var(--yz-border)" }}
             />
-            {suzulmus.map((k) => (
+            {gruplar.flatMap((grup) => [
+              // GRUP BASLIGI + KISI SAYISI ROZETI (istegin maddesi).
+              <div
+                key={`b-${grup.anahtar}`}
+                className="flex h-8 items-center gap-2 border-b px-2"
+                style={{
+                  borderColor: "var(--yz-border)",
+                  background: "var(--yz-surface-2)",
+                }}
+                data-test={`vardiya-grup-${grup.anahtar}`}
+              >
+                <span
+                  style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
+                >
+                  {grup.anahtar === ATANMAMIS
+                    ? t("vardiyaAtanmamis")
+                    : rolAdi(t, grup.rol)}
+                </span>
+                <Rozet durum="notr">
+                  {t("vardiyaRolGrupSayisi", { n: grup.kisiler.length })}
+                </Rozet>
+              </div>,
+              ...grup.kisiler.map((k) => (
               <div
                 key={k.user_id}
                 className="flex h-14 items-center gap-2 border-b pe-2"
@@ -631,15 +854,31 @@ export default function VardiyaPlaniSayfasi() {
                   >
                     {k.ad}
                   </span>
+                  {/* HAFTALIK TOPLAM / HEDEF — istegin maddesi.
+                      SUNUCUDAN gelir ve MOLA DUSULMUSTUR; istemcide
+                      toplamak, mola kuralini burada ikinci kez yazmak
+                      olurdu (ve biri sapinca izgara ile bordro
+                      ayrisirdi). Hedefi asan toplam VURGULANIR. */}
                   <span
-                    className="block truncate"
-                    style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}
+                    className="block truncate tabular-nums"
+                    data-test={`vardiya-saat-${k.user_id}`}
+                    style={{
+                      fontSize: "var(--yz-fs-xs)",
+                      color:
+                        (k.hedef_saat ?? 0) > 0 && (k.toplam_saat ?? 0) > (k.hedef_saat ?? 0)
+                          ? "var(--yz-danger)"
+                          : "var(--yz-text-3)",
+                    }}
                   >
-                    {rolAdi(t, k.rol)}
+                    {t("vardiyaSaatToplam", {
+                      saat: k.toplam_saat ?? 0,
+                      hedef: k.hedef_saat ?? 0,
+                    })}
                   </span>
                 </span>
               </div>
-            ))}
+              )),
+            ])}
           </div>
 
           {/* SAG TARAF YATAY KAYDIRIR. */}
@@ -730,12 +969,61 @@ export default function VardiyaPlaniSayfasi() {
                 />
               )}
 
-              {suzulmus.map((k) => (
+              {gruplar.flatMap((grup) => [
+                // SOL SUTUNDAKI GRUP BASLIGIYLA AYNI YUKSEKLIKTE bos
+                // satir: iki sutun hizasi kaymasin.
+                <div
+                  key={`bs-${grup.anahtar}`}
+                  className="h-8 border-b"
+                  style={{
+                    borderColor: "var(--yz-border)",
+                    background: "var(--yz-surface-2)",
+                  }}
+                />,
+                ...grup.kisiler.map((k) => (
                 <div
                   key={k.user_id}
                   className="relative h-14 border-b"
                   style={{ borderColor: "var(--yz-border)" }}
                 >
+                  {/* (P241 §2) IZIN KATMANI — bloklarin ALTINDA cizilir
+                      ve tiklanmaz: izin bir vardiya degil, o gunun
+                      zeminidir. */}
+                  {/* `?? []`: eski bir yanit ya da kismi bir sahte
+                      govde `izinler` tasimayabilir; sayfanin cokmesi
+                      ile "izin katmani yok" arasinda fark vardir. */}
+                  {(k.izinler ?? []).map((iz) => {
+                    const izBas = Math.max(
+                      0, saatOfseti(baslangic, `${iz.baslangic}T00:00:00`),
+                    );
+                    const izSon = Math.min(
+                      gun * 24,
+                      saatOfseti(baslangic, `${iz.bitis}T00:00:00`) + 24,
+                    );
+                    if (izSon <= 0 || izBas >= gun * 24) return null;
+                    const sol =
+                      gorunum === "ay"
+                        ? (izBas / 24) * PX_GUN_AY
+                        : izBas * PX_SAAT[gorunum];
+                    const en =
+                      gorunum === "ay"
+                        ? ((izSon - izBas) / 24) * PX_GUN_AY
+                        : (izSon - izBas) * PX_SAAT[gorunum];
+                    return (
+                      <div
+                        key={iz.izin_id}
+                        aria-hidden="true"
+                        data-test={`vardiya-izin-${iz.izin_id}`}
+                        className="absolute top-1 bottom-1 rounded-md"
+                        style={{
+                          left: `${sol}px`,
+                          width: `${en}px`,
+                          background: "var(--yz-surface-sunken)",
+                          border: "var(--yz-border-w) dashed var(--yz-border)",
+                        }}
+                      />
+                    );
+                  })}
                   {k.bloklar.map((b) => {
                     const bas = Math.max(0, saatOfseti(baslangic, b.baslar));
                     const son = Math.min(gun * 24, saatOfseti(baslangic, b.biter));
@@ -753,13 +1041,39 @@ export default function VardiyaPlaniSayfasi() {
                         key={b.plan_id}
                         type="button"
                         data-test={`vardiya-blok-${b.plan_id}`}
-                        onClick={() => setSecili({ kisi: k, blok: b })}
+                        aria-pressed={seciliBloklar.has(b.plan_id)}
+                        onClick={(e) => {
+                          // CTRL/SHIFT = TOPLU SECIM, sade tiklama =
+                          // ayrinti. Ayrimi tersine cevirmek, tek bir
+                          // vardiyayi duzenlemek isteyen kullaniciyi
+                          // once secim moduna sokardi.
+                          if (e.ctrlKey || e.metaKey || e.shiftKey) {
+                            setSeciliBloklar((onceki) => {
+                              const yeni = new Set(onceki);
+                              if (yeni.has(b.plan_id)) yeni.delete(b.plan_id);
+                              else yeni.add(b.plan_id);
+                              return yeni;
+                            });
+                            return;
+                          }
+                          setSecili({ kisi: k, blok: b });
+                        }}
                         className="odak-ic absolute top-2 h-10 overflow-hidden rounded-md border px-1 text-start"
                         style={{
                           left: `${sol}px`,
                           width: `${en}px`,
-                          borderColor: "var(--yz-accent-edge)",
-                          background: "var(--yz-surface-2)",
+                          borderColor: seciliBloklar.has(b.plan_id)
+                            ? "var(--yz-accent-edge)"
+                            : b.yayinlandi_at
+                              ? "var(--yz-accent-edge)"
+                              : KENAR_TASLAK,
+                          background: seciliBloklar.has(b.plan_id)
+                            ? ZEMIN_SECILI
+                            : "var(--yz-surface-2)",
+                          // TASLAK KESIKLI CIZGI: renk tek basina anlam
+                          // tasimamali, hucrede ayrica "Taslak" yazisi
+                          // da var.
+                          borderStyle: b.yayinlandi_at ? CIZGI_DUZ : CIZGI_KESIK,
                           borderWidth: "var(--yz-border-w)",
                         }}
                         title={`${ss(b.baslar)}–${ss(b.biter)}`}
@@ -770,19 +1084,22 @@ export default function VardiyaPlaniSayfasi() {
                         >
                           {ss(b.baslar)}–{ss(b.biter)}
                         </span>
-                        {b.shift_ad && (
-                          <span
-                            className="block truncate"
-                            style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}
-                          >
-                            {b.shift_ad}
-                          </span>
-                        )}
+                        <span
+                          className="block truncate"
+                          style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}
+                        >
+                          {/* ROL ETIKETI + LOKASYON (istegin maddesi).
+                              Ikisi de yoksa sablon adi yazilir. */}
+                          {!b.yayinlandi_at
+                            ? t("vardiyaTaslak")
+                            : (b.vardiya_rolu ?? b.blok_ad ?? b.alan ?? b.shift_ad ?? "")}
+                        </span>
                       </button>
                     );
                   })}
                 </div>
-              ))}
+                )),
+              ])}
             </div>
           </div>
         </div>
@@ -797,6 +1114,7 @@ export default function VardiyaPlaniSayfasi() {
           </p>
         )}
       </Kart>
+      )}
 
       {/* --------------------- 2.3 BLOK AYRINTISI ------------------------ */}
       {secili && (

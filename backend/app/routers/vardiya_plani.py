@@ -814,6 +814,10 @@ async def toplu_ekle(
             baslangic_saat=body.baslangic_saat,
             bitis_saat=body.bitis_saat,
             not_metni=body.not_metni,
+            molalar=[m.model_dump(mode="json") for m in (body.molalar or [])],
+            vardiya_rolu=body.vardiya_rolu,
+            blok_id=body.blok_id,
+            alan=body.alan,
         )
         db.add(plan)
         await db.flush()
