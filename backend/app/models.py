@@ -670,6 +670,11 @@ class AppUser(Base):
     ui_tema: Mapped[str] = mapped_column(
         Text, nullable=False, server_default=text("'system'")
     )
+    #: (P243 §4, goc 0147) Web GORUNUM MODU — `standart` | `buyuk`.
+    #: Tema ile ayni gerekce: hesapta saklanir, her tarayicida ayni.
+    ui_gorunum: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("'standart'")
+    )
     # Rol-bazli arama rizasi (C1a): numara YALNIZ riza=true iken ve yetkili
     # arayan role /call-target ile aciklanir (KVKK — amaç-sınırlı).
     #: (P36) Pazarlama izinleri — UC AYRI KANAL, tek bayrak DEGIL: kisi

@@ -3125,4 +3125,9 @@ export const ar: Sozluk = {
   vardiyaGrupKalipli: "{ad} — {n} يوم",
   vardiyaSerbestSaatKisa: "ساعات حرة",
   vardiyaGunSecilmedi: "اختر يومًا واحدًا على الأقل من التقويم.",
+  // (P243 §4) GORUNUM MODU
+  gorunumModu: "حجم العرض",
+  gorunumStandart: "قياسي",
+  gorunumBuyuk: "كبير",
+  gorunumModuIpucu: "تكبر الواجهة كلها — القائمة والجداول والأزرار. تعمل مع تكبير المتصفح.",
 };

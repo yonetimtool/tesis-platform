@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
 
 import { I18nProvider } from "@/lib/i18n/kullan";
+import { GORUNUM_CEREZI } from "@/lib/gorunum";
 import { DIL_COOKIE, istekDili, yon } from "@/lib/i18n/diller";
 import { SOZLUKLER } from "@/lib/i18n/sozluk";
 
@@ -69,12 +70,23 @@ export default async function RootLayout({
   // engellense bile tercih uygulanir. `system`/cerezsiz durumda karari
   // asagidaki satir-ici script verir (OS tercihi yalniz istemcide bilinir).
   const temaCerezi = cookieDeposu.get("tema")?.value;
+  // (P243 §4) GORUNUM MODU DA SUNUCUDA: tema ile AYNI gerekce — buyuk
+  // modda acilan sayfanin once kucuk sonra buyuk cizilmesi, tam da bu
+  // ayara ihtiyac duyan kullaniciyi bir kare boyunca okuyamaz
+  // birakirdi.
+  const gorunumCerezi = cookieDeposu.get(GORUNUM_CEREZI)?.value;
+  const kokSiniflari = [
+    temaCerezi === "dark" ? "dark" : null,
+    gorunumCerezi === "buyuk" ? "yz-buyuk" : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <html
       lang={dil}
       dir={yon(dil)}
-      className={temaCerezi === "dark" ? "dark" : undefined}
+      className={kokSiniflari || undefined}
       suppressHydrationWarning
     >
       <head>

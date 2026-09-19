@@ -3125,4 +3125,9 @@ export const fr: Sozluk = {
   vardiyaGrupKalipli: "{ad} — {n} jours",
   vardiyaSerbestSaatKisa: "Horaires libres",
   vardiyaGunSecilmedi: "Sélectionnez au moins un jour dans le calendrier.",
+  // (P243 §4) GORUNUM MODU
+  gorunumModu: "Taille d’affichage",
+  gorunumStandart: "Standard",
+  gorunumBuyuk: "Grand",
+  gorunumModuIpucu: "Toute l’interface s’agrandit : menu, tableaux, boutons. Fonctionne avec le zoom du navigateur.",
 };

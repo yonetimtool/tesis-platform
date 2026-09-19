@@ -355,6 +355,7 @@ GET    /me/dues                                             RED    RED    RED   
 POST   /me/eposta/dogrula                                   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 POST   /me/eposta/kod-iste                                  IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 GET    /me/etkinlik                                         IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+PATCH  /me/gorunum                                          IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 POST   /me/hesap-sil                                        IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 POST   /me/hesap-sil/eposta-kod-iste                        IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 GET    /me/makbuzlar                                        RED    RED    RED    RED    IZIN   RED    RED   

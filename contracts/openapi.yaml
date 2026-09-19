@@ -15928,6 +15928,33 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '422': { $ref: '#/components/responses/ValidationError' }
 
+  /me/gorunum:
+    patch:
+      tags: [me]
+      summary: Gorunum modu (standart / buyuk)
+      description: |
+        (P243 §4) Arayuz olcegi — HESAPTA saklanir, cihazda degil.
+        `/me/tema` ile AYNI gerekce: gozu iyi gormeyen bir yonetici
+        ofisteki bilgisayarda da evdeki dizustunde de buyuk gormek
+        ister.
+
+        Kozmetik tercih: denetime YAZILMAZ ve ROL KAPISI YOKTUR —
+        herkes kendi hesabina yazar.
+
+        Gecersiz deger 422: sessizce standarda dusmek, kullaniciya
+        ayarinin uygulandigini sandirirdi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [gorunum]
+              properties:
+                gorunum: { type: string, enum: [standart, buyuk] }
+      responses:
+        "200": { description: kullanici }
+        "422": { description: gecersiz deger }
   /me/avatar:
     patch:
       tags: [me]

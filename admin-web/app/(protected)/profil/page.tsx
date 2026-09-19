@@ -31,6 +31,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 
+import { GorunumSecici } from "@/components/GorunumSecici";
 import { Avatar } from "@/components/Avatar";
 import { YasalMetinler } from "@/components/profil/yasal-metinler";
 import { GirisYontemlerim } from "@/components/GirisYontemlerim";
@@ -376,6 +377,19 @@ function HesapBilgileri({
   return (
     <Kart>
       <div className="space-y-6">
+        {/* (P243 §4) GORUNUM MODU — HESAP bolumunun EN USTUNDE.
+            Bu ayari arayan kisi, tam da arayuzu OKUYAMAYAN kisidir;
+            onu sayfanin altina koymak, bulmasi icin once okumasini
+            istemek olurdu. */}
+        <section className="space-y-3" data-test="profil-gorunum">
+          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+            {t("gorunumModu")}
+          </h2>
+          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+            {t("gorunumModuIpucu")}
+          </p>
+          <GorunumSecici />
+        </section>
         <section className="space-y-3">
           <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
             {t("profilFotograf")}

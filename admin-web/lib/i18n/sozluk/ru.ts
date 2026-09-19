@@ -3125,4 +3125,9 @@ export const ru: Sozluk = {
   vardiyaGrupKalipli: "{ad} — {n} дн.",
   vardiyaSerbestSaatKisa: "Свободные часы",
   vardiyaGunSecilmedi: "Выберите хотя бы один день в календаре.",
+  // (P243 §4) GORUNUM MODU
+  gorunumModu: "Размер отображения",
+  gorunumStandart: "Стандартный",
+  gorunumBuyuk: "Крупный",
+  gorunumModuIpucu: "Увеличивается весь интерфейс — меню, таблицы, кнопки. Работает вместе с масштабом браузера.",
 };

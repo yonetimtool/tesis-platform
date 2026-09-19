@@ -50,6 +50,7 @@ from ..schemas import (
     MeEpostaDogrulaRequest,
     MeEpostaEkleRequest,
     MeProfileOut,
+    MeGorunumRequest,
     MeTemaRequest,
     PasswordChangeRequest,
     UserOut,
@@ -93,6 +94,7 @@ def _user_out(user: AppUser) -> UserOut:
         role=user.role, is_active=user.is_active,
         avatar_url=presign_get(user.avatar_key) if user.avatar_key else None,
         ui_tema=user.ui_tema,
+        ui_gorunum=user.ui_gorunum,
     )
 
 
@@ -128,6 +130,24 @@ async def tema_guncelle(
     Literal'iyla sinirli; semadaki CHECK (goc 0076) ikinci savunma.
     """
     user.ui_tema = body.tema
+    user.updated_at = func.now()
+    await db.flush()
+    return _user_out(user)
+
+
+@router.patch("/me/gorunum", response_model=UserOut)
+async def gorunum_guncelle(
+    body: MeGorunumRequest,
+    user: AppUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_tenant_db),
+) -> UserOut:
+    """(P243 §4) Gorunum modu (standart/buyuk) — HESAPTA saklanir.
+
+    `ui_tema` ile AYNI desen ve ayni gerekce: gozu iyi gormeyen bir
+    yonetici ofisteki bilgisayarda da evdeki dizustunde de buyuk
+    gormek ister. Denetime YAZILMAZ — kozmetik bir tercih.
+    """
+    user.ui_gorunum = body.gorunum
     user.updated_at = func.now()
     await db.flush()
     return _user_out(user)

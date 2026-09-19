@@ -3188,4 +3188,9 @@ export const tr = {
   vardiyaGrupKalipli: "{ad} — {n} gün",
   vardiyaSerbestSaatKisa: "Serbest saat",
   vardiyaGunSecilmedi: "Takvimden en az bir gün seçin.",
+  // (P243 §4) GORUNUM MODU
+  gorunumModu: "Görünüm modu",
+  gorunumStandart: "Standart",
+  gorunumBuyuk: "Büyük",
+  gorunumModuIpucu: "Menü, tablolar ve düğmeler dahil tüm arayüz büyür. Tarayıcı yakınlaştırmasıyla birlikte çalışır.",
 } as const;

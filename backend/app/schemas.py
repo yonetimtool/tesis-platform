@@ -274,6 +274,8 @@ class UserOut(BaseModel):
     avatar_url: str | None = None
     # (P190 §5) Tema tercihi — hesapta saklanır; web açılışta senkronlar.
     ui_tema: str = "system"
+    #: (P243 §4) `standart` | `buyuk`.
+    ui_gorunum: str = "standart"
 
 
 class OzellikBayraklari(BaseModel):
@@ -294,6 +296,12 @@ class MeTemaRequest(BaseModel):
     """(P190 §5) Tema tercihini güncelle — hesapta saklanır."""
 
     tema: Literal["system", "light", "dark"]
+
+
+class MeGorunumRequest(BaseModel):
+    """(P243 §4) Web gorunum modu — mobildeki ayarin AYNI kavrami."""
+
+    gorunum: Literal["standart", "buyuk"]
     model_config = ConfigDict(extra="forbid")
 
 

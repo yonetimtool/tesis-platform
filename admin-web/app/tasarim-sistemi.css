@@ -575,3 +575,59 @@
   border: 0;
   border-top: var(--yz-border-w) solid var(--yz-border);
 }
+
+/* ========================================================================= */
+/* (P243 §4) GORUNUM MODU — STANDART / BUYUK                                 */
+/* ========================================================================= */
+/*
+ * NEDEN TOKEN OLCEKLEME, NEDEN `zoom` YA DA `font-size: 125%` DEGIL
+ * -------------------------------------------------------------------------
+ * `zoom` ya da koke buyuk bir `font-size` vermek, piksel cinsinden yazilmis
+ * HER OLCUYU (kenarlik, golge, simge) oldugu gibi birakir ve duzen kayar:
+ * metin buyur, kutu buyumez, TASMA olur. Burada olceklenen sey TIPOGRAFI
+ * TOKENLARI ve onlarla birlikte satir yuksekligi; bilesenler zaten bu
+ * tokenlardan cizildigi icin menu, tablo, form etiketi ve dugme BIRLIKTE
+ * buyur.
+ *
+ * ORAN 1.25 (mobilde 1.3) — ve nedeni olculdu:
+ * mobilde 1.3 secilmisti cunku orada izgara karo sayisi da azaliyor
+ * (`izgaraKaroSiniri`). Web'de tablo sutunlari sabit; 1.3 ile 24 px'lik
+ * `h1` 31 px'e cikiyor ve dar bir ekranda sayfa basligi iki satira
+ * sariyor. 1.25 ayni okunabilirlik kazancini veriyor, sarmayi
+ * onluyor. WCAG 1.4.4 zaten %200'e kadar bozulmamayi istiyor — bu mod
+ * onun ALTINDA bir adim ve tarayici yakinlastirmasinin YERINE gecmez,
+ * ONUNLA BIRLIKTE calisir.
+ *
+ * KONTRAST (WCAG AA): renk tokenlarina DOKUNULMADI. Buyuk mod yalniz
+ * olcu degistiriyor; renk oranlari P160'ta olculmus haliyle duruyor ve
+ * ikisi birbirinden bagimsiz kaliyor.
+ */
+:root.yz-buyuk {
+  --yz-fs-display: 38px;
+  --yz-fs-h1: 30px;
+  --yz-fs-h2: 22px;
+  --yz-fs-h3: 19px;
+  --yz-fs-body: 17px;
+  --yz-fs-input: 18px;
+  --yz-fs-sm: 16px;
+  --yz-fs-xs: 15px;
+  --yz-fs-kpi: 42px;
+  /* SATIR YUKSEKLIGI DE ACILIR: 17 px metni 1.5 satirla birakmak,
+     harfleri buyutup satirlari sikistirmak olurdu. */
+  --yz-lh-body: 1.6;
+}
+
+/* DOKUNMA/TIKLAMA HEDEFLERI DE BUYUR: 44 px'lik girdi yuksekligi
+   `h-11` ile sinif olarak yazili; buyuk modda tokenla degil, ozel
+   kuralla acilir. Bilesenleri tek tek degistirmek, yeni bir bilesen
+   eklendiginde unutulacak bir adim birakirdi. */
+:root.yz-buyuk input:not([type="checkbox"]):not([type="radio"]),
+:root.yz-buyuk select,
+:root.yz-buyuk button {
+  min-height: 52px;
+}
+:root.yz-buyuk input[type="checkbox"],
+:root.yz-buyuk input[type="radio"] {
+  width: 20px;
+  height: 20px;
+}

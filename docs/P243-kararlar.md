@@ -228,3 +228,66 @@ seslendiğini **göndermeden önce** görür.
   yazıldı, kurumlara doğrulatılmadı. Sitenin kendi acil durum planı
   farklıysa metinler gözden geçirilmeli.
 * Drawer'daki SOS **gerçek telefonda** denenmedi (emülatör yok).
+
+---
+
+# §4 — WEB'DE GÖRÜNÜM MODU
+
+## §4.1 Neden token ölçekleme (zoom değil)
+
+`zoom` ya da köke büyük bir `font-size` vermek, piksel cinsinden yazılmış
+her ölçüyü (kenarlık, gölge, ikon) olduğu gibi bırakır: **metin büyür,
+kutu büyümez, taşma olur.**
+
+Ölçeklenen şey **tipografi token'ları** (`--yz-fs-*`) ve satır yüksekliği.
+Menü, tablolar, form etiketleri ve düğmeler zaten bu token'lardan
+çizildiği için **birlikte** büyüyor — tek tek büyütmek, yeni bir bileşende
+unutulacak bir adım bırakırdı. Dokunma/tıklama hedefleri de büyük modda
+52 px'e çıkıyor.
+
+## §4.2 Oran 1.25 — mobildeki 1.3 değil
+
+Mobilde 1.3 seçilmişti çünkü orada ızgara karo sayısı da azalıyor
+(`izgaraKaroSiniri`). Web'de tablo sütunları sabit; 1.3 ile 24 px'lik
+`h1` 31 px'e çıkıyor ve dar bir ekranda sayfa başlığı **iki satıra
+sarıyor**. 1.25 aynı okunabilirlik kazancını veriyor, sarmayı önlüyor.
+
+Bu mod tarayıcı yakınlaştırmasının **yerine geçmez, onunla birlikte
+çalışır**; WCAG 1.4.4 zaten %200'e kadar bozulmamayı istiyor ve bu mod
+onun altında bir adım.
+
+## §4.3 Kontrast (WCAG AA)
+
+**Renk token'larına dokunulmadı.** Büyük mod yalnız ölçü değiştiriyor;
+kontrast oranları P160'ta ölçülmüş hâliyle duruyor ve ikisi birbirinden
+bağımsız kalıyor. Kilit bunu ayrıca ölçüyor: `:root.yz-buyuk` bloğunda
+hiçbir renk değişkeni tanımlanamaz.
+
+## §4.4 Üç katman, her birinin nedeni
+
+| Katman | Neden |
+|---|---|
+| **Hesap** (`app_user.ui_gorunum`, göç 0147) | Başka tarayıcıda da aynı görünüm. `ui_tema` ile aynı gerekçe (göç 0076). |
+| **Çerez** | SSR ilk karede sınıfı basabilsin. Çerez olmasaydı sayfa önce **küçük** çizilir, sonra büyürdü — tam da bu ayara ihtiyaç duyan kullanıcıyı bir kare boyunca okuyamaz bırakırdı. |
+| `localStorage` **yok** | Tema'da geriye dönük uyum için duruyor; burada böyle bir miras yok ve üçüncü bir kaynak "hangisi doğru" sorusunu üçüncü kez sordururdu. |
+
+## §4.5 Mobildeki ayarla aynı mantık
+
+Aynı ad ("Görünüm modu"), aynı iki seçenek ("Standart / Büyük"), aynı
+davranış. Ayar **profil sayfasının hesap bölümünün en üstünde**: bu ayarı
+arayan kişi tam da arayüzü okuyamayan kişidir; onu sayfanın altına
+koymak, bulması için önce okumasını istemek olurdu.
+
+**Fark (bilinçli):** mobilde değer cihazda duruyor, web'de hesapta. Mobil
+uygulamada hesap tek cihaza bağlı kullanılıyor; web'de aynı hesap birden
+çok tarayıcıda açılıyor.
+
+## §4.6 ÖLÇEMEDİĞİM
+
+* **Gerçek tarayıcıda görsel doğrulama yapılmadı** — jsdom CSS
+  değişkenlerini hesaplamaz. Bu yüzden kilit, CSS dosyasını **kaynak
+  olarak** okuyup token'ların gerçekten büyüdüğünü ve renk token'larına
+  dokunulmadığını ölçüyor; **piksel düzeyinde taşma olmadığı gözle
+  doğrulanmalı.**
+* **Kontrast oranı yeniden ölçülmedi**: renk token'larına dokunulmadığı
+  için P160'taki ölçüm geçerli sayıldı.
