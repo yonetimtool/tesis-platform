@@ -258,7 +258,18 @@ def test_TAM_AKIS_kayittan_ONAYA(client, dukkan_conn, moderator):
     assert r.json()["durum"] == "onay_bekliyor"
 
     # 5) Kuyrukta gorunuyor ve KARAR ICIN GEREKEN HER SEYI tasiyor
-    r = client.get("/dukkan/moderasyon/kuyruk", headers=moderator["h"])
+    # LIMIT ACIKCA VERILIR ve bu testin kendi kusurunun duzeltmesidir.
+    #
+    # OLCULDU: kuyruk `ORDER BY created_at` (FIFO) + varsayilan LIMIT 50
+    # ile calisiyor ve dev veritabaninda 79 bekleyen basvuru birikmisti;
+    # YENI acilan basvuru ilk sayfaya HIC girmiyordu. Test deterministik
+    # olarak kirmizi donuyordu ama urunde bir kusur YOK: moderatorun en
+    # eskiden baslamasi bilincli (bekleyen en uzun sureyi gormus olan).
+    # Kusur testteydi: "birinci sayfada" ile "kuyrukta" ayni sey degil.
+    r = client.get(
+        "/dukkan/moderasyon/kuyruk", headers=moderator["h"],
+        params={"limit": 200},
+    )
     assert r.status_code == 200, r.text
     satir = next((x for x in r.json()["items"] if x["id"] == isl), None)
     assert satir is not None, "basvuru kuyrukta yok"

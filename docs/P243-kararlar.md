@@ -386,3 +386,154 @@ veriyormuş.** P243'ten eski bir kusur; düzeltildi.
   tablo büyütme.
 * Davet e-postalarının **gerçekten gittiği** ölçülmedi (dev'de gönderim
   kapalı); ölçülen, davet sayacının arttığı.
+
+---
+
+# §6 ONBOARDING — "en büyük bölüm"
+
+## §6.0 ÖNCE ÖLÇÜLDÜ: sihirbaz kaç adımda bitiyor
+
+Konteynerde `routers/kurulum.py::ADIMLAR` sayıldı:
+
+* **19 adım**, bunların **7'si `zorunlu=True`**:
+  `blok, daire, sakin, eposta, kasa, gelir_gider_tanimi, aidat`.
+* `calisir` ölçütü **bu yedisinin hepsiydi**.
+
+Sonuç: yeni bir yönetici, **duyuru yapabilmek için önce muhasebe kurmak
+zorundaymış gibi** görünüyordu. İlerleme göstergesi de "%16 tamam"
+diyerek yapılmamış her şeyi bir borç gibi sayıyordu.
+
+## §6.1 ASGARİ ÇALIŞIR KURULUM = BLOK + DAİRE
+
+Bu ikisiyle **duyuru yapılır, görev atanır, kamera eklenir, devriye
+planlanır, sakin davet edilir**. `calisir` ölçütü buna bağlandı
+(`ASGARI_KODLAR`, `KurulumAdimOut.asgari`, `asgari_eksikler`).
+
+Eski tanım **kaybolmadı**: `eksik_zorunlular` duruyor. Değişen şey
+**sunum**: "eksik" değil "henüz açılmamış yetenek".
+
+**Atlama asgariyi kapatmaz.** Blok adımını atlamak tesisi çalışır
+yapmaz — atlama göstergeyi rahatlatır, gerçeği değiştirmez (P193 §2
+kararının asgariye taşınması).
+
+## §6.2 "NE ENGELLİYOR" METNİ NEREDE DURUR
+
+İlk yazımda sunucuya `engel` alanı konmuştu; **geri alındı**. Gerekçe:
+her iki istemci de adım kodu → "neyi engelliyor" kaydını **zaten
+tutuyor** (`admin-web/lib/kurulum-adimlari.ts`, `kurulum_screen.dart`)
+ve web kaydı 19 adımın **hepsini** kapsıyor. Sunucuya ikinci, 9 adımlık
+eksik bir kopya koymak iki kaynağı zamanla ayırırdı. Sunucu yalnızca
+**hangi adımın asgari olduğunu** söyler; cümle istemcide, kullanıcının
+dilinde kurulur.
+
+## §6.3 İLERLEME BASKI YAPMIYOR
+
+* Yüzde çubuğu ve "Zorunlu adımlar: 4/6" sayacı **kaldırıldı**.
+* Yerine iki bölüm: **"Başlamak için gerekenler" (0/2)** ve
+  **"Şunları da yapabilirsiniz"**.
+* İkincisinde sayaç **yok** ve her satır ne açtığını yazıyor. Atlanan
+  adım bu listeye **girmez** (ayrı "atladıklarınız" bölümü P199'dan
+  duruyor) — atlamak bilinçli bir karardır, listeye geri yazmak sitem
+  olurdu.
+* Tesis çalışır duruma gelince "Başlamak için gerekenler" kartı **hiç
+  çizilmez**.
+
+Aynı ayrım mobilde de var: `_Ilerleme` yüzde kartı `_AsgariKart` oldu,
+adım listesine tek seferlik "Şunları da yapabilirsiniz" başlığı girdi.
+
+## §6.4 BOŞ EKRANLAR — TARANDI, SAYILDI, DÜZELTİLDİ
+
+| Yüzey | Bulunan | Düzeltilen |
+|---|---|---|
+| web | 58 `BosDurum` kullanımı, **42'si açıklamasız** | 42 |
+| mobil | 9 `BosDurum` çağrısı, **2'si açıklamasız**; ayrıca **9 ekran** bileşeni hiç kullanmıyor, çıplak `Center(child: Text(l10n.xxxYok))` | 11 |
+
+Mobildeki ikinci desen, taramanın **neden metin taraması olması
+gerektiğini** gösterdi: yalnız `BosDurum` aramak o 9 ekranı görmezdi.
+Kilitler (`p243-bos-durum-rehberi.test.ts`, `p243_bos_durum_rehberi_test.dart`)
+her iki deseni de arar ve bugün yazılmamış bir ekranı yarın yakalar.
+
+Metinler "yol tarifi" biçiminde: nereye gidileceğini ya da kaydın hangi
+olayla oluşacağını söyler ("Tahsilat bir kasaya yazılır. Tanımlar >
+Kasalar ekranından en az bir kasa açın.").
+
+## §6.5 İLK GİRİŞ TURU — "bir kez" nerede tutulur
+
+Turun asıl kararı bu. `localStorage` / cihaz deposu olsaydı ofiste turu
+atlayan yönetici evde, telefonda atlayan yönetici web panelinde onu
+**yeniden** görürdü. İşaret **hesapta**: `app_user.tur_goruldu_at`
+(göç 0148), `POST /me/tur-goruldu`.
+
+* **Kullanıcı başına, tesis başına değil**: aynı tesise sonradan eklenen
+  ikinci yönetici turu kendi ilk girişinde görür.
+* **Atlamak da "gördü"dür** — aksi hâlde "atla" düğmesi bir sonraki
+  girişte hiçbir şey yapmamış olurdu.
+* **İdempotent**: ikinci çağrı damgayı değiştirmez.
+* Yalnız admin + yönetici. Sakine "önce blokları girin" demek anlamsız.
+* İşaret yazılamazsa pencere **yine kapanır**. Bir ağ hatası yüzünden
+  kullanıcıyı tanıtım penceresinde tutmak, hatanın kendisinden kötü;
+  bedel: tur bir sonraki girişte yeniden çıkar.
+
+`KurulumHatirlatici`nin kapatma kararı **cihazda kalmaya devam ediyor**
+ve bu bilinçli: o bir "şimdi değil" tercihi, tur ise bir kez öğrenilen
+bilgi.
+
+Mobilde tur **hatırlatıcının dışında**: önce "bu ürün nasıl çalışır",
+sonra "kurulumu tamamlayın". `SetupTenantScreen` dalında açılmaz — tesis
+adlandırma zaten bir kurulum adımı, üstüne tanıtım bindirmek kullanıcıyı
+aynı anda iki işe çağırmaktı.
+
+## §6.6 BAĞLAM İÇİ YARDIM
+
+Üst çubukta soru işareti; metin **rotadan** çözülür
+(`lib/ekran-yardimi.ts`, 16 ekran + en uzun önek kuralı:
+`/finans/butce` → `/finans`).
+
+**Kabukta tek yer**, sayfa başına değil: altmış küsur sayfaya tek tek
+düğme koymak aynı davranışı altmış kez yazmak ve birini unuttuğunda
+kullanıcıya "bazı ekranlarda yardım var" demek olurdu.
+
+**Kaydı olmayan ekranda düğme hiç çizilmez.** Açıp "açıklama yazılmadı"
+demek, düğmenin hiç olmamasından kötüdür: kullanıcı bir kez tıklar, boş
+çıkar, bir daha tıklamaz.
+
+## §6.7 YAPILMAYANLAR (açıkça)
+
+* **Mobilde ekran başına bağlam içi yardım YAPILMADI.** Mobil ekranların
+  ortak bir başlık yuvası yok; soru işareti ~16 AppBar'a tek tek girmeli
+  ve bunların çoğu yerleşim kilidi taşıyor. Yalnız kurulum sihirbazının
+  AppBar'ına turu tekrar açan "?" eylemi kondu. Web tarafı tam.
+* **Gerçek bir tarayıcıda tur akışı sürülmedi**; ölçülen, DOM/widget
+  testlerinde pencerenin dört ekranı gezmesi ve `POST /me/tur-goruldu`
+  isteğinin **gerçekten atılması**.
+* Yardım kaydı 16 ekranı kapsıyor, 65 korumalı rotanın hepsini değil.
+
+## §6.8 YAN BULGULAR (P243 §6 dışı, ölçüm sırasında çıktı)
+
+1. **`func.now()` + async oturum**: `POST /me/tur-goruldu` ilk yazımda
+   500 veriyordu. SQL ifadesi flush sonrası niteliği "expired" bırakıyor
+   ve yanıt kurulurken tembel bir SELECT tetikliyor → `MissingGreenlet`.
+   Damga python tarafında üretilecek şekilde düzeltildi. **Yeni bir
+   async uçta `func.now()` ile nitelik yazarken aynı tuzak var.**
+2. **`PATCH /me/gorunum` (§4) denetçi salt-okuma registresine hiç
+   eklenmemişti** — §4 commit'i bu kilidi koşmamış. Eklendi.
+3. **`test_zz_olcum_p243.py`** §1'de ölçüm için yazılmış, `assert False`
+   ile biten bir dosyaydı ve **silinmeden commit'lenmişti**. Silindi.
+4. **`test_dukkan_arz_akisi::test_TAM_AKIS_kayittan_ONAYA`** deterministik
+   kırmızıydı (bu turdan önce de). Kök neden: moderasyon kuyruğu FIFO +
+   varsayılan `LIMIT 50` ile çalışıyor, dev veritabanında **79 bekleyen
+   başvuru** birikmiş, yeni başvuru ilk sayfaya hiç girmiyor. Üründe
+   kusur yok (moderatörün en eskiden başlaması bilinçli); kusur testte:
+   "birinci sayfada" ile "kuyrukta" aynı şey değil. Test `limit=200`
+   geçecek şekilde düzeltildi.
+5. **`pano-tint-blok`** testi `/Tahsilat/` deseniyle sayfadaki herhangi
+   bir "tahsilat" geçişini arıyordu; §6.4'ün kasa rehber metni yüzünden
+   halka çizilmediği hâlde düştü. Ölçüt halka etiketine (`^Tahsilat: `)
+   daraltıldı.
+
+## §6.9 GÖÇLER
+
+* `0148_ilk_giris_turu` — `app_user.tur_goruldu_at timestamptz`.
+
+(P243 turunun tamamı için prod'da uygulanacak göçler: **0146, 0147,
+0148**.)

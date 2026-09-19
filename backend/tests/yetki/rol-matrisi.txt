@@ -371,6 +371,7 @@ GET    /me/profile                                          IZIN   IZIN   IZIN  
 PATCH  /me/tema                                             IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 POST   /me/tesis-degistir                                   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 GET    /me/tesislerim                                       IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+POST   /me/tur-goruldu                                      IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 GET    /mesai/ayar                                          IZIN   IZIN   RED    RED    RED    RED    IZIN  
 PATCH  /mesai/ayar                                          IZIN   IZIN   RED    RED    RED    RED    RED   
 POST   /mesai/gidere-yaz                                    IZIN   IZIN   RED    RED    RED    RED    RED   
