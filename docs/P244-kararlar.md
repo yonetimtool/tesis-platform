@@ -401,3 +401,119 @@ düşürdü.
 
 `tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
 **tam takım 230 dosya / 1974 test yeşil.**
+
+---
+
+# AŞAMA 3 — PAYLAŞILAN BİLEŞENLER · UYGULANDI
+
+## A3.0 Aşama 1'in bedavaya getirdiği şey
+
+Bileşenlerde **50+ `--yz-metal-*` / `--yz-raised` kullanımı** duruyor
+(yuzey 7, dugme 6, sekmeler 5, kpi 2, tablo 2…). Aşama 1'de **token
+değerleri** düzleştiği için hepsi **zaten düz çiziliyor** — tek bir
+bileşene dokunmadan. Aşama 1'de "adları koru, değerleri düzleştir"
+kararının karşılığı bu.
+
+Yani aşama 3'ün işi "düzleştirmek" değil, **eksik olanı yapmak** oldu.
+
+## A3.1 Yeni: detay çekmecesi (`DetayCekmecesi`)
+
+Ölçülen boşluk: **79 sayfanın 1'inde** detay paneli vardı.
+
+Bunun "boş görünüyor" şikâyetiyle doğrudan ilgisi var: detayı olmayan
+bir tablo, satıra tıklayınca **yeni bir sayfaya** gitmeye zorlar;
+kullanıcı listedeki yerini kaybeder, geri dönünce süzgeçleri yeniden
+kurar. Panel listeyi **yerinde** tutar.
+
+**Neden modal değil:** modal "bir işi bitir, sonra devam et" der
+(oluşturma/düzenleme); çekmece "şunun ayrıntısına bak, listede kal" der.
+İkisini tek bileşene sıkıştırmak iki farklı niyeti tek davranışa
+indirger.
+
+**Odak tuzağı yeniden yazılmadı.** `components/ui/modal.tsx` içindeki
+mantık `lib/odak-tuzagi.ts`'e çıkarıldı; ikisi de onu kullanıyor. Böylece
+P161'de ölçülen ders tek yerde kaldı:
+
+> Görünürlük süzgeci `offsetParent !== null` **olamaz** — jsdom'da her
+> zaman `null` döner, yani tuzak **testte sessizce devre dışı** kalır ve
+> hiç ölçülemez.
+
+## A3.2 Yeni: filtre çubuğu (`FiltreCubugu`)
+
+Ölçülen: paylaşılan bir filtre bileşeni **hiç yoktu**; 12 sayfa aynı
+`flex flex-wrap items-end gap-3` sarmalını elle yazıyor, diğerleri
+varyasyonlarını.
+
+**"N filtre açık — temizle" rozeti** eklendi. Boş bir liste karşısında
+kullanıcının ilk sorusu "kayıt mı yok, yoksa ben mi süzdüm" olur — P243
+§6c'de boş durum metinlerine yazılan dersin aynısı, ama orada yalnız
+metin vardı. **Sayı metnin içinde**: renk tek taşıyıcı değil.
+
+## A3.3 Yeni: özet şeridi (`OzetKarti` + `OzetSeridi`)
+
+Ölçülen: **KPI 79 sayfanın 3'ünde.** Referansta neredeyse her operasyon
+ekranının üstünde 3–5 kart var.
+
+**Mevcut `Kpi` kullanılmadı ve bu bilinçli:** o bir **halka** (116 px
+çember, glow'lu), referansınki **dikdörtgen kart**. Halkayı dikdörtgene
+zorlamak, panoda çalışan bir bileşeni bozmak olurdu. `Kpi` duruyor;
+panonun ele alınması aşama 5.
+
+**Referansın bir hatası düzeltildi.** `ui5`'te "Açık Talepler ↓%20"
+**kırmızı** çizilmiş — oysa açık talebin azalması iyi haberdir. Ok yönü
+ile iyi/kötü aynı şey değil: borç düşerse iyi, tahsilat düşerse kötü.
+Bizde çağıran taraf `trendYonu`nu **anlam** olarak verir
+(`iyi`/`kotu`), yön olarak değil. Kilit bunu ölçüyor.
+
+**Sütun sayısı sabit değil** (`auto-fit`): sabit bir `lg:grid-cols-4`,
+üç kartlı bir ekranda sağda ölü bir kolon bırakırdı — P244'ün kaçınmak
+istediği şeyin ta kendisi.
+
+## A3.4 Tablo: yoğunluk, hover, yapışkan başlık, satır→detay
+
+| ekleme | karar |
+|---|---|
+| `yogunluk` (`rahat`/`normal`/`sik`) | Tek ölçü vardı (`p-3`). Yoğun operasyon tablosu ile altı satırlık tanım defteri aynı nefesi kullanıyordu. **Varsayılan değişmedi** — 28 sayfa bugünkü ölçüyle çizildi, hepsini bir anda değiştirmek ölçülmemiş bir gerileme riskiydi. `py` değişir, `px` sabit kalır: yatay dolguyu daraltmak okunurluğu dikey sıkışmadan çok bozar |
+| satır hover | Referansta her satırın hover zemini var. **CSS'te**, satır içi `style` ile `:hover` yazılamaz. `@media (hover: hover)` ile: dokunmatikte `:hover` yapışır ve yanlış bir "seçili" izlenimi bırakır |
+| `yapiskanBaslik` | **Varsayılan kapalı**: kendi kaydırma kabı olan düzenlerde (modal içindeki tablo) yanlış yere yapışır |
+| `onSatirTikla` + `satirAdi` | Verilirse imleç, `role="button"`, `tabIndex`, `Enter`/`Space` ve erişilebilir ad **birlikte** gelir; verilmezse **hiçbiri**. Yarım uygulanmış tıklanabilir satır (fareyle çalışıp klavyeyle çalışmayan), hiç olmamasından kötüdür |
+
+## A3.5 Kendi tutarsızlığımı düzelttim
+
+Ölçüldü: depoda **358 `data-test`** kullanımına karşı **5 `data-testid`**
+— ve beşinin üçü **benim** önceki aşamalarda eklediklerimdi
+(`kurulum-asgari`, `kurulum-sonra`, `ekran-yardimi`). Testing Library'nin
+`getByTestId` varsayılanı `data-testid` olduğu için oraya kaymışım.
+
+Üçü de konvansiyona döndürüldü, testleri `data-test` seçicisine geçti.
+
+## A3.6 Kilitler
+
+**YENİ** `p244-paylasilan-bilesenler.dom.test.ts` (13 test): çekmecenin
+diyalog rolü/adı, ESC, örtü, odak girişi, boş eylem çubuğu çizilmemesi;
+filtre sayısının **metinle** söylenmesi; trend renginin **anlama** bağlı
+olması; `href` yoksa bağlantı çizilmemesi; yoğunluk; satır tıklamanın
+fare **ve** klavyeyle birlikte çalışması; yapışkan başlığın varsayılan
+kapalılığı.
+
+`i18n` `sabit-metin` taraması şablon dizgemi yakaladı
+(`` `${hucreSinifi} text-start font-medium` ``) — **haklı**: tarama CSS
+sınıfını cümleden ayırt edemez. Değer adlandırıldı.
+
+**Üç kilit kırılarak doğrulandı:** satır tıklamasından `tabIndex`'i
+kaldırmak, çekmeceden ESC'i kaldırmak, trend rengini yöne bağlamak
+(referansın hatası) — üçü de ilgili testi düşürdü.
+
+## A3.7 Bu aşamada YAPILMAYAN
+
+* Yeni bileşenlerin **sayfalara uygulanması** — modül turları (5–9).
+  Bu aşama yalnız bileşen katmanı; hiçbir sayfa değişmedi.
+* `components/Modal.tsx` (eski) hâlâ 1 sayfa + 3 kabuk bileşeni
+  tarafından kullanılıyor; emekliliği aşama 10.
+* `Kpi` (halka) ile `OzetKarti` (dikdörtgen) yan yana yaşıyor; panonun
+  hangisini kullanacağı aşama 5'te karara bağlanacak.
+
+## A3.8 Doğrulama
+
+`tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
+**tam takım 231 dosya / 1987 test yeşil.**

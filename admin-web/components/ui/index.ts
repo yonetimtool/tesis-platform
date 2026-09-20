@@ -64,3 +64,16 @@ export { AyTakvimi, gunEkle, isoHaftaGunu } from "./ay-takvimi";
 // (P244 §2) Kanonik sayfa basligi — eski `tasarim.tsx::SayfaBasligi` ve
 // `form.tsx::PageHeader` bunun yerine gececek (asama 10 temizligi).
 export { SayfaBasligi } from "./sayfa-basligi";
+
+// (P244 §3) YENI PAYLASILAN BILESENLER — olculen bosluklarin karsiligi.
+// Detay paneli 79 sayfanin 1'inde, KPI 3'unde vardi; paylasilan bir
+// filtre cubugu HIC yoktu.
+export { DetayCekmecesi, CekmeceSatiri, type CekmeceProps } from "./cekmece";
+export { FiltreCubugu } from "./filtre-cubugu";
+export {
+  OzetKarti,
+  OzetSeridi,
+  type OzetKartiProps,
+  type OzetDurumu,
+  type TrendYonu,
+} from "./ozet-seridi";

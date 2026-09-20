@@ -3232,4 +3232,9 @@ export const ru: Sozluk = {
   tesisKartiDegistir: "Текущий объект: {ad} — откройте, чтобы сменить",
   kabukAramaKisayolu: "Ctrl K",
   kabukAltbilgiUrun: "Современная платформа управления объектами",
+  // (P244 §3) PAYLASILAN BILESENLER — filtre cubugu, cekmece, tablo
+  filtreCubugu: "Фильтры",
+  filtreTemizle: "Фильтров: {n} — сбросить",
+  cekmeceDetay: "Подробности",
+  tabloSatirAc: "Открыть подробности: {ad}",
 };

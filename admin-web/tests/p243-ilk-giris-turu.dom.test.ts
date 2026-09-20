@@ -11,7 +11,7 @@
 // olsaydi ofiste turu atlayan yonetici evdeki bilgisayarda onu yeniden
 // gorurdu. Isaret hesapta (`app_user.tur_goruldu_at`, goc 0148) ve bu
 // dosya SUNUCUYA GIDILDIGINI olcer — pencerenin kapanmasini degil.
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -19,6 +19,22 @@ import { EkranYardimi } from "@/components/EkranYardimi";
 import { IlkGirisTuru } from "@/components/IlkGirisTuru";
 
 import { ciz, fetchSahtele } from "./yardimci";
+
+// (P244 §3) KANCA SECICISI `data-test` — DEPONUN KONVANSIYONU.
+// Olculdu: 358 `data-test` kullanimina karsi 5 `data-testid`. Testing
+// Library'nin `getByTestId` varsayilani `data-testid` oldugu icin bu
+// dosyalar bir ara o bese katilmisti; konvansiyona geri donuldu.
+const bulZorunlu = (ad: string): HTMLElement => {
+  const o = document.querySelector<HTMLElement>(`[data-test="${ad}"]`);
+  if (!o) throw new Error(`kanca yok: ${ad}`);
+  return o;
+};
+const bulVarMi = (ad: string): HTMLElement | null =>
+  document.querySelector<HTMLElement>(`[data-test="${ad}"]`);
+const bul = async (ad: string): Promise<HTMLElement> => {
+  await waitFor(() => expect(bulVarMi(ad)).not.toBeNull());
+  return bulZorunlu(ad);
+};
 
 let yol = "/dashboard";
 vi.mock("next/navigation", () => ({ usePathname: () => yol }));
@@ -104,7 +120,7 @@ describe("(P243 §6e) baglam ici yardim", () => {
   it("KAYDI OLAN ekranda dugme VAR ve metni gosterir", async () => {
     yol = "/kurulum";
     ciz(EkranYardimi);
-    await userEvent.click(screen.getByTestId("ekran-yardimi"));
+    await userEvent.click(bulZorunlu("ekran-yardimi"));
     expect(screen.getByText(/Başlamak için blok ve daire yeter/)).toBeInTheDocument();
   });
 
@@ -119,7 +135,7 @@ describe("(P243 §6e) baglam ici yardim", () => {
   it("ALT SAYFA ust kaydi devralir, EN UZUN onek kazanir", async () => {
     yol = "/finans/butce";
     ciz(EkranYardimi);
-    await userEvent.click(screen.getByTestId("ekran-yardimi"));
+    await userEvent.click(bulZorunlu("ekran-yardimi"));
     expect(screen.getByText(/Tek defter/)).toBeInTheDocument();
   });
 });

@@ -15,7 +15,7 @@
 //
 // Ortak kok: sihirbaz "sunu yap" diyor ama "yapmazsan NE calismaz"
 // demiyordu. Bu dosya sonucu kilitler.
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -23,6 +23,22 @@ import KurulumPage from "@/app/(protected)/kurulum/page";
 import { KURULUM_HEDEFLERI } from "@/lib/kurulum-adimlari";
 
 import { ciz, fetchSahtele } from "./yardimci";
+
+// (P244 §3) KANCA SECICISI `data-test` — DEPONUN KONVANSIYONU.
+// Olculdu: 358 `data-test` kullanimina karsi 5 `data-testid`. Testing
+// Library'nin `getByTestId` varsayilani `data-testid` oldugu icin bu
+// dosyalar bir ara o bese katilmisti; konvansiyona geri donuldu.
+const bulZorunlu = (ad: string): HTMLElement => {
+  const o = document.querySelector<HTMLElement>(`[data-test="${ad}"]`);
+  if (!o) throw new Error(`kanca yok: ${ad}`);
+  return o;
+};
+const bulVarMi = (ad: string): HTMLElement | null =>
+  document.querySelector<HTMLElement>(`[data-test="${ad}"]`);
+const bul = async (ad: string): Promise<HTMLElement> => {
+  await waitFor(() => expect(bulVarMi(ad)).not.toBeNull());
+  return bulZorunlu(ad);
+};
 
 const KAPATILDI_ANAHTARI = "yonetio.kurulum.kapatildi";
 
@@ -95,7 +111,7 @@ describe("(P193 §2) sihirbaz ozeti", () => {
   it("BASLANGIC BOLUMU yalniz blok+daire ister", async () => {
     kur();
     ciz(KurulumPage);
-    const kutu = await screen.findByTestId("kurulum-asgari");
+    const kutu = await bul("kurulum-asgari");
     expect(kutu).toHaveTextContent(/Başlamak için gerekenler/);
     expect(kutu).toHaveTextContent(/0\/2 hazır/);
     expect(kutu).toHaveTextContent(/Bloklar/);
@@ -107,7 +123,7 @@ describe("(P193 §2) sihirbaz ozeti", () => {
   it("YUZDE GOSTERGESI YOK — '%40 tamam' bir sitemdir", async () => {
     kur();
     ciz(KurulumPage);
-    await screen.findByTestId("kurulum-asgari");
+    await bul("kurulum-asgari");
     expect(screen.queryByRole("progressbar")).toBeNull();
     expect(screen.queryByText(/Zorunlu adımlar:/)).toBeNull();
   });
@@ -115,7 +131,7 @@ describe("(P193 §2) sihirbaz ozeti", () => {
   it("SONRA YAPILABILECEKLER bolumu — asgari adimlar BURADA DEGIL", async () => {
     kur();
     ciz(KurulumPage);
-    const kutu = await screen.findByTestId("kurulum-sonra");
+    const kutu = await bul("kurulum-sonra");
     expect(kutu).toHaveTextContent(/Şunları da yapabilirsiniz/);
     expect(kutu).toHaveTextContent(/Kasa/);
     // Asgari adim iki kez listelenmez.
@@ -133,7 +149,7 @@ describe("(P193 §2) sihirbaz ozeti", () => {
     );
     kur(d);
     ciz(KurulumPage);
-    const kutu = await screen.findByTestId("kurulum-sonra");
+    const kutu = await bul("kurulum-sonra");
     expect(kutu).not.toHaveTextContent(/NFC noktaları/);
   });
 
@@ -149,8 +165,8 @@ describe("(P193 §2) sihirbaz ozeti", () => {
     expect(await screen.findByText(/Tesis çalışır durumda/)).toBeInTheDocument();
     expect(screen.queryByText(/Çalışır kurulum için eksikler/)).toBeNull();
     // Her sey bitince "sunlari da yapabilirsiniz" de cizilmez.
-    expect(screen.queryByTestId("kurulum-sonra")).toBeNull();
-    expect(screen.queryByTestId("kurulum-asgari")).toBeNull();
+    expect(bulVarMi("kurulum-sonra")).toBeNull();
+    expect(bulVarMi("kurulum-asgari")).toBeNull();
   });
 
   it("HATIRLATICI YONETICIDEN geri acilabilir (eksik 14)", async () => {
@@ -178,6 +194,6 @@ describe("(P193 §2) sihirbaz ozeti", () => {
     expect(await screen.findByText(/^Bloklar$/)).toBeInTheDocument();
     // Eski sunucu asgari alanlarini gondermez: bolum HIC cizilmez,
     // "0/0 hazır" gibi anlamsiz bir sayac gosterilmez.
-    expect(screen.queryByTestId("kurulum-asgari")).toBeNull();
+    expect(bulVarMi("kurulum-asgari")).toBeNull();
   });
 });

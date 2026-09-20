@@ -3232,4 +3232,9 @@ export const en: Sozluk = {
   tesisKartiDegistir: "Current site: {ad} — open to switch",
   kabukAramaKisayolu: "Ctrl K",
   kabukAltbilgiUrun: "Modern facility management platform",
+  // (P244 §3) PAYLASILAN BILESENLER — filtre cubugu, cekmece, tablo
+  filtreCubugu: "Filters",
+  filtreTemizle: "{n} filters on — clear",
+  cekmeceDetay: "Details",
+  tabloSatirAc: "Open details for {ad}",
 };

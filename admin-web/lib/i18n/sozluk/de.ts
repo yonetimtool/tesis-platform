@@ -3232,4 +3232,9 @@ export const de: Sozluk = {
   tesisKartiDegistir: "Aktuelle Anlage: {ad} — zum Wechseln öffnen",
   kabukAramaKisayolu: "Strg K",
   kabukAltbilgiUrun: "Moderne Plattform für Anlagenverwaltung",
+  // (P244 §3) PAYLASILAN BILESENLER — filtre cubugu, cekmece, tablo
+  filtreCubugu: "Filter",
+  filtreTemizle: "{n} Filter aktiv — zurücksetzen",
+  cekmeceDetay: "Details",
+  tabloSatirAc: "Details zu {ad} öffnen",
 };

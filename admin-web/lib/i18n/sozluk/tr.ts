@@ -3295,4 +3295,9 @@ export const tr = {
   tesisKartiDegistir: "Bulunduğunuz tesis: {ad} — değiştirmek için açın",
   kabukAramaKisayolu: "Ctrl K",
   kabukAltbilgiUrun: "Modern Tesis Yönetim Platformu",
+  // (P244 §3) PAYLASILAN BILESENLER — filtre cubugu, cekmece, tablo
+  filtreCubugu: "Filtreler",
+  filtreTemizle: "{n} filtre açık — temizle",
+  cekmeceDetay: "Ayrıntılar",
+  tabloSatirAc: "{ad} ayrıntılarını aç",
 } as const;

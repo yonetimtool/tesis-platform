@@ -3232,4 +3232,9 @@ export const es: Sozluk = {
   tesisKartiDegistir: "Comunidad actual: {ad} — abrir para cambiar",
   kabukAramaKisayolu: "Ctrl K",
   kabukAltbilgiUrun: "Plataforma moderna de gestión de comunidades",
+  // (P244 §3) PAYLASILAN BILESENLER — filtre cubugu, cekmece, tablo
+  filtreCubugu: "Filtros",
+  filtreTemizle: "{n} filtros activos — limpiar",
+  cekmeceDetay: "Detalles",
+  tabloSatirAc: "Abrir detalles de {ad}",
 };

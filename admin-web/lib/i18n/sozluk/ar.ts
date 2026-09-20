@@ -3232,4 +3232,9 @@ export const ar: Sozluk = {
   tesisKartiDegistir: "المجمع الحالي: {ad} — افتح للتبديل",
   kabukAramaKisayolu: "Ctrl K",
   kabukAltbilgiUrun: "منصة حديثة لإدارة المجمعات",
+  // (P244 §3) PAYLASILAN BILESENLER — filtre cubugu, cekmece, tablo
+  filtreCubugu: "عوامل التصفية",
+  filtreTemizle: "{n} عوامل تصفية مفعّلة — مسح",
+  cekmeceDetay: "التفاصيل",
+  tabloSatirAc: "فتح تفاصيل {ad}",
 };

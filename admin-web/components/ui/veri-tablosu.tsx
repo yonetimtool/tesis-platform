@@ -33,7 +33,14 @@
  * * Kaydirilabilir kapsayici `tabindex=0` + `role=region`: klavye
  *   kullanicisi yatay kaydirabilmeli.
  */
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+} from "react";
 
 import { siraGecikmesi } from "@/lib/hareket";
 import { useT } from "@/lib/i18n/kullan";
@@ -99,6 +106,24 @@ const VARSAYILAN_DURUM: TabloDurumu = {
   boy: 25,
   siraKolon: null,
   siraYonu: "artan",
+};
+
+/**
+ * (P244 §3) YOGUNLUK -> HUCRE DOLGUSU.
+ *
+ * `py` degisir, `px` SABIT KALIR: yatay dolguyu daraltmak kolonlari
+ * birbirine yapistirir ve okunurlugu dikey sikismadan daha cok bozar.
+ */
+// UCLUDE/SABLONDA DIZE YAZILMAZ (depo kurali `sabit-metin`): tarama
+// sablon dizgesindeki her metni cevrilmemis cumle adayi sayar ve CSS
+// sinifini cumleden ayirt edemez — haklidir. Deger adlandirilinca hem
+// tarama temiz kalir hem niyet okunur.
+const BASLIK_HIZA = "text-start font-medium";
+
+const HUCRE: Record<"rahat" | "normal" | "sik", string> = {
+  rahat: "px-3 py-4",
+  normal: "px-3 py-3",
+  sik: "px-3 py-2",
 };
 
 export interface VeriTablosuProps<T> {
@@ -175,6 +200,37 @@ export interface VeriTablosuProps<T> {
    */
   darMod?: "kart" | "kaydirma" | "otomatik";
 
+  /**
+   * (P244 §3) SATIR YOGUNLUGU.
+   *
+   * Bugune kadar TEK olcu vardi (`p-3` = 12 px). Yogun bir operasyon
+   * tablosu (araç geçişleri, tahsilatlar) ile alti satirlik bir tanim
+   * defteri ayni nefes aralıgini kullaniyordu; referansta ikisi ayri.
+   *
+   * `rahat` okunurlugu, `sik` ekrana sigan kayit sayisini onceler.
+   * VARSAYILAN DEGISMEDI (`normal`) — 28 sayfa bugunku olcuyle cizildi ve
+   * hepsini bir anda degistirmek, olculmemis bir gerileme riski olurdu.
+   */
+  yogunluk?: "rahat" | "normal" | "sik";
+  /**
+   * (P244 §3) SATIRA TIKLAYINCA — detay cekmecesi icin.
+   *
+   * Verilirse satir tiklanabilir olur: imlec degisir, hover belirginlesir,
+   * `Enter`/`Space` calisir ve satir `role="button"` alir. Verilmezse
+   * HICBIRI olmaz — tiklanabilir gorunen ama tiklanmayan bir satir,
+   * kullaniciyi bir kez aldatir.
+   */
+  onSatirTikla?: (satir: T) => void;
+  /** Satirin erisilebilir adi (`onSatirTikla` varsa zorunlu). */
+  satirAdi?: (satir: T) => string;
+  /**
+   * (P244 §3) BASLIK SATIRI YAPISKAN OLSUN MU.
+   *
+   * Uzun listelerde kullanici asagi indikce kolonun ne oldugunu unutur.
+   * Varsayilan KAPALI: yapiskan baslik, kendi kaydirma kabi olan
+   * duzenlerde (modal icindeki tablo) yanlis yere yapisir.
+   */
+  yapiskanBaslik?: boolean;
   sunucuTarafli?: boolean;
   /** Sunucu taraflida ZORUNLU — toplam kayit sayisi. */
   toplam?: number;
@@ -200,6 +256,10 @@ export function VeriTablosu<T>({
   numarali = false,
   altbilgi,
   darMod = "otomatik",
+  yogunluk = "normal",
+  onSatirTikla,
+  satirAdi,
+  yapiskanBaslik = false,
   sunucuTarafli = false,
   toplam,
   durum,
@@ -385,10 +445,18 @@ export function VeriTablosu<T>({
             className="odak-ic overflow-x-auto"
           >
           <table className="w-full border-collapse">
-            <thead>
+            <thead
+              // (P244 §3) YAPISKAN BASLIK — istege bagli.
+              className={yapiskanBaslik ? "sticky top-0" : undefined}
+              style={
+                yapiskanBaslik
+                  ? { zIndex: "var(--yz-z-sticky)" as unknown as number }
+                  : undefined
+              }
+            >
               <tr>
                 {secilebilir && (
-                  <th scope="col" className="w-10 p-3">
+                  <th scope="col" className={`w-10 ${HUCRE[yogunluk]}`}>
                     <input
                       ref={tumuRef}
                       type="checkbox"
@@ -401,7 +469,7 @@ export function VeriTablosu<T>({
                 {numarali && (
                   <th
                     scope="col"
-                    className="w-12 p-3 text-end"
+                    className={`w-12 text-end ${HUCRE[yogunluk]}`}
                     style={{
                       fontSize: "var(--yz-fs-xs)",
                       color: "var(--yz-text-3)",
@@ -415,6 +483,7 @@ export function VeriTablosu<T>({
                 {gorunen.map((k) => (
                   <BaslikHucresi
                     key={k.id}
+                    hucreSinifi={HUCRE[yogunluk]}
                     kolon={k}
                     aktif={d.siraKolon === k.id}
                     yon={d.siraYonu}
@@ -433,7 +502,38 @@ export function VeriTablosu<T>({
                     // SIRALI GIRIS (brief). Gecikme `lib/hareket` tek
                     // kaynagindan; hareket azaltmada CSS animasyonu
                     // kapanir ve gecikmenin bir hukmu kalmaz.
-                    className="yz-satir-giris"
+                    //
+                    // (P244 §3) HOVER DURUMU EKLENDI. Yogun bir tabloda
+                    // gozun hangi satirda oldugunu kaybetmesi en sik
+                    // sikayet edilen seydir; referansta her satirin hover
+                    // zemini var. `yz-satir` sinifi CSS'te (satir ici
+                    // `style` ile hover yazilamaz).
+                    className={`yz-satir-giris yz-satir${
+                      onSatirTikla ? " yz-satir-tiklanir" : ""
+                    }`}
+                    // TIKLANABILIRLIK OPSIYONEL VE TAM: imlec, rol,
+                    // klavye ve erisilebilir ad birlikte gelir ya da
+                    // hicbiri gelmez. Yarim uygulanmis bir tiklanabilir
+                    // satir (fareyle calisip klavyeyle calismayan), hic
+                    // olmamasindan kotudur.
+                    {...(onSatirTikla
+                      ? {
+                          role: "button" as const,
+                          tabIndex: 0,
+                          "aria-label": satirAdi
+                            ? t("tabloSatirAc", { ad: satirAdi(satir) })
+                            : undefined,
+                          onClick: () => onSatirTikla(satir),
+                          onKeyDown: (e: ReactKeyboardEvent<HTMLTableRowElement>) => {
+                            if (e.key !== "Enter" && e.key !== " ") return;
+                            // BOSLUK SAYFAYI KAYDIRMASIN: `role="button"`
+                            // olan bir ogede Space'in varsayilani kaydirma
+                            // degil etkinlestirmedir.
+                            e.preventDefault();
+                            onSatirTikla(satir);
+                          },
+                        }
+                      : {})}
                     style={{
                       animationDelay: `${siraGecikmesi(sira, true)}s`,
                       borderTopWidth: "var(--yz-border-w)",
@@ -443,7 +543,7 @@ export function VeriTablosu<T>({
                     }}
                   >
                     {secilebilir && (
-                      <td className="p-3">
+                      <td className={HUCRE[yogunluk]}>
                         <input
                           type="checkbox"
                           checked={bu}
@@ -454,7 +554,7 @@ export function VeriTablosu<T>({
                     )}
                     {numarali && (
                       <td
-                        className="p-3 text-end tabular-nums"
+                        className={`text-end tabular-nums ${HUCRE[yogunluk]}`}
                         data-test="tablo-sira"
                         style={{
                           fontSize: "var(--yz-fs-sm)",
@@ -468,7 +568,7 @@ export function VeriTablosu<T>({
                       <td
                         key={k.id}
                         className={[
-                          "p-3 align-middle",
+                          `${HUCRE[yogunluk]} align-middle`,
                           k.sayisal ? "text-end tabular-nums" : "",
                           k.darEkrandaGizle ? "hidden md:table-cell" : "",
                         ]
@@ -533,11 +633,14 @@ const ARIA_AZALAN = "descending";
 const ARIA_YOK = "none";
 
 function BaslikHucresi<T>({
+  hucreSinifi,
   kolon,
   aktif,
   yon,
   onSirala,
 }: {
+  /** (P244 §3) Tablonun yogunluguna gore hucre dolgusu. */
+  hucreSinifi: string;
   kolon: Kolon<T>;
   aktif: boolean;
   yon: SiraYonu;
@@ -552,7 +655,8 @@ function BaslikHucresi<T>({
       // yazmak ekran okuyucuya "hepsi sirali" dedirtir.
       aria-sort={aktif ? (yon === YON_ARTAN ? ARIA_ARTAN : ARIA_AZALAN) : ARIA_YOK}
       className={[
-        "p-3 text-start font-medium",
+        hucreSinifi,
+        BASLIK_HIZA,
         kolon.sayisal ? "text-end" : "",
         kolon.darEkrandaGizle ? "hidden md:table-cell" : "",
       ]

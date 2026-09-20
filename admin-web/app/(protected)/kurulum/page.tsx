@@ -155,7 +155,7 @@ export default function KurulumPage() {
           seyi borc gibi gosteriyor ve yeni yoneticiye muhasebe kurmadan
           duyuru yapamayacagini sandiriyordu. */}
       {data && asgariVar && !calisir && (
-        <section className="p-kart" data-testid="kurulum-asgari" aria-label={t("kurulumAsgariBaslik")}>
+        <section className="p-kart" data-test="kurulum-asgari" aria-label={t("kurulumAsgariBaslik")}>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm font-medium text-metin-body">{t("kurulumAsgariBaslik")}</p>
             <span className="text-sm tabular-nums text-metin-muted">
@@ -205,7 +205,7 @@ export default function KurulumPage() {
               bir YETENEGI acar ve neyi actigini yazar. Yapmamak bir
               hata degil, bir tercihtir. */}
           {sonraYapilacaklar.length > 0 && (
-            <div className="mt-3 border-t border-yuzey-divider pt-3" data-testid="kurulum-sonra">
+            <div className="mt-3 border-t border-yuzey-divider pt-3" data-test="kurulum-sonra">
               <p className="text-sm font-medium text-metin-body">{t("kurulumSonraBaslik")}</p>
               <p className="mt-1" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
                 {t("kurulumSonraAlt")}

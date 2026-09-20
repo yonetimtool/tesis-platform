@@ -37,7 +37,7 @@ export function EkranYardimi() {
         onClick={() => setAcik(true)}
         aria-label={t("yardimAc")}
         title={t("yardimAc")}
-        data-testid="ekran-yardimi"
+        data-test="ekran-yardimi"
         className="odak-ic kart-kenar rounded-lg border p-2 text-metin-body transition hover:bg-yuzey-divider"
       >
         <svg

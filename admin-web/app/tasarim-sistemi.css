@@ -501,6 +501,32 @@
   border-color: var(--yz-border-strong);
 }
 
+/* ====================================================================
+   (P244 §3) TABLO SATIRI — HOVER ve TIKLANABILIRLIK
+   ====================================================================
+   NEDEN CSS'TE, SATIR ICI `style` DEGIL: `:hover` satir ici stille
+   yazilamaz. Tablo bileseni her sey icin token kullaniyor ama hover bir
+   DURUM ve durumlar stil sayfasinda yasar.
+
+   NEDEN `:hover` DEGIL `@media (hover: hover)`: dokunmatik cihazlarda
+   `:hover` bir kez tiklandiktan sonra YAPISIR ve kullanici hangi satira
+   dokundugunu unutunca ekranda yanlis bir "secili" izlenimi kalir. */
+@media (hover: hover) {
+  .yz-satir:hover > td {
+    background: var(--yz-surface-2);
+  }
+}
+/* TIKLANABILIR SATIR: imlec + odak halkasi. Odak halkasi `td`ye degil
+   SATIRA cizilir — hucreye cizilse tek bir hucrenin etrafinda belirir ve
+   klavye kullanicisi hangi KAYITTA oldugunu goremezdi. */
+.yz-satir-tiklanir {
+  cursor: pointer;
+}
+.yz-satir-tiklanir:focus-visible {
+  outline: 2px solid var(--yz-accent-edge);
+  outline-offset: -2px;
+}
+
 /* Yukselme YALNIZ hover'da ve 2px — brief. `transform` kullaniliyor
    (layout tetiklemez); hareket azaltmada sure 0 olur, sicrama olmaz. */
 .yz-lift {
