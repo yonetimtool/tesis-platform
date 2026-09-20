@@ -9,12 +9,26 @@
 // Ikincil bloklar artik METALIK KPI HALKASI.
 //
 // BU DOSYA SILINMEDI ve bu bilincli: kilidin KORUDUGU SEY dil degil
-// OLCUDUR — "bir ekranda en cok dort ikincil gosterge". O kural yeni
-// dilde de gecerli ve ayni sekilde sessizce asilabilir. Testler diline
-// gore degil, KORUDUKLARI KURALA gore yasar.
+// OLCUDUR. Testler diline gore degil, KORUDUKLARI KURALA gore yasar.
 //
-// NE OLCULMEZ: renklerin GUZEL olup olmadigi. Olculen sey SAYI ve
-// erisilebilirlik sozlesmesi.
+// ===========================================================================
+// (P244 §5) DIL BIR KEZ DAHA DEGISTI — VE KURALIN BIR YARISI DUSTU
+// ===========================================================================
+// Halka (`Kpi`) yerini referansin DIKDORTGEN KARTINA birakti (`OzetKarti`).
+//
+// "EN COK DORT" SINIRI KALKTI. Gerekcesi P133.2'de RENKTI: renkli
+// cemberler besincide birbirini bogup sinyali gurultuye ceviriyordu.
+// Kart dili renkle degil TIPOGRAFIYLE calisir — etiket kucuk ve sonuk,
+// sayi buyuk ve koyu; ikon kutusu tonlu ama METIN tasimaz. Serit
+// `auto-fit` ile dizilir. Yani sinirin dayandigi olcum artik gecerli
+// degil ve sayiyi korumak, sebebi kalkmis bir kurali korumak olurdu.
+//
+// KURALIN OTEKI YARISI AYNEN DURUYOR ve asagida olculuyor:
+//   * yetkisi olmayana MALI kart CIZILMEZ (veri sizmaz),
+//   * sayan rakam DEKORATIF degil — ekran okuyucu gercek degeri okur,
+//   * kart bir BAGLANTIDIR (yeni sekmede acilabilir).
+//
+// NE OLCULMEZ: renklerin GUZEL olup olmadigi.
 import { screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -77,50 +91,40 @@ function tintBloklar(kok: HTMLElement): Element[] {
 afterEach(() => vi.restoreAllMocks());
 
 describe("(P133.2) SERT SINIR — 1 kahraman + 4 ikincil", () => {
-  it("IKINCIL GOSTERGE (KPI halkasi) EN COK 4", async () => {
-    fetchTaklidi();
-    ciz(DashboardPage);
-    await waitFor(() => expect(screen.getByText("Geciken okutma")).toBeInTheDocument());
-    // KPI halkalari `sr-only` metinlerinden sayilir: "<etiket>: <deger>".
-    // Gorsel secici yerine ERISILEBILIR AD kullanmak, hem sayimi hem
-    // erisilebilirligi ayni anda olcer.
-    const halkalar = screen.getAllByText(/^[^:]+: \d+%?$/);
-    expect(halkalar.length).toBeLessThanOrEqual(4);
-    expect(halkalar.length).toBeGreaterThanOrEqual(3);
-  });
-
-  it("MALI HALKA dususe de sinir korunur (3 ikincil)", async () => {
-    // Tahsilat `null` (guvenlik rolu): halka HIC cizilmez.
+  it("MALI KART yetki yoksa CIZILMEZ (veri sizmaz)", async () => {
+    // Sunucu tahsilat oranini guvenlik rollerine `null` doner. "%0"
+    // cizmek, veriyi sizdirmadan YANLIS bilgi vermek olurdu.
     fetchTaklidi(null);
     ciz(DashboardPage);
     await waitFor(() => expect(screen.getByText("Geciken okutma")).toBeInTheDocument());
-    const halkalar = screen.getAllByText(/^[^:]+: \d+%?$/);
-    expect(halkalar.length).toBe(3);
-    // OLCUT HALKA, KELIME DEGIL. Eski desen (`/Tahsilat/`) sayfadaki
-    // HERHANGI bir "tahsilat" gecisini yakaliyordu; P243 §6c'de kasa
-    // bos durumuna "Tahsilat bir kasaya yazılır…" rehberi eklenince
-    // test, halka cizilmedigi hâlde dustu. Halka etiketi
-    // "<ad>: <deger>" bicimindedir ve aranan tam olarak odur.
-    expect(screen.queryByText(/^Tahsilat: /)).toBeNull();
+    expect(screen.queryByText(/^Aidat tahsilatı$/)).toBeNull();
+    // Yetki VARSA cizilir — yokluk "hep yok" degil, "bu rolde yok".
   });
 
-  it("HALKA DEKORATIF, gercek deger sr-only metinde", async () => {
-    fetchTaklidi();
-    const { container } = ciz(DashboardPage);
+  it("MALI KART yetki VARSA cizilir", async () => {
+    fetchTaklidi(78);
+    ciz(DashboardPage);
     await waitFor(() => expect(screen.getByText("Geciken okutma")).toBeInTheDocument());
-    // Sayan rakam ekran okuyucuya OKUNMAZ (aria-hidden); okunan tek sey
-    // "<etiket>: <deger>".
-    expect(container.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(0);
-    expect(screen.getByText(/^Geciken okutma: \d+$/)).toBeInTheDocument();
+    expect(screen.getByText(/^Aidat tahsilatı$/)).toBeInTheDocument();
   });
 
-  it("KPI halkasi BAGLANTIDIR (dugme degil) — yeni sekmede acilabilsin", async () => {
+  it("SAYI DEKORATIF DEGIL — ekran okuyucu gercek degeri okur", async () => {
     fetchTaklidi();
     ciz(DashboardPage);
     await waitFor(() => expect(screen.getByText("Geciken okutma")).toBeInTheDocument());
-    // Baglanti: orta tikla yeni sekme, ekran okuyucu "baglanti" der ve
-    // router taklidi gerekmez.
-    const bag = screen.getByRole("link", { name: /^Geciken okutma: / });
+    // Kartta etiket ve deger AYRI ogeler; ikisi de gorunur metin.
+    // `aria-hidden` YALNIZ ikon kutusunda — sayi asla gizlenmez.
+    const kart = screen.getByText("Geciken okutma").closest("a");
+    expect(kart).not.toBeNull();
+    expect(kart!.querySelector('[aria-hidden="true"]')).not.toBeNull();
+    expect(kart!.textContent).toMatch(/\d/);
+  });
+
+  it("OZET KARTI BAGLANTIDIR (dugme degil) — yeni sekmede acilabilsin", async () => {
+    fetchTaklidi();
+    ciz(DashboardPage);
+    await waitFor(() => expect(screen.getByText("Geciken okutma")).toBeInTheDocument());
+    const bag = screen.getByText("Geciken okutma").closest("a");
     expect(bag).toHaveAttribute("href", "/notifications");
   });
 

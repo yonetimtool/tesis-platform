@@ -151,6 +151,10 @@ describe("sozluk butunlugu", () => {
     // icin de yalniz Almanca farkli. Cevirmek, kullanicinin klavyesinde
     // OLMAYAN bir tusu tarif etmek olurdu.
     "Ctrl K",
+    // (P244 §5) "{derece}°C {durum}" — iki YER TUTUCU ve bir BIRIM
+    // SIMGESI. Cevrilecek kelime yok; Almanca yalniz bosluk kuralindan
+    // (`24 °C`) otoru farkli, Rusca virgul ekliyor.
+    "{derece}°C {durum}",
   ]);
 
   // KALAN ACIK (durustce): ne bu olcum ne `TR_HARF`, ic/ig/is harfi

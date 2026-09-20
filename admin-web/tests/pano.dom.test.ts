@@ -9,7 +9,7 @@
 // selamlama cumlesi -> KAHRAMAN blok -> ikincil tint bloklar -> gruplu
 // alarmlar + tesis blogu -> kamera seridi. Beklentiler yeni yapiyi
 // olcuyor; olculen INVARYANTLAR ayni kaldi.
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -148,15 +148,26 @@ describe("(P133.2) pano bolumleri — SIRA", () => {
     ciz(DashboardPage);
     // 2 tur, 1 tamamlanan, 3 geciken olay (grubun `sayi`si), %78 tahsilat.
     //
-    // (P160) IDDIA ERISILEBILIR METINDEN OKUNUYOR. KPI halkasinin GORSEL
-    // rakami 0'dan hedefe SAYARAK gelir, yani ara karelerde "%12" gibi bir
-    // deger gosterir; gorsel metne bakan bir test yarisa girer. `sr-only`
-    // metin ise HER ZAMAN gercek degeri tasir (sayan ara degerler ekran
-    // okuyucuya okunmaz) — dogru kaynak da zaten odur.
+    // (P244 §5) IDDIA KART YAPISINA TASINDI. Halka (`Kpi`) etiket ve
+    // degeri TEK bir `sr-only` metinde birlestiriyordu ("Aidat
+    // tahsilatı: %78") cunku gorsel rakam 0'dan hedefe SAYIYORDU ve
+    // ara kareler yaniltiyordu.
+    //
+    // Kart saymaz: deger ilk kareden itibaren GERCEK degerdir ve
+    // GORUNUR metindir. Yani ayri bir `sr-only` kopyaya gerek kalmadi —
+    // etiket ve deger iki ayri gorunur oge. Olculen sey DEGISMEDI:
+    // "bolum sayilari ozetliyor mu".
     await waitFor(() =>
-      expect(screen.getByText("Aidat tahsilatı: %78")).toBeInTheDocument(),
+      expect(screen.getByText("Aidat tahsilatı")).toBeInTheDocument(),
     );
-    expect(screen.getByText(/Geciken okutma: 3$/)).toBeInTheDocument();
+    expect(screen.getByText("%78")).toBeInTheDocument();
+    // Ayni gerekce: etiket ve deger artik iki ayri gorunur oge.
+    const gecikme = screen.getByText("Geciken okutma").closest("a");
+    expect(gecikme).not.toBeNull();
+    // DEGER KENDI OGESINDE aranir, kartin TUM metninde degil: birlesik
+    // metinde ("...okutma3Devriyede...") `\b` sinirlari tutmuyor ve
+    // `toContain("3")` "13"u de gecirirdi.
+    expect(within(gecikme as HTMLElement).getByText("3")).toBeInTheDocument();
   });
 
   it("MALI BLOK yetki yoksa HIC cizilmez (0% degil)", async () => {

@@ -70,7 +70,14 @@ const RotaSahne = dynamic(() => import("./rota-sahnesi"), {
  * ciziliyor. `hazir` bayragi olmadan sunucu/istemci farki hidrasyon
  * uyusmazligi uretirdi.
  */
-function useSahneOrtami() {
+/**
+ * (P244 §5) DISA ACILDI — maket EFSANESI de temayi bilmek zorunda.
+ *
+ * Efsane, sahnenin cizdigi renklerin ADINI soyluyor; renkleri ikinci kez
+ * tanimlasaydi tema degisince sahne ile efsane AYRI renk gosterirdi ve
+ * efsane maketi YANLIS anlatirdi. Ayni kaynak, tek karar.
+ */
+export function useSahneOrtami() {
   const [hazir, setHazir] = useState(false);
   const [destek, setDestek] = useState(true);
   const [koyu, setKoyu] = useState(false);

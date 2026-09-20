@@ -68,6 +68,13 @@ export interface DashboardLive {
   nfc_nokta_sayisi?: number;
 }
 
+/** (P244 §5) `GET /weather` yaniti — kahraman bandindaki hava blogu. */
+export interface HavaDurumu {
+  sicaklik_c: number;
+  durum: "acik" | "parcali" | "kapali" | "sis" | "yagmur" | "kar" | "firtina";
+  konum_ad: string;
+}
+
 export interface AppNotification {
   id: string;
   tip: string;

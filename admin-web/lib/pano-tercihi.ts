@@ -73,7 +73,13 @@ export interface PanoBolumTanimi {
 export const PANO_BOLUMLERI: readonly PanoBolumTanimi[] = [
   { id: "widgetlar", anahtar: "panoBolumWidgetlar", genislik: "tam", kendiBasligi: true },
   { id: "finans", anahtar: "panoBolumFinans", genislik: "yarim" },
-  { id: "maket", anahtar: "panoBolumMaket", genislik: "yarim" },
+  // (P244 §5) MAKET ARTIK KENDI BASLIGINI CIZIYOR.
+  // -----------------------------------------------------------------
+  // Referansta kartin kendi basligi var: ad + bir satirlik aciklama +
+  // (ileride) gorunum secici. Cerceve basligi ile kart basligi YAN YANA
+  // gelince ayni metin IKI KEZ ciziliyordu — `pano-duzenleme` testi
+  // "Found multiple elements: Site maketi" diyerek yakaladi.
+  { id: "maket", anahtar: "panoBolumMaket", genislik: "yarim", kendiBasligi: true },
   // TAKVIM TAM GENISLIK: brief "buyuk" ve "sayfada belirgin yer alacak"
   // diyor. Yarim satirda gun/hafta gorunumu okunmaz olurdu.
   { id: "takvim", anahtar: "panoBolumTakvim", genislik: "tam" },

@@ -610,3 +610,135 @@ Kilit **kırılarak doğrulandı**: bir sayfaya eski modülden ithal eklemek
 
 `tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
 **tam takım 232 dosya / 1990 test yeşil.**
+
+---
+
+# AŞAMA 5 — ÖZET SAYFASI · UYGULANDI
+
+## A5.0 Çatışma: referansın sabit düzeni vs bizim özelleştirilebilir panomuz
+
+Referans (`ui5`) **sabit** bir düzen çiziyor. Bizde özet sayfası
+**kullanıcı başına özelleştirilebilir** (P167 §2.5): 8 bölüm,
+sürükle-bırak sıralama, gizleme, sunucuda kalıcı.
+
+**Karar: özelleştirme sistemi korundu.** Çalışan işlevsellik
+pazarlıksız. Referansın düzeni bölümlerin **varsayılan sırası** olarak
+zaten büyük ölçüde mevcut; eklenen şey bölümlerin **içi** ve sayfanın
+**başı**.
+
+## A5.1 Kahraman bandı — bölüm değil, sayfa başlığının yerine
+
+Sayfa `SayfaBasligi baslik="Özet"` ile başlıyordu: sayfanın **adını
+tekrarlamak** dışında bir şey söylemiyordu. Bant aynı yerde üç soruyu
+birden yanıtlıyor: **kimim, hangi sitedeyim, bugün ne gün** (+ hava).
+
+**Bir bölüm değil** ve bu bilinçli: gizlenebilir bir karşılama satırı,
+"bu sayfa neresi" sorusunu gizlenebilir yapardı.
+
+**Fotoğraf yok — bilinçli.** Referansta bandın zemini site fotoğrafı.
+Bizde tesis fotoğrafı diye bir alan **yok** (ne şemada ne yüklemede).
+Uydurma bir stok görsel koymak, ürünü gerçek olmayan bir şeyle
+süslemekti — P244'ün kaçındığı "mockup" tam olarak bu. Marka gradyanı
+kullanıldı; alan bir gün eklenirse bant onu taşır.
+
+## A5.2 Ölçüm: `/weather` için BFF rotası hiç yokmuş
+
+Sunucuda `GET /weather` **P233'ten beri var** ve **mobil kullanıyor**
+(`weatherProvider`). Web'de karşılık gelen BFF rotası **hiç yoktu** —
+panel hava durumunu isteyemiyordu bile.
+
+Bu, depoda kayıtlı bir kusur **sınıfı** (P173/P189: "BFF eksik-rota"):
+sunucu ucu çalışır, web'in kapısı yoktur ve eksiklik ancak o ekran
+yazılınca fark edilir.
+
+`app/api/weather/route.ts` eklendi. **Yeni sunucu ucu değil** — var olan
+uca kapı.
+
+**503 bir hata değil, bir durum:** konum ayarlanmamışsa uç 503 döner ve
+bant hava bloğunu **çizmez**. Bir karşılama satırını, kullanıcının
+yapabileceği hiçbir şey olmayan bir hatayla bölmek yanlış olurdu.
+
+## A5.3 KPI halkası → özet kartı
+
+| | halka (eski) | kart (yeni) |
+|---|---|---|
+| şekil | 116 px çember + glow | dikdörtgen kart |
+| taşıdığı | tek sayı | etiket + büyük sayı + **alt satır bağlam** |
+| sayı | 0'dan hedefe **sayarak** gelir | ilk kareden itibaren **gerçek** |
+| sınır | **en çok 4** | yok (aşağıda) |
+
+**"En çok dört" sınırı kalktı.** Gerekçesi P133.2'de **renkti**: renkli
+çemberler beşincide birbirini boğup sinyali gürültüye çeviriyordu. Kart
+dili renkle değil **tipografiyle** çalışır — etiket küçük ve sönük, sayı
+büyük ve koyu; ikon kutusu tonlu ama **metin taşımaz**. Sınırın
+dayandığı ölçüm artık geçerli değil; sayıyı korumak **sebebi kalkmış bir
+kuralı** korumak olurdu.
+
+**Kuralın öteki yarısı aynen duruyor** ve ölçülüyor: yetkisi olmayana
+mali kart çizilmez, sayı dekoratif değil, kart bir bağlantıdır.
+
+**Yeni uç açılmadı.** Kartlar sayfada **zaten çekilen** kayıtlardan
+türüyor (`dashboard/live`, `building-map`, `gorunur-sayi`). Kilit bunu
+ölçüyor.
+
+## A5.4 Maket: etkileşim aynen, çerçeve yeni
+
+Karar 6 uygulandı. `BinaSahnesiYukleyici`, `sahneBloklari`, `secim` ve
+seçim paneli **tek satır değişmedi**. Eklenen: kart başlığı, açıklama ve
+**durum efsanesi**.
+
+**Efsane iki kez düzeltildi — ikisi de ölçümle:**
+
+1. İlk yazımda efsaneyi `dolu/boş/borçlu/alarm` diye kurmuştum. Ölçüm:
+   `DaireDurumu` **`normal`/`borclu`/`alarm`/`pasif`** ve **bu sayfa
+   yalnız ikisini üretiyor** (`complaint_count > 0 ? alarm : normal`).
+   Dört durumlu bir efsane, hiç çizilmeyecek iki renk ilan ederdi.
+2. Renkleri `--yz-*-edge` token'larından almıştım. Ölçüm: sahne kendi
+   paletini kullanıyor (`site-palet.ts`, WebGL sayısal renk ister) ve o
+   palet **tema başına ayrı**. Efsane artık `durumRenkleri()`den okuyor —
+   tek kaynak.
+
+## A5.5 Yan bulgu: 3B paleti eski renkleri taşıyor
+
+`site-palet.ts` başlığı "durum renkleri `--yz-*-edge` ailesinin sayısal
+karşılığıdır" diyor. **Bugün değil:** açık temada `alarm: #d45b5e` —
+P244 öncesi `--yz-danger-edge` (`#d25a5d`) ile neredeyse aynı, yenisiyle
+(`#ef4444`) değil. Yani aşama 1 token'ları değiştirdi, **sahne paleti
+geride kaldı**.
+
+**Değiştirmedim.** Karar 6 "maketin kendisine dokunma" diyor ve daire
+durum renkleri maketin kendisi. Ayrı bir karar hak ediyor — **açık
+madde**.
+
+## A5.6 Kilitler
+
+| kilit | ne oldu |
+|---|---|
+| **YENİ** `p244-ozet-sayfasi` (6 test) | Selam/tesis/tarih bir arada; saate göre selam; **hava alınamazsa bant çizilmeye devam eder**; şerit var; **efsane renklerini sahneden alır**; **yeni uç açılmadı** |
+| `pano-tint-blok` | **Bilinçli güncelleme** (aşama 0'da işaretlenmişti). "En çok 4" düştü — gerekçesi renkti, dil değişti. Kuralın öteki yarısı (yetki sızıntısı, dekoratif olmayan sayı, bağlantı) **aynen duruyor** |
+| `pano.dom` | Halkanın birleşik `sr-only` metni yerine kartın iki ayrı görünür ögesi. **Ölçülen şey değişmedi** |
+| `pano-duzenleme` | **Gerçek kusur yakaladı:** maket başlığını iki kez çiziyordum (çerçeve + kart). `maket` artık `kendiBasligi: true` |
+| `i18n` | `"{derece}°C {durum}"` TR-kopyası istisnası; iki yorumumda Türkçe sabit yakalandı |
+
+**Üç kırma denendi, biri kilitsizdi ve kilit eklendi:**
+havayı yutmayı kaldırmak ✔, mali kartı yetkisize çizmek ✔, **efsaneye
+sabit hex yazmak → hiçbir kilit yakalamadı** → `p244-ozet-sayfasi`'na
+eklendi ve kırılarak doğrulandı. Kilidin kendi ölçüm hatası da (jsdom
+hex'i `rgb()`ye çevirir) ilk koşuda ortaya çıktı.
+
+## A5.7 Bu aşamada YAPILMAYAN
+
+* Referanstaki **"Hızlı İşlemler" / "Duyurular" / "Talepler" / "Son
+  İşlemler"** kartları eklenmedi. `widgetlar` bölümü zaten hızlı
+  kısayolları veriyor; kalan üçü **yeni veri kaynakları** ister ve bu
+  turun kuralı "yeni uç açma". Ayrı turda değerlendirilmeli.
+* **3D/Harita görünüm seçici** (referansta maket kartının sağ üstünde)
+  eklenmedi: harita görünümü bu sayfada yok, olmayan bir görünüme
+  geçiren bir düğme çizmek kullanıcıyı aldatırdı.
+* Finans bölümü (`PanoFinansOzeti`) referansın halka grafiğine
+  çevrilmedi — finans turu (aşama 7).
+
+## A5.8 Doğrulama
+
+`tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
+**tam takım 233 dosya / 1996 test yeşil.**
