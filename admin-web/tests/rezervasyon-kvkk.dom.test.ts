@@ -70,10 +70,12 @@ describe("Rezervasyonlarım", () => {
     await userEvent.click(
       await screen.findByRole("button", { name: "Yeni rezervasyon" }),
     );
-    // Ad HEM kartta HEM secenekte gecer; sorgu ROLE ile daraltilir yoksa
-    // "birden cok eleman" hatasi verir (ilk yazimda tam bu oldu).
+    // (P244 §8a) LISTE ARTIK TABLO: alan adi KART BASLIGI degil HUCRE.
+    // Iddia degismedi — "kendi rezervasyonu listede gorunuyor" — ama
+    // artik `cell` rolunden okunuyor. Ad HEM listede HEM secenekte
+    // gectigi icin sorgu yine ROLLE daraltilir.
     expect(
-      await screen.findByRole("heading", { name: "Toplantı salonu" }),
+      await screen.findByRole("cell", { name: "Toplantı salonu" }),
     ).toBeInTheDocument();
     await waitFor(() =>
       expect(screen.getByRole("option", { name: "Toplantı salonu" })).toBeInTheDocument(),

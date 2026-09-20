@@ -9,21 +9,39 @@
 //
 // TELEFON P123 MASKESİNDEN GEÇER: rehberdeki numara aranmak içindir;
 // gruplanmamış 11 hane okunmaz ve yanlış tuşlanır.
-import { useState } from "react";
+//
+// ===========================================================================
+// (P244 §8a) KART YIGINI -> ARANABILIR REHBER TABLOSU
+// ===========================================================================
+// Rehber her esnafi AYRI BIR KART olarak diziyordu. `yonetim-iletisim`
+// icin kart DOGRU secimdir (orada liste UC-BES kisilik sabit bir yonetim
+// kadrosudur, kartvizit gibi okunur); rehber ise BUYUR — tesisin tum
+// guvenilir esnafi. Karti buyuyen listede kullanmak, "tesisatci kimdi"
+// sorusunu sayfa boyu kaydirmaya cevirir.
+//
+// ARAMA ISTEMCIDE ve bu BILINCLI: uc sayfalamiyor, TUM listeyi tek
+// seferde donuyor (`GET /external-services`, `limit` parametresi YOK).
+// Yani elimizdeki dizi listenin TAMAMI; istemcide suzmek burada eksik
+// sonuc uretmez (kargo/arac ekranlarinda uretirdi — orada sunucuda
+// suzuluyor).
+import { useMemo, useState } from "react";
 import useSWR from "swr";
 
 import {
   Modal,
   Alan,
   AlanSarmal,
-  BosDurum,
+  AramaAlani,
   Dugme,
-  HataDurumu,
-  IskeletMetin,
+  FiltreCubugu,
   Kart,
   Rozet,
+  SayfaBasligi,
+  Secim,
+  VeriTablosu,
   useOnay,
 } from "@/components/ui";
+import type { Kolon } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { alanliHataMetni, apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -44,6 +62,8 @@ type Liste = { note: string | null; items: Hizmet[] };
 
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const ROZET_NOTR = "notr" as const;
+const HEPSI = "" as const;
+const YOK = "—";
 
 export default function DisHizmetlerPage() {
   const t = useT();
@@ -75,7 +95,104 @@ export default function DisHizmetlerPage() {
   const [duzenlenen, setDuzenlenen] = useState<{ id: string } | null>(null);
   const { onayla, diyalog } = useOnay();
 
-  const kayitlar = data?.items ?? [];
+  // (P244 §8a) ARAMA + TUR SUZGECI — rehberin asil kullanimi.
+  const [arama, setArama] = useState("");
+  const [turSuzgec, setTurSuzgec] = useState<string>(HEPSI);
+
+  // `?? []` her cizimde YENI bir dizi uretir ve asagidaki `useMemo`lar
+  // hicbir zaman onbellege vurmaz; referansi sabitliyoruz.
+  const kayitlar = useMemo(() => data?.items ?? [], [data]);
+
+  /** Rehberdeki TURLER veriden turetilir — sabit bir liste YOK (tur
+      serbest metin alanidir; sabit liste bir gun veriyle ayrisirdi). */
+  const turler = useMemo(
+    () => [...new Set(kayitlar.map((h) => h.tur))].sort((a, b) => a.localeCompare(b)),
+    [kayitlar],
+  );
+
+  const gorunen = useMemo(() => {
+    const q = arama.trim().toLocaleLowerCase();
+    return kayitlar.filter((h) => {
+      if (turSuzgec && h.tur !== turSuzgec) return false;
+      if (!q) return true;
+      // AD, SOYAD, TUR ve TELEFON aranir: kullanici "kimdi" diye de
+      // "hangi numaraydi" diye de arar.
+      return `${h.ad} ${h.soyad} ${h.tur} ${h.telefon}`.toLocaleLowerCase().includes(q);
+    });
+  }, [kayitlar, arama, turSuzgec]);
+
+  const aktifSuzgec = (arama.trim() ? 1 : 0) + (turSuzgec ? 1 : 0);
+
+  function duzenlemeyeAc(h: Hizmet) {
+    setDuzenlenen({ id: h.id });
+    setTur(h.tur);
+    setAd(h.ad);
+    setSoyad(h.soyad);
+    setTelefon(telefonGiris(h.telefon));
+    setAciklama(h.aciklama ?? "");
+    setHata(null);
+    setModalAcik(true);
+  }
+
+  const kolonlar: Kolon<Hizmet>[] = [
+    {
+      id: "kisi",
+      baslik: t("disHizmetKolonKisi"),
+      hucre: (h) => (
+        <span className="font-medium">
+          {h.ad} {h.soyad}
+        </span>
+      ),
+      deger: (h) => `${h.ad} ${h.soyad}`,
+      kartRolu: "baslik",
+    },
+    {
+      id: "tur",
+      baslik: t("disHizmetTur"),
+      hucre: (h) => <Rozet durum={ROZET_NOTR}>{h.tur}</Rozet>,
+      deger: (h) => h.tur,
+      kartRolu: "rozet",
+    },
+    {
+      id: "telefon",
+      baslik: t("kullaniciTelefon"),
+      // `tel:` baglantisi KALDI: rehberdeki numara ARANMAK icindir ve
+      // tabloya tasinirken kaybedilseydi ekran iş görmezdi.
+      hucre: (h) => (
+        <a
+          className="underline tabular-nums"
+          style={{ color: "var(--yz-accent-ink)" }}
+          href={`tel:${h.telefon}`}
+        >
+          {telefonGiris(h.telefon)}
+        </a>
+      ),
+      deger: (h) => h.telefon,
+      kartRolu: "ozet",
+    },
+    {
+      id: "aciklama",
+      baslik: t("disHizmetAciklama"),
+      hucre: (h) => h.aciklama ?? YOK,
+      darEkrandaGizle: true,
+    },
+    {
+      id: "eylem",
+      baslik: t("listeIslemler"),
+      hucre: (h) => (
+        <div className="flex flex-wrap gap-2">
+          <Dugme boy="kucuk" onClick={() => duzenlemeyeAc(h)}>
+            {t("ortakDuzenle")}
+          </Dugme>
+          <Dugme boy="kucuk" tur="tehlike" onClick={() => void sil(h)}>
+            {t("ortakSil")}
+          </Dugme>
+        </div>
+      ),
+      gizlenebilir: false,
+      kartRolu: "eylem",
+    },
+  ];
 
   async function ekle() {
     // SOYAD DA ZORUNLU: sunucu `DisHizmetCreate.soyad` icin min_length=1
@@ -142,36 +259,72 @@ export default function DisHizmetlerPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-        {t("disHizmetBaslik")}
-      </h1>
-        <Dugme
-          tur="birincil"
-          boy="kucuk"
-          onClick={() => {
-            // YENI KAYIT: duzenleme durumu ve alanlar temizlenir; aksi
-            // halde "yeni" dugmesi son duzenlenenin uzerine yazardi.
-            setDuzenlenen(null);
-            setTur("");
-            setAd("");
-            setSoyad("");
-            setTelefon("");
-            setAciklama("");
-            setHata(null);
-            setModalAcik(true);
-          }}
-        >
-          {t("disHizmetYeni")}
-        </Dugme>
-      </div>
+    <div>
+      <SayfaBasligi
+        baslik={t("disHizmetBaslik")}
+        aciklama={t("disHizmetSayfaAlt")}
+        eylem={
+          <Dugme
+            tur="birincil"
+            boy="kucuk"
+            onClick={() => {
+              // YENI KAYIT: duzenleme durumu ve alanlar temizlenir; aksi
+              // halde "yeni" dugmesi son duzenlenenin uzerine yazardi.
+              setDuzenlenen(null);
+              setTur("");
+              setAd("");
+              setSoyad("");
+              setTelefon("");
+              setAciklama("");
+              setHata(null);
+              setModalAcik(true);
+            }}
+          >
+            {t("disHizmetYeni")}
+          </Dugme>
+        }
+      />
 
+      {/* BOLUM NOTU — yoneticinin serbest metni. Ozet serit YOK ve bu
+          bilincli: rehberde sayilacak anlamli bir sey yok ("12 esnaf"
+          kimsenin sordugu soru degil). Referansin her ekrana serit
+          koyma refleksi burada bos bir kart seridi uretirdi. */}
       {data?.note ? (
-        <Kart>
+        <Kart className="mb-4">
           <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>{data.note}</p>
         </Kart>
       ) : null}
+
+      <FiltreCubugu
+        arama={
+          <AramaAlani
+            deger={arama}
+            onDegisim={setArama}
+            etiket={t("disHizmetAramaEtiket")}
+            yerTutucu={t("disHizmetAramaIpucu")}
+            temizleEtiketi={t("ortakKapat")}
+          />
+        }
+        aktifSayi={aktifSuzgec}
+        onTemizle={() => {
+          setArama("");
+          setTurSuzgec(HEPSI);
+        }}
+      >
+        <Secim
+          aria-label={t("disHizmetTurSuzgec")}
+          value={turSuzgec}
+          onChange={(e) => setTurSuzgec(e.target.value)}
+          className="w-auto"
+        >
+          <option value={HEPSI}>{t("disHizmetTurHepsi")}</option>
+          {turler.map((x) => (
+            <option key={x} value={x}>
+              {x}
+            </option>
+          ))}
+        </Secim>
+      </FiltreCubugu>
 
       <Modal
         acik={modalAcik}
@@ -239,69 +392,19 @@ export default function DisHizmetlerPage() {
         </div>
       </Modal>
 
-      <section className="space-y-3">
-        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
-          {t("disHizmetListe")}
-        </h2>
-        {/* HATA VARSA LISTE DALI HIC CALISMAZ: `kayitlar` bos gelir ve
-            "kayitli esnaf yok" yazmak, rehberin BOS oldugunu soylemek
-            olurdu — oysa bilinen tek sey okunamadigi. */}
-        {error ? (
-          <HataDurumu mesaj={t("ortakHataOlustu")} onTekrar={() => void mutate()} />
-        ) : isLoading ? (
-          <Kart>
-            <IskeletMetin satir={3} />
-          </Kart>
-        ) : kayitlar.length === 0 ? (
-          <Kart>
-            <BosDurum baslik={t("disHizmetYok")} aciklama={t("disHizmetYokAlt")} />
-          </Kart>
-        ) : (
-          kayitlar.map((h) => (
-            <Kart key={h.id} className="space-y-1">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h3 style={{ fontSize: "var(--yz-fs-body)", color: "var(--yz-text)" }}>
-                  {h.ad} {h.soyad}
-                </h3>
-                <Rozet durum={ROZET_NOTR}>{h.tur}</Rozet>
-              </div>
-              {/* `tel:` baglantisi: rehberdeki numara ARANMAK icindir. */}
-              <a
-                className="underline"
-                style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-accent-ink)" }}
-                href={`tel:${h.telefon}`}
-              >
-                {telefonGiris(h.telefon)}
-              </a>
-              {h.aciklama ? (
-                <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-                  {h.aciklama}
-                </p>
-              ) : null}
-              <div className="flex flex-wrap gap-2 pt-1">
-                <Dugme
-                  boy="kucuk"
-                  onClick={() => {
-                    setDuzenlenen({ id: h.id });
-                    setTur(h.tur);
-                    setAd(h.ad);
-                    setSoyad(h.soyad);
-                    setTelefon(telefonGiris(h.telefon));
-                    setAciklama(h.aciklama ?? "");
-                    setHata(null);
-                    setModalAcik(true);
-                  }}
-                >
-                  {t("ortakDuzenle")}
-                </Dugme>
-                <Dugme boy="kucuk" tur="tehlike" onClick={() => void sil(h)}>
-                  {t("ortakSil")}
-                </Dugme>
-              </div>
-            </Kart>
-          ))
-        )}
-      </section>
+      {/* (P61) HATA TABLOYA VERILIR: istek dustugunde `kayitlar` bos
+          gelir ve "kayitli esnaf yok" yazmak, rehberin BOS oldugunu
+          soylemek olurdu — oysa bilinen tek sey okunamadigi. */}
+      <VeriTablosu
+        kolonlar={kolonlar}
+        satirlar={gorunen}
+        satirId={(h) => h.id}
+        yukleniyor={isLoading}
+        hata={error ? t("ortakHataOlustu") : null}
+        onTekrar={() => void mutate()}
+        bosBaslik={t("disHizmetYok")}
+        bosAciklama={aktifSuzgec > 0 ? t("disHizmetYokSuzgecli") : t("disHizmetYokAlt")}
+      />
       {diyalog}
     </div>
   );

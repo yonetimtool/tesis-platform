@@ -61,7 +61,10 @@ describe("Kargolar", () => {
     ciz(KargolarPage);
     expect(await screen.findByText("A-12")).toBeInTheDocument();
     // Ham enum ("bekliyor") DEGIL, cevrilmis etiket.
-    expect(screen.getByText("Bekliyor")).toBeInTheDocument();
+    // (P244 §8a) SATIRDAN OKUNUR: ayni kelime artik durum SUZGECININ
+    // seceneginde de geciyor; kapsamsiz sorgu ikisini birden bulurdu ve
+    // "listede gorunuyor" iddiasini suzgec secenegiyle de KARSILARDI.
+    expect(screen.getByRole("cell", { name: "Bekliyor" })).toBeInTheDocument();
     expect(screen.queryByText("bekliyor")).toBeNull();
   });
 

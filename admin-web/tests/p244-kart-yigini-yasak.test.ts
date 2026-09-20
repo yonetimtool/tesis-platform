@@ -76,11 +76,10 @@ const ISTISNALAR: Record<string, string> = {
  * bayatlar), yeni biri eklenince test DUSER. Yani borc ne sessizce
  * buyuyebilir ne de sessizce unutulabilir.
  */
-const BORC = [
-  "dis-hizmetler/page.tsx",
-  "kargolar/page.tsx",
-  "rezervasyonlarim/page.tsx",
-];
+// (P244 §8a) BORC KAPANDI: ucu de tabloya tasindi. Liste BOS birakildi,
+// SILINMEDI — iddia "bugun borc yok" olarak KALIR ve yeni bir kart
+// yigini eklenirse test duser.
+const BORC: string[] = [];
 
 function sayfalar(): string[] {
   const cikti: string[] = [];

@@ -1245,3 +1245,111 @@ adlandırıldı.
 
 `tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
 **tam takım 239 dosya / 2023 test yeşil.**
+
+---
+
+# AŞAMA 8a — OPERASYON: KART YIĞINI BORCU · UYGULANDI
+
+Aşama 6c'de `p244-kart-yigini-yasak` kilidini yazarken üç sayfayı
+**BORÇ** listesine koymuştum. Borç kapandı.
+
+## A8a.1 Neden bu üçü borçtu, `yonetim-iletisim` değil
+
+Kilit "kart" kullanan her sayfayı suçlamıyor; **kartın doğru olduğu**
+yerleri istisna tutuyor. Ayrımı yeniden ölçtüm:
+
+| ekran | kart neyi temsil ediyor | karar |
+|---|---|---|
+| `yonetim-iletisim` | üç-beş kişilik **sabit** yönetim kadrosu, kartvizit | istisna — **kaldı** |
+| `dis-hizmetler` | tesisin **tüm** güvenilir esnafı, büyüyen liste | borç — tablo |
+| `kargolar` | tekrarlı, beş alanlı operasyon kaydı | borç — tablo |
+| `rezervasyonlarim` | tekrarlı, dar kayıt (alan/tarih/saat/kişi) | borç — tablo |
+
+Kart **kimlik** gösterir, tablo **tarama** sağlar. Kapıdaki görevlinin
+sorusu "hangi dairenin kargosu bekliyor", sakininki "hangi gün
+neredeyim" — ikisi de sütun ister. Kart dili bu ekranlarda ekrana üç-dört
+kayıt sığdırıyordu.
+
+## A8a.2 Ölçtüğüm ve düzelttiğim BFF kusuru
+
+`/api/kargo` vekili **yalnız `limit`/`offset`** taşıyordu. Backend ise
+`durum`, `unit_id`, `baslangic`, `bitis` süzgeçlerini P126.4'ten beri
+destekliyor. Yani durum süzgeci eklesem sunucuya **hiç ulaşmayacaktı**;
+liste süzülmemiş dönecek, üç özet kartı aynı sayıyı gösterecekti.
+
+Bu **tekrar eden bir kusur sınıfı** (P173/P189/P213 ve bu turda §6). Beyaz
+listeyle iletildi; `?` ile gelen her şey değil, yalnızca sözleşmede tarif
+edilen alanlar.
+
+## A8a.3 Ölçülen sınır: kargo listesi yönetime KAPALI
+
+Backend'i okurken beklemediğim bir şey buldum:
+`GET /kargo`, **admin ve yönetici** için `unit_id` + tek seferlik
+görüntüleme izni olmadan **403** veriyor (`kargo_yonetime_kapali`) —
+ziyaretçi ekranıyla aynı gizlilik deseni. Yani bu ekranın gerçek
+izleyicisi **güvenlik ve sakin**.
+
+**Değiştirmedim.** Bu bir gizlilik kararı, arayüz kararı değil; ama özet
+şeridinin ve süzgecin kimin için tasarlandığını bu belirledi.
+
+## A8a.4 Rehberde ÖZET ŞERİDİ YOK — bilerek
+
+Referansın refleksi her ekrana serit koymak. Rehberde sayılacak anlamlı
+bir şey yok: *"12 esnaf"* kimsenin sorduğu soru değil. Şerit yerine
+**arama + tür süzgeci** kondu; rehberde sorulan gerçek soru "tesisatçı
+kimdi". Türler **veriden türetilir** — tür serbest metin alanı, sabit bir
+liste bir gün veriyle ayrışırdı.
+
+Arama **istemcide** ve bu ölçüldü: uç sayfalamıyor, `limit` parametresi
+**yok**, tüm listeyi tek seferde dönüyor. Elimizdeki dizi listenin
+tamamı, yani istemcide süzmek burada eksik sonuç üretmez. (Kargo ve araç
+ekranlarında üretirdi — orada sunucuda süzülüyor.)
+
+## A8a.5 Kendi kusurum: aynı sözlük anahtarı iki kontrolde
+
+Süzgeç `<select>`ine form alanıyla **aynı** anahtarı verdim
+(`disHizmetTur`). Sonuç: ekranda iki kontrolün erişilebilir adı aynı oldu
+ve `yonetici-ekranlari` testi "birden çok eleman" diyerek düştü —
+**haklı olarak**. Bu, P239'da kaydedilen dersin aynısı: aynı anahtar iki
+düğmede = yanlış hedef. Ayrı anahtarlar açıldı
+(`disHizmetTurSuzgec`, `kargoDurumSuzgec`).
+
+## A8a.6 Bilinçli güncellenen iki iddia
+
+* `rezervasyon-kvkk`: alan adı artık kart başlığı değil **hücre**;
+  `findByRole("heading")` → `findByRole("cell")`. İddia değişmedi.
+* `guvenlik-ekranlari`: "Bekliyor" kelimesi artık durum **süzgecinin**
+  seçeneğinde de geçiyor; kapsamsız sorgu iddiayı seçenekle de
+  karşılardı. Satır hücresinden okunuyor.
+
+## A8a.7 Kilitler
+
+* **YENİ** `p244-kargo-bff-suzgec` (4 test) — rota işlevini **doğrudan**
+  çağırır. DOM testi bunu ölçemez: `fetch` taklit edilir, rota hiç
+  çalışmaz (P200/P213 dersi). **İki kırma yakalandı:** süzgeç döngüsünü
+  kaldırmak, beyaz liste yerine her şeyi geçirmek.
+* **YENİ** `p244-operasyon-listeleri` (7 test) — kaynak taraması kartın
+  *gittiğini* ölçer, bu dosya *yerine konanın doğru olduğunu*: gerçek
+  `<table>`, korunan `tel:` bağlantısı, korunan rol/durum kapıları.
+  **Üç kırma yakalandı:** rol kapısını kaldırmak, telefonu düz metne
+  çevirmek, sayaçları görünen listeden türetmek.
+* `p244-kart-yigini-yasak`'ta `BORC` listesi **boşaltıldı, silinmedi** —
+  iddia "bugün borç yok" olarak kalır ve yeni bir kart yığını eklenirse
+  test düşer.
+
+## A8a.8 Bu turda YAPILMAYAN — açıkça
+
+Aşama 8'in operasyon yarısının **yalnızca kart yığını borcu** kapandı.
+`/tasks` (1313 satır, kanban görünüm seçici), `/bakim` (672),
+`/assets` (414), `/complaints` (367), `/schematic` (420) ve iletişim
+modülünün tamamı (`/mesajlar` 564, `/anketler` 594, `/announcements` 408,
+`/site-kurallari` 390) **dokunulmadı**. Bunlar 8b ve 8c.
+
+Borcu öne aldım çünkü kilide yazılmış bir sözdü ve listenin bayatlaması
+en kolay unutulan şeydi.
+
+## A8a.9 Doğrulama
+
+`tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden; kendi
+ürettiğim iki uyarı `useMemo` ile kapatıldı) ·
+**tam takım 241 dosya / 2034 test yeşil.**
