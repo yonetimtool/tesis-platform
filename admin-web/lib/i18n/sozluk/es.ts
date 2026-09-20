@@ -3329,4 +3329,16 @@ export const es: Sozluk = {
   finansOzetBorclandirilanAy: "Cargado este mes",
   finansGiderlerAlt: "Todos los gastos; los pendientes aún no han salido de caja.",
   finansTahsilatlarAlt: "Pagos recibidos de residentes; cada cobro se registra en una caja.",
+  // (P244 §7b) BUTCE — hedef/gerceklesen orani
+  butOran: "Frente al objetivo",
+  butOranEtiket: "{ad}: {yuzde} % del objetivo",
+  // (P244 §7b) AIDAT — tahsilat gostergesi ozeti
+  aidatOzetTahakkuk: "Cargos del periodo",
+  aidatOzetTahsilat: "Cobrado",
+  aidatOzetOran: "Tasa de cobro",
+  aidatOzetDonem: "Periodo {donem}",
+  aidatOzetDegisim: "{puan} pts",
+  otoDurumAktif: "Activo",
+  otoDurumPasif: "Detenido",
+  otoSayfaAlt: "Cuotas, recordatorios y gastos recurrentes; cada regla activa y su resultado.",
 };

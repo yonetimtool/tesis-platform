@@ -29,8 +29,10 @@ import {
   Dugme,
   Kart,
   Modal,
-  Secim,
   HataDurumu,
+  Rozet,
+  SayfaBasligi,
+  Secim,
   VeriTablosu,
   type Kolon,
 } from "@/components/ui";
@@ -255,7 +257,22 @@ function PlanlarKarti() {
     { id: "gun", baslik: t("otoTahakkukGunu"), hucre: (p) => String(p.tahakkuk_gunu) },
     { id: "sonDonem", baslik: t("otoSonDonem"), hucre: (p) => p.son_donem ?? YOK },
     { id: "aktif", baslik: t("otoAktif"),
-      hucre: (p) => (p.aktif ? t("ortakEvet") : t("ortakHayir")) },
+      // (P244 §7b) DUZ METIN -> DURUM ROZETI.
+      // "Evet/Hayır" bir DURUM degil, bir yanit. Kural listesinde
+      // aranan sey "hangileri calisiyor" ve goz bunu bir rozetten
+      // metin okumadan tarar. ROZET METIN TASIR: renk tek tasiyici
+      // degil.
+      //
+      // ROZET TIKLANABILIR DEGIL ve bu OLCULMUS bir karar: referansta
+      // burada bir anahtar (toggle) var, ama kurali yerinde acip
+      // kapatacak bir yazma ucu YOK — `PATCH` yalniz kuralin tamamini
+      // duzenleme akisindan geciyor. Tiklaninca hicbir sey yapmayan
+      // bir anahtar cizmek, kullaniciyi bir kez aldatirdi.
+      hucre: (p) => (
+        <Rozet durum={p.aktif ? "olumlu" : "notr"}>
+          {p.aktif ? t("otoDurumAktif") : t("otoDurumPasif")}
+        </Rozet>
+      ) },
     { id: "eylem", baslik: "", hucre: (p) => (
       <span className="flex gap-2">
         <Dugme tur="ikincil" boy="kucuk"
@@ -661,9 +678,10 @@ export default function OtomasyonPage() {
   const t = useT();
   return (
     <div className="space-y-4">
-      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-        {t("finansOtomasyon")}
-      </h1>
+      <SayfaBasligi
+        baslik={t("finansOtomasyon")}
+        aciklama={t("otoSayfaAlt")}
+      />
       <PlanlarKarti />
       <HatirlatmaKarti />
       <HatirlatmaGecmisiKarti />

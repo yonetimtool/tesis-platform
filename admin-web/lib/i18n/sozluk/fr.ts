@@ -3329,4 +3329,16 @@ export const fr: Sozluk = {
   finansOzetBorclandirilanAy: "Facturé ce mois",
   finansGiderlerAlt: "Toutes les dépenses ; celles en attente n'ont pas encore quitté la caisse.",
   finansTahsilatlarAlt: "Paiements reçus des résidents ; chaque encaissement est imputé à une caisse.",
+  // (P244 §7b) BUTCE — hedef/gerceklesen orani
+  butOran: "Par rapport à l'objectif",
+  butOranEtiket: "{ad} : {yuzde} % de l'objectif",
+  // (P244 §7b) AIDAT — tahsilat gostergesi ozeti
+  aidatOzetTahakkuk: "Charges de la période",
+  aidatOzetTahsilat: "Encaissé",
+  aidatOzetOran: "Taux de recouvrement",
+  aidatOzetDonem: "Période {donem}",
+  aidatOzetDegisim: "{puan} pts",
+  otoDurumAktif: "Actif",
+  otoDurumPasif: "Arrêté",
+  otoSayfaAlt: "Charges, rappels et dépenses récurrentes ; chaque règle active et son résultat.",
 };

@@ -3329,4 +3329,16 @@ export const ru: Sozluk = {
   finansOzetBorclandirilanAy: "Начислено в этом месяце",
   finansGiderlerAlt: "Все расходы; ожидающие одобрения ещё не списаны из кассы.",
   finansTahsilatlarAlt: "Платежи от жильцов; каждое поступление записывается в кассу.",
+  // (P244 §7b) BUTCE — hedef/gerceklesen orani
+  butOran: "К цели",
+  butOranEtiket: "{ad}: {yuzde}% от цели",
+  // (P244 §7b) AIDAT — tahsilat gostergesi ozeti
+  aidatOzetTahakkuk: "Начислено за период",
+  aidatOzetTahsilat: "Собрано",
+  aidatOzetOran: "Собираемость",
+  aidatOzetDonem: "Период {donem}",
+  aidatOzetDegisim: "{puan} п.п.",
+  otoDurumAktif: "Работает",
+  otoDurumPasif: "Остановлено",
+  otoSayfaAlt: "Взносы, напоминания и регулярные расходы; каждое активное правило и его результат.",
 };

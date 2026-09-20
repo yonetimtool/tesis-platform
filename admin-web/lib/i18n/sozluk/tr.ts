@@ -3392,4 +3392,16 @@ export const tr = {
   finansOzetBorclandirilanAy: "Bu ay borçlandırılan",
   finansGiderlerAlt: "Tesisin tüm gider kayıtları; onay bekleyenler kasadan henüz çıkmamıştır.",
   finansTahsilatlarAlt: "Sakinlerden alınan ödemeler; her tahsilat bir kasaya yazılır.",
+  // (P244 §7b) BUTCE — hedef/gerceklesen orani
+  butOran: "Hedefe göre",
+  butOranEtiket: "{ad}: hedefin %{yuzde}'i",
+  // (P244 §7b) AIDAT — tahsilat gostergesi ozeti
+  aidatOzetTahakkuk: "Dönem tahakkuku",
+  aidatOzetTahsilat: "Tahsil edilen",
+  aidatOzetOran: "Tahsilat oranı",
+  aidatOzetDonem: "{donem} dönemi",
+  aidatOzetDegisim: "{puan} puan",
+  otoDurumAktif: "Çalışıyor",
+  otoDurumPasif: "Durdurulmuş",
+  otoSayfaAlt: "Aidat, hatırlatma ve düzenli gider işleri; çalışan her kural ve sonucu burada.",
 } as const;

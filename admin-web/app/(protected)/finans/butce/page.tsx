@@ -14,13 +14,15 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import { useToast } from "@/components/Toast";
+import { HedefBar } from "@/components/finans/hedef-bar";
 import {
   Alan,
   AlanSarmal,
   Dugme,
   Kart,
-  Secim,
   HataDurumu,
+  SayfaBasligi,
+  Secim,
   VeriTablosu,
   type Kolon,
 } from "@/components/ui";
@@ -72,6 +74,16 @@ export default function ButcePage() {
     }
   }
 
+  /**
+   * (P244 §7b) SAPMA BU SATIR ICIN KOTU MU — TEK YERDE.
+   *
+   * Giderde pozitif sapma "butce asildi" (kotu), gelirde "hedefin
+   * uzerinde" (iyi). Hem sapma sutunu hem oran bari bu karari okur.
+   */
+  function sapmaKotuMu(s: Satir): boolean {
+    return (s.tip === "gider") === s.sapma_kurus > 0;
+  }
+
   const kolonlar: Kolon<Satir>[] = [
     { id: "ad", baslik: t("finansSutunTur"), hucre: (s) => s.ad },
     { id: "hedef", baslik: t("butHedef"), sayisal: true,
@@ -82,18 +94,44 @@ export default function ButcePage() {
         <span className="tabular-nums">{kurusToTL(s.gerceklesen_kurus)}</span>
       ),
       deger: (s) => s.gerceklesen_kurus },
+    // (P244 §7b) GORSEL ORAN — hedefe gore nerede oldugu tek bakista.
+    // Kolon `sayisal` DEGIL: icinde bir bar var, sagdan hizalanmasi
+    // gerekmiyor ve tabular rakam kurali burada gecersiz.
+    { id: "oran", baslik: t("butOran"),
+      // SIRALAMA YINE SAYIYA gore: gorsel bir kolon da siralanabilmeli.
+      deger: (s) => (s.hedef_kurus > 0 ? s.gerceklesen_kurus / s.hedef_kurus : -1),
+      hucre: (s) => (
+        <HedefBar
+          hedefKurus={s.hedef_kurus}
+          gerceklesenKurus={s.gerceklesen_kurus}
+          kotuMu={sapmaKotuMu(s)}
+          etiket={t("butOranEtiket", {
+            ad: s.ad,
+            yuzde:
+              s.hedef_kurus > 0
+                ? String(Math.round((s.gerceklesen_kurus / s.hedef_kurus) * 100))
+                : "—",
+          })}
+        />
+      ),
+    },
     { id: "sapma", baslik: t("butSapma"), sayisal: true,
       hucre: (s) => (
         <span
           className="tabular-nums"
           style={{
             // GIDERDE pozitif sapma UYARIDIR, gelirde iyidir.
+            // (P244 §7b) KURAL `sapmaKotuMu`YA CIKARILDI: bar da ayni
+            // yorumu kullaniyor ve ikinci bir kopya, iki ekranda iki
+            // anlam demekti. Ayrica ham `--yz-danger`/`--yz-success`
+            // METIN olarak AA'yi tutmuyor (asama 1'de olculdu) — `-ink`
+            // varyantina gecildi.
             color:
               s.sapma_kurus === 0
                 ? undefined
-                : (s.tip === "gider") === s.sapma_kurus > 0
-                  ? "var(--yz-danger)"
-                  : "var(--yz-success)",
+                : sapmaKotuMu(s)
+                  ? "var(--yz-danger-ink)"
+                  : "var(--yz-success-ink)",
           }}
         >
           {kurusToTL(s.sapma_kurus)}
@@ -105,9 +143,10 @@ export default function ButcePage() {
 
   return (
     <div className="space-y-4">
-      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-        {t("finansButce")}
-      </h1>
+      <SayfaBasligi
+        baslik={t("finansButce")}
+        aciklama={t("butKarsilastirmaAciklama")}
+      />
 
       <Kart>
         <div className="grid gap-3 sm:grid-cols-4">
@@ -140,9 +179,6 @@ export default function ButcePage() {
             </Dugme>
           </div>
         </div>
-        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-          {t("butKarsilastirmaAciklama")}
-        </p>
       </Kart>
 
       <Kart>

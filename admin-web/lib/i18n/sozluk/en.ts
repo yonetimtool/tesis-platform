@@ -3329,4 +3329,16 @@ export const en: Sozluk = {
   finansOzetBorclandirilanAy: "Charged this month",
   finansGiderlerAlt: "All expense records; those awaiting approval have not left the cash account yet.",
   finansTahsilatlarAlt: "Payments received from residents; each collection is booked to a cash account.",
+  // (P244 §7b) BUTCE — hedef/gerceklesen orani
+  butOran: "Vs. target",
+  butOranEtiket: "{ad}: {yuzde}% of target",
+  // (P244 §7b) AIDAT — tahsilat gostergesi ozeti
+  aidatOzetTahakkuk: "Charged this period",
+  aidatOzetTahsilat: "Collected",
+  aidatOzetOran: "Collection rate",
+  aidatOzetDonem: "Period {donem}",
+  aidatOzetDegisim: "{puan} pts",
+  otoDurumAktif: "Running",
+  otoDurumPasif: "Stopped",
+  otoSayfaAlt: "Dues, reminder and recurring-expense jobs; every running rule and its outcome.",
 };

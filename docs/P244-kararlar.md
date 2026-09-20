@@ -1147,3 +1147,101 @@ backend'de olmayan bir süzgeci geri eklemek.
 `tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
 **tam takım 238 dosya / 2018 test yeşil** · backend sözleşme testleri
 6/6 yeşil.
+
+---
+
+# AŞAMA 7b — FİNANSIN KALANI · UYGULANDI
+
+## A7b.1 Önce grafik verisini ölçtüm
+
+7a'da "hangi uçların hazır olduğunu ölçmedim" diye kaydetmiştim. Ölçtüm —
+**üçü de hazır ve beyaz listede**:
+
+| uç | ne veriyor | kullanan |
+|---|---|---|
+| `/budget/karsilastirma` | hedef · gerçekleşen · sapma (kategori başına) | `/finans/butce` (tablo olarak) |
+| `/finans/tahsilat-gostergesi` | tahakkuk · tahsilat · oran · önceki döneme göre değişim | **yalnız** `/finans/borclular` |
+| `/finans/yaslandirma` | yaşlandırma kovaları | `/finans/borclular` (grafikli) |
+
+Yani grafik için **yeni uç gerekmedi**; gereken şey var olan veriyi
+görselleştirmekti.
+
+## A7b.2 Bütçe: iki sayı kolonu → yatay oran barı
+
+Ekran hedefi ve gerçekleşeni **yan yana iki sayı kolonu** olarak
+gösteriyordu. İki sayıyı karşılaştırmak okurun işiydi: *"420.000 ile
+483.500 arasındaki fark ne?"* sorusunu göz yapamaz, ancak hesaplayarak
+bulur. Referansta aynı veri **yatay bar**.
+
+Üç karar, üçü de kilitli:
+
+* **Hedefsiz kategoride bar çizilmez.** Sıfır hedefe karşı dolu bir bar
+  "sonsuz aşım" demekti — bilgi değil, hata.
+* **Dolgu %100'de durur ama yüzde gerçeği söyler.** %180'lik bir bar
+  satırdan taşar ve tablo hizasını bozar; ama sayıyı da kırpmak yanlış
+  bilgi olurdu.
+* **Aşımın işareti tipe bağlı** (giderde kötü, gelirde iyi) ve bu yorum
+  `sapmaKotuMu` ile **tek yerde**; bar onu prop olarak alıyor. İkinci bir
+  kopya, iki ekranda iki anlam demekti.
+
+Ayrıca sapma sütunu ham `--yz-danger`/`--yz-success` kullanıyordu; bunlar
+**metin olarak AA'yı tutmuyor** (aşama 1'de ölçülmüştü) — `-ink`
+varyantına geçti.
+
+## A7b.3 Aidat: gösterge vardı, ekranda yoktu
+
+`/finans/tahsilat-gostergesi` **P192'den beri var** ve
+`/finans/borclular` onu kullanıyor. **Aidat ekranında yoktu** — oysa "bu
+dönem ne kadar tahakkuk etti, ne kadarı tahsil edildi" sorusunun
+sorulacağı ilk yer orası; kullanıcı sayıyı görmek için başka bir ekrana
+gitmek zorundaydı.
+
+Üç kart eklendi. **Oran yoksa (tahakkuk sıfır) durum nötr**: "%0" demek
+tahsilat yapılmadığını **söylemektir**, oysa borçlandırma da yapılmamış
+olabilir.
+
+## A7b.4 `/raporlar` — zaten referansın deseni
+
+Planda "ölü liste görünümünden kaçın, kategorilere ayır" yazmıştım.
+Ölçtüm: ekran **zaten** kategorili başlıklar + ikonlu, açıklamalı kart
+ızgarası kullanıyor. **Dokunmadım.**
+
+## A7b.5 Otomasyon: "Evet/Hayır" → durum rozeti
+
+`aktif` sütunu düz metin "Evet/Hayır" yazıyordu. Kural listesinde aranan
+şey *"hangileri çalışıyor"* ve göz bunu bir rozetten metin okumadan
+tarar.
+
+**Rozet tıklanabilir değil ve bu ölçülmüş bir karar:** referansta burada
+bir anahtar (toggle) var, ama kuralı **yerinde** açıp kapatacak bir yazma
+ucu **yok** — düzenleme kuralın tamamını alan bir akıştan geçiyor.
+Tıklanınca hiçbir şey yapmayan bir anahtar çizmek kullanıcıyı bir kez
+aldatırdı.
+
+## A7b.6 Kilit
+
+**YENİ** `p244-finans-gorsel` (5 test). **Üç kırma denendi, üçü de
+yakalandı:** hedefsizde barı yine çizmek, yüzdeyi de %100'e kırpmak,
+aşım rengini tipten bağımsız yapmak.
+
+`sabit-metin` taraması `trendYonu` üçlüsündeki dizgeleri yakaladı —
+**haklı**: tarama CSS/kimlik değeri ile cümleyi ayırt edemez. Değerler
+adlandırıldı.
+
+## A7b.7 Bu turda YAPILMAYAN — açıkça
+
+* **`/finans/banka`** (629 satır) — referanstaki **banka marka kartları**
+  yapılmadı. Ekran bugün bir yükleme akışı + eşleştirme tablosu; marka
+  kartı listesi **hesap listesi** ekranı ister ve o ayrı bir düzen
+  kararı.
+* **`/icra`** (635), **`/sayac-okuma`** (424), **`/finans/borclular`**
+  (339) dokunulmadı. Borçlular zaten grafikli; icra ve sayaç okuma
+  yapısal olarak makul (tablo + sihirbaz).
+* Otomasyonda **yerinde aç/kapat** yapılmadı (yazma ucu yok — yukarıda).
+* Finans özet şeridi hâlâ dört sayfada; virman/iade/açılış şeritsiz
+  (7a'daki gerekçe geçerli).
+
+## A7b.8 Doğrulama
+
+`tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
+**tam takım 239 dosya / 2023 test yeşil.**

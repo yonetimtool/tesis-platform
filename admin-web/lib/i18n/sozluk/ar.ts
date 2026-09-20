@@ -3329,4 +3329,16 @@ export const ar: Sozluk = {
   finansOzetBorclandirilanAy: "المحمَّل هذا الشهر",
   finansGiderlerAlt: "كل سجلات المصروفات؛ ما ينتظر الموافقة لم يُصرف من الصندوق بعد.",
   finansTahsilatlarAlt: "المدفوعات المستلمة من السكان؛ يُقيَّد كل تحصيل في صندوق.",
+  // (P244 §7b) BUTCE — hedef/gerceklesen orani
+  butOran: "مقابل الهدف",
+  butOranEtiket: "{ad}: {yuzde}٪ من الهدف",
+  // (P244 §7b) AIDAT — tahsilat gostergesi ozeti
+  aidatOzetTahakkuk: "مستحقات الفترة",
+  aidatOzetTahsilat: "المحصّل",
+  aidatOzetOran: "نسبة التحصيل",
+  aidatOzetDonem: "فترة {donem}",
+  aidatOzetDegisim: "{puan} نقطة",
+  otoDurumAktif: "يعمل",
+  otoDurumPasif: "متوقف",
+  otoSayfaAlt: "الرسوم والتذكيرات والمصروفات الدورية؛ كل قاعدة تعمل ونتيجتها.",
 };

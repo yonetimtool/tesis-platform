@@ -9,7 +9,10 @@ import {
   Dugme,
   Kart,
   Modal,
+  OzetKarti,
+  OzetSeridi,
   Rozet,
+  SayfaBasligi,
   Sekmeler,
   VeriTablosu,
   type Kolon,
@@ -31,7 +34,25 @@ import type {
   UnitList,
 } from "@/lib/types";
 
+/** (P244 §7b) `GET /finans/tahsilat-gostergesi` yaniti. */
+interface TahsilatGostergesi {
+  donem: string;
+  tahakkuk_kurus: number;
+  tahsilat_kurus: number;
+  oran_yuzde: number | null;
+  onceki_donem: string;
+  onceki_oran_yuzde: number | null;
+  degisim_puan: number | null;
+}
+
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const YOK = "—";
+// Trend YONU degil ANLAMI: tahsilat oraninin ARTMASI iyidir.
+const TREND_IYI = "iyi" as const;
+const TREND_KOTU = "kotu" as const;
+const TREND_SABIT = "sabit" as const;
+/** Tahsilat orani "iyi" esigi — panodaki esikle AYNI (P133.2). */
+const TAHSILAT_IYI = 85;
 const SEKME_TAHAKKUK = "tahakkuk" as const;
 const SEKME_ODEME = "odeme" as const;
 const DURUM_OLUMLU = "olumlu" as const;
@@ -97,6 +118,12 @@ export default function DuesPage() {
   // eslesmeyen kimlik ESKI davranisa (kisa kimlik) duser — uydurma ad
   // gosterilmez.
   const { data: units } = useSWR<UnitList>("/api/units?limit=200&offset=0", jsonFetcher);
+  // (P244 §7b) Tahsilat gostergesi — donem verilmezse sunucu ICINDE
+  // BULUNULAN donemi kullanir (sozlesme).
+  const { data: gosterge } = useSWR<TahsilatGostergesi>(
+    "/api/panel/tahsilat-gostergesi",
+    jsonFetcher,
+  );
   const daireAdlari = useMemo(() => {
     const m = new Map<string, string>();
     for (const u of units?.items ?? []) {
@@ -204,20 +231,78 @@ export default function DuesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-        {t("aidatBaslik")}
-      </h1>
-        <Dugme tur="birincil" boy="kucuk" onClick={() => {
-          // (P163 §2) ACILISTA ESKI HATA TEMIZLENIR: modal yeniden acildiginda
-          // onceki denemenin mesaji ekranda duruyordu ve kullanici hic
-          // denemeden hata gormus oluyordu.
-          setBErr(null);
-          setModalAcik(true);
-        }}>
-          {t("aidatTopluOlustur")}
-        </Dugme>
-      </div>
+      <SayfaBasligi
+        baslik={t("aidatBaslik")}
+        eylem={
+          <Dugme
+            tur="birincil"
+            boy="kucuk"
+            onClick={() => {
+              // (P163 §2) ACILISTA ESKI HATA TEMIZLENIR: modal yeniden
+              // acildiginda onceki denemenin mesaji ekranda duruyordu ve
+              // kullanici hic denemeden hata gormus oluyordu.
+              setBErr(null);
+              setModalAcik(true);
+            }}
+          >
+            {t("aidatTopluOlustur")}
+          </Dugme>
+        }
+      />
+
+      {/* (P244 §7b) TAHSILAT GOSTERGESI — `/finans/tahsilat-gostergesi`.
+          ==================================================================
+          UC P192'DEN BERI VAR ve `/finans/borclular` onu kullaniyor;
+          AIDAT ekraninda YOKTU. Oysa "bu donem ne kadar tahakkuk etti,
+          ne kadari tahsil edildi" sorusunun sorulacagi ilk yer burasi —
+          kullanici sayiyi gormek icin baska bir ekrana gitmek
+          zorundaydi.
+          SAYILAR TEK KAYNAKTAN (P192 §1): rapor, seffaflik ve mobil ana
+          ekran da ayni fonksiyonlari cagiriyor; istemcide toplam almak
+          ayni metrigi iki ekranda iki farkli rakam yapardi. */}
+      {gosterge && (
+        <OzetSeridi>
+          <OzetKarti
+            etiket={t("aidatOzetTahakkuk")}
+            deger={kurusToTL(gosterge.tahakkuk_kurus)}
+            durum="bilgi"
+            altBilgi={t("aidatOzetDonem", { donem: gosterge.donem })}
+          />
+          <OzetKarti
+            etiket={t("aidatOzetTahsilat")}
+            deger={kurusToTL(gosterge.tahsilat_kurus)}
+            durum="olumlu"
+          />
+          <OzetKarti
+            etiket={t("aidatOzetOran")}
+            deger={gosterge.oran_yuzde === null ? YOK : `%${gosterge.oran_yuzde}`}
+            // ORAN YOKSA (tahakkuk sifir) DURUM NOTR: "%0" demek,
+            // tahsilat yapilmadigini SOYLEMEKTIR — oysa borclandirma da
+            // yapilmamis olabilir.
+            durum={
+              gosterge.oran_yuzde === null
+                ? "notr"
+                : gosterge.oran_yuzde >= TAHSILAT_IYI
+                  ? "olumlu"
+                  : "uyari"
+            }
+            // DEGISIM YONU ANLAM OLARAK verilir: tahsilat oraninin
+            // ARTMASI iyidir (oksun yonu degil, anlami onemli).
+            trend={
+              gosterge.degisim_puan === null
+                ? undefined
+                : t("aidatOzetDegisim", { puan: String(gosterge.degisim_puan) })
+            }
+            trendYonu={
+              gosterge.degisim_puan === null || gosterge.degisim_puan === 0
+                ? TREND_SABIT
+                : gosterge.degisim_puan > 0
+                  ? TREND_IYI
+                  : TREND_KOTU
+            }
+          />
+        </OzetSeridi>
+      )}
 
       {/* TOPLU TAHAKKUK — (P161) MODALA ALINDI.
           P160'ta "dugme arkasina saklamak onu bulunmaz yapardi" diye

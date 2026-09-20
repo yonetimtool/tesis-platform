@@ -3329,4 +3329,16 @@ export const de: Sozluk = {
   finansOzetBorclandirilanAy: "Diesen Monat belastet",
   finansGiderlerAlt: "Alle Ausgaben; Posten zur Freigabe haben die Kasse noch nicht verlassen.",
   finansTahsilatlarAlt: "Zahlungen von Bewohnern; jede Einnahme wird einer Kasse zugeordnet.",
+  // (P244 §7b) BUTCE — hedef/gerceklesen orani
+  butOran: "Ggü. Ziel",
+  butOranEtiket: "{ad}: {yuzde} % des Ziels",
+  // (P244 §7b) AIDAT — tahsilat gostergesi ozeti
+  aidatOzetTahakkuk: "Vorschreibung der Periode",
+  aidatOzetTahsilat: "Eingenommen",
+  aidatOzetOran: "Inkassoquote",
+  aidatOzetDonem: "Periode {donem}",
+  aidatOzetDegisim: "{puan} Pkt.",
+  otoDurumAktif: "Aktiv",
+  otoDurumPasif: "Gestoppt",
+  otoSayfaAlt: "Beiträge, Erinnerungen und wiederkehrende Ausgaben; jede aktive Regel und ihr Ergebnis.",
 };
