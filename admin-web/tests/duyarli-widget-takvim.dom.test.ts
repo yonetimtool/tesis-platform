@@ -43,7 +43,7 @@ describe("(P170 §4.1) widget izgarasi", () => {
 
   it("duzenleme oklari DOKUNMA HEDEFI sinifini tasir", () => {
     // `px-2` bir ok dugmesini ~20 px birakir; kaba isaretcide 44 px.
-    expect(WIDGET).toContain("yz-dokunma-44");
+    expect(WIDGET).toContain("yz-dokunma-48");
   });
 });
 

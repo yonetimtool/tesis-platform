@@ -75,7 +75,7 @@ export function GirisYontemlerim() {
                 ) : null}
               </div>
               <button
-                className={`${btnDanger} min-h-[44px]`}
+                className={`${btnDanger} min-h-[48px]`}
                 onClick={() => void kaldir(b.saglayici)}
               >
                 {t("sosyalYontemKaldir")}

@@ -302,8 +302,8 @@ export function SosyalGiris({
             type="button"
             disabled={bekleyen !== null}
             onClick={() => void basla(s)}
-            // 44px dokunma hedefi (erisilebilirlik kurali).
-            className="kart-kenar flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border bg-yuzey-card px-4 py-2.5 text-sm font-medium text-metin-body transition hover:bg-yuzey-divider disabled:opacity-60"
+            // (P244) 48px dokunma hedefi (erisilebilirlik kurali).
+            className="kart-kenar flex min-h-[48px] w-full items-center justify-center gap-2 rounded-lg border bg-yuzey-card px-4 py-2.5 text-sm font-medium text-metin-body transition hover:bg-yuzey-divider disabled:opacity-60"
           >
             {t(DUGME_ANAHTARI[niyet], { saglayici: ETIKET[s] ?? s })}
           </button>

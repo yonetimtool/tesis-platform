@@ -80,12 +80,21 @@ describe("(P160) yeni token paleti — WCAG AA", () => {
       // Metnin uzerine dusebilecegi TUM yuzeyler. Kart uzerinde gecip
       // sayfa zemininde dusen bir ton, P132.6'da olculen gercek bir
       // kusurdu — o yuzden her yuzey ayri ayri sinaniyor.
+      // (P244 §1) `bg-sidebar` BU KUMEDEN CIKTI — KAPSAM DUSMEDI, TASINDI.
+      // ---------------------------------------------------------------
+      // Kenar cubugu artik LACIVERT bir yuzey; icerik alani ise ACIK.
+      // Genel metin tokenlari ikisinde birden okunamaz (olculdu:
+      // `--yz-text` #172033 lacivert uzerinde 1.06). Bu bir gerileme
+      // DEGIL, yuzeyin sinif degistirmesi: kenar cubugunun artik KENDI
+      // metin tokenlari var (`--yz-sidebar-*`) ve asagidaki ayri blok
+      // onlari AYNI ESIKLERLE olcuyor.
+      //
+      // ESIK DUSURULMEDI. Olculen sey degisti, kural degismedi.
       const yuzeyler = () => ({
         "bg-app": t("yz-bg-app"),
         "surface-1": t("yz-surface-1"),
         "surface-2": t("yz-surface-2"),
         "surface-sunken": t("yz-surface-sunken"),
-        "bg-sidebar": t("yz-bg-sidebar"),
       });
 
       it("birincil metin her yuzeyde AA (>=4.5)", () => {
@@ -196,9 +205,36 @@ describe("(P160) yeni token paleti — WCAG AA", () => {
         expect(o, `bg-sidebar / bg-app = ${o.toFixed(3)}`).toBeGreaterThanOrEqual(1.1);
       });
 
-      it("kenarlik yuzeyden ayirt edilebilir (>=1.5)", () => {
-        // Metalik hissin sarti: kenar GORUNMELI. Cok dusuk oran, kartin
-        // zemine karismasi demek.
+      // (P244 §1) KENAR CUBUGU KENDI AILESIYLE OLCULUR.
+      // Yukaridaki kumeden cikarilan yuzey BURADA, ayni esiklerle.
+      it("kenar cubugu metinleri lacivert uzerinde AA (>=4.5)", () => {
+        const sb = t("yz-bg-sidebar");
+        for (const ad of ["yz-sidebar-text", "yz-sidebar-text-2", "yz-sidebar-label"]) {
+          const o = oran(t(ad), sb);
+          expect(o, `--${ad} / bg-sidebar = ${o.toFixed(2)}`).toBeGreaterThanOrEqual(4.5);
+        }
+      });
+
+      it("kenar cubugu AKTIF OGESI okunur ve isaretcisi ayirt edilir", () => {
+        // AKTIF DOLGU laciverde karsi 3.0'i TUTMUYOR (2.97) ve bu
+        // BILINCLI: dolgu referans tonunda (#2563eb) kalir cunku
+        // uzerindeki BEYAZ metin 5.17 ile AA'yi tutuyor. Tek bir mavi
+        // ikisini birden tutmuyor (#3b82f6 tersini yapar: 4.17 / 3.68).
+        //
+        // Bu yuzden aktiflik RENKLE TEK BASINA anlatilmaz: bir SOL
+        // ISARET CUBUGU (`--yz-sidebar-marker`) ve `aria-current` da var.
+        // Olculen sey burada isaretcinin ayirt edilebilirligi.
+        const metin = oran(t("yz-sidebar-active-ink"), t("yz-sidebar-active"));
+        expect(metin, `aktif metin = ${metin.toFixed(2)}`).toBeGreaterThanOrEqual(4.5);
+        const marker = oran(t("yz-sidebar-marker"), t("yz-bg-sidebar"));
+        expect(marker, `isaretci = ${marker.toFixed(2)}`).toBeGreaterThanOrEqual(3);
+      });
+
+      it("kenarlik yuzeyden ayirt edilebilir (>=1.15)", () => {
+        // Kenar GORUNMELI. Cok dusuk oran, kartin zemine karismasi demek.
+        // (P244) BASLIK DUZELTILDI: ">=1.5" yaziyordu ama iddia >=1.15'ti.
+        // Planin ilk yazimina bu yanlis baslik uzerinden "referans
+        // kenarligi kilidi kiriyor" diye yazmistim — kirmiyordu.
         const o = oran(t("yz-border"), t("yz-surface-1"));
         expect(o, `--yz-border / surface-1 = ${o.toFixed(2)}`).toBeGreaterThanOrEqual(1.15);
       });
@@ -221,6 +257,10 @@ describe("(P160) yeni token paleti — WCAG AA", () => {
     const gerekli = [
       "yz-bg-app", "yz-bg-sidebar", "yz-surface-1", "yz-surface-2",
       "yz-surface-sunken", "yz-border", "yz-border-shine",
+      // (P244 §1) kabuk ailesi — iki temada da tanimli olmak zorunda
+      "yz-sidebar-text", "yz-sidebar-text-2", "yz-sidebar-label",
+      "yz-sidebar-border", "yz-sidebar-active", "yz-sidebar-active-ink",
+      "yz-sidebar-marker",
       "yz-text", "yz-text-2", "yz-text-3",
       "yz-accent", "yz-success", "yz-warning", "yz-danger",
       "yz-accent-ink", "yz-success-ink", "yz-warning-ink", "yz-danger-ink",

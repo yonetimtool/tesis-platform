@@ -630,7 +630,7 @@ function SidebarBody({
             type="button"
             onClick={onDarCevir}
             aria-label={t("kabukMenuDaralt")}
-            className="odak-ic yz-dokunma-44 flex h-8 w-8 items-center justify-center rounded-lg"
+            className="odak-ic yz-dokunma-48 flex h-8 w-8 items-center justify-center rounded-lg"
             style={{ color: "var(--yz-text-3)" }}
           >
             <OkKatla yon="sol" />
@@ -645,7 +645,7 @@ function SidebarBody({
             type="button"
             onClick={onDarCevir}
             aria-label={t("kabukMenuGenislet")}
-            className="odak-ic yz-dokunma-44 flex h-8 w-8 items-center justify-center rounded-lg"
+            className="odak-ic yz-dokunma-48 flex h-8 w-8 items-center justify-center rounded-lg"
             style={{ color: "var(--yz-text-3)" }}
           >
             <OkKatla yon="sag" />

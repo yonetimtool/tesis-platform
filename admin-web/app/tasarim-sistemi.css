@@ -57,48 +57,100 @@
      BEDELI DURUSTCE: zemin koyulastigi icin metin/ikon tokenlarinin
      hepsi yeniden olculdu ve ~%5 koyulastirildi (asagida). Palet
      korundu — ton ve doygunluk ayni, yalniz aciklik kaydi. */
-  --yz-bg-app: #eef1f6;
-  --yz-bg-app-grad: linear-gradient(180deg, #f3f6fa 0%, #e9edf3 100%);
-  --yz-bg-sidebar: #d8e4f5;
+  --yz-bg-app: #eef2f7;
+  /* (P244 §1) GRADYAN DUZLESTI. Eski deger zeminde ust-alt fark yaratiyordu
+     ve "fircalanmis metal" dilinin parcasiydi; referans dili DUZ. Token
+     silinmedi cunku bircok dosya onu okuyor — degeri tek renge esitlendi. */
+  --yz-bg-app-grad: #eef2f7;
+  /* (P244 §1) KENAR CUBUGU LACIVERT.
+     -----------------------------------------------------------------
+     Referanstan piksel olcumuyle alindi (`ui5.png`, x=60 y=300).
+     Eski deger (#d8e4f5) acik maviydi ve beyaz kartlarla ayni yuzey
+     ailesindeydi; lacivert, icerik alanindan 13.15 oraniyla ayrisir.
+     `yz-token-kontrast` testindeki "beyaz DEGIL" ve "maviye calar"
+     sartlarini da tutar (mavi kanal 0x3a, kirmizi 0x14). */
+  --yz-bg-sidebar: #14263a;
   --yz-surface-1: #ffffff;
-  --yz-surface-2: #eff3f8;
-  --yz-surface-sunken: #e7ecf2;
-  --yz-border: #dbe2ea;
+  --yz-surface-2: #eaeff5;
+  --yz-surface-sunken: #e2e8f0;
+  /* Referans #e4e7ec veriyor; bir tik koyu secildi (1.24 -> 1.28) —
+     yogun tablolarda satir ayraci gorunur kalsin. Kilit esigi 1.15. */
+  --yz-border: #dde4ec;
   /* GUCLU KENAR — yapisal vurgu icin (toplam satiri ayraci gibi).
      Normal kenardan gorunur sekilde koyu; ANLAM TASIMAZ (yanindaki
      "Toplam" kelimesi tasir), o yuzden 3.0 esigi aranmadi. */
   --yz-border-strong: #b4c0cc;
-  /* Metalik hissin kaynagi: ust kenar parlamasi. Renk DEGIL, ISIK. */
-  --yz-border-shine: #ffffff;
+  /* Metalik hissin kaynagi: ust kenar parlamasi. Renk DEGIL, ISIK.
+     (P244 §1) DUZ DILDE NEREDEYSE GORUNMEZ: token silinmedi (cok sayida
+     dosya okuyor), degeri cok daha zayif bir beyaza cekildi. */
+  --yz-border-shine: rgba(255, 255, 255, 0.6);
+
+  /* ---------------------------------------------------------------------
+     (P244 §1) KENAR CUBUGU — KENDI TOKEN AILESI
+     ---------------------------------------------------------------------
+     NEDEN AYRI AILE: kenar cubugu artik KOYU bir yuzey, icerik alani ise
+     ACIK. Ayni `--yz-text` degerini iki yerde kullanmak imkansiz —
+     lacivert uzerinde #172033 okunmaz. Eskiden kenar cubugu acik mavi
+     oldugu icin genel metin tokenlari yetiyordu.
+
+     KABUK TOKENLARI MOBIL PARITESININ DISINDADIR (P244 karar 3): mobilin
+     kabugu bir cekmece, webinki kalici bir sutun; ayni degeri
+     paylasmalari icin bir sebep yok. Anlamsal tokenlar (durum renkleri,
+     vurgu, metin) paritede KALIR. */
+  --yz-sidebar-text: #e8eef6;        /* lacivert uzerinde 13.15 */
+  --yz-sidebar-text-2: #9fb3cc;      /* 7.16 */
+  /* BOLUM ETIKETI: referanstaki #6d8cb1 lacivert uzerinde 4.41 — AA'yi
+     TUTMUYOR. Ton korunarak acikligi artirildi: 6.00. */
+  --yz-sidebar-label: #8ba4c4;
+  --yz-sidebar-border: #24384f;
+  --yz-sidebar-hover: rgba(255, 255, 255, 0.07);
+  /* AKTIF OGE — RENK TEK BASINA ANLAM TASIMAZ.
+     -----------------------------------------------------------------
+     OLCULDU: #2563eb lacivert uzerinde 2.97 (arayuz bileseni esigi 3.0'in
+     ALTINDA), ama uzerindeki BEYAZ metin 5.17 ile AA'yi tutuyor.
+     #3b82f6 tersini yapiyor: laciverde karsi 4.17 ama beyaz metin 3.68 —
+     yani metin okunmuyor. Tek bir mavi IKISINI BIRDEN tutmuyor.
+
+     Cozum referansin yapmadigi sey: dolgu referans tonunda kalir (#2563eb,
+     metin 5.17) ve aktiflik AYRICA bir SOL ISARET CUBUGU ile anlatilir.
+     Boylece 2.97 anlam tasiyan tek gosterge olmaktan cikar — `aria-current`
+     ile birlikte uc ayri ipucu olur. */
+  --yz-sidebar-active: #2563eb;
+  --yz-sidebar-active-ink: #ffffff;
+  --yz-sidebar-marker: #60a5fa;      /* sol isaret cubugu — navy'e karsi 6.04 */
 
   /* Metin — uc kademe */
-  --yz-text: #1f2933;
+  --yz-text: #172033;
   /* OLCULDU VE KOYULASTIRILDI: brief #7B8794 veriyordu; sayfa zemininde
      (#F7F9FB) 3.47 — AA'yi TUTMUYOR. Ayni ton BEYAZ kartta 4.37 ile de
      dusuyordu. Ton (hue) ve doygunluk korunarak yalniz aciklik kaydirildi;
      `tests/yz-token-kontrast.test.ts` en zor yuzeyde 4.5'i kilitliyor.
      P132.6'da ayni sinif kusur olculmustu: kartta gecip zeminde dusen ton. */
-  --yz-text-2: #5c6671;
+  --yz-text-2: #566173;
   /* Brief #A3ADB8; sayfa zemininde 2.16 idi. Bu kademe YALNIZ buyuk metin
      ve dekoratif etiket icindir (esik 3.0), govde metninde kullanilmaz. */
-  --yz-text-3: #758291;
+  --yz-text-3: #707d8f;
 
   /* Durum renkleri. RENK YALNIZ SINYALDIR (halka, rozet, uyari seridi);
      dolgu blok olarak KULLANILMAZ — P133'un "tinted blocks" dili bu
      turda terk edildi. */
-  --yz-accent: #5b8def;
-  --yz-success: #3fa97a;
-  --yz-warning: #d6963c;
-  --yz-danger: #d45b5e;
+  --yz-accent: #2563eb;
+  --yz-success: #16a34a;
+  --yz-warning: #f59e0b;
+  --yz-danger: #ef4444;
 
   /* Durum renklerinin METIN uzerinde okunur varyantlari.
      OLCULDU: ham `--yz-warning` (#D6963C) beyaz uzerinde 2.4:1 — AA'yi
      TUTMAZ. Ikon/halka ham tonda kalir (grafik ogesi, 3:1 esigi),
      METIN bu koyulastirilmis tonu kullanir. */
-  --yz-accent-ink: #1e5dd6;
-  --yz-success-ink: #2a7152;
-  --yz-warning-ink: #885b1d;
-  --yz-danger-ink: #ba3235;
+  /* (P244) DEGERLER *EN ZOR* YUZEYDE olculdu — ki o yuzey sayfa zemini
+     DEGIL, `--yz-surface-sunken` (#e2e8f0). Ilk turetimde zemini en zor
+     yuzey sandim ve kilit dordunu birden dusurdu: accent-ink 4.43,
+     success-edge 2.92. Ders: en zor yuzeyi VARSAYMA, kumeyi tara. */
+  --yz-accent-ink: #235edf;   /* en dusuk 4.56 */
+  --yz-success-ink: #107736;  /* 4.59 */
+  --yz-warning-ink: #915d06;  /* 4.52 — ham #f59e0b en iyi ihtimalle 2.15 */
+  --yz-danger-ink: #bd3636;   /* 4.55 */
 
   /* ANLAM TASIYAN GRAFIK OGESI (WCAG 1.4.11, esik 3.0): KPI halkasinin
      cizgisi, rozet kenari, uyari seridi. Ham ton bu esigi TUTMUYOR
@@ -108,10 +160,10 @@
      Cozum depoda ZATEN olan desen (`vurguInk`): ham ton DOLGU ve dekoratif
      parlama icin kalir (kontrast sarti yok), anlam tasiyan CIZGI bu
      varyanti kullanir. Boylece hem palet hem AA korunur. */
-  --yz-accent-edge: #4e7edd;
-  --yz-success-edge: #369068;
-  --yz-warning-edge: #ae7524;
-  --yz-danger-edge: #d25a5d;
+  --yz-accent-edge: #2563eb;  /* en dusuk 4.19 — ham ton yetiyor */
+  --yz-success-edge: #159946; /* 3.00 */
+  --yz-warning-edge: #b87608; /* 3.02 — ham ton grafik esigini de tutmuyordu */
+  --yz-danger-edge: #ef4444;  /* 3.05 — ham ton yetiyor */
   /* (P161) SAHNE ISARETCI RENKLERI. Maketteki etiketler bes TUR tasiyor
      (yonetici / sakin / NFC / kamera / alarm); dordu mevcut durum
      ailesinden karsilanabildi ama NFC ve KAMERA icin karsilik YOKTU ve
@@ -124,36 +176,43 @@
   /* ---------------------------------------------------------------------
      KABARTMA — metalik yuzeyin kalbi (brief: token olarak tanimla)
      --------------------------------------------------------------------- */
-  --yz-raised:
-    inset 0 1px 0 var(--yz-border-shine),
-    0 2px 8px rgba(31, 41, 51, 0.08);
-  --yz-raised-hover:
-    inset 0 1px 0 var(--yz-border-shine),
-    0 6px 16px rgba(31, 41, 51, 0.12);
-  /* Girintili: ustte koyu ic golge, altta acik — kabartmanin TERSI.
-     Input ve girintili alanlar bunu kullanir. */
-  --yz-sunken:
-    inset 0 2px 4px rgba(31, 41, 51, 0.10),
-    inset 0 -1px 0 var(--yz-border-shine);
-  --yz-ring-glow: 0 0 0 1px rgba(91, 141, 239, 0.18);
+  /* (P244 §1) NEUMORPHISM EMEKLIYE AYRILDI — DEGER DUZLESTI, AD KALDI.
+     -----------------------------------------------------------------
+     Eski deger ic parlama + genis yumusak golge idi ("fircalanmis metal").
+     Referans dili DUZ: ince kenarlik + neredeyse gorunmeyen bir yukselti.
+
+     NEDEN TOKEN ADLARI SILINMEDI: `--yz-raised` 21, `--yz-sunken` 7,
+     `--yz-metal-*` 29 dosyada okunuyor. Adlari silmek 50+ dosyaya tek tek
+     dokunmak demekti ve aşama 1'in "bilesen API'si degismez, yalniz deger
+     degisir" sozunu bozardi. Adlar bir tur daha yasar; artiklarin
+     temizligi aşama 10'da. */
+  --yz-raised: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --yz-raised-hover: 0 2px 4px rgba(16, 24, 40, 0.06), 0 4px 10px rgba(16, 24, 40, 0.08);
+  /* Girintili yuzey: duz dilde yalniz cok hafif bir ic golge. */
+  --yz-sunken: inset 0 1px 2px rgba(16, 24, 40, 0.06);
+  --yz-ring-glow: 0 0 0 1px rgba(37, 99, 235, 0.16);
 
   /* Metalik yuzey gradyani — duz dolgu DEGIL, ust-alt ince fark. */
-  --yz-metal-1: linear-gradient(180deg, #ffffff 0%, #f4f7fa 100%);
-  --yz-metal-2: linear-gradient(180deg, #f7fafc 0%, #eaeff5 100%);
+  /* (P244 §1) GRADYANLAR DUZ DOLGUYA INDI — ad korundu (bkz. yukarisi). */
+  --yz-metal-1: #ffffff;
+  --yz-metal-2: #f5f8fb;
   /* ACCENT DOLGUSU KOYULASTIRILDI — OLCULDU VE DUZELTILDI.
      Ilk yazimda #6F9BF2 -> #4B7FE0 idi ve uzerindeki BEYAZ metin 3.88
      ile AA'yi TUTMUYORDU (kodda "kontrast olculdu" yaziyordu ama
      olculmemisti — kusur `yz-bilesen` token testi rozeti yakalayinca
      ortaya cikti). Ton korunarak yalniz aciklik dusuruldu; en acik
      durak (gradyanin ustu) 4.5'i tutuyor, alt durak zaten daha koyu. */
-  --yz-metal-accent: linear-gradient(180deg, #3170ec 0%, #3972dd 100%);
+  --yz-metal-accent: #2563eb;
   /* DOLGU UZERINDEKI METIN — accent/danger gibi RENKLI zeminlerde.
      Token oldu ki bilesenler `#ffffff` yazmasin ve zemin degisince
      tek yerden guncellensin. */
   --yz-on-fill: #ffffff;
   /* Rozet/etiket DOLGUSU (uzerinde beyaz metin). `--yz-danger-edge`
      CIZGI icindir (3.0 esigi); dolgu METIN tasidigi icin 4.5 ister. */
-  --yz-danger-fill: #cf474a;
+  /* Rozet/etiket DOLGUSU: uzerinde BEYAZ metin tasidigi icin 4.5 ister.
+     Ham `#ef4444` uzerinde beyaz 3.76 — YETMEZ. Tailwind red-600 secildi:
+     beyaz metin 4.83. */
+  --yz-danger-fill: #dc2626;
 
   color-scheme: light;
 }
@@ -178,14 +237,17 @@
      Metin ve ikon tokenlari yeniden olculdu: yuzeyler acildigi icin
      hepsi ~%20 beyaza karistirildi, yoksa AA duserdi. */
   --yz-bg-app: #313a44;
-  --yz-bg-app-grad: linear-gradient(180deg, #374049 0%, #2d363f 100%);
-  --yz-bg-sidebar: #262f38;
+  /* (P244 §1) Acik temayla ayni gerekce: gradyan duzlesti. */
+  --yz-bg-app-grad: #313a44;
+  /* (P244 §1) Koyu temada da kenar cubugu ZEMINDEN KOYU kalir (acik
+     temanin TERSI yonde, ayni amacla: icerikten ayrissin). Karttan 1.55. */
+  --yz-bg-sidebar: #1e2833;
   --yz-surface-1: #3b4650;
   --yz-surface-2: #46515c;
   --yz-surface-sunken: #2c353e;
   --yz-border: #55616d;
   --yz-border-strong: #8592a0;
-  --yz-border-shine: #78868f;
+  --yz-border-shine: rgba(255, 255, 255, 0.08);
 
   --yz-text: #e8edf2;
   /* Brief #98A3AE; kart uzerinde (#333C45) 4.37 — esigin hemen altinda. */
@@ -193,49 +255,60 @@
   /* Brief #6E7883; sayfa zemininde 2.86. */
   --yz-text-3: #989fa8;
 
-  --yz-accent: #6ba3d6;
-  --yz-success: #5bb98c;
-  --yz-warning: #e0a458;
-  --yz-danger: #d9686a;
+  /* (P244 §1) Koyu temada HAM referans tonlari KULLANILAMAZ — olculdu:
+     en acik yuzeyde (surface-2 #46515c) accent 1.57 · success 2.46 ·
+     danger 2.15. Ton ve doygunluk korunarak beyaza dogru acildi. */
+  --yz-accent: #769df2;
+  --yz-success: #3eb369;
+  --yz-warning: #f59e0b;
+  --yz-danger: #f47a7a;
 
   /* Koyu zeminde ham tonlar ZATEN okunur (olculdu, hepsi > 4.5:1);
      ayri bir "ink" varyanti gerekmiyor, ama ad KORUNUYOR ki bilesenler
      tek bir degisken adiyla yazilsin ve tema degisince kendiliginden
      dogru tonu alsin. */
-  --yz-accent-ink: #a2c6e6;
-  --yz-success-ink: #90d0b1;
-  --yz-warning-ink: #e8ba81;
-  --yz-danger-ink: #ecb4b5;
+  --yz-accent-ink: #aac2f7;   /* 4.54 */
+  --yz-success-ink: #8ad1a4;  /* 4.53 */
+  --yz-warning-ink: #f8b648;  /* 4.54 */
+  --yz-danger-ink: #f8afaf;   /* 4.53 */
 
   /* Koyu temada ham tonlarin cogu 3.0'i ZATEN tutuyor (accent 3.69 ·
      success 4.13 · warning 4.53); yalniz `danger` 2.89 ile dusuyordu. */
-  --yz-accent-edge: #6ca4d6;
-  --yz-success-edge: #5bb98c;
-  --yz-warning-edge: #e0a458;
-  --yz-danger-edge: #e08587;
+  --yz-accent-edge: #769df2;  /* 3.04 */
+  --yz-success-edge: #3eb369; /* 3.03 */
+  --yz-warning-edge: #f59e0b; /* 3.77 — ham ton koyu temada yetiyor */
+  --yz-danger-edge: #f47a7a;  /* 3.05 */
   --yz-nfc-edge: #a095e4;
   --yz-kamera-edge: #5baab8;
 
-  --yz-raised:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 2px 8px rgba(0, 0, 0, 0.35);
-  --yz-raised-hover:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 6px 18px rgba(0, 0, 0, 0.45);
-  --yz-sunken:
-    inset 0 2px 5px rgba(0, 0, 0, 0.40),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
-  --yz-ring-glow: 0 0 0 1px rgba(107, 163, 214, 0.25);
+  --yz-raised: 0 1px 2px rgba(0, 0, 0, 0.20), 0 1px 3px rgba(0, 0, 0, 0.24);
+  --yz-raised-hover: 0 2px 4px rgba(0, 0, 0, 0.26), 0 4px 10px rgba(0, 0, 0, 0.32);
+  --yz-sunken: inset 0 1px 2px rgba(0, 0, 0, 0.28);
+  --yz-ring-glow: 0 0 0 1px rgba(118, 157, 242, 0.28);
 
   /* (P166 §7.2) Yuzeylerle BIRLIKTE yukseldi: kart #3B4650 olurken
      metalik dolgunun eski hâli (#3A434D) ondan KOYU kaliyor ve kabartma
      tersine donuyordu — dugme, uzerinde durdugu kartin icine cokuyordu. */
-  --yz-metal-1: linear-gradient(180deg, #434e59 0%, #38424c 100%);
-  --yz-metal-2: linear-gradient(180deg, #4b5661 0%, #3f4954 100%);
+  --yz-metal-1: #3f4a55;
+  --yz-metal-2: #47525d;
   /* Ayni olcum koyu temada da yapildi: 3.39 -> 4.51. */
-  --yz-metal-accent: linear-gradient(180deg, #2e7ac0 0%, #3c7ab3 100%);
+  /* Dolgu uzerinde BEYAZ metin var: 4.5 ister. Acik temadaki #2563eb
+     koyu temada da beyazla 5.17 veriyor, ton ailesi korunuyor. */
+  --yz-metal-accent: #2563eb;
   --yz-on-fill: #ffffff;
-  --yz-danger-fill: #d04648;
+  --yz-danger-fill: #c01f1f;  /* beyaz metin 6.07 */
+
+  /* (P244 §1) KABUK TOKENLARI — koyu temada da TANIMLI olmak zorunda,
+     yoksa kenar cubugu acik temanin degerine duser (`yz-token-kontrast`
+     "iki tema da TUM renk tokenlarini tanimlar" testi bunu olcuyor). */
+  --yz-sidebar-text: #e8eef6;        /* 12.79 */
+  --yz-sidebar-text-2: #9fb3cc;      /* 6.96 */
+  --yz-sidebar-label: #8ba4c4;       /* 5.83 */
+  --yz-sidebar-border: #2b3746;
+  --yz-sidebar-hover: rgba(255, 255, 255, 0.06);
+  --yz-sidebar-active: #2563eb;
+  --yz-sidebar-active-ink: #ffffff;
+  --yz-sidebar-marker: #60a5fa;
 
   color-scheme: dark;
 }
@@ -256,7 +329,9 @@
   --yz-fs-display: 30px;   /* sayfa selamlamasi */
   --yz-fs-h1: 24px;
   --yz-fs-h2: 18px;
-  --yz-fs-h3: 15px;
+  /* (P244 §1) 15 -> 16: referansin "Section" kademesi 16/600. Olcegin
+     geri kalani (24/18/14/13/12) ZATEN referansla ayniydi. */
+  --yz-fs-h3: 16px;
   --yz-fs-body: 14px;
   /* (P169 §3.3) GIRDI FONTU — govde metninden AYRI ve 16 px.
      iOS Safari 16 px altindaki girdilere odaklaninca sayfayi
@@ -271,7 +346,9 @@
   --yz-fs-xs: 12px;
   /* KPI sayisi: BUYUK ve INCE (brief). */
   --yz-fs-kpi: 34px;
-  --yz-fw-kpi: 300;
+  /* (P244 §1) 300 -> 700. Ince rakam "premium" degil ZAYIF okunuyordu;
+     referansta KPI sayilari kalin ve sayfanin en guclu ogesi. */
+  --yz-fw-kpi: 700;
 
   --yz-lh-tight: 1.2;
   --yz-lh-body: 1.5;
@@ -451,9 +528,13 @@
 }
 
 /* ====================================================================
-   (P169 §5) DOKUNMA HEDEFLERI — 44 px, YALNIZ PARMAKLA KULLANIRKEN
+   (P169 §5 / P244 §1) DOKUNMA HEDEFLERI — 48 px, YALNIZ PARMAKLA
    ====================================================================
-   Brief butun dokunma hedeflerinin en az 44x44 px olmasini istiyor.
+   (P244) 44 -> 48. OLCULDU VE KAYDA GECTI: 44 bir "sizinti" DEGILDI,
+   WCAG 2.1 SC 2.5.5 (AAA) ve Apple HIG'in olcusuydu; mobildeki 48
+   ise Android Material / Flutter `androidTapTargetGuideline` olcusu
+   (P220). Iki yuzey iki standardi uyguluyordu. Kerem'in karariyla web
+   de UCUNUN EN SIKISINA gecti — bilincli bir sertlestirme.
 
    NEDEN GENISLIGE DEGIL ISARETCIYE BAGLI:
    "Dar ekran" ile "parmakla kullaniliyor" AYNI SEY DEGILDIR. 1280 px'lik
@@ -464,9 +545,17 @@
    ihlal ederdi.
 
    NEDEN `boy="kucuk"` BUYUTULMEDI:
-   36 px masaustunde DOGRU bir olcudur — yogun bir tabloda 44 px satiri
+   36 px masaustunde DOGRU bir olcudur — yogun bir tabloda 48 px satiri
    sisirir ve ekrana sigan kayit sayisini dusurur. Karar yanlis degildi,
    YALNIZCA DOKUNMATIKTE yanlisti.
+
+   NEDEN GENEL BIR `min-width: 48px` YOK — OLCULDU:
+   Ay takvimi izgarasi 7 sutun. Gun hucresi 320/360/390 px ekranda
+   sirasiyla 33.1 / 38.9 / 43.1 px'e dusuyor, yani BUGUN 44'u de
+   tutmuyor. 48 dayatmak izgarayi tasirirdi. `min-height` genel kalir
+   (dikey alan bedava), `min-width` OPT-IN bir sinifla istenir.
+   ACIK MADDE: dar ekranda ay takvimi 48x48'i tutamiyor; cozumu ayri
+   bir is (yatay kaydirma ya da hafta gorunumu).
 
    `min-height`/`min-width` KULLANILIYOR, `height` DEGIL: sabit yukseklik
    iki satira inen bir etiketi kirpardi.
@@ -475,31 +564,31 @@
    kurali her zaman ezebilir. */
 @media (pointer: coarse) {
   :where(button, [role="button"], a[href], summary, input[type="checkbox"], input[type="radio"]) {
-    min-height: 44px;
+    min-height: 48px;
   }
-  /* Metin baglantilari SATIR ICI akar; 44 px yukseklik vermek paragrafi
+  /* Metin baglantilari SATIR ICI akar; 48 px yukseklik vermek paragrafi
      bozardi. Onlarda yalniz dokunma alani buyutulur. */
   :where(p, li, dd, td) :where(a[href]) {
     min-height: 0;
     padding-block: 0.5rem;
   }
-  /* (P170 §4.3) SIMGE DUGMELERI KARE 44 px OLUR.
+  /* (P170 §4.3 / P244) SIMGE DUGMELERI KARE 48 px OLUR.
      Yukaridaki kural yalniz `min-height` verir; `h-8 w-8` bir simge
-     dugmesinde YUKSEKLIK 44'e cikar ama GENISLIK 32 kalir — yani hedef
-     32x44'luk bir dilim olur.
+     dugmesinde YUKSEKLIK 48'e cikar ama GENISLIK 32 kalir — yani hedef
+     32x48'lik bir dilim olur.
 
      GENEL BIR `min-width: 44px` DENENMEDI, OLCULDU VE ELENDI: 360 px'lik
      bir ekranda takvimin ay izgarasinda bir gun hucresi ~40 px'e dusuyor
      (304 px kullanilabilir alan, yedi hucre, alti bosluk). Her dugmeye
-     44 px genislik dayatmak o izgarayi TASIRDI. Bu yuzden kural, simge
+     48 px genislik dayatmak o izgarayi TASIRDI. Bu yuzden kural, simge
      dugmelerinin acikca istedigi bir sinif. */
-  :where(.yz-dokunma-44) {
-    min-width: 44px;
+  :where(.yz-dokunma-48) {
+    min-width: 48px;
   }
   /* Onay kutulari ve radyolar GORSEL olarak buyumemeli (16 px dogru
      olcu), yalniz DOKUNMA ALANI buyumeli. */
   :where(input[type="checkbox"], input[type="radio"]) {
-    min-width: 44px;
+    min-width: 48px;
     /* Kutunun kendisi ortada kalir; buyuyen sey seffaf dokunma alani. */
     background-clip: content-box;
     padding: 14px;

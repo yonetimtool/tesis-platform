@@ -153,7 +153,7 @@ export function WidgetSeridi({
                     type="button"
                     onClick={() => tasi(w.rota, -1)}
                     aria-label={t("panoYukariTasi")}
-                    className="odak-ic yz-dokunma-44 rounded px-2"
+                    className="odak-ic yz-dokunma-48 rounded px-2"
                     style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}
                   >
                     ‹
@@ -162,7 +162,7 @@ export function WidgetSeridi({
                     type="button"
                     onClick={() => cevir(w.rota)}
                     aria-label={t("panoBolumGizle")}
-                    className="odak-ic yz-dokunma-44 rounded px-2"
+                    className="odak-ic yz-dokunma-48 rounded px-2"
                     style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-danger-ink)" }}
                   >
                     ×
@@ -171,7 +171,7 @@ export function WidgetSeridi({
                     type="button"
                     onClick={() => tasi(w.rota, 1)}
                     aria-label={t("panoAsagiTasi")}
-                    className="odak-ic yz-dokunma-44 rounded px-2"
+                    className="odak-ic yz-dokunma-48 rounded px-2"
                     style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}
                   >
                     ›

@@ -201,3 +201,101 @@ düşürerek geçen kilit kabul edilmiyor.
 | §2 yazı tipi | "emin değilim, sorayım" | Inter zaten kurulu; iş Tailwind'i bağlamak |
 | §6 dokunma hedefi | "44 var, 48 isteniyor, sormadan yapmadım" | 48'e geçiliyor; 44'ün kaynağı sızıntı değil (§0.3) |
 | §7 soru 7 | "yalnız Şikayet Haritası eksik gibi" | **eksik ekran yok** |
+
+---
+
+# AŞAMA 1 — TASARIM SİSTEMİ · UYGULANDI
+
+Kapsam sözü tutuldu: **yalnız değer katmanı değişti, bileşen API'si
+değişmedi.** 79 sayfaya aynı anda indi, hiçbir sayfa yarım kalmadı.
+
+## A1.1 Değişen token'lar
+
+| token | eski | yeni | ölçüm |
+|---|---|---|---|
+| `--yz-bg-sidebar` | `#d8e4f5` | **`#14263a`** | içerikten 13.15 ayrışır |
+| `--yz-bg-app` | `#eef1f6` | `#eef2f7` | kart/zemin 1.124 |
+| `--yz-surface-2` | `#eff3f8` | `#eaeff5` | karttan 1.156 (eşik 1.1) |
+| `--yz-surface-sunken` | `#e7ecf2` | `#e2e8f0` | |
+| `--yz-border` | `#dbe2ea` | `#dde4ec` | 1.28 (eşik 1.15) |
+| `--yz-accent` | `#5b8def` | **`#2563eb`** | |
+| `--yz-success` | `#3fa97a` | `#16a34a` | |
+| `--yz-warning` | `#d6963c` | `#f59e0b` | |
+| `--yz-danger` | `#d45b5e` | `#ef4444` | |
+| `--yz-fs-h3` | 15 px | **16 px** | referansın "Section" kademesi |
+| `--yz-fw-kpi` | 300 | **700** | ince rakam zayıf okunuyordu |
+| dokunma hedefi | 44 px | **48 px** | |
+| `fontFamily.sans` | sistem yığını | **Inter** | §0.2'deki kusur |
+
+Yeni aile: `--yz-sidebar-{text,text-2,label,border,hover,active,active-ink,marker}`
+— iki temada da tanımlı.
+
+Düzleşenler: `--yz-raised`, `--yz-raised-hover`, `--yz-sunken`,
+`--yz-metal-1/2/accent`, `--yz-bg-app-grad`, `--yz-border-shine`.
+**Adlar korundu** (50+ dosya okuyor); artıkların temizliği aşama 10'da.
+
+## A1.2 Ölçüm üç kez beni düzeltti
+
+1. **En zor yüzeyi yanlış varsaydım.** `ink`/`edge` tonlarını sayfa
+   zeminine (`#eef2f7`) göre türetmiştim; oysa en zor yüzey
+   `--yz-surface-sunken` (`#e2e8f0`). Kilit dördünü birden düşürdü
+   (`accent-ink` 4.43, `success-edge` 2.92). Yeniden türetim **tüm yüzey
+   kümesini** tarayarak yapıldı.
+   > **Ders:** en zor yüzeyi varsayma, kümeyi tara.
+2. **`--yz-surface-2`'yi fazla açık seçtim** (`#f5f8fb`, karttan 1.066 —
+   eşik 1.1). Kart kademesi görünmez olurdu; P166'da ölçülen kusurun
+   aynısı.
+3. **Kenarlık kilidinin eşiğini planda yanlış aktarmıştım.** Testin
+   *başlığı* ">=1.5" diyor ama *iddiası* `>=1.15`. Planda "referans
+   kenarlığı kilidi kırıyor" yazmıştım — **kırmıyordu**. Başlık
+   düzeltildi.
+
+## A1.3 Öngörülen en büyük risk GERÇEKLEŞMEDİ
+
+Planda "`tasarim-token.test.ts` **toplu kırılır**" demiştim. **Kırılmadı
+— 28/28 geçti.** Sebep: o test `tailwind.config.ts` + `globals.css`
+(eski dil) ile mobil Dart token'larını eşitliyor; yeni `--yz-*` katmanını
+hiç okumuyor.
+
+Yani mobil parite bölünmesi (karar 3) **şimdi gerekmedi**; gerekeceği yer
+aşama 10 (eski dilin emekliliği). Karar geçerli, uygulaması ertelendi.
+
+## A1.4 Aktif menü öğesi — renk tek başına anlam taşımıyor
+
+Ölçüldü: `#2563eb` lacivert üzerinde **2.97** (arayüz bileşeni eşiği 3.0
+altında) ama üzerindeki beyaz metin **5.17**. `#3b82f6` tersini yapıyor:
+laciverde karşı 4.17, beyaz metin **3.68** (okunmuyor). **Tek bir mavi
+ikisini birden tutmuyor.**
+
+Çözüm referansın yapmadığı şey: dolgu referans tonunda kalır, aktiflik
+ayrıca **sol işaret çubuğu** (`--yz-sidebar-marker`, laciverde karşı 6.04)
+ve `aria-current` ile anlatılır. Üç ayrı ipucu.
+
+## A1.5 Kilitler
+
+| kilit | ne oldu |
+|---|---|
+| `yz-token-kontrast` | `bg-sidebar` içerik yüzeyi kümesinden **çıkarıldı**, yerine kenar çubuğu ailesini **aynı eşiklerle** ölçen iki yeni test geldi. Test sayısı 24 → **28**: kapsam düşmedi, büyüdü. Eşik düşürülmedi |
+| `tasarim-token` | **dokunulmadı**, 28/28 geçiyor |
+| `p226-select-gradyan` | Gradyanlar düzleşince tarama listesi boşaldı ve kilit **boşa geçmeyi reddetti** — doğru davranış. Test silinmedi: iddia "liste dolu olmalı"dan "tarayıcı gerçekten çalışıyor + bugün gradyan yok"a taşındı. Biri yarın gradyan eklerse kilit yine yakalar |
+| **YENİ** `p244-olcek-paritesi` | Her `--yz-fs-*`'ın büyük modda tanımlı **ve gerçekten daha büyük** olduğunu ölçer |
+
+**Dört kilit de kırılarak doğrulandı:** yeni ölçü token'ını büyük modda
+tanımsız bırakmak, büyük modda aynı değeri kopyalamak, `warning-ink`'i ham
+tona düşürmek, bölüm etiketini referans tonuna (4.41) düşürmek, gradyan
+token'ını geri getirmek — hepsi ilgili testi düşürdü.
+
+## A1.6 Bu aşamada YAPILMAYAN
+
+* **Kenar çubuğu çizimi.** Token'lar hazır; `AppShell`'in laciverde
+  taşınması **aşama 2**. Bugün kenar çubuğu yeni lacivert token'ı
+  kullanıyor ama içindeki metin renkleri hâlâ genel token'larda —
+  aşama 2'ye kadar kontrast düşük kalabilir. **Bilinçli ve geçici.**
+* Bileşen yoğunluğu, filtre çubuğu, detay çekmecesi → aşama 3.
+* Ay takvimi dar ekranda 48×48'i tutamıyor (§0.3 açık madde).
+
+## A1.7 Doğrulama
+
+* `npx tsc --noEmit` temiz.
+* `npx eslint` 0 hata (4 uyarı, hepsi P244 öncesinden).
+* **Tam web takımı: 229 dosya / 1970 test yeşil.**

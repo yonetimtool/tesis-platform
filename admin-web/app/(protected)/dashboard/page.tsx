@@ -740,7 +740,7 @@ export default function DashboardPage() {
           onKeyDown={(e) => bolumKlavye(si, bi, e)}
           aria-label={t("panoTasiTut", { ad: t(b.anahtar) })}
           title={t("panoTasiTut", { ad: t(b.anahtar) })}
-          className="odak-ic yz-dokunma-44 flex h-11 w-11 shrink-0 items-center justify-center rounded-btn border"
+          className="odak-ic yz-dokunma-48 flex h-11 w-11 shrink-0 items-center justify-center rounded-btn border"
           style={{
             cursor: "grab",
             fontSize: "var(--yz-fs-h2)",
@@ -943,7 +943,7 @@ export default function DashboardPage() {
                     onKeyDown={(e) => bolumKlavye(si, bi, e)}
                     aria-label={t("panoTasiTut", { ad: t(b.anahtar) })}
                     title={t("panoTasiTut", { ad: t(b.anahtar) })}
-                    className="odak-ic yz-dokunma-44 inline-flex items-center gap-2 rounded-btn border px-kart py-2"
+                    className="odak-ic yz-dokunma-48 inline-flex items-center gap-2 rounded-btn border px-kart py-2"
                     style={{
                       cursor: "grab",
                       borderColor: "var(--yz-border)",

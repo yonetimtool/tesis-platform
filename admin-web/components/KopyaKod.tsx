@@ -74,7 +74,11 @@ export function KopyaKod({
       <button
         type="button"
         onClick={() => void kopyala()}
-        // 44px dokunma hedefi (erisilebilirlik kurali).
+        // 32 px SATIR ICI olcu — yanindaki metinle ayni ritimde akar.
+        // Dokunma hedefi BURADAN gelmiyor: `@media (pointer: coarse)`
+        // kurali her dugmeyi 48 px'e cikariyor (tasarim-sistemi.css).
+        // (Eski yorum "44px dokunma hedefi" diyordu ama sinif 32'ydi —
+        //  yorum kodu ANLATMIYORDU, duzeltildi.)
         className="inline-flex min-h-[32px] items-center gap-1 rounded-md border kart-kenar px-2 py-1 text-xs font-medium text-metin-body transition hover:bg-yuzey-divider"
         aria-label={
           etiket ? t("kopyaEtiketli", { ne: etiket }) : t("kopyala")

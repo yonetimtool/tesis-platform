@@ -9,7 +9,7 @@
  * =========================================================================
  * ERISILEBILIRLIK — dort sey pazarlik disi
  * =========================================================================
- * 1. 44px DOKUNMA HEDEFI: `orta` ve `buyuk` boylar bunu tutar. `kucuk`
+ * 1. 48px DOKUNMA HEDEFI: `orta` ve `buyuk` boylar bunu tutar. `kucuk`
  *    boy YALNIZ tablo satiri gibi yogun baglamlar icindir ve orada da
  *    dokunma hedefi satirin kendisiyle saglanir — bu yuzden `kucuk`
  *    36px'te birakildi, 44 degil.
@@ -29,9 +29,9 @@ export type DugmeBoyu = "kucuk" | "orta" | "buyuk";
 const BOY: Record<DugmeBoyu, { h: string; px: string; fs: string }> = {
   // 36px: yogun baglam (tablo satiri). Dokunma hedefi satirla saglanir.
   kucuk: { h: "h-9", px: "px-3", fs: "var(--yz-fs-sm)" },
-  // 44px: brief'in dokunma hedefi.
-  orta: { h: "h-11", px: "px-4", fs: "var(--yz-fs-body)" },
-  buyuk: { h: "h-12", px: "px-5", fs: "var(--yz-fs-h3)" },
+  // (P244) 48px: dokunma hedefi 44'ten 48'e cikti.
+  orta: { h: "h-12", px: "px-4", fs: "var(--yz-fs-body)" },
+  buyuk: { h: "h-14", px: "px-5", fs: "var(--yz-fs-h3)" },
 };
 
 /**

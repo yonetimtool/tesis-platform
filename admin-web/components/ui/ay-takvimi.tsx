@@ -34,9 +34,15 @@
  * (mobildeki `gun_takvimi.dart` ile AYNI karar).
  *
  * =========================================================================
- * DOKUNMA HEDEFI 44px
+ * DOKUNMA HEDEFI (P244: 48px)
  * =========================================================================
- * Hucre `min-h/min-w` 2.75rem = 44px: tasarim sisteminin dokunma hedefi.
+ * Hucre YUKSEKLIGI 3rem = 48px: tasarim sisteminin dokunma hedefi.
+ *
+ * GENISLIK DAYATILMIYOR ve bu OLCULMUS bir istisna: izgara 7 sutun ve
+ * gun hucresi 320/360/390 px ekranda 33.1 / 38.9 / 43.1 px'e dusuyor —
+ * yani 44 de tutulamiyordu. `min-width: 48px` vermek izgarayi TASIRIRDI.
+ * Hedef bugun 39x39 yerine 39x48; tam cozum degil, olculebilir iyilesme.
+ * ACIK MADDE: dar ekranda ay takvimi 48x48'i tutamiyor.
  * Onceki serit 2.25rem (36px) idi ve bu bir DOKUNMA hedefi degil, yogun
  * baglam olcusudur.
  */
@@ -142,8 +148,7 @@ export function AyTakvimi({
               aria-label={g}
               className="odak-ic tabular-nums"
               style={{
-                minWidth: "2.75rem",
-                minHeight: "2.75rem",
+                minHeight: "3rem",
                 fontSize: "var(--yz-fs-sm)",
                 borderRadius: "var(--yz-radius-sm)",
                 border: "var(--yz-border-w) solid var(--yz-border)",

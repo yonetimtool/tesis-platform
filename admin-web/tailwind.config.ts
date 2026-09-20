@@ -1,4 +1,8 @@
 import type { Config } from "tailwindcss";
+import varsayilanTema from "tailwindcss/defaultTheme";
+
+/** Tailwind'in kendi yedek yigini — Inter yuklenmezse devreye girer. */
+const varsayilanYaziTipi = varsayilanTema.fontFamily;
 
 // Yönetiyor tasarim sistemi (Faz 1). Marka: navy #1E3A5F → teal #0E9594.
 // Koyu mod merkezi olarak globals.css'te notrr Tailwind siniflarini yeniden
@@ -134,16 +138,19 @@ const config: Config = {
         },
       },
       fontFamily: {
-        // Yerel sistem yigini — build-time font indirmesi YOK (guvenli + hizli).
-        sans: [
-          "-apple-system",
-          "BlinkMacSystemFont",
-          "Segoe UI",
-          "Roboto",
-          "Helvetica Neue",
-          "Arial",
-          "sans-serif",
-        ],
+        // (P244 §1) INTER'E BAGLANDI — OLCULEN KUSURUN DUZELTMESI.
+        // -------------------------------------------------------------
+        // Burasi SISTEM YIGINI tutuyordu (`-apple-system, Segoe UI…`)
+        // oysa yeni dilin `--yz-font` degiskeni P175'ten beri Inter.
+        // Sonuc: urun IKI YAZI TIPIYLE BIRDEN ciziliyordu — `--yz-font`
+        // kullanan yuzeyler Inter, Tailwind `font-sans` kullanan eski
+        // yuzeyler isletim sistemi yazi tipi (Windows'ta Segoe UI,
+        // macOS'ta SF Pro). Bir tasarim tercihi degil, KUSURDU.
+        //
+        // Inter YEREL barindiriliyor (`app/yazi-tipi.css`, 7 alt kume,
+        // `unicode-range` ile secmeli indirme); ek ag istegi ya da ek
+        // dosya boyutu YOK.
+        sans: ["Inter", "Inter Yedek", ...varsayilanYaziTipi.sans],
       },
       borderRadius: {
         // Olcek: 8 / 12 / 16 (Tailwind lg/xl/2xl ile hizali).

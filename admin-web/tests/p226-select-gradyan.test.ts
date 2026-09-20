@@ -29,14 +29,20 @@ import { describe, expect, it } from "vitest";
 
 const KOK = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-/** CSS'te degeri `gradient(` iceren tum `--yz-*` tokenlari. */
-function gradyanTokenlari(): string[] {
-  const css = readFileSync(join(KOK, "app", "tasarim-sistemi.css"), "utf8");
+/** Verilen CSS metnindeki, degeri `gradient(` iceren `--yz-*` tokenlari. */
+function tokenlariAyikla(css: string): string[] {
   const bulunan = new Set<string>();
   for (const m of css.matchAll(/(--yz-[a-z0-9-]+)\s*:\s*([^;]+);/g)) {
     if (/gradient\(/.test(m[2])) bulunan.add(m[1]);
   }
   return [...bulunan];
+}
+
+/** Tasarim sistemindeki gradyan token'lari. */
+function gradyanTokenlari(): string[] {
+  return tokenlariAyikla(
+    readFileSync(join(KOK, "app", "tasarim-sistemi.css"), "utf8"),
+  );
 }
 
 /** Kaynak agacindaki tum .tsx dosyalari. */
@@ -61,10 +67,33 @@ function tsxDosyalari(): string[] {
 describe("(P226) select/option arka plani DUZ RENK olmali", () => {
   const GRADYANLAR = gradyanTokenlari();
 
-  it("gradyan token listesi CSS'ten URETILDI (bos degil)", () => {
-    // Liste bos kalirsa asagidaki kural sessizce hicbir sey olcmez.
-    expect(GRADYANLAR.length).toBeGreaterThan(0);
-    expect(GRADYANLAR).toContain("--yz-metal-1");
+  // (P244 §1) TEHLIKE SINIFI BOSALDI — KILIT KALDI.
+  // -----------------------------------------------------------------
+  // P244'te "fircalanmis metal" dili emekliye ayrildi ve TUM gradyan
+  // token'lari duz dolguya indi (`--yz-metal-1` artik `#ffffff`).
+  // Yani bu turun kusuru artik URETILEMEZ durumda.
+  //
+  // TEST SILINMEDI: yarin biri yeniden bir gradyan token eklerse tuzak
+  // geri gelir ve jsdom onu YINE goremez (kusur prod'a tam da bu yuzden
+  // cikmisti). Kilit, tehlike sinifi bosken de ANLAMLI olmali.
+  //
+  // Bu yuzden iddia degisti: "liste dolu olmali" yerine "tarayici
+  // GERCEKTEN calisiyor olmali". Tarayicinin calistigi, bilinen bir
+  // gradyan metni uzerinde AYRICA olculuyor — liste bos ciktiginda
+  // bunun sebebi "gradyan kalmadi" mi yoksa "tarayici bozuldu" mu,
+  // ayirt edilebilsin.
+  it("TARAYICI CALISIYOR — tehlike sinifi bos olsa bile", () => {
+    const sahte = `:root {
+      --yz-duz: #ffffff;
+      --yz-gradyanli: linear-gradient(180deg, #fff 0%, #eee 100%);
+    }`;
+    expect(tokenlariAyikla(sahte)).toEqual(["--yz-gradyanli"]);
+  });
+
+  it("BUGUN gradyan token'i YOK (duz dile gecildi)", () => {
+    // Bilgi amacli ve bilincli: bu iddia bir gun degisirse, degistiren
+    // kisi asagidaki kuralin devreye girdigini de bilerek degistirir.
+    expect(GRADYANLAR).toEqual([]);
   });
 
   it("HICBIR <select>/<option> gradyan token'i BACKGROUND olarak kullanmaz", () => {
