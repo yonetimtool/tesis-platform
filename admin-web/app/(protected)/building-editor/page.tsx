@@ -5,14 +5,16 @@ import useSWR from "swr";
 import { daireTipiKisa, daireTipiRengi } from "@/lib/daire-tipi-rengi";
 
 import {
-  Modal,
-  Kart,
   Alan,
   AlanSarmal,
   Dugme,
   HataDurumu,
-  useOnay,
+  Kart,
+  Modal,
+  Rozet,
+  SayfaBasligi,
   Secim,
+  useOnay,
 } from "@/components/ui";
 import { DaireSakinleri } from "@/components/DaireSakinleri";
 import { useToast } from "@/components/Toast";
@@ -58,6 +60,22 @@ const EMPTY_UNIT: UnitFormState = {
 
 /** Sunucudaki `_BLOK_PATTERN` ile AYNI — ayrisirsa test duser. */
 const BLOK_KALIBI = /^[A-Za-z0-9]+$/;
+
+/**
+ * (P244 §6c) BLOK KARTI YUZEYI — tek yerde.
+ *
+ * Eski surum SABIT TAILWIND RENKLERI yaziyordu (`border-indigo-200
+ * bg-indigo-50 text-indigo-900`, `text-amber-600`, `text-red-700`,
+ * `border-slate-300 bg-white`) — yani token katmanini tamamen
+ * atliyordu ve koyu temada kendi basinaydi. Referansin blok kartlari
+ * notr bir yuzey; RENK burada bir ANLAM tasimiyordu, yalnizca susdu.
+ */
+const KART_STILI = {
+  borderRadius: "var(--yz-radius-card)",
+  border: "var(--yz-border-w) solid var(--yz-border)",
+  background: "var(--yz-surface-1)",
+  minHeight: "7rem",
+} as const;
 
 export default function BuildingEditorPage() {
   const t = useT();
@@ -441,20 +459,15 @@ export default function BuildingEditorPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-            {t("kabukBinaDuzenleme")}
-          </h1>
-          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-            {t("binaAciklama")}
-          </p>
-        </div>
-        {/* (P163 §4) YAPISAL ARAC SERIDI — hepsi MODAL acar (P162 kurali).
-            Bu ucu "Daireler" listesinin ustunden BURAYA tasindi: binanin
-            YAPISINI degistiren islemler, bir liste suzulurken yanlislikla
-            basilacak yerde durmamali. */}
-        <div className="flex flex-wrap items-center gap-2">
+      <SayfaBasligi
+        baslik={t("kabukBinaDuzenleme")}
+        aciklama={t("binaAciklama")}
+        eylem={
+          /* (P163 §4) YAPISAL ARAC SERIDI — hepsi MODAL acar (P162
+             kurali). Bu ucu "Daireler" listesinin ustunden BURAYA
+             tasindi: binanin YAPISINI degistiren islemler, bir liste
+             suzulurken yanlislikla basilacak yerde durmamali. */
+          <>
           <Dugme
             boy="kucuk"
             onClick={() => {
@@ -485,8 +498,9 @@ export default function BuildingEditorPage() {
           {drilledIn ? (
             <Dugme boy="kucuk" onClick={closeDetail}>{t("binaBloklaraDon")}</Dugme>
           ) : null}
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* --- TOPLU DAIRE OLUSTUR --- */}
       <Modal
@@ -900,31 +914,55 @@ function BlockTiles({
 }) {
   const t = useT();
   return (
-    <div className="flex flex-wrap gap-3">
+    <div
+      className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+      data-test="blok-kartlari"
+    >
       {labels.map((label) => (
         <div
           key={label}
-          className="relative flex h-32 w-40 flex-col rounded-xl border border-indigo-200 bg-indigo-50 p-3"
+          className="flex flex-col justify-between p-4"
+          style={KART_STILI}
         >
-          <button className="flex flex-1 flex-col items-center justify-center" onClick={() => onOpen(label)}>
-            <span className="text-lg font-semibold text-indigo-900">
+          <button
+            type="button"
+            className="odak-ic text-start"
+            onClick={() => onOpen(label)}
+            aria-label={t("binaBlokAc", { ad: label })}
+          >
+            <span
+              className="block"
+              style={{
+                fontSize: "var(--yz-fs-h3)",
+                fontWeight: 600,
+                color: "var(--yz-text)",
+              }}
+            >
               {t("blokEtiketi", { ad: label })}
             </span>
-            <span className="text-xs text-metin-body">
+            <span
+              className="mt-0.5 block tabular-nums"
+              style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
+            >
               {t("daireSayisiN", { n: unitCountFor(label) })}
             </span>
-            {!registeredFor(label) && (
-              <span className="mt-1 text-[10px] text-amber-600">{t("binaKayitsiz")}</span>
-            )}
           </button>
-          {registeredFor(label) && (
-            <div className="flex justify-center gap-2">
-              <button className="text-xs text-metin-body hover:underline" onClick={() => onEditBlock(label)}>
-                {t("ortakDuzenle")}
-              </button>
-              <button className="text-xs text-red-700 hover:underline" onClick={() => onRemoveBlock(label)}>{t("ortakSil")}</button>
-            </div>
-          )}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {/* KAYITSIZ BLOK: dairelerde gecen ama BLOK KAYDI olmayan
+                etiket. Rozet METIN tasiyor — renk tek tasiyici degil. */}
+            {!registeredFor(label) ? (
+              <Rozet durum="uyari">{t("binaKayitsiz")}</Rozet>
+            ) : (
+              <>
+                <Dugme boy="kucuk" tur="sessiz" onClick={() => onEditBlock(label)}>
+                  {t("ortakDuzenle")}
+                </Dugme>
+                <Dugme boy="kucuk" tur="tehlike" onClick={() => onRemoveBlock(label)}>
+                  {t("ortakSil")}
+                </Dugme>
+              </>
+            )}
+          </div>
         </div>
       ))}
 
@@ -933,22 +971,46 @@ function BlockTiles({
           her yeni daire bir bloga baglanir (canli-site kurali). */}
       {blocklessCount > 0 && (
         <button
+          type="button"
           onClick={onOpenBlockless}
-          className="flex h-32 w-40 flex-col items-center justify-center rounded-xl border kart-kenar bg-yuzey-bg"
+          className="odak-ic yz-lift flex flex-col justify-between p-4 text-start"
+          style={KART_STILI}
         >
-          <span className="text-lg font-semibold text-metin-body">{t("daireBlokAtanmamis")}</span>
-          <span className="text-xs text-metin-body">
+          <span
+            style={{
+              fontSize: "var(--yz-fs-h3)",
+              fontWeight: 600,
+              color: "var(--yz-text)",
+            }}
+          >
+            {t("daireBlokAtanmamis")}
+          </span>
+          <span
+            className="mt-0.5 tabular-nums"
+            style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
+          >
             {t("daireSayisiN", { n: blocklessCount })}
           </span>
         </button>
       )}
 
+      {/* EKLEME KARTI KESIK CIZGILI: "burada bir sey YOK, sen koyabilirsin"
+          demenin yerlesik dili. Dolu kartlarla ayni olcude ki izgara
+          ritmi bozulmasin. */}
       <button
+        type="button"
         onClick={onAddBlock}
-        className="flex h-32 w-40 flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white text-metin-muted hover:bg-yuzey-bg"
+        className="odak-ic flex min-h-[7rem] flex-col items-center justify-center gap-1 transition-colors hover:bg-[var(--yz-surface-2)]"
+        style={{
+          borderRadius: "var(--yz-radius-card)",
+          border: "var(--yz-border-w) dashed var(--yz-border-strong)",
+          color: "var(--yz-text-2)",
+        }}
       >
-        <span className="text-3xl leading-none">+</span>
-        <span className="text-sm">{t("binaBlokEkle")}</span>
+        <span aria-hidden="true" style={{ fontSize: "var(--yz-fs-h1)", lineHeight: 1 }}>
+          +
+        </span>
+        <span style={{ fontSize: "var(--yz-fs-sm)" }}>{t("binaBlokEkle")}</span>
       </button>
     </div>
   );
@@ -1044,7 +1106,16 @@ function BlockDetail({
       </div>
 
       {blockless && (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+        <p
+          className="px-3 py-2"
+          style={{
+            borderRadius: "var(--yz-radius-btn)",
+            border: "var(--yz-border-w) solid var(--yz-warning-edge)",
+            background: "color-mix(in srgb, var(--yz-warning) 12%, var(--yz-surface-1))",
+            color: "var(--yz-warning-ink)",
+            fontSize: "var(--yz-fs-xs)",
+          }}
+        >
           {t("binaBloksuzNot")}
         </p>
       )}
@@ -1054,7 +1125,10 @@ function BlockDetail({
           derdi — hemen ustundeki "Veriler yuklenemedi" kutusuyla
           celiserek. */}
       {!yuklemeHatasi && !blockless && floors.length === 0 && katsiz.length === 0 && (
-        <p className="py-6 text-center text-sm text-metin-muted">
+        <p
+          className="py-6 text-center"
+          style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
+        >
           {t("binaKatYok")}
         </p>
       )}
@@ -1122,7 +1196,12 @@ function FloorRow({
       // kalmamali.
       onDrop={surukleAcik ? () => onBirak?.(units.length) : undefined}
     >
-      <span className="w-16 shrink-0 pt-3 text-xs font-medium text-metin-muted">{katLabel}</span>
+      <span
+        className="w-16 shrink-0 pt-3 font-medium"
+        style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
+      >
+        {katLabel}
+      </span>
       <div className="flex flex-wrap gap-2">
         {units.map((u, indeks) => (
           <div
@@ -1227,7 +1306,14 @@ function FloorRow({
         {canAdd && (
           <button
             onClick={onAddUnit}
-            className="flex h-16 w-20 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-yuzey-bg text-2xl text-metin-muted hover:bg-slate-100"
+            className="odak-ic flex h-16 w-20 items-center justify-center transition-colors hover:bg-[var(--yz-surface-2)]"
+            style={{
+              borderRadius: "var(--yz-radius-btn)",
+              border: "var(--yz-border-w) dashed var(--yz-border-strong)",
+              background: "var(--yz-surface-1)",
+              color: "var(--yz-text-2)",
+              fontSize: "var(--yz-fs-h2)",
+            }}
           >
             +
           </button>

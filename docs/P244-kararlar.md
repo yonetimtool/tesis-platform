@@ -947,3 +947,101 @@ nesne döndürüp bileşeni `filter is not a function` ile düşürüyordu.
 
 `tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
 **tam takım 236 dosya / 2011 test yeşil.**
+
+---
+
+# AŞAMA 6c — BUILDING-EDITOR + GÜVENLİĞİN KALANI · UYGULANDI
+
+## A6c.1 `/building-editor` — sabit renkler token katmanını atlıyordu
+
+Blok kartları **sabit Tailwind renkleri** yazıyordu:
+`border-indigo-200 bg-indigo-50 text-indigo-900`, `text-amber-600`,
+`text-red-700`, `border-slate-300 bg-white` — yani token katmanını
+tamamen atlıyor ve **koyu temada kendi başınaydı**.
+
+Aşama 4'ün kilidi bunu görmemişti: o kilit **modül ithallerini** ölçüyor
+(eski dosyalardan içe aktarma), sabit sınıf adlarını değil. `yz-bilesen`
+kilidi de yalnız `components/ui/` altını tarıyor.
+
+Referansın blok kartları **nötr bir yüzey**; renk burada bir **anlam**
+taşımıyordu, yalnızca süstü. Kartlar token diline çevrildi, ızgaraya
+dizildi, "kayıtsız blok" rozeti **metin** taşıyor, ekleme kartı kesik
+çizgili.
+
+Sayfadaki diğer üç sabit renk kullanımı da (uyarı şeridi, boş metin, kat
+ekleme kutusu) token'a çevrildi.
+
+## A6c.2 Güvenliğin kalanı — ölçerek seçildi
+
+| ekran | ölçüm | karar |
+|---|---|---|
+| `/olaylar` | **kart yığını** + `bg-slate-100` | **çevrildi**: özet şeridi + tablo |
+| `/ziyaretciler` | **kart yığını** | **çevrildi**: özet şeridi + tablo |
+| `/panik` | zaten tablo | dokunulmadı |
+| `/patrol-plans`, `/checkpoints` | zaten `VeriTablosu` | dokunulmadı |
+| `/kamera-kayitlari`, `/notifications`, `/akilli-ev` | sabit renk yok, yapı makul | dokunulmadı |
+
+## A6c.3 Tarama beklediğimden fazlasını buldu
+
+Kart-yığını desenini kilitlemek için yazdığım tarama, düzelttiğim
+üçün **dışında on ekran daha** buldu. Hepsini "istisna" diye
+etiketlemek kuralı sessizce boşaltmak olurdu; tek tek bakıp ikiye
+ayırdım:
+
+**Doğru kullanım (7) — kart yanlış bileşen değil, yanlış YERDE
+kullanılmıştı:**
+
+| ekran | kart neyi temsil ediyor |
+|---|---|
+| `duyurular`, `etkinlikler` | **uzun içerik** (`whitespace-pre-line`) — tablo hücresine sıkıştırmak okunmaz yapardı |
+| `rezervasyon-yonetimi` | **ortak alan tanımı**, rezervasyon kaydı değil |
+| `schematic`, `residents` | **blok grubu** (içinde liste/ızgara) |
+| `tasks` | **kanban görev kartı** — tabloya çevirmek sürükle-bırakı öldürürdü |
+| `tesis-ayarlari` | **ayar grubu** |
+| `yonetim-iletisim` | **kişi kartviziti** |
+| `kameralar`, `building-editor`, `dashboard` | görsel karo / blok kartı / pano bölümü |
+
+**Borç (3) — kart yanlış yerde, ama düzeltmesi bu turun kapsamı
+dışında (aşama 8: operasyon + iletişim):**
+`dis-hizmetler`, `kargolar`, `rezervasyonlarim`.
+
+Borç listesi **tam eşleşir**: biri düzeltilince listeden silinmeli
+(yoksa liste bayatlar), yeni biri eklenince test düşer. Yani borç ne
+sessizce büyüyebilir ne de sessizce unutulabilir.
+
+## A6c.4 Kilit: kart yığını yasağı
+
+**YENİ** `p244-kart-yigini-yasak` (3 test). Metin taraması, çünkü
+"ekran boş görünüyor" görsel bir yargı ve jsdom onu ölçemez — ama
+**desen yapısal**: bir listeyi `map` edip `<Kart` döndürmek.
+
+Kilit ayrıca **istisna listesinin bayatlamasını** da ölçüyor: listede
+adı geçen dosya silinmişse test düşer.
+
+Kırarak doğrulandı: `/olaylar`'ı kart yığınına geri döndürmek testi
+düşürdü.
+
+## A6c.5 Kendi hatam — üçüncü kez
+
+Import bloklarını `[\s\S]*?` ile eşleyen regex'i **üçüncü kez**
+kullandım ve üçüncü kez dosyanın ilk `import {`ini (React'ınkini)
+yakalayıp bloğu bozdu. Her seferinde `tsc` yakaladı ve elle onardım.
+
+**Bundan sonra bu deseni kullanmayacağım**; ithal bloğunu değiştirirken
+hedef modülün tam metnini arayıp değiştireceğim.
+
+## A6c.6 Bu turda YAPILMAYAN
+
+* Borç listesindeki üç ekran (aşama 8).
+* `/kamera-kayitlari`'na referanstaki **sağ önizleme paneli** eklenmedi
+  — video oynatıcı zaten var ama yan yana düzen kurulmadı.
+* `/checkpoints`'e referanstaki **harita + liste** ayrımı uygulanmadı;
+  sayfada harita zaten var, düzeni değiştirilmedi.
+* `/panik`'e özet şeridi eklenmedi (tablo yapısı yeterliydi, öncelik
+  kart yığınlarındaydı).
+* 3B sahne paleti hâlâ P244 öncesi renklerde (§A5.5).
+
+## A6c.7 Doğrulama
+
+`tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
+**tam takım 237 dosya / 2014 test yeşil.**

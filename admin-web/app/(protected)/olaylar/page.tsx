@@ -11,15 +11,20 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import {
-  Modal,
-  CokSatir,
   Alan,
   AlanSarmal,
   BosDurum,
+  CokSatir,
   Dugme,
   HataDurumu,
   IskeletMetin,
   Kart,
+  Modal,
+  OzetKarti,
+  OzetSeridi,
+  Rozet,
+  SayfaBasligi,
+  VeriTablosu,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -39,6 +44,8 @@ type Olay = {
 };
 
 // METIN DEGIL KIMLIK (modul duzeyi).
+// (P244 §6c) UCLUDE DIZE YAZILMAZ (`sabit-metin`) — durum kimligi de dize.
+const DURUM_KAPALI = "kapatildi" as const;
 const DURUM_ANAHTARI: Record<string, SozlukAnahtari> = {
   yeni: "olayYeni",
   inceleniyor: "olayInceleniyor",
@@ -106,22 +113,110 @@ export default function OlaylarPage() {
     }
   }
 
+  // (P244 §6c) ACIK OLAY = kapatilmamis olan. Durum kimlikleri
+  // `DURUM_ANAHTARI`de; "kapatildi" disindaki her sey acik sayilir ki
+  // yeni bir durum eklendiginde sessizce "kapali" tarafina dusmesin.
+  const acikSayisi = kayitlar.filter((o) => o.durum !== DURUM_KAPALI).length;
+
+  const kolonlar = [
+    {
+      id: "tarih",
+      baslik: t("ortakTarih"),
+      hucre: (o: Olay) => tarihSaatUzun(o.created_at),
+      deger: (o: Olay) => o.created_at,
+    },
+    {
+      id: "baslik",
+      baslik: t("olayKolonBaslik"),
+      hucre: (o: Olay) => (
+        <span>
+          <span className="block" style={{ color: "var(--yz-text)" }}>
+            {o.baslik}
+          </span>
+          {o.aciklama ? (
+            // ACIKLAMA IKINCI SATIRDA ve KIRPILIR: uzun bir metin satir
+            // yuksekligini bozup tablonun ritmini kirardi.
+            <span
+              className="block truncate"
+              style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
+            >
+              {o.aciklama}
+            </span>
+          ) : null}
+        </span>
+      ),
+      deger: (o: Olay) => o.baslik,
+    },
+    {
+      id: "kaynak",
+      baslik: t("olayKolonKaynak"),
+      hucre: (o: Olay) => t(kaynakAnahtari(o.kaynak)),
+      darEkrandaGizle: true,
+    },
+    {
+      id: "konum",
+      baslik: t("olayKolonKonum"),
+      hucre: (o: Olay) => o.konum ?? "—",
+      darEkrandaGizle: true,
+    },
+    {
+      id: "durum",
+      baslik: t("ortakDurum"),
+      // ROZET METIN TASIR: renk tek tasiyici degil.
+      hucre: (o: Olay) => (
+        <Rozet durum={o.durum === DURUM_KAPALI ? "olumlu" : "uyari"}>
+          {t(durumAnahtari(o.durum))}
+        </Rozet>
+      ),
+      deger: (o: Olay) => o.durum,
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-        {t("olayBaslik")}
-      </h1>
-        <Dugme tur="birincil" boy="kucuk" onClick={() => {
-          // (P163 §2) ACILISTA ESKI HATA TEMIZLENIR: modal yeniden acildiginda
-          // onceki denemenin mesaji ekranda duruyordu ve kullanici hic
-          // denemeden hata gormus oluyordu.
-          setHata(null);
-          setModalAcik(true);
-        }}>
-          {t("olayYeniBildir")}
-        </Dugme>
-      </div>
+      <SayfaBasligi
+        baslik={t("olayBaslik")}
+        eylem={
+          <Dugme
+            tur="birincil"
+            boy="kucuk"
+            onClick={() => {
+              // (P163 §2) ACILISTA ESKI HATA TEMIZLENIR: modal yeniden
+              // acildiginda onceki denemenin mesaji ekranda duruyordu ve
+              // kullanici hic denemeden hata gormus oluyordu.
+              setHata(null);
+              setModalAcik(true);
+            }}
+          >
+            {t("olayYeniBildir")}
+          </Dugme>
+        }
+      />
+
+      {/* (P244 §6c) OZET SERIDI — sayilar GORUNEN listeden.
+          Liste sayfalanmiyor (sunucu tum olaylari donduruyor), yani
+          gorunen kume = tum kume. Sayfalansaydi `meta.total` gerekirdi
+          (arac gecislerinde oyle yapildi). */}
+      {!isLoading && !error && kayitlar.length > 0 && (
+        <OzetSeridi>
+          <OzetKarti
+            etiket={t("olayOzetToplam")}
+            deger={String(kayitlar.length)}
+            durum="notr"
+          />
+          <OzetKarti
+            etiket={t("olayOzetAcik")}
+            deger={String(acikSayisi)}
+            durum={acikSayisi > 0 ? "uyari" : "olumlu"}
+            altBilgi={acikSayisi > 0 ? t("olayOzetAcikAlt") : undefined}
+          />
+          <OzetKarti
+            etiket={t("olayOzetKapali")}
+            deger={String(kayitlar.length - acikSayisi)}
+            durum="olumlu"
+          />
+        </OzetSeridi>
+      )}
 
       <Modal
         acik={modalAcik}
@@ -172,28 +267,23 @@ export default function OlaylarPage() {
 
       <section className="space-y-3">
         <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("olayListe")}</h2>
-        {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
-        {isLoading ? (
-          <IskeletMetin satir={3} />
-        ) : null}
-        {!isLoading && !error && kayitlar.length === 0 ? (
-          <BosDurum baslik={t("olayYok")} aciklama={t("olayYokAlt")} />
-        ) : null}
-        {kayitlar.map((o) => (
-          <Kart key={o.id} className="space-y-1">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{o.baslik}</h3>
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs">
-                {t(durumAnahtari(o.durum))}
-              </span>
-            </div>
-            <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
-              {tarihSaatUzun(o.created_at)} · {t(kaynakAnahtari(o.kaynak))}
-              {o.konum ? ` · ${o.konum}` : ""}
-            </p>
-            {o.aciklama ? <p className="text-sm">{o.aciklama}</p> : null}
-          </Kart>
-        ))}
+        {/* (P244 §6c) KART YIGINI -> TABLO.
+            Her olay AYRI BIR KARTTI ve ekrana dort kayit siginiyordu.
+            Olay kaydi tekrarli ve kisa alanli (tarih, baslik, kaynak,
+            konum, durum); tablo ayni alanda yirmi kayit gosterir ve goz
+            sutunlari takip eder.
+            HATA TABLOYA VERILIR: istek dustugunde "kayit yok" yazmak,
+            kayit OLMADIGINI soylemek olurdu (P61). */}
+        <VeriTablosu
+          kolonlar={kolonlar}
+          satirlar={kayitlar}
+          satirId={(o) => o.id}
+          yukleniyor={isLoading}
+          hata={error ? t("ortakHataOlustu") : null}
+          yogunluk="sik"
+          bosBaslik={t("olayYok")}
+          bosAciklama={t("olayYokAlt")}
+        />
       </section>
     </div>
   );

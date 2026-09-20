@@ -9,7 +9,6 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import {
-  Modal,
   Alan,
   AlanSarmal,
   BosDurum,
@@ -17,6 +16,12 @@ import {
   HataDurumu,
   IskeletMetin,
   Kart,
+  Modal,
+  OzetKarti,
+  OzetSeridi,
+  Rozet,
+  SayfaBasligi,
+  VeriTablosu,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -103,13 +108,101 @@ export default function ZiyaretcilerPage() {
     }
   }
 
+  // (P244 §6c) ICERIDEKI = cikis damgasi olmayan kayit.
+  const iceridekiler = kayitlar.filter((z) => !z.cikis_zamani).length;
+
+  const kolonlar = [
+    {
+      id: "ad",
+      baslik: t("ziyaretciKolonAd"),
+      hucre: (z: Ziyaretci) => (
+        <span>
+          <span className="block" style={{ color: "var(--yz-text)" }}>
+            {z.ziyaretci_ad}
+          </span>
+          {z.notlar ? (
+            <span
+              className="block truncate"
+              style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
+            >
+              {z.notlar}
+            </span>
+          ) : null}
+        </span>
+      ),
+      deger: (z: Ziyaretci) => z.ziyaretci_ad,
+    },
+    {
+      id: "daire",
+      baslik: t("aracKolonDaire"),
+      hucre: (z: Ziyaretci) => z.unit_no ?? "—",
+      deger: (z: Ziyaretci) => z.unit_no ?? "",
+    },
+    {
+      id: "giris",
+      baslik: t("ziyaretciKolonGiris"),
+      hucre: (z: Ziyaretci) => tarihSaatUzun(z.giris_zamani),
+      deger: (z: Ziyaretci) => z.giris_zamani,
+    },
+    {
+      id: "durum",
+      baslik: t("ortakDurum"),
+      // ROZET METIN TASIR: renk tek tasiyici degil.
+      hucre: (z: Ziyaretci) =>
+        z.cikis_zamani ? (
+          <span style={{ color: "var(--yz-text-2)" }}>
+            {t("aracCikti", { saat: tarihSaatUzun(z.cikis_zamani) })}
+          </span>
+        ) : (
+          <Rozet durum="bilgi" nokta>
+            {t("aracIceride")}
+          </Rozet>
+        ),
+      deger: (z: Ziyaretci) => (z.cikis_zamani ? "1" : "0"),
+    },
+    {
+      id: "eylem",
+      kartRolu: "eylem" as const,
+      baslik: "",
+      gizlenebilir: false,
+      hucre: (z: Ziyaretci) => (
+        <div className="flex justify-end gap-2">
+          {/* DUZENLEME CIKISTAN BAGIMSIZ: kapida yanlis yazilan bir ad ya
+              da daire, ziyaretci ciktiktan SONRA da duzeltilebilmeli —
+              kayit aksi halde kalici olarak yanlis kalir. Sunucu kapisi
+              (`_REGISTRAR`) ikisinde de ayni. */}
+          <Dugme
+            boy="kucuk"
+            onClick={() => {
+              setDuzenlenen({ id: z.id });
+              setAd(z.ziyaretci_ad);
+              setDaireNo(z.unit_no ?? "");
+              setNotlar(z.notlar ?? "");
+              setHata(null);
+              setModalAcik(true);
+            }}
+          >
+            {t("ortakDuzenle")}
+          </Dugme>
+          {/* CIKIS DUGMESI yalnizca ICERIDEKI ziyaretcide: cikmis birine
+              tekrar cikis yaptirmak, kaydi ikinci kez damgalamak
+              olurdu. */}
+          {!z.cikis_zamani ? (
+            <Dugme boy="kucuk" onClick={() => void cikisYap(z.id)}>
+              {t("ziyaretciCikis")}
+            </Dugme>
+          ) : null}
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-        {t("ziyaretciBaslik")}
-      </h1>
-        <Dugme
+      <SayfaBasligi
+        baslik={t("ziyaretciBaslik")}
+        eylem={
+          <Dugme
           tur="birincil"
           boy="kucuk"
           onClick={() => {
@@ -124,9 +217,34 @@ export default function ZiyaretcilerPage() {
             setModalAcik(true);
           }}
         >
-          {t("ziyaretciYeni")}
-        </Dugme>
-      </div>
+            {t("ziyaretciYeni")}
+          </Dugme>
+        }
+      />
+
+      {/* (P244 §6c) OZET SERIDI — sayilar GORUNEN listeden (liste
+          sayfalanmiyor). "Icerideki" sayisi operasyonun en sik sordugu
+          soru: kapida kac kisi var. */}
+      {!isLoading && !error && kayitlar.length > 0 && (
+        <OzetSeridi>
+          <OzetKarti
+            etiket={t("ziyaretciOzetToplam")}
+            deger={String(kayitlar.length)}
+            durum="notr"
+          />
+          <OzetKarti
+            etiket={t("ziyaretciOzetIceride")}
+            deger={String(iceridekiler)}
+            durum={iceridekiler > 0 ? "bilgi" : "olumlu"}
+            altBilgi={t("ziyaretciOzetIcerideAlt")}
+          />
+          <OzetKarti
+            etiket={t("ziyaretciOzetCikmis")}
+            deger={String(kayitlar.length - iceridekiler)}
+            durum="olumlu"
+          />
+        </OzetSeridi>
+      )}
 
       <Modal
         acik={modalAcik}
@@ -184,46 +302,22 @@ export default function ZiyaretcilerPage() {
         {!isLoading && !error && kayitlar.length === 0 ? (
           <BosDurum baslik={t("ziyaretciYok")} aciklama={t("ziyaretciYokAlt")} />
         ) : null}
-        {kayitlar.map((z) => (
-          <Kart key={z.id} className="space-y-1">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{z.ziyaretci_ad}</h3>
-              <span style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{z.unit_no ?? "—"}</span>
-            </div>
-            <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
-              {tarihSaatUzun(z.giris_zamani)}
-              {z.cikis_zamani ? ` → ${tarihSaatUzun(z.cikis_zamani)}` : ""}
-            </p>
-            {z.notlar ? <p className="text-sm">{z.notlar}</p> : null}
-            <div className="flex flex-wrap gap-2">
-              {/* DUZENLEME CIKISTAN BAGIMSIZ: kapida yanlis yazilan bir ad
-                  ya da daire, ziyaretci ciktiktan SONRA da duzeltilebilmeli
-                  — kayit aksi halde kalici olarak yanlis kalir. Sunucu
-                  kapisi (`_REGISTRAR`) ikisinde de ayni. */}
-              <Dugme
-                boy="kucuk"
-                onClick={() => {
-                  setDuzenlenen({ id: z.id });
-                  setAd(z.ziyaretci_ad);
-                  setDaireNo(z.unit_no ?? "");
-                  setNotlar(z.notlar ?? "");
-                  setHata(null);
-                  setModalAcik(true);
-                }}
-              >
-                {t("ortakDuzenle")}
-              </Dugme>
-              {/* CIKIS DUGMESI yalnizca ICERIDEKI ziyaretcide: cikmis
-                  birine tekrar cikis yaptirmak, kaydi ikinci kez
-                  damgalamak olurdu. */}
-              {!z.cikis_zamani ? (
-                <Dugme boy="kucuk" onClick={() => void cikisYap(z.id)}>
-                  {t("ziyaretciCikis")}
-                </Dugme>
-              ) : null}
-            </div>
-          </Kart>
-        ))}
+        {/* (P244 §6c) KART YIGINI -> TABLO.
+            Her ziyaretci AYRI BIR KARTTI; kayit tekrarli ve kisa alanli
+            (ad, daire, giris, cikis). Tablo ayni alanda cok daha fazla
+            kayit gosterir ve "kim iceride" sorusu tek sutundan okunur.
+            HATA TABLOYA VERILIR (P61): istek dustugunde "kayit yok"
+            yazmak, kayit OLMADIGINI soylemek olurdu. */}
+        <VeriTablosu
+          kolonlar={kolonlar}
+          satirlar={kayitlar}
+          satirId={(z) => z.id}
+          yukleniyor={isLoading}
+          hata={error ? t("ortakHataOlustu") : null}
+          yogunluk="sik"
+          bosBaslik={t("ziyaretciYok")}
+          bosAciklama={t("ziyaretciYokAlt")}
+        />
       </section>
     </div>
   );
