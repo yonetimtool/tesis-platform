@@ -235,7 +235,7 @@ describe("(P132) ORTAK ILKELLER tasarim sistemine bagli", () => {
 
   it("kart yuzeyleri token kullaniyor (slate/golge DEGIL)", () => {
     // (P138) `tableCardCls` KALDIRILDI (olu sinif, 0 kullanim); yerini
-    // `components/tablo.tsx` icindeki `TabloKart` aldi ve ayni kural
+    // `components/ui/tablo-ilkelleri.tsx` icindeki `TabloKart` aldi ve ayni kural
     // asagida ONUN uzerinde olculuyor — kapsam kaybi yok, yer degisti.
     for (const ad of ["cardCls", "panelCls"]) {
       const m = new RegExp(`export const ${ad}[^;]*;`, "s").exec(FORM);
@@ -250,16 +250,28 @@ describe("(P132) ORTAK ILKELLER tasarim sistemine bagli", () => {
   });
 
   it("TABLO KABI da token kullaniyor (slate/golge DEGIL)", () => {
-    const TABLO = readFileSync(resolve(KOK, "admin-web/components/tablo.tsx"), "utf8");
+    // (P244 §4) IDDIA GUNCELLENDI, NIYET AYNI.
+    // -----------------------------------------------------------------
+    // Eskiden `rounded-kart` ve `bg-yuzey-card` SINIFLARI aranıyordu —
+    // onlar ESKI dilin adlariydi. Asama 4'te dosya `components/ui/`
+    // altina tasinip token diline cevrildi; eski siniflari sart kosmak,
+    // kaldirilan dili ZORUNLU tutmak olurdu.
+    //
+    // Olculen sey degismedi: "kap tasarim sisteminden geliyor mu, yoksa
+    // elle slate/golge mi yaziyor". Yalnizca sistemin adi degisti.
+    const TABLO = readFileSync(resolve(KOK, "admin-web/components/ui/tablo-ilkelleri.tsx"), "utf8");
     // Govde bir sonraki `export`a kadar: ilk `\n}` yikim parantezidir ve
     // JSX'ten ONCE gelir (ilk yazimda tam bu yuzden bos yakaladi).
     const m = /export function TabloKart\([\s\S]*?(?=\nexport |\n\/\/ )/.exec(TABLO);
     expect(m, "TabloKart yok").not.toBeNull();
-    expect(m![0]).toContain("rounded-kart");
-    expect(m![0]).toContain("bg-yuzey-card");
+    expect(m![0]).toContain("var(--yz-radius-card)");
+    expect(m![0]).toContain("var(--yz-surface-1)");
+    expect(m![0]).toContain("var(--yz-border)");
     // Mobil kartlarda GOLGE YOKTUR — ayirt edici cizgi 1px kenarliktir.
     expect(m![0]).not.toContain("shadow-card");
     expect(m![0]).not.toContain("border-slate-200");
+    // ESKI DILIN ADLARI GERI GELMESIN.
+    expect(m![0]).not.toContain("bg-yuzey-card");
   });
 
   it("birincil dugme MAVI (marka teali degil)", () => {
@@ -302,7 +314,7 @@ describe("(P138) TABLO ILKELI — elle iskelet geri gelmesin", () => {
 
   // ILKELLERIN KENDISI kapsam disi: `<table>`i yazan YERLER onlardir.
   //
-  // (P154) `components/Liste.tsx` EKLENDI. Gerekce: bu kilidin amaci
+  // (P154) `components/ui/liste.tsx` EKLENDI. Gerekce: bu kilidin amaci
   // "her SAYFA kendi tablosunu yazmasin"; Liste ise sayfalarin
   // KULLANDIGI ortak davranis katmani (siralama, suzgec, sayfalama) ve
   // iskeleti bir kez yazip `tablo.tsx`in hucrelerini kullaniyor.
@@ -323,8 +335,8 @@ describe("(P138) TABLO ILKELI — elle iskelet geri gelmesin", () => {
   // korumaya calistigi seyin (erisilebilir tablo yapisi) ta kendisidir;
   // yasaklamak grafigi ekran okuyucuya kapali birakmak olurdu.
   const ILKELLER = [
-    "components/tablo.tsx",
-    "components/Liste.tsx",
+    "components/ui/tablo-ilkelleri.tsx",
+    "components/ui/liste.tsx",
     "components/ui/veri-tablosu.tsx",
     "components/ui/grafik.tsx",
     // (P167 Asama 4) `components/finans/satir-tablosu.tsx` — AYNI SINIF,

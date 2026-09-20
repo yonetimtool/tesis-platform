@@ -4,19 +4,7 @@ import { useRef, useState } from "react";
 import useSWR from "swr";
 
 import { Foto } from "@/components/Foto";
-import { Pager } from "@/components/form";
-import {
-  Modal,
-  Alan,
-  BosDurum,
-  CokSatir,
-  Kart,
-  AlanSarmal,
-  Dugme,
-  HataDurumu,
-  IskeletMetin,
-  useOnay,
-} from "@/components/ui";
+import { Alan, AlanSarmal, BosDurum, CokSatir, Dugme, HataDurumu, IskeletMetin, Kart, Modal, Pager, useOnay } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";

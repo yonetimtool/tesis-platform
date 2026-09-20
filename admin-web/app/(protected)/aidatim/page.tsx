@@ -11,12 +11,7 @@
 // döner ve ekran her daireyi ayrı kart olarak gösterir.
 import useSWR from "swr";
 
-import {
-  BosDurum,
-  HataDurumu,
-  IskeletMetin,
-} from "@/components/ui";
-import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
+import { BosDurum, BosSatir, HataDurumu, IskeletMetin, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/ui";
 import { jsonFetcher } from "@/lib/fetcher";
 import { tarihBicimi } from "@/lib/tarih";
 import { useT } from "@/lib/i18n/kullan";

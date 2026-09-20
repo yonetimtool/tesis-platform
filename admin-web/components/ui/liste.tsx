@@ -2,11 +2,24 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 
-import { BosSatir, Tablo, TabloKart, Td, Th, Tr } from "@/components/tablo";
+import { BosSatir, Tablo, TabloKart, Td, Th, Tr } from "./tablo-ilkelleri";
 import { useT } from "@/lib/i18n/kullan";
 
 /**
  * (P154 / Asama 6.2) TEK LISTE BILESENI.
+ *
+ * =========================================================================
+ * (P244 §4) `components/Liste.tsx`ten BURAYA TASINDI — ve `VeriTablosu`ya
+ * CEVRILMEDI. Gerekce:
+ * =========================================================================
+ * Ikisi ayni ise benziyor ama `Liste` bir seyi daha yapiyor: SUTUN BASINA
+ * SUZGEC (`kolon.suzgec`). `VeriTablosu`da bu YOK. Tek kullanicisini
+ * (`/tanimlar`) `VeriTablosu`ya tasimak, calisan bir ozelligi SESSIZCE
+ * silmek olurdu.
+ *
+ * ACIK MADDE (asama 10): ya `VeriTablosu`ya sutun suzgeci eklenip `Liste`
+ * emekliye ayrilir, ya da ikisinin hangi durumda kullanilacagi yazili bir
+ * kurala baglanir. Bugun iki bilesen yan yana duruyor ve bu bir BORC.
  *
  * NEDEN: Apsiyon raporu §29 ve brief ayni bes seyi istiyor — kolon
  * siralama, suzgec, toplu secim, **sayfa basina kayit (10/25/50/100)**,
@@ -25,6 +38,15 @@ import { useT } from "@/lib/i18n/kullan";
  * kaydin 50'sini" alip "50 kayit var" derdi — sessiz ve yanlis.
  */
 
+/**
+ * (P244 §4) AD `ListeKolonu` OLARAK IHRAC EDILIR.
+ *
+ * `VeriTablosu` da `Kolon` adinda bir tip ihrac ediyor ve ikisi FARKLI
+ * (buradaki `ciz`/`suzgec` tasir, oradaki `hucre`/`siralanabilir`).
+ * Ikisi ayni ambarda (`components/ui`) bulusunca ad cakisti — `tsc`
+ * yakaladi. Ayni ada iki anlam yuklemek, cagiran tarafi "hangisi?" diye
+ * bakmak zorunda birakirdi.
+ */
 export interface Kolon<T> {
   anahtar: string;
   baslik: string;
@@ -146,7 +168,7 @@ export function Liste<T>({
       <TabloKart>
         <Tablo>
           <thead>
-            <tr className="bg-yuzey-divider/40">
+            <tr style={{ background: "var(--yz-surface-2)" }}>
               {secim && (
                 <Th className="w-10">
                   <input
@@ -181,7 +203,7 @@ export function Liste<T>({
                       }`}
                     >
                       {k.baslik}
-                      <span aria-hidden="true" className="text-metin-muted">
+                      <span aria-hidden="true" style={{ color: "var(--yz-text-2)" }}>
                         {sirala?.anahtar === k.anahtar ? (sirala.yon === 1 ? "↑" : "↓") : "↕"}
                       </span>
                     </button>
@@ -200,7 +222,14 @@ export function Liste<T>({
                     {k.suzgec && (
                       <input
                         aria-label={`${k.baslik} — ${t("listeSuzgec")}`}
-                        className="w-full rounded border border-slate-300 bg-yuzey-card px-2 py-1 text-xs"
+                        className="w-full px-2 py-1"
+                        style={{
+                          borderRadius: "var(--yz-radius-sm)",
+                          border: "var(--yz-border-w) solid var(--yz-border)",
+                          background: "var(--yz-surface-1)",
+                          color: "var(--yz-text)",
+                          fontSize: "var(--yz-fs-xs)",
+                        }}
                         value={suzgecler[k.anahtar] ?? ""}
                         onChange={(e) => {
                           setSayfa(0);
@@ -255,9 +284,15 @@ export function Liste<T>({
       {!sunucuTarafi && (
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
           <label className="flex items-center gap-2">
-            <span className="text-metin-muted">{t("listeSayfaBasina")}</span>
+            <span style={{ color: "var(--yz-text-2)" }}>{t("listeSayfaBasina")}</span>
             <select
-              className="rounded border border-slate-300 bg-yuzey-card px-2 py-1"
+              className="px-2 py-1"
+              style={{
+                borderRadius: "var(--yz-radius-sm)",
+                border: "var(--yz-border-w) solid var(--yz-border)",
+                background: "var(--yz-surface-1)",
+                color: "var(--yz-text)",
+              }}
               value={sayfaBoyu}
               onChange={(e) => {
                 setSayfaBoyu(Number(e.target.value));
@@ -273,7 +308,7 @@ export function Liste<T>({
           </label>
 
           <div className="flex items-center gap-3">
-            <span className="text-metin-muted">
+            <span style={{ color: "var(--yz-text-2)" }}>
               {toplam === 0
                 ? t("listeToplamKayit", { toplam: "0" })
                 : t("listeSayfaBilgisi", {
@@ -284,7 +319,12 @@ export function Liste<T>({
             </span>
             <button
               type="button"
-              className="rounded border border-slate-300 px-2 py-1 disabled:opacity-40"
+              className="odak-ic px-2 py-1 disabled:opacity-40"
+              style={{
+                borderRadius: "var(--yz-radius-sm)",
+                border: "var(--yz-border-w) solid var(--yz-border)",
+                color: "var(--yz-text-2)",
+              }}
               aria-label={t("listeOncekiSayfa")}
               disabled={sayfa === 0}
               onClick={() => setSayfa((s) => Math.max(0, s - 1))}
@@ -293,7 +333,12 @@ export function Liste<T>({
             </button>
             <button
               type="button"
-              className="rounded border border-slate-300 px-2 py-1 disabled:opacity-40"
+              className="odak-ic px-2 py-1 disabled:opacity-40"
+              style={{
+                borderRadius: "var(--yz-radius-sm)",
+                border: "var(--yz-border-w) solid var(--yz-border)",
+                color: "var(--yz-text-2)",
+              }}
               aria-label={t("listeSonrakiSayfa")}
               disabled={sayfa >= sonSayfa}
               onClick={() => setSayfa((s) => Math.min(sonSayfa, s + 1))}

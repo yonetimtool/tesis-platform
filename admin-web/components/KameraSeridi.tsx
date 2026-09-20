@@ -1,3 +1,4 @@
+import { BolumBasligi, Kart } from "@/components/ui";
 "use client";
 
 // (P132/4b) PANODA KAMERA SERIDI — mobil `kamera_seridi.dart`in web ikizi.
@@ -16,7 +17,7 @@ import { useEffect, useState } from "react";
 import useSWR from "swr";
 
 import { KameraOynatici } from "@/components/KameraOynatici";
-import { BolumBasligi, Kart } from "@/components/tasarim";
+
 import { useT } from "@/lib/i18n/kullan";
 import { jsonFetcher } from "@/lib/fetcher";
 import { oynatilabilirMi } from "@/lib/kamera-url";

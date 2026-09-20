@@ -517,3 +517,96 @@ kaldırmak, çekmeceden ESC'i kaldırmak, trend rengini yöne bağlamak
 
 `tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
 **tam takım 231 dosya / 1987 test yeşil.**
+
+---
+
+# AŞAMA 4 — KARMA SAYFALARI TEMİZLE · UYGULANDI
+
+**18 → 0.** Korumalı sayfaların hiçbiri artık eski görsel modülden ithal
+etmiyor.
+
+## A4.1 Ölçüm: iş 18 sayfa değil, 5 sembol kümesiydi
+
+| eski sembol | kaç sayfa | ne yapıldı |
+|---|---|---|
+| `tablo::Tablo/Th/Td/Tr/TabloBasligi/TabloKart/BosSatir` | 8 | dosya **taşındı** → `components/ui/tablo-ilkelleri.tsx`, token diline çevrildi |
+| `form::EksikVeriUyarisi` | 6 | `ui/durumlar`a taşındı |
+| `form::Pager` | 2 | `ui/tablo-ilkelleri`ne taşındı |
+| `tasarim::*` (8 sembol) | 1 (dashboard) | `ui` karşılıklarına çevrildi |
+| `tasarim::IkonKutu` | 1 (raporlar) | `ui/yuzey`e taşındı |
+| `Liste` + eski `Modal` | 1 (tanimlar) | `Liste` taşındı; `Modal` → `ui/modal` |
+
+Yani 18 sayfayı tek tek elden geçirmek gerekmedi; **6 modül hareketi** 18
+sayfayı birden temizledi.
+
+## A4.2 `Liste` `VeriTablosu`ya ÇEVRİLMEDİ — gerekçe
+
+İkisi aynı işi yapıyor görünüyor ama `Liste` bir şey daha yapıyor:
+**sütun başına süzgeç** (`kolon.suzgec`). `VeriTablosu`da bu **yok**. Tek
+kullanıcısını (`/tanimlar`) çevirmek, **çalışan bir özelliği sessizce
+silmek** olurdu.
+
+**Açık madde (aşama 10):** ya `VeriTablosu`ya sütun süzgeci eklenip
+`Liste` emekliye ayrılır, ya da ikisinin hangi durumda kullanılacağı
+yazılı bir kurala bağlanır. Bugün iki bileşen yan yana duruyor ve bu bir
+**borç**.
+
+Aynı gerekçeyle `tablo-ilkelleri` de `VeriTablosu`ya çevrilmedi: o bir
+**veri tablosu** (sıralama, sayfalama, seçim, kolon gizleme), bunlar
+**düz tablo ilkelleri**. Altı satırlık bir tanım defterine sayfalama
+eklemek özellik değil gürültü olurdu.
+
+## A4.3 Ölçüm üç şey daha buldu
+
+1. **`EksikVeriUyarisi` sabit renk yazıyordu** (`border-amber-200
+   bg-amber-50 text-amber-800`) — token katmanını bypass ediyordu ve koyu
+   temada kendi başınaydı. Token diline çevrildi; metin `--yz-warning-ink`
+   kullanıyor (ham `--yz-warning` metin olarak **2.15**, AA'nın çok
+   altında — aşama 1'de ölçülmüştü).
+2. **`KahramanBlok` ölü ithaldi** — dashboard onu içe aktarıyor ama hiç
+   kullanmıyordu.
+3. **`KATEGORI_VURGUSU` anlamı rengin adında saklıyordu**
+   (`"blue"`/`"green"`/`"purple"`). Yeni katmanda ad **anlam** taşır;
+   `Rozet`, `IkonKutu` ve `OzetKarti` aynı sözlüğü kullanıyor. Mor
+   karşılıksız kaldı ve `notr`e düştü — rapor dökümleri bir **durum**
+   bildirmiyor, yalnız bir kategori.
+
+## A4.4 `tsc` iki hatamı yakaladı
+
+* **Ad çakışması:** `Liste` `ui`'ya taşınınca iki farklı `Kolon` tipi aynı
+  ambarda buluştu (`Liste`ninki `ciz`/`suzgec`, `VeriTablosu`nunki
+  `hucre`/`siralanabilir`). `ListeKolonu` olarak yeniden adlandırıldı.
+* **Yanlış eşleme:** `BolumBasligi`yi `ui`'nun `Bolum`una bağlamıştım —
+  ama `Bolum` bir **sarmalayıcı** (children zorunlu), `BolumBasligi` ise
+  yalnız **başlık satırı**. `tsc` yakaladı; `BolumBasligi` token diliyle
+  `ui/yuzey`e eklendi.
+
+Ayrıca bir regex'im yanlış ithal bloğunu yakalayıp dosyayı bozdu;
+`git checkout` ile geri alınıp elle yapıldı.
+
+## A4.5 Kilitler
+
+| kilit | ne oldu |
+|---|---|
+| **YENİ** `p244-tek-tasarim-dili` | Hiçbir korumalı sayfa eski görsel modülden ithal etmiyor + eski `tasarim.tsx`'in **hiç kullanıcısı kalmadığı** ölçülüyor |
+| `tasarim-token` — "TABLO KABI token kullanıyor" | **İddia güncellendi, niyet aynı.** Eskiden `rounded-kart`/`bg-yuzey-card` **sınıfları** aranıyordu — onlar eski dilin adlarıydı. Ölçülen şey değişmedi ("kap tasarım sisteminden mi geliyor, yoksa elle slate/gölge mi"); yalnız sistemin adı değişti. Eski adların **geri gelmemesi** de ayrıca kilitlendi |
+| `tasarim-token` — "elle tablo iskeleti yok" | Yol sabitleri taşınan dosyalara güncellendi |
+| `yz-bilesen` — "eski dil sınıfı yok" | **Gerçek kusur yakaladı:** `liste.tsx` çevirimim eksikti, iki düğmede `border-slate-300` kalmıştı |
+
+Kilit **kırılarak doğrulandı**: bir sayfaya eski modülden ithal eklemek
+`p244-tek-tasarim-dili`'ni düşürdü.
+
+## A4.6 Bu aşamada YAPILMAYAN
+
+* `components/tasarim.tsx`, `components/form.tsx` ve eski
+  `components/Modal.tsx` **silinmedi** — aşama 10. `tasarim.tsx`'in artık
+  hiç kullanıcısı yok (kilit bunu ölçüyor), yani silinebilir hâle geldi;
+  `form.tsx` hâlâ form kontrollerini veriyor, `Modal.tsx` 3 kabuk
+  bileşenini.
+* Sayfaların **görünümü** değişmedi: bu aşama modül sınırını tasarım dili
+  sınırıyla hizaladı, düzeni değil.
+
+## A4.7 Doğrulama
+
+`tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
+**tam takım 232 dosya / 1990 test yeşil.**

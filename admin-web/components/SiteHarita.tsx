@@ -1,3 +1,4 @@
+import { Kart } from "@/components/ui";
 "use client";
 
 // (P132/4a) TESIS KONUMU HARITASI — panoda.
@@ -17,7 +18,7 @@
 //    (sayfanin altinda kalir).
 import { useEffect, useRef, useState } from "react";
 
-import { Kart } from "@/components/tasarim";
+
 import { useT } from "@/lib/i18n/kullan";
 
 export const MAPS_ANAHTARI = process.env.NEXT_PUBLIC_MAPS_KEY ?? null;

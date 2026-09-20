@@ -77,3 +77,21 @@ export {
   type OzetDurumu,
   type TrendYonu,
 } from "./ozet-seridi";
+
+// (P244 §4) ESKI KATMANDAN TASINANLAR.
+// `components/tablo.tsx` ve `components/form.tsx` icindeki gorsel
+// ilkeller token diline cevrilip buraya alindi; boylece modul siniri
+// tasarim dili siniriyla ayni yerde duruyor.
+export {
+  TabloKart,
+  Tablo,
+  TabloBasligi,
+  Th,
+  Tr,
+  Td,
+  BosSatir,
+  Pager,
+} from "./tablo-ilkelleri";
+export { EksikVeriUyarisi } from "./durumlar";
+export { IkonKutu, BolumBasligi } from "./yuzey";
+export { Liste, type Kolon as ListeKolonu, type ListeProps } from "./liste";

@@ -3,21 +3,7 @@
 import { useState } from "react";
 import useSWR from "swr";
 
-import {
-  Modal,
-  Kart,
-  CokSatir,
-  Alan,
-  AlanSarmal,
-  BosDurum,
-  Dugme,
-  HataDurumu,
-  IskeletMetin,
-  Rozet,
-  Secim,
-  useOnay,
-} from "@/components/ui";
-import { Tablo, TabloBasligi, Td, Th } from "@/components/tablo";
+import { Alan, AlanSarmal, BosDurum, CokSatir, Dugme, HataDurumu, IskeletMetin, Kart, Modal, Rozet, Secim, Tablo, TabloBasligi, Td, Th, useOnay } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";

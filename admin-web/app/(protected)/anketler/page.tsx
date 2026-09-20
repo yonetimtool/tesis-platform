@@ -3,19 +3,7 @@
 import { useState } from "react";
 import useSWR from "swr";
 
-import {
-  Modal,
-  Grafik,
-  Kart,
-  Alan,
-  AlanSarmal,
-  BosDurum,
-  Dugme,
-  HataDurumu,
-  Rozet,
-  Secim,
-} from "@/components/ui";
-import { Tablo, TabloBasligi, Td, Th, Tr } from "@/components/tablo";
+import { Alan, AlanSarmal, BosDurum, Dugme, Grafik, HataDurumu, Kart, Modal, Rozet, Secim, Tablo, TabloBasligi, Td, Th, Tr } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";

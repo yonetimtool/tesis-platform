@@ -3,20 +3,7 @@
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import {
-  Alan,
-  BosDurum,
-  Modal,
-  AlanSarmal,
-  Dugme,
-  HataDurumu,
-  Kart,
-  Secim,
-  VeriTablosu,
-  type Kolon,
-  type TabloDurumu,
-} from "@/components/ui";
-import { Tablo, TabloBasligi, Td, Th } from "@/components/tablo";
+import { Alan, AlanSarmal, BosDurum, Dugme, HataDurumu, Kart, Modal, Secim, Tablo, TabloBasligi, Td, Th, type Kolon, type TabloDurumu, VeriTablosu } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend, genIdempotencyKey } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";

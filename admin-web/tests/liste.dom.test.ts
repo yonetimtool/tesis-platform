@@ -15,7 +15,9 @@ import userEvent from "@testing-library/user-event";
 import { createElement, useState } from "react";
 import { describe, expect, it } from "vitest";
 
-import { Liste, type Kolon } from "@/components/Liste";
+// (P244 §4) `Kolon` ADI `ListeKolonu` OLDU: `VeriTablosu` da `Kolon`
+// ihrac ediyor ve ikisi farkli tipler; ayni ambarda cakistilar.
+import { Liste, type ListeKolonu as Kolon } from "@/components/ui";
 
 import { ciz } from "./yardimci";
 

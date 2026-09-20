@@ -33,7 +33,7 @@ import {
   Secim,
   useOnay,
 } from "@/components/ui";
-import { Tablo, TabloBasligi, Td, Th, Tr } from "@/components/tablo";
+import { Tablo, TabloBasligi, Td, Th, Tr } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";

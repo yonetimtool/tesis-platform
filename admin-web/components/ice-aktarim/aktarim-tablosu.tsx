@@ -30,7 +30,7 @@
  */
 import { useMemo } from "react";
 
-import { Tablo, TabloBasligi, Td, Th, Tr } from "@/components/tablo";
+import { Tablo, TabloBasligi, Td, Th, Tr } from "@/components/ui";
 import { Dugme } from "@/components/ui";
 import { useT } from "@/lib/i18n/kullan";
 

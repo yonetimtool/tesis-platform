@@ -3,21 +3,7 @@
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { EksikVeriUyarisi } from "@/components/form";
-import {
-  Alan,
-  AlanSarmal,
-  Dugme,
-  TarihAraligi,
-  aralikGecerli,
-  Kart,
-  Kpi,
-  Rozet,
-  Secim,
-  VeriTablosu,
-  type Kolon,
-  type TabloDurumu,
-} from "@/components/ui";
+import { Alan, AlanSarmal, aralikGecerli, Dugme, EksikVeriUyarisi, Kart, Kpi, Rozet, Secim, TarihAraligi, type Kolon, type TabloDurumu, VeriTablosu } from "@/components/ui";
 import { ReportsTabs } from "@/components/ReportsTabs";
 import { TUR_DURUM, enumAdi } from "@/lib/enum-adlari";
 import { fetchAllPaged } from "@/lib/client";

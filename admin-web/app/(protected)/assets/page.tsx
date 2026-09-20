@@ -3,22 +3,7 @@
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { EksikVeriUyarisi } from "@/components/form";
-import {
-  Alan,
-  Kart,
-  Modal,
-  Rozet,
-  VeriTablosu,
-  type Kolon,
-  type TabloDurumu,
-  AlanSarmal,
-  BosDurum,
-  Dugme,
-  HataDurumu,
-  IskeletMetin,
-  Secim,
-} from "@/components/ui";
+import { Alan, AlanSarmal, BosDurum, Dugme, EksikVeriUyarisi, HataDurumu, IskeletMetin, Kart, Modal, Rozet, Secim, type Kolon, type TabloDurumu, VeriTablosu } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { kisaKimlik } from "@/lib/kimlik";
 import { DEMIRBAS_DURUM, DEMIRBAS_KATEGORI, enumAdi } from "@/lib/enum-adlari";

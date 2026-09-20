@@ -27,6 +27,7 @@ import Link from "next/link";
  * geliyor, bilesen onu tasimiyor.
  */
 import type { CSSProperties, ElementType, ReactNode } from "react";
+import { useT } from "@/lib/i18n/kullan";
 
 const ETIKET_DUGME = "button";
 const ETIKET_KUTU = "div";
@@ -202,6 +203,107 @@ export function Girinti({
       style={{ borderRadius: "var(--yz-radius-input)", ...style }}
     >
       {children}
+    </div>
+  );
+}
+
+/**
+ * (P244 §4) IKON KUTUSU — `components/tasarim.tsx`ten TASINDI.
+ *
+ * Eski surum `VURGU_TINT`/`VURGU_IKON` haritalarini kullaniyordu; onlar
+ * ESKI dilin Tailwind sinif dizeleriydi (`bg-accent-blue/12` gibi) ve
+ * tema degisince token katmanindan bagimsiz davraniyordu.
+ *
+ * DURUM ADLARI `OzetKarti` ILE AYNI (`notr/bilgi/olumlu/uyari/kritik`):
+ * iki bilesen ayni sozlugu kullanmazsa, cagiran taraf her seferinde
+ * "burada hangi ad gecerli" diye bakmak zorunda kalir.
+ *
+ * ZEMIN HAM TON, IKON `-edge` VARYANTI: zemin dekordur (kontrast sarti
+ * yok), ikon ANLAMLI GRAFIKTIR ve 3.0 esigini tutmalidir (WCAG 1.4.11).
+ */
+export function IkonKutu({
+  durum = "bilgi",
+  kucuk = false,
+  children,
+}: {
+  durum?: "notr" | "bilgi" | "olumlu" | "uyari" | "kritik";
+  kucuk?: boolean;
+  children: ReactNode;
+}) {
+  const ZEMIN: Record<string, string> = {
+    notr: "var(--yz-surface-2)",
+    bilgi: "color-mix(in srgb, var(--yz-accent) 14%, transparent)",
+    olumlu: "color-mix(in srgb, var(--yz-success) 16%, transparent)",
+    uyari: "color-mix(in srgb, var(--yz-warning) 20%, transparent)",
+    kritik: "color-mix(in srgb, var(--yz-danger) 16%, transparent)",
+  };
+  const IKON: Record<string, string> = {
+    notr: "var(--yz-text-2)",
+    bilgi: "var(--yz-accent-edge)",
+    olumlu: "var(--yz-success-edge)",
+    uyari: "var(--yz-warning-edge)",
+    kritik: "var(--yz-danger-edge)",
+  };
+  return (
+    <span
+      aria-hidden="true"
+      className={`inline-flex shrink-0 items-center justify-center ${
+        kucuk ? "h-8 w-8" : "h-10 w-10"
+      }`}
+      style={{
+        borderRadius: kucuk ? "var(--yz-radius-ring)" : "var(--yz-radius-sm)",
+        background: ZEMIN[durum],
+        color: IKON[durum],
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+/**
+ * (P244 §4) BOLUM BASLIK SATIRI — `components/tasarim.tsx`ten TASINDI.
+ *
+ * `Bolum` (yukarida) bir SARMALAYICIDIR: baslik + govde. Bu ise yalniz
+ * BASLIK SATIRI — pano gibi, govdesi ayri cizilen duzenler icin.
+ * Ikisi karistirilirsa `children` zorunlulugu yuzunden derleme hatasi
+ * gelir (bu tasima sirasinda tam olarak oldu ve `tsc` yakaladi).
+ *
+ * `href` verilirse sagda "Tumunu gor" baglantisi cizilir — referansta
+ * her kart basliginin sagindaki desen.
+ */
+export function BolumBasligi({
+  baslik,
+  href,
+  sag,
+}: {
+  baslik: string;
+  href?: string;
+  sag?: ReactNode;
+}) {
+  const t = useT();
+  return (
+    <div className="mb-3 flex items-center justify-between gap-3">
+      <h2
+        style={{
+          fontSize: "var(--yz-fs-h3)",
+          fontWeight: 600,
+          color: "var(--yz-text)",
+        }}
+      >
+        {baslik}
+      </h2>
+      {href ? (
+        <Link
+          href={href}
+          className="odak-ic shrink-0 hover:underline"
+          style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-accent-ink)" }}
+        >
+          {t("tasarimTumunuGor")}
+        </Link>
+      ) : (
+        sag
+      )}
     </div>
   );
 }

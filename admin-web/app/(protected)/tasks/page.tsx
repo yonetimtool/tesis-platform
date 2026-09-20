@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
-import { EksikVeriUyarisi } from "@/components/form";
 import useSWR from "swr";
 
 import { BagimlilikUyarisi } from "@/components/BagimlilikUyarisi";
@@ -12,26 +11,7 @@ import { Ekler } from "@/components/Ekler";
 import { GorevAdimlari } from "@/components/GorevAdimlari";
 import { useToast } from "@/components/Toast";
 import { useBant } from "@/lib/kirilma-kullan";
-import {
-  IskeletMetin,
-  AyTakvimi,
-  BosDurum,
-  Alan,
-  AlanSarmal,
-  CokSatir,
-  Dugme,
-  HataDurumu,
-  Kart,
-  Rozet,
-  Modal,
-  Secim,
-  Sekmeler,
-  VeriTablosu,
-  type Kolon,
-  type TabloDurumu,
-  useOnay,
-} from "@/components/ui";
-import { Tablo, TabloBasligi, Td, Th, Tr } from "@/components/tablo";
+import { Alan, AlanSarmal, AyTakvimi, BosDurum, CokSatir, Dugme, EksikVeriUyarisi, HataDurumu, IskeletMetin, Kart, Modal, Rozet, Secim, Sekmeler, Tablo, TabloBasligi, Td, Th, Tr, type Kolon, type TabloDurumu, useOnay, VeriTablosu } from "@/components/ui";
 import { kisaKimlik } from "@/lib/kimlik";
 import { useAcilinca } from "@/lib/kaydir";
 import { apiSend } from "@/lib/client";

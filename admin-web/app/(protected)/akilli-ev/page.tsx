@@ -28,21 +28,8 @@
 import { useState } from "react";
 import useSWR from "swr";
 
-import { Tablo, TabloBasligi, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
-import {
-  Alan,
-  AlanSarmal,
-  BosDurum,
-  Dugme,
-  HataDurumu,
-  Kart,
-  Modal,
-  Rozet,
-  Secim,
-  Sekmeler,
-  useOnay,
-} from "@/components/ui";
+import { Alan, AlanSarmal, BosDurum, Dugme, HataDurumu, Kart, Modal, Rozet, Secim, Sekmeler, Tablo, TabloBasligi, Td, Th, Tr, useOnay } from "@/components/ui";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";

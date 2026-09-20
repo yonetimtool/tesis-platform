@@ -157,10 +157,15 @@ export const KATEGORI_BASLIGI: Record<string, SozlukAnahtari> = {
 /** Kategori kimligi -> `IkonKutu` vurgu rengi. Kategoriyi yalniz baslikla
  *  ayirmak, uzun bir izgarada kaydirirken hangi bolumde olundugunu
  *  kaybettirirdi. */
-export const KATEGORI_VURGUSU: Record<string, "blue" | "green" | "purple"> = {
-  listeler: "blue",
-  ekstreler: "green",
-  dokumler: "purple",
+// (P244 §4) DURUM ADLARI YENI SOZLUGE CEVRILDI.
+// Eski degerler ("blue"/"green"/"purple") ESKI dilin renk adlariydi.
+// Yeni katmanda ad RENK degil ANLAM tasir — `IkonKutu` ve `OzetKarti`
+// ayni sozlugu kullanir. Mor karsiliksiz kaldi ve `notr`e dustu: rapor
+// dokumleri bir DURUM bildirmiyor, yalniz bir kategori.
+export const KATEGORI_VURGUSU: Record<string, "notr" | "bilgi" | "olumlu"> = {
+  listeler: "bilgi",
+  ekstreler: "olumlu",
+  dokumler: "notr",
 };
 
 /** Is durumu -> rozet metni. */

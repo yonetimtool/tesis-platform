@@ -3,21 +3,7 @@
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { EksikVeriUyarisi } from "@/components/form";
-import {
-  Alan,
-  AlanSarmal,
-  Cekmece,
-  Dugme,
-  HataDurumu,
-  Modal,
-  Rozet,
-  Secim,
-  VeriTablosu,
-  type Kolon,
-  type TabloDurumu,
-  useOnay,
-} from "@/components/ui";
+import { Alan, AlanSarmal, Cekmece, Dugme, EksikVeriUyarisi, HataDurumu, Modal, Rozet, Secim, type Kolon, type TabloDurumu, useOnay, VeriTablosu } from "@/components/ui";
 import { RotaSahnesiYukleyici } from "@/components/3d/sahne-yukleyici";
 import { useToast } from "@/components/Toast";
 import { kisaKimlik } from "@/lib/kimlik";

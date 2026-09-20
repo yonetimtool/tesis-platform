@@ -281,3 +281,36 @@ export function HataDurumu({
     </Kart>
   );
 }
+
+/**
+ * (P244 §4) EKSIK VERI UYARISI — `components/form.tsx`ten TASINDI.
+ *
+ * NEDEN TASINDI: eski surum SABIT RENK yaziyordu
+ * (`border-amber-200 bg-amber-50 text-amber-800`) — yani tasarim
+ * sisteminin tek token katmanini BYPASS ediyordu ve tema degisince
+ * (koyu tema) kendi basina kaliyordu. Alti sayfa onu kullaniyor.
+ *
+ * `role="status"` KORUNDU: bu bir hata degil, bir BILGILENDIRME —
+ * ekran okuyucu kullaniciyi bolmeden duyurur (`alert` bolerdi).
+ */
+export function EksikVeriUyarisi({ mesaj }: { mesaj?: string | null }) {
+  if (!mesaj) return null;
+  return (
+    <p
+      role="status"
+      className="px-3 py-1.5"
+      style={{
+        borderRadius: "var(--yz-radius-btn)",
+        border: "var(--yz-border-w) solid var(--yz-warning-edge)",
+        // Zemin HAM tonun cok seyreltilmisi; uzerindeki METIN `-ink`
+        // varyantini kullanir (ham `--yz-warning` metin olarak 2.15 ile
+        // AA'nin cok altinda — P244 asama 1'de olculdu).
+        background: "color-mix(in srgb, var(--yz-warning) 12%, var(--yz-surface-1))",
+        color: "var(--yz-warning-ink)",
+        fontSize: "var(--yz-fs-xs)",
+      }}
+    >
+      {mesaj}
+    </p>
+  );
+}

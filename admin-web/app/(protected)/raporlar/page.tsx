@@ -5,17 +5,8 @@ import useSWR from "swr";
 
 import { RaporModali, type RaporKatalogOgesi, type RaporSutun, type RaporTablosu } from "@/components/rapor/rapor-modali";
 import { RaporGrafik } from "@/components/rapor/rapor-grafik";
-import { IkonKutu } from "@/components/tasarim";
 import { useToast } from "@/components/Toast";
-import {
-  BosDurum,
-  Dugme,
-  HataDurumu,
-  Kart,
-  Rozet,
-  VeriTablosu,
-  type Kolon,
-} from "@/components/ui";
+import { BosDurum, Dugme, HataDurumu, IkonKutu, Kart, Rozet, type Kolon, VeriTablosu } from "@/components/ui";
 import { agIstegi } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { kurusToTLSade } from "@/lib/money";
@@ -275,7 +266,7 @@ export default function RaporlarPage() {
                     background: "var(--yz-metal-1)",
                   }}
                 >
-                  <IkonKutu vurgu={KATEGORI_VURGUSU[bolum.id] ?? "blue"} kucuk>
+                  <IkonKutu durum={KATEGORI_VURGUSU[bolum.id] ?? "bilgi"} kucuk>
                     <KategoriIkonu />
                   </IkonKutu>
                   <span className="min-w-0">

@@ -1,3 +1,25 @@
+// (P244 §4) BASIT TABLO ILKELLERI — `components/tablo.tsx`ten TASINDI.
+//
+// ===========================================================================
+// NEDEN TASINDI
+// ===========================================================================
+// Dosya ESKI tasarim dilinin siniflarini kullaniyordu (`kart-kenar`,
+// `rounded-kart`, `bg-yuzey-card`, `text-metin-muted`) ve 8 sayfa ondan
+// ithal ediyordu — yani o sayfalar "karma dil" olarak olculuyordu.
+// Degerler token'a cevrildi ve dosya YENI katmana (`components/ui/`)
+// tasindi: modul siniri artik tasarim dili siniriyla ayni yerde.
+//
+// ===========================================================================
+// NEDEN `VeriTablosu`YA CEVRILMEDI
+// ===========================================================================
+// Ikisi FARKLI iki sey: `VeriTablosu` siralama, sayfalama, secim, kolon
+// gizleme ve dar-ekran kart gorunumu tasiyan bir VERI TABLOSU; buradakiler
+// ise duz bir tabloyu token diliyle cizen ILKELLER. Sekiz sayfayi
+// `VeriTablosu`ya tasimak, her birinin hucrelerini kolon dizisine
+// cevirmek demekti — yapisal bir donusum, gorsel bir temizlik degil.
+// Ustelik alti satirlik bir tanim defterine sayfalama eklemek, ozellik
+// degil gurultu olurdu.
+
 "use client";
 
 // (P138) ORTAK TABLO ILKELI — 23 sayfa ayni iskeleti elle yaziyordu.
@@ -29,6 +51,8 @@
 import type { ReactNode } from "react";
 import { useT } from "@/lib/i18n/kullan";
 
+import { Dugme } from "./dugme";
+
 // Tablo kabı — kart yuzeyi + yatay kaydirma.
 export function TabloKart({
   children,
@@ -39,7 +63,13 @@ export function TabloKart({
 }) {
   const t = useT();
   return (
-    <div className={`kart-kenar overflow-hidden rounded-kart border bg-yuzey-card ${className}`}>
+    <div className={`overflow-hidden border ${className}`}
+      style={{
+        borderColor: "var(--yz-border)",
+        borderWidth: "var(--yz-border-w)",
+        borderRadius: "var(--yz-radius-card)",
+        background: "var(--yz-surface-1)",
+      }}>
       {/* DAR EKRANDA YATAY KAYDIRMA: tabloyu kirpmak yerine kaydirmak,
           sutun gizlemekten durusttur — kullanici verinin var oldugunu
           gorur. Sayfa govdesi yatay kaymaz, yalniz bu kap kayar. */}
@@ -81,7 +111,14 @@ export function Tablo({
   children: ReactNode;
   className?: string;
 }) {
-  return <table className={`w-full text-sm ${className}`}>{children}</table>;
+  return (
+    <table
+      className={`w-full ${className}`}
+      style={{ fontSize: "var(--yz-fs-sm)" }}
+    >
+      {children}
+    </table>
+  );
 }
 
 // Baslik satiri — sayfa zemini dolgusu, KENARLIK YOK.
@@ -102,7 +139,13 @@ export function TabloBasligi({
 }) {
   return (
     <thead
-      className={`${zeminsiz ? "" : "bg-yuzey-bg"} text-start text-metin-muted ${className}`}
+      className={`text-start ${className}`}
+      style={{
+        background: zeminsiz ? undefined : "var(--yz-surface-2)",
+        color: "var(--yz-text-2)",
+        fontSize: "var(--yz-fs-xs)",
+        letterSpacing: "var(--yz-tracking-label)",
+      }}
     >
       <tr>{children}</tr>
     </thead>
@@ -170,7 +213,12 @@ export function Tr({
   return (
     <tr
       onClick={onClick}
-      className={`border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg ${className}`}
+      // (P244 §4) HOVER ARTIK CSS'TE (`yz-satir`): satir ici `style` ile
+      // `:hover` yazilamaz ve dokunmatikte `:hover` YAPISIR — kullanici
+      // hangi satira dokundugunu unutunca yanlis bir "secili" izlenimi
+      // kalirdi. Kural `@media (hover: hover)` ile sinirli.
+      className={`yz-satir border-t transition-colors ${className}`}
+      style={{ borderColor: "var(--yz-border)", borderTopWidth: "var(--yz-border-w)" }}
     >
       {children}
     </tr>
@@ -218,10 +266,64 @@ export function BosSatir({
   children: ReactNode;
 }) {
   return (
-    <tr className="border-t border-yuzey-divider">
-      <td colSpan={sutun} className="px-4 py-8 text-center text-metin-muted">
+    <tr
+      className="border-t"
+      style={{ borderColor: "var(--yz-border)", borderTopWidth: "var(--yz-border-w)" }}
+    >
+      <td
+        colSpan={sutun}
+        className="px-4 py-8 text-center"
+        style={{ color: "var(--yz-text-2)", fontSize: "var(--yz-fs-sm)" }}
+      >
         {children}
       </td>
     </tr>
+  );
+}
+
+/**
+ * (P244 §4) SAYFALAYICI — `components/form.tsx`ten TASINDI.
+ *
+ * Sayfalama bir FORM kontrolu degil, tablonun parcasi. `VeriTablosu`
+ * kendi sayfalayicisini tasiyor; bu, ILKELLERLE cizilmis duz tablolar
+ * icindir (2 sayfa).
+ */
+export function Pager({
+  offset,
+  limit,
+  total,
+  onPrev,
+  onNext,
+}: {
+  offset: number;
+  limit: number;
+  total: number;
+  onPrev: () => void;
+  onNext: () => void;
+}) {
+  const t = useT();
+  const canPrev = offset > 0;
+  const canNext = offset + limit < total;
+  return (
+    <div
+      className="flex items-center justify-between"
+      style={{ fontSize: "var(--yz-fs-sm)" }}
+    >
+      <span style={{ color: "var(--yz-text-2)" }}>
+        {t("ortakSayfalayici", {
+          toplam: total,
+          bas: total === 0 ? 0 : offset + 1,
+          son: Math.min(offset + limit, total),
+        })}
+      </span>
+      <div className="flex gap-2">
+        <Dugme tur="sessiz" boy="kucuk" disabled={!canPrev} onClick={onPrev}>
+          {t("ortakOnceki")}
+        </Dugme>
+        <Dugme tur="sessiz" boy="kucuk" disabled={!canNext} onClick={onNext}>
+          {t("ortakSonraki")}
+        </Dugme>
+      </div>
+    </div>
   );
 }

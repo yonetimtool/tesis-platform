@@ -3,15 +3,7 @@
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { EksikVeriUyarisi } from "@/components/form";
-import {
-  Alan,
-  AlanSarmal,
-  Dugme,
-  Kart,
-  VeriTablosu,
-  type Kolon,
-} from "@/components/ui";
+import { Alan, AlanSarmal, Dugme, EksikVeriUyarisi, Kart, type Kolon, VeriTablosu } from "@/components/ui";
 import { ReportsTabs } from "@/components/ReportsTabs";
 import { kisaKimlik } from "@/lib/kimlik";
 import { ODEME_YONTEM, enumAdi } from "@/lib/enum-adlari";

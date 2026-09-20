@@ -99,42 +99,8 @@ export function ErrorBox({ message }: { message?: string | null }) {
   );
 }
 
-export function Pager({
-  offset,
-  limit,
-  total,
-  onPrev,
-  onNext,
-}: {
-  offset: number;
-  limit: number;
-  total: number;
-  onPrev: () => void;
-  onNext: () => void;
-}) {
-  const t = useT();
-  const canPrev = offset > 0;
-  const canNext = offset + limit < total;
-  return (
-    <div className="flex items-center justify-between text-sm">
-      <span className="text-metin-muted">
-        {t("ortakSayfalayici", {
-          toplam: total,
-          bas: total === 0 ? 0 : offset + 1,
-          son: Math.min(offset + limit, total),
-        })}
-      </span>
-      <div className="flex gap-2">
-        <button disabled={!canPrev} onClick={onPrev} className={`${btnGhost} disabled:opacity-50`}>
-          {t("ortakOnceki")}
-        </button>
-        <button disabled={!canNext} onClick={onNext} className={`${btnGhost} disabled:opacity-50`}>
-          {t("ortakSonraki")}
-        </button>
-      </div>
-    </div>
-  );
-}
+// (P244 §4) `Pager` BURADAN KALDIRILDI — `components/ui/tablo-ilkelleri.tsx`e
+// tasindi: sayfalama bir FORM kontrolu degil, tablonun parcasidir.
 
 /** (P58) IKINCIL YUKLEME UYARISI — hata DEGIL, EKSIKLIK bildirir.
  *
@@ -148,14 +114,7 @@ export function Pager({
  * BASARISIZ OLMADI, eksik yuklendi. Bu yuzden ayri, sessiz bir gorunum ve
  * `role="status"` — ekran okuyucu duyurur ama araya girmez.
  */
-export function EksikVeriUyarisi({ mesaj }: { mesaj?: string | null }) {
-  if (!mesaj) return null;
-  return (
-    <p
-      role="status"
-      className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs text-amber-800"
-    >
-      {mesaj}
-    </p>
-  );
-}
+// (P244 §4) `EksikVeriUyarisi` BURADAN KALDIRILDI — `components/ui/
+// durumlar.tsx`e tasindi. Eski surum sabit `amber-*` renkleri yaziyordu
+// ve token katmanini bypass ediyordu. Yeniden ihrac EDILMEDI: iki
+// kaynak, "hangisi gecerli?" sorusunu ureten tekrardir.

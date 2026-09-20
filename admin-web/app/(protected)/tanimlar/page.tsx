@@ -7,19 +7,8 @@ import useSWR from "swr";
 const TUR_BIRINCIL = "birincil" as const;
 const TUR_IKINCIL = "ikincil" as const;
 
-import {
-  Kart,
-  Secim,
-  Alan,
-  AlanSarmal,
-  BosDurum,
-  Dugme,
-  HataDurumu,
-  useOnay,
-} from "@/components/ui";
-import { Liste } from "@/components/Liste";
+import { Alan, AlanSarmal, BosDurum, Dugme, HataDurumu, Kart, Liste, Modal, Secim, useOnay } from "@/components/ui";
 import { TelefonAlani, telefonHataMetni } from "@/components/TelefonAlani";
-import { Modal, ModalEylemler } from "@/components/Modal";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -827,19 +816,28 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
           bir panel aciyordu: ESC yoktu, dis tik yoktu, odak tuzagi yoktu
           ve kaydedilmemis degisiklikle kapatmak SESSIZCE veriyi atardi.
           Ucu de artik bilesende. */}
+      {/* (P244 §4) ESKI `components/Modal` YERINE `ui/modal`.
+          API adlari degisti (`kapat`->`onKapat`, `kirli`->`kirliMi`,
+          `altBilgi`->`eylemler`) ve `ModalEylemler` sarmalayicisi YOK:
+          yeni modalde eylemler dogrudan `Dugme` ile yazilir — araya bir
+          sarmalayici koymak, iki dugmenin sirasini ve etiketlerini
+          bilesende gizlemek demekti. */}
       <Modal
         baslik={duzenlenen ? t("ortakDuzenle") : t("tanimYeniKayit")}
         acik={acik}
-        kapat={() => setAcik(false)}
+        onKapat={() => setAcik(false)}
         // KIRLI: yeni kayitta herhangi bir alan doldurulduysa, duzenlemede
         // formun acilis degerinden sapildiysa.
-        kirli={kaydediyor ? false : Object.values(form).some((v) => v !== "" && v !== false)}
-        altBilgi={
-          <ModalEylemler
-            iptal={() => setAcik(false)}
-            kaydet={() => void kaydet()}
-            kaydediyor={kaydediyor}
-          />
+        kirliMi={kaydediyor ? false : Object.values(form).some((v) => v !== "" && v !== false)}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setAcik(false)} disabled={kaydediyor}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme tur="birincil" onClick={() => void kaydet()} yukleniyor={kaydediyor}>
+              {kaydediyor ? t("ortakKaydediliyor") : t("ortakKaydet")}
+            </Dugme>
+          </>
         }
       >
         <HataDurumu mesaj={formHata} />

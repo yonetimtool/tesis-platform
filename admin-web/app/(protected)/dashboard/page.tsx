@@ -37,24 +37,25 @@ import useSWR from "swr";
 import { BinaSahnesiYukleyici } from "@/components/3d/sahne-yukleyici";
 import { DevriyeGorunumu } from "@/components/DevriyeGorunumu";
 import type { SahneBlogu, SahneSecimi } from "@/components/3d/bina-sahnesi";
-import { Dugme, IskeletKpi, Kpi } from "@/components/ui";
+import {
+  BolumBasligi,
+  BosDurum,
+  Dugme,
+  HataDurumu,
+  IskeletKpi,
+  IskeletMetin,
+  Kart,
+  Kpi,
+  Rozet,
+  SayfaBasligi,
+  type RozetDurumu,
+} from "@/components/ui";
 import { PanoFinansOzeti } from "@/components/pano/finans-ozeti";
 import { PanoTakvim } from "@/components/pano/takvim";
 import { WidgetSeridi, type WidgetAdayi } from "@/components/pano/widget-seridi";
 import { SayfaEylemleri } from "@/components/SayfaEylemleri";
 import { useToast } from "@/components/Toast";
 import { KameraSeridi } from "@/components/KameraSeridi";
-import {
-  BolumBasligi,
-  BosDurum,
-  Chip,
-  HataDurumu,
-  KahramanBlok,
-  Kart,
-  SayfaBasligi,
-  Yukleniyor,
-  type Vurgu,
-} from "@/components/tasarim";
 import { apiSend } from "@/lib/client";
 import { BILDIRIM_TIP, enumAdi } from "@/lib/enum-adlari";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
@@ -105,11 +106,18 @@ const YOL = {
   tur: "M4 18l5-7 5 4 6-9",
 };
 
-/** Alarm ONEMI -> vurgu kimligi (renk token'da, anlam burada). */
-const ONEM_VURGU: Record<string, Vurgu> = {
-  yuksek: "red",
-  orta: "orange",
-  dusuk: "blue",
+/**
+ * Alarm ONEMI -> rozet durumu (renk token'da, anlam burada).
+ *
+ * (P244 §4) DEGERLER RENK ADI OLMAKTAN CIKTI: eski dilde `"red"` /
+ * `"orange"` yaziyordu, yani anlam RENGIN ADINDA sakliydi. Yeni katmanda
+ * ad ANLAM tasir ve ayni sozluk `Rozet`, `IkonKutu`, `OzetKarti`da
+ * gecerlidir.
+ */
+const ONEM_VURGU: Record<string, RozetDurumu> = {
+  yuksek: "kritik",
+  orta: "uyari",
+  dusuk: "bilgi",
 };
 
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
@@ -642,7 +650,7 @@ export default function DashboardPage() {
         // bolum listesinde yok ama GENEL KISITLAR "mevcut islev
         // kaybolmayacak" diyor. Artik oteki bolumlerle ayni kurala tabi.
         return isLoading && !data ? (
-          <Yukleniyor satir={3} />
+          <IskeletMetin satir={3} />
         ) : siradaki ? (
           // (P181 7.3) Düz cümle yerine GÖRSEL devriye bileşeni: ilerleme
           // halkası + tamamlanan/kalan nokta + son okutma zamanı.
@@ -701,7 +709,7 @@ export default function DashboardPage() {
         return <KameraSeridi kameralar={kameralar} rol={rol} />;
       case "alarmlar":
         return isLoading && !data ? (
-          <Yukleniyor satir={3} />
+          <IskeletMetin satir={3} />
         ) : gruplar.length === 0 ? (
           <BosDurum baslik={t("pano2AlarmYokBaslik")} aciklama={t("pano2AlarmYokBaslikAlt")} />
         ) : (
@@ -993,7 +1001,7 @@ function AlarmGrubuSatiri({ grup }: { grup: AlarmGrubu }) {
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-2">
-          <Chip vurgu={vurgu}>{t("pano2AlarmSayi", { sayi: grup.sayi })}</Chip>
+          <Rozet durum={vurgu}>{t("pano2AlarmSayi", { sayi: grup.sayi })}</Rozet>
           <span className="text-satiralt text-metin-muted">
             {formatDateTime(grup.en_son)}
           </span>
