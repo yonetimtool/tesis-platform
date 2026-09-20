@@ -155,6 +155,11 @@ describe("sozluk butunlugu", () => {
     // SIMGESI. Cevrilecek kelime yok; Almanca yalniz bosluk kuralindan
     // (`24 °C`) otoru farkli, Rusca virgul ekliyor.
     "{derece}°C {durum}",
+    // (P244 §6) "34 ABC 123" — ORNEK PLAKA, cumle degil. Turk plaka
+    // bicimi her dilde ayni gosterilir; "cevirmek" ancak baska bir
+    // ulkenin plakasini yazmak olurdu ve arama kutusunun ne bekledigini
+    // YANLIS anlatirdi.
+    "34 ABC 123",
   ]);
 
   // KALAN ACIK (durustce): ne bu olcum ne `TR_HARF`, ic/ig/is harfi

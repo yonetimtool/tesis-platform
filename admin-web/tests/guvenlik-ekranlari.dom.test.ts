@@ -158,13 +158,27 @@ describe("Araç geçişleri", () => {
     expect(screen.getByText(/otomatik oluşur/i)).toBeInTheDocument();
   });
 
-  it("YAZMA dugmesi/formu YOK", async () => {
+  it("YAZMA yolu YOK (okuma kontrolleri serbest)", async () => {
     // Elle plaka yazmak, otomatik kayitla celisen ikinci bir gercek uretir.
+    //
+    // (P244 §6) OLCUT DEGISTI, KURAL AYNI.
+    // -----------------------------------------------------------------
+    // Eski iddia "hic dugme ve hic metin kutusu yok"tu ve bu, "yazma
+    // yolu yok"un VEKILIYDI. Sayfaya ARAMA ve FILTRE gelince vekil
+    // dustu — ama kural dusmedi: arama kutusu bir OKUMA kontroludur,
+    // kayit uretmez.
+    //
+    // Olculen sey artik dogrudan kuralin kendisi: form YOK ve
+    // "yeni/ekle" gibi bir OLUSTURMA eylemi YOK. (Gercek guvence BFF'te:
+    // rota yalniz `GET` disa aktarir — `bff-yol-eslesmesi` onu olcuyor.)
     taklit({ "/api/vehicle-passes": { items: [GECIS] } });
-    ciz(AracGecisleriPage);
+    const { container } = ciz(AracGecisleriPage);
     await screen.findByText("34ABC123");
-    expect(screen.queryAllByRole("button")).toHaveLength(0);
-    expect(screen.queryAllByRole("textbox")).toHaveLength(0);
+    expect(container.querySelector("form")).toBeNull();
+    const olusturma = screen
+      .queryAllByRole("button")
+      .filter((b) => /yeni|ekle|oluştur|kaydet/i.test(b.textContent ?? ""));
+    expect(olusturma).toHaveLength(0);
   });
 
   it("istek DUSTUGUNDE 'kayit yok' YAZILMAZ (P61)", async () => {

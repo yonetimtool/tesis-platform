@@ -23,7 +23,6 @@
 import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 
-
 import { KameraOynatici } from "@/components/KameraOynatici";
 import { kareKaynagi } from "@/components/KameraSeridi";
 import {
@@ -35,7 +34,10 @@ import {
   IskeletMetin,
   Kart,
   Modal,
+  OzetKarti,
+  OzetSeridi,
   Rozet,
+  SayfaBasligi,
   Secim,
   useOnay,
 } from "@/components/ui";
@@ -60,6 +62,23 @@ const TURLER: CameraTur[] = ["hls", "mp4", "rtsp"];
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`): tur kimligi cumle degil.
 const TUR_RTSP = "rtsp" as const;
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+// (P244 §6) IZGARA YOGUNLUGU — uclude dize yazilmaz (`sabit-metin`).
+type IzgaraYogunlugu = "seyrek" | "orta" | "sik";
+const IZGARA_SEYREK = "seyrek" as const;
+const IZGARA_ORTA = "orta" as const;
+const IZGARA_SIK = "sik" as const;
+const IZGARA_ANAHTARI = "yonetio.kamera.izgara";
+const IZGARA_ETIKETI = {
+  seyrek: "kameraIzgaraSeyrek",
+  orta: "kameraIzgaraOrta",
+  sik: "kameraIzgaraSik",
+} as const;
+const IZGARA_SINIFI: Record<IzgaraYogunlugu, string> = {
+  seyrek: "grid gap-4 sm:grid-cols-2",
+  orta: "grid gap-4 sm:grid-cols-2 lg:grid-cols-3",
+  sik: "grid gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5",
+};
+
 const ROZET_UYARI = "uyari" as const;
 // Tur adlari TEKNIK KIMLIKTIR (HLS/MP4/RTSP) — cevrilmez, sozluge girmez.
 const TUR_SECENEKLERI = TURLER.map((tr) => (
@@ -128,6 +147,34 @@ export default function KameralarPage() {
   );
   const kameralar = data?.items ?? [];
   const gorunen = kameralar.filter((k) => k.aktif);
+  // (P244 §6) IZGARA YOGUNLUGU — referanstaki "4'lü / 9'lu" secici.
+  //
+  // NEDEN SABIT DEGIL: uc kameralik bir sitede 3 sutun dogru olcudur ama
+  // yirmi kameralik bir sitede ayni izgara sayfayi yedi ekran boyu
+  // uzatir. Secim CIHAZA degil VERIYE bagli ve bunu ancak kullanici
+  // bilir. Tercih `localStorage`ta: bir GORUNUM aliskanligi, hesaba
+  // yazilacak bir ayar degil (kabuk menusunun dar/genis tercihiyle ayni
+  // sinif).
+  const [yogunluk, setYogunluk] = useState<IzgaraYogunlugu>(IZGARA_ORTA);
+  useEffect(() => {
+    try {
+      const k = localStorage.getItem(IZGARA_ANAHTARI);
+      if (k === IZGARA_SEYREK || k === IZGARA_ORTA || k === IZGARA_SIK) {
+        setYogunluk(k);
+      }
+    } catch {
+      // Bozuk/erisilemez depolama izgarayi KIRMAZ — varsayilana dusulur.
+    }
+  }, []);
+  function yogunlukSec(y: IzgaraYogunlugu) {
+    setYogunluk(y);
+    try {
+      localStorage.setItem(IZGARA_ANAHTARI, y);
+    } catch {
+      /* depolama yoksa tercih bu oturumda yasar */
+    }
+  }
+
   // (P190 §6) Karo kaynagi: yoneticinin girdigi snapshot_url varsa o; yoksa
   // RTSP kameralarda SUNUCUNUN cektigi kare (`/api/cameras/{id}/kare`) —
   // kimlik bilgili RTSP adresi istemciye inmeden izgara dolar.
@@ -140,6 +187,15 @@ export default function KameralarPage() {
   // Kare cekilemeyen (baglanti yok) kameralar — karo acik durum cizer,
   // bos kutu birakmaz. Her tazeleme turunda yeniden denenir.
   const [kareHatalari, setKareHatalari] = useState<Set<string>>(new Set());
+
+  // OZET SAYILARI GORUNEN LISTEDEN — yeni uc YOK.
+  // "Goruntu alinamayan" sayisi ILERLEYEN bir sayidir: kare istekleri
+  // dustukce artar. Etiket bunu durustce soyluyor ("goruntu alinamayan"),
+  // "arizali" demiyor — bir kamera calisiyor ama karesi gec gelmis
+  // olabilir.
+  const canliSayisi = gorunen.filter(
+    (k) => kareKaynagi(k) && !kareHatalari.has(k.id),
+  ).length;
 
   // NESİL SAYACI: adrese eklenerek önbelleği kırar. Zaman damgası yerine
   // sayaç — testte deterministik olsun diye (mobildeki gerekçenin aynısı).
@@ -381,14 +437,73 @@ export default function KameralarPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-          {t("kameraBaslikWeb")}
-        </h1>
-        <Dugme tur="birincil" boy="kucuk" onClick={yeni}>
-          {t("kameraYeni")}
-        </Dugme>
-      </div>
+      <SayfaBasligi
+        baslik={t("kameraBaslikWeb")}
+        aciklama={t("kameraSayfaAlt")}
+        eylem={
+          <Dugme tur="birincil" boy="kucuk" onClick={yeni}>
+            {t("kameraYeni")}
+          </Dugme>
+        }
+      />
+
+      {/* (P244 §6) OZET SERIDI — referanstaki uc sayac.
+          Sayilar GORUNEN LISTEDEN turer; yeni uc YOK. */}
+      {!error && gorunen.length > 0 && (
+        <OzetSeridi>
+          <OzetKarti
+            etiket={t("kameraOzetToplam")}
+            deger={String(gorunen.length)}
+            durum="bilgi"
+          />
+          <OzetKarti
+            etiket={t("kameraOzetCanli")}
+            deger={String(canliSayisi)}
+            durum={canliSayisi === gorunen.length ? "olumlu" : "uyari"}
+          />
+          <OzetKarti
+            etiket={t("kameraOzetGoruntusuz")}
+            deger={String(gorunen.length - canliSayisi)}
+            durum={gorunen.length - canliSayisi > 0 ? "uyari" : "olumlu"}
+            altBilgi={t("kameraOzetGoruntusuzAlt")}
+          />
+        </OzetSeridi>
+      )}
+
+      {/* (P244 §6) IZGARA YOGUNLUGU. Ucu de AYNI anlami tasiyor
+          ("kac sutun"); bu yuzden segment, acilir liste degil — secenekler
+          az, karsilastirmali ve tek dokunusla degisiyor. */}
+      {!error && gorunen.length > 0 && (
+        <div
+          className="flex items-center gap-1 self-start rounded-lg p-1"
+          role="group"
+          aria-label={t("kameraIzgaraEtiket")}
+          style={{
+            background: "var(--yz-surface-2)",
+            border: "var(--yz-border-w) solid var(--yz-border)",
+            width: "fit-content",
+          }}
+        >
+          {([IZGARA_SEYREK, IZGARA_ORTA, IZGARA_SIK] as const).map((y) => (
+            <button
+              key={y}
+              type="button"
+              onClick={() => yogunlukSec(y)}
+              aria-pressed={yogunluk === y}
+              data-test={`kamera-izgara-${y}`}
+              className="odak-ic rounded px-3 py-1.5 transition-colors"
+              style={{
+                fontSize: "var(--yz-fs-sm)",
+                background: yogunluk === y ? "var(--yz-surface-1)" : undefined,
+                color: yogunluk === y ? "var(--yz-text)" : "var(--yz-text-2)",
+                boxShadow: yogunluk === y ? "var(--yz-raised)" : undefined,
+              }}
+            >
+              {t(IZGARA_ETIKETI[y])}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* HATA VARSA IZGARA DALI CALISMAZ: `gorunen` bos gelir ve "kamera
           yok" yazmak, kamera OLMADIGINI soylemek olurdu — oysa bilinen
@@ -451,7 +566,7 @@ export default function KameralarPage() {
       )}
 
       {!error && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className={IZGARA_SINIFI[yogunluk]}>
           {gorunen.map((k) => {
             const oynar = k.oynatilabilir ?? oynatilabilirMi(k.tur, k.restream_url);
             return (
@@ -500,6 +615,29 @@ export default function KameralarPage() {
                       >
                         {t("kameraKareYokWeb")}
                       </div>
+                    )}
+                    {/* (P244 §6) CANLI ROZETI KUCUK RESMIN USTUNDE.
+                        Eskiden canli oldugu kartin ALTINDA sonuk bir
+                        satirdi; referansta kirmizi rozet goruntunun
+                        ustunde duruyor ve goz onu ONCE gorur.
+                        RENK TEK TASIYICI DEGIL: rozetin icinde kelime de
+                        yaziyor. */}
+                    {kareKaynagi(k) && !kareHatalari.has(k.id) && (
+                      <span
+                        className="absolute start-2 top-2 inline-flex items-center gap-1.5 rounded px-1.5 py-0.5"
+                        style={{
+                          background: "var(--yz-danger-fill)",
+                          color: "var(--yz-on-fill)",
+                          fontSize: "var(--yz-fs-xs)",
+                        }}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className="inline-block h-1.5 w-1.5 rounded-full"
+                          style={{ background: "var(--yz-on-fill)" }}
+                        />
+                        {t("kameraCanliRozet")}
+                      </span>
                     )}
                     {!oynar && (
                       <span className="absolute end-2 top-2">

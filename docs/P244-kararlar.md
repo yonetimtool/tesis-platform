@@ -742,3 +742,115 @@ hex'i `rgb()`ye çevirir) ilk koşuda ortaya çıktı.
 
 `tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
 **tam takım 233 dosya / 1996 test yeşil.**
+
+---
+
+# AŞAMA 6a — GÜVENLİK · UYGULANDI (ilk tur)
+
+Plan aşama 6'yı **iki tur** diye tahmin etmişti. Bu tur **güvenlik**;
+tesis (B grubu) bir sonraki tura kaldı — sonunda açıkça yazılı.
+
+## A6.1 Ölçüm: aşama 3'ün bileşenleri hiç kullanılmıyordu
+
+10 güvenlik ekranı tarandı: **`OzetSeridi`, `FiltreCubugu` ve
+`DetayCekmecesi` sıfır sayfada.** Aşama 3'te yazılan bileşenler
+raftaydı. En büyük kaldıraç buydu.
+
+## A6.2 `arac-gecisleri` — ölçülen en zayıf ekran
+
+69 satırdı ve her kaydı **ayrı bir kart** olarak alt alta diziyordu:
+50 geçiş = 50 kart.
+
+Kart dizisi burada yanlış bir seçimdi: geçiş kaydı **üç alanlı ve
+tekrarlı**; kart dili her kayda bir başlık seviyesi verip ekrana dört
+kayıt sığdırıyordu. Tablo aynı alanda yirmi beş kayıt gösterir.
+
+Yeni: `SayfaBasligi` + `OzetSeridi` (3 kart) + `FiltreCubugu`
+(plaka araması + durum) + `VeriTablosu` (`yogunluk="sik"`, yapışkan
+başlık, numaralı).
+
+## A6.3 Ölçüm: BFF sunucunun süzgeçlerini düşürüyormuş
+
+Sunucu `acik`, `plaka`, `baslangic`, `bitis` süzgeçlerini **P16'dan beri**
+destekliyor ve sözleşme bunları **açıkça sayaç tarifi** olarak
+belgeliyor:
+
+> "Ana ekran sayacı: `?acik=true&limit=1` → `meta.total`"
+> "Bugün N giriş: `?baslangic=<gün başı>&limit=1` → `meta.total`"
+
+BFF rotası yalnız `limit`/`offset` taşıyordu. Yani web ne plakaya göre
+arayabiliyor ne de "içeride kaç araç var" sorabiliyordu. Depoda kayıtlı
+sınıf (**P213**: "BFF sorgu süzgecini beyaz listeyle taşır").
+
+Rota düzeltildi — **beyaz listeyle**, çünkü sorgu dizesini olduğu gibi
+iletmek istemcinin backend uçlarına serbestçe parametre geçirmesine izin
+vermek olurdu.
+
+Sayaçlar artık **`meta.total`dan** geliyor, görünen sayfadan değil:
+görünen 50 kaydı saymak "bugün 50 giriş oldu" gibi **yanlış** bir sayı
+üretirdi.
+
+## A6.4 `kameralar` — canlı rozeti ve ızgara yoğunluğu
+
+* **CANLI rozeti küçük resmin üstünde.** Eskiden canlı olduğu kartın
+  **altında sönük bir satırdı**; referansta kırmızı rozet görüntünün
+  üstünde ve göz onu önce görür. Renk tek taşıyıcı değil — rozetin
+  içinde kelime de var.
+* **Izgara yoğunluğu** (Büyük / Orta / Sık). Sabit `lg:grid-cols-3`
+  üç kameralık bir sitede doğru, yirmi kameralık bir sitede sayfayı
+  yedi ekran boyu uzatıyordu. Seçim **cihaza değil veriye** bağlı ve
+  bunu ancak kullanıcı bilir. Tercih `localStorage`ta: bir **görünüm
+  alışkanlığı**, hesaba yazılacak bir ayar değil (kabuk menüsünün
+  dar/geniş tercihiyle aynı sınıf).
+* Özet şeridi: toplam / görüntü veren / görüntü alınamayan.
+  **"Arızalı" demiyoruz** — bir kamera çalışıyor ama karesi geç gelmiş
+  olabilir; etiket "görüntü alınamayan" ve alt satırı bunun **ilerleyen**
+  bir sayı olduğunu söylüyor.
+
+## A6.5 Kırma denemeleri iki boşluk buldu
+
+| kırma | sonuç |
+|---|---|
+| Sayaçları görünen listeden say | **Yakalanmadı** → testim ayırt etmiyordu (üç kart da aynı sayıyı gösteriyordu). İddia **kart başına** daraltıldı; yeniden kırıldı, düştü |
+| Aramayı istemciye al | yakalandı ✔ |
+| BFF'ten süzgeci kaldır | **Yakalanmadı** → DOM testi `fetch`i taklit ediyor, **rota işlevi hiç çalışmıyor**. P200/P213 dersi birebir tekrar: taklit, ölçülmek istenen katmanın **altına** konmalı. Ayrı bir rota testi yazıldı (`p244-bff-arac-suzgec`, 5 test); yeniden kırıldı, dördü birden düştü |
+
+## A6.6 Kilitler iki gerçek kusurumu yakaladı
+
+1. **`canliSayisi`yi `kareHatalari` tanımlanmadan önce koymuşum** —
+   `kamera-oynatici.dom` testi TDZ hatasıyla düştü. `tsc` bunu
+   görmemişti.
+2. **`arac-gecisleri` istek düştüğünde "kayıt yok" yazıyordu** —
+   `guvenlik-ekranlari.dom` yakaladı. **P61 ihlali**: bilinen tek şey
+   listenin okunamadığı. Hata artık tabloya veriliyor; tablo boş durum
+   yerine tekrar düğmesi çiziyor.
+
+## A6.7 Bir kilidin ölçütü değişti, kuralı değişmedi
+
+`guvenlik-ekranlari` — "YAZMA düğmesi/formu YOK". Eski iddia *"hiç
+düğme ve hiç metin kutusu yok"*tu ve bu, "yazma yolu yok"un **vekiliydi**.
+Sayfaya arama ve filtre gelince vekil düştü — **ama kural düşmedi**:
+arama kutusu bir **okuma** kontrolüdür, kayıt üretmez.
+
+Ölçülen şey artık doğrudan kuralın kendisi: `<form>` yok ve
+"yeni/ekle/oluştur/kaydet" diye bir eylem yok. Gerçek güvence zaten
+BFF'te (rota yalnız `GET` dışa aktarır).
+
+## A6.8 Bu turda YAPILMAYAN — açıkça
+
+* **Tesis grubu (B) hiç ele alınmadı**: `/building-editor`, `/units`,
+  `/residents`, `/rezervasyon-yonetimi`, `/tesis-ayarlari`. Sonraki tur.
+* Güvenliğin kalan yedi ekranı (`kamera-kayitlari`, `panik`, `akilli-ev`,
+  `notifications`, `patrol-plans`, `checkpoints`, `olaylar`,
+  `ziyaretciler`) **dokunulmadı**. Bu turda iki ekran ölçülerek seçildi:
+  en zayıf olan (`arac-gecisleri`, 69 satır) ve referansın en güçlü
+  gösterdiği (`kameralar`).
+* **`DetayCekmecesi` hâlâ hiçbir sayfada kullanılmıyor.** Aşama 3'te
+  yazıldı, aşama 6a'da yeri gelmedi — satır tıklaması `arac-gecisleri`
+  için anlamsız (geçiş kaydının detayı yok). Tesis turunda daire detayı
+  için kullanılacak.
+
+## A6.9 Doğrulama
+
+`tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
+**tam takım 235 dosya / 2007 test yeşil.**
