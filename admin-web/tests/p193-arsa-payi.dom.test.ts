@@ -54,13 +54,23 @@ describe("(P193 §6) arsa payı toplu giriş", () => {
   it("TOPLAM ve EKSIK GIRIS sayisi gorunur", async () => {
     kur();
     ciz(UnitsPage);
-    // Toplam AYRI UCTAN gelir: liste sayfalidir, gorunen satirlarin
-    // toplami "toplam arsa payi" DEGILDIR.
-    expect(await screen.findByText(/Arsa payı toplamı/)).toBeInTheDocument();
+    // (P244 §6b) BILGI TABLONUN ALTINDAN OZET SERIDINE TASINDI.
+    // -----------------------------------------------------------------
+    // Eskiden iki duz cumleydi ("Arsa payı toplamı…", "1 dairede arsa
+    // payı yok"); artik iki ozet karti. OLCULEN SEY DEGISMEDI ve asil
+    // gerekce hâlâ gecerli:
+    //
+    //   Toplam AYRI UCTAN gelir (`/api/units/arsa-payi-ozeti`). Liste
+    //   SAYFALIDIR; gorunen satirlarin toplami "toplam arsa payi"
+    //   DEGILDIR. Bu yuzden iddia, uctan gelen degerin ekrana ciktigini
+    //   olcer — gorunen satirlardan turetilenin degil.
+    const toplam = await screen.findByText(/Toplam arsa payı/);
+    expect(toplam.closest("div")!.parentElement!.textContent).toContain("0,0125");
+    const eksik = screen.getByText(/Arsa payı girilmemiş/);
     expect(
-      screen.getByText(/1 dairede arsa payı yok/),
-      "eksik giris uyarisi gorunmuyor",
-    ).toBeInTheDocument();
+      eksik.closest("div")!.parentElement!.textContent,
+      "eksik giris sayisi gorunmuyor",
+    ).toContain("1");
   });
 
   it("SECILI dairelere DAIRE BASINA farkli deger yazilir", async () => {

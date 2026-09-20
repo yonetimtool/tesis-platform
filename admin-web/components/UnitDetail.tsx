@@ -3,8 +3,20 @@
 import { useState } from "react";
 import useSWR from "swr";
 
-import { ErrorBox, Field, btnDanger, btnGhost, btnPrimary, cardCls, inputCls } from "@/components/form";
-import { Dugme, Modal, useOnay } from "@/components/ui";
+// (P244 §6b) ESKI DIL KALINTILARI TEMIZLENDI.
+// `cardCls`/`inputCls`/`btn*`/`Field`/`ErrorBox` eski gorsel dilin
+// yardimcilariydi. Bilesen artik CEKMECENIN ICINDE cizildigi icin kendi
+// kart yuzeyini de tasimiyor: cekmece zaten bir yuzeydir, ustune ikinci
+// bir kart koymak iki kenarlik ve iki dolgu demekti.
+import {
+  Alan,
+  AlanSarmal,
+  Dugme,
+  HataDurumu,
+  Modal,
+  Secim,
+  useOnay,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { ODEME_DURUM, ODEME_YONTEM, enumAdi } from "@/lib/enum-adlari";
 import { apiSend, genIdempotencyKey } from "@/lib/client";
@@ -263,7 +275,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
   const residentChoices = (residentUsers?.items ?? []).filter((u) => !atanmisIds.has(u.id));
 
   return (
-    <div className={`space-y-5 p-5 ${cardCls}`}>
+    <div className="space-y-5">
       <h2 className="text-lg font-medium">{t("daireBorcDurumu", { no: unit.no })}</h2>
 
       {/* Bakiye ozeti */}
@@ -287,9 +299,9 @@ export function UnitDetail({ unit }: { unit: Unit }) {
       </div>
 
       <div className="flex gap-2">
-        <button className={btnPrimary} onClick={openPay}>
+        <Dugme tur="birincil" boy="kucuk" onClick={openPay}>
           {t("daireTahsilatKaydet")}
-        </button>
+        </Dugme>
       </div>
 
       <Modal
@@ -309,19 +321,17 @@ export function UnitDetail({ unit }: { unit: Unit }) {
       >
         <form id="tahsilat-form" onSubmit={pay} className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field label={t("aidatTutarTl")} hint={t("daireTutarOrnek")}>
-              <input
-                className={inputCls}
+            <AlanSarmal etiket={t("aidatTutarTl")} ipucu={t("daireTutarOrnek")}>
+              {(b) => (<Alan {...b}
                 inputMode="decimal"
                 value={pTl}
                 onChange={(e) => setPTl(e.target.value)}
                 placeholder="250,00"
                 required
-              />
-            </Field>
-            <Field label={t("aidatYontem")}>
-              <select
-                className={inputCls}
+              />)}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("aidatYontem")}>
+              {(b) => (<Secim {...b}
                 value={pYontem}
                 onChange={(e) => setPYontem(e.target.value as DuesYontem)}
               >
@@ -330,18 +340,16 @@ export function UnitDetail({ unit }: { unit: Unit }) {
                     {t(o.anahtar)}
                   </option>
                 ))}
-              </select>
-            </Field>
-            <Field label={t("aidatMakbuzNoOpsiyonel")}>
-              <input
-                className={inputCls}
+              </Secim>)}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("aidatMakbuzNoOpsiyonel")}>
+              {(b) => (<Alan {...b}
                 value={pMakbuz}
                 onChange={(e) => setPMakbuz(e.target.value)}
-              />
-            </Field>
-            <Field label={t("aidatTahakkukOpsiyonel")}>
-              <select
-                className={inputCls}
+              />)}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("aidatTahakkukOpsiyonel")}>
+              {(b) => (<Secim {...b}
                 value={pAssessment}
                 onChange={(e) => setPAssessment(e.target.value)}
               >
@@ -351,30 +359,29 @@ export function UnitDetail({ unit }: { unit: Unit }) {
                     {a.donem} · {kurusToTL(a.tutar_kurus)}
                   </option>
                 ))}
-              </select>
-            </Field>
-            <Field
-              label={t("daireDonemOpsiyonel")}
-              hint={
+              </Secim>)}
+            </AlanSarmal>
+            <AlanSarmal
+              etiket={t("daireDonemOpsiyonel")}
+              ipucu={
                 pAssessment
                   ? t("daireDonemOtomatik")
                   : t("daireDonemSerbest")
               }
             >
-              <input
-                className={inputCls}
+              {(b) => (<Alan {...b}
                 value={pAssessment ? seciliTahakkukDonem : pDonem}
                 onChange={(e) => setPDonem(e.target.value)}
                 placeholder="2026-07"
                 disabled={Boolean(pAssessment)}
-              />
-            </Field>
+              />)}
+            </AlanSarmal>
           </div>
-          <ErrorBox message={pErr} />
+          <HataDurumu mesaj={pErr} />
           <div className="flex gap-2">
-            <button type="button" className={btnGhost} onClick={() => setPOpen(false)}>
+            <Dugme tur="sessiz" boy="kucuk" onClick={() => setPOpen(false)}>
               {t("ortakIptal")}
-            </button>
+            </Dugme>
           </div>
         </form>
       </Modal>
@@ -443,38 +450,35 @@ export function UnitDetail({ unit }: { unit: Unit }) {
       >
         <form id="tahakkuk-form" onSubmit={addAssessment} className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label={t("ortakDonem")} hint={t("daireDonemOrnek")}>
-            <input
-              className={inputCls}
+          <AlanSarmal etiket={t("ortakDonem")} ipucu={t("daireDonemOrnek")}>
+              {(b) => (<Alan {...b}
               value={aDonem}
               onChange={(e) => setADonem(e.target.value)}
               placeholder="2026-07"
               required
-            />
-          </Field>
-          <Field label={t("aidatTutarTl")}>
-            <input
-              className={inputCls}
+            />)}
+            </AlanSarmal>
+          <AlanSarmal etiket={t("aidatTutarTl")}>
+              {(b) => (<Alan {...b}
               inputMode="decimal"
               value={aTl}
               onChange={(e) => setATl(e.target.value)}
               placeholder="750,00"
               required
-            />
-          </Field>
-          <Field label={t("daireSonOdemeTarihi")}>
-            <input
+            />)}
+            </AlanSarmal>
+          <AlanSarmal etiket={t("daireSonOdemeTarihi")}>
+              {(b) => (<Alan {...b}
               type="date"
-              className={inputCls}
               value={aSon}
               onChange={(e) => setASon(e.target.value)}
-            />
-          </Field>
-          <Field label={t("ortakAciklamaOpsiyonel")}>
-            <input className={inputCls} value={aDesc} onChange={(e) => setADesc(e.target.value)} />
-          </Field>
+            />)}
+            </AlanSarmal>
+          <AlanSarmal etiket={t("ortakAciklamaOpsiyonel")}>
+              {(b) => (<Alan {...b}  value={aDesc} onChange={(e) => setADesc(e.target.value)} />)}
+            </AlanSarmal>
         </div>
-        <ErrorBox message={aErr} />
+        <HataDurumu mesaj={aErr} />
         </form>
       </Modal>
 
@@ -494,9 +498,9 @@ export function UnitDetail({ unit }: { unit: Unit }) {
                   ? t(sifatAnahtari(r.rol_tipi, r.oturuyor ?? false)!)
                   : "—"}
               </span>
-              <button className={btnDanger} onClick={() => removeResident(r.user_id)}>
+              <Dugme tur="tehlike" boy="kucuk" onClick={() => removeResident(r.user_id)}>
                 {t("kullaniciCikar")}
-              </button>
+              </Dugme>
             </li>
           ))}
           {residents && aktifSakinler.length === 0 && (
@@ -520,9 +524,8 @@ export function UnitDetail({ unit }: { unit: Unit }) {
       >
         <form id="sakin-form" onSubmit={addResident} className="space-y-3">
           <div className="grow">
-            <Field label={t("sakinEkle")} hint={t("daireSakinIpucu")}>
-              <select
-                className={inputCls}
+            <AlanSarmal etiket={t("sakinEkle")} ipucu={t("daireSakinIpucu")}>
+              {(b) => (<Secim {...b}
                 value={rUser}
                 onChange={(e) => setRUser(e.target.value)}
                 required
@@ -533,13 +536,12 @@ export function UnitDetail({ unit }: { unit: Unit }) {
                     {u.ad} ({u.email})
                   </option>
                 ))}
-              </select>
-            </Field>
+              </Secim>)}
+            </AlanSarmal>
           </div>
           <div className="w-40">
-            <Field label={t("ortakRol")}>
-              <select
-                className={inputCls}
+            <AlanSarmal etiket={t("ortakRol")}>
+              {(b) => (<Secim {...b}
                 value={rRol}
                 onChange={(e) => setRRol(e.target.value as ResidentRol | "")}
               >
@@ -549,12 +551,12 @@ export function UnitDetail({ unit }: { unit: Unit }) {
                     {t(o.anahtar)}
                   </option>
                 ))}
-              </select>
-            </Field>
+              </Secim>)}
+            </AlanSarmal>
           </div>
         </form>
       </Modal>
-        <ErrorBox message={rErr} />
+        <HataDurumu mesaj={rErr} />
       </div>
       {diyalog}
     </div>

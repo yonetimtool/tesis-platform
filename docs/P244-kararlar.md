@@ -854,3 +854,96 @@ BFF'te (rota yalnız `GET` dışa aktarır).
 
 `tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
 **tam takım 235 dosya / 2007 test yeşil.**
+
+---
+
+# AŞAMA 6b — TESİS · UYGULANDI (ikinci tur)
+
+## A6b.1 `DetayCekmecesi` nihayet kullanılıyor
+
+Aşama 3'te yazıldı, **altı tur boyunca hiçbir sayfada kullanılmadı**.
+İlk tüketicisi `/units`.
+
+**Ölçülen kusur:** daire detayı **tablonun altında** açılıyor ve sayfa
+oraya **kaydırılıyordu** (`useAcilinca`). Kullanıcı listedeki yerini
+kaybediyor, geri dönünce süzgeçleri ve kaydırmayı yeniden kuruyordu; bir
+daireden ötekine bakmak her seferinde aşağı-yukarı gitmek demekti.
+
+Çekmece listeyi **yerinde** tutar. `useAcilinca` kancası artık gereksiz —
+kaldırıldı.
+
+## A6b.2 Satır tıklaması EKLENMEDİ — ölçülmüş karar
+
+Aşama 3'te tabloya `onSatirTikla` eklemiştim ve burası ilk adayıydı.
+**Eklemedim:** `/units` tablosu **seçilebilir** (`secilebilir`), yani
+satıra tıklamak kullanıcıların çoğunda **"seç"** anlamına gelir. İki
+anlamı aynı harekete yüklemek, toplu işlem yapmak isteyene her seferinde
+çekmece açardı.
+
+Detay, satır sonundaki **düğmeyle** açılıyor. Kilit bunu ölçüyor: satırda
+`role="button"` **yok** ve seçim kutusu **duruyor**.
+
+## A6b.3 `UnitDetail` eski dilden çıktı
+
+41 eski-dil kullanımı vardı (`cardCls`, `inputCls`, `btnPrimary/Ghost/
+Danger`, `Field`, `ErrorBox`). Aşama 4 **sayfaları** temizlemişti;
+paylaşılan bu bileşen `components/form.tsx`e bağlı kalmıştı.
+
+**Kart sarmalayıcısı kaldırıldı:** bileşen artık çekmecenin içinde
+çiziliyor ve çekmece zaten bir yüzey — üstüne ikinci bir kart koymak iki
+kenarlık ve iki dolgu demekti.
+
+Dönüşümde `tsc` bir API farkını yakaladı: `AlanSarmal` **render-prop**
+alıyor (`{(b) => <Alan {...b} …/>}`), eski `Field` düz children alıyordu.
+Sekiz alan buna göre çevrildi.
+
+## A6b.4 Özet şeritleri — "bu sayı neyi sayıyor?"
+
+| ekran | kaynak | gerekçe |
+|---|---|---|
+| `/units` | `/api/units/arsa-payi-ozeti` (**ayrı uç**) | Liste **sayfalı**; görünen satırların toplamı "toplam arsa payı" değildir |
+| `/residents` | **görünen liste** | Liste sayfalı **değil** — sunucu tüm sakinleri döndürüyor, gruplama istemcide |
+| `/arac-gecisleri` (6a) | `meta.total` | Liste sayfalı |
+
+Üçü aynı kuralı değil, aynı **soruyu** uyguluyor: *bu sayı neyi sayıyor?*
+
+`/residents`'ta özet **süzgeçsiz** listeden sayılıyor: `gruplar` süzgeçten
+geçmiş listeyi taşıyor ve oradan saymak "arama yapınca sakin sayısı
+düştü" gibi yanlış bir şey söylerdi.
+
+## A6b.5 `/residents` gruplaması KORUNDU
+
+Blok-gruplu kart yapısı **tabloya çevrilmedi**: gruplama bu sayfanın
+**var olma sebebi** (P220 §4 — "kim nerede oturuyor" sorusu). Eklenen
+şey sayfa başlığı, özet şeridi ve filtre çubuğu.
+
+## A6b.6 Kilitler
+
+**YENİ** `p244-tesis-ekranlari` (4 test): özet şeridi arsa payı eksiğini
+sayıyla söyler; detay **çekmecede** açılır ve arkadaki tablo durur; ESC
+kapatır; satır tıklaması **eklenmedi** ve seçim kutusu duruyor.
+
+**İki kırma denendi, ikisi de yakalandı:** detayı tablo altına geri
+koymak, satır tıklaması eklemek.
+
+`p193-arsa-payi` — bilgi tablonun altından özet şeridine taşındığı için
+iddia güncellendi. **Ölçülen şey değişmedi** ve asıl gerekçe kaydedildi:
+toplam ayrı uçtan gelir, görünen satırlardan türetilmez.
+
+Test yazarken kendi kurgum bir kez düştü: `/api/units/{id}/residents`
+de `/api/units` içeriyor; genel dalı öne almak, dizi bekleyen bir uca
+nesne döndürüp bileşeni `filter is not a function` ile düşürüyordu.
+
+## A6b.7 Bu turda YAPILMAYAN — açıkça
+
+* **`/building-editor` (1238 satır) hiç ele alınmadı.** Referanstaki
+  "blok kartları şeridi + seçili bloğun daire tablosu" deseni oraya ait
+  ve tek başına bir tur işi. En uzun üçüncü sayfa.
+* `/rezervasyon-yonetimi` ve `/tesis-ayarlari` dokunulmadı.
+* Güvenliğin kalan yedi ekranı (6a'da da not edilmişti) dokunulmadı.
+* **3B sahne paleti hâlâ P244 öncesi renklerde** (§A5.5 açık maddesi).
+
+## A6b.8 Doğrulama
+
+`tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
+**tam takım 236 dosya / 2011 test yeşil.**

@@ -3294,4 +3294,16 @@ export const ru: Sozluk = {
   kameraIzgaraSeyrek: "Крупно",
   kameraIzgaraOrta: "Средне",
   kameraIzgaraSik: "Плотно",
+  // (P244 §6b) DAIRELER — ozet seridi ve detay cekmecesi
+  daireOzetToplam: "Всего квартир",
+  daireOzetArsaPayi: "Общая доля в земле",
+  daireOzetArsaPayiAlt: "Заполнено {girilmis} из {daire} квартир",
+  daireOzetEksik: "Доля не указана",
+  daireOzetEksikAlt: "Массовое начисление пропустит эти квартиры",
+  daireDetayBaslik: "Квартира {no}",
+  daireDetayBlok: "Корпус {blok}",
+  sakinOzetToplam: "Всего жильцов",
+  sakinOzetBlok: "Корпуса",
+  sakinOzetPasif: "Неактивные записи",
+  sakinOzetPasifAlt: "Жильцы без доступа",
 };

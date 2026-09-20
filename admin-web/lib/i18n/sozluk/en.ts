@@ -3294,4 +3294,16 @@ export const en: Sozluk = {
   kameraIzgaraSeyrek: "Large",
   kameraIzgaraOrta: "Medium",
   kameraIzgaraSik: "Compact",
+  // (P244 §6b) DAIRELER — ozet seridi ve detay cekmecesi
+  daireOzetToplam: "Total units",
+  daireOzetArsaPayi: "Total land share",
+  daireOzetArsaPayiAlt: "{girilmis} of {daire} units entered",
+  daireOzetEksik: "Land share missing",
+  daireOzetEksikAlt: "Bulk charging skips these units",
+  daireDetayBaslik: "Unit {no}",
+  daireDetayBlok: "Block {blok}",
+  sakinOzetToplam: "Total residents",
+  sakinOzetBlok: "Blocks",
+  sakinOzetPasif: "Inactive records",
+  sakinOzetPasifAlt: "Residents who can't sign in",
 };

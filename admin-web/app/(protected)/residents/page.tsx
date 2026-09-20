@@ -4,12 +4,17 @@ import { useMemo, useState } from "react";
 import useSWR from "swr";
 
 import {
+  AramaAlani,
   BosDurum,
   Dugme,
+  FiltreCubugu,
   HataDurumu,
   IskeletMetin,
   Kart,
+  OzetKarti,
+  OzetSeridi,
   Rozet,
+  SayfaBasligi,
   useOnay,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
@@ -82,6 +87,14 @@ export default function ResidentsPage() {
   }>(key, jsonFetcher);
 
   const gruplar = useMemo(() => bloklaraGore(data?.items ?? []), [data?.items]);
+  // (P244 §6b) OZET SAYILARI — SUZGECSIZ tum listeden.
+  // `gruplar` suzgecten GECMIS listeyi tasiyor; ozeti oradan saymak
+  // "arama yapinca sakin sayisi dustu" gibi yanlis bir sey soylerdi.
+  const tumSakinler = data?.items ?? [];
+  const blokSayisi = new Set(
+    tumSakinler.map((s) => s.blok ?? null).filter((b) => b !== null),
+  ).size;
+  const pasifSayisi = tumSakinler.filter((s) => !s.is_active).length;
 
   async function sakinSil(s: ResidentListItem) {
     const ok = await onayla({
@@ -110,28 +123,54 @@ export default function ResidentsPage() {
 
   return (
     <div className="space-y-5">
-      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-        {t("kabukSakinler")}
-      </h1>
-      <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-        {t("sakinSayfaAciklama")}
-      </p>
+      <SayfaBasligi
+        baslik={t("kabukSakinler")}
+        aciklama={t("sakinSayfaAciklama")}
+      />
 
-      <div className="flex flex-wrap items-center gap-2">
-        <input
-          type="search"
-          value={arama}
-          onChange={(e) => setArama(e.target.value)}
-          placeholder={t("sakinAraIpucu")}
-          aria-label={t("sakinAra")}
-          className="w-full max-w-sm rounded px-3 py-2"
-          style={{
-            fontSize: "var(--yz-fs-sm)",
-            border: "1px solid var(--yz-border)",
-            background: "var(--yz-surface-1)",
-            color: "var(--yz-text)",
-          }}
-        />
+      {/* (P244 §6b) OZET SERIDI — sayilar GORUNEN listeden turer.
+          Burada bu DOGRU: liste sayfalanmis degil, sunucu tum sakinleri
+          donduruyor (gruplama istemcide yapiliyor, bkz. `bloklaraGore`).
+          Arac gecislerinde `meta.total` gerekmisti cunku orada liste
+          sayfalanmisti — ayni kural degil, ayni SORU: "bu sayi neyi
+          sayiyor?" */}
+      {!isLoading && !error && (
+        <OzetSeridi>
+          <OzetKarti
+            etiket={t("sakinOzetToplam")}
+            deger={String(tumSakinler.length)}
+            durum="notr"
+          />
+          <OzetKarti
+            etiket={t("sakinOzetBlok")}
+            deger={String(blokSayisi)}
+            durum="bilgi"
+          />
+          <OzetKarti
+            etiket={t("sakinOzetPasif")}
+            deger={String(pasifSayisi)}
+            durum={pasifSayisi > 0 ? "uyari" : "olumlu"}
+            altBilgi={pasifSayisi > 0 ? t("sakinOzetPasifAlt") : undefined}
+          />
+        </OzetSeridi>
+      )}
+
+      <FiltreCubugu
+        arama={
+          <AramaAlani
+            deger={arama}
+            onDegisim={setArama}
+            etiket={t("sakinAra")}
+            yerTutucu={t("sakinAraIpucu")}
+            temizleEtiketi={t("ortakKapat")}
+          />
+        }
+        aktifSayi={(aramaGecerli ? 1 : 0) + (blok !== null ? 1 : 0)}
+        onTemizle={() => {
+          setArama("");
+          setBlok(null);
+        }}
+      >
         {arama.trim().length > 0 && !aramaGecerli && (
           <span style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
             {t("sakinAraAsgari")}
@@ -143,7 +182,7 @@ export default function ResidentsPage() {
             {t("sakinBlokSuzgeciKaldir", { blok })}
           </Dugme>
         )}
-      </div>
+      </FiltreCubugu>
 
       {isLoading ? (
         <IskeletMetin satir={4} />

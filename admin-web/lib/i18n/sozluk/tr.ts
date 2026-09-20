@@ -3357,4 +3357,16 @@ export const tr = {
   kameraIzgaraSeyrek: "Büyük",
   kameraIzgaraOrta: "Orta",
   kameraIzgaraSik: "Sık",
+  // (P244 §6b) DAIRELER — ozet seridi ve detay cekmecesi
+  daireOzetToplam: "Toplam daire",
+  daireOzetArsaPayi: "Toplam arsa payı",
+  daireOzetArsaPayiAlt: "{daire} dairenin {girilmis} tanesi girildi",
+  daireOzetEksik: "Arsa payı girilmemiş",
+  daireOzetEksikAlt: "Toplu borçlandırma bu daireleri atlar",
+  daireDetayBaslik: "Daire {no}",
+  daireDetayBlok: "{blok} Blok",
+  sakinOzetToplam: "Toplam sakin",
+  sakinOzetBlok: "Blok",
+  sakinOzetPasif: "Pasif kayıt",
+  sakinOzetPasifAlt: "Girişi kapalı sakinler",
 } as const;

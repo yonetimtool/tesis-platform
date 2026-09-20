@@ -11,14 +11,18 @@ import { alanliHataMetni, apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { aralikCoz } from "@/lib/aralik";
 import {
-  Modal,
-  Secim,
-  Kart,
-  AlanSarmal,
   Alan,
+  AlanSarmal,
+  DetayCekmecesi,
   Dugme,
   HataDurumu,
+  Kart,
+  Modal,
+  OzetKarti,
+  OzetSeridi,
   Rozet,
+  SayfaBasligi,
+  Secim,
   VeriTablosu,
   type Kolon,
   type SayfaBoyu,
@@ -27,7 +31,6 @@ import {
 } from "@/components/ui";
 import { sayiBicimi, sayiCoz, tamsayiCoz } from "@/lib/sayi";
 import type { Unit, UnitList } from "@/lib/types";
-import { useAcilinca } from "@/lib/kaydir";
 import { useT } from "@/lib/i18n/kullan";
 import { kurusToTL } from "@/lib/money";
 
@@ -189,7 +192,6 @@ export default function UnitsPage() {
   const [formErr, setFormErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   // (P162 §7.1) Acilan detay alanina yumusak kaydirma — tek yardimci.
-  const { ref: detayRef, kaydir: detayKaydir } = useAcilinca();
   const [detail, setDetail] = useState<Unit | null>(null);
 
   function openEdit(u: Unit) {
@@ -342,11 +344,13 @@ export default function UnitsPage() {
         gizlenebilir: false,
         hucre: (u) => (
           <div className="flex justify-end gap-2">
-            <Dugme
-              boy="kucuk"
-              onClick={() => { setDetail(detail?.id === u.id ? null : u); detayKaydir(); }}
-            >
-              {detail?.id === u.id ? t("ortakKapat") : t("daireDetayAidat")}
+            {/* SATIR TIKLAMASI EKLENMEDI ve bu OLCULMUS bir karar:
+                tablo SECILEBILIR (`secilebilir`), yani satira tiklamak
+                kullanicilarin cogunda "sec" anlamina gelir. Iki anlami
+                ayni harekete yuklemek, toplu islem yapmak isteyen
+                kullaniciya her seferinde cekmece acardi. */}
+            <Dugme boy="kucuk" onClick={() => setDetail(u)}>
+              {t("daireDetayAidat")}
             </Dugme>
             <Dugme boy="kucuk" onClick={() => openEdit(u)}>
               {t("ortakDuzenle")}
@@ -364,24 +368,56 @@ export default function UnitsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-          {t("kabukDaireler")}
-        </h1>
-        {/* (P165 §2) "YENI DAIRE" DUGMESI KALDIRILDI.
-            Daire ekleme artik BINA DUZENLEME ekraninda; iki giris
-            noktasi, kullaniciyi "hangisi dogru" sorusuyla birakiyordu.
-            Ekran YINE DE cikmaza sokmuyor: bosken ve baslikta oraya
-            goturen bir bag var. */}
-        {/* (P181 6.2) Düz metin bağlantı yerine birincil düğme; diğer ekranlarla tutarlı. */}
-        <Dugme
-          tur="birincil"
-          boy="kucuk"
-          onClick={() => router.push("/building-editor")}
-        >
-          {t("daireBinaDuzenlemeGit")}
-        </Dugme>
-      </div>
+      {/* (P165 §2) "YENI DAIRE" DUGMESI KALDIRILDI.
+          Daire ekleme artik BINA DUZENLEME ekraninda; iki giris noktasi,
+          kullaniciyi "hangisi dogru" sorusuyla birakiyordu. Ekran YINE DE
+          cikmaza sokmuyor: bosken ve baslikta oraya goturen bir bag var.
+          (P181 6.2) Duz metin baglanti yerine birincil dugme. */}
+      <SayfaBasligi
+        baslik={t("kabukDaireler")}
+        eylem={
+          <Dugme
+            tur="birincil"
+            boy="kucuk"
+            onClick={() => router.push("/building-editor")}
+          >
+            {t("daireBinaDuzenlemeGit")}
+          </Dugme>
+        }
+      />
+
+      {/* (P244 §6b) OZET SERIDI — sayilar ZATEN cekilen
+          `/api/units/arsa-payi-ozeti` kaydindan; yeni uc YOK.
+          Arsa payi ozeti eskiden tablonun ALTINDA duz bir cumleydi
+          (`role="status"`); sayfanin en ustunde ve sayi olarak durmasi
+          hem daha erken okunuyor hem "eksik var mi" sorusunu tek bakista
+          yanitliyor. */}
+      {payOzet && (
+        <OzetSeridi>
+          <OzetKarti
+            etiket={t("daireOzetToplam")}
+            deger={String(payOzet.daire_sayisi)}
+            durum="notr"
+          />
+          <OzetKarti
+            etiket={t("daireOzetArsaPayi")}
+            deger={sayiBicimi(payOzet.toplam, "0")}
+            durum="bilgi"
+            altBilgi={t("daireOzetArsaPayiAlt", {
+              girilmis: String(payOzet.girilmis),
+              daire: String(payOzet.daire_sayisi),
+            })}
+          />
+          <OzetKarti
+            etiket={t("daireOzetEksik")}
+            deger={String(payOzet.girilmemis)}
+            durum={payOzet.girilmemis > 0 ? "uyari" : "olumlu"}
+            altBilgi={
+              payOzet.girilmemis > 0 ? t("daireOzetEksikAlt") : undefined
+            }
+          />
+        </OzetSeridi>
+      )}
 
       <BagimlilikUyarisi
         kod="blok"
@@ -568,21 +604,25 @@ export default function UnitsPage() {
           dagilim gider paylasimini sessizce yanlis hesaplar, ve
           girilmemis daire dagitimin DISINDA kalir. Ikisi de burada
           gorunur. */}
-      {payOzet && (
-        <p
-          role="status"
-          style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
-        >
-          {t("daireArsaPayiOzet", {
-            toplam: sayiBicimi(payOzet.toplam, "0"),
-            girilmis: String(payOzet.girilmis),
-            daire: String(payOzet.daire_sayisi),
-          })}
-          {payOzet.girilmemis > 0 ? ` ${t("daireArsaPayiEksik", { adet: String(payOzet.girilmemis) })}` : null}
-        </p>
-      )}
 
-      <div ref={detayRef}>{detail && <UnitDetail unit={detail} />}</div>
+      {/* (P244 §6b) DETAY ARTIK CEKMECEDE.
+          ==================================================================
+          Eskiden detay TABLONUN ALTINDA aciliyor ve sayfa oraya
+          KAYDIRILIYORDU (`useAcilinca`): kullanici listedeki yerini
+          kaybediyor, geri donunce suzgecleri ve kaydirmayi yeniden
+          kuruyordu. Bir daireden otekine bakmak her seferinde asagi-yukari
+          gitmek demekti.
+          Cekmece listeyi YERINDE tutar: arkadaki tablo gorunur kalir ve
+          kullanici bir sonraki daireye gecebilir. */}
+      <DetayCekmecesi
+        acik={detail !== null}
+        onKapat={() => setDetail(null)}
+        baslik={detail ? t("daireDetayBaslik", { no: detail.no }) : ""}
+        altBaslik={detail?.blok ? t("daireDetayBlok", { blok: detail.blok }) : undefined}
+        genislik="genis"
+      >
+        {detail && <UnitDetail unit={detail} />}
+      </DetayCekmecesi>
 
       <Modal
         baslik={t("daireArsaPayiBaslik")}

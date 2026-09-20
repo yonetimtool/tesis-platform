@@ -3294,4 +3294,16 @@ export const fr: Sozluk = {
   kameraIzgaraSeyrek: "Grand",
   kameraIzgaraOrta: "Moyen",
   kameraIzgaraSik: "Compact",
+  // (P244 §6b) DAIRELER — ozet seridi ve detay cekmecesi
+  daireOzetToplam: "Logements au total",
+  daireOzetArsaPayi: "Quote-part totale",
+  daireOzetArsaPayiAlt: "{girilmis} logements sur {daire} saisis",
+  daireOzetEksik: "Quote-part manquante",
+  daireOzetEksikAlt: "La facturation en masse ignore ces logements",
+  daireDetayBaslik: "Logement {no}",
+  daireDetayBlok: "Bloc {blok}",
+  sakinOzetToplam: "Résidents au total",
+  sakinOzetBlok: "Blocs",
+  sakinOzetPasif: "Enregistrements inactifs",
+  sakinOzetPasifAlt: "Résidents sans accès",
 };
