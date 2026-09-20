@@ -3227,4 +3227,9 @@ export const ar: Sozluk = {
   yardimTanimlar: "سجلات مثل الصناديق وأنواع الإيراد/المصروف وأنواع الوحدات والعدادات. تتغذى قوائم الاختيار في الشاشات الأخرى من هنا.",
   yardimRaporlar: "تقارير المالية والمهام والدوريات والإشغال. يمكن تنزيل كل تقرير بصيغة PDF أو Excel.",
   yardimAyarlar: "اسم المجمع وعنوانه وموقعه وإعدادات الوحدات. بدون تحديد الموقع تُعرض حالة الطقس لإسطنبول.",
+  // (P244 §2) KABUK — site karti, arama kisayolu, altbilgi
+  tesisKartiAd: "المجمع الحالي: {ad}",
+  tesisKartiDegistir: "المجمع الحالي: {ad} — افتح للتبديل",
+  kabukAramaKisayolu: "Ctrl K",
+  kabukAltbilgiUrun: "منصة حديثة لإدارة المجمعات",
 };

@@ -3290,4 +3290,9 @@ export const tr = {
   yardimTanimlar: "Kasalar, gelir-gider türleri, daire tipleri, sayaçlar gibi defterler. Diğer ekranların seçim listeleri buradan beslenir.",
   yardimRaporlar: "Finans, görev, devriye ve doluluk raporları. Her raporu PDF veya Excel olarak indirebilirsiniz.",
   yardimAyarlar: "Tesisin adı, adresi, konumu ve modül ayarları. Konumu girmezseniz hava durumu İstanbul'a göre gösterilir.",
+  // (P244 §2) KABUK — site karti, arama kisayolu, altbilgi
+  tesisKartiAd: "Bulunduğunuz tesis: {ad}",
+  tesisKartiDegistir: "Bulunduğunuz tesis: {ad} — değiştirmek için açın",
+  kabukAramaKisayolu: "Ctrl K",
+  kabukAltbilgiUrun: "Modern Tesis Yönetim Platformu",
 } as const;

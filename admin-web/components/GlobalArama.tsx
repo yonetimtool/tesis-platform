@@ -145,6 +145,11 @@ export function GlobalArama({
 
   return (
     <div ref={kutuRef} className="relative w-full max-w-md">
+      {/* (P244 §2) ARAMA ALANI YENI DILE TASINDI.
+          Eski sinif dizesi (`border-slate-300 bg-yuzey-card
+          text-metin-body`) ESKI dilin kalintisiydi: kabuk her sayfada
+          ciziliyor, yani urunun en cok gorunen tek kontrolu eski dilde
+          kaliyordu. */}
       <input
         type="search"
         value={q}
@@ -153,8 +158,35 @@ export function GlobalArama({
         onKeyDown={(e) => e.key === "Escape" && setAcik(false)}
         placeholder={t("aramaIpucu")}
         aria-label={t("aramaEtiket")}
-        className="w-full rounded-lg border border-slate-300 bg-yuzey-card px-3 py-1.5 text-sm text-metin-body outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/25"
+        className="odak-ic w-full outline-none transition"
+        style={{
+          borderRadius: "var(--yz-radius-btn)",
+          border: "var(--yz-border-w) solid var(--yz-border)",
+          background: "var(--yz-surface-1)",
+          color: "var(--yz-text)",
+          fontSize: "var(--yz-fs-sm)",
+          // SAG BOSLUK KISAYOL ROZETI ICIN: rozet alanin USTUNDE duruyor,
+          // metin altina girmesin.
+          padding: "0 5.5rem 0 0.75rem",
+        }}
       />
+      {/* (P244 §2) KISAYOL ROZETI — referansta arama alaninin sag ucunda.
+          DEKORATIF DEGIL: kisayol (Ctrl/Cmd+K) P166'dan beri CALISIYOR ama
+          hicbir yerde YAZMIYORDU, yani yalniz deneyerek bulunabiliyordu.
+          `aria-hidden`: alanin erisilebilir adi `aria-label`dan geliyor,
+          rozet onu tekrarlayip uzatmasin. */}
+      <kbd
+        aria-hidden="true"
+        className="pointer-events-none absolute end-2 top-1/2 -translate-y-1/2 select-none rounded px-1.5 py-0.5 font-sans"
+        style={{
+          fontSize: "var(--yz-fs-xs)",
+          color: "var(--yz-text-3)",
+          background: "var(--yz-surface-2)",
+          border: "var(--yz-border-w) solid var(--yz-border)",
+        }}
+      >
+        {t("kabukAramaKisayolu")}
+      </kbd>
 
       {acik && (
         <div

@@ -83,6 +83,11 @@ function menuAdlari(): string[] {
     // katmak, bos menu beklentisini yanlis yere dusururdu.
     .filter((a) => a.getAttribute("aria-label") !== "Yönetiyor")
     .filter((a) => (a.getAttribute("href") ?? "") !== "#icerik")
+    // (P244 §2) ALTBILGI DE MENU OGESI DEGILDIR — ayni gerekce.
+    // `/gizlilik` ve `/kosullar` KAMUYA ACIK hukuki sayfalar; korumali
+    // bir ekrana giden yol degil. Olculen sey hâlâ "sayfa satiri cizildi
+    // mi" — esik gevsetilmedi, kabugun sabit parcalari disarida.
+    .filter((a) => !a.closest("footer"))
     .map((a) => a.textContent?.trim() ?? "");
 }
 

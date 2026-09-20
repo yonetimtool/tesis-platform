@@ -60,3 +60,7 @@ export {
 } from "./grafik";
 export { TarihAraligi, aralikGecerli, type AralikTipi } from "./tarih-araligi";
 export { AyTakvimi, gunEkle, isoHaftaGunu } from "./ay-takvimi";
+
+// (P244 §2) Kanonik sayfa basligi — eski `tasarim.tsx::SayfaBasligi` ve
+// `form.tsx::PageHeader` bunun yerine gececek (asama 10 temizligi).
+export { SayfaBasligi } from "./sayfa-basligi";

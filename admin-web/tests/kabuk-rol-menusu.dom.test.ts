@@ -87,6 +87,17 @@ function menuAdlari(): string[] {
     // katmak, bos menu beklentisini yanlis yere dusururdu.
     .filter((a) => a.getAttribute("aria-label") !== "Yönetiyor")
     .filter((a) => (a.getAttribute("href") ?? "") !== "#icerik")
+    // (P244 §2) ALTBILGI DE MENU OGESI DEGILDIR — ayni gerekce.
+    // -----------------------------------------------------------------
+    // Asama 2'de kabuga bir altbilgi eklendi ve icinde `/gizlilik` ile
+    // `/kosullar` var. Bunlar KAMUYA ACIK hukuki sayfalar; korumali bir
+    // ekrana giden yol DEGIL. Yine de `queryAllByRole("link")` onlari
+    // sayiyordu ve "menu bos olmali" beklentisi dusuyordu.
+    //
+    // ESIK GEVSETILMEDI: olculen sey hâlâ "bu role hicbir SAYFA satiri
+    // cizilmiyor mu". Yalnizca kabugun sabit parcalari — logo, atla
+    // baglantisi, hukuki altbilgi — sayimin disinda tutuluyor.
+    .filter((a) => !a.closest("footer"))
     .map((a) => a.textContent?.trim() ?? "")
     .filter((s) => s.length > 0);
 }

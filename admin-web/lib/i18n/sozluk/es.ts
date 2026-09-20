@@ -3227,4 +3227,9 @@ export const es: Sozluk = {
   yardimTanimlar: "Registros como cajas, tipos de ingreso/gasto, tipos de vivienda y contadores. Las listas de otras pantallas se nutren de aquí.",
   yardimRaporlar: "Informes de finanzas, tareas, rondas y ocupación. Cada informe se descarga en PDF o Excel.",
   yardimAyarlar: "Nombre, dirección, ubicación y ajustes de módulos. Sin ubicación, el tiempo se muestra para Estambul.",
+  // (P244 §2) KABUK — site karti, arama kisayolu, altbilgi
+  tesisKartiAd: "Comunidad actual: {ad}",
+  tesisKartiDegistir: "Comunidad actual: {ad} — abrir para cambiar",
+  kabukAramaKisayolu: "Ctrl K",
+  kabukAltbilgiUrun: "Plataforma moderna de gestión de comunidades",
 };

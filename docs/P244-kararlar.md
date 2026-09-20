@@ -299,3 +299,105 @@ token'ını geri getirmek — hepsi ilgili testi düşürdü.
 * `npx tsc --noEmit` temiz.
 * `npx eslint` 0 hata (4 uyarı, hepsi P244 öncesinden).
 * **Tam web takımı: 229 dosya / 1970 test yeşil.**
+
+---
+
+# AŞAMA 2 — KABUK · UYGULANDI
+
+## A2.1 Kenar çubuğu laciverde taşındı
+
+Aşama 1'de token'ı lacivert olmuştu ama çizim kodu hâlâ **içerik**
+yüzeylerinin metin token'larını kullanıyordu. Ölçüldü: `--yz-text`
+(`#172033`) lacivert üzerinde **1.06** — menü okunmuyordu. Aşama 1'in
+sonunda "bilinçli ve geçici" diye kaydettiğim borç buydu; kapandı.
+
+| yer | eski | yeni |
+|---|---|---|
+| menü satırı (pasif) | `--yz-text-2` | `--yz-sidebar-text-2` |
+| menü satırı (aktif) | kabartılmış metal kapsül + `accent-edge` çubuk | **dolu mavi hap** + `--yz-sidebar-marker` çubuk |
+| bölüm başlığı | `--yz-text` / `--yz-text-3` | `--yz-sidebar-text` / `--yz-sidebar-label` |
+| iç kenarlıklar | `--yz-border` | `--yz-sidebar-border` |
+| çıkış düğmesi | beyaz `--yz-metal-1` kart | saydam + ince kenarlık |
+| tema anahtarı | beyaz yüzey | kabuk yüzeyi |
+
+**Mobil üst çubuk laciverde çevrilmedi, beyaz oldu.** Gerekçe: içindeki
+bileşenler (bildirim merkezi, dil seçici, hesap menüsü) **masaüstü üst
+çubuğuyla aynı** bileşenler ve o çubuk beyaz. Laciverde çevirmek ya üç
+bileşeni birden koyu zemin için yeniden renklendirmeyi ya da onları
+okunmaz bırakmayı gerektirirdi. Referansta da üst çubuk beyaz.
+
+## A2.2 Aktif öğe — üç ipucu
+
+Ölçüm (aşama 1) tek bir mavinin iki eşiği birden tutamadığını göstermişti.
+Uygulanan: dolgu `#2563eb` (beyaz metin 5.17) **+** sol işaret çubuğu
+`--yz-sidebar-marker` (laciverde karşı 6.04) **+** `aria-current="page"`.
+Renk tek taşıyıcı değil.
+
+## A2.3 Site kartı — kenar çubuğunun dibinde
+
+Referanstaki kart eklendi: bina ikonu + site adı + rol + `›`.
+
+* **Tek tesislide de çizilir** ama düğme değil: "hangi sitedeyim" sorusu
+  onun için de geçerli; olmayan bir kararı sunan düğme, basıldığında
+  hiçbir şey yapmayan düğmedir.
+* **Seçici hesap menüsünden KALDIRILDI.** İki yerde birden durması
+  "hangisi geçerli?" sorusunu üretir — dil seçicinin P140.4'teki
+  gerekçesiyle aynı. Geçiş **mantığı** `lib/tesis-gecis.ts` kancasına
+  çıkarıldı: çizim taşındı, karar tek yerde kaldı.
+* Menü **yukarı açılır**: kart zaten çubuğun dibinde.
+
+## A2.4 Üst çubuk: `Ctrl K` rozeti
+
+Kısayol P166'dan beri **çalışıyordu ama hiçbir yerde yazmıyordu** — yani
+yalnız deneyerek bulunabiliyordu. Referanstaki rozet eklendi
+(`aria-hidden`: alanın erişilebilir adı `aria-label`dan geliyor).
+
+Arama alanının kendisi de **eski dilden yeni dile taşındı**
+(`border-slate-300 bg-yuzey-card text-metin-body` → token'lar). Kabuk her
+sayfada çiziliyor; ürünün en çok görünen tek kontrolü eski dilde
+kalıyordu.
+
+## A2.5 Altbilgi — bizde hiç yoktu
+
+Referansta var, bizde **yoktu**. İçeriğin bittiğini söyler: altbilgisiz
+bir sayfada uzun bir tablonun sonu ile ekranın sonu aynı şeye benziyor.
+Telif + ürün adı + `/gizlilik` ve `/kosullar`.
+
+## A2.6 Kanonik sayfa başlığı — ölçüm
+
+**79 sayfanın 71'i kendi `<h1>`ini yazıyor.** Ortak desen yok: eski dilde
+`SayfaBasligi` (tasarim.tsx) ve `PageHeader` (form.tsx) var ama ikisi
+**toplam 4 sayfada** kullanılıyor.
+
+"Her sayfa aynı şablon" şikâyetinin yanındaki ikinci gerçek bu: sayfalar
+aynı şablonda **değil**, ama tutarlı da değil.
+
+`components/ui/sayfa-basligi.tsx` eklendi (başlık · açıklama · eylem ·
+üst bilgi · alt çubuk yuvaları). **Adoption modül turlarında** — bu
+aşamada yalnız bileşen hazır, hiçbir sayfa bozulmadı.
+
+## A2.7 Kilitler
+
+| kilit | ne oldu |
+|---|---|
+| **YENİ** `p244-kabuk-token` | Kenar çubuğu ağacında içerik token'ı (`--yz-text*`, `--yz-metal-*`) kullanımını yasaklar; aktif öğenin renk dışında ipucu taşıdığını ölçer. **Metin taraması, DOM testi değil** — jsdom renk çözmez ve P226'da tam bu tuzağa düşülmüştü |
+| `kabuk-rol-menusu` · `duzen-rol` | "Menü boş çizilir" testleri altbilgi bağlantılarını sayıyordu. **Eşik gevşetilmedi**: ölçülen şey hâlâ "bu role sayfa satırı çizilmiyor mu"; kabuğun sabit parçaları (logo, atla bağlantısı, hukuki altbilgi) sayım dışında |
+| `p203-coklu-tesis` | Seçici taşındığı için **ölçülen yer** değişti, ölçülen şey değil: tek tesisliye seçim sunulmaması ve bulunduğu tesisin tıklanamaz olması hâlâ ölçülüyor. Tek tesislide kartın **düğme olmadığı** da eklendi |
+| `i18n` TR-kopyası | `"Ctrl K"` istisna listesine girdi: tuş adı, cümle değil. Almanca'da tuş gerçekten `Strg` olduğu için yalnız o dil farklı |
+
+**İki kilit kırılarak doğrulandı:** menü satırını içerik token'ına geri
+döndürmek ve aktif işaretçiyi kaldırmak — ikisi de `p244-kabuk-token`'ı
+düşürdü.
+
+## A2.8 Bu aşamada YAPILMAYAN
+
+* Sayfa başlığının 71 sayfaya uygulanması — modül turları (5–9).
+* Bölüm başlıklarının referanstaki gibi küçük-kapital **etiket** olarak
+  düz listede durması: bizde **katlanır** kalıyor (karar 1, 84 öğe).
+* Üst çubukta site adı: referansta üst çubukta yok, kenar çubuğunda —
+  bizde de öyle yapıldı.
+
+## A2.9 Doğrulama
+
+`tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
+**tam takım 230 dosya / 1974 test yeşil.**

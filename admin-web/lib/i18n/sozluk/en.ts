@@ -3227,4 +3227,9 @@ export const en: Sozluk = {
   yardimTanimlar: "Registers such as cash accounts, income/expense types, unit types and meters. The dropdowns on other screens are fed from here.",
   yardimRaporlar: "Finance, task, patrol and occupancy reports. Every report can be downloaded as PDF or Excel.",
   yardimAyarlar: "Site name, address, location and module settings. Without a location the weather is shown for Istanbul.",
+  // (P244 §2) KABUK — site karti, arama kisayolu, altbilgi
+  tesisKartiAd: "Current site: {ad}",
+  tesisKartiDegistir: "Current site: {ad} — open to switch",
+  kabukAramaKisayolu: "Ctrl K",
+  kabukAltbilgiUrun: "Modern facility management platform",
 };

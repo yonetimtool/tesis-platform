@@ -147,29 +147,38 @@ it("TEK tesiste SECIM CIKMAZ ve UYELIK UCU CAGRILMAZ", async () => {
 
 // ==================== UYGULAMA ICI SECICI ================================ #
 
+// (P244 §2) SECICI HESAP MENUSUNDEN KENAR CUBUGUNUN DIBINDEKI SITE
+// KARTINA TASINDI — iki yerde birden durmasi "hangisi gecerli?" sorusunu
+// ureten bir tekrardi (dil secicinin P140.4'teki gerekcesiyle ayni).
+//
+// OLCULEN SEY DEGISMEDI, OLCULEN YER DEGISTI: tek tesisliye secim
+// sunulmamasi ve bulundugu tesisin tiklanamaz olmasi hâlâ burada.
 async function menu(uyelikler: unknown) {
-  const mod = await import("@/components/KullaniciMenusu");
+  const mod = await import("@/components/TesisKarti");
   taklit((u) => {
     if (u.includes("/api/me/tesislerim")) return uyelikler;
     if (u.includes("/api/me")) return { ad: "Kerem", email: "k@o.com", tenant_id: "t-1" };
     if (u.includes("tenant/settings")) return { ad: "Oltu Sitesi" };
     return { ok: true };
   });
-  return ciz(mod.KullaniciMenusu);
+  return ciz(mod.TesisKarti);
 }
 
 it("TEK tesisli kullanicida SECICI CIZILMEZ", async () => {
-  const k = userEvent.setup();
   await menu(TEK_TESIS);
-  await k.click(screen.getByRole("button", { name: /hesab/i }));
-  await waitFor(() => expect(screen.getByRole("menu")).toBeTruthy());
+  // Kart CIZILIR (hangi sitedeyim sorusu tek tesisliye de gecerli) ama
+  // TIKLANABILIR DEGILDIR: olmayan bir karari sunan dugme, basildiginda
+  // hicbir sey yapmayan bir dugmedir.
+  await waitFor(() => expect(kanca("tesis-karti")).toBeTruthy());
+  expect(kanca("tesis-karti")!.tagName).not.toBe("BUTTON");
   expect(kanca("tesis-secici")).toBeNull();
 });
 
 it("COK tesisli kullanicida SECICI cikar ve BULUNDUGU tesis isaretli", async () => {
   const k = userEvent.setup();
   await menu(IKI_TESIS);
-  await k.click(screen.getByRole("button", { name: /hesab/i }));
+  await waitFor(() => expect(kanca("tesis-karti")).toBeTruthy());
+  await k.click(kanca("tesis-karti") as HTMLElement);
   await waitFor(() => expect(kanca("tesis-secici")).toBeTruthy());
   // Bulundugu tesis TIKLANAMAZ (zaten oradasin).
   expect((kanca("tesis-sec-t-1") as HTMLButtonElement).disabled).toBe(true);

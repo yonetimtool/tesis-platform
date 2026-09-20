@@ -3227,4 +3227,9 @@ export const fr: Sozluk = {
   yardimTanimlar: "Registres : caisses, natures de recettes/dépenses, types de logement, compteurs. Les listes déroulantes des autres écrans en proviennent.",
   yardimRaporlar: "Rapports finances, tâches, rondes et occupation. Chaque rapport est téléchargeable en PDF ou Excel.",
   yardimAyarlar: "Nom, adresse, localisation et réglages des modules. Sans localisation, la météo affichée est celle d'Istanbul.",
+  // (P244 §2) KABUK — site karti, arama kisayolu, altbilgi
+  tesisKartiAd: "Site actuel : {ad}",
+  tesisKartiDegistir: "Site actuel : {ad} — ouvrir pour changer",
+  kabukAramaKisayolu: "Ctrl K",
+  kabukAltbilgiUrun: "Plateforme moderne de gestion immobilière",
 };

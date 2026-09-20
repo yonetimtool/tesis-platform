@@ -146,6 +146,11 @@ describe("sozluk butunlugu", () => {
     // rakamlarin sirasini degistirmek olurdu ve bu bir sayfa sayaci
     // icin yanlis olurdu.
     "{sira}/{toplam}",
+    // (P244 §2) "Ctrl K" — TUS ADI, cumle degil. Klavyedeki tusun uzerinde
+    // ne yaziyorsa o gosterilir; Almanca'da tus gercekten "Strg" oldugu
+    // icin de yalniz Almanca farkli. Cevirmek, kullanicinin klavyesinde
+    // OLMAYAN bir tusu tarif etmek olurdu.
+    "Ctrl K",
   ]);
 
   // KALAN ACIK (durustce): ne bu olcum ne `TR_HARF`, ic/ig/is harfi

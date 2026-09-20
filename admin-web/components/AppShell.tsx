@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { DilSecici } from "@/components/DilSecici";
+import { TesisKarti } from "@/components/TesisKarti";
 import { EkranYardimi } from "@/components/EkranYardimi";
 import { GlobalArama } from "@/components/GlobalArama";
 import { KurulumHatirlatici } from "@/components/KurulumHatirlatici";
@@ -319,26 +320,32 @@ function MenuSatiri({
       // `title` tek basina guvenilir bir ad kaynagi degildir.
       title={dar ? etiket : undefined}
       aria-current={aktif ? "page" : undefined}
-      // (P160) AKTIF OGE: hafif KABARTMALI KAPSUL + sol gosterge.
+      // (P244 §2) AKTIF OGE: DOLU MAVI HAP + SOL ISARET CUBUGU.
       //
-      // P132'nin "mavi tint" dili TERK EDILDI (brief: renkli dolgu bloklar
-      // yerine metalik yuzey; renk yalniz durum sinyali). Aktiflik artik
-      // RENKLE degil YUZEYLE anlatiliyor — satir zeminden bir kademe
-      // yukselir. Bu ayni zamanda daha erisilebilir: renk korlugu olan
-      // kullanici da kabartmayi gorur.
+      // Kenar cubugu artik LACIVERT; eski "kabartilmis metal kapsul" dili
+      // (P160) acik bir yuzey icin tasarlanmisti ve koyu zeminde
+      // GORUNMUYORDU. Referansin dili dolu hap.
+      //
+      // RENK TEK BASINA ANLAM TASIMIYOR — ve bu bir tercih degil, OLCUM
+      // sonucu: dolgu (#2563eb) lacivert uzerinde 2.97, yani arayuz
+      // bileseni esigi 3.0'in ALTINDA. Daha acik bir mavi (#3b82f6)
+      // esigi tutuyor ama uzerindeki beyaz metin 3.68'e dusuyor — yani
+      // okunmuyor. Tek bir mavi ikisini birden tutmuyor.
+      //
+      // Bu yuzden aktiflik UC ipucuyla anlatiliyor: dolgu + SOL ISARET
+      // CUBUGU (laciverde karsi 6.04) + `aria-current="page"`.
+      //
       // GIRINTI (§1.1): ikonsuz alt satir `ps-9`, ikonlu bagimsiz sekme
-      // `ps-3`. Ikisi ayni gorsel eksende hizalanir — bagimsiz sekmenin
-      // ikonu, alt satirlarin metin baslangicinin SOLUNDA kalir ve iki
-      // duzey birbirine karismaz.
-      className={`odak-ic group relative flex items-center gap-3 py-2 transition-[background,box-shadow] ${
+      // `ps-3`. Ikisi ayni gorsel eksende hizalanir.
+      className={`odak-ic group relative flex items-center gap-3 py-2 transition-[background,color] ${
         dar ? "justify-center px-2" : ikonlu ? "pe-3 ps-3" : "pe-3 ps-9"
-      }`}
+      } ${aktif ? "" : "hover:bg-[var(--yz-sidebar-hover)]"}`}
       style={{
         borderRadius: "var(--yz-radius-btn)",
         fontSize: "var(--yz-fs-body)",
-        color: aktif ? "var(--yz-text)" : "var(--yz-text-2)",
-        background: aktif ? "var(--yz-metal-2)" : SEFFAF,
-        boxShadow: aktif ? "var(--yz-raised)" : GOLGESIZ,
+        color: aktif ? "var(--yz-sidebar-active-ink)" : "var(--yz-sidebar-text-2)",
+        background: aktif ? "var(--yz-sidebar-active)" : SEFFAF,
+        fontWeight: aktif ? 600 : undefined,
         transitionDuration: "var(--yz-dur-fast)",
       }}
     >
@@ -346,12 +353,18 @@ function MenuSatiri({
         <motion.span
           layoutId="nav-active-bar"
           className="absolute inset-y-1.5 start-0 w-1 rounded-e-full"
-          style={{ background: "var(--yz-accent-edge)" }}
+          style={{ background: "var(--yz-sidebar-marker)" }}
           transition={{ type: "spring", stiffness: 500, damping: 40 }}
         />
       )}
       {ikonGoster && (
-        <span style={{ color: aktif ? "var(--yz-accent-edge)" : "var(--yz-text-3)" }}>
+        <span
+          style={{
+            color: aktif
+              ? "var(--yz-sidebar-active-ink)"
+              : "var(--yz-sidebar-text-2)",
+          }}
+        >
           <Icon name={oge.icon} />
         </span>
       )}
@@ -419,7 +432,7 @@ function Bolum({
     return (
       <div
         className="space-y-0.5 border-t pt-2 first:border-t-0 first:pt-0"
-        style={{ borderColor: "var(--yz-border)" }}
+        style={{ borderColor: "var(--yz-sidebar-border)" }}
         // Bolum adi GORSEL olarak yok ama gruplama ekran okuyucuda KALIR.
         aria-label={baslik}
         role="group"
@@ -446,15 +459,23 @@ function Bolum({
         // bir hedef (`py-2`): eskiden 1.5px'lik ince bir etiketti ve
         // tiklanabilir oldugu anlasilmiyordu. Ok SONA alindi — bas tarafta
         // ikonla yarisiyor, sonda ise "acilir" isareti olarak okunuyor.
-        className="odak-ic flex w-full items-center gap-3 px-3 py-2 text-start font-semibold uppercase transition-colors"
+        // (P244 §2) BOLUM BASLIGI = referansin kucuk-kapital etiketi.
+        // Renk `--yz-sidebar-label` (lacivert uzerinde 6.00). Referanstaki
+        // #6d8cb1 olculdu ve 4.41 ile AA'yi TUTMUYORDU; ton korunarak
+        // acildi.
+        className="odak-ic flex w-full items-center gap-3 px-3 py-2 text-start font-semibold uppercase transition-colors hover:bg-[var(--yz-sidebar-hover)]"
         style={{
           borderRadius: "var(--yz-radius-btn)",
           fontSize: "var(--yz-fs-xs)",
           letterSpacing: "var(--yz-tracking-label)",
-          color: acik ? "var(--yz-text)" : "var(--yz-text-2)",
+          color: acik ? "var(--yz-sidebar-text)" : "var(--yz-sidebar-label)",
         }}
       >
-        <span style={{ color: acik ? "var(--yz-accent-edge)" : "var(--yz-text-3)" }}>
+        <span
+          style={{
+            color: acik ? "var(--yz-sidebar-text)" : "var(--yz-sidebar-label)",
+          }}
+        >
           <Icon name={GRUP_IKONU[grup.id]} />
         </span>
         <span className="flex-1 truncate">{baslik}</span>
@@ -614,7 +635,7 @@ function SidebarBody({
           dar ? "justify-center px-2" : "justify-between px-5"
         }`}
         style={{
-          borderColor: "var(--yz-border)",
+          borderColor: "var(--yz-sidebar-border)",
           borderBottomWidth: "var(--yz-border-w)",
         }}
       >
@@ -630,8 +651,8 @@ function SidebarBody({
             type="button"
             onClick={onDarCevir}
             aria-label={t("kabukMenuDaralt")}
-            className="odak-ic yz-dokunma-48 flex h-8 w-8 items-center justify-center rounded-lg"
-            style={{ color: "var(--yz-text-3)" }}
+            className="odak-ic yz-dokunma-48 flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[var(--yz-sidebar-hover)]"
+            style={{ color: "var(--yz-sidebar-text-2)" }}
           >
             <OkKatla yon="sol" />
           </button>
@@ -645,8 +666,8 @@ function SidebarBody({
             type="button"
             onClick={onDarCevir}
             aria-label={t("kabukMenuGenislet")}
-            className="odak-ic yz-dokunma-48 flex h-8 w-8 items-center justify-center rounded-lg"
-            style={{ color: "var(--yz-text-3)" }}
+            className="odak-ic yz-dokunma-48 flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[var(--yz-sidebar-hover)]"
+            style={{ color: "var(--yz-sidebar-text-2)" }}
           >
             <OkKatla yon="sag" />
           </button>
@@ -666,7 +687,10 @@ function SidebarBody({
 
       <div
         className="shrink-0 space-y-2 border-t px-3 py-4"
-        style={{ borderColor: "var(--yz-border)", borderTopWidth: "var(--yz-border-w)" }}
+        style={{
+          borderColor: "var(--yz-sidebar-border)",
+          borderTopWidth: "var(--yz-border-w)",
+        }}
       >
         {/* (P167 §1.7) PROFIL SATIRI BURADAN KALDIRILDI — sag ust kullanici
             menusune tasindi (`KullaniciMenusu`). Kenar cubugu artik yalnizca
@@ -684,6 +708,10 @@ function SidebarBody({
             gibi bir kisayol degil — 68px'e sigdirilamadigi icin
             kaldirilmasi, kurulumunu bitirmemis yoneticiyi yolsuz
             birakirdi. */}
+        {/* (P244 §2) SITE KARTI — referansta kenar cubugunun DIBINDE.
+            "Hangi sitedeyim" sorusunun yaniti artik menuyu acmadan
+            gorunuyor; coklu uyelikte gecis de buradan yapiliyor. */}
+        <TesisKarti dar={dar} />
         {kurulumVar && (
           <MenuSatiri
             oge={KURULUM_OGESI}
@@ -711,14 +739,17 @@ function SidebarBody({
             // az belirsiz (bir SAYFA adi degil, bir EYLEM oldugu belli).
             aria-label={t("kabukCikisYap")}
             title={t("kabukCikisYap")}
-            className="odak-ic w-full border px-3 py-2 text-center transition"
+            // (P244 §2) Lacivert zeminde beyaz bir kart DEGIL: ince
+            // kenarlikli, seffaf zeminli bir dugme. Eski deger
+            // `--yz-metal-1` (beyaz) idi ve koyu kenar cubugunda parlak
+            // bir leke gibi duruyordu.
+            className="odak-ic w-full border px-3 py-2 text-center transition hover:bg-[var(--yz-sidebar-hover)]"
             style={{
               borderRadius: "var(--yz-radius-btn)",
-              borderColor: "var(--yz-border)",
+              borderColor: "var(--yz-sidebar-border)",
               borderWidth: "var(--yz-border-w)",
-              background: "var(--yz-metal-1)",
-              boxShadow: "var(--yz-raised)",
-              color: "var(--yz-text-2)",
+              background: SEFFAF,
+              color: "var(--yz-sidebar-text-2)",
               fontSize: "var(--yz-fs-sm)",
             }}
           >
@@ -730,7 +761,7 @@ function SidebarBody({
           </button>
         </div>
         {cikisHatasi && (
-          <p role="alert" className="text-xs text-accent-red">
+          <p role="alert" className="text-xs" style={{ color: "var(--yz-danger-edge)" }}>
             {t("kabukCikisYapilamadi")}
           </p>
         )}
@@ -901,7 +932,7 @@ export function AppShell({
           style={{
             zIndex: "var(--yz-z-sidebar)" as unknown as number,
             background: "var(--yz-bg-sidebar)",
-            borderColor: "var(--yz-border)",
+            borderColor: "var(--yz-sidebar-border)",
             borderInlineEndWidth: "var(--yz-border-w)",
             transitionDuration: "var(--yz-dur-slow)",
             transitionTimingFunction: "var(--yz-ease)",
@@ -918,9 +949,18 @@ export function AppShell({
         {/* Mobil ust cubuk */}
         <header
           className="sticky top-0 flex h-14 items-center justify-between border-b px-4 lg:hidden"
+          // (P244 §2) MOBIL UST CUBUK BEYAZ KALDI — kenar cubugu lacivert
+          // oldugu icin bu satir da laciverde donmus olurdu.
+          //
+          // NEDEN BEYAZ: bu cubugun ICINDEKI bilesenler (bildirim merkezi,
+          // dil secici, hesap menusu) MASAUSTU UST CUBUGUYLA AYNI
+          // bilesenler ve o cubuk beyaz. Laciverde cevirmek ya uc bileseni
+          // birden koyu zemin icin yeniden renklendirmeyi ya da onlari
+          // koyu zeminde okunmaz birakmayi gerektirirdi. Referansta da
+          // ust cubuk beyaz.
           style={{
             zIndex: "var(--yz-z-header)" as unknown as number,
-            background: "var(--yz-bg-sidebar)",
+            background: "var(--yz-surface-1)",
             borderColor: "var(--yz-border)",
             borderBottomWidth: "var(--yz-border-w)",
           }}
@@ -969,7 +1009,7 @@ export function AppShell({
           style={{
             zIndex: "var(--yz-z-drawer)" as unknown as number,
             background: "var(--yz-bg-sidebar)",
-            borderColor: "var(--yz-border)",
+            borderColor: "var(--yz-sidebar-border)",
             borderInlineEndWidth: "var(--yz-border-w)",
             boxShadow: "var(--yz-raised-hover)",
           }}
@@ -1047,6 +1087,27 @@ export function AppShell({
           >
             {children}
           </motion.main>
+          {/* (P244 §2) ALTBILGI — referansta var, bizde HIC YOKTU.
+              Icerigin BITTIGINI soyler: altbilgisiz bir sayfada uzun bir
+              tablonun sonu ile ekranin sonu ayni seye benziyor.
+              Hukuki baglantilar zaten `/gizlilik` ve `/kosullar`
+              adreslerinde yasiyor; burada yalniz onlara yol veriliyor. */}
+          <footer
+            className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 pb-8 pt-2 sm:px-6 lg:px-8"
+            style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}
+          >
+            <span>
+              © {new Date().getFullYear()} Yönetiyor · {t("kabukAltbilgiUrun")}
+            </span>
+            <span className="flex flex-wrap items-center gap-4">
+              <Link href="/gizlilik" className="odak-ic underline-offset-2 hover:underline">
+                {t("kvkkGizlilik")}
+              </Link>
+              <Link href="/kosullar" className="odak-ic underline-offset-2 hover:underline">
+                {t("kvkkKosullar")}
+              </Link>
+            </span>
+          </footer>
         </div>
       </div>
     </MotionConfig>
