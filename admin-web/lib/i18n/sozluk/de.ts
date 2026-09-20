@@ -3321,4 +3321,12 @@ export const de: Sozluk = {
   ziyaretciOzetIceride: "Aktuell im Objekt",
   ziyaretciOzetIcerideAlt: "Besucher ohne Austritt",
   ziyaretciOzetCikmis: "Ausgetreten",
+  // (P244 §7) FINANS — ozet seridi ve sayfa aciklamalari
+  finansOzetBekleyenCikis: "{tutar} wartet auf Freigabe",
+  finansOzetTahsilAy: "Diesen Monat eingenommen",
+  finansOzetOnayBekleyen: "Ausgaben zur Freigabe",
+  finansOzetOnayBekleyenAlt: "Noch nicht ausgezahlt",
+  finansOzetBorclandirilanAy: "Diesen Monat belastet",
+  finansGiderlerAlt: "Alle Ausgaben; Posten zur Freigabe haben die Kasse noch nicht verlassen.",
+  finansTahsilatlarAlt: "Zahlungen von Bewohnern; jede Einnahme wird einer Kasse zugeordnet.",
 };

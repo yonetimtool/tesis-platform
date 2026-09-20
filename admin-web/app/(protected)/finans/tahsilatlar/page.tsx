@@ -13,6 +13,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { useToast } from "@/components/Toast";
+import { FinansOzetSeridi } from "@/components/finans/ozet-seridi";
 import {
   Alan,
   AlanSarmal,
@@ -73,6 +74,8 @@ export default function TahsilatlarPage() {
   return (
     <HareketSayfasi
       baslikAnahtari="kabukTahsilatlar"
+      aciklamaAnahtari="finansTahsilatlarAlt"
+      ozet={<FinansOzetSeridi tur="tahsilat" />}
       tip={TIP}
       raporKodu="makbuz_dokumu"
       yenile={yenile}

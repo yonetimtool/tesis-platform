@@ -3321,4 +3321,12 @@ export const en: Sozluk = {
   ziyaretciOzetIceride: "Currently inside",
   ziyaretciOzetIcerideAlt: "Visitors who haven't left",
   ziyaretciOzetCikmis: "Departed",
+  // (P244 §7) FINANS — ozet seridi ve sayfa aciklamalari
+  finansOzetBekleyenCikis: "{tutar} awaiting approval",
+  finansOzetTahsilAy: "Collected this month",
+  finansOzetOnayBekleyen: "Expenses awaiting approval",
+  finansOzetOnayBekleyenAlt: "Not yet paid out",
+  finansOzetBorclandirilanAy: "Charged this month",
+  finansGiderlerAlt: "All expense records; those awaiting approval have not left the cash account yet.",
+  finansTahsilatlarAlt: "Payments received from residents; each collection is booked to a cash account.",
 };

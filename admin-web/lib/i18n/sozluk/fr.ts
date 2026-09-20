@@ -3321,4 +3321,12 @@ export const fr: Sozluk = {
   ziyaretciOzetIceride: "Actuellement présents",
   ziyaretciOzetIcerideAlt: "Visiteurs non sortis",
   ziyaretciOzetCikmis: "Sortis",
+  // (P244 §7) FINANS — ozet seridi ve sayfa aciklamalari
+  finansOzetBekleyenCikis: "{tutar} en attente d'approbation",
+  finansOzetTahsilAy: "Encaissé ce mois",
+  finansOzetOnayBekleyen: "Dépenses à approuver",
+  finansOzetOnayBekleyenAlt: "Pas encore décaissé",
+  finansOzetBorclandirilanAy: "Facturé ce mois",
+  finansGiderlerAlt: "Toutes les dépenses ; celles en attente n'ont pas encore quitté la caisse.",
+  finansTahsilatlarAlt: "Paiements reçus des résidents ; chaque encaissement est imputé à une caisse.",
 };

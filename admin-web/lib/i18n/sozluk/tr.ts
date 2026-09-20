@@ -3384,4 +3384,12 @@ export const tr = {
   ziyaretciOzetIceride: "Şu an içeride",
   ziyaretciOzetIcerideAlt: "Çıkışı yapılmamış ziyaretçi",
   ziyaretciOzetCikmis: "Çıkmış",
+  // (P244 §7) FINANS — ozet seridi ve sayfa aciklamalari
+  finansOzetBekleyenCikis: "{tutar} onay bekliyor",
+  finansOzetTahsilAy: "Bu ay tahsil edilen",
+  finansOzetOnayBekleyen: "Onay bekleyen gider",
+  finansOzetOnayBekleyenAlt: "Kasadan henüz çıkmadı",
+  finansOzetBorclandirilanAy: "Bu ay borçlandırılan",
+  finansGiderlerAlt: "Tesisin tüm gider kayıtları; onay bekleyenler kasadan henüz çıkmamıştır.",
+  finansTahsilatlarAlt: "Sakinlerden alınan ödemeler; her tahsilat bir kasaya yazılır.",
 } as const;

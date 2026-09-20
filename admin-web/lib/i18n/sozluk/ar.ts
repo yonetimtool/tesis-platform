@@ -3321,4 +3321,12 @@ export const ar: Sozluk = {
   ziyaretciOzetIceride: "بالداخل الآن",
   ziyaretciOzetIcerideAlt: "زوار لم يغادروا",
   ziyaretciOzetCikmis: "غادروا",
+  // (P244 §7) FINANS — ozet seridi ve sayfa aciklamalari
+  finansOzetBekleyenCikis: "{tutar} بانتظار الموافقة",
+  finansOzetTahsilAy: "المحصّل هذا الشهر",
+  finansOzetOnayBekleyen: "مصروفات بانتظار الموافقة",
+  finansOzetOnayBekleyenAlt: "لم يُصرف بعد",
+  finansOzetBorclandirilanAy: "المحمَّل هذا الشهر",
+  finansGiderlerAlt: "كل سجلات المصروفات؛ ما ينتظر الموافقة لم يُصرف من الصندوق بعد.",
+  finansTahsilatlarAlt: "المدفوعات المستلمة من السكان؛ يُقيَّد كل تحصيل في صندوق.",
 };

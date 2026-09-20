@@ -3321,4 +3321,12 @@ export const es: Sozluk = {
   ziyaretciOzetIceride: "Ahora dentro",
   ziyaretciOzetIcerideAlt: "Visitantes sin salida",
   ziyaretciOzetCikmis: "Salidos",
+  // (P244 §7) FINANS — ozet seridi ve sayfa aciklamalari
+  finansOzetBekleyenCikis: "{tutar} pendiente de aprobación",
+  finansOzetTahsilAy: "Cobrado este mes",
+  finansOzetOnayBekleyen: "Gastos por aprobar",
+  finansOzetOnayBekleyenAlt: "Aún no desembolsado",
+  finansOzetBorclandirilanAy: "Cargado este mes",
+  finansGiderlerAlt: "Todos los gastos; los pendientes aún no han salido de caja.",
+  finansTahsilatlarAlt: "Pagos recibidos de residentes; cada cobro se registra en una caja.",
 };

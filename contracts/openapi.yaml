@@ -22809,6 +22809,19 @@ components:
           type: array
           items: { $ref: "#/components/schemas/KasaBakiye" }
         genel_toplam_kurus: { type: integer, format: int64 }
+        bekleyen_cikis_toplam_kurus:
+          type: integer
+          format: int64
+          description: >-
+            (P192 §2.2) Tum kasalarin ONAY BEKLEYEN cikis toplami —
+            "bakiye X, bekleyen Y" gosterimi icin. Bakiyeye DAHIL DEGIL.
+
+            (P244 §7) SOZLESMEYE GEC EKLENDI: alan backend'de P192'den
+            beri VAR (`KasaBakiyeResponse.bekleyen_cikis_toplam_kurus`)
+            ve `/finans` ekrani onu okuyordu, ama semada HIC beyan
+            edilmemisti. Web'in `uc-sozlesme-kapisi` kilidi yakaladi:
+            arayuz, sozlesmenin vaat etmedigi bir alani ZORUNLU okuyorsa
+            ekranda `undefined` cikar. Kusur sozlesmedeydi, kodda degil.
     BankaSatirIn:
       type: object
       required: [satir_no, aciklama, tutar_kurus]

@@ -36,6 +36,7 @@ import useSWR from "swr";
 import { useToast } from "@/components/Toast";
 import {
   Dugme,
+  SayfaBasligi,
   VeriTablosu,
   useOnay,
   type Kolon,
@@ -163,6 +164,10 @@ export function HareketSayfasi({
   araclar,
   yenile,
   cocuk,
+  aciklamaAnahtari,
+  ozet,
+  grafik,
+  suzgec,
 }: {
   baslikAnahtari: SozlukAnahtari;
   /** Listenin `tip` suzgeci. Bos ise TUM hareketler. */
@@ -177,6 +182,40 @@ export function HareketSayfasi({
   yenile: number;
   /** Modallar — sayfa kendi formunu buraya koyar. */
   cocuk?: ReactNode;
+  /**
+   * (P244 §7) SAYFA ACIKLAMASI — basligin altinda bir cumle.
+   *
+   * Verilmezse cizilmez: "Giderler" basligi altinda "Giderler listesi"
+   * yazmak, bos bir satiri doldurmaktan baska bir sey yapmaz.
+   */
+  aciklamaAnahtari?: SozlukAnahtari;
+  /**
+   * (P244 §7) OZET YUVASI — basligin altinda, tablonun ustunde.
+   *
+   * =========================================================================
+   * NEDEN YUVA, NEDEN KABUGUN KENDI HESABI DEGIL
+   * =========================================================================
+   * Bu kabugu YEDI sayfa paylasiyor (gider, gelir, tahsilat,
+   * borclandirma, virman, iade, acilis) ve ozetleyecek sey her birinde
+   * FARKLI: giderde "onay bekleyen", tahsilatta "bu ay tahsil edilen",
+   * iadede "iade edilebilir tutar". Kabuk bunlari bilemez; bildigi tek
+   * sey NEREYE cizilecegi.
+   *
+   * Olculen kusur da tam buydu: yedi sayfa TEK bir iskeleti paylastigi
+   * icin finans modulu bastan sona ayni gorunuyordu — baslik + tablo,
+   * baska hicbir sey.
+   */
+  ozet?: ReactNode;
+  /**
+   * (P244 §7) GRAFIK YUVASI — ozetin altinda, tablonun ustunde.
+   *
+   * Referansta finansin yarisi grafikli (aidat cubuk, finans cizgi,
+   * gider halka). Yuva bos birakilabilir: grafigi olmayan bir sayfada
+   * bos bir kutu birakmak, olmayan bir seyi vaat etmek olurdu.
+   */
+  grafik?: ReactNode;
+  /** (P244 §7) Filtre cubugu — kabuk yerini verir, iceriği sayfanin. */
+  suzgec?: ReactNode;
 }) {
   const t = useT();
   const toast = useToast();
@@ -185,10 +224,11 @@ export function HareketSayfasi({
     sayfa: 1, boy: 25, siraKolon: null, siraYonu: "artan",
   });
 
-  const suzgec = tip ? `&tip=${encodeURIComponent(tip)}` : "";
+  // (P244 §7) AD DEGISTI: `suzgec` artik bir PROP (filtre cubugu yuvasi).
+  const tipSorgusu = tip ? `&tip=${encodeURIComponent(tip)}` : "";
   const anahtar =
     `/api/panel/finans-hareketler?limit=${durum.boy}` +
-    `&offset=${(durum.sayfa - 1) * durum.boy}${suzgec}&_=${yenile}`;
+    `&offset=${(durum.sayfa - 1) * durum.boy}${tipSorgusu}&_=${yenile}`;
   const { data, error, isLoading, mutate } = useSWR<{
     meta: { total: number };
     items: Hareket[];
@@ -330,15 +370,23 @@ export function HareketSayfasi({
   return (
     <div className="space-y-4">
       {diyalog}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-          {t(baslikAnahtari)}
-        </h1>
-        <div className="flex flex-wrap items-center gap-2">
-          {araclar}
-          <DisaAktar kod={raporKodu} />
-        </div>
-      </div>
+      <SayfaBasligi
+        baslik={t(baslikAnahtari)}
+        aciklama={aciklamaAnahtari ? t(aciklamaAnahtari) : undefined}
+        eylem={
+          <>
+            {araclar}
+            <DisaAktar kod={raporKodu} />
+          </>
+        }
+      />
+
+      {/* (P244 §7) YUVALAR — verilmezse HIC CIZILMEZ.
+          Bos bir ozet seridi ya da bos bir grafik kutusu, sayfayi
+          doldurmus gibi gorunup hicbir sey soylemez. */}
+      {ozet}
+      {grafik}
+      {suzgec}
 
       <VeriTablosu
         kolonlar={sutunlar}

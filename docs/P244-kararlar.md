@@ -1045,3 +1045,105 @@ hedef modülün tam metnini arayıp değiştireceğim.
 
 `tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
 **tam takım 237 dosya / 2014 test yeşil.**
+
+---
+
+# AŞAMA 7a — FİNANS · UYGULANDI (ilk tur)
+
+Plan finansı **iki tur** diye tahmin etmişti. Bu tur **paylaşılan kabuk +
+ölçümde çıkan iki sessiz kusur**; grafikler ve kalan ekranlar sonraki
+tura.
+
+## A7.1 Ölçülen kök neden: yedi sayfa tek iskelet
+
+`HareketSayfasi` kabuğunu **yedi sayfa** paylaşıyor (gider, gelir,
+tahsilat, borçlandırma, virman, iade, açılış) ve kabuk yalnızca
+**başlık + tablo** çiziyordu. Finans modülünün baştan sona aynı
+görünmesinin sebebi tek bir dosyaydı.
+
+Kabuk **yeniden yazılmadı** — yapılandırılabilir yapıldı:
+`aciklamaAnahtari`, `ozet`, `grafik`, `suzgec` yuvaları. **Verilmezse
+hiç çizilmez**: boş bir özet şeridi ya da boş bir grafik kutusu, sayfayı
+doldurmuş gibi görünüp hiçbir şey söylemez.
+
+**Neden yuva, neden kabuğun kendi hesabı değil:** özetlenecek şey her
+sayfada farklı (giderde "onay bekleyen", tahsilatta "bu ay tahsil
+edilen", borçlandırmada "bu ay borçlandırılan"). Kabuk bunları bilemez;
+bildiği tek şey **nereye** çizileceği.
+
+Özet sayıları **sunucudan** geliyor (`/finans/ozet`,
+`/finans/kasa-bakiyeleri`) — görünen hareketlerden toplam almak "iki
+yerde iki farklı rakam" demekti; bu kural `/finans` sayfasının dosya
+başında zaten yazılıydı. **Yeni uç açılmadı**; ikisi de beyaz listede ve
+SWR önbelleği paylaşılıyor.
+
+## A7.2 Ölçüm iki SESSİZ kusur buldu — aynı satırda, ters yönlerde
+
+BFF beyaz listesi: `["tip", "kasa_id", "baslangic", "bitis"]`
+Backend imzası: `tip, kasa_id, user_id`
+
+**1. `user_id` eksikti — gerçek ve pahalı.**
+`/finans/iade` ekranı "bu **kişinin** tahsilatları" diye soruyor
+(`?tip=tahsilat&user_id=…`) ve süzgeç **BFF'te düşüyordu**: ekran
+**herkesin** tahsilatını listeliyordu. Kullanıcı yanlış bir tahsilatı
+seçip iade açabilirdi.
+
+**2. `baslangic`/`bitis` fazlaydı.**
+Backend bunları **hiç tanımıyor**. Beyaz listede durmaları **olmayan bir
+yeteneği varmış gibi** gösteriyordu: biri tarih süzgeci yazsa parametre
+sunucuya gider, FastAPI onu sessizce atar, ekran "süzdüm" der ama
+süzmez. (Tarandı: kullanan yoktu.)
+
+İkisi de **sessiz**: ne hata verir ne log bırakır. Tek belirti "listede
+olmaması gereken kayıtlar var".
+
+## A7.3 Sözleşme sapması — web kilidi yakaladı
+
+`uc-sozlesme-kapisi` kilidi, yazdığım `KasaOzet` arayüzünde
+`bekleyen_cikis_toplam_kurus`u **sözleşmenin vaat etmediği** bir alan
+olarak işaretledi.
+
+Ölçüldü: alan **backend'de P192'den beri var** ve `/finans` ekranı onu
+zaten okuyordu — ama OpenAPI şemasında **hiç beyan edilmemişti**. Yani
+sapma benden önce vardı; benim adlandırılmış arayüzüm onu **görünür**
+yaptı (eski okuma satır içi generic olduğu için tarama görmüyordu).
+
+**Kusur sözleşmedeydi, kodda değil.** `KasaBakiyeResponse` şemasına
+eklendi; backend sözleşme testleri (6/6) yeşil.
+
+## A7.4 Kilit
+
+**YENİ** `p244-finans-suzgec` (4 test): beyaz liste **backend imzasıyla
+birebir** eşleşir — eksik de olamaz, fazla da. Tarama
+`routers/finans.py::hareket_listesi` imzasını **doğrudan okuyor**, elle
+yazılmış bir liste ile karşılaştırmıyor.
+
+`user_id` için **ayrı bir iddia** var ve bu bilinçli: düştüğünde ne
+olduğunu anlatması gerekiyor ("iade ekranı herkesin tahsilatını
+listeler").
+
+**İki kırma denendi, ikisi de yakalandı:** `user_id`yi geri çıkarmak,
+backend'de olmayan bir süzgeci geri eklemek.
+
+## A7.5 Bu turda YAPILMAYAN — açıkça
+
+* **Grafikler eklenmedi.** Referansta aidat çubuk, finans çizgi, gider
+  halka, bütçe yatay bar var. Yuva (`grafik`) hazır ama **hiçbir sayfa
+  doldurmuyor** — grafik verisi ayrı uçlar ister ve hangi uçların
+  hazır olduğunu ölçmedim.
+* **Özet şeridi yalnız dört sayfada**: giderler, gelirler, tahsilatlar,
+  (borçlandırma kabuğu kullanmıyor — kendi ekranı). Virman, iade ve
+  açılış şeritsiz kaldı: virman kasadan kasaya taşıma (özetlenecek
+  toplam bir şey yok), iade zaten seçilen kişiye bağlı, açılış tek
+  seferlik.
+* `/dues`, `/finans/banka`, `/finans/otomasyon`, `/finans/butce`,
+  `/finans/borclular`, `/icra`, `/sayac-okuma`, `/raporlar`
+  **dokunulmadı** — referansın en ayırt edici düzenleri (banka marka
+  kartları, otomasyon kural satırları, bütçe yatay bar, rapor
+  kategorileri) burada ve hepsi sonraki tura.
+
+## A7.6 Doğrulama
+
+`tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
+**tam takım 238 dosya / 2018 test yeşil** · backend sözleşme testleri
+6/6 yeşil.

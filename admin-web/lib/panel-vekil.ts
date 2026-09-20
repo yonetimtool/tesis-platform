@@ -144,7 +144,22 @@ export const YAZMA: Record<string, string> = {
  *  gelisiguzel parametre gecirmek, backend'de var olmayan bir suzgeci
  *  varmis gibi gostermek ya da beklenmedik bir dal acmak olurdu). */
 export const SUZGECLER: Record<string, string[]> = {
-  "finans-hareketler": ["tip", "kasa_id", "baslangic", "bitis"],
+  // (P244 §7) `user_id` EKLENDI, `baslangic`/`bitis` KALDIRILDI — IKISI DE
+  // OLCULDU:
+  //
+  //  * `user_id` backend'de DESTEKLENIYOR (`routers/finans.py`
+  //    `hareket_listesi`) ve sozlesmede yazili, ama beyaz listede YOKTU.
+  //    `/finans/iade` ekrani "bu KISININ tahsilatlari" diye soruyor
+  //    (`?tip=tahsilat&user_id=...`) ve suzgec BFF'te DUSUYORDU: ekran
+  //    HERKESIN tahsilatini listeliyordu. Kullanici yanlis bir tahsilati
+  //    secip iade acabilirdi — sessiz ve pahali bir kusur.
+  //
+  //  * `baslangic`/`bitis` backend'de HIC YOK (ne imzada ne sorguda) ve
+  //    sozlesmede de gecmiyor. Beyaz listede durmalari, olmayan bir
+  //    yetenegi VARMIS gibi gosteriyordu: biri tarih suzgeci yazsa
+  //    parametre sunucuya gider, FastAPI onu sessizce atar ve ekran
+  //    "suzdum" der ama suzmez. Kullanan da yoktu (tarandi).
+  "finans-hareketler": ["tip", "kasa_id", "user_id"],
   "mesaj-sablonlari": ["kanal", "aktif"],
   "mesaj-gecmis": ["kanal", "durum"],
   "unit-uyarilari": ["unit_id"],

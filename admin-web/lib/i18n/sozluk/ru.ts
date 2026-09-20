@@ -3321,4 +3321,12 @@ export const ru: Sozluk = {
   ziyaretciOzetIceride: "Сейчас внутри",
   ziyaretciOzetIcerideAlt: "Посетители без выхода",
   ziyaretciOzetCikmis: "Вышли",
+  // (P244 §7) FINANS — ozet seridi ve sayfa aciklamalari
+  finansOzetBekleyenCikis: "{tutar} ожидает одобрения",
+  finansOzetTahsilAy: "Собрано в этом месяце",
+  finansOzetOnayBekleyen: "Расходы на одобрении",
+  finansOzetOnayBekleyenAlt: "Ещё не выплачено",
+  finansOzetBorclandirilanAy: "Начислено в этом месяце",
+  finansGiderlerAlt: "Все расходы; ожидающие одобрения ещё не списаны из кассы.",
+  finansTahsilatlarAlt: "Платежи от жильцов; каждое поступление записывается в кассу.",
 };

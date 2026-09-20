@@ -9,6 +9,7 @@
 import { useState } from "react";
 
 import { Dugme } from "@/components/ui";
+import { FinansOzetSeridi } from "@/components/finans/ozet-seridi";
 import { HareketModali } from "@/components/finans/hareket-modali";
 import { HareketSayfasi } from "@/components/finans/hareket-sayfasi";
 import { useT } from "@/lib/i18n/kullan";
@@ -23,6 +24,10 @@ export default function GiderlerPage() {
   return (
     <HareketSayfasi
       baslikAnahtari="kabukGiderler"
+      aciklamaAnahtari="finansGiderlerAlt"
+      // (P244 §7) OZET YUVASI: yedi sayfa ayni kabugu paylasiyor ama
+      // ozetleyecek sey her birinde farkli. Karar sayfanin.
+      ozet={<FinansOzetSeridi tur="gider" />}
       tip={TIP}
       raporKodu="finansal_hareketler"
       yenile={yenile}
