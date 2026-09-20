@@ -1,6 +1,10 @@
 # P244 — Arayüz yeniden tasarımı · AŞAMA 1: ÖLÇÜM ve PLAN
 
-**Bu belgede kod yok.** Ölçüm, karar önerisi ve aşama planı var. Onay bekliyor.
+**Bu belgede kod yok.** Ölçüm, karar önerisi ve aşama planı var.
+
+> **Aşama 0 tamamlandı.** Sekiz sorunun karara dönmüş hâli ve aşama 0'da
+> yapılan üç ölçüm: **`docs/P244-kararlar.md`**. O ölçümlerden ikisi bu
+> belgedeki iddiaları düzeltti (Şikayet Haritası var; Inter zaten kurulu).
 
 ---
 
@@ -304,9 +308,9 @@ tanımlanmalı; bunu bir kilitle bağlayacağım.
 
 | | |
 |---|---|
-| **Ekranlar** | `/building-editor` (1238), `/units`, `/residents`, `/schematic`, `/rezervasyon-yonetimi`, `/tesis-ayarlari` |
+| **Ekranlar** | `/building-editor` (1238), `/units`, `/residents`, `/rezervasyon-yonetimi`, `/tesis-ayarlari` — *(`/schematic` = Şikayet Haritası, D grubuna taşındı)* |
 | **Ölçülen sorunlar** | `building-editor` en uzun 3. sayfa ve tek parça; blok kartı kavramı yok; `UnitDetail` var ama **detay paneli 79 sayfanın yalnız 1'inde** |
-| **Yeni yön** | `ui4`'teki Bina Düzenleme deseni: üstte **blok kartları şeridi** + altta seçili bloğun daire tablosu + sağdan **daire detay çekmecesi**. `/schematic` ve maket `ui5`'teki gibi segment + yüzen kontrol + efsane |
+| **Yeni yön** | `ui4`'teki Bina Düzenleme deseni: üstte **blok kartları şeridi** + altta seçili bloğun daire tablosu + sağdan **daire detay çekmecesi**. Maket `ui5`'teki gibi segment + yüzen kontrol + efsane |
 | **Yeniden kullanılacak** | `UnitDetail`, `3d/bina-sahnesi`, `3d/sahne-yukleyici`, `DaireSakinleri`, `dokunma-kapisi` |
 | **Modüle özgü yeni** | `BlokKarti`, `DetayCekmecesi` (ürün geneline yayılacak) |
 | **Büyüklük** | **Büyük** |
@@ -328,8 +332,8 @@ tanımlanmalı; bunu bir kilitle bağlayacağım.
 
 | | |
 |---|---|
-| **Ekranlar** | `/bakim`, `/tasks` (1333), `/assets`, `/complaints`, `/rezervasyon-yonetimi`, `/gorevlerim`, `/kargolar` |
-| **Ölçülen sorunlar** | `/tasks` en uzun 2. sayfa; şikayet haritası **yok** (referansta harita+panel); `/bakim` P241'de yeni yazıldı, dile en yakın olan bu |
+| **Ekranlar** | `/bakim`, `/tasks` (1333), `/assets`, `/complaints`, **`/schematic` (Şikayet Haritası, 420)**, `/gorevlerim`, `/kargolar` |
+| **Ölçülen sorunlar** | `/tasks` en uzun 2. sayfa; şikayet haritası **VAR** — `/schematic` (bkz. kararlar §0.1, planın ilk yazımında yanlış okunmuştu); `/bakim` P241'de yeni yazıldı, dile en yakın olan bu |
 | **Yeni yön** | Görevler: liste/pano/takvim görünüm seçici + filtre çubuğu + detay çekmecesi. Şikayet: harita + sağda öncelik listesi. Rezervasyon: alan kartları + rezervasyon tablosu. Demirbaş: envanter tablosu + detay çekmecesi |
 | **Yeniden kullanılacak** | `GorevAdimlari`, `ui/ay-takvimi`, `harita/*`, `Ekler` |
 | **Modüle özgü yeni** | `GorevPanosu` (kanban), `SikayetHaritasi`, `AlanKarti` |
