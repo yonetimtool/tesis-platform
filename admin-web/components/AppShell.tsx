@@ -770,6 +770,8 @@ function SidebarBody({
   );
 }
 
+const ORTU_RENGI = "rgba(15, 23, 42, 0.4)";
+
 export function AppShell({
   children,
   rol,
@@ -999,7 +1001,13 @@ export function AppShell({
           <button
             aria-label={t("kabukMenuyuKapat")}
             onClick={() => setOpen(false)}
-            className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-40 backdrop-blur-sm lg:hidden"
+            // (P244 §10b) Ham palet -> token. Ortu KOYU TEMADA DA koyu
+            // olmali (arkadaki icerigi bastirmak icin), bu yuzden
+            // tema-bagimsiz bir siyah saydamlik; `--yz-*` ailesinde
+            // ortu tonu YOK ve tek kullanim icin token acmak, sozlugu
+            // kullanilmayan bir adla buyutmekti.
+            style={{ background: ORTU_RENGI }}
           />
         )}
         <aside

@@ -204,7 +204,12 @@ export default function YerelIsletmeler() {
       {hata && (
         <p
           role="alert"
-          className="rounded bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-950 dark:text-red-200"
+          className="rounded border px-3 py-2 text-sm"
+          style={{
+            background: "var(--yz-surface-sunken)",
+            borderColor: "var(--yz-danger-edge)",
+            color: "var(--yz-danger-ink)",
+          }}
         >
           {hata}
         </p>

@@ -48,7 +48,12 @@ export function DilSecici() {
         aria-label={t("dilSecici")}
         aria-haspopup="listbox"
         aria-expanded={acik}
-        className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-metin-body transition hover:bg-slate-100"
+        className="odak-ic rounded-lg border px-3 py-1.5 text-sm transition"
+        style={{
+          borderColor: "var(--yz-border)",
+          color: "var(--yz-text)",
+          background: "var(--yz-surface-1)",
+        }}
       >
         <span aria-hidden>🌐</span> {DIL_ADLARI[dil]}
       </button>
@@ -66,7 +71,7 @@ export function DilSecici() {
                 role="option"
                 aria-selected={d === dil}
                 onClick={() => sec(d)}
-                className={`block w-full px-3 py-1.5 text-start text-sm transition hover:bg-slate-100 ${
+                className={`odak-ic block w-full px-3 py-1.5 text-start text-sm transition ${
                   d === dil ? "font-semibold text-brand-tealInk" : "text-metin-body"
                 }`}
               >

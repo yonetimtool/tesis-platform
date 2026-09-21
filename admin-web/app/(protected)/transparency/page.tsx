@@ -51,6 +51,12 @@ const tl = kurusToTL;
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const R_OLUMLU = "olumlu" as const;
 const R_NOTR = "notr" as const;
+// (P244 §10b) Ham palet -> `-ink`: para satirinda renk METINDIR ve
+// AA'yi tutmali (asama 1'de olculdu).
+const RENK_GELIR = "text-[color:var(--yz-success-ink)]";
+const RENK_GIDER = "text-[color:var(--yz-danger-ink)]";
+const RENK_NET_ARTI = "text-[color:var(--yz-success-ink)] font-semibold";
+const RENK_NET_EKSI = "text-[color:var(--yz-danger-ink)] font-semibold";
 
 export default function TransparencyPage() {
   const { t, dil } = useI18n();
@@ -116,8 +122,8 @@ export default function TransparencyPage() {
                   </Rozet>
                 </div>
                 <dl className="space-y-1.5 text-sm">
-                  <Row k={t("seffafToplamGelir")} v={tl(b.toplam_gelir_kurus)} cls="text-emerald-700" />
-                  <Row k={t("seffafToplamGider")} v={tl(b.toplam_gider_kurus)} cls="text-red-700" />
+                  <Row k={t("seffafToplamGelir")} v={tl(b.toplam_gelir_kurus)} cls={RENK_GELIR} />
+                  <Row k={t("seffafToplamGider")} v={tl(b.toplam_gider_kurus)} cls={RENK_GIDER} />
                   {/* `dl` yalniz `dt`/`dd` (ve onlari saran `div`) icerir;
                       ciplak ayrac `div`i axe'in `definition-list` kuralini
                       kiriyordu (tur 30). Ayirici gorsel — `dd`ye tasindi. */}
@@ -125,7 +131,7 @@ export default function TransparencyPage() {
                     ayrac
                     k={t("seffafNet")}
                     v={tl(b.net_kurus)}
-                    cls={b.net_kurus >= 0 ? "text-emerald-700 font-semibold" : "text-red-700 font-semibold"}
+                    cls={b.net_kurus >= 0 ? RENK_NET_ARTI : RENK_NET_EKSI}
                   />
                 </dl>
                 {/* NOT `dl` DISINDA: `dl` yalniz dt/dd ciftleri (ve onlari

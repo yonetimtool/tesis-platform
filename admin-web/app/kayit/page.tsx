@@ -676,7 +676,12 @@ export default function KayitSayfasi() {
           {yol === "sosyal" && !eposta ? (
             <div
               role="alert"
-              className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800"
+              className="rounded-lg border px-3 py-2 text-sm"
+              style={{
+                background: "var(--yz-surface-sunken)",
+                borderColor: "var(--yz-warning-edge)",
+                color: "var(--yz-warning-ink)",
+              }}
             >
               <p>{t("kayitSosyalEpostaYok")}</p>
               <button

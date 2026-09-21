@@ -286,7 +286,7 @@ export function HataDurumu({
  * (P244 §4) EKSIK VERI UYARISI — `components/form.tsx`ten TASINDI.
  *
  * NEDEN TASINDI: eski surum SABIT RENK yaziyordu
- * (`border-amber-200 bg-amber-50 text-amber-800`) — yani tasarim
+ * (ham uyari paleti: kenar/zemin/metin ucu de sabit ton) — yani tasarim
  * sisteminin tek token katmanini BYPASS ediyordu ve tema degisince
  * (koyu tema) kendi basina kaliyordu. Alti sayfa onu kullaniyor.
  *

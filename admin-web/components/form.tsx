@@ -94,7 +94,12 @@ export function ErrorBox({ message }: { message?: string | null }) {
     // ayrica `aria-live` vermek cift duyuruya yol acar.
     <p
       role="alert"
-      className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+      className="rounded-lg border px-3 py-2 text-sm"
+      style={{
+        background: "var(--yz-surface-sunken)",
+        borderColor: "var(--yz-danger-edge)",
+        color: "var(--yz-danger-ink)",
+      }}
     >
       {message}
     </p>

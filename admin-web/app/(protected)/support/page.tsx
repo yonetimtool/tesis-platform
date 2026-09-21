@@ -263,12 +263,18 @@ export default function SupportPage() {
 
       {secili ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-lg rounded-kart bg-white p-5 shadow-xl dark:bg-slate-900">
+          <div
+            className="w-full max-w-lg rounded-kart p-5 shadow-xl"
+            style={{ background: "var(--yz-surface-1)", color: "var(--yz-text)" }}
+          >
             <h2 className="text-base font-semibold">{secili.konu}</h2>
             <p className="mt-1" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
               {secili.tenant_ad ?? secili.tenant_id} · {formatDateTime(secili.created_at)}
             </p>
-            <p className="mt-3 whitespace-pre-wrap rounded-lg bg-yuzey-bg p-3 text-sm dark:bg-slate-800">
+            <p
+              className="mt-3 whitespace-pre-wrap rounded-lg p-3 text-sm"
+              style={{ background: "var(--yz-surface-sunken)", color: "var(--yz-text)" }}
+            >
               {secili.aciklama}
             </p>
             {secili.foto_url ? (
@@ -325,7 +331,8 @@ export default function SupportPage() {
                 {t("ortakVazgec")}
               </button>
               <button
-                className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900"
+                className="odak-ic rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+                style={{ background: "var(--yz-accent)", color: "var(--yz-on-fill)" }}
                 onClick={yanitla}
                 disabled={
                   gonderiliyor || (!cevap.trim() && !cozulduIsaretle && !dosya)

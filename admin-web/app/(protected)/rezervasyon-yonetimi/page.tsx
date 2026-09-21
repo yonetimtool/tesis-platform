@@ -342,7 +342,10 @@ function RezervasyonlarSekmesi() {
           <Kart key={r.id} className="space-y-1">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h3 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{r.alan_ad ?? "—"}</h3>
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs">
+              <span
+                className="rounded-full px-2 py-0.5 text-xs"
+                style={{ background: "var(--yz-surface-sunken)", color: "var(--yz-text-2)" }}
+              >
                 {t(durumAnahtari(r.durum))}
               </span>
             </div>

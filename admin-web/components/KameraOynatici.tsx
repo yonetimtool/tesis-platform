@@ -164,7 +164,12 @@ export function KameraOynatici({ url, mp4, poster }: Props) {
         <p
           role="alert"
           data-hata-sinifi={sinif}
-          className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+          className="rounded-lg border px-3 py-2 text-sm"
+          style={{
+            background: "var(--yz-surface-sunken)",
+            borderColor: "var(--yz-danger-edge)",
+            color: "var(--yz-danger-ink)",
+          }}
         >
           {hata}
           {/* (P215) SUNUCU KAYNAKLIYSA NE YAPILMAYACAGINI da soyle:

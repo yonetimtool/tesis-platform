@@ -25,6 +25,13 @@ import { kisaKimlik } from "@/lib/kimlik";
 import { kurusToTL, tlToKurus } from "@/lib/money";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
+
+// (P244 §10b) Ham palet -> token. Zemin `color-mix` ile tondan
+// turetilir (tema degisince birlikte kayar), metin `-ink` varyantidir.
+const ZEMIN_BORC = "bg-[color-mix(in_srgb,var(--yz-danger)_12%,transparent)]";
+const ZEMIN_ALACAK = "bg-[color-mix(in_srgb,var(--yz-success)_14%,transparent)]";
+const RENK_BORC = "text-[color:var(--yz-danger-ink)]";
+const RENK_ALACAK = "text-[color:var(--yz-success-ink)]";
 import type {
   DuesYontem,
   ResidentRol,
@@ -290,9 +297,9 @@ export function UnitDetail({ unit }: { unit: Unit }) {
           <div className="text-xs text-metin-muted">{t("raporOdenen")}</div>
           <div className="text-lg font-semibold">{kurusToTL(dues?.toplam_odenen_kurus ?? 0)}</div>
         </div>
-        <div className={`rounded-lg p-3 ${bakiye > 0 ? "bg-red-50" : "bg-emerald-50"}`}>
+        <div className={`rounded-lg p-3 ${bakiye > 0 ? ZEMIN_BORC : ZEMIN_ALACAK}`}>
           <div className="text-xs text-metin-muted">{t("raporBakiyeBorc")}</div>
-          <div className={`text-lg font-semibold ${bakiye > 0 ? "text-red-700" : "text-emerald-700"}`}>
+          <div className={`text-lg font-semibold ${bakiye > 0 ? RENK_BORC : RENK_ALACAK}`}>
             {kurusToTL(bakiye)}
           </div>
         </div>

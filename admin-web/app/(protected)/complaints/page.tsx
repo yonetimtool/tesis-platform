@@ -59,7 +59,7 @@ function Ikon({ yol }: { yol: string }) {
  *
  * (P244 §8b) HAM TAILWIND PALETI -> `Rozet` DURUMU.
  *
- * Renkler `bg-amber-100 text-amber-700` gibi DOGRUDAN palet siniflariydi:
+ * Renkler DOGRUDAN palet siniflariydi (sabit sari zemin + sari metin):
  * eski tasarim dilinin renk katmani. Asama 4 modul sinirini kapatmisti
  * ama renk katmanini degil — bu dosya `@/components/ui`den ithal ettigi
  * icin `p244-tek-tasarim-dili` kilidi onu HAKLI OLARAK gecmisti; kilit
@@ -378,7 +378,7 @@ function TalepCekmecesi({ talep: c, onKapat }: { talep: Complaint | null; onKapa
  * DURUM GECMISI.
  *
  * (P244 §8b) Nokta rengi eskiden rozetin TAILWIND SINIFINDAN geliyordu
- * (`bg-amber-100` hem zemin hem nokta). Rozetin kendisi artik token
+ * (ayni sinif hem zemin hem nokta). Rozetin kendisi artik token
  * tabanli oldugu icin o sinif kalmadi; nokta `Rozet`in kendi `nokta`
  * kipine devredildi — renk TEK YERDE tanimli kalir.
  */

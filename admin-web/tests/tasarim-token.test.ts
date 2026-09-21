@@ -232,6 +232,42 @@ describe("(P132.8) ELDEN GECIRILEN SINIFLAR GERI GELMESIN", () => {
     "border-slate-100", // -> border-yuzey-divider
     "rounded-2xl", // -> rounded-kart (ayni 16px, tek ad)
     "shadow-card", // mobil kartlarda GOLGE yok
+
+    // ------------------------------------------------------------------
+    // (P244 §10b) VURGU TONLARI DA SIFIRLANDI.
+    //
+    // Bunlar P132.8'de BILEREK birakilmisti ("tasarim sisteminde
+    // karsilik gelen bir token YOK"). P244 o karsiligi uretti:
+    //   * zemin  -> `color-mix(in srgb, var(--yz-<ton>) N%, transparent)`
+    //   * metin  -> `--yz-<ton>-ink`  (AA, asama 1'de olculdu)
+    //   * kenar  -> `--yz-<ton>-edge` (>=3.0, WCAG 1.4.11)
+    //
+    // Fark yalnizca ad degil: alfa/`-100` tonlari token katmanindan
+    // BAGIMSIZ davraniyor ve tema degisince birlikte kaymıyordu.
+    // ------------------------------------------------------------------
+    "bg-emerald-100",
+    "bg-emerald-50",
+    "text-emerald-800",
+    "text-emerald-700",
+    "bg-amber-100",
+    "bg-amber-50",
+    "text-amber-900",
+    "text-amber-800",
+    "text-amber-700",
+    "text-amber-600",
+    "bg-sky-100",
+    "text-sky-800",
+    "bg-red-50",
+    "text-red-800",
+    "text-red-700",
+    "bg-indigo-50",
+    "text-indigo-900",
+    "border-indigo-200",
+    "border-red-200",
+    "border-amber-200",
+    "bg-slate-800",
+    "bg-slate-900",
+    "text-slate-900",
   ];
 
   function kaynaklar(): [string, string][] {

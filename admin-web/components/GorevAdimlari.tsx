@@ -160,7 +160,13 @@ export function GorevAdimlari({
               <span className="min-w-0 flex-1">
                 <span className="font-medium">{a.ad}</span>
                 {a.foto_zorunlu ? (
-                  <span className="ms-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-900">
+                  <span
+                    className="ms-2 rounded-full px-2 py-0.5 text-xs"
+                    style={{
+                      background: "color-mix(in srgb, var(--yz-warning) 20%, transparent)",
+                      color: "var(--yz-warning-ink)",
+                    }}
+                  >
                     {t("gorevAdimFotoZorunlu")}
                   </span>
                 ) : null}

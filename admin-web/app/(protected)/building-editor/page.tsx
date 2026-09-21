@@ -64,8 +64,8 @@ const BLOK_KALIBI = /^[A-Za-z0-9]+$/;
 /**
  * (P244 §6c) BLOK KARTI YUZEYI — tek yerde.
  *
- * Eski surum SABIT TAILWIND RENKLERI yaziyordu (`border-indigo-200
- * bg-indigo-50 text-indigo-900`, `text-amber-600`, `text-red-700`,
+ * Eski surum SABIT TAILWIND RENKLERI yaziyordu (indigo kenar/zemin/
+ * metin ucusu, sari uyari metni, kirmizi hata metni,
  * `border-slate-300 bg-white`) — yani token katmanini tamamen
  * atliyordu ve koyu temada kendi basinaydi. Referansin blok kartlari
  * notr bir yuzey; RENK burada bir ANLAM tasimiyordu, yalnizca susdu.
@@ -76,6 +76,9 @@ const KART_STILI = {
   background: "var(--yz-surface-1)",
   minHeight: "7rem",
 } as const;
+
+const PASIF_DAIRE =
+  "border-[color:var(--yz-text-2)] bg-[color:var(--yz-text-2)]";
 
 export default function BuildingEditorPage() {
   const t = useT();
@@ -1256,7 +1259,7 @@ function FloorRow({
               .filter(Boolean)
               .join(" · ")}
             className={`odak-ic group relative flex h-16 w-20 flex-col items-center justify-center rounded-lg border text-white ${
-              u.aktif ? "border-black/20" : "border-slate-400 bg-slate-400"
+              u.aktif ? "border-black/20" : PASIF_DAIRE
             } ${suruklenen?.id === u.id ? "opacity-50" : ""} ${
               surukleAcik ? "cursor-move" : ""
             }`}

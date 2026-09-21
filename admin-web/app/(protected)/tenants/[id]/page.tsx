@@ -24,6 +24,19 @@ import { useT } from "@/lib/i18n/kullan";
 import { tarihSaatUzun } from "@/lib/tarih";
 import { telefonNormalle } from "@/lib/telefon";
 
+// (P244 §10b) HAM PALET -> TOKEN. Zemin `color-mix` ile tondan
+// turetilir (tema degisince birlikte kayar), metin `-ink` varyantidir
+// (AA, asama 1'de olculdu). Sinif dizesi kaliyor cunku bu rozetler
+// kosullu `className` ifadelerinin icinde.
+const ROZET_OLUMLU =
+  "bg-[color-mix(in_srgb,var(--yz-success)_16%,transparent)] text-[color:var(--yz-success-ink)]";
+const ROZET_UYARI =
+  "bg-[color-mix(in_srgb,var(--yz-warning)_20%,transparent)] text-[color:var(--yz-warning-ink)]";
+const ROZET_BILGI =
+  "bg-[color-mix(in_srgb,var(--yz-accent)_14%,transparent)] text-[color:var(--yz-accent-ink)]";
+const ROZET_NOTR =
+  "bg-[color:var(--yz-surface-sunken)] text-[color:var(--yz-text-2)]";
+
 interface Yonetici {
   id: string;
   ad: string;
@@ -316,8 +329,8 @@ export default function TenantDetailPage() {
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                       data.kurulum_tamamlandi
-                        ? "bg-emerald-100 text-emerald-800"
-                        : "bg-amber-100 text-amber-800"
+                        ? ROZET_OLUMLU
+                        : ROZET_UYARI
                     }`}
                   >
                     {data.kurulum_tamamlandi
@@ -382,7 +395,7 @@ export default function TenantDetailPage() {
                   <dd>
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        y.is_active ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-metin-body"
+                        y.is_active ? ROZET_OLUMLU : ROZET_NOTR
                       }`}
                     >
                       {y.is_active ? t("ortakAktif") : t("ortakPasif")}
@@ -474,12 +487,12 @@ export default function TenantDetailPage() {
                       <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
                         <span className="break-words">{satir.ad}</span>
                         {satir.birincil && (
-                          <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-800">
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${ROZET_BILGI}`}>
                             {t("tesisBirincilRozet")}
                           </span>
                         )}
                         {!satir.is_active && (
-                          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-metin-body">
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${ROZET_NOTR}`}>
                             {t("ortakPasif")}
                           </span>
                         )}

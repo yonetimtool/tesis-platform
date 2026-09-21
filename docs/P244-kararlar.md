@@ -1998,3 +1998,93 @@ token'a çevrildi.
 `tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
 **tam takım 247 dosya / 2063 test yeşil** (bir test dosyası silindi:
 `modal.dom`, kapsamı `ui-modal.dom`da).
+
+---
+
+# AŞAMA 10b — RENK BORCU + ÖLÇÜLEN PARİTE KARARI · UYGULANDI
+
+## A10b.1 Önce bir varsayımımı çürüttüm
+
+`DilSecici`de `bg-white` + `text-metin-body` görünce "koyu temada beyaz
+kutu üzerinde açık gri metin, okunmaz" diye düşündüm. **Ölçtüm, yanıldım:**
+`globals.css` merkezi bir koyu-mod katmanı taşıyor
+(`.dark .bg-white { #0f172a }`, slate/red-50/accent tonları dahil).
+
+Yani **eski dil bozuk render etmiyor.** İki vokabülerin yan yana
+yaşaması bir bakım ve tutarlılık borcu; bir çizim hatası değil. Bu, bu
+turun kapsamını da belirledi: mekanik bir "hepsini çevir" turu değil.
+
+## A10b.2 Vurgu tonları SIFIRLANDI
+
+P132.8 kilidi nötr slate tonlarını yasaklamış ama **vurgu tonlarını
+bilerek bırakmıştı**: *"tasarım sisteminde karşılık gelen bir token YOK
+ve karşılık üretmek bu turun kapsamı değildi."*
+
+P244 o karşılığı üretti:
+
+| rol | karşılık |
+|---|---|
+| zemin | `color-mix(in srgb, var(--yz-<ton>) N%, transparent)` |
+| metin | `--yz-<ton>-ink` (AA, aşama 1'de ölçüldü) |
+| kenar | `--yz-<ton>-edge` (≥3.0, WCAG 1.4.11) |
+
+Fark yalnız ad değil: `-100`/alfa tonları **token katmanından bağımsız**
+davranıyordu ve tema değişince birlikte kaymıyordu.
+
+**23 sınıf sıfıra indi** ve kilide eklendi (`bg-emerald-100`,
+`text-amber-800`, `bg-sky-100`, `bg-red-50`, `text-red-700`,
+`bg-indigo-50`, `bg-slate-900` … ). Kırma denendi, yakalandı.
+
+Kilit yine **kendi yorumlarımı** yakaladı — tarama prose ile kodu
+ayırt edemez ve **etmemeli**; yorumlar yeniden yazıldı.
+
+## A10b.3 ÖLÇÜLEN PARİTE KARARI — kullanıcının kararı
+
+Kalan borcun **büyük kısmı** (185 kullanım) tek bir aileden:
+`text-metin-*`, `bg-yuzey-*`, `kart-kenar`. Bunlar rastgele değil —
+**mobil `home_tokens.dart` ile paritede** ve `tasarim-token` kilidi Dart
+dosyasını okuyup karşılaştırıyor.
+
+Aynı rol, iki değer (beyaz kart üzerinde kontrast):
+
+| rol | eski (mobil paritesi) | yeni (`--yz-*`) | eski | yeni |
+|---|---|---|---|---|
+| gövde metni | `#374151` | `#172033` | 10.31 | 16.27 |
+| ikincil metin | `#626976` | `#566173` | 5.52 | 6.26 |
+| sayfa zemini | `#EAEEF5` | `#eef2f7` | — | — |
+| ayraç | `#E4E9F1` | `#dde4ec` | — | — |
+
+**İkisi de AA'yı tutuyor.** Sorun okunabilirlik değil: aynı ekranda iki
+farklı gri ve iki farklı ayraç çizgisi yan yana duruyor — şikayet edilen
+"yarım kalmış" hissinin kaynağı tam olarak bu.
+
+**Üç yol var ve üçü de bir bedel taşıyor:**
+
+1. **Web kullanımlarını `--yz-*`'a çevir** (185 düzenleme). Web tek
+   vokabüler olur; ama web ile mobil **görünür biçimde ayrışır**
+   (gövde metni 10.31 → 16.27, gözle fark edilir bir koyulaşma).
+2. **`--yz-*` değerlerini mobil değerlerine çek.** Parite korunur; ama
+   aşama 1'deki tüm `-ink`/`-edge` türetmeleri o zemine göre
+   ölçülmüştü, yeniden ölçülmesi ve kontrast kilitlerinin yeniden
+   kurulması gerekir.
+3. **Mobili web değerlerine çek.** İki yüzey de tutarlı olur; ama bu
+   bir **mobil sürüm** işidir (1.6.0+16 henüz mağazada değil).
+
+**Bu turda hiçbirini seçmedim** ve bu bilinçli: kalıcı kural *"her
+özellik iki yüzeyde"* ve *"istisna önceden gerekçelendirilir"* diyor.
+Sessizce birini seçmek, o kuralı arkadan dolanmak olurdu.
+
+## A10b.4 Bu turda YAPILMAYAN — açıkça
+
+* **185 kullanımlık mobil-parite ailesi** dokunulmadı (yukarıdaki
+  karar bekliyor).
+* `components/form.tsx` hâlâ 5 kullanıcıda.
+* **Açık maddeler duruyor:** `tablist` vs `nav` (§9b), yumuşak ton
+  ailesi (§8d — aslında bu turda `color-mix` deseniyle *fiilen* çözüldü
+  ama token ailesi olarak adlandırılmadı), ay takviminin dar ekranda
+  48×48'i tutamaması, `site-palet.ts`.
+
+## A10b.5 Doğrulama
+
+`tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
+**tam takım 247 dosya / 2063 test yeşil.**

@@ -111,6 +111,9 @@ function Makbuzlar() {
   );
 }
 
+const RENK_BORC = "text-[color:var(--yz-danger-ink)]";
+const RENK_ALACAK = "text-[color:var(--yz-success-ink)]";
+
 export default function AidatimPage() {
   const t = useT();
   const { data, error, isLoading } = useSWR<{ items: DaireDurum[] }>(
@@ -140,7 +143,9 @@ export default function AidatimPage() {
             <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("aidatimDaire", { no: d.no })}</h2>
             <p
               className={`text-lg font-semibold tabular-nums ${
-                d.bakiye_kurus > 0 ? "text-red-700" : "text-emerald-700"
+                // (P244 §10b) Ham palet -> `-ink`: para satirinda renk
+                // METINDIR ve AA'yi tutmali (asama 1'de olculdu).
+                d.bakiye_kurus > 0 ? RENK_BORC : RENK_ALACAK
               }`}
             >
               {kurusToTL(d.bakiye_kurus)}

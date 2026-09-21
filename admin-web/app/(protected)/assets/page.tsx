@@ -78,7 +78,7 @@ const KATEGORI: { value: AssetKategori; anahtar: SozlukAnahtari }[] = [
 ];
 // (P244 §8b) `DURUM_STYLE` SILINDI — OLU KODDU.
 //
-// Ham tailwind paleti (`bg-emerald-100 text-emerald-800`) tasiyan tek
+// Ham tailwind paleti (sabit yesil zemin + metin) tasiyan tek
 // sabitti ve HIC KULLANILMIYORDU: rozet rengi yukaridaki `durumRengi`
 // uzerinden `Rozet`in kendi token'larindan geliyor. Eski dilin renk
 // katmanindan geriye kalan bir kalintiydi.

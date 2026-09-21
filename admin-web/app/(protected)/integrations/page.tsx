@@ -11,6 +11,10 @@ import { ParolaAlani } from "@/components/ParolaAlani";
 import { DiyafonBolumu } from "@/components/diyafon/diyafon-bolumu";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
+
+// (P244 §10b) Ham palet -> `-ink` (AA, asama 1'de olculdu).
+const RENK_OK = "text-[color:var(--yz-success-ink)]";
+const RENK_HATA = "text-[color:var(--yz-danger-ink)]";
 import type {
   AuthType,
   HttpMethod,
@@ -461,7 +465,7 @@ export default function IntegrationsPage() {
                       </div>
                       {tr && (
                         <span
-                          className={`text-xs ${tr.ok ? "text-emerald-700" : "text-red-700"}`}
+                          className={`text-xs ${tr.ok ? RENK_OK : RENK_HATA}`}
                         >
                           {tr.ok
                             ? t("entegBasarili", { kod: tr.status ?? "—" })
