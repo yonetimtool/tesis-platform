@@ -11,7 +11,35 @@ import { Ekler } from "@/components/Ekler";
 import { GorevAdimlari } from "@/components/GorevAdimlari";
 import { useToast } from "@/components/Toast";
 import { useBant } from "@/lib/kirilma-kullan";
-import { Alan, AlanSarmal, AyTakvimi, BosDurum, CokSatir, Dugme, EksikVeriUyarisi, HataDurumu, IskeletMetin, Kart, Modal, Rozet, Secim, Sekmeler, Tablo, TabloBasligi, Td, Th, Tr, type Kolon, type TabloDurumu, useOnay, VeriTablosu } from "@/components/ui";
+import {
+  Alan,
+  AlanSarmal,
+  AyTakvimi,
+  BosDurum,
+  CokSatir,
+  Dugme,
+  EksikVeriUyarisi,
+  FiltreCubugu,
+  HataDurumu,
+  IskeletMetin,
+  Kart,
+  Modal,
+  OzetKarti,
+  OzetSeridi,
+  Rozet,
+  SayfaBasligi,
+  Secim,
+  Sekmeler,
+  Tablo,
+  TabloBasligi,
+  Td,
+  Th,
+  Tr,
+  type Kolon,
+  type TabloDurumu,
+  useOnay,
+  VeriTablosu,
+} from "@/components/ui";
 import { kisaKimlik } from "@/lib/kimlik";
 import { useAcilinca } from "@/lib/kaydir";
 import { apiSend } from "@/lib/client";
@@ -128,6 +156,23 @@ const D_BASLANDI = "baslandi" as const;
 const D_TAMAMLANDI = "tamamlandi" as const;
 const D_GECIKTI = "gecikti" as const;
 const DURUM_SECENEKLERI = [D_ATANDI, D_BASLANDI, D_TAMAMLANDI, D_GECIKTI] as const;
+const R_OLUMLU = "olumlu" as const;
+const YOK = "—";
+const AKTIF_EVET = "true" as const;
+const AKTIF_HAYIR = "false" as const;
+
+const IKON_LISTE = "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01";
+const IKON_SAAT = "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 7v5l3 2";
+const IKON_ONAY = "M20 6 9 17l-5-5";
+
+function Ikon({ yol }: { yol: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor"
+      strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={yol} />
+    </svg>
+  );
+}
 
 const EMPTY: FormState = {
   ad: "",
@@ -183,6 +228,22 @@ export default function TasksPage() {
   if (durumFiltre) qs.set("durum", durumFiltre);
   const { data, error, isLoading, mutate } = useSWR<TaskList>(
     `/api/tasks?${qs.toString()}`,
+    jsonFetcher,
+  );
+
+  // Sayaclar ayri uclardan (`?durum=X&limit=1` -> `meta.total`).
+  // Gorunen sayfa hem sayfali hem suzgecli; ondan saymak suzgec acikken
+  // sayaci da suzerdi.
+  const { data: acikSayi } = useSWR<TaskList>(
+    `/api/tasks?limit=1&offset=0&aktif=${AKTIF_EVET}`,
+    jsonFetcher,
+  );
+  const { data: gecikenSayi } = useSWR<TaskList>(
+    `/api/tasks?limit=1&offset=0&durum=${D_GECIKTI}`,
+    jsonFetcher,
+  );
+  const { data: tamamSayi } = useSWR<TaskList>(
+    `/api/tasks?limit=1&offset=0&durum=${D_TAMAMLANDI}`,
     jsonFetcher,
   );
   // Atanan picker: saha personeli (security + tesis_gorevlisi — lib/roles SAHA_ROLLERI).
@@ -500,90 +561,141 @@ export default function TasksPage() {
   );
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-          {t("kabukGorevler")}
-        </h1>
-        <div className="flex flex-wrap items-center gap-2">
-          {/* (P181 6.3) Kategori yönetimine doğrudan erişim: /tanimlar görev-kategorileri defterine derin bağlantı. */}
-          <Dugme
-            tur="ikincil"
-            boy="kucuk"
-            onClick={() => router.push("/tanimlar?defter=gorev-kategorileri")}
-          >
-            {t("gorevKategoriYonet")}
-          </Dugme>
-          <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
-            {t("gorevYeni")}
-          </Dugme>
-        </div>
-      </div>
+    <div>
+      <SayfaBasligi
+        baslik={t("kabukGorevler")}
+        aciklama={t("gorevSayfaAlt")}
+        eylem={
+          <div className="flex flex-wrap items-center gap-2">
+            {/* (P181 6.3) Kategori yonetimine dogrudan erisim:
+                /tanimlar gorev-kategorileri defterine derin baglanti. */}
+            <Dugme
+              tur="ikincil"
+              boy="kucuk"
+              onClick={() => router.push("/tanimlar?defter=gorev-kategorileri")}
+            >
+              {t("gorevKategoriYonet")}
+            </Dugme>
+            <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
+              {t("gorevYeni")}
+            </Dugme>
+          </div>
+        }
+      />
+
+      {/* Sayaclar ayri uclardan gelir: liste hem sayfali hem suzgecli;
+          gorunen sayfadan saymak yanlis bir sayi uretirdi. */}
+      <OzetSeridi>
+        <OzetKarti
+          etiket={t("gorevOzetAcik")}
+          deger={String(acikSayi?.meta?.total ?? 0)}
+          ikon={<Ikon yol={IKON_LISTE} />}
+          durum="bilgi"
+        />
+        <OzetKarti
+          etiket={t("gorevDurumGecikti")}
+          deger={String(gecikenSayi?.meta?.total ?? 0)}
+          ikon={<Ikon yol={IKON_SAAT} />}
+          durum="uyari"
+          altBilgi={t("gorevOzetGecikenAlt")}
+        />
+        <OzetKarti
+          etiket={t("gorevDurumTamamlandi")}
+          deger={String(tamamSayi?.meta?.total ?? 0)}
+          ikon={<Ikon yol={IKON_ONAY} />}
+          durum="olumlu"
+        />
+      </OzetSeridi>
 
       <EksikVeriUyarisi
         mesaj={usersErr || kategorilerErr ? t("ortakSecenekYuklenemedi") : null}
       />
 
-      <div className="flex flex-wrap items-end gap-3">
-        {/* SUZGEC ARTIK GERCEK: `kategori_id` backend'de destekleniyor
-            ("diger" = kategorisiz). Eski `tip` suzgeci hicbir sey
-            yapmiyordu (bkz. dosya basi). */}
-        <div className="w-52">
-          <AlanSarmal etiket={t("gorevKategoriAlan")}>
-            {(b) => (
-              <Secim
-                {...b}
-                value={kategoriFiltre}
-                onChange={(e) => {
-                  setKategoriFiltre(e.target.value);
-                  setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
-                }}
-              >
-                <option value="">{t("ortakTumu")}</option>
-                <option value={KATEGORISIZ}>{t("gorevKategorisiz")}</option>
-                {(kategoriler?.items ?? []).map((k) => (
-                  <option key={k.id} value={k.id}>
-                    {k.ad}
-                  </option>
-                ))}
-              </Secim>
-            )}
-          </AlanSarmal>
-        </div>
-        <div className="w-44">
-          <AlanSarmal etiket={t("ortakDurum")}>
-  {(b) => (
-    <Secim {...b} value={aktif}
-              onChange={(e) => {
-                setAktif(e.target.value);
-                setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
-              }}
-            >
-              <option value="">{t("ortakTumu")}</option>
-              <option value="true">{t("ortakAktif")}</option>
-              <option value="false">{t("ortakPasif")}</option></Secim>
-  )}
-</AlanSarmal>
-        </div>
-        <div className="w-56">
-          <AlanSarmal etiket={t("gorevAtanan")}>
-  {(b) => (
-    <Secim {...b} value={atananFiltre}
-              onChange={(e) => {
-                setAtananFiltre(e.target.value);
-                setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
-              }}
-            >
-              <option value="">{t("ortakTumu")}</option>
-              {personel.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.ad} ({rolAdi(t, u.role)})
-                </option>
-              ))}</Secim>
-  )}
-</AlanSarmal>
-        </div>
-      </div>
+      <FiltreCubugu
+        aktifSayi={
+          (kategoriFiltre ? 1 : 0) +
+          (aktif ? 1 : 0) +
+          (atananFiltre ? 1 : 0) +
+          (durumFiltre ? 1 : 0)
+        }
+        onTemizle={() => {
+          setKategoriFiltre("");
+          setAktif("");
+          setAtananFiltre("");
+          setDurumFiltre("");
+          setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
+        }}
+      >
+        {/* SECIMLER GORUNMEZ ETIKETLI: serit her kontrolun ustune bir
+            etiket satiri koyunca iki kata cikiyordu; ad `aria-label`
+            ile KALIR. */}
+        <Secim
+          aria-label={t("gorevKategoriAlan")}
+          value={kategoriFiltre}
+          onChange={(e) => {
+            setKategoriFiltre(e.target.value);
+            setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
+          }}
+          className="w-auto"
+        >
+          <option value="">{t("gorevKategoriHepsi")}</option>
+          <option value={KATEGORISIZ}>{t("gorevKategorisiz")}</option>
+          {(kategoriler?.items ?? []).map((k) => (
+            <option key={k.id} value={k.id}>
+              {k.ad}
+            </option>
+          ))}
+        </Secim>
+        {/* (P244 §8c) DURUM SUZGECI EKRANA GELDI.
+            `durumFiltre` durumu ve sorgusu KODDA VARDI ama onu kuracak
+            bir kontrol YOKTU: P230 §4'te eklenen durum suzgeci webden
+            hic kullanilamiyordu. */}
+        <Secim
+          aria-label={t("gorevKolonDurum")}
+          value={durumFiltre}
+          onChange={(e) => {
+            setDurumFiltre(e.target.value);
+            setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
+          }}
+          className="w-auto"
+        >
+          <option value="">{t("gorevDurumHepsi")}</option>
+          {DURUM_SECENEKLERI.map((d) => (
+            <option key={d} value={d}>
+              {t(DURUM_ETIKET[d])}
+            </option>
+          ))}
+        </Secim>
+        <Secim
+          aria-label={t("ortakDurum")}
+          value={aktif}
+          onChange={(e) => {
+            setAktif(e.target.value);
+            setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
+          }}
+          className="w-auto"
+        >
+          <option value="">{t("gorevAktiflikHepsi")}</option>
+          <option value={AKTIF_EVET}>{t("ortakAktif")}</option>
+          <option value={AKTIF_HAYIR}>{t("ortakPasif")}</option>
+        </Secim>
+        <Secim
+          aria-label={t("gorevAtanan")}
+          value={atananFiltre}
+          onChange={(e) => {
+            setAtananFiltre(e.target.value);
+            setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
+          }}
+          className="w-auto"
+        >
+          <option value="">{t("gorevAtananHepsi")}</option>
+          {personel.map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.ad} ({rolAdi(t, u.role)})
+            </option>
+          ))}
+        </Secim>
+      </FiltreCubugu>
 
       {/* (P154 / Asama 7.4) Kategori yoksa gorev acilamaz: sunucu
           `422 butce_kategori_bulunamadi` doner ve kullanici nereye
@@ -860,7 +972,7 @@ export default function TasksPage() {
       <div ref={detayRef} />
       {detail && (
         <Kart className="space-y-3">
-          <h2 className="text-lg font-medium">
+          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)", fontWeight: 600 }}>
             {t("gorevTamamlamaKayitlari", { ad: detail.ad })}
           </h2>
 
@@ -872,7 +984,10 @@ export default function TasksPage() {
             adimSirali={detail.adim_sirali}
             onDegisti={() => void mutate()}
           />
-          <div className="overflow-hidden rounded-lg border kart-kenar">
+          <div
+            className="overflow-hidden rounded-lg border"
+            style={{ borderColor: "var(--yz-border)" }}
+          >
             <div className="odak-ic overflow-x-auto" tabIndex={0}>
               <Tablo>
               <TabloBasligi>
@@ -885,7 +1000,7 @@ export default function TasksPage() {
               <tbody>
                 {(completions?.items ?? []).map((c) => (
                   <Tr key={c.id}>
-                    <Td className="text-metin-body">{formatDateTime(c.tamamlanma_zamani)}</Td>
+                    <Td>{formatDateTime(c.tamamlanma_zamani)}</Td>
                     <Td>{c.tamamlayan_ad ?? userName(c.tamamlayan_user_id)}</Td>
                     <Td>
                       {c.foto_url ? (
@@ -908,14 +1023,12 @@ export default function TasksPage() {
                       ) : c.foto_key ? (
                         // Anahtar var ama adres yok: presign uretilememis.
                         // Rozet BURADA dogru — "kanit var, gosterilemiyor".
-                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">
-                          {t("gorevFotoVarRozet")}
-                        </span>
+                        <Rozet durum={R_OLUMLU}>{t("gorevFotoVarRozet")}</Rozet>
                       ) : (
-                        <span className="text-metin-muted">{t("raporYok")}</span>
+                        <span style={{ color: "var(--yz-text-2)" }}>{t("raporYok")}</span>
                       )}
                     </Td>
-                    <Td className="text-metin-body">{c.notlar ?? "—"}</Td>
+                    <Td>{c.notlar ?? YOK}</Td>
                     <Td>
                       {/* (P229 §3) GERI AL — yetki kurali SUNUCUDA
                           (`_REOPENER`: admin + yonetici); buradaki dugme

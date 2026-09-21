@@ -3,7 +3,16 @@
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { BosDurum, HataDurumu, IskeletMetin, Kart, Sekmeler } from "@/components/ui";
+import {
+  BosDurum,
+  HataDurumu,
+  IskeletMetin,
+  Kart,
+  OzetKarti,
+  OzetSeridi,
+  SayfaBasligi,
+  Sekmeler,
+} from "@/components/ui";
 import { PlanHaritasiYukleyici } from "@/components/harita/harita-yukleyici";
 import type { PlanBlogu, PlanHucresi } from "@/components/harita/plan-haritasi";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -94,6 +103,22 @@ function UnitCell({
         {unit.complaint_count ?? 0}
       </span>
     </button>
+  );
+}
+
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const RENK_KIRMIZI = "kirmizi" as const;
+
+const IKON_UYARI = "M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z";
+const IKON_BINA = "M3 21h18M5 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M9 7h2M9 11h2M9 15h2M15 21v-8h2a2 2 0 0 1 2 2v6";
+const IKON_IZGARA = "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z";
+
+function Ikon({ yol }: { yol: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor"
+      strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={yol} />
+    </svg>
   );
 }
 
@@ -268,13 +293,66 @@ export default function SchematicPage() {
     return { hucreler: h, planBloklari: b, yerlesimsiz: eksik };
   }, [data, selected, t]);
 
-  return (
-    <div className="space-y-5">
-      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-        {t("kabukSikayetHaritasi")}
-      </h1>
+  /**
+   * (P244 §8c) OZET SAYILARI — BURADA ISTEMCIDE HESAPLANIR ve bu
+   * BILINCLI bir istisna.
+   *
+   * Diger ekranlarda sayaclar ayri uclardan (`?limit=1` ->
+   * `meta.total`) okunuyor, cunku oralarda liste SAYFALI: gorunen
+   * sayfadan saymak yanlis sayi uretir. Burada veri sayfali DEGIL —
+   * `building-map` binanin TAMAMINI tek yanitta veriyor (harita zaten
+   * ancak boyle cizilebilir). Elimizdeki agac listenin tamami oldugu
+   * icin sayim dogrudur ve uce ucuncu bir istek atmak gereksizdi.
+   */
+  const sayaclar = useMemo(() => {
+    let acikSikayet = 0;
+    let yogunDaire = 0;
+    for (const blok of data?.bloklar ?? []) {
+      for (const kat of blok.katlar) {
+        for (const u of kat.units) {
+          acikSikayet += u.complaint_count ?? 0;
+          if (u.color === RENK_KIRMIZI) yogunDaire += 1;
+        }
+      }
+    }
+    return { acikSikayet, yogunDaire };
+  }, [data]);
 
-      <Legend />
+  return (
+    <div>
+      <SayfaBasligi baslik={t("kabukSikayetHaritasi")} aciklama={t("haritaSayfaAlt")} />
+
+      <OzetSeridi>
+        <OzetKarti
+          etiket={t("haritaOzetAcikSikayet")}
+          deger={String(sayaclar.acikSikayet)}
+          ikon={<Ikon yol={IKON_UYARI} />}
+          durum="uyari"
+        />
+        <OzetKarti
+          etiket={t("haritaOzetYogunDaire")}
+          deger={String(sayaclar.yogunDaire)}
+          ikon={<Ikon yol={IKON_BINA} />}
+          durum="kritik"
+          altBilgi={t("haritaKirmizi")}
+        />
+        {/* HARITADAKI daire = CIZILEBILEN daire (`hucreler`), tum
+            kayitli daireler degil: kat/sira girilmemis daire haritada
+            YOKTUR ve onu bu sayiya katmak, kartin etiketini yalan
+            yapardi. Kac tanesinin eksik oldugu haritanin ALTINDA zaten
+            yaziyor — ayni cumleyi kartta da tekrarlamak, ekranda iki
+            kez okunan tek bir bilgi olurdu (kilit bunu yakaladi). */}
+        <OzetKarti
+          etiket={t("haritaOzetDaire")}
+          deger={String(hucreler.length)}
+          ikon={<Ikon yol={IKON_IZGARA} />}
+          durum="notr"
+        />
+      </OzetSeridi>
+
+      <div className="mb-4">
+        <Legend />
+      </div>
 
       {error && <HataDurumu mesaj={error.message} />}
       {isLoading && !data && (

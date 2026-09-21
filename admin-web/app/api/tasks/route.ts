@@ -18,6 +18,22 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   if (aktif === "true" || aktif === "false") qs.set("aktif", aktif);
   const atanan = sp.get("atanan_user_id");
   if (atanan) qs.set("atanan_user_id", atanan);
+  // (P244 §8c) `kategori_id` ve `durum` BURADA DUSUYORDU.
+  //
+  // Sayfa ikisini de GONDERIYOR (`qs.set("kategori_id", ...)`,
+  // `qs.set("durum", ...)`) ve arka uc ikisini de destekliyor
+  // (`list_tasks`: kategori UUID veya "diger"; durum = atandi |
+  // baslandi | tamamlandi | gecikti — P230 §4). Vekil ikisini de
+  // gecirmiyordu, yani KATEGORI SUZGECI HICBIR SEY YAPMIYORDU:
+  // kullanici bir kategori seciyor, liste degismiyordu.
+  //
+  // Ustelik sayfadaki yorum "SUZGEC ARTIK GERCEK" diyordu — arka uc
+  // icin dogruydu, yol icin degil. Depoda dorduncu kez ayni kusur
+  // sinifi (P173/P189/P213 + bu turda §6 ve §8a).
+  for (const ad of ["kategori_id", "durum"] as const) {
+    const v = sp.get(ad);
+    if (v) qs.set(ad, v);
+  }
   return proxyJson(`/tasks?${qs.toString()}`, "GET");
 }
 

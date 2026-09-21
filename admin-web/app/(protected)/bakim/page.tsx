@@ -22,7 +22,27 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import { useToast } from "@/components/Toast";
-import { Alan, AlanSarmal, BosDurum, Dugme, HataDurumu, Kart, Modal, Rozet, Secim, Sekmeler, Tablo, TabloBasligi, Td, Th, Tr, useOnay } from "@/components/ui";
+import {
+  Alan,
+  AlanSarmal,
+  BosDurum,
+  Dugme,
+  HataDurumu,
+  Kart,
+  Modal,
+  OzetKarti,
+  OzetSeridi,
+  Rozet,
+  SayfaBasligi,
+  Secim,
+  Sekmeler,
+  Tablo,
+  TabloBasligi,
+  Td,
+  Th,
+  Tr,
+  useOnay,
+} from "@/components/ui";
 import { TelefonAlani } from "@/components/TelefonAlani";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -97,6 +117,24 @@ const DURUMLAR: Record<string, SozlukAnahtari> = {
   yaklasti: "bakimDurumYaklasti",
   planli: "bakimDurumPlanli",
 };
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const D_GECIKTI = "gecikti" as const;
+const D_BUGUN = "bugun" as const;
+const D_YAKLASTI = "yaklasti" as const;
+
+const IKON_UYARI = "M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z";
+const IKON_SAAT = "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 7v5l3 2";
+const IKON_TAKVIM = "M7 3v4M17 3v4M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z";
+
+function Ikon({ yol }: { yol: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor"
+      strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={yol} />
+    </svg>
+  );
+}
+
 const YEDEK_PERIYOT: SozlukAnahtari = "bakimPeriyotAylik";
 const YEDEK_DURUM: SozlukAnahtari = "bakimDurumPlanli";
 const PERIYOT_ANAHTARLARI = Object.keys(PERIYOTLAR);
@@ -127,6 +165,26 @@ export default function BakimPage() {
     jsonFetcher,
   );
   const ozet = useSWR<Ozet>(`/api/bakim/ozet?yil=${yil}`, jsonFetcher);
+
+  // SAYAÇLAR AYRI UÇLARDAN, GORUNEN LISTEDEN DEGIL.
+  //
+  // Liste durum SUZGECINE bagli: suzgec "planli" secildiginde gorunen
+  // dizide TEK BIR geciken kayit bile olmaz ve "0 geciken bakim"
+  // yazardi — oysa geciken bakim orada duruyor. Sunucu turetilmis
+  // durumu kendisi suzuyor ve `meta.total` DOGRU toplami veriyor
+  // (bkz. bakim.py: suzgec varken TUM kayitlar okunup suzuluyor).
+  const gecikenSayi = useSWR<{ meta?: { total?: number } }>(
+    `/api/bakim/ekipmanlar?limit=1&offset=0&durum=${D_GECIKTI}`,
+    jsonFetcher,
+  );
+  const bugunSayi = useSWR<{ meta?: { total?: number } }>(
+    `/api/bakim/ekipmanlar?limit=1&offset=0&durum=${D_BUGUN}`,
+    jsonFetcher,
+  );
+  const yaklasanSayi = useSWR<{ meta?: { total?: number } }>(
+    `/api/bakim/ekipmanlar?limit=1&offset=0&durum=${D_YAKLASTI}`,
+    jsonFetcher,
+  );
 
   const [form, setForm] = useState(false);
   const [ad, setAd] = useState("");
@@ -449,15 +507,30 @@ export default function BakimPage() {
   );
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-          {t("bakimBaslik")}
-        </h1>
-        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-          {t("bakimAciklama")}
-        </p>
-      </div>
+    <div>
+      <SayfaBasligi baslik={t("bakimBaslik")} aciklama={t("bakimAciklama")} />
+
+      <OzetSeridi>
+        <OzetKarti
+          etiket={t("bakimDurumGecikti")}
+          deger={String(gecikenSayi.data?.meta?.total ?? 0)}
+          ikon={<Ikon yol={IKON_UYARI} />}
+          durum="kritik"
+          altBilgi={t("bakimOzetGecikenAlt")}
+        />
+        <OzetKarti
+          etiket={t("bakimDurumBugun")}
+          deger={String(bugunSayi.data?.meta?.total ?? 0)}
+          ikon={<Ikon yol={IKON_TAKVIM} />}
+          durum="uyari"
+        />
+        <OzetKarti
+          etiket={t("bakimDurumYaklasti")}
+          deger={String(yaklasanSayi.data?.meta?.total ?? 0)}
+          ikon={<Ikon yol={IKON_SAAT} />}
+          durum="bilgi"
+        />
+      </OzetSeridi>
 
       <HataDurumu
         mesaj={ekipmanlar.error || ozet.error ? t("ortakHataOlustu") : null}

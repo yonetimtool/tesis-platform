@@ -1459,3 +1459,95 @@ görmez. İddia değişmedi.
 
 `tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
 **tam takım 242 dosya / 2040 test yeşil.**
+
+---
+
+# AŞAMA 8c — GÖREVLER, BAKIM, ŞİKAYET HARİTASI · UYGULANDI
+
+## A8c.1 Görevlerde ÇALIŞMAYAN bir özellik buldum
+
+Bu bir tasarım eksiği değil, **bozuk bir özellikti**:
+
+* Sayfa `kategori_id`yi sorguya **ekliyordu**,
+* Arka uç `kategori_id`yi **destekliyor** (UUID veya `"diger"`),
+* Ama BFF rotası yalnız `limit`/`offset`/`aktif`/`atanan_user_id`
+  taşıyordu — `kategori_id` ve `durum` **sessizce düşüyordu**.
+
+Yani kullanıcı bir kategori seçiyor ve **liste aynen kalıyordu**.
+Sayfadaki yorum *"SÜZGEÇ ARTIK GERÇEK"* diyor; arka uç için doğruydu,
+**yol için değildi**.
+
+Aynı kusur sınıfının depoda **dördüncü** örneği: P173, P189, P213 ve bu
+turda §6 (araç geçişleri) ile §8a (kargo). Bu kadar tekrar edince artık
+bir kaza değil: **BFF, vekil olduğu için görünmez, ve görünmeyen katman
+sessizce yanlış olur.**
+
+## A8c.2 İkinci ölü özellik: durum süzgeci
+
+`durumFiltre` **durumu vardı**, sorguya **ekleniyordu** — ama onu
+kuracak **hiçbir kontrol yoktu**. P230 §4'te eklenen görev durumu
+süzgeci (atandı / başlandı / tamamlandı / gecikti) webden **hiç
+kullanılamıyordu**. Ekrana getirildi.
+
+İki kusur birlikte anlamlı: kontrol olsa bile BFF onu düşürecekti.
+
+## A8c.3 Şerit sayıları — bu turun en çok tekrar eden kusuru
+
+Dört ekranda aynı karar: **sayaçlar görünen listeden türetilmez.**
+
+`/bakim`da bu özellikle keskin. Liste `?durum=` ile süzülüyor; sayaçlar
+kendi sorgularını atmasa, *"planlı"* seçili bir ekranda geciken bakım
+sayısı **0** görünürdü — yani ekran, **geciken bakım yok derdi**.
+
+`/schematic` **bilinçli istisna**: orada veri sayfalı değil,
+`building-map` binanın tamamını tek yanıtta veriyor (harita zaten ancak
+öyle çizilebilir). Elimizdeki ağaç listenin tamamı olduğu için istemci
+sayımı **doğrudur** ve uca üçüncü bir istek atmak gereksizdi.
+
+## A8c.4 Kilidin yakaladığı kendi hatam
+
+Haritada "Haritadaki daire" kartına, haritanın altında **zaten yazan**
+"N dairenin kat/sıra bilgisi eksik" cümlesini alt bilgi olarak
+koymuştum. `yz-plan-haritasi` kilidi "birden çok eleman" diyerek düştü
+— **haklı**: ekranda iki kez okunan tek bir bilgi.
+
+Düzeltirken ikinci bir hata daha çıktı: sayacı **tüm kayıtlı daireler**
+üzerinden hesaplıyordum, oysa kat/sıra girilmemiş daire **haritada
+yoktur**. Etiketi yalan yapıyordu; sayım çizilebilen hücrelere
+(`hucreler`) bağlandı.
+
+## A8c.5 Renk katmanı
+
+`/tasks` tamamlama tablosundaki ham palet kalıntıları (`kart-kenar`,
+`text-metin-body`, `text-metin-muted`, `bg-emerald-100`) token'a
+çevrildi. 8b'de sayılan **22 sayfalık** borçtan bu turda dokunulanlar
+düştü.
+
+## A8c.6 Kilitler
+
+* **YENİ** `p244-gorev-bff-suzgec` (5 test) — rota işlevini doğrudan
+  çağırır. **İki kırma yakalandı:** süzgeç döngüsünü kaldırmak, beyaz
+  liste yerine her şeyi geçirmek. Ayrıca "önceden çalışan süzgeçler
+  bozulmadı" iddiası da kilitli.
+* **YENİ** `p244-operasyon-ekranlari` (4 test) — durum süzgecinin
+  ekranda olduğunu, seçilen durumun **listeye** uygulandığını (sayaç
+  isteğiyle karışmasın diye `limit=1` olmaması aranıyor) ve şerit
+  sayaçlarının ayrı sorgulardan geldiğini ölçer. **İki kırma
+  yakalandı:** durum seçimini kaldırmak, bakım sayaçlarını görünen
+  listeye bağlamak.
+
+## A8c.7 Bu turda YAPILMAYAN — açıkça
+
+* **İletişim modülünün tamamı** dokunulmadı: `/mesajlar` (564),
+  `/anketler` (594), `/announcements` (408), `/site-kurallari` (390),
+  `/etkinlik-yonetimi` (299), `/duyurular`, `/kurallar`, `/etkinlikler`,
+  `/davetler`. Bu artık **aşama 8d**.
+* `/tasks`ta kanban ve takvim görünümlerinin **iç düzeni** değişmedi;
+  yalnız sayfanın başlığı, şeridi ve süzgeç çubuğu yenilendi.
+* `/tasks`ta tamamlama kayıtları hâlâ tablonun **altında bir kart**
+  (çekmeceye taşınmadı — `/assets` ile aynı açık madde).
+
+## A8c.8 Doğrulama
+
+`tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
+**tam takım 244 dosya / 2049 test yeşil.**
