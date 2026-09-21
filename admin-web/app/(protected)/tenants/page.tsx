@@ -18,9 +18,11 @@ import {
   AlanSarmal,
   BosDurum,
   Dugme,
+  FiltreCubugu,
   HataDurumu,
   IskeletMetin,
   useOnay,
+  SayfaBasligi,
 } from "@/components/ui";
 import { KopyaKod } from "@/components/KopyaKod";
 import { useToast } from "@/components/Toast";
@@ -334,20 +336,16 @@ export default function TenantsPage() {
   );
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-            {t("kabukTesisler")}
-          </h1>
-          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-            {t("tesisListeAciklama")}
-          </p>
-        </div>
-        <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
-          {t("tesisYeni")}
-        </Dugme>
-      </div>
+    <div>
+      <SayfaBasligi
+        baslik={t("kabukTesisler")}
+        aciklama={t("tesisListeAciklama")}
+        eylem={
+          <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
+            {t("tesisYeni")}
+          </Dugme>
+        }
+      />
 
       {error && <HataDurumu mesaj={error.message} />}
       {isLoading && !data && <IskeletMetin satir={3} />}
@@ -401,7 +399,7 @@ export default function TenantsPage() {
 
           <div className="space-y-4">
             {form.yoneticiler.map((y, i) => (
-              <div key={y.anahtar} className="rounded-lg border kart-kenar p-4">
+              <div key={y.anahtar} className="rounded-lg border p-4" style={{ borderColor: "var(--yz-border)" }}>
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <div>
                     <h3 className="text-sm font-medium">
@@ -489,25 +487,16 @@ export default function TenantsPage() {
         </form>
       </Modal>
 
-      <VeriTablosu<TenantRow>
-        kolonlar={kolonlar}
-        satirlar={data?.items ?? []}
-        satirId={(x) => x.id}
-        hata={error ? error.message : null}
-        onTekrar={() => void mutate()}
-        yukleniyor={isLoading && !data}
-        // (P225) SONUC YOKSA BOS TABLO BIRAKILMAZ ve mesaj ARAMAYA GORE
-        // degisir: "hic tesis yok" ile "aramana eslesen yok" ayri
-        // durumlardir; ayni cumle, suzgeci acik biraktigini fark etmeyen
-        // kullaniciya "tesisler silinmis" dedirtirdi.
-        bosBaslik={aramaAktif ? t("tesisAramaSonucYok") : t("tesisYok")}
-        bosAciklama={aramaAktif ? t("tesisAramaSonucYokAlt") : t("tesisYokAlt")}
-        // Satirlar 1'den numaralanir; numara SAYFA BASINA degil LISTENIN
-        // TAMAMINA gore (gerekce `VeriTablosu.numarali`).
-        numarali
-        araclar={
-          <div className="flex flex-wrap items-center gap-2">
-            <Alan
+      {/* (P244 §9c) SUZGECLER TABLONUN DISINDA — liste hata alinca
+          kaybolmamali (§9b'de /users'ta olculen kusurun aynisi). */}
+      <FiltreCubugu
+        aktifSayi={(arama.trim() ? 1 : 0) + (kurulumSuzgec ? 1 : 0)}
+        onTemizle={() => {
+          setArama("");
+          setKurulumSuzgec("");
+        }}
+      >
+<Alan
               aria-label={t("tesisAraEtiketi")}
               placeholder={t("tesisAraIpucu")}
               value={arama}
@@ -556,8 +545,24 @@ export default function TenantsPage() {
                 {t("tesisKurulumTamamlanan")}
               </option>
             </select>
-          </div>
-        }
+      </FiltreCubugu>
+
+      <VeriTablosu<TenantRow>
+        kolonlar={kolonlar}
+        satirlar={data?.items ?? []}
+        satirId={(x) => x.id}
+        hata={error ? error.message : null}
+        onTekrar={() => void mutate()}
+        yukleniyor={isLoading && !data}
+        // (P225) SONUC YOKSA BOS TABLO BIRAKILMAZ ve mesaj ARAMAYA GORE
+        // degisir: "hic tesis yok" ile "aramana eslesen yok" ayri
+        // durumlardir; ayni cumle, suzgeci acik biraktigini fark etmeyen
+        // kullaniciya "tesisler silinmis" dedirtirdi.
+        bosBaslik={aramaAktif ? t("tesisAramaSonucYok") : t("tesisYok")}
+        bosAciklama={aramaAktif ? t("tesisAramaSonucYokAlt") : t("tesisYokAlt")}
+        // Satirlar 1'den numaralanir; numara SAYFA BASINA degil LISTENIN
+        // TAMAMINA gore (gerekce `VeriTablosu.numarali`).
+        numarali
       />
       {diyalog}
     </div>

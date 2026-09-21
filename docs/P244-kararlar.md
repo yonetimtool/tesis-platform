@@ -1822,3 +1822,76 @@ hesap silme) düzen olarak değişmedi; yalnız sayfa başlığı geldi.
 
 `tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
 **tam takım 247 dosya / 2065 test yeşil.**
+
+---
+
+# AŞAMA 9c — DENETİM, DOKÜMAN, TESİSLER + SÜZGEÇ KURALI · UYGULANDI
+
+## A9c.1 §9b'de bulduğum kusur bir tane değildi — altı taneydi
+
+`/users`ta süzgeçlerin `araclar` yuvasında durduğunu ve liste hata
+alınca **kaybolduğunu** ölçmüştüm. Depoyu taradım: aynı desen
+**`/audit`, `/dues`, `/icra`, `/tenants`, `/finans`** sayfalarında da
+vardı.
+
+`VeriTablosu`nun `araclar` yuvası tablonun üst şerididir ve tablo hata
+alınca gövdesi "tekrar dene" ile değişir. Süzgeç oraya konulduğunda
+**liste düştüğü anda ekrandan siliniyor**.
+
+Bu tam olarak **yanlış anda** kaybolmaktır: tabloyu hata durumuna sokan
+şey çoğu zaman **süzgecin kendisidir** (çok geniş aralık, geçersiz
+dönem, zaman aşımı) ve kullanıcının ilk refleksi onu değiştirmektir.
+
+## A9c.2 Kural: süzgeç dışarıda, liste eylemi içeride
+
+Ayrım keyfi değil ve kilit bunu tam olarak böyle ölçüyor:
+
+* **Süzgeç** listeyi **yeniden sorar** — hata hâlinde **çalışır** ve
+  gereklidir. Dışarıda durmalı.
+* **Liste eylemi** (dışa aktar, toplu işlem) **görünen listeyi**
+  kullanır — liste yoksa anlamsızdır ve onunla birlikte kaybolması
+  **doğrudur**. İçeride kalabilir.
+
+Bu yüzden tarama `<Secim` / `<AramaAlani` arıyor, `<Dugme` **aramıyor**.
+`/finans/tahsilatlar` gibi sayfalardaki dışa-aktar düğmeleri yerinde
+bırakıldı.
+
+## A9c.3 Neden kaynak taraması, DOM testi değil
+
+DOM testi bunu ekran ekran ölçerdi ve **yeni bir sayfa eklendiğinde
+sessiz kalırdı**. Altı ekranda tekrar eden bir şey artık bir kaza değil,
+bir alışkanlık — ve alışkanlığı ancak yapısal bir kural durdurur:
+*"süzgeç denetimi `araclar` yuvasına yazılmaz."*
+
+Tarama **dengeli parantezle** `araclar={...}` içeriğini çıkarıyor ve
+çıkarıcının kendisi sahte kaynakla doğrulanıyor (vakum testi).
+
+## A9c.4 Sayfa başlıkları ve renk borcu
+
+Yedi ekran `SayfaBasligi`ya taşındı: `/audit`, `/dokumanlar`,
+`/karar-defteri`, `/transparency`, `/tenants`, `/kurulum`,
+`/ice-aktarim` (+ `/icra`).
+
+Renk katmanı borcu **18 → 14**. `/transparency`de yayın rozeti ham
+palet sınıflarındaydı (`bg-emerald-100`), `Rozet`e çevrildi — anlam
+korundu (yayında=olumlu, taslak=nötr). `/kurulum`daki adım numarası
+rozeti üç ayrı palet sınıfı taşıyordu; token'a geçti ve **sayı + metin
+ile anlam taşıma** kuralı bozulmadı.
+
+## A9c.5 Bu turda YAPILMAYAN — açıkça
+
+* `/ice-aktarim` (742) ve `/kurulum` (386) **düzen olarak**
+  değişmedi; ikisi de sihirbaz akışı ve P243 §6'da yeni yazılmıştı.
+  Referansın **adım çubuğu** eklenmedi.
+* `/tenants` hâlâ tablo + kart karışımı; usta-detaya çevrilmedi.
+* `/dokumanlar` ve `/karar-defteri` yalnız başlık aldı; özet şeridi
+  eklenmedi (ikisinde de sayılacak anlamlı bir şey yok — "17 doküman"
+  kimsenin sorduğu soru değil).
+* Renk borcu: **14 sayfa** kaldı (aşama 10).
+* §9b'de açılan **desen tutarsızlığı** açık maddesi duruyor:
+  `/tanimlar` `role=tablist`, `/profil` `<nav>`.
+
+## A9c.6 Doğrulama
+
+`tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
+**tam takım 248 dosya / 2067 test yeşil.**

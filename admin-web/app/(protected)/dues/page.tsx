@@ -6,6 +6,7 @@ import useSWR from "swr";
 import {
   Alan,
   AlanSarmal,
+  FiltreCubugu,
   Dugme,
   Kart,
   Modal,
@@ -47,6 +48,8 @@ interface TahsilatGostergesi {
 
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const YOK = "—";
+// Yer tutucu bir BICIM ORNEGI (yil-ay), cevrilecek bir cumle degil.
+const DONEM_IPUCU = "2026-07";
 // Trend YONU degil ANLAMI: tahsilat oraninin ARTMASI iyidir.
 const TREND_IYI = "iyi" as const;
 const TREND_KOTU = "kotu" as const;
@@ -394,7 +397,33 @@ export default function DuesPage() {
             id: SEKME_TAHAKKUK,
             baslik: t("aidatTahakkuklar"),
             icerik: (
-              <VeriTablosu<DuesAssessment>
+              <>
+                {/* (P244 §9c) DONEM SUZGECI TABLONUN DISINDA.
+                    `araclar` yuvasindayken, tahakkuk listesi hata
+                    alinca tablo "tekrar dene" cizer ve suzgec de
+                    onunla kaybolurdu — oysa kullanicinin ilk refleksi
+                    donemi degistirip tekrar denemektir. */}
+                <FiltreCubugu
+                  aktifSayi={aDonem.trim() ? 1 : 0}
+                  onTemizle={() => {
+                    setADonem("");
+                    setADurum({ ...aDurum, sayfa: 1 });
+                  }}
+                >
+                  <Alan
+                    aria-label={t("aidatDonemFiltresi")}
+                    value={aDonem}
+                    onChange={(e) => {
+                      setADonem(e.target.value);
+                      // Suzgec degisince BASA don: eski sayfada kalmak
+                      // bos gorunen bir liste demekti.
+                      setADurum({ ...aDurum, sayfa: 1 });
+                    }}
+                    placeholder={DONEM_IPUCU}
+                    className="w-40"
+                  />
+                </FiltreCubugu>
+                <VeriTablosu<DuesAssessment>
                 kolonlar={tahakkukKolonlari}
                 satirlar={assessments?.items ?? []}
                 satirId={(a) => a.id}
@@ -407,26 +436,8 @@ export default function DuesPage() {
                 toplam={assessments?.meta?.total ?? 0}
                 durum={aDurum}
                 onDurumDegisti={setADurum}
-                araclar={
-                  <div className="w-full sm:w-48">
-                    <AlanSarmal etiket={t("aidatDonemFiltresi")}>
-                      {(b) => (
-                        <Alan
-                          {...b}
-                          value={aDonem}
-                          onChange={(e) => {
-                            setADonem(e.target.value);
-                            // Suzgec degisince BASA don: eski sayfada
-                            // kalmak bos gorunen bir liste demekti.
-                            setADurum({ ...aDurum, sayfa: 1 });
-                          }}
-                          placeholder="2026-07"
-                        />
-                      )}
-                    </AlanSarmal>
-                  </div>
-                }
-              />
+                />
+              </>
             ),
           },
           {

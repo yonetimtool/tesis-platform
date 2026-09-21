@@ -14,6 +14,7 @@ import {
   VeriTablosu,
   useOnay,
   type Kolon,
+  SayfaBasligi,
 } from "@/components/ui";
 import { apiSend, agIstegi } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
@@ -312,18 +313,13 @@ export default function DokumanlarPage() {
   const sonSayfa = Math.max(0, Math.ceil(toplam / SAYFA_BOYU) - 1);
 
   return (
-    <div className="space-y-6">
+    <div>
       {diyalog}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-            {t("dokumanBaslik")}
-          </h1>
-          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-            {t("dokumanAlt")}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+      <SayfaBasligi
+        baslik={t("dokumanBaslik")}
+        aciklama={t("dokumanAlt")}
+        eylem={
+          <div className="flex items-center gap-2">
           {/* EXCEL: rapor motorundan. Ikinci bir Excel yazicisi yazmak,
               sutun bicimlerinin iki yerde yasamasi olurdu. */}
           <a
@@ -346,11 +342,12 @@ export default function DokumanlarPage() {
             </svg>
             {t("dokumanExcel")}
           </a>
-          <Dugme tur="birincil" onClick={() => setAcik(true)}>
+          <Dugme tur="birincil" boy="kucuk" onClick={() => setAcik(true)}>
             {t("dokumanYukle")}
           </Dugme>
-        </div>
-      </div>
+          </div>
+        }
+      />
 
       {hata ? <HataDurumu mesaj={hata} /> : null}
 

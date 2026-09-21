@@ -3409,4 +3409,5 @@ export const ar: Sozluk = {
   kullaniciRolHepsi: "كل الأدوار",
   kullaniciDurumHepsi: "نشطة وغير نشطة",
   profilSayfaAlt: "بيانات حسابك والأمان وتفضيلات الإشعارات والنصوص القانونية.",
+  icraSayfaAlt: "الديون قيد التنفيذ وحالات الملفات وخطوات التحصيل.",
 };

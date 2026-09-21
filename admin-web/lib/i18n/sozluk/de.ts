@@ -3409,4 +3409,5 @@ export const de: Sozluk = {
   kullaniciRolHepsi: "Alle Rollen",
   kullaniciDurumHepsi: "Aktiv und inaktiv",
   profilSayfaAlt: "Ihre Kontodaten, Sicherheit, Benachrichtigungen und Rechtstexte.",
+  icraSayfaAlt: "Forderungen im Vollstreckungsverfahren, Fallstatus und Inkassoschritte.",
 };

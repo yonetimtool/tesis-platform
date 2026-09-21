@@ -9,6 +9,7 @@ import {
   AlanSarmal,
   CokSatir,
   Dugme,
+  FiltreCubugu,
   Kart,
   Modal,
   Rozet,
@@ -18,6 +19,7 @@ import {
   type Kolon,
   type TabloDurumu,
   useOnay,
+  SayfaBasligi,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -347,23 +349,53 @@ export default function IcraPage() {
   );
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>{t("kabukIcra")}</h1>
-        {yazabilir ? (
-          <Dugme
-            tur="birincil"
-            boy="kucuk"
-            onClick={() => {
-              setForm(bosForm());
-              setFormHata(null);
-              setAcik(true);
-            }}
-          >
-            {t("icraYeni")}
-          </Dugme>
-        ) : null}
-      </div>
+    <div>
+      <SayfaBasligi
+        baslik={t("kabukIcra")}
+        aciklama={t("icraSayfaAlt")}
+        eylem={
+          yazabilir ? (
+            <Dugme
+              tur="birincil"
+              boy="kucuk"
+              onClick={() => {
+                setForm(bosForm());
+                setFormHata(null);
+                setAcik(true);
+              }}
+            >
+              {t("icraYeni")}
+            </Dugme>
+          ) : null
+        }
+      />
+
+      {/* (P244 §9c) SUZGEC TABLONUN DISINDA — liste hata alinca
+          kaybolmamali (§9b'de /users'ta olculen kusurun aynisi). */}
+      <FiltreCubugu
+        aktifSayi={durum ? 1 : 0}
+        onTemizle={() => {
+          setDurum("" as DurumSecimi);
+          setTabloDurumu({ ...tabloDurumu, sayfa: 1 });
+        }}
+      >
+        <Secim
+          aria-label={t("icraDurum")}
+          value={durum}
+          onChange={(e) => {
+            setDurum(e.target.value as DurumSecimi);
+            setTabloDurumu({ ...tabloDurumu, sayfa: 1 });
+          }}
+          className="w-auto"
+        >
+          <option value="">{t("icraDurumHepsi")}</option>
+          {DURUMLAR.map((d) => (
+            <option key={d} value={d}>
+              {t(`icraDurum_${d}` as never)}
+            </option>
+          ))}
+        </Secim>
+      </FiltreCubugu>
 
       <VeriTablosu<IcraDosyasi>
         kolonlar={kolonlar}
@@ -377,29 +409,6 @@ export default function IcraPage() {
         toplam={data?.meta?.total ?? 0}
         durum={tabloDurumu}
         onDurumDegisti={setTabloDurumu}
-        araclar={
-          <div style={{ maxWidth: 220 }}>
-            <AlanSarmal etiket={t("icraDurum")}>
-              {(b) => (
-                <Secim
-                  {...b}
-                  value={durum}
-                  onChange={(e) => {
-                    setDurum(e.target.value as DurumSecimi);
-                    setTabloDurumu({ ...tabloDurumu, sayfa: 1 });
-                  }}
-                >
-                  <option value="">{t("icraDurumHepsi")}</option>
-                  {DURUMLAR.map((d) => (
-                    <option key={d} value={d}>
-                      {t(`icraDurum_${d}` as never)}
-                    </option>
-                  ))}
-                </Secim>
-              )}
-            </AlanSarmal>
-          </div>
-        }
       />
 
       {secili && (

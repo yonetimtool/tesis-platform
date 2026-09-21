@@ -13,6 +13,7 @@ import {
   Modal,
   VeriTablosu,
   type Kolon,
+  SayfaBasligi,
 } from "@/components/ui";
 import { apiSend } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
@@ -197,20 +198,16 @@ export default function KararDefteriPage() {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-            {t("kararBaslik")}
-          </h1>
-          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-            {t("kararAlt")}
-          </p>
-        </div>
-        <Dugme tur="birincil" onClick={() => setAcik(true)}>
-          {t("kararEkle")}
-        </Dugme>
-      </div>
+    <div>
+      <SayfaBasligi
+        baslik={t("kararBaslik")}
+        aciklama={t("kararAlt")}
+        eylem={
+          <Dugme tur="birincil" boy="kucuk" onClick={() => setAcik(true)}>
+            {t("kararEkle")}
+          </Dugme>
+        }
+      />
 
       <VeriTablosu<Karar>
         kolonlar={kolonlar}

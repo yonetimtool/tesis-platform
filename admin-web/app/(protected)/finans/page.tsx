@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { Alan, AlanSarmal, BosDurum, Dugme, HataDurumu, Kart, Modal, Secim, Tablo, TabloBasligi, Td, Th, type Kolon, type TabloDurumu, VeriTablosu } from "@/components/ui";
+import { Alan, AlanSarmal, BosDurum, Dugme, FiltreCubugu, HataDurumu, Kart, Modal, Secim, Tablo, TabloBasligi, Td, Th, type Kolon, type TabloDurumu, VeriTablosu } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend, genIdempotencyKey } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
@@ -399,6 +399,37 @@ export default function FinansPage() {
         {/* HATA SESSIZ KALMAZ: uc dustugunde "kayit yok" gostermek,
             kullaniciya kasanin bos oldugunu soylemek olurdu. Karar artik
             `VeriTablosu`nun icinde (`hata` ozelligi). */}
+        {/* (P244 §9c) SUZGEC TABLONUN DISINDA: `araclar` yuvasinda
+            kalsaydi liste hata alinca suzgec de kaybolurdu — oysa
+            tabloyu hata durumuna sokan sey cogu zaman SUZGECIN KENDISI
+            olur ve kullanicinin ilk refleksi onu degistirmektir. */}
+        <FiltreCubugu
+          aktifSayi={tip ? 1 : 0}
+          onTemizle={() => {
+            setTip("" as TipSecimi);
+            setTabloDurumu({ ...tabloDurumu, sayfa: 1 });
+          }}
+        >
+          {/* (P63) Suzgecin HICBIR etiketi yoktu: ekran okuyucu yalnizca
+              "acilir liste" der ve kullanici neyi suzdugunu bilmez. */}
+          <Secim
+            aria-label={t("finansTipSuzgeci")}
+            value={tip}
+            onChange={(e) => {
+              setTip(e.target.value as TipSecimi);
+              setTabloDurumu({ ...tabloDurumu, sayfa: 1 });
+            }}
+            className="w-auto"
+          >
+            <option value="">{t("finansHepsi")}</option>
+            {TIPLER.map((x) => (
+              <option key={x} value={x}>
+                {t(`finansTip_${x}` as never)}
+              </option>
+            ))}
+          </Secim>
+        </FiltreCubugu>
+
         <VeriTablosu<Hareket>
           kolonlar={kolonlar}
           satirlar={hareketler?.items ?? []}
@@ -412,27 +443,6 @@ export default function FinansPage() {
           toplam={hareketler?.meta?.total ?? 0}
           durum={tabloDurumu}
           onDurumDegisti={setTabloDurumu}
-          araclar={
-            // (P63) Suzgecin HICBIR etiketi yoktu: ekran okuyucu yalnizca
-            // "acilir liste" der ve kullanici neyi suzdugunu bilmez.
-            <div style={{ maxWidth: 200 }}>
-              <Secim
-                aria-label={t("finansTipSuzgeci")}
-                value={tip}
-                onChange={(e) => {
-                  setTip(e.target.value as TipSecimi);
-                  setTabloDurumu({ ...tabloDurumu, sayfa: 1 });
-                }}
-              >
-                <option value="">{t("finansHepsi")}</option>
-                {TIPLER.map((x) => (
-                  <option key={x} value={x}>
-                    {t(`finansTip_${x}` as never)}
-                  </option>
-                ))}
-              </Secim>
-            </div>
-          }
         />
       </div>
     </div>

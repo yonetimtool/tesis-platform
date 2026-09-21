@@ -3409,4 +3409,5 @@ export const es: Sozluk = {
   kullaniciRolHepsi: "Todos los roles",
   kullaniciDurumHepsi: "Activas e inactivas",
   profilSayfaAlt: "Sus datos de cuenta, seguridad, preferencias de notificación y textos legales.",
+  icraSayfaAlt: "Deudas en ejecución, estados de expediente y pasos de cobro.",
 };

@@ -7,6 +7,7 @@ import useSWR from "swr";
 import {
   Dugme,
   HataDurumu,
+  SayfaBasligi,
 } from "@/components/ui";
 import { ilkGirisTurunuAc } from "@/components/IlkGirisTuru";
 import { kurulumHatirlaticiyiAc } from "@/components/KurulumHatirlatici";
@@ -139,15 +140,8 @@ export default function KurulumPage() {
   );
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-          {t("kurulumBaslik")}
-        </h1>
-        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-          {t("kurulumAlt")}
-        </p>
-      </div>
+    <div>
+      <SayfaBasligi baslik={t("kurulumBaslik")} aciklama={t("kurulumAlt")} />
       <HataDurumu mesaj={hata ?? (error ? t("kurulumHata") : null)} />
 
       {/* (P243 §6a) BASLAMAK ICIN GEREKENLER — sihirbazin ILK sozu.
@@ -157,8 +151,8 @@ export default function KurulumPage() {
       {data && asgariVar && !calisir && (
         <section className="p-kart" data-test="kurulum-asgari" aria-label={t("kurulumAsgariBaslik")}>
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-medium text-metin-body">{t("kurulumAsgariBaslik")}</p>
-            <span className="text-sm tabular-nums text-metin-muted">
+            <p className="text-sm font-medium" style={{ color: "var(--yz-text)" }}>{t("kurulumAsgariBaslik")}</p>
+            <span className="text-sm tabular-nums" style={{ color: "var(--yz-text-2)" }}>
               {t("kurulumAsgariSayac", { tamam: asgariTamam, toplam: asgariToplam })}
             </span>
           </div>
@@ -192,7 +186,7 @@ export default function KurulumPage() {
           aria-label={calisir ? t("kurulumOzetHazir") : t("kurulumOzetEksik")}
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-medium text-metin-body">
+            <p className="text-sm font-medium" style={{ color: "var(--yz-text)" }}>
               {calisir ? t("kurulumOzetHazir") : t("kurulumOzetEksik")}
             </p>
 
@@ -205,8 +199,8 @@ export default function KurulumPage() {
               bir YETENEGI acar ve neyi actigini yazar. Yapmamak bir
               hata degil, bir tercihtir. */}
           {sonraYapilacaklar.length > 0 && (
-            <div className="mt-3 border-t border-yuzey-divider pt-3" data-test="kurulum-sonra">
-              <p className="text-sm font-medium text-metin-body">{t("kurulumSonraBaslik")}</p>
+            <div className="mt-3 border-t pt-3" style={{ borderColor: "var(--yz-border)" }} data-test="kurulum-sonra">
+              <p className="text-sm font-medium" style={{ color: "var(--yz-text)" }}>{t("kurulumSonraBaslik")}</p>
               <p className="mt-1" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
                 {t("kurulumSonraAlt")}
               </p>
@@ -227,8 +221,8 @@ export default function KurulumPage() {
             </div>
           )}
           {atlananlar.length > 0 && (
-            <div className="mt-3 border-t border-yuzey-divider pt-3" data-test="kurulum-atlananlar">
-              <p className="text-sm font-medium text-metin-body">
+            <div className="mt-3 border-t pt-3" style={{ borderColor: "var(--yz-border)" }} data-test="kurulum-atlananlar">
+              <p className="text-sm font-medium" style={{ color: "var(--yz-text)" }}>
                 {t("kurulumAtlanan")}
               </p>
               <p className="mt-1" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
@@ -294,22 +288,26 @@ export default function KurulumPage() {
             <li key={a.kod} className="p-kart">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="flex items-center gap-2 text-sm font-medium text-metin-body">
+                  <p
+                    className="flex items-center gap-2 text-sm font-medium"
+                    style={{ color: "var(--yz-text)" }}
+                  >
                     <span
                       // SAYI DA ROZET DE ANLAM TASIR: yalniz renk kullanmak,
                       // renk ayirt edemeyen kullanici icin bilgiyi silerdi.
-                      className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs ${
+                      className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs"
+                      style={
                         a.tamam
-                          ? "bg-accent-green/15 text-vurguInk-green"
+                          ? { background: "var(--yz-surface-sunken)", color: "var(--yz-success-ink)" }
                           : a.atlandi
-                            ? "bg-yuzey-divider text-metin-muted"
-                            : "bg-accent-blue/12 text-accent-blue"
-                      }`}
+                            ? { background: "var(--yz-surface-sunken)", color: "var(--yz-text-2)" }
+                            : { background: "var(--yz-surface-sunken)", color: "var(--yz-accent-ink)" }
+                      }
                     >
                       {i + 1}
                     </span>
                     {t(h.etiket)}
-                    <span className="text-xs font-normal text-metin-muted">
+                    <span className="text-xs font-normal" style={{ color: "var(--yz-text-2)" }}>
                       {a.tamam
                         ? t("kurulumAdimTamam", { sayi: a.sayi })
                         : a.atlandi

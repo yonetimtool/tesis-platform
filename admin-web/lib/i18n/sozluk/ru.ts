@@ -3409,4 +3409,5 @@ export const ru: Sozluk = {
   kullaniciRolHepsi: "Все роли",
   kullaniciDurumHepsi: "Активные и неактивные",
   profilSayfaAlt: "Данные учётной записи, безопасность, уведомления и правовые документы.",
+  icraSayfaAlt: "Долги во взыскании, статусы дел и шаги по сбору.",
 };

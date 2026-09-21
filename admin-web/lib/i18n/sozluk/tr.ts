@@ -3472,4 +3472,5 @@ export const tr = {
   kullaniciRolHepsi: "Tüm roller",
   kullaniciDurumHepsi: "Aktif ve pasif",
   profilSayfaAlt: "Hesap bilgileriniz, güvenlik, bildirim tercihleri ve yasal metinler.",
+  icraSayfaAlt: "Takibe düşen borçlar, dosya durumları ve tahsilat adımları.",
 } as const;

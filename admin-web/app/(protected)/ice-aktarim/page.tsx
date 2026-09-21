@@ -11,6 +11,7 @@ import {
   HataDurumu,
   Secim,
   useOnay,
+  SayfaBasligi,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -393,15 +394,8 @@ function ornekSatirlari(tur: Tur): string[][] {
   }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-          {t("iceAktarimBaslik")}
-        </h1>
-        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-          {t("iceAktarimAlt")}
-        </p>
-      </div>
+    <div>
+      <SayfaBasligi baslik={t("iceAktarimBaslik")} aciklama={t("iceAktarimAlt")} />
       <HataDurumu mesaj={hata} />
 
       {/* --------------------------- 1) TUR + SABLON --------------------- */}
@@ -713,7 +707,7 @@ function ornekSatirlari(tur: Tur): string[][] {
         {(gecmis?.items ?? []).map((k) => (
           <div
             key={k.id}
-            className="kart-kenar flex flex-wrap items-center justify-between gap-3 rounded-lg border p-2 text-sm"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-2 text-sm" style={{ borderColor: "var(--yz-border)" }}
           >
             <span className="min-w-0">
               {t(TUR_ETIKET[k.tur] ?? _YEDEK_TUR_ETIKET)} ·{" "}

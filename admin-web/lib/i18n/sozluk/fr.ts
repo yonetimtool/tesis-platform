@@ -3409,4 +3409,5 @@ export const fr: Sozluk = {
   kullaniciRolHepsi: "Tous les rôles",
   kullaniciDurumHepsi: "Actifs et inactifs",
   profilSayfaAlt: "Vos informations de compte, sécurité, préférences de notification et textes légaux.",
+  icraSayfaAlt: "Créances en recouvrement, statuts des dossiers et étapes d'encaissement.",
 };

@@ -5,8 +5,9 @@ import useSWR from "swr";
 
 import {
   Alan,
-  AlanSarmal,
+  FiltreCubugu,
   Rozet,
+  SayfaBasligi,
   Secim,
   VeriTablosu,
   type Kolon,
@@ -20,6 +21,8 @@ import { useT } from "@/lib/i18n/kullan";
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`). "platform" bir
 // KAPSAM KIMLIGIDIR (tenant'i olmayan kayit), cumle degil.
 const PLATFORM = "platform" as const;
+// Yer tutucu bir ORNEK DEGER (kaynak tipi), cevrilecek bir cumle degil.
+const KAYNAK_IPUCU = "app_user";
 const ROZET_NOTR = "notr" as const;
 
 /** Denetim satiri — `AuditLog` sozlesmesi. */
@@ -150,15 +153,70 @@ export default function AuditPage() {
   );
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-          {t("kabukDenetimKaydi")}
-        </h1>
-        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-          {t("denetimAciklama")}
-        </p>
-      </div>
+    <div>
+      <SayfaBasligi baslik={t("kabukDenetimKaydi")} aciklama={t("denetimAciklama")} />
+
+      {/* (P244 §9c) SUZGECLER TABLONUN DISINDA.
+          `araclar` yuvasindayken, liste hata alinca tablo "tekrar dene"
+          cizer ve SUZGECLER DE ONUNLA KAYBOLURDU — oysa kullanicinin
+          ilk refleksi suzgeci degistirip tekrar denemektir. Ayni kusur
+          §9b'de /users'ta olculmustu; bu tur geri kalan dort ekrani
+          kapatiyor. */}
+      <FiltreCubugu
+        aktifSayi={
+          (action ? 1 : 0) +
+          (resourceType.trim() ? 1 : 0) +
+          (tenantId.trim() ? 1 : 0) +
+          (from ? 1 : 0) +
+          (to ? 1 : 0)
+        }
+        onTemizle={() => {
+          reset(setAction)("");
+          reset(setResourceType)("");
+          reset(setTenantId)("");
+          reset(setFrom)("");
+          reset(setTo)("");
+        }}
+      >
+        {/* GORUNMEZ ETIKET: serit her kontrolun ustune bir etiket satiri
+            koyunca iki kata cikiyordu; ad `aria-label` ile KALIR. */}
+        <Secim
+          aria-label={t("denetimIslem")}
+          value={action}
+          onChange={(e) => reset(setAction)(e.target.value)}
+          className="w-auto"
+        >
+          {ISLEM_SECENEKLERI(t)}
+        </Secim>
+        <Alan
+          aria-label={t("denetimKaynakTipi")}
+          value={resourceType}
+          onChange={(e) => reset(setResourceType)(e.target.value)}
+          placeholder={KAYNAK_IPUCU}
+          className="w-40"
+        />
+        <Alan
+          aria-label={t("ayarTenantId")}
+          value={tenantId}
+          onChange={(e) => reset(setTenantId)(e.target.value)}
+          placeholder={t("denetimTumu")}
+          className="w-40"
+        />
+        <Alan
+          aria-label={t("ortakBaslangic")}
+          type="date"
+          value={from}
+          onChange={(e) => reset(setFrom)(e.target.value)}
+          className="w-auto"
+        />
+        <Alan
+          aria-label={t("ortakBitis")}
+          type="date"
+          value={to}
+          onChange={(e) => reset(setTo)(e.target.value)}
+          className="w-auto"
+        />
+      </FiltreCubugu>
 
       <VeriTablosu<DenetimSatiri>
         kolonlar={kolonlar}
@@ -173,52 +231,6 @@ export default function AuditPage() {
         toplam={data?.meta?.total ?? 0}
         durum={tabloDurumu}
         onDurumDegisti={setTabloDurumu}
-        araclar={
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            <AlanSarmal etiket={t("denetimIslem")}>
-              {(b) => (
-                <Secim {...b} value={action} onChange={(e) => reset(setAction)(e.target.value)}>
-                  {ISLEM_SECENEKLERI(t)}
-                </Secim>
-              )}
-            </AlanSarmal>
-            <AlanSarmal etiket={t("denetimKaynakTipi")}>
-              {(b) => (
-                <Alan
-                  {...b}
-                  value={resourceType}
-                  onChange={(e) => reset(setResourceType)(e.target.value)}
-                  placeholder="app_user"
-                />
-              )}
-            </AlanSarmal>
-            <AlanSarmal etiket={t("ayarTenantId")}>
-              {(b) => (
-                <Alan
-                  {...b}
-                  value={tenantId}
-                  onChange={(e) => reset(setTenantId)(e.target.value)}
-                  placeholder={t("denetimTumu")}
-                />
-              )}
-            </AlanSarmal>
-            <AlanSarmal etiket={t("ortakBaslangic")}>
-              {(b) => (
-                <Alan
-                  {...b}
-                  type="date"
-                  value={from}
-                  onChange={(e) => reset(setFrom)(e.target.value)}
-                />
-              )}
-            </AlanSarmal>
-            <AlanSarmal etiket={t("ortakBitis")}>
-              {(b) => (
-                <Alan {...b} type="date" value={to} onChange={(e) => reset(setTo)(e.target.value)} />
-              )}
-            </AlanSarmal>
-          </div>
-        }
       />
     </div>
   );

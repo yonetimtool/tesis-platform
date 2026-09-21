@@ -9,11 +9,13 @@ const ESIK_IYI = 80;
 import {
   Grafik,
   Kart,
+  Rozet,
   BosDurum,
   AlanSarmal,
   HataDurumu,
   IskeletMetin,
   Secim,
+  SayfaBasligi,
 } from "@/components/ui";
 import { jsonFetcher } from "@/lib/fetcher";
 import { kurusToTL } from "@/lib/money";
@@ -46,6 +48,10 @@ function ayBaslik(ay: string, dil: string): string {
 // Artik tek kaynak `lib/money.ts`tir ve ICU'ya hic bagimli degildir.
 const tl = kurusToTL;
 
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const R_OLUMLU = "olumlu" as const;
+const R_NOTR = "notr" as const;
+
 export default function TransparencyPage() {
   const { t, dil } = useI18n();
   const list = useSWR<TransparencyList>("/api/transparency", jsonFetcher);
@@ -64,13 +70,8 @@ export default function TransparencyPage() {
   const b = board.data;
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-          {t("seffafPano")}
-        </h1>
-        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{t("seffafAciklama")}</p>
-      </div>
+    <div>
+      <SayfaBasligi baslik={t("seffafPano")} aciklama={t("seffafAciklama")} />
 
       {list.error && <HataDurumu mesaj={t("seffafAylarYuklenemedi")} />}
       {list.isLoading && !list.data && (
@@ -108,15 +109,11 @@ export default function TransparencyPage() {
                   <h2 className="min-w-0 font-medium break-words">
                     {t("seffafOzetBasligi", { ay: ayBaslik(b.ay, dil) })}
                   </h2>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      b.yayinlandi
-                        ? "bg-emerald-100 text-emerald-800"
-                        : "bg-slate-100 text-metin-body"
-                    }`}
-                  >
+                  {/* (P244 §9c) Ham palet -> `Rozet`. Anlam korundu:
+                      yayinda=olumlu, taslak=notr. */}
+                  <Rozet durum={b.yayinlandi ? R_OLUMLU : R_NOTR}>
                     {b.yayinlandi ? t("seffafYayinda") : t("seffafTaslak")}
-                  </span>
+                  </Rozet>
                 </div>
                 <dl className="space-y-1.5 text-sm">
                   <Row k={t("seffafToplamGelir")} v={tl(b.toplam_gelir_kurus)} cls="text-emerald-700" />
@@ -159,7 +156,7 @@ export default function TransparencyPage() {
                       <span className="font-semibold">%{b.aidat.daire_orani_yuzde}</span>
                     </div>
                     <Bar value={b.aidat.daire_orani_yuzde} />
-                    <p className="mt-2 text-xs text-metin-muted">
+                    <p className="mt-2 text-xs" style={{ color: "var(--yz-text-2)" }}>
                       {t("seffafTahsilatOrani", {
                         tahsil: tl(b.aidat.tahsilat_kurus),
                         tahakkuk: tl(b.aidat.tahakkuk_kurus),
@@ -211,9 +208,10 @@ function Row({
 }) {
   return (
     <div
-      className={`flex justify-between${ayrac ? " mt-2 border-t border-yuzey-divider pt-2" : ""}`}
+      className={`flex justify-between${ayrac ? " mt-2 border-t pt-2" : ""}`}
+      style={ayrac ? { borderColor: "var(--yz-border)" } : undefined}
     >
-      <dt className="text-metin-body">{k}</dt>
+      <dt style={{ color: "var(--yz-text)" }}>{k}</dt>
       <dd className={cls}>{v}</dd>
     </div>
   );
