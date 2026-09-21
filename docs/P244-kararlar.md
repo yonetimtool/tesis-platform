@@ -2230,3 +2230,93 @@ edemez. Kırma denendi, yakalandı.
 `npm run dogrula` → `tsc --noEmit && next lint && vitest run &&
 next build` · **çıkış kodu 0** · **tam takım 250 dosya / 2086 test
 yeşil.**
+
+---
+
+# AŞAMA 10e — MAKET PALETİ + TAKVİM DOKUNMA HEDEFİ · UYGULANDI
+
+## A10e.1 Maket: yorum bir şey diyordu, kod başka
+
+`site-palet.ts`in dosya başı *"durum renkleri `--yz-*-edge` ailesinin
+sayısal karşılığıdır"* diyordu. **Değildi.** Değerler elle seçilmiş,
+doygunluğu düşürülmüş tonlardı (`#6586a4`, `#ad7930`…). İddia ile kod
+ayrışmıştı — ve böyle bir ayrışma, yorumun okuyucuya **yanlış yönde
+güven vermesi** demektir.
+
+**Artık gerçekten türetiliyor.** Yöntem aşama 1'in aynısı: token'ın
+**ton ve doygunluğu korunur**, yalnız **ışıklık** duvara karşı eşiği
+tutana kadar kaydırılır.
+
+| durum | token | açık | koyu |
+|---|---|---|---|
+| normal | `--yz-accent` | `#5887f0` (3.42) | `#6f98f2` (3.42) |
+| borçlu | `--yz-warning` | `#c47e08` (3.31) | `#f59e0b` (4.49) |
+| alarm | `--yz-danger` | `#ef4444` (3.76) | `#f36d6d` (3.31) |
+| pasif | `--yz-text-2` | `#848fa3` (3.26) | `#8b97a9` (3.26) |
+| seçim/hover | `--yz-success` | `#16a24a` / `#12873d` | `#17ae4f` / `#1cd360` |
+
+**İki ton bilerek "eşiği en sakin geçen" değer:**
+* `normal` çoğunluk durumudur; ham vurgu (açık temada 5.17) bütün cepheyi
+  doygun maviye boyardı ve borçlu/alarm ayırt edilemezdi.
+* `pasif` bir **durum değil bir yokluk** (P161 kararı); öne çıkarmak
+  olmayan bir sorunu işaret ederdi.
+
+Borçlu ve alarm ise eşikten pay bırakılarak **seçilebilir** kaldı.
+
+## A10e.2 Sahne yüzeyleri token katmanına hizalandı
+
+Maket kendi gri ailesini taşıyordu (`#151b22`, `#e8edf2`, `#d8e0e9`) ve
+P244'ten sonra ana sayfadaki **tek uyumsuz öğe** oydu.
+
+`arkaPlan ← --yz-bg-app` · `platform ← --yz-surface-sunken` ·
+`platformKenar/katCizgisi ← --yz-border` · `kutle ← --yz-surface-1`
+(bina = kart yüzeyi) · `cati/balkon ← --yz-surface-2`.
+
+**Doğa öğeleri (çim, havuz, ağaç, yol) token'a ZORLANMADI:** çimin
+semantik bir karşılığı yoktur; onu da `--yz-*`a çekmek olmayan bir anlam
+uydurmak olurdu. Kilit bu kararı **görünür** tutuyor.
+
+**Etkileşime dokunulmadı** — geometri, kamera, tıklama, seçim davranışı
+aynı; ışık kurulumu da (brief §4'ün iki-tema kararı) aynı.
+
+Kilit ton **eşitliği değil ton (hue) aynılığı** ölçüyor: ışıklık
+kaydırması zorunlu olduğu için birebir eşitlik yanlış şart olurdu.
+Yüzeyler ise birebir. **İki kırma yakalandı.**
+
+## A10e.3 Takvim: açık madde kapandı
+
+Bileşen yüksekliği 48 tutuyor ama **genişlik dayatmıyordu**. Kendi
+yorumu bunu yazıyordu: 320/360/390 px ekranda hücre 33.1 / 38.9 / 43.1
+px'e düşüyor — **44 bile tutulmuyordu**.
+
+**Karar: erişilebilirlik hedefi istisna kabul etmez.** Hücre artık
+`minmax(3rem, 1fr)` — her zaman en az 48×48.
+
+**Aritmetik:** 7 × 48 + 6 × 4 = **360 px**. 390 px ve üzeri sığdırır;
+320–375 sığdırmaz.
+
+**Dar ekranda yatay kaydırma — hafta görünümü değil.**
+Hafta görünümüne düşmek 48'i tutardı ama **ayı göstermezdi**; takvimin
+tek varlık sebebi "ayın tamamını bir bakışta görmek" ve dar ekranda
+bunu kaldırmak, küçük ekranda **başka bir ürün** sunmak olurdu — üstelik
+kendi ileri/geri gezinmesini ve kendi hatalarını getirirdi. Yatay
+kaydırma deseni depoda **zaten var** (`VeriTablosu`), kap `tabIndex=0` +
+`role=region` taşıyor (WCAG 2.1.1: klavye kullanıcısı da kaydırabilmeli)
+ve bölge **adlandırıldı**.
+
+**Neden kaynak taraması:** jsdom **yerleşim hesaplamaz**;
+`getBoundingClientRect` her şey için 0 döner ve bir DOM testi 48px'i
+asla ölçemez (P226'nın renk dersinin ölçü karşılığı). **İki kırma
+yakalandı.**
+
+Bilinçli güncellenen iddia: `p240` testi `.grid-cols-7` sınıfını
+arıyordu; imza değişti (eşit bölen sınıf hücreyi 39px'e düşürüyordu),
+iddia aynı kaldı.
+
+## A10e.4 Doğrulama
+
+`npm run dogrula` (tsc + next lint + vitest + **next build**) →
+**çıkış kodu 0** · **tam takım 2114 test yeşil.**
+
+Not: `tesis-ayarlari.dom` bir koşumda 5 sn zaman aşımına düştü, izole
+koşumda geçiyor — tam takım yükü altında süre aşımı, koda bağlı değil.

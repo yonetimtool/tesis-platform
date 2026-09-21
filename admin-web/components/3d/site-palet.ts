@@ -80,18 +80,44 @@ export interface SahnePaleti {
  * onu uyari renginde gostermek olmayan bir sorunu isaret ederdi. Ama artik
  * SOLUK OLMAK ile GORUNMEZ OLMAK ayrildi — o da esigi geciyor.
  */
+/**
+ * (P244 §10e) DEGERLER ARTIK TOKEN AILELERINDEN TURETILIYOR.
+ *
+ * Dosya basindaki aciklama "durum renkleri `--yz-*-edge` ailesinin
+ * sayisal karsiligidir" diyordu ama DEGILDI: eski degerler elle
+ * secilmis, doygunlugu dusurulmus tonlardi (#6586a4, #ad7930...).
+ * Iddia ile kod ayrisikti.
+ *
+ * ARTIK GERCEKTEN TURETILIYOR. Yontem P244 asama 1'in aynisi: token'in
+ * TON ve DOYGUNLUGU korunur, yalniz ISIKLIK duvara karsi esigi tutana
+ * kadar kaydirilir.
+ *
+ *   normal -> `--yz-accent`   (#2563eb)
+ *   borclu -> `--yz-warning`  (#f59e0b)
+ *   alarm  -> `--yz-danger`   (#ef4444)
+ *   pasif  -> `--yz-text-2`   (#566173)
+ *
+ * IKI TON BILEREK "EN SAKIN GECEN" DEGER:
+ *   * `normal` cogunluk durumudur; ham vurgu (acik temada 5.17) butun
+ *     cepheyi doygun maviye boyardi ve borclu/alarm ayirt edilemezdi.
+ *     Esigi tutan EN SAKIN ton secildi (3.42).
+ *   * `pasif` bir DURUM DEGIL bir YOKLUK (P161 karari). Onu one
+ *     cikarmak olmayan bir sorunu isaret ederdi; yine esige en yakin
+ *     ton (3.26).
+ * Borclu ve alarm ise esikten pay birakilarak SECILEBILIR kaldi.
+ */
 const DURUM_ACIK: Record<DaireDurumu, string> = {
-  normal: "#6586a4",
-  borclu: "#ad7930",
-  alarm: "#d45b5e",
-  pasif: "#6b7885",
+  normal: "#5887f0",
+  borclu: "#c47e08",
+  alarm: "#ef4444",
+  pasif: "#848fa3",
 };
 
 const DURUM_KOYU: Record<DaireDurumu, string> = {
-  normal: "#93c3ef",
-  borclu: "#faaf46",
-  alarm: "#ffa5ab",
-  pasif: "#abc0d5",
+  normal: "#6f98f2",
+  borclu: "#f59e0b",
+  alarm: "#f36d6d",
+  pasif: "#8b97a9",
 };
 
 export function durumRenkleri(koyu: boolean): Record<DaireDurumu, string> {
@@ -110,8 +136,11 @@ export function durumRenkleri(koyu: boolean): Record<DaireDurumu, string> {
  * kirmizi=alarm, gri=pasif) KULLANILMAYAN tek belirgin ton oydu; yani
  * hicbir durumla karistirilmaz.
  */
-const SECIM_ACIK = "#1f7a4d";
-const SECIM_KOYU = "#5fe0a0";
+// (P244 §10e) `--yz-success` (#16a34a) ailesinden turetildi. P162 §8.1
+// karari AYNEN GECERLI: yesil, durum ailesinde kullanilmayan tek
+// belirgin ton oldugu icin secildi ve hicbir durumla karistirilamaz.
+const SECIM_ACIK = "#16a24a";
+const SECIM_KOYU = "#17ae4f";
 
 export function secimRengi(koyu: boolean): string {
   return koyu ? SECIM_KOYU : SECIM_ACIK;
@@ -122,27 +151,50 @@ export function secimRengi(koyu: boolean): string {
  * ayri"). Yesilin daha soluk/soguk bir kademesi: ayni aileden oldugu
  * icin "buraya tiklarsan secilir" der, ama secili olanla karistirilmaz.
  */
-const HOVER_ACIK = "#40926a";
-const HOVER_KOYU = "#9defc6";
+// (P244 §10e) Ayni yesil ailenin IKINCI kademesi — "buraya tiklarsan
+// secilir" der ama secili olanla karistirilmaz.
+const HOVER_ACIK = "#12873d";
+const HOVER_KOYU = "#1cd360";
 
 export function hoverRengi(koyu: boolean): string {
   return koyu ? HOVER_KOYU : HOVER_ACIK;
 }
 
+/**
+ * (P244 §10e) SAHNE YUZEYLERI TOKEN KATMANINA HIZALANDI.
+ *
+ * OLCULEN KUSUR: maket kendi gri ailesini tasiyordu (#151b22, #e8edf2,
+ * #d8e0e9...) ve P244'ten sonra ana sayfadaki TEK uyumsuz oge oydu —
+ * cevresindeki kartlar token yuzeylerinde, maket baska bir gri.
+ *
+ * ESLEME (WebGL `var(--yz-*)` anlamaz; sayisal karsiliklari yazildi):
+ *   arkaPlan      <- --yz-bg-app          (tuval sayfayla ayni zeminde)
+ *   platform      <- --yz-surface-sunken  (tabla sayfadan COKUK)
+ *   platformKenar <- --yz-border
+ *   kutle         <- --yz-surface-1       (bina = kart yuzeyi)
+ *   katCizgisi    <- --yz-border
+ *   cati / balkon <- --yz-surface-2
+ *
+ * DOGA OGELERI (cim, havuz, agac, yol) TOKEN AILESINDE YOK ve
+ * uydurulmadi: cimin semantik bir karsiligi yoktur. Dokunulmadilar.
+ *
+ * ISIK KURULUMU DEGISMEDI — brief §4'un iki-tema karari (koyu: serin
+ * mavi anahtar + dusuk ortam; acik: notr gun isigi) gecerli.
+ */
 const KOYU: SahnePaleti = {
-  arkaPlan: "#151b22",
-  platform: "#1e262e",
-  platformKenar: "#2b3641",
+  arkaPlan: "#313a44",
+  platform: "#2c353e",
+  platformKenar: "#55616d",
   cim: "#243a33",
   yol: "#232a31",
   patika: "#39424b",
   havuz: "#1d4f6b",
   agacGovde: "#3a3229",
   agacTepe: "#2f5a45",
-  kutle: "#5a646e",
-  katCizgisi: "#47505a",
-  cati: "#4d5761",
-  balkon: "#6a747f",
+  kutle: "#3b4650",
+  katCizgisi: "#55616d",
+  cati: "#46515c",
+  balkon: "#46515c",
   pencere: "#7fa9cf",
   serit: "#3d8fd4",
   ortamIsik: "#9fc0e0",
@@ -154,19 +206,19 @@ const KOYU: SahnePaleti = {
 };
 
 const ACIK: SahnePaleti = {
-  arkaPlan: "#d8e0e9",
-  platform: "#e2e9f0",
-  platformKenar: "#cfd9e3",
+  arkaPlan: "#eef2f7",
+  platform: "#e2e8f0",
+  platformKenar: "#dde4ec",
   cim: "#cfe0cf",
   yol: "#c2cad2",
   patika: "#dde3e9",
   havuz: "#a9d3e8",
   agacGovde: "#a9977f",
   agacTepe: "#8fb79a",
-  kutle: "#e8edf2",
-  katCizgisi: "#c6cfd8",
-  cati: "#d5dce3",
-  balkon: "#f3f6f9",
+  kutle: "#ffffff",
+  katCizgisi: "#dde4ec",
+  cati: "#eaeff5",
+  balkon: "#eaeff5",
   pencere: "#6f9cc4",
   serit: "#3d8fd4",
   ortamIsik: "#ffffff",

@@ -3410,4 +3410,5 @@ export const ar: Sozluk = {
   kullaniciDurumHepsi: "نشطة وغير نشطة",
   profilSayfaAlt: "بيانات حسابك والأمان وتفضيلات الإشعارات والنصوص القانونية.",
   icraSayfaAlt: "الديون قيد التنفيذ وحالات الملفات وخطوات التحصيل.",
+  takvimBolgesi: "تقويم الشهر",
 };

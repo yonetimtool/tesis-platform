@@ -97,9 +97,16 @@ describe("(P240 §5c) gorev son tarihi TAKVIMDEN", () => {
     await userEvent.click(el("vardiya-yeni") as HTMLElement);
     await waitFor(() => expect(el("vardiya-ekle-takvim")).toBeTruthy());
     // Ortak bilesenin imzasi: 7 sutunlu izgara (haftaya hizali).
-    const izgara = (el("vardiya-ekle-takvim") as HTMLElement).querySelector(
-      ".grid-cols-7",
-    );
+    //
+    // (P244 §10e) IMZA DEGISTI, IDDIA DEGISMEDI. Sutunlar artik
+    // `grid-cols-7` SINIFIYLA degil, satir-ici
+    // `repeat(7, minmax(3rem, 1fr))` ile kuruluyor: esit bolen sinif
+    // dar ekranda hucreyi 39px'e dusuruyordu ve 48x48 dokunma hedefi
+    // tutulmuyordu. Olculen sey yine "ortak bilesenin 7 sutunlu
+    // izgarasi ciziliyor mu".
+    const izgara = [
+      ...(el("vardiya-ekle-takvim") as HTMLElement).querySelectorAll<HTMLElement>("div"),
+    ].find((d) => d.style.gridTemplateColumns.includes("repeat(7"));
     expect(izgara, "7 sutunlu izgara YOK").toBeTruthy();
   });
 

@@ -3410,4 +3410,5 @@ export const de: Sozluk = {
   kullaniciDurumHepsi: "Aktiv und inaktiv",
   profilSayfaAlt: "Ihre Kontodaten, Sicherheit, Benachrichtigungen und Rechtstexte.",
   icraSayfaAlt: "Forderungen im Vollstreckungsverfahren, Fallstatus und Inkassoschritte.",
+  takvimBolgesi: "Monatskalender",
 };

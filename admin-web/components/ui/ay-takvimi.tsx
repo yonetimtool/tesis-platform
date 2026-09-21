@@ -34,21 +34,44 @@
  * (mobildeki `gun_takvimi.dart` ile AYNI karar).
  *
  * =========================================================================
- * DOKUNMA HEDEFI (P244: 48px)
+ * DOKUNMA HEDEFI 48x48 — ISTISNASIZ (P244 §10e)
  * =========================================================================
- * Hucre YUKSEKLIGI 3rem = 48px: tasarim sisteminin dokunma hedefi.
+ * ONCEKI DURUM bir ACIK MADDEYDI: yukseklik 48 tutuluyor ama GENISLIK
+ * dayatilmiyordu. Olcum: yedi sutunlu izgarada gun hucresi
+ * 320/360/390 px ekranda 33.1 / 38.9 / 43.1 px'e dusuyor — yani 44 bile
+ * tutulmuyordu. "Olculebilir iyilesme" denip birakilmisti.
  *
- * GENISLIK DAYATILMIYOR ve bu OLCULMUS bir istisna: izgara 7 sutun ve
- * gun hucresi 320/360/390 px ekranda 33.1 / 38.9 / 43.1 px'e dusuyor —
- * yani 44 de tutulamiyordu. `min-width: 48px` vermek izgarayi TASIRIRDI.
- * Hedef bugun 39x39 yerine 39x48; tam cozum degil, olculebilir iyilesme.
- * ACIK MADDE: dar ekranda ay takvimi 48x48'i tutamiyor.
- * Onceki serit 2.25rem (36px) idi ve bu bir DOKUNMA hedefi degil, yogun
- * baglam olcusudur.
+ * KARAR: erisilebilirlik hedefi istisna kabul etmez. Hucre artik
+ * `minmax(3rem, 1fr)` — her zaman EN AZ 48x48.
+ *
+ * ARITMETIK: 7 x 48 + 6 x 4 (bosluk) = 360 px. Sayfa dolgusu dusuldugunde
+ * 390 px ve uzeri ekranlar bunu SIGDIRIR; 320-375 arasi SIGDIRMAZ.
+ *
+ * DAR EKRANDA NE OLUR — YATAY KAYDIRMA, HAFTA GORUNUMU DEGIL.
+ * Iki secenek vardi:
+ *   * HAFTA GORUNUMUNE DUSMEK: 48'i tutar ama AYI gostermez. Takvimin
+ *     tek varlik sebebi "ayin tamamini bir bakista gormek"; dar ekranda
+ *     bunu kaldirmak, kucuk ekranda BASKA bir urun sunmak olurdu.
+ *     Ustelik kendi ileri/geri gezinmesini ve kendi hatalarini getirir.
+ *   * YATAY KAYDIRMA: ay izgarasi AYNEN kalir, yalnizca 320-375 px
+ *     araliginda yana kayar. Depoda bu desen ZATEN var (`VeriTablosu`
+ *     genis tabloyu boyle tasir) ve kap `tabIndex=0` + `role=region`
+ *     tasir — klavye kullanicisi de kaydirabilmeli.
+ * Ikincisi secildi: dokunma hedefi KOSULSUZ tutuluyor ve takvim her
+ * ekranda AYNI sey olarak kaliyor.
+ *
+ * Bosluk dar ekranda 4px'te sabit; daraltmak 336 px'lik asgari genisligi
+ * degistirmez (7x48 zaten 336) ve yalnizca hucreleri birbirine yapistirir.
  */
 import { useMemo } from "react";
 
-import { useI18n } from "@/lib/i18n/kullan";
+import { useI18n, useT } from "@/lib/i18n/kullan";
+
+// UCLUDE/SABLONDA DIZE YAZILMAZ (depo kurali `sabit-metin`).
+/** Hucre EN AZ 48px; kalan yer esit paylasilir. */
+const IZGARA_SUTUNLARI = "repeat(7, minmax(3rem, 1fr))";
+/** 7 x 48 + 6 x 4 bosluk = 360px. Altinda kap YATAY KAYAR. */
+const IZGARA_ASGARI = "22.5rem";
 
 /** `2026-09-17` + n gun -> ISO gun. UTC ile: yerel saat kaydirmaz. */
 export function gunEkle(iso: string, n: number): string {
@@ -98,6 +121,7 @@ export function AyTakvimi({
   etiketli?: boolean;
 }) {
   const { dil } = useI18n();
+  const t = useT();
   const gunler = useMemo(() => ayinGunleri(ay), [ay]);
 
   // Ayin ILK gununun haftagunu: izgaranin basina o kadar BOS hucre.
@@ -114,12 +138,26 @@ export function AyTakvimi({
   }, [dil]);
 
   return (
-    <div data-test={`${kanca}-takvim`}>
+    // KAYDIRILABILIR KAP: `tabIndex=0` + `role=region` — klavye
+    // kullanicisi de yatay kaydirabilmeli (WCAG 2.1.1). Ad verilmeden
+    // `role=region` erisilebilirlik agacinda adsiz bir bolge birakir.
+    <div
+      data-test={`${kanca}-takvim`}
+      className="odak-ic overflow-x-auto"
+      tabIndex={0}
+      role="region"
+      aria-label={t("takvimBolgesi")}
+    >
+      <div style={{ minWidth: IZGARA_ASGARI }}>
       {etiketli && (
         <div
-          className="grid grid-cols-7 gap-1"
+          className="grid gap-1"
           aria-hidden="true"
-          style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}
+          style={{
+            gridTemplateColumns: IZGARA_SUTUNLARI,
+            fontSize: "var(--yz-fs-xs)",
+            color: "var(--yz-text-3)",
+          }}
         >
           {gunAdlari.map((ad) => (
             <div key={ad} className="text-center">
@@ -128,7 +166,7 @@ export function AyTakvimi({
           ))}
         </div>
       )}
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid gap-1" style={{ gridTemplateColumns: IZGARA_SUTUNLARI }}>
         {Array.from({ length: bosluk }, (_, i) => (
           <div key={`bos-${i}`} />
         ))}
@@ -148,6 +186,8 @@ export function AyTakvimi({
               aria-label={g}
               className="odak-ic tabular-nums"
               style={{
+                // 48x48 — KOSULSUZ (yukseklik burada, genislik izgara
+                // sutununda: `minmax(3rem, 1fr)`).
                 minHeight: "3rem",
                 fontSize: "var(--yz-fs-sm)",
                 borderRadius: "var(--yz-radius-sm)",
@@ -162,6 +202,7 @@ export function AyTakvimi({
             </button>
           );
         })}
+      </div>
       </div>
     </div>
   );
