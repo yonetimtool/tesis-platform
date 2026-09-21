@@ -59,8 +59,15 @@ describe("Pano", () => {
     // kumeden turer.
     //   3 pencere -> "Bugunku tur" = 3
     //   1 tamamlandi -> "Tamamlanan tur" = 1
-    //   tahsilat orani sunucudan -> %64
-    await waitFor(() => expect(screen.getByText("%64")).toBeInTheDocument());
+    //
+    // (P245) TAHSILAT ORANI ARTIK BU UCTAN DEGIL. Kart `/finans/
+    // tahsilat-gostergesi`ten besleniyor (referans "tahsil edilen /
+    // tahakkuk" ve onceki aya gore degisimi de istiyor; o alanlar
+    // yalniz orada var). `dashboard/live`in `aidat_tahsilat_orani`
+    // alani artik pano KPI'sini beslemiyor, bu yuzden "%64" burada
+    // ARANMAZ. Olculen kural degismedi: devriye sayilari SUNUCUDAN
+    // gelen kumeden turer, istemcide yeniden sayilmaz.
+    await waitFor(() => expect(screen.getByText("Bugünkü tur")).toBeInTheDocument());
     expect(screen.getAllByText("3").length).toBeGreaterThan(0);
     // Alarm da SUNUCUDAN gelen metinle cizilir: panelde yeniden cumle
     // kurmak, sunucunun dil katalogunu atlamak olurdu.

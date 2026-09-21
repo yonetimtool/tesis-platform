@@ -38,7 +38,16 @@ export type PanoBolumId =
   | "devriye"
   | "kpi"
   | "kameralar"
-  | "alarmlar";
+  | "alarmlar"
+  // (P245) REFERANSIN OZET SAYFASINDAKI DORT BOLUM.
+  //
+  // ui5'te maketin SAGINDA hizli islemler + duyurular, ALTINDA ise uc
+  // esit sutun (tahsilat halkasi, talepler, son islemler) var. Bunlarin
+  // hicbiri sayfada YOKTU.
+  | "yanpanel"
+  | "tahsilat"
+  | "talepler"
+  | "sonislemler";
 
 export interface PanoBolumTanimi {
   id: PanoBolumId;
@@ -55,7 +64,19 @@ export interface PanoBolumTanimi {
    * sirada `finans` ve `maket` yan yana iki yarim bolum, yani maket
    * widget seridinin hemen altinda sag sutunda duruyor.
    */
-  genislik: "tam" | "yarim";
+  /**
+   * (P245) REFERANS ORANLARI EKLENDI.
+   *
+   * ui5'in ozet sayfasi esit sutunlardan olusmuyor: orta sirada maket
+   * sayfanin ~%65'ini, sagdaki panel ~%35'ini kapliyor; alt sirada ise
+   * UC ESIT sutun var. Motor yalniz "tam" ve "yarim" biliyordu, yani
+   * maket ancak yarim genislikte cizilebiliyordu — kullanicinin
+   * "maket sagda kucuk bir kutu" olcumunun sebebi buydu.
+   *
+   *   `genis` + `dar` -> 2/1 oranli satir
+   *   `uc` x3         -> uc esit sutun
+   */
+  genislik: "tam" | "yarim" | "genis" | "dar" | "uc";
   /**
    * Bolum KENDI basligini mi ciziyor?
    *
@@ -70,24 +91,48 @@ export interface PanoBolumTanimi {
   kendiBasligi?: true;
 }
 
+/**
+ * (P245) SIRA ve GENISLIKLER ui5'E GORE YENIDEN KURULDU.
+ *
+ * OLCULEN DURUM (Playwright, 1440x900): sayfa sirasi kisayol seridi ->
+ * finansal ozet + maket -> DEV TAKVIM -> devriye/alarm -> gunun
+ * sayilari -> kameralar seklindeydi. Referansin ilk ekraninda
+ * gorunen HICBIR SEY (4 KPI, buyuk maket, hizli islemler, duyurular,
+ * tahsilat halkasi, talepler, son islemler) ayni yerde degildi.
+ *
+ * YENI VARSAYILAN SIRA — referansin okuma sirasi:
+ *   1. KPI seridi (tam)          — "tesis nasil" sorusunun yaniti
+ *   2. maket (genis) + yan panel (dar)
+ *   3. tahsilat + talepler + son islemler (uc esit)
+ *   4. ...ve ardindan MEVCUT bolumler, kaybolmadan
+ *
+ * ESKI ICERIK SILINMEDI: finansal ozet, takvim, devriye, alarmlar,
+ * widget seridi ve kameralar listede AYNEN duruyor — yalnizca referans
+ * duzeninin ALTINA indi. "Paneli duzenle" (P182) ile her biri yine
+ * tasinabilir/gizlenebilir; kullanicinin KAYITLI tercihi varsa o
+ * kazanir (`satirlariCoz`).
+ */
 export const PANO_BOLUMLERI: readonly PanoBolumTanimi[] = [
-  { id: "widgetlar", anahtar: "panoBolumWidgetlar", genislik: "tam", kendiBasligi: true },
+  { id: "kpi", anahtar: "panoBolumKpi", genislik: "tam", kendiBasligi: true },
+  // (P244 §5) MAKET KENDI BASLIGINI CIZIYOR (kart basligi + aciklama).
+  { id: "maket", anahtar: "panoBolumMaket", genislik: "genis", kendiBasligi: true },
+  // YAN PANEL TEK BOLUM: referansta sagda Hizli Islemler ve Duyurular
+  // ALT ALTA duruyor. Motor satir basina bir bolum/sutun cizdigi icin
+  // ikisini ayri bolum yapmak, onlari YAN YANA koymak demekti.
+  // BEDELI ACIK: kullanici yalniz duyurulari gizleyemez, paneli
+  // butun olarak gizler.
+  { id: "yanpanel", anahtar: "panoBolumYanPanel", genislik: "dar", kendiBasligi: true },
+  { id: "tahsilat", anahtar: "panoBolumTahsilat", genislik: "uc", kendiBasligi: true },
+  { id: "talepler", anahtar: "panoBolumTalepler", genislik: "uc", kendiBasligi: true },
+  { id: "sonislemler", anahtar: "panoBolumSonIslemler", genislik: "uc", kendiBasligi: true },
+  // --- REFERANSTA OLMAYAN AMA KAYBOLMAYACAK OLANLAR ---------------
   { id: "finans", anahtar: "panoBolumFinans", genislik: "yarim" },
-  // (P244 §5) MAKET ARTIK KENDI BASLIGINI CIZIYOR.
-  // -----------------------------------------------------------------
-  // Referansta kartin kendi basligi var: ad + bir satirlik aciklama +
-  // (ileride) gorunum secici. Cerceve basligi ile kart basligi YAN YANA
-  // gelince ayni metin IKI KEZ ciziliyordu — `pano-duzenleme` testi
-  // "Found multiple elements: Site maketi" diyerek yakaladi.
-  { id: "maket", anahtar: "panoBolumMaket", genislik: "yarim", kendiBasligi: true },
+  { id: "devriye", anahtar: "panoBolumDevriye", genislik: "yarim" },
+  { id: "alarmlar", anahtar: "panoBolumAlarmlar", genislik: "yarim" },
+  { id: "widgetlar", anahtar: "panoBolumWidgetlar", genislik: "tam", kendiBasligi: true },
   // TAKVIM TAM GENISLIK: brief "buyuk" ve "sayfada belirgin yer alacak"
   // diyor. Yarim satirda gun/hafta gorunumu okunmaz olurdu.
   { id: "takvim", anahtar: "panoBolumTakvim", genislik: "tam" },
-  // Devriye ve alarmlar YAN YANA: ikisi de "su an sahada ne oluyor"
-  // sorusunun parcasi ve ayni bakista okunmalari dogal.
-  { id: "devriye", anahtar: "panoBolumDevriye", genislik: "yarim" },
-  { id: "alarmlar", anahtar: "panoBolumAlarmlar", genislik: "yarim" },
-  { id: "kpi", anahtar: "panoBolumKpi", genislik: "tam" },
   { id: "kameralar", anahtar: "panoBolumKameralar", genislik: "tam", kendiBasligi: true },
 ];
 
@@ -118,6 +163,15 @@ export interface CozulmusSatir {
   sutun: number;
   baslik?: string | null;
   bolumler: CozulmusBolum[];
+  /**
+   * (P245) ESIT OLMAYAN SATIR. `"2-1"` -> sol sutun iki kat genis.
+   *
+   * KAYDA YAZILMAZ ve bu bilincli: oran bir KULLANICI TERCIHI degil,
+   * bolumun kendi tanimindan (`genislik`) turer. Kayda yazmak, ayni
+   * bilgiyi iki yerde tutmak ve biri degisince otekini bayatlatmak
+   * olurdu — `satirlariCoz` onu her cozumde yeniden turetiyor.
+   */
+  oran?: "2-1";
 }
 
 /** Widget seridinde en fazla kac kisayol. Sinir TEK YERDE durur ki serit,
@@ -201,7 +255,18 @@ export function varsayilanSatirlar(bolumler: readonly CozulmusBolum[]): Cozulmus
   for (let i = 0; i < bolumler.length; i++) {
     const b = bolumler[i];
     const sonraki = bolumler[i + 1];
-    if (b.genislik === "yarim" && sonraki?.genislik === "yarim") {
+    const ucuncu = bolumler[i + 2];
+    if (b.genislik === "genis" && sonraki?.genislik === "dar") {
+      satirlar.push({ sutun: 2, oran: "2-1", bolumler: [b, sonraki] });
+      i++;
+    } else if (
+      b.genislik === "uc" &&
+      sonraki?.genislik === "uc" &&
+      ucuncu?.genislik === "uc"
+    ) {
+      satirlar.push({ sutun: 3, bolumler: [b, sonraki, ucuncu] });
+      i += 2;
+    } else if (b.genislik === "yarim" && sonraki?.genislik === "yarim") {
       satirlar.push({ sutun: 2, bolumler: [b, sonraki] });
       i++;
     } else {
@@ -234,7 +299,17 @@ export function satirlariCoz(
       .filter((b): b is CozulmusBolum => b !== undefined && !kullanildi.has(b.id));
     bolumler.forEach((b) => kullanildi.add(b.id));
     if (bolumler.length) {
-      satirlar.push({ sutun: sutunKis(s.sutun), baslik: s.baslik ?? null, bolumler });
+      satirlar.push({
+        sutun: sutunKis(s.sutun),
+        baslik: s.baslik ?? null,
+        bolumler,
+        // ORAN KAYITTAN DEGIL TANIMDAN: iki bolumlu bir satirin solu
+        // `genis` ise oran 2/1'dir. Kullanici satiri elle kurmus olsa
+        // bile maket yine buyuk cizilir.
+        ...(bolumler.length === 2 && bolumler[0].genislik === "genis"
+          ? { oran: "2-1" as const }
+          : {}),
+      });
     }
   }
   for (const b of cozulmus.filter((x) => !kullanildi.has(x.id))) {

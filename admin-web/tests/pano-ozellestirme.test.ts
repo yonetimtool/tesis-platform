@@ -63,17 +63,28 @@ describe("(P167 §2.5) bolum duzeni", () => {
     expect(b.find((x) => x.id === "finans")?.gizli).toBe(false);
   });
 
-  it("(§2.4) VARSAYILANDA maket, finansin YANINDA ve UST SIRADA", () => {
-    // Brief: "3D SITE MAKETI Sag UST tarafa alinacak." Iki YARIM bolum
-    // yan yana cizildigi icin maket, widget seridinin hemen altinda sag
-    // sutunda duruyor.
+  it("(P245) VARSAYILANDA maket, YAN PANELIN yaninda ve UST SIRADA", () => {
+    /**
+     * (P245) IDDIA GUNCELLENDI, NIYET AYNI: "maket UST SIRADA ve
+     * BUYUK".
+     *
+     * Eski surum maketi `finans`in yanindaki YARIM sutunda ariyordu.
+     * Playwright olcumu o duzenin sonucunu gosterdi: maket sagda
+     * kucuk bir kutuydu ve referansta (ui5) sayfanin merkezi.
+     *
+     * Yeni duzende maket `genis` (2/3) ve yanindaki `yanpanel` `dar`
+     * (1/3) — referansin orta sirasi. Finansal ozet KAYBOLMADI,
+     * referans duzeninin ALTINA indi.
+     */
     const b = bolumleriCoz(undefined);
-    const i = b.findIndex((x) => x.id === "finans");
-    expect(b[i + 1].id).toBe("maket");
-    expect(b[i].genislik).toBe("yarim");
-    expect(b[i + 1].genislik).toBe("yarim");
-    // Widget seridi ONLARDAN ONCE.
-    expect(b.findIndex((x) => x.id === "widgetlar")).toBeLessThan(i);
+    const i = b.findIndex((x) => x.id === "maket");
+    expect(b[i].genislik).toBe("genis");
+    expect(b[i + 1].id).toBe("yanpanel");
+    expect(b[i + 1].genislik).toBe("dar");
+    // KPI seridi maketten ONCE: referansta ilk okunan sey odur.
+    expect(b.findIndex((x) => x.id === "kpi")).toBeLessThan(i);
+    // Finansal ozet SILINMEDI.
+    expect(b.findIndex((x) => x.id === "finans")).toBeGreaterThan(i);
   });
 
   it("(GENEL KISIT) mevcut islev KAYBOLMADI — devriye/KPI/kamera bolumleri VAR", () => {
@@ -143,7 +154,8 @@ describe("(P167 §2.5) sunucuya yazilan govde", () => {
     const g = tercihGovdesi(["/dues"], bolumleriCoz(undefined));
     expect(g.widgetlar).toEqual([{ rota: "/dues" }]);
     expect(g.bolumler?.length).toBe(PANO_BOLUMLERI.length);
-    expect(g.bolumler?.[0]).toEqual({ id: "widgetlar", gizli: false });
+    // (P245) ILK BOLUM ARTIK KPI SERIDI — referansin okuma sirasi.
+    expect(g.bolumler?.[0]).toEqual({ id: "kpi", gizli: false });
   });
 
   it("ALTI SINIRI govdede de uygulanir (sunucu 422 dondurmesin)", () => {

@@ -42,6 +42,7 @@ import { durumRenkleri } from "@/components/3d/site-palet";
 import { DevriyeGorunumu } from "@/components/DevriyeGorunumu";
 import type { SahneBlogu, SahneSecimi } from "@/components/3d/bina-sahnesi";
 import {
+  AramaAlani,
   BolumBasligi,
   BosDurum,
   Dugme,
@@ -55,6 +56,7 @@ import {
   Rozet,
   SayfaBasligi,
   type RozetDurumu,
+  DugmeBaglantisi,
 } from "@/components/ui";
 import { KahramanBandi } from "@/components/pano/kahraman-bandi";
 import { PanoFinansOzeti } from "@/components/pano/finans-ozeti";
@@ -66,6 +68,11 @@ import { KameraSeridi } from "@/components/KameraSeridi";
 import { apiSend } from "@/lib/client";
 import { BILDIRIM_TIP, enumAdi } from "@/lib/enum-adlari";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
+import { kurusToTL } from "@/lib/money";
+import { PlanHaritasiYukleyici } from "@/components/harita/harita-yukleyici";
+import type { PlanBlogu, PlanHucresi } from "@/components/harita/plan-haritasi";
+import { tarihBicimi } from "@/lib/tarih";
+import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import { useI18n, useT } from "@/lib/i18n/kullan";
 import { menuGruplari, ogeBaglantisi } from "@/lib/menu";
 import {
@@ -133,6 +140,75 @@ const ONEM_VURGU: Record<string, RozetDurumu> = {
 const IKON_UYARI = "M12 4 3 19h18L12 4ZM12 10v4M12 17h.01";
 const IKON_TUR = "M12 3a9 9 0 1 0 9 9M12 3v9l6 3";
 const IKON_BINA = "M4 20V6a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v14M13 20V10h6a1 1 0 0 1 1 1v9M3 20h18";
+/**
+ * (P245) HIZLI ISLEMLER — referansin SABIT dort eylemi.
+ *
+ * Kisayol seridinden (P182) AYRIDIR: serit kullanicinin SECTIGI
+ * rotalari tasir; buradakiler referansin listesi. Ikisini birlestirmek,
+ * kullanicinin secimini referansin listesiyle ezmek olurdu.
+ */
+const HIZLI_ISLEMLER: { rota: string; anahtar: SozlukAnahtari; ikon: string }[] = [
+  { rota: "/dues", anahtar: "panoHizliAidat", ikon: "M12 3v18M16 7.5C16 6 14.2 5 12 5S8 6 8 7.5 9.8 10 12 10s4 1 4 2.5S14.2 15 12 15s-4-1-4-2.5" },
+  { rota: "/complaints", anahtar: "panoHizliTalep", ikon: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" },
+  { rota: "/announcements", anahtar: "panoHizliDuyuru", ikon: "M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1ZM16 8a5 5 0 0 1 0 8" },
+  { rota: "/users", anahtar: "panoHizliPersonel", ikon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M22 11h-6" },
+];
+/** Yan panel/alt sira listelerinde kac satir gosterilecek. */
+const PANEL_SATIRI = 3;
+const BAGLANTI_STILI = {
+  fontSize: "var(--yz-fs-xs)",
+  color: "var(--yz-accent-ink)",
+} as const;
+
+/** (P33) Talep onceligi -> rozet durumu + sozluk anahtari. */
+const ONCELIK_DURUMU: Record<string, "notr" | "bilgi" | "olumlu" | "uyari" | "kritik"> = {
+  dusuk: "notr",
+  normal: "bilgi",
+  yuksek: "uyari",
+  acil: "kritik",
+};
+const ONCELIK_ANAHTARI: Record<string, SozlukAnahtari> = {
+  dusuk: "oncelikDusuk",
+  normal: "oncelikNormal",
+  yuksek: "oncelikYuksek",
+  acil: "oncelikAcil",
+};
+
+/**
+ * (P245) TAHSILAT SATIRI — halka grafigin yanindaki renkli liste.
+ *
+ * RENK TEK TASIYICI DEGIL: her noktanin yaninda ADI yaziyor. Referans
+ * yalniz renkli nokta + tutar gosteriyor; renk ayirt edemeyen kullanici
+ * icin bu bilgi kaybolurdu.
+ */
+function TahsilatSatiri({ renk, ad, deger }: { renk: string; ad: string; deger: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <dt className="flex min-w-0 items-center gap-2">
+        <span
+          aria-hidden="true"
+          className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+          style={{ background: renk }}
+        />
+        <span
+          className="truncate"
+          style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
+        >
+          {ad}
+        </span>
+      </dt>
+      <dd
+        className="shrink-0 tabular-nums font-medium"
+        style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}
+      >
+        {deger}
+      </dd>
+    </div>
+  );
+}
+
+const IKON_BORC =
+  "M3 6h18v4H3zM5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9M12 13v4M10 15h4";
 const IKON_PARA = "M12 3v18M16 7.5C16 6 14.2 5 12 5S8 6 8 7.5 9.8 10 12 10s4 1 4 2.5S14.2 15 12 15s-4-1-4-2.5";
 const IKON_TALEP = "M5 5h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H9l-4 4v-4H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z";
 
@@ -175,6 +251,18 @@ const MAKET_EFSANESI = [
   { anahtar: "maketDurumAlarm" as const, durum: DAIRE_ALARM },
 ];
 
+// (P245) MAKET GORUNUMLERI — referansin "3D Görünüm / Harita Görünümü".
+// `??` ucluda dize yazmak `sabit-metin` taramasini tetikler (hakli:
+// tarama anahtar ile cumleyi ayirt edemez).
+const ONCELIK_BILINMIYOR: SozlukAnahtari = "ortakDiger";
+const ARAMA_SINIRI = 5;
+const MAKET_3B = "uc-boyut" as const;
+const MAKET_HARITA = "harita" as const;
+const MAKET_GORUNUMLERI = [
+  { id: MAKET_3B, anahtar: "panoMaket3B" as const },
+  { id: MAKET_HARITA, anahtar: "panoMaketHarita" as const },
+];
+
 const SECILI_TUR = "birincil" as const;
 const SECILMEMIS_TUR = "ikincil" as const;
 
@@ -186,6 +274,58 @@ const SUTUN_SINIF: Record<number, string> = {
   3: "grid gap-bolum md:grid-cols-2 lg:grid-cols-3",
   4: "grid gap-bolum md:grid-cols-2 lg:grid-cols-4",
 };
+/**
+ * (P245) ESIT OLMAYAN SATIR — referansta orta sira 2/1.
+ *
+ * Maket ui5'te sayfanin ~%65'ini kapliyor. Esit iki sutunda (%50) maket
+ * "sagda kucuk bir kutu" olarak okunuyordu; sikayetin dogrudan sebebi
+ * buydu. `minmax(0,...)` sart: `1fr` ic icerigi tasirdiginda sutun
+ * genislemesin diye.
+ */
+const SUTUN_2_1 = "grid gap-bolum lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]";
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const ORAN_2_1 = "2-1" as const;
+const TALEP_ACIK = "acik" as const;
+const ONCELIK_YUKSEK = "yuksek" as const;
+// TREND ANLAMI TASIR, YON DEGIL: tahsilat oraninin ARTMASI iyidir.
+const TREND_IYI = "iyi" as const;
+const TREND_KOTU = "kotu" as const;
+const TREND_SABIT = "sabit" as const;
+
+/** (P245) `/finans/tahsilat-gostergesi` — sozlesmedeki alanlar. */
+interface TahsilatGostergesi {
+  donem: string;
+  tahakkuk_kurus: number;
+  tahsilat_kurus: number;
+  oran_yuzde: number;
+  onceki_donem?: string | null;
+  onceki_oran_yuzde?: number | null;
+  degisim_puan?: number | null;
+}
+/** (P245) Yan panel/alt sira listelerinin okudugu alanlar. */
+interface PanoDuyuru {
+  id: string;
+  baslik: string;
+  govde: string;
+  created_at: string;
+}
+interface PanoTalep {
+  id: string;
+  baslik: string;
+  oncelik?: string | null;
+  created_at: string;
+}
+interface PanoIslem {
+  id: string;
+  action: string;
+  actor_ad?: string | null;
+  created_at: string;
+}
+/** (P245) `/finans/yaslandirma?ozet=true` — yalniz toplamlar okunuyor. */
+interface Yaslandirma {
+  toplam_kalan_kurus: number;
+  toplam_daire: number;
+}
 // (P184 §11) SURUKLE-BIRAK hedef isareti. Onceki SOLUK KESIK cerceve yerine
 // bir bolumun ONUNE kalin accent EKLEME CIZGISI cizilir (nereye dusecegi net).
 // Modul sabiti: style icinde ternary metin birakmak sabit-metin tarayicisini
@@ -611,6 +751,11 @@ export default function DashboardPage() {
     revalidateOnFocus: false,
   });
 
+  const [maketGorunumu, setMaketGorunumu] = useState<string>(MAKET_3B);
+  const [daireArama, setDaireArama] = useState("");
+  // EFSANE RENKLERI SAHNEYLE AYNI KAYNAKTAN (bkz. `MAKET_EFSANESI`).
+  const { koyu: sahneKoyu } = useSahneOrtami();
+
   const sahneBloklari = useMemo(() => {
     const haritada = new Map((binaHaritasi?.bloklar ?? []).map((b) => [b.blok, b]));
     const daireleriCikar = (ad: string) =>
@@ -639,6 +784,58 @@ export default function DashboardPage() {
     return [...resmi, ...artiklar];
   }, [blokYanit, binaHaritasi]);
 
+  /**
+   * (P245) HARITA GORUNUMU ICIN HUCRELER.
+   *
+   * `sahneBloklari` ile AYNI KAYNAKTAN turetilir (`binaHaritasi`): iki
+   * gorunum ayni veriyi gostermeli, yoksa kullanici sekme degistirince
+   * BASKA bir tesis gorurdu. Kat/sira girilmemis daire haritada YOKTUR
+   * (uydurma sutun, daireyi olmadigi yere koymakti — `/schematic`teki
+   * ayni kural).
+   */
+  const { planHucreleri, planBloklari, planKaynagi } = useMemo(() => {
+    const hucreler: PlanHucresi[] = [];
+    const bloklar: PlanBlogu[] = [];
+    const kaynak = new Map<string, { blok: string; kat: number }>();
+    let x = 0;
+    for (const blok of sahneBloklari) {
+      let genislik = 1;
+      for (const d of blok.daireler) {
+        if (d.sira == null || d.kat == null) continue;
+        genislik = Math.max(genislik, d.sira + 1);
+        hucreler.push({
+          id: d.id,
+          etiket: d.no,
+          x: x + d.sira,
+          y: d.kat,
+          ton: durumRenkleri(sahneKoyu)[d.durum],
+          ipucu: d.no,
+          secili: secim.daireId === d.id,
+        });
+        kaynak.set(d.id, { blok: blok.ad, kat: d.kat });
+      }
+      bloklar.push({ ad: blok.ad, x, genislik });
+      x += genislik + 1;
+    }
+    return { planHucreleri: hucreler, planBloklari: bloklar, planKaynagi: kaynak };
+  }, [sahneBloklari, sahneKoyu, secim.daireId]);
+
+  /** Arama kutusuna yazilanla eslesen daireler (en fazla bes). */
+  const eslesenDaireler = useMemo(() => {
+    const q = daireArama.trim().toLocaleLowerCase();
+    if (!q) return [];
+    const cikti: { id: string; no: string; kat: number; blokAd: string }[] = [];
+    for (const blok of sahneBloklari) {
+      for (const d of blok.daireler) {
+        if (cikti.length >= ARAMA_SINIRI) return cikti;
+        if (`${blok.ad} ${d.no}`.toLocaleLowerCase().includes(q)) {
+          cikti.push({ id: d.id, no: d.no, kat: d.kat, blokAd: blok.ad });
+        }
+      }
+    }
+    return cikti;
+  }, [daireArama, sahneBloklari]);
+
   // (P184-ek duzeltme §2) 3D MAKET ISARETCILERI KALDIRILDI: kamera + kacirilan
   // devriye noktalari maketten cikarildi. Bilgi zaten kamera seridi, alarmlar
   // bolumu ve devriye gorunumunde var. `kameralar`/`gruplar` DURUYOR (o
@@ -656,8 +853,64 @@ export default function DashboardPage() {
   );
   const blokSayisi = (binaHaritasi?.bloklar ?? []).length;
   const acikTalep = gorunurSikayet?.acik_sayisi ?? null;
-  // EFSANE RENKLERI SAHNEYLE AYNI KAYNAKTAN (bkz. `MAKET_EFSANESI`).
-  const { koyu: sahneKoyu } = useSahneOrtami();
+
+  // =====================================================================
+  // (P245) REFERANSIN DORT KPI'SI — GERCEK VERIYLE
+  // =====================================================================
+  // ui5'te dort kart var: Toplam Daire, Tahsilat Orani, Acik Talepler,
+  // Toplam Borc. Ucunun alt satirinda ONCEKI AYA GORE trend oku.
+  //
+  // VERI KAYNAKLARI (hepsi ZATEN VAR, yeni uc yazilmadi):
+  //   tahsilat  -> `/finans/tahsilat-gostergesi` (oran + degisim_puan)
+  //   borc      -> `/finans/yaslandirma?ozet=true` (daire + kalan kurus)
+  //   yuksek    -> `/complaints?durum=acik&oncelik=yuksek&limit=1`
+  //   daire     -> `building-map` (sayfada zaten cekiliyor)
+  //
+  // MALI KARTLAR YALNIZ MALI YETKIDE: uc guvenlik/saha rollerine 403
+  // doner ve SWR hata verir; kart o zaman HIC cizilmez. "0 ₺" yazmak
+  // veriyi sizdirmadan YANLIS bilgi vermek olurdu (P133.2 karari).
+  const maliYetki = rol === "admin" || rol === "yonetici";
+  const { data: tahsilatGosterge } = useSWR<TahsilatGostergesi>(
+    maliYetki ? "/api/panel/tahsilat-gostergesi" : null,
+    jsonFetcher,
+    { shouldRetryOnError: false },
+  );
+  const { data: yaslandirma } = useSWR<Yaslandirma>(
+    maliYetki ? "/api/panel/yaslandirma?ozet=true" : null,
+    jsonFetcher,
+    { shouldRetryOnError: false },
+  );
+  // YAN PANEL ve ALT SIRA LISTELERI — hepsi kucuk sayfalar.
+  const { data: sonDuyurular } = useSWR<{ items: PanoDuyuru[] }>(
+    `/api/announcements?limit=${PANEL_SATIRI}&offset=0`,
+    jsonFetcher,
+    { shouldRetryOnError: false },
+  );
+  const { data: sonTalepler } = useSWR<{ items: PanoTalep[] }>(
+    `/api/complaints?limit=${PANEL_SATIRI + 1}&offset=0&durum=${TALEP_ACIK}`,
+    jsonFetcher,
+    { shouldRetryOnError: false },
+  );
+  // (P245) SON ISLEMLER YALNIZ PLATFORM ADMININE.
+  //
+  // OLCULDU: `GET /audit` `require_role("admin")` ile korunuyor ve
+  // YONETICIYE 403 doner. Referansta bu liste var ama bizde denetim
+  // kaydi bir KVKK yuzeyidir; yoneticiye acmak bir arayuz turunun
+  // verecegi karar degil.
+  //
+  // Yetkisiz rolde bolum HIC CIZILMEZ — bos bir "Son islemler" karti
+  // birakmak, olmayan bir seyin yerini ayirmakti.
+  const denetimYetkisi = rol === "admin";
+  const { data: sonIslemler } = useSWR<{ items: PanoIslem[] }>(
+    denetimYetkisi ? `/api/audit?limit=${PANEL_SATIRI + 1}&offset=0` : null,
+    jsonFetcher,
+    { shouldRetryOnError: false },
+  );
+  const { data: yuksekTalep } = useSWR<{ meta?: { total?: number } }>(
+    `/api/complaints?limit=1&offset=0&durum=${TALEP_ACIK}&oncelik=${ONCELIK_YUKSEK}`,
+    jsonFetcher,
+    { shouldRetryOnError: false },
+  );
   const sahneRenkleri = durumRenkleri(sahneKoyu);
 
   // KAHRAMAN: once SUREN tur; yoksa SIRADAKI bekleyen; o da yoksa bos durum.
@@ -696,25 +949,61 @@ export default function DashboardPage() {
           <div className="space-y-3">
             <Kart className="overflow-hidden" dolgu={false}>
               <div
-                className="border-b px-4 py-3"
+                className="flex flex-wrap items-start justify-between gap-3 border-b px-4 py-3"
                 style={{
                   borderColor: "var(--yz-border)",
                   borderBottomWidth: "var(--yz-border-w)",
                 }}
               >
+                <div className="min-w-0">
                 <p style={{ fontSize: "var(--yz-fs-h3)", fontWeight: 600, color: "var(--yz-text)" }}>
                   {t("panoBolumMaket")}
                 </p>
                 <p className="mt-0.5" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
                   {t("panoMaketAlt")}
                 </p>
+                </div>
+                {/* SEGMENT SERIDI: iki secenek icin acilir liste degil.
+                    Secili olan GORUNUR kalir ve tek dokunusla gecilir. */}
+                <div className="flex shrink-0 gap-1" role="group" aria-label={t("panoMaketGorunum")}>
+                  {MAKET_GORUNUMLERI.map((g) => (
+                    <Dugme
+                      key={g.id}
+                      boy="kucuk"
+                      tur={maketGorunumu === g.id ? SECILI_TUR : SECILMEMIS_TUR}
+                      aria-pressed={maketGorunumu === g.id}
+                      onClick={() => setMaketGorunumu(g.id)}
+                    >
+                      {t(g.anahtar)}
+                    </Dugme>
+                  ))}
+                </div>
               </div>
-              <BinaSahnesiYukleyici
-                bloklar={sahneBloklari}
-                secim={secim}
-                onSecim={setSecim}
-                yukseklik="clamp(280px, 38vh, 440px)"
-              />
+              {/* (P245) 3B / HARITA GECISI — referansin kart basligindaki
+                  segment seridi. IKI GORUNUM DE ZATEN VARDI: 3B sahne
+                  burada, plan haritasi `/schematic` sayfasinda. Referans
+                  ikisini AYNI kartta yan yana koyuyor; yeni bir gorunum
+                  yazilmadi, var olan ikisi birlestirildi. */}
+              {maketGorunumu === MAKET_3B ? (
+                <BinaSahnesiYukleyici
+                  bloklar={sahneBloklari}
+                  secim={secim}
+                  onSecim={setSecim}
+                  yukseklik="clamp(280px, 38vh, 440px)"
+                />
+              ) : (
+                <PlanHaritasiYukleyici
+                  hucreler={planHucreleri}
+                  bloklar={planBloklari}
+                  onSec={(id) => {
+                    const d = planKaynagi.get(id);
+                    // SECIM AYNI DURUM: harita ve 3B ayni `secim`i yazar,
+                    // yani sekme degistirince secili daire KORUNUR.
+                    if (d) setSecim({ blokId: d.blok, kat: d.kat, daireId: id });
+                  }}
+                  yukseklik="clamp(280px, 38vh, 440px)"
+                />
+              )}
               {/* EFSANE: referansta maketin altinda duran durum serisi.
                   RENK TEK TASIYICI DEGIL — her cipin yaninda ADI yaziyor. */}
               <div
@@ -736,7 +1025,46 @@ export default function DashboardPage() {
                     {t(e.anahtar)}
                   </span>
                 ))}
+                {/* (P245) DAIRE ARAMA — referansta efsanenin sagindaki
+                    kutu. SUZME DEGIL SECME: yazilan daire maketten
+                    SECILIR ve secim paneli acilir; listeyi daraltmak
+                    maketin isi degil. */}
+                <span className="ms-auto w-full sm:w-64">
+                  <AramaAlani
+                    deger={daireArama}
+                    onDegisim={setDaireArama}
+                    etiket={t("panoDaireAra")}
+                    yerTutucu={t("panoDaireAraIpucu")}
+                    temizleEtiketi={t("ortakKapat")}
+                  />
+                </span>
               </div>
+              {/* EslESEN DAIRELER: en fazla bes: liste maketin altinda
+                  buyuyup kartin yuksekligini zipla degistirmemeli. */}
+              {daireArama.trim() && (
+                <div
+                  className="flex flex-wrap gap-2 border-t px-4 py-2.5"
+                  style={{ borderColor: "var(--yz-border)", borderTopWidth: "var(--yz-border-w)" }}
+                >
+                  {eslesenDaireler.length === 0 ? (
+                    <span style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                      {t("panoDaireBulunamadi")}
+                    </span>
+                  ) : (
+                    eslesenDaireler.map((d) => (
+                      <Dugme
+                        key={d.id}
+                        boy="kucuk"
+                        onClick={() =>
+                          setSecim({ blokId: d.blokAd, kat: d.kat, daireId: d.id })
+                        }
+                      >
+                        {d.no}
+                      </Dugme>
+                    ))
+                  )}
+                </div>
+              )}
             </Kart>
             <SahneSecimPaneli
               secim={secim}
@@ -765,42 +1093,20 @@ export default function DashboardPage() {
           />
         );
       case "kpi":
-        // (P244 §5) HALKA -> OZET KARTI SERIDI.
+        // (P245) REFERANSIN DORT KARTI.
         // -----------------------------------------------------------------
-        // Halka (`Kpi`) 116 px'lik bir cemberdi ve YALNIZ bir sayi
-        // tasiyordu. Referansin karti ayni yerde daha cok sey soyluyor:
-        // etiket, buyuk sayi ve BIR ALT SATIR baglam ("12 dairede borç
-        // var" gibi). Olculen sikayet "sayfalar bos gorunuyor"du; ayni
-        // alanda uc kat bilgi tasimak bunun dogrudan karsiligi.
+        // ONCEKI DURUM (Playwright ile olculdu): serit devriye/tur
+        // sayaclarini gosteriyordu ve referansin dort basligindan
+        // (Toplam Daire, Tahsilat Orani, Acik Talepler, Toplam Borc)
+        // yalnizca ikisi vardi — ustelik sayfanin ALTINDA.
         //
-        // SERT SINIR KALKTI, YERINE OLCU GELDI: eski kural "en cok dort
-        // halka"ydi cunku renkli cemberler besincide gurultuye
-        // donusuyordu. Kart dili renkle degil TIPOGRAFIYLE calisir;
-        // serit `auto-fit` ile dizilir ve kac kart olursa olsun ayni
-        // ritmi korur.
-        //
-        // VERI KAYNAGI DEGISMEDI: hicbir yeni uc cagrilmiyor, sayfada
-        // ZATEN cekilen kayitlar kullaniliyor.
+        // TREND YALNIZ VERISI OLANDA: sozlesme yalniz tahsilat icin
+        // `degisim_puan` veriyor. Talep ve borc icin onceki-ay
+        // karsilastirmasi HICBIR UCTA YOK; ok cizmek uydurmak olurdu.
         return isLoading && !data ? (
           <IskeletKpi adet={4} />
         ) : (
           <OzetSeridi>
-            <OzetKarti
-              etiket={t("pano2BlokGecikme")}
-              deger={String(gecikmeSayisi)}
-              durum={gecikmeSayisi ? "kritik" : "olumlu"}
-              ikon={<OzetIkonu yol={IKON_UYARI} />}
-              altBilgi={gecikmeSayisi ? t("panoKpiGecikmeAlt") : t("panoKpiGecikmeYok")}
-              href="/notifications"
-            />
-            <OzetKarti
-              etiket={t("pano2BlokTur")}
-              deger={String(turlar.length)}
-              durum="bilgi"
-              ikon={<OzetIkonu yol={IKON_TUR} />}
-              altBilgi={t("panoKpiTurAlt", { n: tamamlanan })}
-              href="/patrol-plans"
-            />
             {daireSayisi > 0 && (
               <OzetKarti
                 etiket={t("panoKpiDaire")}
@@ -811,17 +1117,34 @@ export default function DashboardPage() {
                 href="/units"
               />
             )}
-            {/* MALI KART YALNIZ YETKI VARSA: sunucu tahsilat oranini
-                guvenlik rollerine `null` doner. "%0" cizmek, veriyi
-                sizdirmadan YANLIS bilgi vermek olurdu. */}
-            {data?.aidat_tahsilat_orani != null && (
+            {/* MALI KARTLAR YALNIZ MALI YETKIDE (P133.2): uc guvenlik
+                rollerine kapali ve "0" cizmek yanlis bilgi olurdu. */}
+            {tahsilatGosterge && (
               <OzetKarti
                 etiket={t("pano2BlokTahsilat")}
-                deger={yuzde(data.aidat_tahsilat_orani)}
+                deger={yuzde(tahsilatGosterge.oran_yuzde)}
                 durum={
-                  data.aidat_tahsilat_orani >= TAHSILAT_ESIGI ? "olumlu" : "uyari"
+                  tahsilatGosterge.oran_yuzde >= TAHSILAT_ESIGI ? "olumlu" : "uyari"
                 }
                 ikon={<OzetIkonu yol={IKON_PARA} />}
+                // SOZLUK ANAHTARI ACILMADI: "{tahsil} / {hedef}" yedi
+                // dilde AYNI dizedir ve butunluk kilidi onu hakli olarak
+                // "TR kopyasi" sayar. Ayrac bir cumle degil, NOKTALAMA.
+                altBilgi={`${kurusToTL(tahsilatGosterge.tahsilat_kurus)} / ${kurusToTL(
+                  tahsilatGosterge.tahakkuk_kurus,
+                )}`}
+                trend={
+                  tahsilatGosterge.degisim_puan != null
+                    ? t("panoKpiPuan", { n: tahsilatGosterge.degisim_puan })
+                    : undefined
+                }
+                trendYonu={
+                  tahsilatGosterge.degisim_puan == null || tahsilatGosterge.degisim_puan === 0
+                    ? TREND_SABIT
+                    : tahsilatGosterge.degisim_puan > 0
+                      ? TREND_IYI
+                      : TREND_KOTU
+                }
                 href="/finans"
               />
             )}
@@ -831,10 +1154,272 @@ export default function DashboardPage() {
                 deger={String(acikTalep)}
                 durum={acikTalep > 0 ? "uyari" : "olumlu"}
                 ikon={<OzetIkonu yol={IKON_TALEP} />}
+                altBilgi={
+                  yuksekTalep?.meta?.total != null
+                    ? t("panoKpiTalepAlt", { n: yuksekTalep.meta.total })
+                    : undefined
+                }
                 href="/complaints"
               />
             )}
+            {/* (P245) DEVRIYE SAYACLARI KAYBOLMADI — YER DEGISTIRDI.
+                -----------------------------------------------------------
+                Serit eskiden "geciken okutma" ve "bugunku tur"u
+                gosteriyordu. Referansin dort basligi mali; ama mali
+                yetkisi OLMAYAN rolde o iki kart zaten cizilmiyor ve
+                serit yariya duserdi.
+                Cozum rol-uyumlu: yonetim referansin dordunu gorur,
+                guvenlik/saha ayni yerde KENDI dort sayisini. Hicbir
+                bilgi silinmedi. */}
+            {!maliYetki && (
+              <>
+                <OzetKarti
+                  etiket={t("pano2BlokGecikme")}
+                  deger={String(gecikmeSayisi)}
+                  durum={gecikmeSayisi ? "kritik" : "olumlu"}
+                  ikon={<OzetIkonu yol={IKON_UYARI} />}
+                  altBilgi={gecikmeSayisi ? t("panoKpiGecikmeAlt") : t("panoKpiGecikmeYok")}
+                  href="/notifications"
+                />
+                <OzetKarti
+                  etiket={t("pano2BlokTur")}
+                  deger={String(turlar.length)}
+                  durum="bilgi"
+                  ikon={<OzetIkonu yol={IKON_TUR} />}
+                  altBilgi={t("panoKpiTurAlt", { n: tamamlanan })}
+                  href="/patrol-plans"
+                />
+              </>
+            )}
+            {yaslandirma && (
+              <OzetKarti
+                etiket={t("panoKpiBorc")}
+                deger={kurusToTL(yaslandirma.toplam_kalan_kurus)}
+                durum={yaslandirma.toplam_kalan_kurus > 0 ? "uyari" : "olumlu"}
+                ikon={<OzetIkonu yol={IKON_BORC} />}
+                altBilgi={t("panoKpiBorcAlt", { n: yaslandirma.toplam_daire })}
+                href="/finans/borclular"
+              />
+            )}
           </OzetSeridi>
+        );
+      case "yanpanel":
+        // (P245) REFERANSTA MAKETIN SAGINDA DURAN SUTUN.
+        // -----------------------------------------------------------------
+        // ui5'te burada Hizli Islemler (dort buyuk dugme) ve Duyurular
+        // (son uc) alt alta duruyor. Sayfada IKISI DE YOKTU.
+        //
+        // HIZLI ISLEMLER KISAYOL SERIDINDEN AYRIDIR: serit kullanicinin
+        // SECTIGI rotalari tasir (P182); buradakiler referansin SABIT
+        // dort eylemi. Ikisini birlestirmek, kullanicinin secimini
+        // referansin listesiyle ezmek olurdu.
+        return (
+          <div className="space-y-bolum">
+            <Kart className="space-y-3">
+              <BolumBasligi baslik={t("panoHizliIslemler")} />
+              <div className="grid grid-cols-2 gap-2">
+                {HIZLI_ISLEMLER.map((h) => (
+                  <DugmeBaglantisi
+                    key={h.rota}
+                    href={h.rota}
+                    className="justify-start"
+                  >
+                    <OzetIkonu yol={h.ikon} />
+                    {t(h.anahtar)}
+                  </DugmeBaglantisi>
+                ))}
+              </div>
+            </Kart>
+            <Kart className="space-y-3">
+              <BolumBasligi
+                baslik={t("panoBolumDuyurular")}
+                sag={
+                  <Link href="/duyurular" style={BAGLANTI_STILI}>
+                    {t("tasarimTumunuGor")}
+                  </Link>
+                }
+              />
+              {/* BOS DURUM SESSIZ GECILMEZ: duyuru yoksa kart bos bir
+                  dikdortgen olarak kalirdi. */}
+              {(sonDuyurular?.items ?? []).length === 0 ? (
+                <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+                  {t("sakinDuyurularYok")}
+                </p>
+              ) : (
+                <ul className="space-y-3">
+                  {(sonDuyurular?.items ?? []).slice(0, PANEL_SATIRI).map((d) => (
+                    <li key={d.id} className="min-w-0">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <p
+                          className="min-w-0 truncate font-medium"
+                          style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}
+                        >
+                          {d.baslik}
+                        </p>
+                        <span
+                          className="shrink-0 tabular-nums"
+                          style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
+                        >
+                          {tarihBicimi(d.created_at)}
+                        </span>
+                      </div>
+                      <p
+                        className="line-clamp-2"
+                        style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
+                      >
+                        {d.govde}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Kart>
+          </div>
+        );
+      case "tahsilat":
+        // (P245) HALKA GRAFIK — referansta alt siranin sol sutunu.
+        // Sayilar `/finans/tahsilat-gostergesi`ten; BEKLEYEN tahakkuk
+        // eksi tahsilat olarak TURETILIR (uc ayrica vermiyor) ve
+        // "geciken" AYRI BIR SORU oldugu icin UYDURULMAZ — yaslandirma
+        // toplami o soruyu yanitliyor.
+        return !tahsilatGosterge ? (
+          <BosDurum baslik={t("panoTahsilatVeriYok")} aciklama={t("panoTahsilatVeriYokAlt")} />
+        ) : (
+          <Kart className="space-y-3">
+            <BolumBasligi baslik={t("panoBolumTahsilat")} />
+            <div className="flex flex-wrap items-center gap-4">
+              {/* HALKA MEVCUT `Kpi` BILESENI: referansta alt siranin
+                  sol sutununda duran cember tam olarak bu sekil. Ikinci
+                  bir halka cizmek, ayni gorseli iki yerde tanimlamakti. */}
+              <Kpi
+                deger={tahsilatGosterge.oran_yuzde}
+                etiket={t("pano2BlokTahsilat")}
+                durum={
+                  tahsilatGosterge.oran_yuzde >= TAHSILAT_ESIGI ? "olumlu" : "uyari"
+                }
+                bicimle={yuzde}
+                cap={128}
+              />
+              <dl className="min-w-0 flex-1 space-y-1.5">
+                <TahsilatSatiri
+                  renk="var(--yz-success-edge)"
+                  ad={t("panoTahsilEdilen")}
+                  deger={kurusToTL(tahsilatGosterge.tahsilat_kurus)}
+                />
+                <TahsilatSatiri
+                  renk="var(--yz-warning-edge)"
+                  ad={t("panoBekleyen")}
+                  deger={kurusToTL(
+                    Math.max(
+                      0,
+                      tahsilatGosterge.tahakkuk_kurus - tahsilatGosterge.tahsilat_kurus,
+                    ),
+                  )}
+                />
+                {yaslandirma && (
+                  <TahsilatSatiri
+                    renk="var(--yz-danger-edge)"
+                    ad={t("panoGeciken")}
+                    deger={kurusToTL(yaslandirma.toplam_kalan_kurus)}
+                  />
+                )}
+              </dl>
+            </div>
+          </Kart>
+        );
+      case "talepler":
+        return (
+          <Kart className="space-y-3">
+            <BolumBasligi
+              baslik={t("panoBolumTalepler")}
+              sag={
+                <Link href="/complaints" style={BAGLANTI_STILI}>
+                  {t("tasarimTumunuGor")}
+                </Link>
+              }
+            />
+            {(sonTalepler?.items ?? []).length === 0 ? (
+              <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+                {t("talepYok")}
+              </p>
+            ) : (
+              <ul className="space-y-2.5">
+                {(sonTalepler?.items ?? []).slice(0, PANEL_SATIRI + 1).map((c) => (
+                  <li key={c.id} className="flex items-center justify-between gap-2">
+                    <span
+                      className="min-w-0 truncate"
+                      style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}
+                    >
+                      {c.baslik}
+                    </span>
+                    <span className="flex shrink-0 items-center gap-2">
+                      {c.oncelik && (
+                        <Rozet durum={ONCELIK_DURUMU[c.oncelik] ?? "notr"}>
+                          {t(ONCELIK_ANAHTARI[c.oncelik] ?? ONCELIK_BILINMIYOR)}
+                        </Rozet>
+                      )}
+                      <span
+                        className="tabular-nums"
+                        style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
+                      >
+                        {tarihBicimi(c.created_at)}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Kart>
+        );
+      case "sonislemler":
+        if (!denetimYetkisi) return null;
+        // (P245) "Kim, ne, ne zaman" — DENETIM KAYDINDAN.
+        // Referanstaki liste tam olarak bu: ad + islem + zaman. Depoda
+        // bu bilgiyi tasiyan tek kaynak `audit_log`; yeni bir uc
+        // yazmak, ayni gercegi ikinci kez toplamak olurdu.
+        return (
+          <Kart className="space-y-3">
+            <BolumBasligi
+              baslik={t("panoBolumSonIslemler")}
+              sag={
+                <Link href="/audit" style={BAGLANTI_STILI}>
+                  {t("tasarimTumunuGor")}
+                </Link>
+              }
+            />
+            {(sonIslemler?.items ?? []).length === 0 ? (
+              <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+                {t("denetimKayitYok")}
+              </p>
+            ) : (
+              <ul className="space-y-2.5">
+                {(sonIslemler?.items ?? []).slice(0, PANEL_SATIRI + 1).map((a) => (
+                  <li key={a.id} className="flex items-center justify-between gap-2">
+                    <span className="min-w-0">
+                      <span
+                        className="block truncate font-medium"
+                        style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}
+                      >
+                        {a.actor_ad ?? t("denetimSistem")}
+                      </span>
+                      <span
+                        className="block truncate"
+                        style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
+                      >
+                        {a.action}
+                      </span>
+                    </span>
+                    <span
+                      className="shrink-0 tabular-nums"
+                      style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
+                    >
+                      {formatDateTime(a.created_at)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Kart>
         );
       case "kameralar":
         return <KameraSeridi kameralar={kameralar} rol={rol} />;
@@ -996,7 +1581,14 @@ export default function DashboardPage() {
             : {})}
         >
           {gorunurSatirlar.map((satir, si) => (
-            <div key={si} className={SUTUN_SINIF[satir.sutun] ?? SUTUN_SINIF[1]}>
+            <div
+              key={si}
+              className={
+                satir.oran === ORAN_2_1
+                  ? SUTUN_2_1
+                  : (SUTUN_SINIF[satir.sutun] ?? SUTUN_SINIF[1])
+              }
+            >
               {satir.bolumler.map((b, bi) => {
                 // (P184 §11) Bu bolum SU AN birakma hedefi mi (ve tutulan
                 // bolumun kendisi DEGIL mi)? Oyleyse ONUNE kalin accent ekleme

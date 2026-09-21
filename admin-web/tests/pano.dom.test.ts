@@ -91,7 +91,7 @@ function fetchTaklidi({
 afterEach(() => vi.restoreAllMocks());
 
 describe("(P133.2) pano bolumleri — SIRA", () => {
-  it("(P167 §2) VARSAYILAN SIRA: finans -> takvim -> devriye -> alarmlar", async () => {
+  it("(P245) VARSAYILAN SIRA: KPI -> maket -> alt sira -> mevcut bolumler", async () => {
     // (P167 Asama 2) SIRA ARTIK SABIT DEGIL, VARSAYILAN. Kullanici
     // bolumleri siralayip gizleyebiliyor (`/me/pano-tercihi`); olculen sey
     // KAYIT YOKKEN cizilen duzen.
@@ -102,12 +102,25 @@ describe("(P133.2) pano bolumleri — SIRA", () => {
     ciz(DashboardPage);
     await screen.findAllByText("Gece turu");
     const metin = document.body.textContent ?? "";
+    /**
+     * (P245) SIRA REFERANSA (ui5) GORE YENIDEN KURULDU.
+     *
+     * Playwright olcumu eski siranin sonucunu gosterdi: sayfa kisayol
+     * seridiyle basliyor, maket sagda kucuk bir kutu, referansin
+     * ilk ekranindaki hicbir sey ayni yerde degil.
+     *
+     * OLCULEN KURAL AYNI: kayit yokken cizilen duzen BELIRLIDIR ve
+     * sira SABITTIR. Degisen, o siranin ne oldugu.
+     *
+     * "Finansal özet" LISTEDE KALDI: referansta yok ama silinmedi —
+     * referans duzeninin ALTINA indi (mevcut islev kaybolmaz).
+     */
     const sira = [
-      "Finansal özet",
       "Site maketi",
-      "Takvim",
-      "Devriye durumu",
+      "Hızlı işlemler",
+      "Finansal özet",
       "Alarmlar",
+      "Takvim",
     ].map((b) => metin.indexOf(b));
     expect(sira.every((i) => i >= 0), metin.slice(0, 400)).toBe(true);
     expect(sira).toEqual([...sira].sort((a, b) => a - b));
@@ -157,11 +170,13 @@ describe("(P133.2) pano bolumleri — SIRA", () => {
     // GORUNUR metindir. Yani ayri bir `sr-only` kopyaya gerek kalmadi —
     // etiket ve deger iki ayri gorunur oge. Olculen sey DEGISMEDI:
     // "bolum sayilari ozetliyor mu".
+    // (P245) TAHSILAT KARTI ARTIK `/finans/tahsilat-gostergesi`ten
+    // besleniyor ve bu taklit onu yanitlamiyor; mali kart bu senaryoda
+    // CIZILMEZ. Olculen sey degismedi: devriye sayilari ozetleniyor mu.
+    // Etiket ve deger iki ayri gorunur oge.
     await waitFor(() =>
-      expect(screen.getByText("Aidat tahsilatı")).toBeInTheDocument(),
+      expect(screen.getByText("Geciken okutma")).toBeInTheDocument(),
     );
-    expect(screen.getByText("%78")).toBeInTheDocument();
-    // Ayni gerekce: etiket ve deger artik iki ayri gorunur oge.
     const gecikme = screen.getByText("Geciken okutma").closest("a");
     expect(gecikme).not.toBeNull();
     // DEGER KENDI OGESINDE aranir, kartin TUM metninde degil: birlesik

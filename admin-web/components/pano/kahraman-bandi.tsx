@@ -105,7 +105,7 @@ export function KahramanBandi({ tarih }: { tarih?: Date }) {
     <section
       data-test="pano-kahraman"
       aria-label={t("panoKahramanBaslik")}
-      className="mb-5 overflow-hidden px-5 py-6 sm:px-7 sm:py-7"
+      className="relative mb-5 overflow-hidden px-5 py-6 sm:px-7 sm:py-7"
       style={{
         borderRadius: "var(--yz-radius-card)",
         // MARKA GRADYANI: lacivert kenar cubuguyla ayni aileden, iceriden
@@ -116,6 +116,15 @@ export function KahramanBandi({ tarih }: { tarih?: Date }) {
         color: "var(--yz-sidebar-text)",
       }}
     >
+      {/* (P245) NOTR BINA GORSELI — referansta burada tesis fotografi var.
+          -----------------------------------------------------------------
+          TESIS FOTOGRAFI ALANI SOZLESMEDE YOK (`Tenant` semasinda logo/
+          kapak alani bulunmuyor), bu yuzden fotograf CIZILEMEZ. Yerine
+          notr bir bina siluetinin kendisi cizildi: ag istegi yok, tema
+          degisiminde kaymaz ve olcekle bozulmaz.
+          KONTRAST: siluetler zeminden yalnizca bir kademe acik ve
+          `aria-hidden`; uzerindeki beyaz metin AA'yi tutmaya devam eder. */}
+      <BinaSilueti />
       <h1
         style={{
           fontSize: "var(--yz-fs-h1)",
@@ -158,6 +167,57 @@ export function KahramanBandi({ tarih }: { tarih?: Date }) {
           </span>
         ) : null}
       </div>
+
+      {/* (P245) SAGDAKI KISA IFADE — referansin band sonu. Dar ekranda
+          GIZLENIR: selamin altina inmesi, bandi iki kat uzatirdi. */}
+      <p
+        className="pointer-events-none absolute end-7 top-1/2 hidden max-w-[16rem] -translate-y-1/2 text-end italic lg:block"
+        style={{ fontSize: "var(--yz-fs-body)", color: "var(--yz-sidebar-text)", opacity: 0.85 }}
+      >
+        {t("panoKahramanIfade")}
+      </p>
     </section>
+  );
+}
+
+/**
+ * Notr bina silueti — dekoratiftir (`aria-hidden`).
+ *
+ * Tek renk ve dusuk opaklik: bandin uzerindeki metin okunakli kalmali.
+ * `preserveAspectRatio` ile SAGA yaslanir; dar ekranda sola tasip
+ * metnin altina girmez.
+ */
+function BinaSilueti() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 420 160"
+      preserveAspectRatio="xMaxYMid slice"
+      className="pointer-events-none absolute inset-y-0 end-0 h-full w-1/2"
+      style={{ opacity: 0.22 }}
+    >
+      <g fill="#ffffff">
+        <rect x="14" y="70" width="58" height="90" rx="3" />
+        <rect x="84" y="42" width="66" height="118" rx="3" />
+        <rect x="162" y="86" width="52" height="74" rx="3" />
+        <rect x="226" y="28" width="72" height="132" rx="3" />
+        <rect x="310" y="62" width="60" height="98" rx="3" />
+        <rect x="382" y="96" width="30" height="64" rx="3" />
+      </g>
+      <g fill="#0f1b2b" opacity="0.55">
+        {Array.from({ length: 6 }, (_, sutun) =>
+          Array.from({ length: 7 }, (_, satir) => (
+            <rect
+              key={`${sutun}-${satir}`}
+              x={24 + sutun * 74}
+              y={44 + satir * 16}
+              width="9"
+              height="9"
+              rx="1.5"
+            />
+          )),
+        )}
+      </g>
+    </svg>
   );
 }

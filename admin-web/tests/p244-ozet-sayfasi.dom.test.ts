@@ -148,10 +148,27 @@ describe("(P244 §5) ozet seridi", () => {
     }
   });
 
-  it("YENI UC ACILMADI — kartlar SAYFADA ZATEN cekilen veriden turedi", async () => {
-    // P244'un kurali: bu tur YENI EKRAN ve YENI UC getirmez. Ozet
-    // kartlari `dashboard/live`, `building-map` ve `gorunur-sayi`dan
-    // turer; hicbiri bu tur icin acilmis degil.
+  it("(P245) PANONUN CAGIRDIGI UCLAR — hepsi ZATEN VAR OLAN uclar", async () => {
+    /**
+     * IDDIA GUNCELLENDI, NIYET AYNI.
+     *
+     * P244'un kurali "bu tur yeni uc getirmez"di ve o tur icin
+     * dogruydu. P245 referansin DORT KPI'sini GERCEK VERIYLE istedi;
+     * o sayilar (tahsil/tahakkuk, borclu daire sayisi, yuksek
+     * oncelikli talep) `dashboard/live`de YOKTUR.
+     *
+     * OLCULEN SEY HALA AYNI: pano SUNUCUYA YENI UC EKLETMEZ. Asagidaki
+     * yollarin hepsi BACKEND'DE ZATEN VARDI ve baska ekranlar
+     * tarafindan kullaniliyordu:
+     *   /finans/tahsilat-gostergesi  -> /finans/borclular (P192)
+     *   /finans/yaslandirma          -> /finans/borclular (P192 §5.1)
+     *   /complaints                  -> /complaints, /taleplerim
+     *   /announcements               -> /duyurular, /announcements
+     *   /audit                       -> /audit (yalniz admin)
+     *
+     * Yani liste "hangi uclar cagriliyor" sorusunun GUNCEL yanitidir;
+     * buraya yazilmamis bir uc cikarsa test yine duser.
+     */
     taklit();
     ciz(DashboardPage);
     await waitFor(() => expect(kanca("ozet-seridi")).not.toBeNull());
@@ -173,7 +190,14 @@ describe("(P244 §5) ozet seridi", () => {
         !u.includes("/api/takvim") &&
         // `/api/weather` P244'te EKLENDI ama yeni bir SUNUCU ucu degil:
         // sunucuda P233'ten beri var, eksik olan BFF rotasiydi.
-        !u.includes("/api/weather"),
+        !u.includes("/api/weather") &&
+        // (P245) REFERANSIN DORT KPI'SI + YAN PANEL + ALT SIRA.
+        // Hepsi backend'de var olan uclar; bkz. yukaridaki gerekce.
+        !u.includes("/api/panel/tahsilat-gostergesi") &&
+        !u.includes("/api/panel/yaslandirma") &&
+        !u.includes("/api/complaints") &&
+        !u.includes("/api/announcements") &&
+        !u.includes("/api/audit"),
     );
     expect(yeni, `beklenmeyen uc: ${yeni.join(", ")}`).toEqual([]);
   });

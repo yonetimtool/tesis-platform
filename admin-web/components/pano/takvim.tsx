@@ -41,7 +41,7 @@ import {
 } from "@/components/ui";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
-import { useT } from "@/lib/i18n/kullan";
+import { useI18n, useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
 type TakvimTip =
@@ -237,6 +237,7 @@ function pencere(gorunum: Gorunum, capa: Date): [Date, Date] {
 
 export function PanoTakvim() {
   const t = useT();
+  const { dil } = useI18n();
   const toast = useToast();
   const { onayla, diyalog } = useOnay();
 
@@ -327,7 +328,7 @@ export function PanoTakvim() {
     else setCapa(new Date(capa.getFullYear(), capa.getMonth() + yon, 1));
   }
 
-  const baslikMetni = new Intl.DateTimeFormat(undefined, {
+  const baslikMetni = new Intl.DateTimeFormat(dil, {
     month: "long",
     year: "numeric",
     ...(gorunum === GORUNUM_GUN ? { day: "numeric" } : {}),
@@ -432,7 +433,7 @@ export function PanoTakvim() {
               className="px-1 pb-1 text-center"
               style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}
             >
-              {new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(
+              {new Intl.DateTimeFormat(dil, { weekday: "short" }).format(
                 gunEkle(haftaBasi(new Date()), i),
               )}
             </div>
@@ -629,6 +630,7 @@ function AjandaListesi({
   onSecim: (o: TakvimOgesi) => void;
 }) {
   const t = useT();
+  const { dil } = useI18n();
   const kapRef = useRef<HTMLDivElement>(null);
   const bugunRef = useRef<HTMLLIElement>(null);
 
@@ -667,7 +669,7 @@ function AjandaListesi({
                 }}
               >
                 <span>
-                  {new Intl.DateTimeFormat(undefined, {
+                  {new Intl.DateTimeFormat(dil, {
                     weekday: "long",
                     day: "numeric",
                     month: "long",
@@ -715,6 +717,7 @@ function GunListesi({
   zamanOnde?: boolean;
 }) {
   const t = useT();
+  const { dil } = useI18n();
   if (ogeler.length === 0) return <BosDurum baslik={t("takvimOlayYok")} aciklama={t("takvimOlayYokAlt")} />;
   return (
     <ul className="space-y-1">
@@ -733,7 +736,7 @@ function GunListesi({
                 className="w-11 shrink-0 tabular-nums"
                 style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
               >
-                {new Intl.DateTimeFormat(undefined, {
+                {new Intl.DateTimeFormat(dil, {
                   hour: "2-digit",
                   minute: "2-digit",
                 }).format(new Date(o.baslangic))}
@@ -810,6 +813,7 @@ function HatirlatmaFormu({
   onSil: SilmeIslemi;
 }) {
   const t = useT();
+  const { dil } = useI18n();
   const toast = useToast();
   const [baslik, setBaslik] = useState("");
   const [aciklama, setAciklama] = useState("");

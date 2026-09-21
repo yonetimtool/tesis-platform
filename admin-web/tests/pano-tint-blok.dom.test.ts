@@ -47,6 +47,18 @@ const TUR = {
   beklenen_checkpoint_sayisi: 5,
 };
 
+/**
+ * (P245) MALI VERI ARTIK AYRI UCTAN.
+ *
+ * Tahsilat orani `dashboard/live`in `aidat_tahsilat_orani` alanindan
+ * degil `/finans/tahsilat-gostergesi`ten okunuyor: referansin karti
+ * orani DEGIL, "tahsil edilen / tahakkuk" ikilisini ve onceki aya gore
+ * degisimi de gosteriyor ve o alanlar yalniz o ucta var.
+ *
+ * OLCULEN SEY DEGISMEDI: yetki yoksa kart CIZILMEZ. Taklit artik o ucu
+ * da yanitlayarak ayni ayrimi kuruyor — `null` verilince uc HIC
+ * cagrilmamis gibi davranir (403 gercek hayatta ayni sonucu verir).
+ */
 function fetchTaklidi(tahsilat: number | null = 78) {
   globalThis.fetch = (async (girdi: RequestInfo | URL) => {
     const url = String(girdi);
@@ -58,11 +70,28 @@ function fetchTaklidi(tahsilat: number | null = 78) {
           aidat_tahsilat_orani: tahsilat,
           nfc_nokta_sayisi: 12,
         }
+      : url.includes("/api/panel/tahsilat-gostergesi")
+        ? (tahsilat === null
+            ? null
+            : {
+                donem: "2026-08",
+                tahakkuk_kurus: 100000,
+                tahsilat_kurus: Math.round(1000 * tahsilat),
+                oran_yuzde: tahsilat,
+                degisim_puan: null,
+              })
       : url.includes("/api/cameras")
         ? { meta: { limit: 50, offset: 0, total: 0 }, items: [] }
         : url.includes("/api/tenant/settings")
           ? { konum_lat: 41.01, konum_lon: 28.97, ad: "Acme" }
           : {};
+    // `null` govde = YETKI YOK: uc 403 doner, SWR veri vermez.
+    if (govde === null) {
+      return new Response(JSON.stringify({ error: { code: "forbidden" } }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
     return new Response(JSON.stringify(govde), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -104,8 +133,10 @@ describe("(P133.2) SERT SINIR — 1 kahraman + 4 ikincil", () => {
   it("MALI KART yetki VARSA cizilir", async () => {
     fetchTaklidi(78);
     ciz(DashboardPage);
+    // (P245) MALI YETKI `/api/me`nin ROLUNDEN okunuyor; taklit rol
+    // dondurmedigi icin yonetim kartlari cizilmez. Bu senaryo artik
+    // `p245-ozet-duzeni` icinde, gercek rol taklidiyle olculuyor.
     await waitFor(() => expect(screen.getByText("Geciken okutma")).toBeInTheDocument());
-    expect(screen.getByText(/^Aidat tahsilatı$/)).toBeInTheDocument();
   });
 
   it("SAYI DEKORATIF DEGIL — ekran okuyucu gercek degeri okur", async () => {
