@@ -3,7 +3,39 @@
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { Alan, AlanSarmal, Cekmece, Dugme, EksikVeriUyarisi, HataDurumu, Modal, Rozet, Secim, type Kolon, type TabloDurumu, useOnay, VeriTablosu } from "@/components/ui";
+import {
+  Alan,
+  AlanSarmal,
+  Cekmece,
+  Dugme,
+  EksikVeriUyarisi,
+  HataDurumu,
+  Modal,
+  OzetKarti,
+  OzetSeridi,
+  Rozet,
+  SayfaBasligi,
+  Secim,
+  type Kolon,
+  type TabloDurumu,
+  useOnay,
+  VeriTablosu,
+} from "@/components/ui";
+
+// (P245) OZET SERIDI IKONLARI — referansta her kartin solunda bir ikon.
+const IKON_ROTA = "M9 20l-5.4-2.7A1 1 0 0 1 3 16.4V5.6a1 1 0 0 1 1.4-.9L9 7l6-2.3 5.4 2.7a1 1 0 0 1 .6.9v10.8a1 1 0 0 1-1.4.9L15 18l-6 2ZM9 7v13M15 4.7V18";
+const IKON_LISTE = "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01";
+const IKON_NOKTA = "M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11ZM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z";
+const IKON_SAAT = "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 7v5l3 2";
+
+function PlanIkonu({ yol }: { yol: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor"
+      strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={yol} />
+    </svg>
+  );
+}
 import { RotaSahnesiYukleyici } from "@/components/3d/sahne-yukleyici";
 import { useToast } from "@/components/Toast";
 import { kisaKimlik } from "@/lib/kimlik";
@@ -149,6 +181,15 @@ export default function PatrolPlansPage() {
     assignPlan ? UC_PANO : null,
     jsonFetcher,
   );
+
+  // OZET SAYILARI GORUNEN SAYFADAN DEGIL: liste sayfali gelir ve
+  // gorunen 25 kaydi saymak "3 aktif plan" gibi yanlis bir sayi
+  // uretirdi. Toplam `meta.total`dan; aktif/pasif ayrimi ise sunucuda
+  // suzgec olmadigi icin GORUNEN SAYFADAN sayilir ve bu ACIK:
+  // alt bilgi "bu sayfada" demez, cunku plan sayisi tek sayfaya sigan
+  // bir buyukluktur (tesis basina onlarca degil, birkac plan).
+  const aktifPlan = (data?.items ?? []).filter((p) => p.aktif).length;
+  const pasifPlan = (data?.items ?? []).length - aktifPlan;
 
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -367,15 +408,53 @@ export default function PatrolPlansPage() {
   );
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-          {t("kabukDevriyePlanlari")}
-        </h1>
-        <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
-          {t("planYeni")}
-        </Dugme>
-      </div>
+    <div>
+      <SayfaBasligi
+        baslik={t("kabukDevriyePlanlari")}
+        aciklama={t("planSayfaAlt")}
+        eylem={
+          <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
+            {t("planYeni")}
+          </Dugme>
+        }
+      />
+
+      {/* (P245) OZET SERIDI — referansta (ui3) her guvenlik ekraninin
+          ustunde duruyor.
+          -----------------------------------------------------------------
+          SAYILAR SAYFANIN ZATEN CEKTIGI VERIDEN TURER; yeni uc yok.
+          Referansta "%92 Tamamlanma" ve "2 Aksama" da var; ikisi de
+          PLAN LISTESINDE DEGIL, tur gecmisinde. Uydurulmadi — yerine
+          bu listenin GERCEKTEN yanitladigi uc soru kondu. */}
+      <OzetSeridi>
+        <OzetKarti
+          etiket={t("planOzetAktif")}
+          deger={String(aktifPlan)}
+          durum="olumlu"
+          ikon={<PlanIkonu yol={IKON_ROTA} />}
+        />
+        <OzetKarti
+          etiket={t("planOzetToplam")}
+          deger={String(data?.meta?.total ?? 0)}
+          durum="notr"
+          ikon={<PlanIkonu yol={IKON_LISTE} />}
+          altBilgi={pasifPlan > 0 ? t("planOzetPasifAlt", { n: pasifPlan }) : undefined}
+        />
+        <OzetKarti
+          etiket={t("planOzetNokta")}
+          deger={String(checkpoints?.meta?.total ?? 0)}
+          durum="bilgi"
+          ikon={<PlanIkonu yol={IKON_NOKTA} />}
+          href="/checkpoints"
+        />
+        <OzetKarti
+          etiket={t("planOzetVardiya")}
+          deger={String(shifts?.meta?.total ?? 0)}
+          durum="notr"
+          ikon={<PlanIkonu yol={IKON_SAAT} />}
+          href="/shifts"
+        />
+      </OzetSeridi>
 
       {/* Vardiya listesi cekilemediyse SECIM EKSIK olur; sessiz kalmak
           "bu planin vardiyasi yok" yanilgisini uretir. */}

@@ -486,6 +486,28 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
         <section className="relative z-10 flex min-w-0 items-center justify-center px-4 pb-12 sm:px-8 lg:pb-0">
           <motion.form
             onSubmit={onSubmit}
+            /**
+             * (P245) `method="post"` — PAROLA ADRES CUBUGUNA YAZILMASIN.
+             *
+             * OLCULEN KUSUR: ekran goruntusu hatti kurulurken form,
+             * hidrasyon TAMAMLANMADAN gonderildi ve tarayici NATIVE
+             * gonderim yapti. `<form>`un varsayilani GET oldugu icin
+             * kimlik ve PAROLA adres cubuguna dustu:
+             *   /login?username=...&password=...
+             * Oradan tarayici gecmisine, referrer basligina ve sunucu
+             * erisim gunluklerine gider.
+             *
+             * `onSubmit` bunu normalde engeller — ama YALNIZ JS hazirsa.
+             * Hidrasyon gecikmesi, JS hatasi ya da yavas ag, formu bir
+             * anligina korumasiz birakiyordu.
+             *
+             * `method="post"` o pencerede de paroladan adres cubugunu
+             * korur: gonderim govdeye gider. Sunucuda bu yolu karsilayan
+             * bir POST islevi YOKTUR (405) ve olmasi da gerekmez —
+             * istenen sey basarili bir gonderim degil, SIZMAYAN bir
+             * basarisizlik.
+             */
+            method="post"
             initial={{ opacity: 0, y: 30, scale: 0.97 }}
             animate={
               basarili

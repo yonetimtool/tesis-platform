@@ -3,6 +3,20 @@
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 
+// (P245) OZET SERIDI IKONLARI.
+const IKON_NOKTA = "M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11ZM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z";
+const IKON_ONAY = "M20 6 9 17l-5-5";
+const IKON_TARA = "M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M3 12h18";
+
+function NoktaIkonu({ yol }: { yol: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor"
+      strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={yol} />
+    </svg>
+  );
+}
+
 import {
   Alan,
   AlanSarmal,
@@ -16,6 +30,9 @@ import {
   type Kolon,
   type TabloDurumu,
   useOnay,
+  OzetKarti,
+  OzetSeridi,
+  SayfaBasligi,
 } from "@/components/ui";
 import { RotaSahnesiYukleyici } from "@/components/3d/sahne-yukleyici";
 import { KonumHaritasiYukleyici } from "@/components/harita/harita-yukleyici";
@@ -202,6 +219,11 @@ export default function CheckpointsPage() {
     () => new Set((okutmalar?.items ?? []).map((o) => o.checkpoint_id)),
     [okutmalar],
   );
+  // OZET SAYILARI: toplam `meta.total`dan (liste sayfali), aktif/pasif
+  // ayrimi gorunen sayfadan — kontrol noktasi sayisi tek sayfaya sigar.
+  const aktifNokta = (data?.items ?? []).filter((c) => c.aktif).length;
+  const pasifNokta = (data?.items ?? []).length - aktifNokta;
+
   const alarmlar = useMemo(
     () => alarmHaritasi((pano?.alarm_gruplari ?? []) as AlarmGrubu[]),
     [pano],
@@ -371,15 +393,45 @@ export default function CheckpointsPage() {
   );
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-          {t("kabukNfcNoktalari")}
-        </h1>
-        <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
-          {t("noktaYeni")}
-        </Dugme>
-      </div>
+    <div>
+      <SayfaBasligi
+        baslik={t("kabukNfcNoktalari")}
+        aciklama={t("noktaSayfaAlt")}
+        eylem={
+          <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
+            {t("noktaYeni")}
+          </Dugme>
+        }
+      />
+
+      {/* (P245) OZET SERIDI — referansta (ui3) NFC ekraninin ustunde
+          "Aktif / Pasif / Bakimda" serisi var. Bizde durum alani
+          `aktif` (iki degerli); UC durumlu bir serit, hicbir zaman
+          dolmayacak bir kart ilan ederdi.
+          UCUNCU KART BUGUN OKUTULAN: bu ekranin asil sorusu "noktalar
+          calisiyor mu" ve yanit okutma raporunda. */}
+      <OzetSeridi>
+        <OzetKarti
+          etiket={t("noktaOzetToplam")}
+          deger={String(data?.meta?.total ?? 0)}
+          durum="notr"
+          ikon={<NoktaIkonu yol={IKON_NOKTA} />}
+        />
+        <OzetKarti
+          etiket={t("noktaOzetAktif")}
+          deger={String(aktifNokta)}
+          durum={aktifNokta > 0 ? "olumlu" : "uyari"}
+          ikon={<NoktaIkonu yol={IKON_ONAY} />}
+          altBilgi={pasifNokta > 0 ? t("noktaOzetPasifAlt", { n: pasifNokta }) : undefined}
+        />
+        <OzetKarti
+          etiket={t("noktaOzetOkutulan")}
+          deger={String(okutulanIdler.size)}
+          durum="bilgi"
+          ikon={<NoktaIkonu yol={IKON_TARA} />}
+          altBilgi={t("noktaOzetOkutulanAlt")}
+        />
+      </OzetSeridi>
 
       {/* FORM ARTIK MODALDA. Odak tuzagi, ESC ve kapanista odagin geri
           donmesi `Modal`dan geliyor. */}

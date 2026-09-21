@@ -42,13 +42,41 @@ const HESAPLAR = {
 async function girisYap(sayfa, rol) {
   const h = HESAPLAR[rol];
   await sayfa.goto(`${h.taban}/login`, { waitUntil: "networkidle" });
-  await sayfa.fill("#yz-kimlik", h.kimlik);
-  await sayfa.fill("#yz-parola", h.parola);
-  await sayfa.click('button[type="submit"]');
-  await sayfa.waitForURL((u) => !u.pathname.includes("/login"), { timeout: 45000 });
+  /**
+   * HIDRASYON BEKLENIR — ve beklemek YETMEZSE TEKRAR DENENIR.
+   *
+   * OLCULEN KUSUR: form JS hazir olmadan gonderilince tarayici NATIVE
+   * gonderim yapiyor ve sayfa `/login`de kaliyordu (sekiz rotanin
+   * yedisi bu yuzden zaman asimina dustu). "Bir sure bekle" cozumu yine
+   * bir TAHMINDIR; onun yerine SONUC olculur: giris olduysa adres
+   * degisir, olmadiysa yeniden denenir.
+   */
+  for (let deneme = 1; deneme <= 4; deneme += 1) {
+    await sayfa.waitForTimeout(deneme * 1200);
+    await sayfa.fill("#yz-kimlik", h.kimlik);
+    await sayfa.fill("#yz-parola", h.parola);
+    await sayfa.click('button[type="submit"]');
+    try {
+      await sayfa.waitForURL((u) => !u.pathname.includes("/login"), { timeout: 12000 });
+      return;
+    } catch {
+      // Native gonderim sayfayi yeniden yukleyebilir; alanlar bosalir.
+      await sayfa.goto(`${h.taban}/login`, { waitUntil: "networkidle" }).catch(() => {});
+    }
+  }
+  throw new Error("giris yapilamadi");
 }
 
-async function cek({ rol, tema, mod, ad }) {
+/**
+ * (P245) TEK OTURUM, COK ROTA.
+ *
+ * Ilk surum her rota icin yeniden giris yapiyordu; sekiz ardisik giris
+ * sonrasinda hepsi ZAMAN ASIMINA dustu (giris ucu ard arda denemeleri
+ * sinirliyor — dogru davranis). Oturum bir kez acilir ve tum rotalar
+ * ayni baglamda gezilir: hem hizli hem de gercek kullanicinin yaptigi
+ * sey bu.
+ */
+async function cekHepsi({ rol, tema, mod, rotalar }) {
   TABAN = HESAPLAR[rol].taban;
   const tarayici = await chromium.launch();
   const baglam = await tarayici.newContext({
@@ -57,81 +85,72 @@ async function cek({ rol, tema, mod, ad }) {
     colorScheme: tema === "koyu" ? "dark" : "light",
     locale: "tr-TR",
   });
+  await baglam.addCookies([
+    { name: "tema", value: tema === "koyu" ? "dark" : "light", url: TABAN },
+    { name: "gorunum", value: mod, url: TABAN },
+  ]);
+  // Kurulum hatirlaticisi SAYFA YUKLENMEDEN kapatilir (hidrasyon
+  // bitmeden tiklamak modali geri getiriyordu).
+  await baglam.addInitScript(() => {
+    try {
+      localStorage.setItem("yonetio.kurulum.kapatildi", "1");
+    } catch {}
+  });
   const sayfa = await baglam.newPage();
   try {
     await girisYap(sayfa, rol);
-    // TEMA ve GORUNUM CEREZLE tasinir (`lib/tema.ts`, `lib/gorunum.ts`) —
-    // SSR ilk karede onu okur, boylece titreme olmaz. `localStorage`a
-    // yazmak yanlis katmandi.
-    await baglam.addCookies([
-      { name: "tema", value: tema === "koyu" ? "dark" : "light", url: TABAN },
-      { name: "gorunum", value: mod, url: TABAN },
-    ]);
-    // ILK GIRIS TURU (P243 §6) ekrani kapatir: goruntu onun altinda
-    // kalirdi. Turu "gorulmus" isaretlemek, gercek kullanicinin ikinci
-    // girisindeki durumu vermek demektir.
-    await sayfa.goto(`${TABAN}/dashboard`, { waitUntil: "networkidle" });
-    // KURULUM HATIRLATICISI `localStorage` ile kapanir; isareti SAYFA
-    // YUKLENMEDEN once yaziyoruz. Tiklamayla kapatmak, hidrasyon
-    // tamamlanmadan once tiklama riski tasiyor ve modal geri geliyordu.
-    await sayfa.addInitScript(() => {
-      try {
-        localStorage.setItem("yonetio.kurulum.kapatildi", "1");
-      } catch {}
-    });
-    // Turu SUNUCUDA gorulmus isaretle: isaret `app_user.tur_goruldu_at`
-    // (goc 0148) ve dugmeye tiklamak ayni ucu cagirir. Dogrudan cagirmak
-    // hem daha guvenilir hem de gercek kullanicinin IKINCI girisindeki
-    // durumu verir.
+    // Ilk-giris turunun isareti SUNUCUDA (`app_user.tur_goruldu_at`).
     await sayfa.request.post(`${TABAN}/api/me/tur-goruldu`).catch(() => {});
-    await sayfa.reload({ waitUntil: "networkidle" });
 
-
-    // ISINMA TURU — `next dev` ROTAYI TALEP UZERINE DERLER.
-    //
-    // OLCULDU: ilk ekran goruntusunde mali kartlar ve tahsilat halkasi
-    // BOS cikti; sebep veri degil, DERLEME GECIKMESIYDI.
-    await sayfa.waitForTimeout(2500);
-    await sayfa.reload({ waitUntil: "networkidle" });
-
-    // SABIT BEKLEME YETMEZ — VERIYE BAGLI KOSUL BEKLENIR.
-    //
-    // Ikinci olcumde sayfa YARIM yakalandi: iskeletler, "Henuz duyuru
-    // yok", bos maket. Sabit bir sure, derleme + SWR + WebGL'in ne kadar
-    // surecegini TAHMIN etmektir; goruntu de o tahminin dogru olup
-    // olmadigina gore degisir. Onun yerine gorunmesi GEREKEN seyler
-    // beklenir.
-    await sayfa
-      .locator('[data-test="pano-kahraman"]')
-      .waitFor({ state: "visible", timeout: 30000 })
-      .catch(() => {});
-    // ISKELET YOKLUGU YETMEZ — ICERIK VARLIGI BEKLENIR.
-    //
-    // `.animate-pulse` sayisi, iskeletler HENUZ MONTE EDILMEDEN once de
-    // sifirdir; o kosul "yuklendi" degil "daha baslamadi" anlamina da
-    // gelebiliyordu ve goruntu yine yarim cikti. Beklenen sey artik
-    // VERININ KENDISI: KPI seridinde kart var mi.
-    await sayfa
-      .waitForFunction(
-        () => {
-          const g = document.body.innerText;
-          // KPI seridi `building-map` gelince cizilir; duyuru karti da
-          // veri gelince bos durumdan cikar.
-          return g.includes("Toplam daire") && !g.includes("Henüz duyuru yok");
-        },
-        { timeout: 45000 },
-      )
-      .catch(() => {});
-    // 3B sahne WebGL ile cizilir; tuval gorununce kare hazirdir.
-    if (await sayfa.locator("canvas").count()) {
-      await sayfa.locator("canvas").first().waitFor({ state: "visible", timeout: 20000 }).catch(() => {});
+    for (const rota of rotalar) {
+      const ad =
+        rota === "/dashboard"
+          ? `ozet-${rol}-${tema}-${mod}`
+          : `${rota.replace(/\//g, "")}-${rol}-${tema}`;
+      try {
+        await sayfa.goto(`${TABAN}${rota}`, { waitUntil: "networkidle" });
+        // SABIT BEKLEME YETMEZ — ICERIK BEKLENIR. Sabit sure, derleme +
+        // SWR + WebGL suresini TAHMIN etmektir ve goruntu iki kez YARIM
+        // cikmisti.
+        await sayfa
+          .waitForFunction(
+            (ozetMi) => {
+              const g = document.body.innerText;
+              if (!ozetMi) {
+                // ICERIK VAR **ve** ISKELET YOK.
+                //
+                // Yalniz "metin uzunlugu" bakmak yetmiyordu: sayfa
+                // basligi hemen cizilir, tablo hala iskelettir ve
+                // goruntu YARIM cikar (olculdu: /patrol-plans).
+                // Iskelet parcasi `motion-safe:animate-pulse` tasir.
+                const iskelet = document.querySelectorAll(
+                  '[class*="animate-pulse"]',
+                ).length;
+                return g.length > 200 && iskelet === 0;
+              }
+              return g.includes("Toplam daire") && !g.includes("Henüz duyuru yok");
+            },
+            rota === "/dashboard",
+            { timeout: 45000 },
+          )
+          .catch(() => {});
+        if (await sayfa.locator("canvas").count()) {
+          await sayfa
+            .locator("canvas")
+            .first()
+            .waitFor({ state: "visible", timeout: 15000 })
+            .catch(() => {});
+        }
+        await sayfa.waitForTimeout(2500);
+        const yol = `${CIKTI}/${ad}.png`;
+        await sayfa.screenshot({ path: yol, fullPage: true });
+        console.log("OK  ", yol);
+      } catch (e) {
+        console.log("HATA", ad, String(e).split("\n")[0]);
+      }
     }
-    await sayfa.waitForTimeout(3500);
-    const yol = `${CIKTI}/${ad}.png`;
-    await sayfa.screenshot({ path: yol, fullPage: true });
-    console.log("OK  ", yol);
   } catch (e) {
-    console.log("HATA", ad, String(e).split("\n")[0]);
+    console.log("GIRIS HATASI", rol, String(e).split("\n")[0]);
   } finally {
     await tarayici.close();
   }
@@ -140,4 +159,7 @@ async function cek({ rol, tema, mod, ad }) {
 const rol = process.argv[2] ?? "yonetici";
 const tema = process.argv[3] ?? "acik";
 const mod = process.env.YZ_MOD ?? "standart";
-await cek({ rol, tema, mod, ad: `ozet-${rol}-${tema}-${mod}` });
+
+// `YZ_ROTALAR=/kameralar,/olaylar` -> her rota icin ayri goruntu.
+const rotalar = (process.env.YZ_ROTALAR ?? "/dashboard").split(",").filter(Boolean);
+await cekHepsi({ rol, tema, mod, rotalar });

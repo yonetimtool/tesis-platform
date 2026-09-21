@@ -23,7 +23,25 @@
 import { useState } from "react";
 import useSWR from "swr";
 
-import { Alan, BosDurum, Dugme, HataDurumu, Kart, Modal, Rozet, Tablo, TabloBasligi, Td, Th, Tr } from "@/components/ui";
+// (P245) OZET SERIDI IKONLARI.
+const IKON_ALARM = "M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z";
+const IKON_TAKVIM = "M7 3v4M17 3v4M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z";
+const IKON_ONAY = "M20 6 9 17l-5-5";
+
+function PanikIkonu({ yol }: { yol: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor"
+      strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={yol} />
+    </svg>
+  );
+}
+
+import { Alan, BosDurum, Dugme, HataDurumu, Kart, Modal, Rozet, Tablo, TabloBasligi, Td, Th, Tr,
+  OzetKarti,
+  OzetSeridi,
+  SayfaBasligi
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
@@ -105,16 +123,51 @@ export default function PanikPage() {
 
   const satirlar = data?.items ?? [];
 
+  // SAYILAR GORUNEN LISTEDEN ve bu BILINCLI: uc durum suzgeci
+  // sunmuyor ve panik cagrisi tesis basina gunde birkac kayittir —
+  // sayfalama sinirina carpmaz.
+  const acikCagri = satirlar.filter((a) => a.kapandi_at == null).length;
+  const kapananCagri = satirlar.length - acikCagri;
+  const bugunBasi = new Date();
+  bugunBasi.setHours(0, 0, 0, 0);
+  const bugunCagri = satirlar.filter(
+    (a) => new Date(a.created_at).getTime() >= bugunBasi.getTime(),
+  ).length;
+
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-          {t("panikTakipBaslik")}
-        </h1>
-        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-          {t("panikTakipAlt")}
-        </p>
-      </div>
+    <div>
+      <SayfaBasligi baslik={t("panikTakipBaslik")} aciklama={t("panikTakipAlt")} />
+
+      {/* (P245) OZET SERIDI — referansta (ui3) "Acil Durum Cagrilari"
+          ekraninin ustunde dort kart var: aktif cagri, bugun toplam,
+          ortalama mudahale, zamaninda oran.
+          -----------------------------------------------------------------
+          ORTALAMA MUDAHALE ve ZAMANINDA ORANI UYDURULMADI: ikisi de
+          cagri basina "mudahale baslangici" damgasi ister; kayitta
+          `created_at` ve `kapandi_at` var, ARADAKI adim YOK. Sunucu
+          onu vermeden hesaplanan bir "4 dk", olculmemis bir sayidir.
+          Yerine bu listenin GERCEKTEN yanitladigi uc soru kondu. */}
+      <OzetSeridi>
+        <OzetKarti
+          etiket={t("panikOzetAcik")}
+          deger={String(acikCagri)}
+          durum={acikCagri > 0 ? "kritik" : "olumlu"}
+          ikon={<PanikIkonu yol={IKON_ALARM} />}
+          altBilgi={acikCagri > 0 ? t("panikOzetAcikAlt") : undefined}
+        />
+        <OzetKarti
+          etiket={t("panikOzetBugun")}
+          deger={String(bugunCagri)}
+          durum="bilgi"
+          ikon={<PanikIkonu yol={IKON_TAKVIM} />}
+        />
+        <OzetKarti
+          etiket={t("panikOzetKapanan")}
+          deger={String(kapananCagri)}
+          durum="olumlu"
+          ikon={<PanikIkonu yol={IKON_ONAY} />}
+        />
+      </OzetSeridi>
 
       <HataDurumu mesaj={error ? t("ortakHataOlustu") : null} />
 

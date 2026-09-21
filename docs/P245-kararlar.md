@@ -162,3 +162,103 @@ alındı: **denetçi** ve **admin**.
 `npm run dogrula` (tsc + next lint + vitest + **next build**) →
 **çıkış kodu 0** · **2121 test yeşil** · **YENİ** `p245-ozet-duzeni`
 (7 iddia); iki kırma denendi, ikisi de yakalandı.
+
+---
+
+# P245 §2 — GÜVENLİK GRUBU (ui3)
+
+Referans: **`ui3.png`** — dokuz güvenlik ekranı.
+
+## 6. Ölçülen ortak desen
+
+ui3'teki dokuz ekranın **hepsinde** aynı iskelet var: başlık + bir
+cümlelik açıklama → **KPI şeridi** → filtre çubuğu → yoğun tablo.
+
+Playwright ile yedi ekranı topluca görüntüledim. Ölçüm:
+
+| ekran | başlık | KPI | filtre |
+|---|---|---|---|
+| `/arac-gecisleri` | ✔ | ✔ | ✔ (P244 §6a) |
+| `/kameralar`, `/olaylar` | ✔ | ✔ | ✘ |
+| `/patrol-plans`, `/checkpoints`, `/panik`, `/akilli-ev`, `/vardiya-plani`, `/kamera-kayitlari` | ✘ | ✘ | ✘ |
+
+Yani altı ekran **üçünden hiçbirine** sahip değildi — `/patrol-plans`
+çıplak bir başlık ve tek satırlık bir tablodan ibaretti.
+
+Bu turda **dördü** kapatıldı: `/patrol-plans`, `/checkpoints`,
+`/panik`, `/akilli-ev`.
+
+## 7. UYDURULMAYAN SAYILAR — açıkça
+
+Referansın KPI'ları her zaman bizde karşılığı olan sayılar değil:
+
+* **Devriye Planları** — ui3 *"%92 Tamamlanma"* ve *"2 Aksama"* diyor.
+  İkisi de plan listesinde **yok**, tur geçmişinde. Yerine bu listenin
+  gerçekten yanıtladığı dört soru kondu (aktif plan, toplam plan,
+  kontrol noktası, vardiya).
+* **Acil Durum Çağrıları** — ui3 *"4 dk Ort. Müdahale"* ve *"%96
+  Zamanında"* diyor. İkisi de çağrı başına **müdahale başlangıcı**
+  damgası ister; kayıtta `created_at` ve `kapandi_at` var, **aradaki
+  adım yok**. Sunucu onu vermeden hesaplanan bir "4 dk" ölçülmemiş bir
+  sayıdır.
+* **NFC Noktaları** — ui3 "Aktif / Pasif / **Bakımda**" diyor; bizde
+  durum alanı iki değerli (`aktif`). Üç durumlu bir şerit, hiçbir zaman
+  dolmayacak bir kart ilan ederdi. Üçüncü kart yerine **bugün okutulan**
+  kondu — bu ekranın asıl sorusu "noktalar çalışıyor mu".
+
+## 8. Hat iki GERÇEK KUSUR daha buldu
+
+### 8.1 Giriş formu parolayı ADRES ÇUBUĞUNA yazıyordu
+
+Ekran görüntüsü betiği formu **hidrasyon tamamlanmadan** gönderdi ve
+tarayıcı **native** gönderim yaptı. `<form>`un varsayılanı GET olduğu
+için kimlik ve **parola** adres çubuğuna düştü:
+
+```
+/login?username=...&password=...
+```
+
+Oradan tarayıcı geçmişine, `Referer` başlığına ve sunucu erişim
+günlüklerine gider.
+
+`onSubmit` bunu normalde engeller — **ama yalnız JS hazırsa**.
+Hidrasyon gecikmesi, JS hatası ya da yavaş ağ formu bir anlığına
+korumasız bırakıyordu. `method="post"` eklendi: o pencerede de gönderim
+gövdeye gider. Sunucuda bu yolu karşılayan bir POST işlevi **yok** (405)
+ve olması da gerekmiyor — istenen şey başarılı bir gönderim değil,
+**sızmayan bir başarısızlık**.
+
+### 8.2 `npm run build` çalışan dev sunucusunu bozuyor
+
+Yarım saat "giriş çalışmıyor" diye aradım. Kök neden: `next.config`
+`output: "standalone"` ve `npm run dogrula` içindeki `next build`,
+çalışan `next dev`in `.next` dizinini **eziyor**. Statik parçalar 404
+dönüyor, React hiç yüklenmiyor, sayfa sunucu çizimi olarak "çalışıyor"
+görünüyor ama **hiçbir şey tıklanmıyor**.
+
+**Kural:** ekran görüntüsü alırken `npm run dogrula` koşulmaz; zincir
+en sona bırakılır ve sonrasında dev sunucusu yeniden başlatılır.
+
+## 9. Betikteki iki yöntem hatası (ikisi de ölçümle bulundu)
+
+* **Ard arda giriş**: her rota için yeniden giriş yapılıyordu; sekiz
+  ardışık denemede hepsi zaman aşımına düştü. Tek oturum, çok rota.
+* **"İçerik var" yetmedi**: `innerText.length > 200` koşulu sayfa
+  başlığı çizilir çizilmez doğru oluyordu ve tablo hâlâ iskeletken
+  görüntü alınıyordu (`/patrol-plans` yarım çıktı). Koşul artık
+  **içerik var VE iskelet yok**.
+
+## 10. Bu turda YAPILMAYAN — açıkça
+
+* `/vardiya-plani` (1353 satır) ve `/kamera-kayitlari` (270) —
+  başlık/KPI/filtre üçlüsü **eklenmedi**.
+* Altı ekranın hiçbirine **filtre çubuğu** eklenmedi; bu tur KPI
+  şeridine ve başlığa odaklandı.
+* `ui3`ün "Bildirimler" ekranı (`/notifications`) ölçülmedi.
+* Diğer beş grup (tesis, finans, operasyon, iletişim, tanımlar) bu turda
+  açılmadı.
+
+## 11. Doğrulama
+
+`npm run dogrula` → **çıkış kodu 0** · **2121 test yeşil**.
+Ekran görüntüleri: `docs/P245/` altında güvenlik grubundan yedi ekran.
