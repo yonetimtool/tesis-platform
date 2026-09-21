@@ -3401,4 +3401,12 @@ export const ru: Sozluk = {
   yetkiOzetKapisiz: "Без ролевого барьера",
   yetkiOzetKapisizAlt: "Это не значит «открыто всем»",
   ayarSayfaAlt: "Мастер настройки, напоминание и настройки панели.",
+  kullaniciSayfaAlt: "Все учётные записи комплекса, их роли и привязки к квартирам.",
+  kullaniciOzetAktif: "Активные учётные записи",
+  kullaniciOzetSakin: "Жильцы",
+  kullaniciOzetPasif: "Неактивные учётные записи",
+  kullaniciOzetPasifAlt: "Не может войти",
+  kullaniciRolHepsi: "Все роли",
+  kullaniciDurumHepsi: "Активные и неактивные",
+  profilSayfaAlt: "Данные учётной записи, безопасность, уведомления и правовые документы.",
 };

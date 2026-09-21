@@ -10,9 +10,13 @@ import {
   AlanSarmal,
   AramaAlani,
   Dugme,
+  FiltreCubugu,
   HataDurumu,
   Modal,
+  OzetKarti,
+  OzetSeridi,
   Rozet,
+  SayfaBasligi,
   Secim,
   VeriTablosu,
   type Kolon,
@@ -97,6 +101,21 @@ const DURUM_OLUMLU = "olumlu" as const;
 const DURUM_NOTR = "notr" as const;
 
 const ROL_SAKIN = "resident" as const;
+const AKTIF_EVET = "true" as const;
+const AKTIF_HAYIR = "false" as const;
+
+const IKON_KISILER = "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75";
+const IKON_EV = "M3 10.5 12 3l9 7.5M5 9.5V21h14V9.5M10 21v-6h4v6";
+const IKON_KAPALI = "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM5.6 5.6l12.8 12.8";
+
+function Ikon({ yol }: { yol: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor"
+      strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={yol} />
+    </svg>
+  );
+}
 
 /** (P218) Kullanicinin dairedeki sifati — ARAYUZ kavrami. */
 type DaireSifati = "malik" | "kiraci" | "malik_oturan";
@@ -204,6 +223,19 @@ export default function UsersPage() {
   if (role) qs.set("role", role);
   if (aktif) qs.set("is_active", aktif);
   if (q.trim()) qs.set("q", q.trim());
+  // Sayaclar ayri sorgulardan (`?...&limit=1` -> `meta.total`).
+  const { data: aktifSayi } = useSWR<UserListResponse>(
+    `/api/users?limit=1&offset=0&is_active=${AKTIF_EVET}`,
+    jsonFetcher,
+  );
+  const { data: pasifSayi } = useSWR<UserListResponse>(
+    `/api/users?limit=1&offset=0&is_active=${AKTIF_HAYIR}`,
+    jsonFetcher,
+  );
+  const { data: sakinSayi } = useSWR<UserListResponse>(
+    `/api/users?limit=1&offset=0&role=${ROL_SAKIN}`,
+    jsonFetcher,
+  );
   const { data, error, isLoading, mutate } = useSWR<UserListResponse>(
     `/api/users?${qs.toString()}`,
     jsonFetcher,
@@ -552,31 +584,97 @@ export default function UsersPage() {
   );
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-          {t("kabukKullanicilar")}
-        </h1>
-        <div className="flex flex-wrap gap-2">
-          {/* (P154 / Asama 5) EXCEL ILE TOPLU SAKIN YUKLEME — brief:
-              "Asama 8'deki import framework'u kullanacak, AYRI YUKLEME
-              KODU YAZMA". Bu yuzden burada bir yukleme formu YOK,
-              catiya yonlendirme var. */}
-          <Link href="/ice-aktarim?tur=kisi">
-            <Dugme boy="kucuk">{t("kullaniciTopluYukle")}</Dugme>
-          </Link>
-          {/* (P193 §7 / eksik 10) ODEME KODLARI. Banka eslestirmesinin
-              kesin calismasi sakinin havale aciklamasina kendi kodunu
-              yazmasina bagli; kod sakinin uygulamasinda gorunuyordu ama
-              yonetici goremiyor, dolayisiyla DUYURAMIYORDU. */}
-          <Dugme boy="kucuk" onClick={() => void odemeKodlariniAc()}>
-            {t("kullaniciOdemeKodlari")}
-          </Dugme>
-          <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
-            {t("kullaniciYeni")}
-          </Dugme>
-        </div>
-      </div>
+    <div>
+      <SayfaBasligi
+        baslik={t("kabukKullanicilar")}
+        aciklama={t("kullaniciSayfaAlt")}
+        eylem={
+          <div className="flex flex-wrap gap-2">
+            {/* (P154 / Asama 5) EXCEL ILE TOPLU SAKIN YUKLEME — brief:
+                "Asama 8'deki import framework'u kullanacak, AYRI YUKLEME
+                KODU YAZMA". Bu yuzden burada bir yukleme formu YOK,
+                catiya yonlendirme var. */}
+            <Link href="/ice-aktarim?tur=kisi">
+              <Dugme boy="kucuk">{t("kullaniciTopluYukle")}</Dugme>
+            </Link>
+            {/* (P193 §7 / eksik 10) ODEME KODLARI. Banka eslestirmesinin
+                kesin calismasi sakinin havale aciklamasina kendi kodunu
+                yazmasina bagli; kod sakinin uygulamasinda gorunuyordu ama
+                yonetici goremiyor, dolayisiyla DUYURAMIYORDU. */}
+            <Dugme boy="kucuk" onClick={() => void odemeKodlariniAc()}>
+              {t("kullaniciOdemeKodlari")}
+            </Dugme>
+            <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
+              {t("kullaniciYeni")}
+            </Dugme>
+          </div>
+        }
+      />
+
+      {/* Sayaclar ayri uclardan gelir: liste hem sayfali hem suzgecli;
+          gorunen sayfadan saymak yanlis bir sayi uretirdi. */}
+      <OzetSeridi>
+        <OzetKarti
+          etiket={t("kullaniciOzetAktif")}
+          deger={String(aktifSayi?.meta?.total ?? 0)}
+          ikon={<Ikon yol={IKON_KISILER} />}
+          durum="olumlu"
+        />
+        <OzetKarti
+          etiket={t("kullaniciOzetSakin")}
+          deger={String(sakinSayi?.meta?.total ?? 0)}
+          ikon={<Ikon yol={IKON_EV} />}
+          durum="bilgi"
+        />
+        <OzetKarti
+          etiket={t("kullaniciOzetPasif")}
+          deger={String(pasifSayi?.meta?.total ?? 0)}
+          ikon={<Ikon yol={IKON_KAPALI} />}
+          durum="notr"
+          altBilgi={t("kullaniciOzetPasifAlt")}
+        />
+      </OzetSeridi>
+
+      <FiltreCubugu
+        arama={
+          <AramaAlani
+            deger={q}
+            onDegisim={(v) => suzgec({ q: v })}
+            etiket={t("kullaniciArama")}
+            yerTutucu={t("kullaniciAramaIpucu")}
+            temizleEtiketi={t("ortakKapat")}
+          />
+        }
+        aktifSayi={(role ? 1 : 0) + (aktif ? 1 : 0) + (q.trim() ? 1 : 0)}
+        onTemizle={() => suzgec({ role: "", aktif: "", q: "" })}
+      >
+        {/* SECIMLER GORUNMEZ ETIKETLI: serit her kontrolun ustune bir
+            etiket satiri koyunca iki kata cikiyordu; ad `aria-label`
+            ile KALIR. */}
+        <Secim
+          aria-label={t("ortakRol")}
+          value={role}
+          onChange={(e) => suzgec({ role: e.target.value })}
+          className="w-auto"
+        >
+          <option value="">{t("kullaniciRolHepsi")}</option>
+          {ROLES.map((r) => (
+            <option key={r.value} value={r.value}>
+              {t(r.anahtar)}
+            </option>
+          ))}
+        </Secim>
+        <Secim
+          aria-label={t("ortakDurum")}
+          value={aktif}
+          onChange={(e) => suzgec({ aktif: e.target.value })}
+          className="w-auto"
+        >
+          <option value="">{t("kullaniciDurumHepsi")}</option>
+          <option value={AKTIF_EVET}>{t("ortakAktif")}</option>
+          <option value={AKTIF_HAYIR}>{t("ortakPasif")}</option>
+        </Secim>
+      </FiltreCubugu>
 
       {/* HATA DURUMU artik TABLONUN ICINDE (`hata` ozelligi). Disarida
           bir dal olsaydi hata cikinca SUZGECLER de kaybolurdu — oysa
@@ -594,52 +692,10 @@ export default function UsersPage() {
           toplam={data?.meta?.total ?? 0}
           durum={durum}
           onDurumDegisti={setDurum}
-          araclar={
-            <div className="flex flex-wrap items-end gap-3">
-              <div className="w-44">
-                <AlanSarmal etiket={t("ortakRol")}>
-                  {(b) => (
-                    <Secim
-                      {...b}
-                      value={role}
-                      onChange={(e) => suzgec({ role: e.target.value })}
-                    >
-                      <option value="">{t("ortakTumu")}</option>
-                      {ROLES.map((r) => (
-                        <option key={r.value} value={r.value}>
-                          {t(r.anahtar)}
-                        </option>
-                      ))}
-                    </Secim>
-                  )}
-                </AlanSarmal>
-              </div>
-              <div className="w-44">
-                <AlanSarmal etiket={t("ortakDurum")}>
-                  {(b) => (
-                    <Secim
-                      {...b}
-                      value={aktif}
-                      onChange={(e) => suzgec({ aktif: e.target.value })}
-                    >
-                      <option value="">{t("ortakTumu")}</option>
-                      <option value="true">{t("ortakAktif")}</option>
-                      <option value="false">{t("ortakPasif")}</option>
-                    </Secim>
-                  )}
-                </AlanSarmal>
-              </div>
-              <div className="min-w-[220px] grow">
-                <AramaAlani
-                  deger={q}
-                  onDegisim={(v) => suzgec({ q: v })}
-                  etiket={t("kullaniciArama")}
-                  yerTutucu={t("kullaniciAramaIpucu")}
-                  temizleEtiketi={t("ortakKapat")}
-                />
-              </div>
-            </div>
-          }
+          // YOGUN: kisi listesi taranir; ekrana cok satir sigmasi
+          // satir yuksekliginden daha degerli.
+          yogunluk="sik"
+          yapiskanBaslik
         />
 
       {/* FORM ARTIK MODALDA (brief: "sayfa ustunde alan acma deseni

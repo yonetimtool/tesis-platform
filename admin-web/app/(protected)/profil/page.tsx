@@ -47,6 +47,7 @@ import {
   Dugme,
   HataDurumu,
   IskeletMetin,
+  SayfaBasligi,
   Kart,
   Secim,
   useOnay,
@@ -118,12 +119,23 @@ export default function ProfilPage() {
   );
 
   return (
-    <div className="space-y-6">
-      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-        {t("profilBaslik")}
-      </h1>
+    <div>
+      <SayfaBasligi baslik={t("profilBaslik")} aciklama={t("profilSayfaAlt")} />
 
       {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
+
+      {/* (P244 §9b) BU SAYFA `UstaDetayDuzeni`YE CEVRILMEDI ve bu
+          olculmus bir karar, atlanmis bir is degil:
+            * Sol liste bir `<nav>` ve bu P169 §4'te BILINCLI secilmisti
+              — ekran okuyucu kullanicisi gezinme bolgesini ATLAYABILIR.
+            * "Hesabimi sil" ogesi `tehlikeli` isaretiyle KIRMIZI
+              cizilir; `UstaDetayDuzeni` boyle bir kavram tasimiyor ve
+              sirf tutarlilik icin onu kaybetmek, yikici bir secimi
+              digerleriyle ayni gostermek olurdu.
+            * Alti oge var, on bir degil: `/tanimlar`daki "on bir kez
+              Tab" sorunu burada YOK.
+          Iki ekranin iki desen kullanmasi bir TUTARSIZLIKTIR ve
+          kararlara ACIK MADDE olarak yazildi (asama 10). */}
 
       {/* (P184-ek duzeltme §1) AYRI "beklemede" KARTI KALDIRILDI: e-posta
           dogrulama artik Hesap Bilgileri formundaki e-posta kutusunun kendi

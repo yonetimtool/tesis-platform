@@ -3401,4 +3401,12 @@ export const fr: Sozluk = {
   yetkiOzetKapisiz: "Sans contrôle de rôle",
   yetkiOzetKapisizAlt: "Ne signifie pas public",
   ayarSayfaAlt: "Assistant de configuration, rappel et préférences du panneau.",
+  kullaniciSayfaAlt: "Tous les comptes du site, leurs rôles et rattachements aux logements.",
+  kullaniciOzetAktif: "Comptes actifs",
+  kullaniciOzetSakin: "Résidents",
+  kullaniciOzetPasif: "Comptes inactifs",
+  kullaniciOzetPasifAlt: "Ne peut pas se connecter",
+  kullaniciRolHepsi: "Tous les rôles",
+  kullaniciDurumHepsi: "Actifs et inactifs",
+  profilSayfaAlt: "Vos informations de compte, sécurité, préférences de notification et textes légaux.",
 };

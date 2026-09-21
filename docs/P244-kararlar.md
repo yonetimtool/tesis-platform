@@ -1737,3 +1737,88 @@ ekranın toplamı beş kart, sol liste bir sütun israfı olurdu.
 
 `tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
 **tam takım 246 dosya / 2062 test yeşil.**
+
+---
+
+# AŞAMA 9b — KULLANICILAR + PROFİL · UYGULANDI
+
+## A9b.1 Süzgeçler hata hâlinde kayboluyordu
+
+`/users`ın rol/durum/arama süzgeçleri tablonun **`araclar` yuvasının
+içindeydi**. Tablo hata alınca "tekrar dene" çizer ve süzgeçler
+**onunla birlikte kaybolurdu** — oysa kullanıcının ilk refleksi süzgeci
+değiştirip tekrar denemektir.
+
+Bu, dosyanın kendi yorumunun **zaten söylediği** bir kural: hata
+durumu tablonun içine alınırken "dışarıda bir dal olsaydı hata çıkınca
+SÜZGEÇLER de kaybolurdu" diye yazılmış. Kural doğruydu, uygulama ters
+düşmüştü: süzgeçler de aynı kutunun içindeydi.
+
+`FiltreCubugu` tablonun **dışına** çıktı ve iddia kilitli.
+
+## A9b.2 Sayaçlar: rol süzgeci açıkken "Sakin: 0"
+
+Üç kart (aktif / sakin / pasif) ayrı sorgulardan (`?...&limit=1` →
+`meta.total`). Görünen sayfadan saymak iki kez yanlış olurdu: liste hem
+**sayfalı** (25'lik) hem **süzgeçli** — rol süzgeci açıkken sayaç da
+süzülür ve *"Sakin: 0"* yazardı, oysa sakin var, yalnızca listede yok.
+
+## A9b.3 ÖLÇÜLDÜ: `/users`ta avatar YAPILAMAZ
+
+Plan *"`/users` sekmeli tablo + **avatar** + rol rozeti"* diyordu.
+Sözleşmeyi okudum: `UserListItem` şeması `avatar_url` **vermiyor**
+(`id, ad, email, aranabilir, role, is_active, gorev_*, created_at`).
+Tek-kayıt `User` şemasında da yok.
+
+Uydurulmadı. `uc-sozlesme-kapisi` kilidi zaten buna izin vermezdi ve
+kilit haklı: sözleşmenin vermediği bir alanı okuyan arayüz, bir gün
+sessizce boş çizer. **Avatar istenirse önce sözleşme + backend işidir**
+— arayüz turunun kapsamı değil.
+
+Rol zaten `Rozet` ile noktalı çiziliyor; o kısım **vardı**.
+
+## A9b.4 `/profil` ÇEVRİLMEDİ — ve bu ölçülmüş bir karar
+
+`/profil` **zaten** usta-detay: solda bölüm listesi, sağda içerik.
+`UstaDetayDuzeni`ye çevirmedim, çünkü çevirmek **üç şeyi bozardı**:
+
+* Sol liste bir **`<nav>`** ve bu P169 §4'te bilinçli seçilmiş — ekran
+  okuyucu kullanıcısı gezinme bölgesini **atlayabilir**.
+* **"Hesabımı sil"** öğesi `tehlikeli` işaretiyle kırmızı çiziliyor;
+  `UstaDetayDuzeni` böyle bir kavram taşımıyor. Sırf tutarlılık için
+  onu kaybetmek, yıkıcı bir seçimi diğerleriyle aynı göstermek olurdu.
+* **Altı öğe var, on bir değil**: `/tanimlar`daki "on bir kez Tab"
+  sorunu burada yok.
+
+**AÇIK MADDE (aşama 10):** iki kardeş ekran aynı şekil için **iki
+desen** kullanıyor — `/tanimlar` `role=tablist`, `/profil` `<nav>` +
+`aria-current`. İkisi de geçerli ARIA desenleri ve her birinin bu
+ekrandaki gerekçesi yukarıda yazılı, ama **tutarsızlık gerçek**. Aşama
+10'da ya `UstaDetayDuzeni`ye "tehlikeli öğe" + gezinme semantiği
+eklenip ikisi birleştirilmeli, ya da ayrılık kalıcı bir kural olarak
+yazılmalı. Bu turda sessizce birini ötekine benzetmek, iki gerçek
+davranışı gizlemek olurdu.
+
+## A9b.5 Kilit
+
+**YENİ** `p244-kullanici-ekrani` (3 test). **İki kırma yakalandı:**
+sayaçları görünen listeden türetmek, süzgeçleri tablonun `araclar`
+yuvasına geri koymak.
+
+İkincisi özellikle önemliydi: bu turda **kendi elimle** üretebileceğim
+bir gerilemeydi — süzgeçleri çubuğa taşırken tablonun içinde bırakmak
+da mümkündü.
+
+## A9b.6 Bu turda YAPILMAYAN — açıkça
+
+`/kurulum` (386), `/ice-aktarim` (742), `/dokumanlar` (512),
+`/karar-defteri` (315), `/transparency` (240), `/audit` (225),
+`/tenants` (565) dokunulmadı — aşama 9c.
+
+`/profil`in **iç bölümleri** (hesap, güvenlik, bildirim, yasal, şifre,
+hesap silme) düzen olarak değişmedi; yalnız sayfa başlığı geldi.
+
+## A9b.7 Doğrulama
+
+`tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
+**tam takım 247 dosya / 2065 test yeşil.**

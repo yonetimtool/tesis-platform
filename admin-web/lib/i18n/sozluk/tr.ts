@@ -3464,4 +3464,12 @@ export const tr = {
   yetkiOzetKapisiz: "Rol kapısı yok",
   yetkiOzetKapisizAlt: "Herkese açık demek değil",
   ayarSayfaAlt: "Kurulum sihirbazı, hatırlatıcı ve panel tercihleri.",
+  kullaniciSayfaAlt: "Tesisteki tüm hesaplar, rolleri ve daire bağları.",
+  kullaniciOzetAktif: "Aktif hesap",
+  kullaniciOzetSakin: "Site sakini",
+  kullaniciOzetPasif: "Pasif hesap",
+  kullaniciOzetPasifAlt: "Giriş yapamaz",
+  kullaniciRolHepsi: "Tüm roller",
+  kullaniciDurumHepsi: "Aktif ve pasif",
+  profilSayfaAlt: "Hesap bilgileriniz, güvenlik, bildirim tercihleri ve yasal metinler.",
 } as const;

@@ -3401,4 +3401,12 @@ export const de: Sozluk = {
   yetkiOzetKapisiz: "Keine Rollensperre",
   yetkiOzetKapisizAlt: "Bedeutet nicht öffentlich",
   ayarSayfaAlt: "Einrichtungsassistent, Erinnerung und Panel-Einstellungen.",
+  kullaniciSayfaAlt: "Alle Konten der Anlage, ihre Rollen und Wohnungszuordnungen.",
+  kullaniciOzetAktif: "Aktive Konten",
+  kullaniciOzetSakin: "Bewohner",
+  kullaniciOzetPasif: "Inaktive Konten",
+  kullaniciOzetPasifAlt: "Kann sich nicht anmelden",
+  kullaniciRolHepsi: "Alle Rollen",
+  kullaniciDurumHepsi: "Aktiv und inaktiv",
+  profilSayfaAlt: "Ihre Kontodaten, Sicherheit, Benachrichtigungen und Rechtstexte.",
 };

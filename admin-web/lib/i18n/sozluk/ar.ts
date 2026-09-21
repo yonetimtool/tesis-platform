@@ -3401,4 +3401,12 @@ export const ar: Sozluk = {
   yetkiOzetKapisiz: "بلا بوابة أدوار",
   yetkiOzetKapisizAlt: "لا يعني أنها عامة",
   ayarSayfaAlt: "معالج الإعداد والتذكير وتفضيلات اللوحة.",
+  kullaniciSayfaAlt: "كل الحسابات في المجمع وأدوارها وارتباطها بالوحدات.",
+  kullaniciOzetAktif: "حسابات نشطة",
+  kullaniciOzetSakin: "السكان",
+  kullaniciOzetPasif: "حسابات غير نشطة",
+  kullaniciOzetPasifAlt: "لا يمكنه تسجيل الدخول",
+  kullaniciRolHepsi: "كل الأدوار",
+  kullaniciDurumHepsi: "نشطة وغير نشطة",
+  profilSayfaAlt: "بيانات حسابك والأمان وتفضيلات الإشعارات والنصوص القانونية.",
 };

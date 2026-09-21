@@ -3401,4 +3401,12 @@ export const en: Sozluk = {
   yetkiOzetKapisiz: "No role gate",
   yetkiOzetKapisizAlt: "Does not mean public",
   ayarSayfaAlt: "Setup wizard, reminder and panel preferences.",
+  kullaniciSayfaAlt: "All accounts at the site, their roles and unit links.",
+  kullaniciOzetAktif: "Active accounts",
+  kullaniciOzetSakin: "Residents",
+  kullaniciOzetPasif: "Inactive accounts",
+  kullaniciOzetPasifAlt: "Cannot sign in",
+  kullaniciRolHepsi: "All roles",
+  kullaniciDurumHepsi: "Active and inactive",
+  profilSayfaAlt: "Your account details, security, notification preferences and legal texts.",
 };
