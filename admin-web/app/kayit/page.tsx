@@ -539,7 +539,7 @@ export default function KayitSayfasi() {
       </div>
 
       <div>
-        <p className="text-xs font-medium text-metin-muted">
+        <p className="text-xs font-medium text-[color:var(--yz-text-2)]">
           {t("kayitAdim", { n: String(adimNo), toplam: String(toplamAdim) })}
         </p>
         <h1 className="mt-1 text-2xl font-semibold">{t("kayitBaslik")}</h1>
@@ -550,7 +550,7 @@ export default function KayitSayfasi() {
       {/* ============================ ADIM 1 ============================ */}
       {adim === "rol" && (
         <div className="space-y-3">
-          <p className="text-sm text-metin-body">{t("kayitAltBaslik")}</p>
+          <p className="text-sm text-[color:var(--yz-text)]">{t("kayitAltBaslik")}</p>
           {(
             [
               ["yonetici", t("kayitRolYonetici"), t("kayitRolAciklamaYonetici")],
@@ -560,7 +560,7 @@ export default function KayitSayfasi() {
             <button
               key={deger}
               type="button"
-              className={`${cardCls} w-full px-4 py-3 text-start transition hover:bg-yuzey-divider ${
+              className={`${cardCls} w-full px-4 py-3 text-start transition hover:bg-[color:var(--yz-border)] ${
                 rol === deger ? "ring-2 ring-primary" : ""
               }`}
               aria-pressed={rol === deger}
@@ -572,7 +572,7 @@ export default function KayitSayfasi() {
               }}
             >
               <span className="block font-medium">{baslik}</span>
-              <span className="block text-sm text-metin-muted">{aciklama}</span>
+              <span className="block text-sm text-[color:var(--yz-text-2)]">{aciklama}</span>
             </button>
           ))}
         </div>
@@ -619,7 +619,7 @@ export default function KayitSayfasi() {
                 setTicari={setOnayTicari} t={t}
               />
               {!onaylarTam && (
-                <p className="text-sm text-metin-muted" data-test="kayit-sosyal-onay-uyari">
+                <p className="text-sm text-[color:var(--yz-text-2)]" data-test="kayit-sosyal-onay-uyari">
                   {t("kayitOnayZorunlu")}
                 </p>
               )}
@@ -664,7 +664,7 @@ export default function KayitSayfasi() {
         <form onSubmit={bilgileriGonder} className="space-y-4">
           <h2 className="font-medium">{t("kayitBilgilerBaslik")}</h2>
           {yol === "sosyal" ? (
-            <p className="text-sm text-metin-muted">{t("kayitSosyalAdNotu")}</p>
+            <p className="text-sm text-[color:var(--yz-text-2)]">{t("kayitSosyalAdNotu")}</p>
           ) : null}
           {/* (P222 §2) SAGLAYICI E-POSTA VERMEDI.
               APPLE e-postayi YALNIZ ILK yetkilendirmede paylasir. Kullanici
@@ -740,7 +740,7 @@ export default function KayitSayfasi() {
               kanca="kayit-eposta"
             />
             {yol === "sosyal" ? (
-              <span className="mt-1 block text-xs text-metin-muted">
+              <span className="mt-1 block text-xs text-[color:var(--yz-text-2)]">
                 {sosyalRelay ? t("kayitSosyalRelayNotu") : t("kayitSosyalEpostaNotu")}
               </span>
             ) : null}
@@ -812,22 +812,22 @@ export default function KayitSayfasi() {
           <button
             type="button"
             data-test="kayit-secim-yeni"
-            className={`${cardCls} w-full px-4 py-4 text-start transition hover:bg-yuzey-divider`}
+            className={`${cardCls} w-full px-4 py-4 text-start transition hover:bg-[color:var(--yz-border)]`}
             onClick={() => secimSec("yeni")}
           >
             <span className="block font-medium">{t("kayitSecimYeni")}</span>
-            <span className="block text-sm text-metin-muted">
+            <span className="block text-sm text-[color:var(--yz-text-2)]">
               {t("kayitSecimYeniAciklama")}
             </span>
           </button>
           <button
             type="button"
             data-test="kayit-secim-katil"
-            className={`${cardCls} w-full px-4 py-4 text-start transition hover:bg-yuzey-divider`}
+            className={`${cardCls} w-full px-4 py-4 text-start transition hover:bg-[color:var(--yz-border)]`}
             onClick={() => secimSec("katil")}
           >
             <span className="block font-medium">{t("kayitSecimKatil")}</span>
-            <span className="block text-sm text-metin-muted">
+            <span className="block text-sm text-[color:var(--yz-text-2)]">
               {t("kayitSecimKatilAciklama")}
             </span>
           </button>
@@ -855,7 +855,7 @@ export default function KayitSayfasi() {
                   autoComplete="off"
                   data-test="kayit-tesis-ad"
                 />
-                <span className="mt-1 block text-xs text-metin-muted">
+                <span className="mt-1 block text-xs text-[color:var(--yz-text-2)]">
                   {t("kayitTesisAdIpucu")}
                 </span>
               </label>
@@ -873,7 +873,7 @@ export default function KayitSayfasi() {
                 autoComplete="off"
                 data-test="kayit-tesis-kodu"
               />
-              <span className="mt-1 block text-xs text-metin-muted">
+              <span className="mt-1 block text-xs text-[color:var(--yz-text-2)]">
                 {t("kayitTesisKoduIpucu")}
               </span>
             </label>
@@ -899,7 +899,7 @@ export default function KayitSayfasi() {
         <form onSubmit={kodGonder} className="space-y-4">
           <h2 className="font-medium">{t("kayitKodBaslik")}</h2>
           {/* Kod E-POSTAYA gonderildi; adres listede degilse gelmeyebilir. */}
-          <p className="text-sm text-metin-body">
+          <p className="text-sm text-[color:var(--yz-text)]">
             {t("kayitKodEpostaAciklama", { eposta: eposta.trim() })}
           </p>
           <label className="block">
@@ -935,7 +935,7 @@ export default function KayitSayfasi() {
       {adim === "onay" && (
         <div className="space-y-4">
           <h2 className="font-medium">{t("kayitOnayBekliyorBaslik")}</h2>
-          <p className="text-sm text-metin-body">{t("kayitOnayBekliyorAciklama")}</p>
+          <p className="text-sm text-[color:var(--yz-text)]">{t("kayitOnayBekliyorAciklama")}</p>
           <Link href="/login" className="block">
             <span className={`${btnPrimary} block w-full py-3 text-center`}>
               {t("kayitGirisLinki")}
@@ -948,7 +948,7 @@ export default function KayitSayfasi() {
       {adim === "sonuc" && (
         <div className="space-y-4">
           <h2 className="font-medium">{tesisAd}</h2>
-          <p className="text-sm text-metin-body">{t("kayitTesisKoduBaslik")}</p>
+          <p className="text-sm text-[color:var(--yz-text)]">{t("kayitTesisKoduBaslik")}</p>
           <div className={`${cardCls} flex items-center gap-3 px-4 py-3`}>
             <span
               className="flex-1 select-all text-xl font-semibold tracking-wide"
@@ -970,7 +970,7 @@ export default function KayitSayfasi() {
               {kopyalandi ? t("kayitKopyalandi") : t("kayitKopyala")}
             </button>
           </div>
-          <p className="text-sm text-metin-muted">{t("kayitTesisKoduPaylas")}</p>
+          <p className="text-sm text-[color:var(--yz-text-2)]">{t("kayitTesisKoduPaylas")}</p>
           <button
             type="button"
             data-test="kayit-sonuc-devam"

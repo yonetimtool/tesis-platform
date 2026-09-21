@@ -1192,7 +1192,7 @@ function FloorRow({
   const surukleAcik = Boolean(onBirak);
   return (
     <div
-      className="flex items-start gap-3 border-t border-yuzey-divider pt-3"
+      className="flex items-start gap-3 border-t border-[color:var(--yz-border)] pt-3"
       onDragOver={surukleAcik ? (e) => e.preventDefault() : undefined}
       // Satirin BOSLUGUNA birakmak SONA ekler: kullanici bir daireyi
       // katin sonuna tasimak istediginde son kutuya nisan almak zorunda

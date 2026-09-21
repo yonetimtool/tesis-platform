@@ -139,13 +139,13 @@ export default function DavetSayfasi() {
       </div>
 
       {durum === "yukleniyor" && (
-        <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
+        <p className="text-sm text-[color:var(--yz-text-2)]">{t("ortakYukleniyor")}</p>
       )}
 
       {durum === "gecersiz" && (
         <div className={`${cardCls} space-y-4 p-6`}>
           <h1 className="text-xl font-semibold">{t("davetGecersizBaslik")}</h1>
-          <p className="text-sm text-metin-body">
+          <p className="text-sm text-[color:var(--yz-text)]">
             {hataKodu === "davet_suresi_doldu"
               ? t("davetSuresiDoldu")
               : hataKodu === "davet_kullanilmis"
@@ -154,7 +154,7 @@ export default function DavetSayfasi() {
           </p>
           {/* Yoneticiye yeniden davet gonderttiren yol: kullanici onu arar.
               (Panelde yonetici gitmeyeni gorup yeniden gonderebilir.) */}
-          <p className="text-sm text-metin-muted">{t("davetYoneticinizeBasvurun")}</p>
+          <p className="text-sm text-[color:var(--yz-text-2)]">{t("davetYoneticinizeBasvurun")}</p>
           <MagazaDugmeleri />
         </div>
       )}
@@ -163,7 +163,7 @@ export default function DavetSayfasi() {
         <div className="space-y-5">
           <div>
             <h1 className="text-2xl font-semibold">{t("davetBaslik")}</h1>
-            <p className="mt-1 text-sm text-metin-body">
+            <p className="mt-1 text-sm text-[color:var(--yz-text)]">
               {t("davetOzet", {
                 tesis: cozum.tesis_ad,
                 rol: ROL_ANAHTARI[cozum.rol]
@@ -173,12 +173,12 @@ export default function DavetSayfasi() {
             </p>
             <dl className="mt-3 space-y-1 text-sm">
               <div className="flex justify-between gap-4">
-                <dt className="text-metin-muted">{t("davetTelefon")}</dt>
+                <dt className="text-[color:var(--yz-text-2)]">{t("davetTelefon")}</dt>
                 <dd className="font-mono">{cozum.telefon_maskeli}</dd>
               </div>
               {cozum.daire_no ? (
                 <div className="flex justify-between gap-4">
-                  <dt className="text-metin-muted">{t("binaDaireNo")}</dt>
+                  <dt className="text-[color:var(--yz-text-2)]">{t("binaDaireNo")}</dt>
                   <dd>{cozum.daire_no}</dd>
                 </div>
               ) : null}
@@ -285,8 +285,8 @@ function MagazaDugmeleri() {
   );
 
   return (
-    <div className="space-y-2 border-t kart-kenar pt-4">
-      <p className="text-xs text-metin-muted">{t("davetUygulamaIndir")}</p>
+    <div className="space-y-2 border-t border-[color:var(--yz-border)] pt-4">
+      <p className="text-xs text-[color:var(--yz-text-2)]">{t("davetUygulamaIndir")}</p>
       {/* Platforma gore SIRALA: kullanicinin magazasi ustte. */}
       {platform === "ios" ? (
         <>

@@ -281,7 +281,7 @@ export default function SupportPage() {
               <Foto
                 src={secili.foto_url}
                 alt={t("destekTalepGorseli")}
-                className="mt-3 h-48 w-full rounded-lg border kart-kenar object-contain dark:border-slate-700"
+                className="mt-3 h-48 w-full rounded-lg border border-[color:var(--yz-border)] object-contain dark:border-slate-700"
               />
             ) : null}
             <AlanSarmal etiket={t("destekYanit")}>
@@ -301,7 +301,7 @@ export default function SupportPage() {
                 <Foto
                   src={secili.admin_cevap_foto_url}
                   alt={t("destekYanitGorseli")}
-                  className="mt-1 h-40 w-full rounded-lg border kart-kenar object-contain dark:border-slate-700"
+                  className="mt-1 h-40 w-full rounded-lg border border-[color:var(--yz-border)] object-contain dark:border-slate-700"
                 />
               </div>
             ) : null}

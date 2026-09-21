@@ -43,7 +43,7 @@ export function EkranYardimi() {
         aria-label={t("yardimAc")}
         title={t("yardimAc")}
         data-test="ekran-yardimi"
-        className="odak-ic kart-kenar rounded-lg border p-2 text-metin-body transition hover:bg-yuzey-divider"
+        className="odak-ic border-[color:var(--yz-border)] rounded-lg border p-2 text-[color:var(--yz-text)] transition hover:bg-[color:var(--yz-border)]"
       >
         <svg
           viewBox="0 0 24 24"

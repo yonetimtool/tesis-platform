@@ -63,7 +63,7 @@ export function DilSecici() {
           role="listbox"
           // `end-0`: RTL'de de dogru kenara yaslanir (`end-0` Arapcada
           // menuyu ekranin disina iterdi).
-          className="absolute end-0 z-50 mt-1 w-40 overflow-hidden rounded-lg border kart-kenar bg-white py-1 shadow-lift"
+          className="absolute end-0 z-50 mt-1 w-40 overflow-hidden rounded-lg border border-[color:var(--yz-border)] bg-white py-1 shadow-lift"
         >
           {DILLER.map((d) => (
             <li key={d}>
@@ -72,7 +72,7 @@ export function DilSecici() {
                 aria-selected={d === dil}
                 onClick={() => sec(d)}
                 className={`odak-ic block w-full px-3 py-1.5 text-start text-sm transition ${
-                  d === dil ? "font-semibold text-brand-tealInk" : "text-metin-body"
+                  d === dil ? "font-semibold text-brand-tealInk" : "text-[color:var(--yz-text)]"
                 }`}
               >
                 {DIL_ADLARI[d]}

@@ -127,7 +127,7 @@ export default function YerelIsletmeler() {
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-semibold">{t("dukkanYerelIsletmeler")}</h1>
-        <p className="mt-1 text-sm text-[--yz-metin-soluk]">
+        <p className="mt-1 text-sm text-[color:var(--yz-text-2)]">
           {t("dukkanYerelIsletmelerAciklama")}
         </p>
       </div>
@@ -194,7 +194,8 @@ export default function YerelIsletmeler() {
           <button
             onClick={ara}
             disabled={bekle}
-            className="rounded bg-[--yz-birincil] px-4 py-2 text-sm text-white disabled:opacity-60"
+            className="odak-ic rounded px-4 py-2 text-sm disabled:opacity-60"
+            style={{ background: "var(--yz-accent)", color: "var(--yz-on-fill)" }}
           >
             {t("dukkanAraDugme")}
           </button>
@@ -217,11 +218,11 @@ export default function YerelIsletmeler() {
 
       {sonuc !== null && (
         <>
-          <p className="text-sm text-[--yz-metin-soluk]">
+          <p className="text-sm text-[color:var(--yz-text-2)]">
             {t("dukkanSonucSayisi")}: {toplam}
           </p>
           {sonuc.length === 0 ? (
-            <p className="text-sm text-[--yz-metin-soluk]">
+            <p className="text-sm text-[color:var(--yz-text-2)]">
               {t("dukkanSonucYok")}
             </p>
           ) : (
@@ -231,7 +232,7 @@ export default function YerelIsletmeler() {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h2 className="font-medium">{i.ad}</h2>
-                      <p className="mt-1 text-xs text-[--yz-metin-soluk]">
+                      <p className="mt-1 text-xs text-[color:var(--yz-text-2)]">
                         {i.kategoriler.slice(0, 4).join(" · ")}
                       </p>
                       <p className="mt-1 text-sm">
@@ -242,14 +243,15 @@ export default function YerelIsletmeler() {
                           ` · ✔ ${t("dukkanDogrulanmis")}`}
                       </p>
                       {i.aciklama && (
-                        <p className="mt-2 line-clamp-2 text-sm text-[--yz-metin-soluk]">
+                        <p className="mt-2 line-clamp-2 text-sm text-[color:var(--yz-text-2)]">
                           {i.aciklama}
                         </p>
                       )}
                     </div>
                     <a
                       href={`tel:${i.telefon}`}
-                      className="shrink-0 rounded bg-[--yz-birincil] px-3 py-2 text-sm text-white"
+                      className="odak-ic shrink-0 rounded px-3 py-2 text-sm"
+                      style={{ background: "var(--yz-accent)", color: "var(--yz-on-fill)" }}
                     >
                       {i.telefon}
                     </a>

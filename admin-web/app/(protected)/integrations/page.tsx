@@ -361,7 +361,7 @@ export default function IntegrationsPage() {
         </form>
       </Modal>
 
-      <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
+      <div className="overflow-hidden rounded-kart border border-[color:var(--yz-border)] bg-white">
         <div className="odak-ic overflow-x-auto" tabIndex={0}>
           <Tablo>
             <TabloBasligi>
@@ -379,13 +379,13 @@ export default function IntegrationsPage() {
             {(data?.items ?? []).map((it) => {
               const tr = testResult[it.id];
               return (
-                <tr key={it.id} className={`border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg ${it.aktif ? "" : "bg-yuzey-bg"}`}>
+                <tr key={it.id} className={`border-t border-[color:var(--yz-border)] transition-colors hover:bg-[color:var(--yz-bg-app)] ${it.aktif ? "" : "bg-[color:var(--yz-bg-app)]"}`}>
                   <Td>{it.ad}</Td>
-                  <Td className="text-metin-body">{it.channel_type}</Td>
-                  <Td className="text-metin-body max-w-[280px] truncate">
+                  <Td className="text-[color:var(--yz-text)]">{it.channel_type}</Td>
+                  <Td className="text-[color:var(--yz-text)] max-w-[280px] truncate">
                     {it.http_method} {it.endpoint_url}
                   </Td>
-                  <Td className="text-metin-body">
+                  <Td className="text-[color:var(--yz-text)]">
                     {it.auth_type}
                     {it.auth_secret_set ? " 🔒" : ""}
                   </Td>
@@ -417,7 +417,7 @@ export default function IntegrationsPage() {
                       </div>
                     )}
                   </Td>
-                  <Td className="text-metin-body">
+                  <Td className="text-[color:var(--yz-text)]">
                     <span data-test={`enteg-son-iletisim-${it.id}`}>
                     {/* SON BASARILI ILETISIM — "hic" ile "uzun zaman
                         once" ayni sey degil; bos birakmak ikisini

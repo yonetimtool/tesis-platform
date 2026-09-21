@@ -85,7 +85,7 @@ export function ParolaAlani({
         aria-label={acik ? t("parolaGizle") : t("parolaGoster")}
         // 44pt dokunma hedefi — kucuk bir goz ikonu parmakla isabet
         // ettirilemez.
-        className="odak-ic absolute inset-y-0 end-0 flex h-full min-w-11 items-center justify-center px-2 text-metin-muted transition hover:text-metin-body"
+        className="odak-ic absolute inset-y-0 end-0 flex h-full min-w-11 items-center justify-center px-2 text-[color:var(--yz-text-2)] transition hover:text-[color:var(--yz-text)]"
       >
         <Goz acik={acik} />
       </button>

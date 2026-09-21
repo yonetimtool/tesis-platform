@@ -79,7 +79,7 @@ export function KopyaKod({
         // kurali her dugmeyi 48 px'e cikariyor (tasarim-sistemi.css).
         // (Eski yorum "44px dokunma hedefi" diyordu ama sinif 32'ydi —
         //  yorum kodu ANLATMIYORDU, duzeltildi.)
-        className="inline-flex min-h-[32px] items-center gap-1 rounded-md border kart-kenar px-2 py-1 text-xs font-medium text-metin-body transition hover:bg-yuzey-divider"
+        className="inline-flex min-h-[32px] items-center gap-1 rounded-md border border-[color:var(--yz-border)] px-2 py-1 text-xs font-medium text-[color:var(--yz-text)] transition hover:bg-[color:var(--yz-border)]"
         aria-label={
           etiket ? t("kopyaEtiketli", { ne: etiket }) : t("kopyala")
         }

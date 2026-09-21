@@ -290,9 +290,9 @@ export function SosyalGiris({
     <div className="space-y-3">
       {niyet === "giris" ? (
         <div className="flex items-center gap-3">
-          <span className="h-px flex-1 bg-yuzey-divider" />
-          <span className="text-xs text-metin-muted">{t("sosyalVeya")}</span>
-          <span className="h-px flex-1 bg-yuzey-divider" />
+          <span className="h-px flex-1 bg-[color:var(--yz-border)]" />
+          <span className="text-xs text-[color:var(--yz-text-2)]">{t("sosyalVeya")}</span>
+          <span className="h-px flex-1 bg-[color:var(--yz-border)]" />
         </div>
       ) : null}
       <div className="grid gap-2">
@@ -303,7 +303,7 @@ export function SosyalGiris({
             disabled={bekleyen !== null}
             onClick={() => void basla(s)}
             // (P244) 48px dokunma hedefi (erisilebilirlik kurali).
-            className="kart-kenar flex min-h-[48px] w-full items-center justify-center gap-2 rounded-lg border bg-yuzey-card px-4 py-2.5 text-sm font-medium text-metin-body transition hover:bg-yuzey-divider disabled:opacity-60"
+            className="border-[color:var(--yz-border)] flex min-h-[48px] w-full items-center justify-center gap-2 rounded-lg border bg-[color:var(--yz-surface-1)] px-4 py-2.5 text-sm font-medium text-[color:var(--yz-text)] transition hover:bg-[color:var(--yz-border)] disabled:opacity-60"
           >
             {t(DUGME_ANAHTARI[niyet], { saglayici: ETIKET[s] ?? s })}
           </button>

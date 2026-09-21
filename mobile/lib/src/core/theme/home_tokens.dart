@@ -142,6 +142,28 @@ class HomeSurface {
   /// Gorsel yer tutucu zemini (duyuru foto, kamera karesi).
   final Color placeholder;
 
+  // =======================================================================
+  // (P244 §10d) DEGERLER WEB TASARIM SISTEMINE (`--yz-*`) CEKILDI.
+  // =======================================================================
+  // P244'te web'e yeni bir token katmani (`admin-web/app/tasarim-
+  // sistemi.css`) geldi ve iki yuzey AYNI ROL icin FARKLI degerler
+  // tasimaya basladi (govde metni beyaz kartta 10.31 vs 16.27). Ikisi de
+  // AA'yi tutuyordu; sorun okunabilirlik degil, ayni urunun iki ekraninda
+  // iki farkli gri ve iki farkli ayrac cizgisiydi.
+  //
+  // KARAR (kullanici): iki yuzey de YENI degerlere gelsin. Eski degerlere
+  // donmek, P244 asama 1'deki kontrast olcumlerini bosa cikarirdi.
+  //
+  // TEK ANLAM DEGISIKLIGI: `heading` ve `body` ARTIK AYNI TON. Yeni
+  // sistemde basliki govdeden ayiran sey RENK degil BOYUT ve AGIRLIK;
+  // uc kademe metin rengi (text / text-2 / text-3) hiyerarsiyi baska
+  // eksende kuruyor. Ikisini ayri tutmak, iki sistemi yarim karistirmak
+  // olurdu.
+  //
+  // `cardBorder` ARTIK SAYDAM DEGIL: eski deger %4 siyah / %8 beyazdi ve
+  // kartin uzerinde durdugu yuzeye gore KAYIYORDU. Yeni `--yz-border`
+  // duz bir tondur — ayni cizgi her yuzeyde ayni gorunur.
+  // =======================================================================
   static const _light = HomeSurface(
     // (P166 §7.2) ZEMIN BIR KADEME KOYULASTI, KART BEYAZ KALDI.
     //
@@ -149,19 +171,19 @@ class HomeSurface {
     // orani 1.03'tu — yani GORUNMEZ. "Acik tema fazla beyaz gorunuyor"
     // sikayetinin sebebi renklerin acikligi degil, kartin bir YUZEY gibi
     // degil zeminin devami gibi okunmasiydi. Yeni oran 1.16.
-    background: Color(0xFFEAEEF5),
+    background: Color(0xFFEEF2F7),
     badge: HomeTokens.red,
     badgeOn: Color(0xFFFFFFFF),
     card: Color(0xFFFFFFFF),
-    cardBorder: Color(0x0A000000), // %4 siyah
-    divider: Color(0xFFE4E9F1),
-    heading: Color(0xFF111827),
-    body: Color(0xFF374151),
+    cardBorder: Color(0xFFDDE4EC),
+    divider: Color(0xFFDDE4EC),
+    heading: Color(0xFF172033),
+    body: Color(0xFF172033),
     // Zemin koyulastigi icin YENIDEN OLCULDU: eski #6B7280 yeni zeminde
     // 4.15 ile AA'nin ALTINA duserdi. Ton korunup aciklik kaydirildi;
     // yeni deger zeminde 4.75, beyaz kartta 5.52.
-    muted: Color(0xFF626976),
-    placeholder: Color(0xFFE5E7EB),
+    muted: Color(0xFF566173),
+    placeholder: Color(0xFFE2E8F0),
   );
 
   static const _dark = HomeSurface(
@@ -172,17 +194,17 @@ class HomeSurface {
     // kart artik zeminden GORUNUR sekilde yukselir. Metin tonlari
     // yeniden olculdu: hepsi AA'yi tutuyor (baslik 12.4, govde 9.3,
     // ikincil 5.4 — kart uzerinde).
-    background: Color(0xFF1B222C),
+    background: Color(0xFF313A44),
     // Olculdu: dolgu/zemin 5.20, metin/dolgu 5.20 — ikisi de AA.
     badge: Color(0xFFF26565),
     badgeOn: Color(0xFF1B222C),
-    card: Color(0xFF262E3A),
-    cardBorder: Color(0x14FFFFFF),
-    divider: Color(0xFF333C4A),
-    heading: Color(0xFFF3F4F6),
-    body: Color(0xFFD1D5DB),
-    muted: Color(0xFF9CA3AF),
-    placeholder: Color(0xFF333C4A),
+    card: Color(0xFF3B4650),
+    cardBorder: Color(0xFF55616D),
+    divider: Color(0xFF55616D),
+    heading: Color(0xFFE8EDF2),
+    body: Color(0xFFE8EDF2),
+    muted: Color(0xFFBCC3CA),
+    placeholder: Color(0xFF2C353E),
   );
 
   /// Vurgu renginin BU YUZEYDE metin olarak kullanilacak bicimi.

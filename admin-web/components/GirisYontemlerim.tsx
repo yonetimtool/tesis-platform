@@ -58,9 +58,9 @@ export function GirisYontemlerim() {
       <h2 className="font-medium">{t("sosyalYontemlerBaslik")}</h2>
       {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
       {isLoading ? (
-        <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
+        <p className="text-sm text-[color:var(--yz-text-2)]">{t("ortakYukleniyor")}</p>
       ) : items.length === 0 ? (
-        <p className="text-sm text-metin-muted">{t("sosyalYontemYok")}</p>
+        <p className="text-sm text-[color:var(--yz-text-2)]">{t("sosyalYontemYok")}</p>
       ) : (
         <ul className="divide-y divide-slate-200">
           {items.map((b) => (
@@ -71,7 +71,7 @@ export function GirisYontemlerim() {
               <div className="min-w-0">
                 <p className="text-sm font-medium">{saglayiciEtiketi(b.saglayici)}</p>
                 {b.eposta ? (
-                  <p className="truncate text-xs text-metin-muted">{b.eposta}</p>
+                  <p className="truncate text-xs text-[color:var(--yz-text-2)]">{b.eposta}</p>
                 ) : null}
               </div>
               <button

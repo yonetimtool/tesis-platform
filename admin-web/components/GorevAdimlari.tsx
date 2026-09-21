@@ -136,7 +136,7 @@ export function GorevAdimlari({
     <Kart className="space-y-3" data-test="gorev-adimlari">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-base font-medium">{t("gorevAdimlar")}</h3>
-        <span className="text-sm text-metin-muted" data-test="gorev-adim-ilerleme">
+        <span className="text-sm text-[color:var(--yz-text-2)]" data-test="gorev-adim-ilerleme">
           {t("gorevAdimIlerleme", {
             tamam: String(tamam),
             toplam: String(adimlar.length),
@@ -144,7 +144,7 @@ export function GorevAdimlari({
         </span>
       </div>
       {adimSirali ? (
-        <p className="text-xs text-metin-muted">{t("gorevAdimSirali")}</p>
+        <p className="text-xs text-[color:var(--yz-text-2)]">{t("gorevAdimSirali")}</p>
       ) : null}
 
       {adimlar.length === 0 ? (
@@ -155,7 +155,7 @@ export function GorevAdimlari({
             <li
               key={a.id}
               data-test={`gorev-adim-${a.id}`}
-              className="flex flex-wrap items-center gap-2 rounded-lg border kart-kenar p-2"
+              className="flex flex-wrap items-center gap-2 rounded-lg border border-[color:var(--yz-border)] p-2"
             >
               <span className="min-w-0 flex-1">
                 <span className="font-medium">{a.ad}</span>
@@ -171,7 +171,7 @@ export function GorevAdimlari({
                   </span>
                 ) : null}
                 {a.tamamlandi ? (
-                  <span className="block text-xs text-metin-muted">
+                  <span className="block text-xs text-[color:var(--yz-text-2)]">
                     {a.tamamlayan_ad ?? ""}
                     {a.tamamlanma_zamani
                       ? ` · ${formatDateTime(a.tamamlanma_zamani)}`
@@ -202,7 +202,7 @@ export function GorevAdimlari({
                   {t("gorevAdimGeriAl")}
                 </Dugme>
               ) : a.foto_zorunlu ? (
-                <label className="cursor-pointer rounded-md border kart-kenar px-2 py-1 text-sm">
+                <label className="cursor-pointer rounded-md border border-[color:var(--yz-border)] px-2 py-1 text-sm">
                   {yukleniyor === a.id ? "…" : t("gorevAdimTamamla")}
                   <input
                     type="file"

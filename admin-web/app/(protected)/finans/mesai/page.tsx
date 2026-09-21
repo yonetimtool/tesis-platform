@@ -232,7 +232,7 @@ export default function MesaiSayfasi() {
           {(data?.kisiler ?? []).map((k) => (
             <li
               key={k.user_id}
-              className="flex flex-wrap items-center justify-between gap-2 border-b border-yuzey-divider pb-2 last:border-0"
+              className="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--yz-border)] pb-2 last:border-0"
               data-test={`mesai-satir-${k.user_id}`}
             >
               <span style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>
@@ -268,7 +268,7 @@ export default function MesaiSayfasi() {
 
       {yazilabilir.length > 0 && (
         <Kart>
-          <p className="text-sm text-metin-body" data-test="mesai-toplam">
+          <p className="text-sm text-[color:var(--yz-text)]" data-test="mesai-toplam">
             {t("mesaiYazilacakToplam", {
               n: yazilabilir.length,
               tutar: kurusToTL(toplam),

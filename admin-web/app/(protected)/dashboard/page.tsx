@@ -245,7 +245,7 @@ function SahneSecimPaneli({
   if (!blok) {
     return (
       <Kart className="p-kart">
-        <p className="text-satiralt leading-[1.6] text-metin-muted">
+        <p className="text-satiralt leading-[1.6] text-[color:var(--yz-text-2)]">
           {t("sahneSecimIpucu")}
         </p>
       </Kart>
@@ -263,22 +263,22 @@ function SahneSecimPaneli({
     <Kart className="space-y-3 p-kart">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-kartbaslik text-metin-heading">{blok.ad}</p>
-          <p className="mt-0.5 text-satiralt text-metin-muted">
+          <p className="text-kartbaslik text-[color:var(--yz-text)]">{blok.ad}</p>
+          <p className="mt-0.5 text-satiralt text-[color:var(--yz-text-2)]">
             {t("sahneBlokOzeti", { kat: katlar.length, daire: blok.daireler.length })}
           </p>
         </div>
         <button
           type="button"
           onClick={onKapat}
-          className="shrink-0 text-satiralt underline text-metin-muted"
+          className="shrink-0 text-satiralt underline text-[color:var(--yz-text-2)]"
         >
           {t("sahneSecimTemizle")}
         </button>
       </div>
 
       <div>
-        <p className="text-satiralt font-medium text-metin-heading">{t("sahneKatBaslik")}</p>
+        <p className="text-satiralt font-medium text-[color:var(--yz-text)]">{t("sahneKatBaslik")}</p>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           {katlar.map((k) => (
             <Dugme
@@ -298,7 +298,7 @@ function SahneSecimPaneli({
 
       {secim.kat !== null && (
         <div>
-          <p className="text-satiralt font-medium text-metin-heading">
+          <p className="text-satiralt font-medium text-[color:var(--yz-text)]">
             {t("sahneDaireBaslik")}
           </p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -324,11 +324,11 @@ function SahneSecimPaneli({
       )}
 
       {daire && (
-        <div className="border-t border-yuzey-divider pt-3">
-          <p className="text-satiralt text-metin-muted">
+        <div className="border-t border-[color:var(--yz-border)] pt-3">
+          <p className="text-satiralt text-[color:var(--yz-text-2)]">
             {t("sahneDaireOzeti", { no: daire.no, kat: katAdi(daire.kat) })}
           </p>
-          <p className="mt-1 text-satiralt text-metin-heading">
+          <p className="mt-1 text-satiralt text-[color:var(--yz-text)]">
             {daire.durum === DAIRE_ALARM ? t("sahneDaireAlarm") : t("sahneDaireNormal")}
           </p>
 
@@ -337,7 +337,7 @@ function SahneSecimPaneli({
               kullanici daireyi buluyor, sonra menuden ilgili ekrani elle
               ariyordu. Baglantilar kaydin KIMLIGINI tasiyor — hedef
               ekranlar sorgu parametresiyle suzuluyor. */}
-          <p className="mt-3 text-satiralt font-medium text-metin-heading">
+          <p className="mt-3 text-satiralt font-medium text-[color:var(--yz-text)]">
             {t("sahneEylemler")}
           </p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -891,7 +891,7 @@ export default function DashboardPage() {
         >
           ⠿
         </button>
-        <span className="text-bolum text-metin-heading">{t(b.anahtar)}</span>
+        <span className="text-bolum text-[color:var(--yz-text)]">{t(b.anahtar)}</span>
       </div>
     );
   }
@@ -937,7 +937,7 @@ export default function DashboardPage() {
             aria-live="polite"
             className="inline-flex items-center gap-1 rounded-chip px-2 py-0.5 text-chip"
             style={{
-              // (§11 düzeltme) `--yz-success-tint` tanımsızdı (tasarım-token
+              // (§11 düzeltme) yesil tint token'i TANIMSIZDI (tasarım-token
               // kilidi). Tanımlı yüzey + başarı-mürekkebi ile aynı his.
               background: "var(--yz-surface-2)",
               color: "var(--yz-success-ink)",
@@ -1063,7 +1063,7 @@ export default function DashboardPage() {
           }}
         >
           <div className="mb-kart flex items-center gap-2">
-            <span className="text-bolum text-metin-heading">
+            <span className="text-bolum text-[color:var(--yz-text)]">
               {t("panoGizliBolumler")}
             </span>
           </div>
@@ -1130,26 +1130,26 @@ function AlarmGrubuSatiri({ grup }: { grup: AlarmGrubu }) {
         className="odak-ic flex w-full items-center gap-3 p-kart text-start disabled:cursor-default"
       >
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-kartbaslik text-metin-heading">
+          <span className="block truncate text-kartbaslik text-[color:var(--yz-text)]">
             {grup.patrol_plan_ad ?? enumAdi(t, BILDIRIM_TIP, grup.tip)}
           </span>
-          <span className="mt-0.5 block truncate text-satiralt leading-[1.6] text-metin-muted">
+          <span className="mt-0.5 block truncate text-satiralt leading-[1.6] text-[color:var(--yz-text-2)]">
             {grup.mesaj}
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-2">
           <Rozet durum={vurgu}>{t("pano2AlarmSayi", { sayi: grup.sayi })}</Rozet>
-          <span className="text-satiralt text-metin-muted">
+          <span className="text-satiralt text-[color:var(--yz-text-2)]">
             {formatDateTime(grup.en_son)}
           </span>
         </span>
       </button>
       {acik && (
-        <ul className="border-t border-yuzey-divider px-kart py-2">
+        <ul className="border-t border-[color:var(--yz-border)] px-kart py-2">
           {grup.olaylar.map((o, i) => (
             <li
               key={`${o.patrol_window_id ?? i}`}
-              className="py-1 text-satiralt leading-[1.6] text-metin-muted"
+              className="py-1 text-satiralt leading-[1.6] text-[color:var(--yz-text-2)]"
             >
               {formatDateTime(o.olusma_zamani)}
             </li>

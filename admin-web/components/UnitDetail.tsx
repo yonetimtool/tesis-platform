@@ -287,18 +287,18 @@ export function UnitDetail({ unit }: { unit: Unit }) {
 
       {/* Bakiye ozeti */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="rounded-lg bg-yuzey-bg p-3">
-          <div className="text-xs text-metin-muted">{t("raporToplamTahakkuk")}</div>
+        <div className="rounded-lg bg-[color:var(--yz-bg-app)] p-3">
+          <div className="text-xs text-[color:var(--yz-text-2)]">{t("raporToplamTahakkuk")}</div>
           <div className="text-lg font-semibold">
             {kurusToTL(dues?.toplam_tahakkuk_kurus ?? 0)}
           </div>
         </div>
-        <div className="rounded-lg bg-yuzey-bg p-3">
-          <div className="text-xs text-metin-muted">{t("raporOdenen")}</div>
+        <div className="rounded-lg bg-[color:var(--yz-bg-app)] p-3">
+          <div className="text-xs text-[color:var(--yz-text-2)]">{t("raporOdenen")}</div>
           <div className="text-lg font-semibold">{kurusToTL(dues?.toplam_odenen_kurus ?? 0)}</div>
         </div>
         <div className={`rounded-lg p-3 ${bakiye > 0 ? ZEMIN_BORC : ZEMIN_ALACAK}`}>
-          <div className="text-xs text-metin-muted">{t("raporBakiyeBorc")}</div>
+          <div className="text-xs text-[color:var(--yz-text-2)]">{t("raporBakiyeBorc")}</div>
           <div className={`text-lg font-semibold ${bakiye > 0 ? RENK_BORC : RENK_ALACAK}`}>
             {kurusToTL(bakiye)}
           </div>
@@ -399,7 +399,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
           <h3 className="mb-2 font-medium">{t("aidatTahakkuklar")}</h3>
           <ul className="space-y-1 text-sm">
             {(dues?.assessments ?? []).map((a) => (
-              <li key={a.id} className="flex justify-between rounded border border-yuzey-divider px-2 py-1">
+              <li key={a.id} className="flex justify-between rounded border border-[color:var(--yz-border)] px-2 py-1">
                 <span>
                   {a.donem}
                   {a.aciklama ? ` · ${a.aciklama}` : ""}
@@ -408,7 +408,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
               </li>
             ))}
             {dues && dues.assessments?.length === 0 && (
-              <li className="text-metin-muted">{t("aidatTahakkukYokNokta")}</li>
+              <li className="text-[color:var(--yz-text-2)]">{t("aidatTahakkukYokNokta")}</li>
             )}
           </ul>
         </div>
@@ -416,7 +416,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
           <h3 className="mb-2 font-medium">{t("aidatOdemeler")}</h3>
           <ul className="space-y-1 text-sm">
             {(dues?.payments ?? []).map((p) => (
-              <li key={p.id} className="flex justify-between rounded border border-yuzey-divider px-2 py-1">
+              <li key={p.id} className="flex justify-between rounded border border-[color:var(--yz-border)] px-2 py-1">
                 <span>
                   {enumAdi(t, ODEME_YONTEM, p.yontem)} ·{" "}
                   {enumAdi(t, ODEME_DURUM, p.durum)}
@@ -425,7 +425,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
                 <span className="font-medium">{kurusToTL(p.tutar_kurus)}</span>
               </li>
             ))}
-            {dues && dues.payments?.length === 0 && <li className="text-metin-muted">{t("daireOdemeYok")}</li>}
+            {dues && dues.payments?.length === 0 && <li className="text-[color:var(--yz-text-2)]">{t("daireOdemeYok")}</li>}
           </ul>
         </div>
       </div>
@@ -490,11 +490,11 @@ export function UnitDetail({ unit }: { unit: Unit }) {
       </Modal>
 
       {/* Sakinler */}
-      <div className="space-y-3 rounded-lg border kart-kenar p-4">
+      <div className="space-y-3 rounded-lg border border-[color:var(--yz-border)] p-4">
         <h3 className="font-medium">{t("sakinlerBaslik")}</h3>
         <ul className="space-y-1 text-sm">
           {aktifSakinler.map((r) => (
-            <li key={r.id} className="flex items-center justify-between rounded border border-yuzey-divider px-2 py-1">
+            <li key={r.id} className="flex items-center justify-between rounded border border-[color:var(--yz-border)] px-2 py-1">
               {/* (P181 6.1) SAKİN ADI — yoksa (kullanıcı silinmiş) kısa kimliğe düş. */}
               <span className={r.user_ad ? "" : "font-mono"}>
                 {r.user_ad ?? kisaKimlik(r.user_id)} ·{" "}
@@ -511,7 +511,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
             </li>
           ))}
           {residents && aktifSakinler.length === 0 && (
-            <li className="text-metin-muted">{t("daireAktifSakinYok")}</li>
+            <li className="text-[color:var(--yz-text-2)]">{t("daireAktifSakinYok")}</li>
           )}
         </ul>
         <Modal

@@ -22,6 +22,16 @@ const DART = readFileSync(
 );
 const TW = readFileSync(resolve(KOK, "admin-web/tailwind.config.ts"), "utf8");
 const CSS = readFileSync(resolve(KOK, "admin-web/app/globals.css"), "utf8");
+const YZ = readFileSync(resolve(KOK, "admin-web/app/tasarim-sistemi.css"), "utf8");
+
+/** `--yz-text: #172033;` -> "#172033" (ilk tanim = ACIK tema). */
+function yzToken(ad: string, koyu = false): string {
+  const hepsi = [...YZ.matchAll(new RegExp(`--${ad}:\\s*(#[0-9a-fA-F]{6})`, "g"))];
+  if (hepsi.length === 0) throw new Error(`Token yok: --${ad}`);
+  // Dosyada once `:root` (acik), sonra `.dark` blogu gelir.
+  const m = koyu ? hepsi[hepsi.length - 1] : hepsi[0];
+  return m[1].toLowerCase();
+}
 
 /** `static const primary = Color(0xFF2563EB);` -> "#2563EB" */
 function dartRenk(ad: string): string {
@@ -71,44 +81,19 @@ describe("(P132) vurgu paleti mobil ile AYNI", () => {
   });
 });
 
-describe("(P132) yuzey/metin renkleri", () => {
-  it("ACIK tema — tailwind", () => {
-    const bekle: [string, string][] = [
-      ["bg", dartYuzey("_light", "background")],
-      ["card", dartYuzey("_light", "card")],
-      ["divider", dartYuzey("_light", "divider")],
-      ["placeholder", dartYuzey("_light", "placeholder")],
-    ];
-    for (const [ad, deger] of bekle) {
-      const m = new RegExp(`${ad}:\\s*"(#[0-9A-Fa-f]{6})"`).exec(TW);
-      expect(m, `yuzey.${ad} yok`).not.toBeNull();
-      expect(m![1].toUpperCase(), ad).toBe(deger);
-    }
-    for (const [ad, alan] of [["heading", "heading"], ["body", "body"], ["muted", "muted"]]) {
-      const m = new RegExp(`${ad}:\\s*"(#[0-9A-Fa-f]{6})"`).exec(TW);
-      expect(m![1].toUpperCase(), ad).toBe(dartYuzey("_light", alan));
-    }
-  });
-
-  it("KOYU tema — globals.css", () => {
-    // Koyu tema web'de sayfa basina `dark:` varyantiyla DEGIL, tek yerde
-    // (globals.css) cozulur; deger yine mobil kaynaktan gelir.
-    const bekle: [string, string][] = [
-      [".dark .bg-yuzey-bg", dartYuzey("_dark", "background")],
-      [".dark .bg-yuzey-card", dartYuzey("_dark", "card")],
-      [".dark .text-metin-heading", dartYuzey("_dark", "heading")],
-      [".dark .text-metin-body", dartYuzey("_dark", "body")],
-      [".dark .text-metin-muted", dartYuzey("_dark", "muted")],
-    ];
-    for (const [secici, deger] of bekle) {
-      const m = new RegExp(
-        `${secici.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\{[^}]*?(#[0-9a-fA-F]{6})`,
-      ).exec(CSS);
-      expect(m, `${secici} yok`).not.toBeNull();
-      expect(m![1].toUpperCase(), secici).toBe(deger);
-    }
-  });
-});
+/**
+ * (P244 §10d) "(P132) yuzey/metin renkleri" BLOGU KALDIRILDI.
+ *
+ * O blok Dart'i `tailwind.config.ts`teki `metin.*`/`yuzey.*` girdileri
+ * ve `globals.css`teki `.dark .text-metin-*` kurallariyla
+ * karsilastiriyordu. Bu turda o SINIFLARIN KULLANICISI KALMADI (178
+ * kullanim `--yz-*`a tasindi) ve tanimlari silindi.
+ *
+ * KAPSAM KAYBI YOK, YER DEGISTI: ayni iddia — "mobil yuzey/metin
+ * renkleri web ile AYNI" — asagida `(P244 §10d)` blogunda ve artik
+ * DOGRUDAN `--yz-*` katmanina karsi olculuyor. Olu bir tanimi kilitlemek
+ * hicbir sey olcmezdi.
+ */
 
 describe("(P132) olcu token'lari", () => {
   const bekle: [string, string][] = [
@@ -307,7 +292,11 @@ describe("(P132.8) ELDEN GECIRILEN SINIFLAR GERI GELMESIN", () => {
     // Yukaridaki test 0 dosya okusaydi da gecerdi — bu, kilidin en olasi
     // sessiz bozulma bicimidir.
     expect(DOSYALAR.length).toBeGreaterThan(40);
-    expect(DOSYALAR.some(([, s]) => s.includes("text-metin-muted"))).toBe(true);
+    // (P244 §10d) NOBETCI DIZE DEGISTI. Eskiden `text-metin-muted`
+    // araniyordu; o sinifin KULLANICISI KALMADI (178 kullanim `--yz-*`a
+    // tasindi) ve tanimi silindi. Nobetci, taramanin gercekten dosya
+    // okudugunu gostermeli — bugun HER YERDE bulunan bir dize secildi.
+    expect(DOSYALAR.some(([, s]) => s.includes("var(--yz-text)"))).toBe(true);
   });
 });
 
@@ -330,7 +319,10 @@ describe("(P132) ORTAK ILKELLER tasarim sistemine bagli", () => {
       expect(m, `${ad} yok`).not.toBeNull();
       const deger = m![0];
       expect(deger, ad).toContain("rounded-kart");
-      expect(deger, ad).toContain("bg-yuzey-card");
+      // (P244 §10d) `bg-yuzey-card` -> `--yz-surface-1`. Olculen sey
+      // degismedi: kart yuzeyi TASARIM SISTEMINDEN geliyor mu, yoksa
+      // elle yazilmis bir renk mi. Yalniz sistemin adi degisti.
+      expect(deger, ad).toContain("var(--yz-surface-1)");
       // Mobil kartlarda GOLGE YOKTUR — ayirt edici cizgi 1px kenarliktir.
       expect(deger, ad).not.toContain("shadow-card");
       expect(deger, ad).not.toContain("border-slate-200");
@@ -545,5 +537,62 @@ describe("(P160) TANIMSIZ TOKEN kullanilamaz", () => {
     }
     expect(kaynaklar.length).toBeGreaterThan(40);
     expect([...eksik], "tanimsiz tasarim degiskeni").toEqual([]);
+  });
+});
+
+
+// ===========================================================================
+// (P244 §10d) UC KAYNAK TEK DEGER — Dart, tailwind/globals ve `--yz-*`
+// ===========================================================================
+// P244 web'e yeni bir token katmani getirdi ve iki yuzey AYNI ROL icin
+// FARKLI degerler tasimaya basladi (govde metni beyaz kartta 10.31 vs
+// 16.27). Ikisi de AA'yi tutuyordu; sorun okunabilirlik degil, ayni
+// urunun iki ekraninda iki farkli gri ve iki farkli ayrac cizgisiydi.
+//
+// KARAR: iki yuzey de YENI degerlere geldi. Bu blok ucunu birden
+// kilitler — biri kayarsa test duser.
+//
+// NE OLCULMEZ: gorunumun kendisi. Olculen sey DEGERLERIN esitligi;
+// ayrisma her zaman buradan basliyor.
+describe("(P244 §10d) mobil yuzeyi `--yz-*` ile AYNI degerde", () => {
+  const eslesme: [string, "_light" | "_dark", string, string][] = [
+    // [ Dart alani, Dart blogu, --yz token adi, koyu mu ]
+    ["background", "_light", "yz-bg-app", ""],
+    ["card", "_light", "yz-surface-1", ""],
+    ["divider", "_light", "yz-border", ""],
+    ["cardBorder", "_light", "yz-border", ""],
+    ["placeholder", "_light", "yz-surface-sunken", ""],
+    ["heading", "_light", "yz-text", ""],
+    ["body", "_light", "yz-text", ""],
+    ["muted", "_light", "yz-text-2", ""],
+    ["background", "_dark", "yz-bg-app", "k"],
+    ["card", "_dark", "yz-surface-1", "k"],
+    ["divider", "_dark", "yz-border", "k"],
+    ["cardBorder", "_dark", "yz-border", "k"],
+    ["placeholder", "_dark", "yz-surface-sunken", "k"],
+    ["heading", "_dark", "yz-text", "k"],
+    ["body", "_dark", "yz-text", "k"],
+    ["muted", "_dark", "yz-text-2", "k"],
+  ];
+  for (const [alan, blok, token, koyu] of eslesme) {
+    it(`${blok}.${alan} = --${token}`, () => {
+      expect(dartYuzey(blok, alan).toLowerCase()).toBe(yzToken(token, koyu === "k"));
+    });
+  }
+
+  it("BASLIK ve GOVDE ayni ton — hiyerarsi BOYUT/AGIRLIKTA", () => {
+    // Eski sistemde baslik ve govde AYRI tonlardi (#111827 / #374151).
+    // Yeni sistemde uc kademe metin rengi var (text / text-2 / text-3) ve
+    // baslik-govde ayrimi RENKLE DEGIL boyut/agirlikla kuruluyor. Ikisini
+    // ayri tutmak, iki sistemi yarim karistirmak olurdu.
+    expect(dartYuzey("_light", "heading")).toBe(dartYuzey("_light", "body"));
+    expect(dartYuzey("_dark", "heading")).toBe(dartYuzey("_dark", "body"));
+  });
+
+  it("KART KENARI SAYDAM DEGIL (yuzeye gore kaymasin)", () => {
+    // Eski deger %4 siyah / %8 beyazdi: ayni cizgi, uzerinde durdugu
+    // yuzeye gore FARKLI gorunuyordu. Duz ton her yuzeyde ayni.
+    expect(DART).not.toMatch(/cardBorder: Color\(0x0A000000\)/);
+    expect(DART).not.toMatch(/cardBorder: Color\(0x14FFFFFF\)/);
   });
 });

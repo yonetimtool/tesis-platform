@@ -30,8 +30,8 @@ export function EmptyState({
         </svg>
       </span>
       <div className="space-y-1">
-        <p className="text-kartbaslik text-metin-heading">{title}</p>
-        {description && <p className="text-sm text-metin-muted">{description}</p>}
+        <p className="text-kartbaslik text-[color:var(--yz-text)]">{title}</p>
+        {description && <p className="text-sm text-[color:var(--yz-text-2)]">{description}</p>}
       </div>
       {action}
     </div>

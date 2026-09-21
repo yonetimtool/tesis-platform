@@ -2139,3 +2139,94 @@ kararının konusu (aşağıda).
 
 `tsc` temiz · `eslint` 0 hata · **tam takım 248 dosya / 2066 test
 yeşil.**
+
+---
+
+# AŞAMA 10d — PARİTE BİRLEŞTİ + `next build` ZİNCİRE GİRDİ
+
+## A10d.1 EN PAHALI DERS: doğrulama zinciri ürünü derlemiyordu
+
+Prod dağıtımı **kırıldı**. Üç dosyada `"use client"` direktifinin önüne
+bir `import` satırı girmişti (benim düzenlemelerim); `next build`
+reddediyor:
+
+> The "use client" directive must be placed before other expressions.
+
+**Hiçbir kilit yakalamadı ve sebebi yapısal:**
+
+| adım | neden görmedi |
+|---|---|
+| `tsc` | geçerli TypeScript görüyor |
+| `eslint` | böyle bir kuralı yoktu |
+| `vitest` | modülleri **kendi** çatı kurallarıyla yükler; Next'in direktif kuralını uygulamaz |
+
+Üç adım da yeşildi. On aşama boyunca `npm run build` **hiç koşmadı**.
+
+**Ders:** doğrulama zinciri ürünün **gerçek derlemesini** içermiyorsa, o
+derlemenin kuralları ölçülmüyor demektir.
+
+**İki şey yapıldı:**
+1. **YENİ** `use-client-ilk-ifade` kilidi — aynı sınıfı saniyeler içinde
+   yakalayan ucuz ön kontrol. Yorumlar serbest (Next yalnız
+   **ifadelerden** önce olmasını ister); kuralı yorumlara genişletmek
+   gerçek kusurla ilgisi olmayan bir biçim dayatması olurdu. Kırma
+   denendi, yakalandı.
+2. `npm run dogrula` = `tsc --noEmit && next lint && vitest run &&
+   next build` — **push öncesi her turda**.
+
+## A10d.2 Parite birleşti: üç kaynak, tek değer
+
+Kullanıcı kararı: 1. ve 3. yol **birlikte** — web yeni değerlere geçsin,
+mobil de aynı turda web'e çekilsin.
+
+**Mobil (`home_tokens.dart`) yeni değerlere çekildi.** Ölçülen kontrast:
+
+| | açık | koyu |
+|---|---|---|
+| gövde / kart | 16.27 | 8.19 |
+| ikincil / kart | 6.26 | 5.42 |
+| ikincil / zemin | 5.57 | 6.48 |
+| kart / zemin | 1.12 | 1.20 |
+
+Hepsi AA; kart/zemin ayrımı P166'nın düzelttiği 1.16/1.17 ile aynı
+sınıfta (o turda 1.03 "görünmez" diye ölçülmüştü).
+
+**İki anlam değişikliği, ikisi de açık:**
+
+* **`heading` ve `body` artık aynı ton.** Yeni sistemde başlığı gövdeden
+  ayıran şey **renk değil boyut ve ağırlık**; üç kademe metin rengi
+  (`text` / `text-2` / `text-3`) hiyerarşiyi başka eksende kuruyor.
+  İkisini ayrı tutmak iki sistemi yarım karıştırmak olurdu.
+* **`cardBorder` artık saydam değil.** Eski değer %4 siyah / %8 beyazdı
+  ve kartın üzerinde durduğu yüzeye göre **kayıyordu**. Düz ton her
+  yüzeyde aynı görünür.
+
+**Web:** 178 sınıf kullanımı 33 dosyada `--yz-*`a taşındı; `metin.*` /
+`yuzey.*` tailwind girdileri ve `.dark .text-metin-*` / `.kart-kenar`
+kuralları **silindi** (kullanıcısı kalmamıştı).
+
+**Kilit yeniden kuruldu:** eski "(P132) yüzey/metin renkleri" bloğu
+Dart'ı **ölü** tailwind girdileriyle karşılaştırıyordu. Kaldırıldı;
+yerine **16 eşleme** Dart ↔ `--yz-*` katmanını **doğrudan** ölçüyor,
+artı "başlık = gövde" ve "kart kenarı saydam değil" iddiaları.
+
+## A10d.3 Yeni kilit İKİ GERÇEK KUSUR buldu
+
+`p244-token-var-mi` — kullanılan her `--yz-*` adının tanımlı olduğunu
+tarar. Yazılır yazılmaz:
+
+* **`--yz-metin-soluk`** (5 kullanım, `/yerel-isletmeler`) —
+  **hiçbir yerde tanımlı değil**. Tarayıcı geçersiz değeri atar, metin
+  devralınan rengi alır. Hata yok, uyarı yok, yalnız yanlış renk.
+* **`--yz-birincil`** (2 kullanım, aynı ekran) — düğme zeminleri.
+  Tanımsız olduğu için **beyaz metinli, zeminsiz** düğmeler çiziliyordu.
+
+Bu kusur türü sessizdir: `tsc` sınıf dizesini denetlemez, jsdom rengi
+çözmez, göz "biraz koyu" ile "doğru" arasındaki farkı ekrandan ayırt
+edemez. Kırma denendi, yakalandı.
+
+## A10d.4 Doğrulama — artık `next build` dahil
+
+`npm run dogrula` → `tsc --noEmit && next lint && vitest run &&
+next build` · **çıkış kodu 0** · **tam takım 250 dosya / 2086 test
+yeşil.**

@@ -322,7 +322,7 @@ export default function TenantDetailPage() {
                         <KopyaKod deger={data.kayit_kodu} etiket={t("tesisKayitKodu")} />
                       </div>
                     ) : null}
-                    <p className="mt-1 font-mono text-xs break-all text-metin-muted">
+                    <p className="mt-1 font-mono text-xs break-all text-[color:var(--yz-text-2)]">
                       {data.tenant_id}
                     </p>
                   </div>
@@ -339,7 +339,7 @@ export default function TenantDetailPage() {
                   </span>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm text-metin-body">
+                  <p className="text-sm text-[color:var(--yz-text)]">
                     {t("tesisOlusturulmaTarihi", { zaman: fmtDate(data.created_at) })}
                   </p>
                   <Dugme boy="kucuk" onClick={openNameEdit}>
@@ -387,11 +387,11 @@ export default function TenantDetailPage() {
             {y && !editing && (
               <div className="space-y-3">
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm [&>*]:min-w-0 [&>dd]:break-words">
-                  <dt className="text-metin-muted">{t("ortakAd")}</dt>
+                  <dt className="text-[color:var(--yz-text-2)]">{t("ortakAd")}</dt>
                   <dd>{y.ad}</dd>
-                  <dt className="text-metin-muted">{t("tesisTelefonGiris")}</dt>
+                  <dt className="text-[color:var(--yz-text-2)]">{t("tesisTelefonGiris")}</dt>
                   <dd>{y.telefon ?? "—"}</dd>
-                  <dt className="text-metin-muted">{t("ortakDurum")}</dt>
+                  <dt className="text-[color:var(--yz-text-2)]">{t("ortakDurum")}</dt>
                   <dd>
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -401,8 +401,8 @@ export default function TenantDetailPage() {
                       {y.is_active ? t("ortakAktif") : t("ortakPasif")}
                     </span>
                   </dd>
-                  <dt className="text-metin-muted">{t("tesisKimlik")}</dt>
-                  <dd className="text-metin-body">
+                  <dt className="text-[color:var(--yz-text-2)]">{t("tesisKimlik")}</dt>
+                  <dd className="text-[color:var(--yz-text)]">
                     {y.password_set
                       ? t("tesisParolaBelirlendi")
                       : t("tesisGeciciKodAsamasi")}

@@ -130,7 +130,7 @@ function PlatformKarti({
   return (
     <Kart>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-base font-medium text-metin-body">{etiket}</h2>
+        <h2 className="text-base font-medium text-[color:var(--yz-text)]">{etiket}</h2>
         <Rozet durum={acikSeviye ? "uyari" : "notr"}>
           {acikSeviye ? t("surumPolitikaAcik") : t("surumPolitikaKapali")}
         </Rozet>

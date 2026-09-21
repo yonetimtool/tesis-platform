@@ -712,7 +712,7 @@ export default function VardiyaPlaniSayfasi() {
       <Kart>
         <div className="grid gap-4 sm:grid-cols-2">
           <div data-test="vardiya-simdi-gorevde">
-            <p className="text-sm font-medium text-metin-body">
+            <p className="text-sm font-medium text-[color:var(--yz-text)]">
               {t("vardiyaSuAnGorevde")}
             </p>
             {simdiDurum?.gorevdeki_vardiya ? (
@@ -737,7 +737,7 @@ export default function VardiyaPlaniSayfasi() {
             )}
           </div>
           <div data-test="vardiya-simdi-sonraki">
-            <p className="text-sm font-medium text-metin-body">
+            <p className="text-sm font-medium text-[color:var(--yz-text)]">
               {t("vardiyaSiradaki")}
             </p>
             {simdiDurum?.sonraki_vardiya ? (
@@ -1268,7 +1268,7 @@ function BlokAyrinti({
   return (
     <Kart>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm font-medium text-metin-body" data-test="vardiya-ayrinti">
+        <p className="text-sm font-medium text-[color:var(--yz-text)]" data-test="vardiya-ayrinti">
           {kisi.ad} · {blok.tarih} {ss(blok.baslar)}–{ss(blok.biter)}
           {blok.gece_asiyor ? ` · ${t("vardiyaGeceAsiyor")}` : ""}
         </p>

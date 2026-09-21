@@ -15,8 +15,8 @@ import { useT } from "@/lib/i18n/kullan";
 // `/davet/[jeton]`, `Ekler`, `GirisYontemlerim`) — korumali alanin
 // disinda, kendi duzen kurallari olan ekranlar.
 //
-// KENAR ve TEHLIKE renkleri token'a gecti. `bg-yuzey-card` /
-// `text-metin-body` BILEREK DURUYOR: o aile mobil `home_tokens.dart`
+// KENAR ve TEHLIKE renkleri token'a gecti. `bg-[color:var(--yz-surface-1)]` /
+// `text-[color:var(--yz-text)]` BILEREK DURUYOR: o aile mobil `home_tokens.dart`
 // ile PARITEDE ve hangi yone gidilecegi kullanicinin karari
 // (bkz. kararlar §10b.3). Sessizce cevirmek o karari arkadan dolanmak
 // olurdu.
@@ -28,21 +28,21 @@ import { useT } from "@/lib/i18n/kullan";
 // tek yerde ve gerileme riski olmadan verir ("tek yer, sayfa basina CSS
 // degil" — P132 sart 1).
 export const inputCls =
-  "w-full rounded-lg border border-[color:var(--yz-border)] bg-yuzey-card px-3 py-2 text-sm text-metin-body outline-none transition focus:border-[color:var(--yz-accent)] focus:ring-2 focus:ring-[color:var(--yz-accent)]/25 disabled:opacity-60";
+  "w-full rounded-lg border border-[color:var(--yz-border)] bg-[color:var(--yz-surface-1)] px-3 py-2 text-sm text-[color:var(--yz-text)] outline-none transition focus:border-[color:var(--yz-accent)] focus:ring-2 focus:ring-[color:var(--yz-accent)]/25 disabled:opacity-60";
 // Birincil dugme MAVI (mobil `HomeTokens.primary`). Beyaz metin
 // #2563EB uzerinde 5.17:1 — AA (tests/tasarim-kontrast.test.ts).
 // GOLGE KALDIRILDI: mobil kartlarda golge yoktur, dugmede de olmamali.
 export const btnPrimary =
   "odak-ters inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1d4fd8] active:translate-y-px disabled:opacity-60";
 export const btnGhost =
-  "kart-kenar rounded-lg border bg-yuzey-card px-3 py-1.5 text-sm text-metin-body transition hover:bg-yuzey-divider";
+  "border-[color:var(--yz-border)] rounded-lg border bg-[color:var(--yz-surface-1)] px-3 py-1.5 text-sm text-[color:var(--yz-text)] transition hover:bg-[color:var(--yz-border)]";
 export const btnDanger =
-  "rounded-lg border border-[color:var(--yz-danger-edge)] bg-yuzey-card px-3 py-1.5 text-sm text-[color:var(--yz-danger-ink)] transition hover:brightness-95";
+  "rounded-lg border border-[color:var(--yz-danger-edge)] bg-[color:var(--yz-surface-1)] px-3 py-1.5 text-sm text-[color:var(--yz-danger-ink)] transition hover:brightness-95";
 
 // Kart yuzeyi — yumusak katmanli golge + 16px radius (dashboard vb. yeniden
 // kullanir; koyu modda .dark .bg-white → slate-900).
 // Kart: radius 16 + 1px cok hafif kenarlik, GOLGE YOK (mobil karari).
-export const cardCls = "kart-kenar rounded-kart border bg-yuzey-card";
+export const cardCls = "border-[color:var(--yz-border)] rounded-kart border bg-[color:var(--yz-surface-1)]";
 
 // (P138) `tableCardCls` KALDIRILDI. Tanimliydi ama HICBIR sayfa
 // kullanmiyordu (0/23) — yerini `components/tablo.tsx` icindeki

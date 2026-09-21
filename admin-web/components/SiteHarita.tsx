@@ -1,6 +1,6 @@
-import { Kart } from "@/components/ui";
 "use client";
 
+import { Kart } from "@/components/ui";
 // (P132/4a) TESIS KONUMU HARITASI — panoda.
 //
 // UC KARAR, ucu de "yarim gosterme" ilkesinden:
@@ -83,9 +83,9 @@ export function SiteHarita({
 
   const harita = (
     <>
-      <div ref={ref} className="aspect-[16/9] w-full bg-yuzey-placeholder">
+      <div ref={ref} className="aspect-[16/9] w-full bg-[color:var(--yz-surface-sunken)]">
         {!konumVar ? (
-          <p className="flex h-full items-center justify-center px-6 text-center text-satiralt text-metin-muted">
+          <p className="flex h-full items-center justify-center px-6 text-center text-satiralt text-[color:var(--yz-text-2)]">
             {t("panoKonumYok")}
           </p>
         ) : gorundu ? (
@@ -101,7 +101,7 @@ export function SiteHarita({
       {konumVar && !MAPS_ANAHTARI ? (
         // Hangi saglayicinin cizdigi GORUNUR olmali: "harita farkli
         // gorunuyor" sorusunun cevabi burada.
-        <p className="px-kart py-2 text-satiralt text-metin-muted">
+        <p className="px-kart py-2 text-satiralt text-[color:var(--yz-text-2)]">
           {t("panoKonumOsm")}
         </p>
       ) : null}
@@ -113,8 +113,8 @@ export function SiteHarita({
   return (
     <Kart className="overflow-hidden">
       <div className="flex items-center justify-between gap-3 p-kart pb-3">
-        <h2 className="text-bolum text-metin-heading">{t("panoKonumBaslik")}</h2>
-        {ad ? <span className="truncate text-satiralt text-metin-muted">{ad}</span> : null}
+        <h2 className="text-bolum text-[color:var(--yz-text)]">{t("panoKonumBaslik")}</h2>
+        {ad ? <span className="truncate text-satiralt text-[color:var(--yz-text-2)]">{ad}</span> : null}
       </div>
       {harita}
     </Kart>

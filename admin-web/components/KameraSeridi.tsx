@@ -1,6 +1,6 @@
-import { BolumBasligi, Kart } from "@/components/ui";
 "use client";
 
+import { BolumBasligi, Kart } from "@/components/ui";
 // (P132/4b) PANODA KAMERA SERIDI — mobil `kamera_seridi.dart`in web ikizi.
 //
 // P43'UN KARARI AYNEN GECERLI: karo DURAGAN KARE cizer (`snapshot_url`),
@@ -129,10 +129,10 @@ export function KameraSeridi({
       {oynatilan ? (
         <Kart className="mb-3 p-kart">
           <div className="mb-2 flex items-center justify-between gap-3">
-            <h3 className="text-kartbaslik text-metin-heading">{oynatilan.ad}</h3>
+            <h3 className="text-kartbaslik text-[color:var(--yz-text)]">{oynatilan.ad}</h3>
             <button
               onClick={() => setOynatilan(null)}
-              className="kart-kenar rounded-lg border px-3 py-1 text-sm text-metin-body hover:bg-yuzey-divider"
+              className="border-[color:var(--yz-border)] rounded-lg border px-3 py-1 text-sm text-[color:var(--yz-text)] hover:bg-[color:var(--yz-border)]"
             >
               {t("ortakKapat")}
             </button>
@@ -168,7 +168,7 @@ export function KameraSeridi({
                 aria-label={oynar ? t("kameraOynat", { ad: k.ad }) : k.ad}
                 className="block w-full text-start disabled:cursor-default"
               >
-                <span className="relative block aspect-video bg-yuzey-placeholder">
+                <span className="relative block aspect-video bg-[color:var(--yz-surface-sunken)]">
                   {kareKaynagi(k) ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -179,7 +179,7 @@ export function KameraSeridi({
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <span className="flex h-full items-center justify-center text-satiralt text-metin-muted">
+                    <span className="flex h-full items-center justify-center text-satiralt text-[color:var(--yz-text-2)]">
                       {t("kameraKareYokWeb")}
                     </span>
                   )}
@@ -195,7 +195,7 @@ export function KameraSeridi({
                     </span>
                   ) : null}
                 </span>
-                <span className="block truncate px-3 py-2 text-kartbaslik text-metin-heading">
+                <span className="block truncate px-3 py-2 text-kartbaslik text-[color:var(--yz-text)]">
                   {k.ad}
                 </span>
               </button>

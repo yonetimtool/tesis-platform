@@ -129,7 +129,7 @@ export function TanitimForm() {
       </label>
       {/* DONUS YOLU KURALI EKRANDA YAZILI: sunucu telefon VEYA e-posta
           istiyor; kullanici bunu gondermeden ONCE bilmeli. */}
-      <p className="text-satiralt text-metin-mutedBg sm:col-span-2">
+      <p className="text-satiralt text-[color:var(--yz-text-2)] sm:col-span-2">
         {t("tanitimFormDonusYolu")}
       </p>
       {hata ? (

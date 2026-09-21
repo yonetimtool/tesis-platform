@@ -151,7 +151,7 @@ export function Ekler({
 
   return (
     <section aria-label={t("ekBaslik")} className="flex flex-col gap-3">
-      <h3 className="text-sm font-semibold text-metin-body">{t("ekBaslik")}</h3>
+      <h3 className="text-sm font-semibold text-[color:var(--yz-text)]">{t("ekBaslik")}</h3>
 
       {hata && (
         <p role="alert" className="text-sm text-vurguInk-red">
@@ -161,24 +161,24 @@ export function Ekler({
 
       <ul className="flex flex-col gap-2">
         {ekler.length === 0 && (
-          <li className="text-sm text-metin-muted">{t("ekYok")}</li>
+          <li className="text-sm text-[color:var(--yz-text-2)]">{t("ekYok")}</li>
         )}
         {ekler.map((e) => (
           <li
             key={e.id}
-            className="kart-kenar flex items-start justify-between gap-3 rounded-kart border p-2"
+            className="border-[color:var(--yz-border)] flex items-start justify-between gap-3 rounded-kart border p-2"
           >
             <div className="min-w-0">
               {e.tur === "not" ? (
-                <p className="whitespace-pre-wrap break-words text-sm text-metin-body">
+                <p className="whitespace-pre-wrap break-words text-sm text-[color:var(--yz-text)]">
                   {e.metin}
                 </p>
               ) : (
-                <p className="break-words text-sm font-medium text-metin-body">
+                <p className="break-words text-sm font-medium text-[color:var(--yz-text)]">
                   {e.dosya_adi ?? e.dosya_key}
                 </p>
               )}
-              <p className="mt-0.5 text-xs text-metin-muted">
+              <p className="mt-0.5 text-xs text-[color:var(--yz-text-2)]">
 {/* (P162 §7.3) Duyuran adi yerine ROL — bkz. announcements. */}
                 {t("duyuranRol")} · {formatDateTime(e.created_at)}
               </p>

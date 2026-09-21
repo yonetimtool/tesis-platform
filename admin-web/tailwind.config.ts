@@ -103,27 +103,14 @@ const config: Config = {
         },
         // Yuzey/metin — acik tema degerleri; koyu tema globals.css'te
         // ayni degisken adlariyla yeniden tanimlanir (tek yer).
-        yuzey: {
-          // (P166 §7.2) Mobil `home_tokens.dart` ile AYNI — parite testi
-          // ikisini kilitliyor. Zemin koyulasti ki beyaz kart AYRISSIN.
-          bg: "#EAEEF5",
-          card: "#FFFFFF",
-          divider: "#E4E9F1",
-          placeholder: "#E5E7EB",
-        },
-        metin: {
-          heading: "#111827",
-          body: "#374151",
-          // (P166 §7.2) Zemin koyulastigi icin yeniden olculdu (eski
-          // #6B7280 yeni zeminde 4.15 ile AA altina duserdi).
-          muted: "#626976",
-          // (P132.6) IKINCIL METIN SAYFA ZEMININDE. Kontrast testi olctu:
-          // #6B7280 beyaz KART uzerinde 4.83 (gecer) ama sayfa zemininde
-          // (#F4F6FA) 4.47 — esigin ALTINDA. Ayni token'i iki yuzeyde
-          // kullanmak, sayfa zeminindeki her ikincil satiri esigin altina
-          // dusuruyordu. Bu ton sayfa zemini icindir: 4.91.
-          mutedBg: "#636C7A",
-        },
+        // (P244 §10d) `metin.*` ve `yuzey.*` KALDIRILDI.
+        //
+        // Bunlar eski tasarim dilinin rol adlariydi ve mobil
+        // `home_tokens.dart` ile paritede tutuluyordu. P244'te iki yuzey
+        // de `--yz-*` degerlerine cekildi ve web'deki 178 kullanim oraya
+        // tasindi; girdiler KULLANILMAYAN birer kopya olarak kalmisti.
+        // Parite artik `--yz-*` ile DOGRUDAN olculuyor
+        // (tests/tasarim-token.test.ts, "(P244 §10d)").
         brand: {
           navy: "#1E3A5F",
           // MARKA teali (gradyan/dolgu). Metin ve dugme zemini icin

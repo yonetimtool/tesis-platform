@@ -184,12 +184,12 @@ export function KameraOynatici({ url, mp4, poster }: Props) {
         </p>
       )}
       {bagleniyor && !hata && (
-        <p role="status" className="text-xs text-metin-muted" data-bagleniyor="1">
+        <p role="status" className="text-xs text-[color:var(--yz-text-2)]" data-bagleniyor="1">
           {t("kameraBagleniyor")}
         </p>
       )}
       {yol && !hata && !bagleniyor && (
-        <p className="text-xs text-metin-muted" data-yol={yol}>
+        <p className="text-xs text-[color:var(--yz-text-2)]" data-yol={yol}>
           {yolEtiketi[yol]}
         </p>
       )}

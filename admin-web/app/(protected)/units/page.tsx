@@ -685,7 +685,7 @@ export default function UnitsPage() {
         }
       >
         <div className="space-y-3">
-          <p className="text-sm text-metin-muted">
+          <p className="text-sm text-[color:var(--yz-text-2)]">
             {t("daireTopluSecili", { adet: secili.length })}
           </p>
           <AlanSarmal etiket={t("ortakDurum")}>

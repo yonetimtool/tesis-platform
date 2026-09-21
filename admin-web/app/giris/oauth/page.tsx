@@ -308,7 +308,7 @@ function OauthDonus() {
         <h1 className="text-lg font-semibold">{t("sosyalBaslik")}</h1>
 
         {adim === "yukleniyor" ? (
-          <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
+          <p className="text-sm text-[color:var(--yz-text-2)]">{t("ortakYukleniyor")}</p>
         ) : null}
 
 
@@ -318,7 +318,7 @@ function OauthDonus() {
         {adim === "onay_bekliyor" ? (
           <>
             <h2 className="font-medium">{t("kayitOnayBekliyorBaslik")}</h2>
-            <p className="text-sm text-metin-body">{t("kayitOnayBekliyorAciklama")}</p>
+            <p className="text-sm text-[color:var(--yz-text)]">{t("kayitOnayBekliyorAciklama")}</p>
             <button className={btnPrimary} onClick={() => router.replace("/login")}>
               {t("sosyalGiriseDon")}
             </button>
@@ -329,7 +329,7 @@ function OauthDonus() {
             kullanici: kayit yuzeyi. */}
         {adim === "kayit_gerekli" ? (
           <>
-            <p className="text-sm text-metin-body">{t("sosyalBagliDegil")}</p>
+            <p className="text-sm text-[color:var(--yz-text)]">{t("sosyalBagliDegil")}</p>
             <button className={btnPrimary} onClick={() => router.replace("/kayit")}>
               {t("sosyalKaydolDevam")}
             </button>
@@ -344,7 +344,7 @@ function OauthDonus() {
         {adim === "tesis_secimi" ? (
           <div className="space-y-3" data-test="oauth-tesis-secimi">
             <h2 className="font-medium">{t("girisTesisSecBaslik")}</h2>
-            <p className="text-sm text-metin-body">{t("girisTesisSecAlt")}</p>
+            <p className="text-sm text-[color:var(--yz-text)]">{t("girisTesisSecAlt")}</p>
             {tesisler.map((x) => (
               <button
                 key={x.tenant_id}
@@ -361,7 +361,7 @@ function OauthDonus() {
 
         {adim === "mevcut" ? (
           <>
-            <p className="text-sm text-metin-body">{t("sosyalMevcutHesap")}</p>
+            <p className="text-sm text-[color:var(--yz-text)]">{t("sosyalMevcutHesap")}</p>
             <button
               className={btnPrimary}
               onClick={() => {

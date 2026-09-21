@@ -254,25 +254,14 @@ textarea:focus-visible,
    ========================================================================== */
 
 /* Yuzey/metin — HomeSurface._dark ile birebir. */
-.dark .bg-yuzey-bg { background-color: #1b222c; }
-.dark .bg-yuzey-card { background-color: #262e3a; }
-.dark .bg-yuzey-divider { background-color: #232a36; }
-.dark .bg-yuzey-placeholder { background-color: #232a36; }
-.dark .border-yuzey-divider { border-color: #232a36; }
-.dark .text-metin-heading { color: #f3f4f6; }
-.dark .text-metin-body { color: #d1d5db; }
-.dark .text-metin-muted { color: #9ca3af; }
 /* `mutedBg` acik temada SAYFA ZEMININDE AA'yi tutmak icin koyulastirilmis
    ikincil tondur (#636C7A). Koyu temada ayni deger kalirsa kontrast 3.5'e
    duser (AA 4.5 degil) — bu yuzden `muted` ile AYNI acik tona doner
    (#9ca3af: sayfada 7.3, kartta 6.7). Bu satiri (P132.8) token kilidi
    buldu; acik temada hicbir belirtisi yoktu. */
-.dark .text-metin-mutedBg { color: #9ca3af; }
 
 /* Kart kenarligi: acik temada %4 siyah, koyu temada %8 beyaz. Mobilde de
    golge YOKTUR — ayirt edici cizgi bu 1px'tir. */
-.kart-kenar { border-color: rgba(0, 0, 0, 0.04); }
-.dark .kart-kenar { border-color: rgba(255, 255, 255, 0.08); }
 
 /* VURGU METNI KOYU TEMADA ACILIR — HomeTokens._koyuMetin haritasinin
    birebir karsiligi. Gerekce oradaki olcumdur: 600-tonu vurgular koyu

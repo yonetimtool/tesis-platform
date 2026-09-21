@@ -146,8 +146,8 @@ export function GlobalArama({
   return (
     <div ref={kutuRef} className="relative w-full max-w-md">
       {/* (P244 §2) ARAMA ALANI YENI DILE TASINDI.
-          Eski sinif dizesi (`border-slate-300 bg-yuzey-card
-          text-metin-body`) ESKI dilin kalintisiydi: kabuk her sayfada
+          Eski sinif dizesi (`border-slate-300 bg-[color:var(--yz-surface-1)]
+          text-[color:var(--yz-text)]`) ESKI dilin kalintisiydi: kabuk her sayfada
           ciziliyor, yani urunun en cok gorunen tek kontrolu eski dilde
           kaliyordu. */}
       <input
@@ -192,10 +192,10 @@ export function GlobalArama({
         <div
           role="listbox"
           aria-label={t("aramaSonuclari")}
-          className="kart-kenar absolute end-0 top-full z-40 mt-1 max-h-80 w-full overflow-y-auto rounded-kart border bg-yuzey-card shadow-yuzen"
+          className="border-[color:var(--yz-border)] absolute end-0 top-full z-40 mt-1 max-h-80 w-full overflow-y-auto rounded-kart border bg-[color:var(--yz-surface-1)] shadow-yuzen"
         >
           {vuruslar.length === 0 && sayfalar.length === 0 && !yukleniyor && (
-            <p className="px-3 py-4 text-sm text-metin-muted">{t("aramaSonucYok")}</p>
+            <p className="px-3 py-4 text-sm text-[color:var(--yz-text-2)]">{t("aramaSonucYok")}</p>
           )}
 
           {/* (P166 §2) SAYFALAR ONCE. Kullanici bir sayfa adi yazdiysa
@@ -206,7 +206,7 @@ export function GlobalArama({
             <div role="group" aria-labelledby="arama-sayfalar-baslik">
               <p
                 id="arama-sayfalar-baslik"
-                className="px-3 pb-1 pt-2 text-xs uppercase tracking-wide text-metin-muted"
+                className="px-3 pb-1 pt-2 text-xs uppercase tracking-wide text-[color:var(--yz-text-2)]"
               >
                 {t("aramaSayfalar")}
               </p>
@@ -217,10 +217,10 @@ export function GlobalArama({
                   role="option"
                   aria-selected={false}
                   onClick={() => sayfayaGit(s)}
-                  className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-start transition hover:bg-yuzey-divider"
+                  className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-start transition hover:bg-[color:var(--yz-border)]"
                 >
                   <span className="text-sm font-medium">{t(s.oge.anahtar)}</span>
-                  <span className="text-xs text-metin-muted">{t(s.grupAnahtari)}</span>
+                  <span className="text-xs text-[color:var(--yz-text-2)]">{t(s.grupAnahtari)}</span>
                 </button>
               ))}
             </div>
@@ -228,7 +228,7 @@ export function GlobalArama({
 
           {vuruslar.length > 0 && sayfalar.length > 0 && (
             <p
-              className="px-3 pb-1 pt-2 text-xs uppercase tracking-wide text-metin-muted"
+              className="px-3 pb-1 pt-2 text-xs uppercase tracking-wide text-[color:var(--yz-text-2)]"
               aria-hidden="true"
             >
               {t("aramaKayitlar")}
@@ -241,10 +241,10 @@ export function GlobalArama({
               role="option"
               aria-selected={false}
               onClick={() => git(v)}
-              className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-start transition hover:bg-yuzey-divider"
+              className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-start transition hover:bg-[color:var(--yz-border)]"
             >
               <span className="text-sm font-medium">{v.baslik}</span>
-              <span className="text-xs text-metin-muted">
+              <span className="text-xs text-[color:var(--yz-text-2)]">
                 {t(HEDEF[v.kaynak]?.etiket ?? _YEDEK_ETIKET)}
                 {v.ayrinti ? ` · ${v.ayrinti}` : ""}
               </span>

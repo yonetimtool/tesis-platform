@@ -86,7 +86,7 @@ function Makbuzlar() {
             </TabloBasligi>
             <tbody>
               {makbuzlar.map((m) => (
-                <tr key={m.id} className="border-t border-yuzey-divider">
+                <tr key={m.id} className="border-t border-[color:var(--yz-border)]">
                   <Td dolgusuz className="py-2 font-mono text-xs">{m.belge_no}</Td>
                   <Td dolgusuz className="py-2 tabular-nums">
                     {kurusToTL(m.tutar_kurus)}
@@ -178,7 +178,7 @@ export default function AidatimPage() {
                   </TabloBasligi>
                 <tbody>
                   {d.assessments.map((a) => (
-                    <tr key={a.id} className="border-t border-yuzey-divider">
+                    <tr key={a.id} className="border-t border-[color:var(--yz-border)]">
                       <Td dolgusuz className="py-2">{a.donem}</Td>
                       <Td dolgusuz className="py-2 tabular-nums">
                         {kurusToTL(a.tutar_kurus)}

@@ -1,10 +1,12 @@
+"use client";
+
 // (P244 §4) BASIT TABLO ILKELLERI — `components/tablo.tsx`ten TASINDI.
 //
 // ===========================================================================
 // NEDEN TASINDI
 // ===========================================================================
-// Dosya ESKI tasarim dilinin siniflarini kullaniyordu (`kart-kenar`,
-// `rounded-kart`, `bg-yuzey-card`, `text-metin-muted`) ve 8 sayfa ondan
+// Dosya ESKI tasarim dilinin siniflarini kullaniyordu (`border-[color:var(--yz-border)]`,
+// `rounded-kart`, `bg-[color:var(--yz-surface-1)]`, `text-[color:var(--yz-text-2)]`) ve 8 sayfa ondan
 // ithal ediyordu — yani o sayfalar "karma dil" olarak olculuyordu.
 // Degerler token'a cevrildi ve dosya YENI katmana (`components/ui/`)
 // tasindi: modul siniri artik tasarim dili siniriyla ayni yerde.
@@ -20,7 +22,6 @@
 // Ustelik alti satirlik bir tanim defterine sayfalama eklemek, ozellik
 // degil gurultu olurdu.
 
-"use client";
 
 // (P138) ORTAK TABLO ILKELI — 23 sayfa ayni iskeleti elle yaziyordu.
 //
@@ -45,7 +46,7 @@
 // panoda kalir.
 //
 // AYRIM DOLGU VE BOSLUKTAN: dikey izgara cizgisi YOK, satir arasi tek bir
-// hafif yatay ayirici (`border-yuzey-divider`) ve uzerine gelince yuzey
+// hafif yatay ayirici (`border-[color:var(--yz-border)]`) ve uzerine gelince yuzey
 // dolgusu. Degerlerin hepsi mevcut token'lardan; yeni renk/olcu ICAT
 // EDILMEDI.
 import type { ReactNode } from "react";
