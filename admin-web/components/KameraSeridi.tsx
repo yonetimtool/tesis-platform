@@ -184,7 +184,13 @@ export function KameraSeridi({
                     </span>
                   )}
                   {!oynar ? (
-                    <span className="absolute end-2 top-2 rounded-chip bg-accent-orange/12 px-2 py-0.5 text-chip text-accent-orange">
+                    <span
+                    className="absolute end-2 top-2 rounded-chip px-2 py-0.5 text-chip"
+                    style={{
+                      background: "color-mix(in srgb, var(--yz-warning) 20%, transparent)",
+                      color: "var(--yz-warning-ink)",
+                    }}
+                  >
                       {t("kameraOynatilamazRozet")}
                     </span>
                   ) : null}

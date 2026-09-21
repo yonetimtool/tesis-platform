@@ -21,7 +21,8 @@
  *    engellemezdi.
  * 4. IKON-ONLY dugmede `aria-label` ZORUNLU (tip seviyesinde zorlanir).
  */
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import Link from "next/link";
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
 
 export type DugmeTuru = "birincil" | "ikincil" | "sessiz" | "tehlike";
 export type DugmeBoyu = "kucuk" | "orta" | "buyuk";
@@ -88,6 +89,84 @@ export interface DugmeProps extends TemelProps {
   /** Satir genisligi kaplasin mi (mobil form dugmeleri). */
   tamGenislik?: boolean;
   className?: string;
+}
+
+/**
+ * (P244 §10) DUGME GORUNUMLU BAGLANTI.
+ *
+ * =========================================================================
+ * OLCULEN KUSUR
+ * =========================================================================
+ * Depoda dugme gibi duran BES ayri elle yazilmis `<a>` vardi
+ * (`tenants`, `kurulum`, `dokumanlar`, `settings`, `KurulumHatirlatici`)
+ * ve ucu daha eski dilin `btnPrimary`/`btnGhost` sinif sabitlerini
+ * kullaniyordu. Bes kopya = bes farkli yukseklik, dolgu ve odak halkasi.
+ *
+ * =========================================================================
+ * NEDEN `Dugme` DEGIL
+ * =========================================================================
+ * `Dugme` bir `<button>` cizer. Hedefi bir SAYFA olan sey baglanti
+ * olmali: orta tikla yeni sekmede acilir, ekran okuyucu "baglanti" der,
+ * tarayici adresi onizler. Bir `<button>`a `onClick={router.push}`
+ * takmak bunlarin ucunu de kaybeder.
+ *
+ * Gorunum sozlesmesi `Dugme` ile AYNI kaynaktan gelir (`BOY`,
+ * `turStili`); ayrisamaz.
+ */
+export function DugmeBaglantisi({
+  children,
+  href,
+  tur = "ikincil",
+  boy = "orta",
+  ikon,
+  className = "",
+  ...rest
+}: {
+  children?: ReactNode;
+  href: string;
+  tur?: DugmeTuru;
+  boy?: DugmeBoyu;
+  ikon?: ReactNode;
+  className?: string;
+} & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "className" | "href">) {
+  const b = BOY[boy];
+  // IC ROTADA `next/link`, DISARIDA duz `<a>`.
+  //
+  // Duz `<a>` ic rotada ISTEMCI GECISINI KAYBETTIRIR: tarayici sayfayi
+  // bastan yukler, kabuk yeniden kurulur ve SWR onbellegi bosalir.
+  // Bu bilesen elle yazilmis bes baglantinin yerine geciyor ve o
+  // beslerin hepsi `next/link` kullaniyordu — sessizce tam sayfa
+  // yenilemeye donmek bir GERILEME olurdu.
+  const Etiket = href.startsWith("/") ? Link : "a";
+  return (
+    <Etiket
+      {...rest}
+      href={href}
+      className={[
+        "odak-ic inline-flex items-center justify-center gap-2 border",
+        "font-medium transition-[box-shadow,transform,background] select-none",
+        b.h,
+        b.px,
+        "active:scale-[0.98]",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      style={{
+        borderRadius: "var(--yz-radius-btn)",
+        fontSize: b.fs,
+        borderWidth: "var(--yz-border-w)",
+        boxShadow: tur === "sessiz" ? "none" : "var(--yz-raised)",
+        transitionDuration: "var(--yz-dur-fast)",
+        transitionTimingFunction: "var(--yz-ease)",
+        textDecoration: "none",
+        ...turStili(tur),
+      }}
+    >
+      {ikon}
+      {children}
+    </Etiket>
+  );
 }
 
 export function Dugme({

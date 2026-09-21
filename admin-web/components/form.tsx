@@ -19,7 +19,9 @@ export const btnPrimary =
 export const btnGhost =
   "kart-kenar rounded-lg border bg-yuzey-card px-3 py-1.5 text-sm text-metin-body transition hover:bg-yuzey-divider";
 export const btnDanger =
-  "rounded-lg border border-accent-red/30 bg-yuzey-card px-3 py-1.5 text-sm text-vurguInk-red transition hover:bg-accent-red/12";
+  // (P244 §10) Eski Tailwind alfa sinifi kaldirildi; bu modul hala bes
+  // dosyada kullaniliyor ve tamamen emekliye ayrilmasi ayri bir is.
+  "rounded-lg border border-accent-red/30 bg-yuzey-card px-3 py-1.5 text-sm text-vurguInk-red transition hover:brightness-95";
 
 // Kart yuzeyi — yumusak katmanli golge + 16px radius (dashboard vb. yeniden
 // kullanir; koyu modda .dark .bg-white → slate-900).

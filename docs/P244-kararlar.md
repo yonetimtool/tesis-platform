@@ -1895,3 +1895,106 @@ ile anlam taşıma** kuralı bozulmadı.
 
 `tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
 **tam takım 248 dosya / 2067 test yeşil.**
+
+---
+
+# AŞAMA 10a — ESKİ DİLİN EMEKLİYE AYRILMASI · UYGULANDI
+
+## A10a.1 Dört modülden üçü gitti
+
+| modül | durum |
+|---|---|
+| `components/tablo.tsx` | aşama 4'te silinmişti |
+| `components/Liste.tsx` | aşama 4'te silinmişti |
+| `components/tasarim.tsx` | **silindi** — tek "kullanıcısı" onu yasaklayan kilitti |
+| `components/Modal.tsx` | **silindi** — 3 kullanıcı `ui/modal`a taşındı |
+| `components/form.tsx` | **kaldı** — 5 kullanıcı, hepsi giriş/kayıt yüzeyinde |
+
+`Modal.tsx`i silmeden önce **davranış kapsamını ölçtüm**: eski
+`modal.dom.test.ts` yedi iddia taşıyordu (ESC, dış tık, iç tık, odak
+girişi/dönüşü, odak tuzağı sarması, kirli form onayı). `ui-modal.dom`
+**dokuzunu** taşıyor ve yedisinin hepsini kapsıyor. Kapsam kaybı yok —
+varsayılmadı, karşılaştırıldı.
+
+## A10a.2 Ölçülen kusur: beş ayrı "düğme gibi duran bağlantı"
+
+Depoda düğme görünümlü **beş** elle yazılmış `<a>` vardı (`tenants`,
+`kurulum`, `dokumanlar`, `settings`, `KurulumHatirlatici`) ve üçü daha
+eski dilin `btnPrimary`/`btnGhost` sınıf sabitlerini kullanıyordu. Beş
+kopya = beş farklı yükseklik, dolgu ve odak halkası.
+
+**YENİ `DugmeBaglantisi`.** Görünüm sözleşmesi `Dugme` ile **aynı
+kaynaktan** gelir (`BOY`, `turStili`) — ayrışamaz.
+
+**Neden `Dugme` değil:** `Dugme` bir `<button>` çizer. Hedefi bir
+**sayfa** olan şey bağlantı olmalı — orta tıkla yeni sekmede açılır,
+ekran okuyucu "bağlantı" der, tarayıcı adresi önizler. Bir `<button>`a
+`onClick={router.push}` takmak üçünü de kaybeder.
+
+**İç rotada `next/link`, dışarıda düz `<a>`.** İlk yazımda düz `<a>`
+kullanmıştım; bu **gerileme** olurdu: iç rotada tarayıcı sayfayı baştan
+yükler, kabuk yeniden kurulur ve SWR önbelleği boşalır. Beş bağlantının
+hepsi `next/link` kullanıyordu; sessizce tam sayfa yenilemeye dönmek
+kimsenin istemediği bir değişiklikti.
+
+## A10a.3 PARİTEDEN AYRILAN İLK TOKEN — açıkça
+
+`tasarim-token` kilidi *"Dart ve web aynı tint opaklığını (%12)
+kullanır"* diyordu ve web tarafını **silinen** `tasarim.tsx`ten
+okuyordu.
+
+İki şey değişti, ikisi de bilinçli:
+
+1. `tasarim.tsx` silindi.
+2. Yeni katman **tek bir opaklık kullanmıyor**: `IkonKutu` her durum
+   için ayrı oran taşıyor (bilgi %14, olumlu %16, uyarı %20, kritik
+   %16). Sebep ölçülmüştü — aynı opaklıkta sarı, maviden görünür
+   derecede soluk kalıyor; göz tonu değil **kontrastı** okuyor.
+
+Planlama kararı **#3** tam da bunu söylüyordu: *anlam taşıyan token'lar
+paritede kalır, görsel işlem detayları ayrılır.* Tint opaklığı
+ikincisidir.
+
+**Test silinmedi, yeniden yazıldı.** Artık üç şeyi kilitliyor: mobil
+kendi değerini koruyor; web tinti yeni katmanda ve `color-mix` + token
+üzerinden (tema değişince tint de değişir — alfa sınıfı token
+katmanından **bağımsız** davranıyordu); eski sınıf dizesi hiçbir yere
+geri gelmedi.
+
+Üçüncü iddia yazılır yazılmaz **dört gerçek kullanıcı** buldu
+(`EmptyState`, `KameraSeridi`, `TanitimForm`, `form.tsx`) — hepsi
+token'a çevrildi.
+
+## A10a.4 Kilitlerin güncellenmesi
+
+* `p244-tek-tasarim-dili`: "kimse kullanmıyor" iddiası **"dosya olarak
+  da yok"**a yükseltildi. Kullanılmayan ama **duran** bir modül, bir
+  sonraki geliştiricinin refleksle ithal edeceği şeydir.
+* **YENİ** iddia: `form.tsx`in kalan **beş** kullanıcısı tam eşleşen bir
+  listede. Biri temizlenince listeden silinmeli, yeni biri eklenince
+  test düşer — borç ne sessizce büyüyebilir ne de sessizce unutulabilir.
+
+## A10a.5 Bu turda YAPILMAYAN — açıkça
+
+* **`components/form.tsx` silinmedi.** Beş kullanıcısı da giriş/kayıt
+  yüzeyinde (`/kayit`, `/giris/oauth`, `/davet/[jeton]`, `Ekler`,
+  `GirisYontemlerim`) — korumalı alanın **dışında**, kendi düzen
+  kuralları olan ekranlar. Onları çevirmek ayrı bir tur.
+* **Renk katmanı borcu:** ölçtüğüm sayı kararlarda yazdığımdan
+  **büyük** çıktı. §8b'de "22 sayfa" demiştim; o tarama yalnız
+  `(protected)` altındaki `page.tsx`leri görüyordu. Tüm `.tsx`
+  tarandığında **43 dosya / ~200 kullanım**: paylaşılan bileşenler de
+  borcu taşıyor. Bu turda yalnız tint sınıfları ve dokunduğum dosyalar
+  temizlendi.
+* **`site-palet.ts`** hâlâ P244 öncesi renkleri taşıyor (karar 6 gereği
+  3B maketin kendisine dokunulmadı) — **kullanıcının kararını
+  bekliyor**.
+* **Açık maddeler duruyor:** `tablist` vs `nav` tutarsızlığı (§9b),
+  yumuşak ton ailesi (§8d), ay takviminin dar ekranda 48×48'i
+  tutamaması.
+
+## A10a.6 Doğrulama
+
+`tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
+**tam takım 247 dosya / 2063 test yeşil** (bir test dosyası silindi:
+`modal.dom`, kapsamı `ui-modal.dom`da).

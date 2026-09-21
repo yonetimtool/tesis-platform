@@ -1,15 +1,18 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 
-import { btnPrimary } from "@/components/form";
+import { DugmeBaglantisi } from "@/components/ui";
 import {
   BAGIMLILIKLAR,
   hedefBaglantisi,
   type BagimlilikKodu,
 } from "@/lib/bagimliliklar";
 import { useT } from "@/lib/i18n/kullan";
+
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const TUR_BIRINCIL = "birincil" as const;
+const BOY_KUCUK = "kucuk" as const;
 
 /**
  * (P154 / Asama 7.4) BAGIMLILIK UYARISI — TEK bilesen, tum ekranlar.
@@ -57,13 +60,20 @@ export function BagimlilikUyarisi({
       role="status"
       className="flex flex-wrap items-center justify-between gap-3 rounded-kart border border-accent-orange/30 bg-accent-orange/10 p-3"
     >
-      <p className="min-w-0 text-sm text-metin-body">{t(b.mesaj)}</p>
-      <Link
+      <p className="min-w-0 text-sm" style={{ color: "var(--yz-text)" }}>
+        {t(b.mesaj)}
+      </p>
+      {/* (P244 §10) Elle yazilmis `btnPrimary` sinifi yerine paylasilan
+          `DugmeBaglantisi`: gorunum sozlesmesi `Dugme` ile AYNI
+          kaynaktan gelir ve ayrisamaz. */}
+      <DugmeBaglantisi
         href={hedefBaglantisi(b, suAn)}
-        className={`${btnPrimary} shrink-0`}
+        tur={TUR_BIRINCIL}
+        boy={BOY_KUCUK}
+        className="shrink-0"
       >
         {t(b.eylem)}
-      </Link>
+      </DugmeBaglantisi>
     </div>
   );
 }

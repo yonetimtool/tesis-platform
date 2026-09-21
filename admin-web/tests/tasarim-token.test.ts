@@ -153,12 +153,61 @@ describe("(P132) koyu tema VURGU METNI haritasi", () => {
   });
 });
 
-describe("(P132) tint opakligi %12", () => {
-  it("Dart ve web ayni opakligi kullanir", () => {
+describe("(P244 §10) tint opakligi — PARITEDEN AYRILDI", () => {
+  /**
+   * ESKI IDDIA: "Dart ve web ayni tint opakligini (%12) kullanir" ve
+   * web tarafi `components/tasarim.tsx`teki `bg-accent-blue/12`
+   * dizesinden okunuyordu.
+   *
+   * IKI SEY DEGISTI ve ikisi de BILINCLI:
+   *
+   * 1. `components/tasarim.tsx` SILINDI (P244 §10). Eski tasarim dili
+   *    emekliye ayrildi; kullanicisi kalmamisti.
+   * 2. Yeni katman TEK BIR opaklik kullanmiyor: `IkonKutu` her durum
+   *    icin AYRI oran tasiyor (bilgi %14, olumlu %16, uyari %20,
+   *    kritik %16). Sebep olculmustu — ayni opaklikta sari, maviden
+   *    gorunur derecede soluk kaliyor; goz tonu degil KONTRASTI
+   *    okuyor.
+   *
+   * P244 planlama kararı #3 tam da bunu soyluyordu: ANLAM TASIYAN
+   * token'lar paritede KALIR, GORSEL ISLEM detaylari ayrilir. Tint
+   * opakligi ikincisidir.
+   *
+   * Bu yuzden iddia "ayni deger" olmaktan cikti ama TEST SILINMEDI:
+   * hala iki seyi kilitliyor — mobil tarafin kendi degerini
+   * kaybetmemesi ve ESKI SINIF DIZESININ geri gelmemesi.
+   */
+  it("MOBIL kendi opakligini korur", () => {
     expect(DART).toMatch(/withValues\(alpha:\s*0\.12\)/);
-    const kit = readFileSync(resolve(KOK, "admin-web/components/tasarim.tsx"), "utf8");
-    // Tailwind alfa sozdizimi: `/12`.
-    expect(kit).toContain("bg-accent-blue/12");
+  });
+
+  it("WEB tinti YENI katmanda ve TOKEN uzerinden", () => {
+    const yuzey = readFileSync(resolve(KOK, "admin-web/components/ui/yuzey.tsx"), "utf8");
+    // `color-mix` + `--yz-*`: tema degisince tint de degisir. Eski
+    // Tailwind alfa sozdizimi (`bg-accent-blue/12`) token katmanindan
+    // BAGIMSIZ davraniyordu.
+    expect(yuzey).toContain("color-mix(in srgb, var(--yz-accent)");
+  });
+
+  it("ESKI SINIF DIZESI hicbir yerde geri gelmedi", () => {
+    const kaynaklar: string[] = [];
+    const tara = (dizin: string) => {
+      for (const ad of readdirSync(dizin)) {
+        const tam = join(dizin, ad);
+        if (statSync(tam).isDirectory()) {
+          if (ad === "node_modules" || ad === ".next") continue;
+          tara(tam);
+          continue;
+        }
+        if (ad.endsWith(".tsx") || ad.endsWith(".ts")) kaynaklar.push(tam);
+      }
+    };
+    tara(resolve(KOK, "admin-web/app"));
+    tara(resolve(KOK, "admin-web/components"));
+    const suclular = kaynaklar.filter((f) =>
+      /bg-accent-\w+\/12\b/.test(readFileSync(f, "utf8")),
+    );
+    expect(suclular, `eski tint sinifi: ${suclular.join(", ")}`).toEqual([]);
   });
 });
 

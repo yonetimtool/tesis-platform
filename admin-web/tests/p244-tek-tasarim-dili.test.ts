@@ -19,14 +19,22 @@
 // ettigi. Asama 4'te modul sinirlari tasarim dili siniriyla ayni yere
 // getirildi: gorsel ilkeller `components/ui/` altinda, eski dosyalarda
 // yalniz forma ait olanlar kaldi.
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
 const KOK = join(__dirname, "..");
 
-/** Eski tasarim dilinin GORSEL modulleri. */
+/**
+ * Eski tasarim dilinin GORSEL modulleri.
+ *
+ * (P244 §10) DORDU DE ARTIK DOSYA OLARAK DA YOK: `tablo.tsx` ve
+ * `Liste.tsx` asama 4'te, `tasarim.tsx` ve `Modal.tsx` asama 10'da
+ * silindi. Liste BOSALTILMADI — iddia "bu yollardan ithal edilmiyor"
+ * olarak KALIR ve biri dosyayi geri koyup kullanmaya baslarsa test
+ * duser.
+ */
 const ESKI_MODULLER = [
   "@/components/tablo",
   "@/components/tasarim",
@@ -71,11 +79,36 @@ describe("(P244 §4) tek tasarim dili", () => {
     ).toEqual([]);
   });
 
-  it("ESKI `tasarim.tsx` ARTIK KIMSE TARAFINDAN kullanilmiyor", () => {
-    // Bilgi amacli ve bilincli: dosya HENUZ silinmedi (asama 10) ama
-    // kullanicisi kalmadiysa silinebilir hale geldi demektir. Biri onu
-    // yeniden kullanmaya baslarsa bu iddia duser ve karar yeniden
-    // verilir.
+  it("(P244 §10) ESKI GORSEL MODULLER DOSYA OLARAK DA YOK", () => {
+    // Onceki surum "kimse kullanmiyor" diyordu ve dosyalar duruyordu.
+    // Kullanilmayan ama DURAN bir modul, bir sonraki gelistiricinin
+    // refleksle ithal edecegi seydir; asama 10'da silindiler.
+    for (const ad of ["tablo.tsx", "tasarim.tsx", "Liste.tsx", "Modal.tsx"]) {
+      expect(
+        existsSync(join(KOK, "components", ad)),
+        `${ad} geri gelmis`,
+      ).toBe(false);
+    }
+  });
+
+  it("(P244 §10) ESKI `components/form` KALAN KULLANICILARI — bayatlamasin", () => {
+    /**
+     * `form.tsx` HENUZ silinemedi: bes dosya hala sinif sabitlerini
+     * (`inputCls`, `btnDanger`, `cardCls`, `Field`, `ErrorBox`)
+     * kullaniyor ve bunlarin hepsi GIRIS/KAYIT yuzeyinde — korumali
+     * alanin disinda, kendi duzen kurallari olan ekranlar.
+     *
+     * LISTE TAM ESLESIR: biri temizlenince buradan SILINMELI (yoksa
+     * liste bayatlar), yeni biri eklenince test DUSER. Yani borc ne
+     * sessizce buyuyebilir ne de sessizce unutulabilir.
+     */
+    const BEKLENEN = [
+      "app/davet/[jeton]/page.tsx",
+      "app/giris/oauth/page.tsx",
+      "app/kayit/page.tsx",
+      "components/Ekler.tsx",
+      "components/GirisYontemlerim.tsx",
+    ];
     const kullanan: string[] = [];
     const tara = (dizin: string) => {
       for (const ad of readdirSync(dizin)) {
@@ -86,14 +119,14 @@ describe("(P244 §4) tek tasarim dili", () => {
           continue;
         }
         if (!ad.endsWith(".tsx") && !ad.endsWith(".ts")) continue;
-        if (tam.endsWith("components/tasarim.tsx")) continue;
-        if (readFileSync(tam, "utf8").includes('from "@/components/tasarim"')) {
+        if (tam.endsWith("components/form.tsx")) continue;
+        if (readFileSync(tam, "utf8").includes('from "@/components/form"')) {
           kullanan.push(tam.slice(KOK.length + 1));
         }
       }
     };
     tara(join(KOK, "app"));
     tara(join(KOK, "components"));
-    expect(kullanan, `hâlâ kullanan: ${kullanan.join(", ")}`).toEqual([]);
+    expect(kullanan.sort()).toEqual(BEKLENEN);
   });
 });

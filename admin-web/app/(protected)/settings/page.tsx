@@ -11,6 +11,7 @@ import {
   Secim,
   AlanSarmal,
   Dugme,
+  DugmeBaglantisi,
   HataDurumu,
   IskeletMetin,
   SayfaBasligi,
@@ -23,6 +24,10 @@ import { OPERASYON, GIRDI_TIPI } from "@/lib/tesis-ayar-alanlari";
 import type { TenantSettings } from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
+
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const BOY_KUCUK = "kucuk" as const;
+const KURULUM_ROTASI = "/kurulum";
 
 /**
  * (P40) Ayarlar — kimlik alanlari + OPERASYON ayarlari.
@@ -123,19 +128,9 @@ export default function SettingsPage() {
           /* BAGLANTI, DUGME DEGIL: orta tikla yeni sekmede acilir ve
              ekran okuyucu "baglanti" der. `Dugme` gorunumu tasiyan bir
              `<a>`. */
-          <Link
-            href="/kurulum"
-            className="odak-ic yz-lift inline-flex items-center px-3 py-2"
-            style={{
-              borderRadius: "var(--yz-radius-btn)",
-              border: "var(--yz-border-w) solid var(--yz-border)",
-              fontSize: "var(--yz-fs-sm)",
-              color: "var(--yz-text)",
-              background: "var(--yz-metal-1)",
-            }}
-          >
+          <DugmeBaglantisi href={KURULUM_ROTASI} boy={BOY_KUCUK}>
             {t("kurulumBaslik")}
-          </Link>
+          </DugmeBaglantisi>
         }
       />
 

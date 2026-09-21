@@ -3,9 +3,14 @@
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-import { Modal } from "@/components/Modal";
+
+import { Modal } from "@/components/ui";
 import { ekranYardimi } from "@/lib/ekran-yardimi";
 import { useT } from "@/lib/i18n/kullan";
+
+// (P244 §10) Eski `components/Modal` emekliye ayrildi; `ui/modal` genislik
+// yerine SINIF aliyor (cagiranin duzen karari, bilesenin degil).
+const MODAL_DAR = "max-w-md";
 
 /**
  * (P243 §6e) BAGLAM ICI YARDIM — ust cubuktaki soru isareti.
@@ -57,8 +62,8 @@ export function EkranYardimi() {
       <Modal
         baslik={t("yardimBaslik")}
         acik={acik}
-        kapat={() => setAcik(false)}
-        genislik="sm"
+        onKapat={() => setAcik(false)}
+        genislikSinifi={MODAL_DAR}
       >
         <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
           {t(anahtar)}

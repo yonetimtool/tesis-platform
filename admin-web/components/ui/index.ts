@@ -14,6 +14,7 @@
 export { Kart, Bolum, Girinti, type YuzeyTonu, type KartProps } from "./yuzey";
 export {
   Dugme,
+  DugmeBaglantisi,
   IkonDugmesi,
   type DugmeProps,
   type DugmeTuru,

@@ -1,11 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-import { btnGhost } from "@/components/form";
+import { DugmeBaglantisi } from "@/components/ui";
 import { DONUS_PARAM, gecerliDonus } from "@/lib/bagimliliklar";
 import { useT } from "@/lib/i18n/kullan";
+
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const BOY_KUCUK = "kucuk" as const;
 
 /**
  * (P154 / Asama 7.4) "ISIN BITINCE GERI DON" seridi.
@@ -39,10 +41,12 @@ export function DonusCubugu() {
       role="status"
       className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-kart border border-accent-blue/30 bg-accent-blue/10 p-3"
     >
-      <p className="min-w-0 text-sm text-metin-body">{t("donusAciklama")}</p>
-      <Link href={hedef} className={`${btnGhost} shrink-0`}>
+      <p className="min-w-0 text-sm" style={{ color: "var(--yz-text)" }}>
+        {t("donusAciklama")}
+      </p>
+      <DugmeBaglantisi href={hedef} boy={BOY_KUCUK} className="shrink-0">
         {t("donusDugme")}
-      </Link>
+      </DugmeBaglantisi>
     </div>
   );
 }

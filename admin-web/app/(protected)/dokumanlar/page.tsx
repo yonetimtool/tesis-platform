@@ -15,10 +15,15 @@ import {
   useOnay,
   type Kolon,
   SayfaBasligi,
+  DugmeBaglantisi,
 } from "@/components/ui";
 import { apiSend, agIstegi } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
+
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const BOY_KUCUK = "kucuk" as const;
+const RAPOR_ROTASI = "/raporlar";
 
 /**
  * (P167 §6.3) DOKUMAN YONETIMI — kendi sayfasi.
@@ -322,16 +327,11 @@ export default function DokumanlarPage() {
           <div className="flex items-center gap-2">
           {/* EXCEL: rapor motorundan. Ikinci bir Excel yazicisi yazmak,
               sutun bicimlerinin iki yerde yasamasi olurdu. */}
-          <a
-            className="odak-ic yz-lift inline-flex items-center gap-2 px-3 py-2"
-            style={{
-              borderRadius: "var(--yz-radius-btn)",
-              border: "var(--yz-border-w) solid var(--yz-border)",
-              fontSize: "var(--yz-fs-sm)",
-              color: "var(--yz-success-ink)",
-            }}
-            href="/raporlar"
+          <DugmeBaglantisi
+            href={RAPOR_ROTASI}
+            boy={BOY_KUCUK}
             aria-label={t("dokumanExcel")}
+            style={{ color: "var(--yz-success-ink)" }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <rect
@@ -341,7 +341,7 @@ export default function DokumanlarPage() {
               <path d="M3 9h18M9 9v11M15 9v11" stroke="currentColor" strokeWidth="1.6" />
             </svg>
             {t("dokumanExcel")}
-          </a>
+          </DugmeBaglantisi>
           <Dugme tur="birincil" boy="kucuk" onClick={() => setAcik(true)}>
             {t("dokumanYukle")}
           </Dugme>

@@ -81,7 +81,12 @@ export function TanitimForm() {
     return (
       <p
         role="status"
-        className="rounded-kart border border-accent-green/30 bg-accent-green/12 px-4 py-3 text-sm text-vurguInk-green"
+        className="rounded-kart border px-4 py-3 text-sm"
+        style={{
+          borderColor: "var(--yz-success-edge)",
+          background: "color-mix(in srgb, var(--yz-success) 16%, transparent)",
+          color: "var(--yz-success-ink)",
+        }}
       >
         {t("tanitimFormTesekkur")}
       </p>

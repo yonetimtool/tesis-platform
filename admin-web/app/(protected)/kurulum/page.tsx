@@ -8,6 +8,7 @@ import {
   Dugme,
   HataDurumu,
   SayfaBasligi,
+  DugmeBaglantisi,
 } from "@/components/ui";
 import { ilkGirisTurunuAc } from "@/components/IlkGirisTuru";
 import { kurulumHatirlaticiyiAc } from "@/components/KurulumHatirlatici";
@@ -18,6 +19,11 @@ import { useToast } from "@/components/Toast";
 import { KURULUM_HEDEFLERI } from "@/lib/kurulum-adimlari";
 import { useRol } from "@/lib/rol-kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
+
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const BOY_KUCUK = "kucuk" as const;
+const TUR_BIRINCIL = "birincil" as const;
+const TUR_IKINCIL = "ikincil" as const;
 
 /**
  * (P154 / Asama 7.3) KURULUM SIHIRBAZI.
@@ -349,19 +355,15 @@ export default function KurulumPage() {
                   )}
                   {/* BAGLANTI, DUGME DEGIL: adim bir SAYFAYA gider ve orta
                       tikla yeni sekmede acilabilmeli. */}
-                  <Link
+                  <DugmeBaglantisi
                     href={h.rota}
-                    className="odak-ic yz-lift inline-flex items-center px-3 py-2"
-                    style={{
-                      borderRadius: "var(--yz-radius-btn)",
-                      border: "var(--yz-border-w) solid var(--yz-border)",
-                      fontSize: "var(--yz-fs-sm)",
-                      color: a.tamam ? "var(--yz-text)" : "var(--yz-on-fill)",
-                      background: a.tamam ? "var(--yz-metal-1)" : "var(--yz-metal-accent)",
-                    }}
+                    // BITMEMIS adim BIRINCIL, biten IKINCIL: sihirbazda
+                    // goz siradaki isi arar, yapilani degil.
+                    tur={a.tamam ? TUR_IKINCIL : TUR_BIRINCIL}
+                    boy={BOY_KUCUK}
                   >
                     {a.tamam || yetkisiz ? t("kurulumGoruntule") : t("kurulumGit")}
-                  </Link>
+                  </DugmeBaglantisi>
                   {/* ATLAMA yalniz BITMEMIS adimda anlamli; biten bir adimi
                       atlamak kullaniciya hicbir sey kazandirmaz. */}
                   {!a.tamam && (

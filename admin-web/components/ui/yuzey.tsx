@@ -211,7 +211,7 @@ export function Girinti({
  * (P244 §4) IKON KUTUSU — `components/tasarim.tsx`ten TASINDI.
  *
  * Eski surum `VURGU_TINT`/`VURGU_IKON` haritalarini kullaniyordu; onlar
- * ESKI dilin Tailwind sinif dizeleriydi (`bg-accent-blue/12` gibi) ve
+ * ESKI dilin Tailwind alfa sinif dizeleriydi ve
  * tema degisince token katmanindan bagimsiz davraniyordu.
  *
  * DURUM ADLARI `OzetKarti` ILE AYNI (`notr/bilgi/olumlu/uyari/kritik`):

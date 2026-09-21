@@ -7,6 +7,7 @@ import useSWR from "swr";
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const R_OLUMLU = "olumlu" as const;
 const R_UYARI = "uyari" as const;
+const BOY_KUCUK = "kucuk" as const;
 
 import {
   Modal,
@@ -18,6 +19,7 @@ import {
   AlanSarmal,
   BosDurum,
   Dugme,
+  DugmeBaglantisi,
   FiltreCubugu,
   HataDurumu,
   IskeletMetin,
@@ -290,19 +292,9 @@ export default function TenantsPage() {
         gizlenebilir: false,
         hucre: (x) => (
           <div className="flex justify-end gap-2">
-            <Link
-              href={`/tenants/${x.id}`}
-              className="odak-ic yz-lift inline-flex items-center px-3 py-2"
-              style={{
-                borderRadius: "var(--yz-radius-btn)",
-                border: "var(--yz-border-w) solid var(--yz-border)",
-                fontSize: "var(--yz-fs-sm)",
-                color: "var(--yz-text)",
-                background: "var(--yz-metal-1)",
-              }}
-            >
+            <DugmeBaglantisi href={`/tenants/${x.id}`} boy={BOY_KUCUK}>
               {t("tesisYonet")}
-            </Link>
+            </DugmeBaglantisi>
             {/* (P225) PLATFORM ADMINI BARINDIRAN TESISTE SIL DUGMESI
                 HIC CIZILMEZ. Sunucu ve trigger da reddediyor (uc
                 katman); buradaki gizleme, yoneticiyi anlamsiz bir

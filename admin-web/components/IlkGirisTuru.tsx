@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import useSWR, { mutate as globalMutate } from "swr";
 
-import { Modal } from "@/components/Modal";
-import { btnGhost, btnPrimary } from "@/components/form";
+import { Dugme, Modal } from "@/components/ui";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
@@ -46,6 +45,13 @@ import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
  */
 
 /** Tur ekranlari — baslik + metin sozluk anahtari. */
+// (P244 §10) Eski `components/form` sinif sabitleri yerine `Dugme`.
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const TUR_SESSIZ = "sessiz" as const;
+const TUR_BIRINCIL = "birincil" as const;
+const BOY_KUCUK = "kucuk" as const;
+const MODAL_DAR = "max-w-md";
+
 const EKRANLAR: readonly { baslik: SozlukAnahtari; metin: SozlukAnahtari }[] = [
   { baslik: "tur1Baslik", metin: "tur1Metin" },
   { baslik: "tur2Baslik", metin: "tur2Metin" },
@@ -116,7 +122,7 @@ export function IlkGirisTuru() {
   const sonMu = sira === EKRANLAR.length - 1;
 
   return (
-    <Modal baslik={t("turBaslik")} acik={acik} kapat={bitir} genislik="sm">
+    <Modal baslik={t("turBaslik")} acik={acik} onKapat={bitir} genislikSinifi={MODAL_DAR}>
       <div className="space-y-3">
         <p className="tabular-nums" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
           {t("turSayac", { sira: sira + 1, toplam: EKRANLAR.length })}
@@ -130,22 +136,22 @@ export function IlkGirisTuru() {
         <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
           {/* ATLA HER EKRANDA: yalniz ilk ekranda olsaydi, ikinci
               ekranda ilgisini kaybeden kisinin cikisi kalmazdi. */}
-          <button type="button" className={btnGhost} onClick={bitir}>
+          <Dugme tur={TUR_SESSIZ} boy={BOY_KUCUK} onClick={bitir}>
             {t("turAtla")}
-          </button>
+          </Dugme>
           <div className="flex gap-2">
             {sira > 0 && (
-              <button type="button" className={btnGhost} onClick={() => setSira(sira - 1)}>
+              <Dugme tur={TUR_SESSIZ} boy={BOY_KUCUK} onClick={() => setSira(sira - 1)}>
                 {t("turGeri")}
-              </button>
+              </Dugme>
             )}
-            <button
-              type="button"
-              className={btnPrimary}
+            <Dugme
+              tur={TUR_BIRINCIL}
+              boy={BOY_KUCUK}
               onClick={() => (sonMu ? bitir() : setSira(sira + 1))}
             >
               {sonMu ? t("turBitir") : t("turIleri")}
-            </button>
+            </Dugme>
           </div>
         </div>
       </div>

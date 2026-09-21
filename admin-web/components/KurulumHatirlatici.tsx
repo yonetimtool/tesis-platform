@@ -44,19 +44,21 @@
  * temizlense de ilerleme kaybolmaz.
  */
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 
-import { Modal } from "@/components/Modal";
-import { btnGhost, btnPrimary } from "@/components/form";
+import { Dugme, DugmeBaglantisi, Modal } from "@/components/ui";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 
 /** Kapatma tercihi — TEKNIK anahtar, marka adindan bagimsiz (bkz. §6). */
 const KAPATILDI_ANAHTARI = "yonetio.kurulum.kapatildi";
 const UC = "/api/panel/kurulum";
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const TUR_SESSIZ = "sessiz" as const;
+const TUR_BIRINCIL = "birincil" as const;
+
 const KURULUM_ROTASI = "/kurulum";
 /** Sihirbazi gorebilen roller — uctaki `require_role` ile AYNI kume. */
 const YONETIM_ROLLERI = ["admin", "yonetici"];
@@ -114,18 +116,18 @@ export function KurulumHatirlatici({ rol }: { rol: string | null }) {
     <Modal
       baslik={t("kurulumHatirlaticiBaslik")}
       acik={acik}
-      kapat={kapat}
-      altBilgi={
+      onKapat={kapat}
+      eylemler={
         <>
-          <button type="button" className={btnGhost} onClick={kapat}>
+          <Dugme tur={TUR_SESSIZ} onClick={kapat}>
             {t("kurulumHatirlaticiSonra")}
-          </button>
+          </Dugme>
           {/* BAGLANTI, DUGME DEGIL: hedef bir SAYFA ve orta tikla yeni
               sekmede acilabilmeli. Tiklayinca modal da kapanir — aksi
               hâlde kullanici sihirbaza gidip ustunde modal bulurdu. */}
-          <Link href={KURULUM_ROTASI} className={btnPrimary} onClick={kapat}>
+          <DugmeBaglantisi href={KURULUM_ROTASI} tur={TUR_BIRINCIL} onClick={kapat}>
             {t("kurulumHatirlaticiGit")}
-          </Link>
+          </DugmeBaglantisi>
         </>
       }
     >
