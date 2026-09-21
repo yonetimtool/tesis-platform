@@ -3395,4 +3395,10 @@ export const fr: Sozluk = {
   sakinEtkinlikKatilmiyor: "{n} ne participent pas",
   sakinKurallarAlt: "Règlement fixé par la gestion ; l'ordre est celui qu'elle a donné.",
   yonetimIletisimAlt: "Personnes et adresse pour joindre directement la gestion.",
+  tanimSayfaAlt: "Caisses, catégories, entreprises et autres registres ; chacun avec ses règles de colonnes.",
+  yetkiOzetUc: "Points de terminaison",
+  yetkiOzetRol: "Rôles",
+  yetkiOzetKapisiz: "Sans contrôle de rôle",
+  yetkiOzetKapisizAlt: "Ne signifie pas public",
+  ayarSayfaAlt: "Assistant de configuration, rappel et préférences du panneau.",
 };

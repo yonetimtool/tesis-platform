@@ -10,6 +10,7 @@ import {
   HataDurumu,
   IskeletMetin,
   Kart,
+  SayfaBasligi,
   Secim,
 } from "@/components/ui";
 import { KonumSecici } from "@/components/KonumSecici";
@@ -132,14 +133,7 @@ export default function TesisAyarlariPage() {
 
   return (
     <div className="max-w-2xl space-y-5">
-      <div>
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-          {t("tesisAyarBaslik")}
-        </h1>
-        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-          {t("tesisAyarAlt")}
-        </p>
-      </div>
+      <SayfaBasligi baslik={t("tesisAyarBaslik")} aciklama={t("tesisAyarAlt")} />
 
       {error && <HataDurumu mesaj={error.message} />}
       {isLoading && !data && <IskeletMetin satir={4} />}

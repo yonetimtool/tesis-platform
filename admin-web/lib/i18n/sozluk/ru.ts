@@ -3395,4 +3395,10 @@ export const ru: Sozluk = {
   sakinEtkinlikKatilmiyor: "{n} не придут",
   sakinKurallarAlt: "Правила, установленные управлением; порядок задан им.",
   yonetimIletisimAlt: "Люди и адрес для прямой связи с управлением.",
+  tanimSayfaAlt: "Кассы, категории, компании и другие реестры; у каждого свои правила колонок.",
+  yetkiOzetUc: "Определённые точки",
+  yetkiOzetRol: "Роли",
+  yetkiOzetKapisiz: "Без ролевого барьера",
+  yetkiOzetKapisizAlt: "Это не значит «открыто всем»",
+  ayarSayfaAlt: "Мастер настройки, напоминание и настройки панели.",
 };

@@ -3395,4 +3395,10 @@ export const en: Sozluk = {
   sakinEtkinlikKatilmiyor: "{n} not attending",
   sakinKurallarAlt: "Site rules set by management; the order is the one management gave.",
   yonetimIletisimAlt: "People and address you can reach management through directly.",
+  tanimSayfaAlt: "Cash accounts, categories, companies and other registries; each with its own column rules.",
+  yetkiOzetUc: "Defined endpoints",
+  yetkiOzetRol: "Roles",
+  yetkiOzetKapisiz: "No role gate",
+  yetkiOzetKapisizAlt: "Does not mean public",
+  ayarSayfaAlt: "Setup wizard, reminder and panel preferences.",
 };

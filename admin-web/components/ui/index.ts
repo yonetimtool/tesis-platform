@@ -70,6 +70,7 @@ export { SayfaBasligi } from "./sayfa-basligi";
 // filtre cubugu HIC yoktu.
 export { DetayCekmecesi, CekmeceSatiri, type CekmeceProps } from "./cekmece";
 export { IcerikKarti } from "./icerik-karti";
+export { UstaDetayDuzeni, type UstaSecenek } from "./usta-detay";
 export { FiltreCubugu } from "./filtre-cubugu";
 export {
   OzetKarti,

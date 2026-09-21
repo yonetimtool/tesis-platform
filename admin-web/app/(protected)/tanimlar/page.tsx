@@ -7,7 +7,21 @@ import useSWR from "swr";
 const TUR_BIRINCIL = "birincil" as const;
 const TUR_IKINCIL = "ikincil" as const;
 
-import { Alan, AlanSarmal, BosDurum, Dugme, HataDurumu, Kart, Liste, Modal, Secim, useOnay } from "@/components/ui";
+import {
+  Alan,
+  AlanSarmal,
+  BosDurum,
+  Dugme,
+  HataDurumu,
+  Kart,
+  Liste,
+  Modal,
+  SayfaBasligi,
+  Secim,
+  UstaDetayDuzeni,
+  type UstaSecenek,
+  useOnay,
+} from "@/components/ui";
 import { TelefonAlani, telefonHataMetni } from "@/components/TelefonAlani";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -566,41 +580,35 @@ export default function TanimlarPage() {
   );
   // -1 "Ayarlar" sekmesi (defter degil) — artik o da ADRESTEN okunuyor.
   const ayarlarda = defterAdi === AYARLAR_ADI;
-  const sekme = ayarlarda ? -1 : DEFTERLER.findIndex((d) => d.kaynak === defterAdi);
-  const defter = DEFTERLER[sekme];
-  const setSekme = (i: number) => {
-    setDefterAdi(i === -1 ? AYARLAR_ADI : DEFTERLER[i].kaynak);
-  };
+  const defter = DEFTERLER.find((d) => d.kaynak === defterAdi) ?? DEFTERLER[0];
+  // (P244 §9) ON BIR DEFTER SARAN BIR DUGME SIRASINDAN USTA-DETAYA.
+  //
+  // Dugmeler iki-uc satira yayiliyor, acik olan yalnizca renkle belli
+  // oluyor ve icerik her secimde asagi kayiyordu. Dikey liste on bir
+  // ogeyi tek sutunda gosterir ve secili olan KONUMUNU KORUR.
+  //
+  // "Ayarlar" seceneginin defterlerden sonra gelmesi KORUNDU: o bir
+  // defter degil (muhasebe ayarlari formu) ve listenin sonunda durmasi
+  // bu farki soyluyor.
+  const secenekler: UstaSecenek[] = [
+    ...DEFTERLER.map((d) => ({ id: d.kaynak, baslik: t(d.baslikAnahtari) })),
+    { id: AYARLAR_ADI, baslik: t("tanimAyarlar") },
+  ];
+
   return (
-    <div className="space-y-4">
-      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-        {t("kabukTanimlar")}
-      </h1>
-      <div className="flex flex-wrap gap-2">
-        {DEFTERLER.map((d, i) => (
-          <Dugme
-            key={d.kaynak}
-            boy="kucuk"
-            tur={i === sekme ? TUR_BIRINCIL : TUR_IKINCIL}
-            /* (P160) `aria-pressed`: acik defter eskiden yalniz RENKLE
-               belliydi ve ekran okuyucu hangisinin acik oldugunu
-               soylemiyordu. */
-            aria-pressed={i === sekme}
-            onClick={() => setSekme(i)}
-          >
-            {t(d.baslikAnahtari)}
-          </Dugme>
-        ))}
-        <Dugme
-          boy="kucuk"
-          tur={sekme === -1 ? TUR_BIRINCIL : TUR_IKINCIL}
-          aria-pressed={sekme === -1}
-          onClick={() => setSekme(-1)}
-        >
-          {t("tanimAyarlar")}
-        </Dugme>
-      </div>
-      {sekme === -1 ? <Ayarlar /> : <DefterGorunumu key={defter.kaynak} defter={defter} />}
+    <div>
+      <SayfaBasligi baslik={t("kabukTanimlar")} aciklama={t("tanimSayfaAlt")} />
+      <UstaDetayDuzeni
+        secenekler={secenekler}
+        aktifId={ayarlarda ? AYARLAR_ADI : defter.kaynak}
+        onDegis={setDefterAdi}
+        listeBasligi={t("kabukTanimlar")}
+      >
+        {/* YALNIZ SECILI OLAN CIZILIR: her defterin kendi `useSWR`i var;
+            hepsini birden kurmak bir istek yerine on bir istek demekti.
+            `key` defter degisince durumu sifirlar. */}
+        {ayarlarda ? <Ayarlar /> : <DefterGorunumu key={defter.kaynak} defter={defter} />}
+      </UstaDetayDuzeni>
     </div>
   );
 }

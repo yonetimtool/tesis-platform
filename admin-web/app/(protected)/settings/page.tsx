@@ -13,6 +13,7 @@ import {
   Dugme,
   HataDurumu,
   IskeletMetin,
+  SayfaBasligi,
 } from "@/components/ui";
 import { kurulumHatirlaticiyiAc } from "@/components/KurulumHatirlatici";
 import { useToast } from "@/components/Toast";
@@ -115,26 +116,28 @@ export default function SettingsPage() {
           acilabilme". Menude de bir girisi var ama kullanicinin onu
           ARADIGI yer burasi — kurulum bittikten sonra sihirbaz akilda
           "bir ayar" olarak kalir. */}
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-          {t("kabukAyarlar")}
-        </h1>
-        {/* BAGLANTI, DUGME DEGIL: orta tikla yeni sekmede acilir ve ekran
-            okuyucu "baglanti" der. `Dugme` gorunumu tasiyan bir `<a>`. */}
-        <Link
-          href="/kurulum"
-          className="odak-ic yz-lift inline-flex items-center px-3 py-2"
-          style={{
-            borderRadius: "var(--yz-radius-btn)",
-            border: "var(--yz-border-w) solid var(--yz-border)",
-            fontSize: "var(--yz-fs-sm)",
-            color: "var(--yz-text)",
-            background: "var(--yz-metal-1)",
-          }}
-        >
-          {t("kurulumBaslik")}
-        </Link>
-      </div>
+      <SayfaBasligi
+        baslik={t("kabukAyarlar")}
+        aciklama={t("ayarSayfaAlt")}
+        eylem={
+          /* BAGLANTI, DUGME DEGIL: orta tikla yeni sekmede acilir ve
+             ekran okuyucu "baglanti" der. `Dugme` gorunumu tasiyan bir
+             `<a>`. */
+          <Link
+            href="/kurulum"
+            className="odak-ic yz-lift inline-flex items-center px-3 py-2"
+            style={{
+              borderRadius: "var(--yz-radius-btn)",
+              border: "var(--yz-border-w) solid var(--yz-border)",
+              fontSize: "var(--yz-fs-sm)",
+              color: "var(--yz-text)",
+              background: "var(--yz-metal-1)",
+            }}
+          >
+            {t("kurulumBaslik")}
+          </Link>
+        }
+      />
 
       {/* (P166 §8.1) HATIRLATICIYI TEKRAR AC.
           Brief: "kapatilabilsin, sonra ayarlardan tekrar acilabilsin."

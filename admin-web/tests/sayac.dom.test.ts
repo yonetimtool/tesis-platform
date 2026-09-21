@@ -68,9 +68,17 @@ function govdeYakala(parca: string): unknown[] {
 /** "Bölüm Sayaçları" sekmesini acar. */
 async function bolumSekmesi(): Promise<void> {
   await waitFor(() =>
-    expect(screen.getByRole("button", { name: "Bölüm Sayaçları" })).toBeInTheDocument(),
+    // (P244 §9) DEFTER SECICILERI ARTIK GERCEK SEKME.
+    //
+    // On bir defter sayfanin ustunde SARAN bir dugme sirasiydi; artik
+    // solda dikey bir `role=tablist`. Sorgu `button` -> `tab` olarak
+    // guncellendi: ogeler hala `<button>` etiketi ama ACIK bir role
+    // tasiyorlar ve erisilebilirlik agacinda sekme olarak duruyorlar.
+    // Iddia degismedi: defter seciciyi bul, tikla, o defterin ucu
+    // cagrilsin.
+    expect(screen.getByRole("tab", { name: "Bölüm Sayaçları" })).toBeInTheDocument(),
   );
-  await userEvent.click(screen.getByRole("button", { name: "Bölüm Sayaçları" }));
+  await userEvent.click(screen.getByRole("tab", { name: "Bölüm Sayaçları" }));
 }
 
 describe("Bolum sayaclari defteri (referans alan tipi)", () => {

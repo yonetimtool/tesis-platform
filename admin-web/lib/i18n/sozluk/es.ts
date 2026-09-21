@@ -3395,4 +3395,10 @@ export const es: Sozluk = {
   sakinEtkinlikKatilmiyor: "{n} no asisten",
   sakinKurallarAlt: "Normas fijadas por la administración; el orden es el que ella dio.",
   yonetimIletisimAlt: "Personas y dirección para contactar directamente con la administración.",
+  tanimSayfaAlt: "Cajas, categorías, empresas y otros registros; cada uno con sus reglas de columnas.",
+  yetkiOzetUc: "Extremos definidos",
+  yetkiOzetRol: "Roles",
+  yetkiOzetKapisiz: "Sin control de rol",
+  yetkiOzetKapisizAlt: "No significa público",
+  ayarSayfaAlt: "Asistente de configuración, recordatorio y preferencias del panel.",
 };

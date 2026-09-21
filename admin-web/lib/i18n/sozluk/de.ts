@@ -3395,4 +3395,10 @@ export const de: Sozluk = {
   sakinEtkinlikKatilmiyor: "{n} nehmen nicht teil",
   sakinKurallarAlt: "Von der Verwaltung festgelegte Hausregeln; die Reihenfolge stammt von ihr.",
   yonetimIletisimAlt: "Personen und Adresse, über die Sie die Verwaltung direkt erreichen.",
+  tanimSayfaAlt: "Kassen, Kategorien, Firmen und weitere Register; jedes mit eigenen Spaltenregeln.",
+  yetkiOzetUc: "Definierte Endpunkte",
+  yetkiOzetRol: "Rollen",
+  yetkiOzetKapisiz: "Keine Rollensperre",
+  yetkiOzetKapisizAlt: "Bedeutet nicht öffentlich",
+  ayarSayfaAlt: "Einrichtungsassistent, Erinnerung und Panel-Einstellungen.",
 };

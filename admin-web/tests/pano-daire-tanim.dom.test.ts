@@ -124,7 +124,9 @@ describe("Tanimlar", () => {
     ciz(TanimlarPage);
     await waitFor(() => expect(screen.getByText("Merkez Kasa")).toBeInTheDocument());
 
-    await userEvent.click(screen.getByRole("button", { name: "Firmalar" }));
+    // (P244 §9) Defter secicileri artik `role=tab` (usta-detay dikey
+    // listesi). Iddia degismedi: sekme degisince O DEFTERIN ucu cagrilir.
+    await userEvent.click(screen.getByRole("tab", { name: "Firmalar" }));
     await waitFor(() =>
       expect(cagrilanUrller().some((u) => u.includes("/api/tanimlar/firmalar"))).toBe(true),
     );

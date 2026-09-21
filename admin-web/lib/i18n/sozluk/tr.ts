@@ -3458,4 +3458,10 @@ export const tr = {
   sakinEtkinlikKatilmiyor: "{n} katılmıyor",
   sakinKurallarAlt: "Yönetimin belirlediği site kuralları; sıra yönetimin verdiği sıradır.",
   yonetimIletisimAlt: "Yönetime doğrudan ulaşabileceğiniz kişiler ve adres.",
+  tanimSayfaAlt: "Kasa, kategori, firma ve diğer kayıt defterleri; her biri kendi sütun kurallarıyla.",
+  yetkiOzetUc: "Tanımlı uç",
+  yetkiOzetRol: "Rol",
+  yetkiOzetKapisiz: "Rol kapısı yok",
+  yetkiOzetKapisizAlt: "Herkese açık demek değil",
+  ayarSayfaAlt: "Kurulum sihirbazı, hatırlatıcı ve panel tercihleri.",
 } as const;

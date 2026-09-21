@@ -1654,3 +1654,86 @@ düğmesi **olmaması**.
 
 `tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
 **tam takım 245 dosya / 2057 test yeşil.**
+
+---
+
+# AŞAMA 9a — TANIMLAR / AYARLAR: USTA-DETAY · UYGULANDI
+
+## A9a.1 On bir defter, saran bir düğme sırası
+
+`/tanimlar` on bir kayıt defterini sayfanın üstünde **saran** bir düğme
+sırası olarak diziyordu: iki-üç satıra yayılan düğmeler, yalnızca renkle
+(ve `aria-pressed` ile) belli olan seçim, her tıklamada aşağı kayan
+içerik.
+
+Dikey liste on bir öğeyi **tek sütunda** gösterir, seçili olan
+**konumunu korur** ve göz listeyi yukarıdan aşağı tarar. Referansta bu
+ekranların hepsi usta-detay.
+
+## A9a.2 Neden `Sekmeler`in bir varyantı değil
+
+`Sekmeler` içeriği **kendi tutar** (`sekme.icerik`) — yani on bir
+defterin hepsini birden kurmak demektir. Her defterin **kendi `useSWR`i**
+var; fark, bir istek ile **on bir istek** arasındaki farktır.
+
+`UstaDetayDuzeni`de içerik `children` olarak dışarıdan gelir: çağıran
+yalnız seçili olanı çizer. Bu, bileşeni ayırmanın **tek gerekçesi** ve
+kilitli (`YALNIZ SECILI DEFTERIN UCU CAGRILIR`).
+
+## A9a.3 Erişilebilirlik: `aria-pressed` yetmiyordu
+
+Eski düğme sırası `aria-pressed` taşıyordu — P160'ta eklenmişti ve o
+gün doğruydu. Ama `aria-pressed` ekran okuyucuya *"bu N öğeden K'sı"*
+demez; sekme deseni der. Yeni düzen gerçek `role=tablist` +
+`aria-orientation=vertical` + `role=tab` + `aria-selected`.
+
+**Seritte tek klavye durağı** (`tabIndex`): on bir sekmenin her biri
+odaklanabilir olsaydı klavye kullanıcısı içeriğe ulaşmak için **on bir
+kez** Tab'a basardı. Gezinme ok tuşlarıyla — ve dört ok tuşu da kabul
+ediliyor, çünkü **dar ekranda aynı şerit yatay çiziliyor** ve orada
+kullanıcının refleksi sağ/sol olur.
+
+## A9a.4 Bilinçli güncellenen iddia
+
+`sayac.dom` ve `pano-daire-tanim.dom` defter seçicilerini
+`getByRole("button")` ile buluyordu. Öğeler hâlâ `<button>` etiketi ama
+artık **açık bir role** taşıyorlar ve erişilebilirlik ağacında sekme
+olarak duruyorlar. Sorgular `tab`a güncellendi; **iddia değişmedi**:
+defter seçiciyi bul, tıkla, o defterin ucu çağrılsın.
+
+## A9a.5 Yetki matrisi: üç sayı, başka yerden okunamaz
+
+`/yetki`ye özet şeridi eklendi ve sayılar **istemcide** hesaplanıyor —
+`/schematic` ile aynı bilinçli istisna: matris sayfalı değil, sunucu tüm
+uçları tek yanıtta veriyor ("kim neye erişiyor" sorusu ancak böyle
+yanıtlanır).
+
+Üçüncü kart özellikle eklendi: **"rol kapısı yok"** sayısı. Sayfanın en
+başındaki not zaten *"rol kapısı yok ≠ herkese açık"* diyor; kartın alt
+bilgisi bunu tekrar söylüyor, çünkü bir sayıyı rakam olarak görmek
+yorumu davet eder.
+
+Tablo `yogunluk="sik"` + yapışkan başlık: yüzlerce uç ve **rol başına
+bir sütun** var; ekrana çok satır sığması satır yüksekliğinden değerli.
+
+## A9a.6 Kilit
+
+**YENİ** `p244-usta-detay` (5 test). **Üç kırma yakalandı:** her sekmeyi
+odaklanabilir yapmak, `aria-selected` yerine `aria-pressed` kullanmak,
+bütün defterleri birden çizmek.
+
+## A9a.7 Bu turda YAPILMAYAN — açıkça
+
+Aşama 9'un yalnız ilk parçası bitti. **Dokunulmayanlar:**
+`/users` (1007), `/profil` (1048), `/kurulum` (386), `/ice-aktarim`
+(742), `/dokumanlar` (512), `/karar-defteri` (315), `/transparency`
+(240), `/audit` (225), `/tenants` (565). Bunlar 9b ve 9c.
+
+`/settings` ve `/tesis-ayarlari` yalnız **sayfa başlığını** aldı; form
+düzenleri (kart grupları) zaten makul ve usta-detaya çevrilmedi — iki
+ekranın toplamı beş kart, sol liste bir sütun israfı olurdu.
+
+## A9a.8 Doğrulama
+
+`tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
+**tam takım 246 dosya / 2062 test yeşil.**

@@ -3395,4 +3395,10 @@ export const ar: Sozluk = {
   sakinEtkinlikKatilmiyor: "{n} لن يحضروا",
   sakinKurallarAlt: "قواعد المجمع التي وضعتها الإدارة؛ الترتيب من الإدارة.",
   yonetimIletisimAlt: "الأشخاص والعنوان للتواصل المباشر مع الإدارة.",
+  tanimSayfaAlt: "الصناديق والفئات والشركات وسجلات أخرى؛ لكلٍّ قواعد أعمدته.",
+  yetkiOzetUc: "نقاط معرَّفة",
+  yetkiOzetRol: "الأدوار",
+  yetkiOzetKapisiz: "بلا بوابة أدوار",
+  yetkiOzetKapisizAlt: "لا يعني أنها عامة",
+  ayarSayfaAlt: "معالج الإعداد والتذكير وتفضيلات اللوحة.",
 };
