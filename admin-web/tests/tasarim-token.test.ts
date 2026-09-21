@@ -322,7 +322,10 @@ describe("(P132) ORTAK ILKELLER tasarim sistemine bagli", () => {
     // (P138) `tableCardCls` KALDIRILDI (olu sinif, 0 kullanim); yerini
     // `components/ui/tablo-ilkelleri.tsx` icindeki `TabloKart` aldi ve ayni kural
     // asagida ONUN uzerinde olculuyor — kapsam kaybi yok, yer degisti.
-    for (const ad of ["cardCls", "panelCls"]) {
+    // (P244 §10) `panelCls` KALDIRILDI: olu ihracti (0 kullanim), tipki
+    // `tableCardCls` gibi. Kullanilmayan ama DURAN bir sinif, bir
+    // sonraki gelistiricinin ikinci bir secenek olarak gorecegi seydir.
+    for (const ad of ["cardCls"]) {
       const m = new RegExp(`export const ${ad}[^;]*;`, "s").exec(FORM);
       expect(m, `${ad} yok`).not.toBeNull();
       const deger = m![0];
@@ -365,9 +368,23 @@ describe("(P132) ORTAK ILKELLER tasarim sistemine bagli", () => {
     expect(m![0]).not.toContain("brand-teal");
   });
 
-  it("girdi odagi birincil renkte", () => {
+  it("girdi odagi VURGU renginde", () => {
+    /**
+     * (P244 §10) IDDIA GUNCELLENDI, NIYET AYNI.
+     *
+     * Eskiden `focus:border-primary` araniyordu — `primary` tailwind
+     * config'teki SABIT #2563EB'dir ve KOYU TEMADA DA ayni kalir.
+     * Odak halkasi artik `--yz-accent` uzerinden: acik temada AYNI
+     * deger (#2563eb), koyu temada acilir (#769df2).
+     *
+     * Yani bu yalniz bir ad degisikligi degil, bir DUZELTME: sabit
+     * lacivert odak halkasi koyu zeminde zar zor secilir.
+     *
+     * Olculen sey degismedi: odak MARKA TEALINDE DEGIL, vurgu
+     * renginde (P132 karari).
+     */
     const m = /export const inputCls[^;]*;/s.exec(FORM);
-    expect(m![0]).toContain("focus:border-primary");
+    expect(m![0]).toContain("focus:border-[color:var(--yz-accent)]");
     expect(m![0]).not.toContain("brand-teal");
   });
 });

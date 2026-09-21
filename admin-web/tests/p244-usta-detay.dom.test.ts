@@ -104,3 +104,50 @@ describe("(P244 §9a) tanimlar — usta-detay", () => {
     expect(defterIstekleri.size, `cagrilan defter uclari: ${[...defterIstekleri]}`).toBeLessThanOrEqual(1);
   });
 });
+
+// ===========================================================================
+// (P244 §10) IKI ANLAM — ve aralarindaki kural
+// ===========================================================================
+// §9b'de `/tanimlar` `role=tablist`, `/profil` `<nav>` kullaniyordu ve bu
+// bir TUTARSIZLIK olarak acik madde yazilmisti. Duzen artik TEK
+// bilesende; ayrilan yalnizca ANLAM:
+//
+//   `sekme`   — ogeler AYNI TUR icerigin alternatif gorunumu
+//   `gezinme` — ogeler FARKLI ISLER (ve biri YIKICI)
+//
+// Bu blok ikisinin de kendi sozlesmesini korudugunu olcer. Tek bilesene
+// tasinirken en kolay kaybedilecek sey, `/profil`in `<nav>` landmark'i
+// ve "Hesabimi sil"in kirmizi cizimidir.
+describe("(P244 §10) profil — gezinme anlami korundu", () => {
+  it("`<nav>` LANDMARK'I DURUYOR (ekran okuyucu atlayabilmeli)", async () => {
+    const { default: ProfilPage } = await import("@/app/(protected)/profil/page");
+    fetchSahtele({ "/api/me": { ad: "Ali", email: "a@b.c" } });
+    ciz(ProfilPage);
+    const gezinme = await screen.findByRole("navigation", { name: /bölüm/i });
+    expect(gezinme).toBeInTheDocument();
+    // Sekme DEGIL: `tablist` burada YANLIS anlam olurdu.
+    expect(screen.queryByRole("tablist")).toBeNull();
+  });
+
+  it("GEZINMEDE her oge NORMAL bir Tab duragi", async () => {
+    // Sekmedeki roving `tabIndex` burada yanlis olurdu: ok tusu bir
+    // `<nav>` icinde secim hareketi degildir.
+    const { default: ProfilPage } = await import("@/app/(protected)/profil/page");
+    fetchSahtele({ "/api/me": { ad: "Ali", email: "a@b.c" } });
+    ciz(ProfilPage);
+    const gezinme = await screen.findByRole("navigation", { name: /bölüm/i });
+    const ogeler = within(gezinme).getAllByRole("button");
+    expect(ogeler.length).toBeGreaterThan(3);
+    expect(ogeler.every((x) => x.getAttribute("tabindex") !== "-1")).toBe(true);
+  });
+
+  it("YIKICI OGE digerleriyle AYNI GORUNMEZ", async () => {
+    const { default: ProfilPage } = await import("@/app/(protected)/profil/page");
+    fetchSahtele({ "/api/me": { ad: "Ali", email: "a@b.c" } });
+    ciz(ProfilPage);
+    const gezinme = await screen.findByRole("navigation", { name: /bölüm/i });
+    const sil = within(gezinme).getByRole("button", { name: /hesabımı sil/i });
+    // jsdom RENK COZMEZ; olculen sey stilin TOKEN'i tasidigi.
+    expect(sil.getAttribute("style")).toContain("--yz-danger-ink");
+  });
+});

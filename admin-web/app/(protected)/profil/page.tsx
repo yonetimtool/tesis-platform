@@ -48,6 +48,7 @@ import {
   HataDurumu,
   IskeletMetin,
   SayfaBasligi,
+  UstaDetayDuzeni,
   Kart,
   Secim,
   useOnay,
@@ -103,8 +104,8 @@ type Bildirimler = {
 type PresignBileti = { upload_url: string; foto_key: string };
 
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`) — `AppShell` ile ayni desen.
-const SEFFAF = "transparent";
-const GOLGESIZ = "none";
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const ANLAM_GEZINME = "gezinme" as const;
 
 export default function ProfilPage() {
   const t = useT();
@@ -124,85 +125,45 @@ export default function ProfilPage() {
 
       {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
 
-      {/* (P244 §9b) BU SAYFA `UstaDetayDuzeni`YE CEVRILMEDI ve bu
-          olculmus bir karar, atlanmis bir is degil:
-            * Sol liste bir `<nav>` ve bu P169 §4'te BILINCLI secilmisti
-              — ekran okuyucu kullanicisi gezinme bolgesini ATLAYABILIR.
-            * "Hesabimi sil" ogesi `tehlikeli` isaretiyle KIRMIZI
-              cizilir; `UstaDetayDuzeni` boyle bir kavram tasimiyor ve
-              sirf tutarlilik icin onu kaybetmek, yikici bir secimi
-              digerleriyle ayni gostermek olurdu.
-            * Alti oge var, on bir degil: `/tanimlar`daki "on bir kez
-              Tab" sorunu burada YOK.
-          Iki ekranin iki desen kullanmasi bir TUTARSIZLIKTIR ve
-          kararlara ACIK MADDE olarak yazildi (asama 10). */}
-
-      {/* (P184-ek duzeltme §1) AYRI "beklemede" KARTI KALDIRILDI: e-posta
-          dogrulama artik Hesap Bilgileri formundaki e-posta kutusunun kendi
-          icinde (kutu + Kaydet + "dogrulama bekliyor"). Ikinci bir akis, tam
-          da kullanicinin sikayet ettigi ayriligi uretiyordu. */}
-      <div className="grid gap-6 lg:grid-cols-[13rem_minmax(0,1fr)]">
-        {/* SAYFA ICI SOL MENU — `nav` etiketi bilincli: ekran okuyucu
-            kullanicisi bunu bir gezinme bolgesi olarak atlayabilmeli. */}
-        {/* (P169 §4) DAR EKRANDA YATAY SERIT, GENISTE DIKEY MENU.
-            Dikey menu dar ekranda icerigin USTUNE bes satirlik bir blok
-            koyuyor ve kullanici asil formu gormek icin her girisinde
-            asagi kaydiriyordu. Karar SALT CSS: `useBant` gerekmedi,
-            dolayisiyla sunucu/istemci farki ve hidrasyon riski de yok.
-            `lg` ve ustu HIC DEGISMEDI. */}
-        <nav
-          aria-label={t("profilBolumMenusu")}
-          className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 lg:mx-0 lg:block lg:space-y-1 lg:overflow-visible lg:px-0 lg:pb-0"
-        >
-          {PROFIL_BOLUMLERI.map((b) => {
-            const aktif = b.id === bolum;
-            return (
-              <button
-                key={b.id}
-                type="button"
-                onClick={() => setBolum(b.id)}
-                aria-current={aktif ? "page" : undefined}
-                // `shrink-0` + `whitespace-nowrap` seridin sikismasini
-                // onler; `lg:w-full` dikey kipte eski genisligi geri verir.
-                className="odak-ic block shrink-0 whitespace-nowrap px-3 py-2 text-start transition lg:w-full"
-                style={{
-                  borderRadius: "var(--yz-radius-btn)",
-                  fontSize: "var(--yz-fs-sm)",
-                  // Aktiflik RENKLE degil YUZEYLE anlatilir — kenar
-                  // cubugundaki (P160) dille ayni.
-                  background: aktif ? "var(--yz-metal-2)" : SEFFAF,
-                  boxShadow: aktif ? "var(--yz-raised)" : GOLGESIZ,
-                  color: b.tehlikeli
-                    ? "var(--yz-danger-ink)"
-                    : aktif
-                      ? "var(--yz-text)"
-                      : "var(--yz-text-2)",
-                }}
-              >
-                {t(b.anahtar)}
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="min-w-0">
-          {isLoading ? (
-            <IskeletMetin satir={5} />
-          ) : bolum === "hesap" ? (
-            <HesapBilgileri profil={data} tazele={() => void mutate()} />
-          ) : bolum === "guvenlik" ? (
-            <GuvenlikVeGiris />
-          ) : bolum === "bildirim" ? (
-            <BildirimAyarlari />
-          ) : bolum === "yasal" ? (
-            <YasalMetinler />
-          ) : bolum === "sifre" ? (
-            <SifreDegistir parolaVar={Boolean(data)} />
-          ) : (
-            <HesabimiSil />
-          )}
-        </div>
-      </div>
+      {/* (P244 §10) ARTIK PAYLASILAN DUZENDE — ama `gezinme` ANLAMIYLA.
+          §9b'de bu sayfayi cevirmemistim; gerekcelerim gecerliydi ama
+          sonuc iki kardes ekranda IKI DESEN olmustu. `UstaDetayDuzeni`
+          ikisini de karsilayacak hale getirildi:
+            * `<nav>` landmark'i KORUNDU (P169 §4 karari) — ekran
+              okuyucu kullanicisi bolgeyi atlayabilir,
+            * "Hesabimi sil" ogesinin KIRMIZI cizimi KORUNDU
+              (`tehlikeli`),
+            * dar ekranda yatay serit / geniste dikey liste davranisi
+              zaten bilesenin kendisinde.
+          Kazanilan: bosluk, hiza ve secili durum gorunumu artik
+          `/tanimlar` ile AYNI yerden geliyor. */}
+      <UstaDetayDuzeni
+        secenekler={PROFIL_BOLUMLERI.map((b) => ({
+          id: b.id,
+          baslik: t(b.anahtar),
+          tehlikeli: b.tehlikeli,
+        }))}
+        aktifId={bolum}
+        onDegis={(id) => setBolum(id as ProfilBolumId)}
+        listeBasligi={t("profilBolumMenusu")}
+        anlam={ANLAM_GEZINME}
+      >
+        {isLoading ? (
+          <IskeletMetin satir={5} />
+        ) : bolum === "hesap" ? (
+          <HesapBilgileri profil={data} tazele={() => void mutate()} />
+        ) : bolum === "guvenlik" ? (
+          <GuvenlikVeGiris />
+        ) : bolum === "bildirim" ? (
+          <BildirimAyarlari />
+        ) : bolum === "yasal" ? (
+          <YasalMetinler />
+        ) : bolum === "sifre" ? (
+          <SifreDegistir parolaVar={Boolean(data)} />
+        ) : (
+          <HesabimiSil />
+        )}
+      </UstaDetayDuzeni>
     </div>
   );
 }

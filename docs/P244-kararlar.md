@@ -2088,3 +2088,54 @@ Sessizce birini seçmek, o kuralı arkadan dolanmak olurdu.
 
 `tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
 **tam takım 247 dosya / 2063 test yeşil.**
+
+---
+
+# AŞAMA 10c — `tablist` vs `nav` KAPANDI, `form.tsx` KÜÇÜLDÜ
+
+## A10c.1 Tutarsızlığı kural yaparak kapattım
+
+§9b'de `/profil`i `UstaDetayDuzeni`ye çevirmemiştim ve gerekçelerim
+geçerliydi (nav landmark'ı, yıkıcı öğe, altı öğe). Ama sonuç **iki
+kardeş ekranda iki desen** oldu ve bunu açık madde yazmıştım.
+
+Çözüm "birini ötekine benzetmek" değil: bileşen **ikisini de**
+karşılayacak hâle getirildi ve aradaki kural yazıldı.
+
+| anlam | ne zaman | davranış |
+|---|---|---|
+| `sekme` | öğeler **aynı tür** içeriğin alternatif görünümü | `role=tablist`, `aria-selected`, roving `tabIndex` (11 öğe = **tek** Tab durağı), ok tuşlarıyla gezinme |
+| `gezinme` | öğeler **farklı işler**, biri yıkıcı | `<nav>` landmark, `aria-current="page"`, her öğe normal Tab durağı, ok tuşu **seçmez** |
+
+ARIA rehberi de böyle ayırır: sekmeler aynı tür içeriğin alternatif
+görünümleridir. `/tanimlar` on bir defter (hepsi liste+form) →
+**sekme**. `/profil` hesap bilgileri / şifre / **hesap silme** →
+**gezinme**.
+
+**Kazanılan:** boşluk, hiza ve seçili durum görünümü artık iki ekranda
+aynı yerden geliyor. **Korunan:** `<nav>` landmark'ı (P169 §4) ve
+"Hesabımı sil"in kırmızı çizimi (`tehlikeli`).
+
+Üç yeni iddia kilitli; **iki kırma yakalandı** (gezinmede de tablist
+çizmek, tehlikeli rengini kaldırmak).
+
+## A10c.2 `form.tsx` küçüldü
+
+**Ölü ihraçlar silindi:** `PageHeader` (yerini `ui/SayfaBasligi` aldı),
+`Field` (yerini `ui/AlanSarmal` aldı), `panelCls`, `panelMotion` —
+dördünün de kullanıcısı yoktu.
+
+**Kenar ve tehlike renkleri token'a geçti.** Bu arada bir **düzeltme**
+çıktı: odak halkası `focus:border-primary` idi ve `primary` tailwind
+config'teki **sabit** `#2563EB`; koyu temada da aynı kalıyordu, yani
+koyu zeminde zar zor seçiliyordu. Artık `--yz-accent`: açık temada aynı
+değer, koyu temada açılıyor. P132 kilidi bu iddiayı taşıyordu; iddia
+güncellendi, **niyet aynı** (odak marka tealinde değil, vurgu renginde).
+
+`bg-yuzey-card` / `text-metin-body` **bilerek duruyor** — parite
+kararının konusu (aşağıda).
+
+## A10c.3 Doğrulama
+
+`tsc` temiz · `eslint` 0 hata · **tam takım 248 dosya / 2066 test
+yeşil.**
