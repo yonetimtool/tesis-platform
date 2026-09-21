@@ -12,20 +12,44 @@ import useSWR from "swr";
 import {
   BosDurum,
   HataDurumu,
+  IcerikKarti,
   IskeletMetin,
   Kart,
+  Rozet,
+  SayfaBasligi,
 } from "@/components/ui";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { tarihSaatUzun } from "@/lib/tarih";
 
+/**
+ * (P244 §8d) `foto_url`, `olusturan_ad` ve KATILIM SAYILARI EKLENDI.
+ *
+ * Hepsi sozlesmenin `Etkinlik` semasinda SOZ VERILIYOR. Katilim
+ * sayilari icin sema acikca "SEFFAF katilim sayilari; sayilar herkese
+ * acik" diyor — yani OKUMASI urun geregi. Ekran ikisini de
+ * gostermiyordu.
+ *
+ * KATILIM BEYANI (RSVP) HALA YOK ve bu dosya basindaki karar GECERLI:
+ * beyan bir YAZMA akisidir, kendi dogrulama/geri alma davranisini
+ * ister. Degisen sey, SALT OKUNUR sayilarin gorunur olmasi — yarim bir
+ * dugme eklemek degil.
+ */
 type Etkinlik = {
   id: string;
   baslik: string;
   aciklama: string;
   tarih: string;
   konum: string | null;
+  foto_url: string | null;
+  olusturan_ad: string | null;
+  katiliyorum_sayisi: number;
+  katilmiyorum_sayisi: number;
 };
+
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const R_OLUMLU = "olumlu" as const;
+const R_NOTR = "notr" as const;
 
 export default function EtkinliklerPage() {
   const t = useT();
@@ -36,10 +60,8 @@ export default function EtkinliklerPage() {
   const kayitlar = data?.items ?? [];
 
   return (
-    <div className="space-y-5">
-      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-        {t("sakinEtkinlikBaslik")}
-      </h1>
+    <div className="space-y-4">
+      <SayfaBasligi baslik={t("sakinEtkinlikBaslik")} aciklama={t("sakinEtkinlikAlt")} />
       {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
       {isLoading ? (
         <IskeletMetin satir={3} />
@@ -50,14 +72,29 @@ export default function EtkinliklerPage() {
         </Kart>
       ) : null}
       {kayitlar.map((e) => (
-        <Kart key={e.id} className="space-y-1">
-          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{e.baslik}</h2>
-          <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
-            {tarihSaatUzun(e.tarih)}
-            {e.konum ? ` · ${e.konum}` : ""}
-          </p>
-          <p className="whitespace-pre-line" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>{e.aciklama}</p>
-        </Kart>
+        <IcerikKarti
+          key={e.id}
+          baslik={e.baslik}
+          fotoUrl={e.foto_url}
+          fotoAlt={t("gorselAlt", { baslik: e.baslik })}
+          ustVeri={`${tarihSaatUzun(e.tarih)}${e.konum ? ` · ${e.konum}` : ""}${
+            e.olusturan_ad ? ` · ${e.olusturan_ad}` : ""
+          }`}
+          govde={e.aciklama}
+          altBilgi={
+            // SAYILAR ROZETTE, DUGMEDE DEGIL: bu ekranda katilim
+            // BEYAN EDILEMEZ; rozet okunur, dugme basilir. Basilamayan
+            // bir dugme cizmek kullaniciyi bir kez aldatirdi.
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Rozet durum={R_OLUMLU}>
+                {t("sakinEtkinlikKatiliyor", { n: e.katiliyorum_sayisi })}
+              </Rozet>
+              <Rozet durum={R_NOTR}>
+                {t("sakinEtkinlikKatilmiyor", { n: e.katilmiyorum_sayisi })}
+              </Rozet>
+            </div>
+          }
+        />
       ))}
     </div>
   );

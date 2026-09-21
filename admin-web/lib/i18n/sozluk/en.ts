@@ -3389,4 +3389,10 @@ export const en: Sozluk = {
   haritaOzetAcikSikayet: "Open complaints",
   haritaOzetYogunDaire: "Dense units",
   haritaOzetDaire: "Units on the map",
+  sakinDuyurularAlt: "Announcements management posted to the site; newest first.",
+  sakinEtkinlikAlt: "Events planned at the site and their attendance counts.",
+  sakinEtkinlikKatiliyor: "{n} attending",
+  sakinEtkinlikKatilmiyor: "{n} not attending",
+  sakinKurallarAlt: "Site rules set by management; the order is the one management gave.",
+  yonetimIletisimAlt: "People and address you can reach management through directly.",
 };

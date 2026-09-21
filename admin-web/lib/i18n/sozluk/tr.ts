@@ -3452,4 +3452,10 @@ export const tr = {
   haritaOzetAcikSikayet: "Açık şikayet",
   haritaOzetYogunDaire: "Yoğun daire",
   haritaOzetDaire: "Haritadaki daire",
+  sakinDuyurularAlt: "Yönetimin tesise yaptığı duyurular; en yeni en üstte.",
+  sakinEtkinlikAlt: "Tesiste planlanan etkinlikler ve katılım sayıları.",
+  sakinEtkinlikKatiliyor: "{n} katılıyor",
+  sakinEtkinlikKatilmiyor: "{n} katılmıyor",
+  sakinKurallarAlt: "Yönetimin belirlediği site kuralları; sıra yönetimin verdiği sıradır.",
+  yonetimIletisimAlt: "Yönetime doğrudan ulaşabileceğiniz kişiler ve adres.",
 } as const;

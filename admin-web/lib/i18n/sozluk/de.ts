@@ -3389,4 +3389,10 @@ export const de: Sozluk = {
   haritaOzetAcikSikayet: "Offene Beschwerden",
   haritaOzetYogunDaire: "Dichte Wohnungen",
   haritaOzetDaire: "Wohnungen auf der Karte",
+  sakinDuyurularAlt: "Mitteilungen der Verwaltung an die Anlage; neueste zuerst.",
+  sakinEtkinlikAlt: "Geplante Veranstaltungen und die Teilnehmerzahlen.",
+  sakinEtkinlikKatiliyor: "{n} nehmen teil",
+  sakinEtkinlikKatilmiyor: "{n} nehmen nicht teil",
+  sakinKurallarAlt: "Von der Verwaltung festgelegte Hausregeln; die Reihenfolge stammt von ihr.",
+  yonetimIletisimAlt: "Personen und Adresse, über die Sie die Verwaltung direkt erreichen.",
 };

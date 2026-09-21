@@ -1551,3 +1551,106 @@ düştü.
 
 `tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
 **tam takım 244 dosya / 2049 test yeşil.**
+
+---
+
+# AŞAMA 8d — İLETİŞİM: SAKİN TARAFI · UYGULANDI
+
+## A8d.1 Bu turda bulduğum şey bir tasarım eksiği değildi
+
+Sözleşme `Announcement`, `Etkinlik` ve `SiteKurali` şemalarının
+**üçünde de** `foto_url` (kısa ömürlü presigned GET) söz veriyor.
+Yönetim ekranları görsel **yüklüyor** — kural görseli P190 §3'te
+**özellikle** eklenmişti.
+
+Sakin taraftaki üç ekran bu alanı **yerel tiplerine hiç koymamıştı**:
+
+| ekran | uçtan gelen ama çizilmeyen |
+|---|---|
+| `/duyurular` | `foto_url`, `olusturan_ad` |
+| `/etkinlikler` | `foto_url`, `olusturan_ad`, `katiliyorum_sayisi`, `katilmiyorum_sayisi` |
+| `/kurallar` | `foto_url` |
+| `/yonetim-iletisim` | `avatar_url` (tipte **vardı**, hiç kullanılmıyordu) |
+
+Yani yönetici bir duyuruya kapak görseli ekliyor, **sakin onu hiç
+görmüyordu**. Kural görseli eklendiği günden beri görünmüyordu.
+
+**Bu kusurun türü önemli:** ekran hatasız çalışıyor, testler yeşil,
+yalnızca veri eksik. Hiçbir kilit bunu yakalayamazdı çünkü hiçbir kilit
+*"uç ne veriyorsa ekran onu gösteriyor mu"* diye **sormuyordu**.
+`uc-sozlesme-kapisi` ters yönü ölçüyor (sözleşmenin **vermediği** alan
+okunmasın). Eksik yön artık kilitli.
+
+## A8d.2 Katılım sayıları: okunur, basılmaz
+
+`Etkinlik` şeması katılım sayıları için açıkça *"ŞEFFAF katılım
+sayıları; sayılar herkese açık"* diyor — yani **okunması ürün gereği**.
+Sayılar geldi.
+
+**RSVP beyanı hâlâ yok** ve dosyanın başındaki karar geçerli: beyan bir
+**yazma** akışıdır, kendi doğrulama/geri alma davranışını ister.
+Değişen şey salt okunur sayıların görünür olması — yarım bir düğme
+eklemek değil. Bu yüzden sayılar **rozette**: rozet okunur, düğme
+basılır; basılamayan bir düğme çizmek kullanıcıyı bir kez aldatırdı.
+
+## A8d.3 `IcerikKarti` — üç ekran tek bileşen
+
+Üç ekran aynı şeyi gösteriyor: başlık + üst veri satırı + serbest metin
++ opsiyonel kapak. Üç kez yazmak, görselin oran/kırpma davranışının üç
+yerde ayrışması demekti.
+
+**Kapak oranı sabit** (`aspect-[16/9] object-cover`) ve bu bilinçli:
+görseller kullanıcı yüklemesidir; dikey bir telefon fotoğrafı kartı
+ekran boyu uzatırdı. Kırpar ama **düzeni korur**.
+
+`/kurallar`da `<ol>` **korundu**: kurallar numaralandırılmış bir
+metindir ve ekran okuyucu sıra bilgisini ancak listeden alır. Kart
+yüzeyi listenin **içine** girdi, dışına değil — bu, kart eklerken en
+kolay kaybedilecek şeydi ve kilitli.
+
+## A8d.4 Sözlük anahtarı AÇMAMA kararı
+
+Duyurunun üst veri satırı için `"{zaman} · {kisi}"` anahtarı açtım ve
+sözlük bütünlüğü kilidi **haklı olarak** düştü: yedi dilde aynı dize,
+yani "TR kopyası". Anahtar **silindi**; ayraç bir cümle değil bir
+**noktalama** ve şablonda kalıyor (etkinlik ekranı da aynı deseni
+kullanıyor).
+
+## A8d.5 Renk katmanı borcu 22 → 18
+
+`mesajlar` (SMS önizleme kutusu, unicode uyarısı, sayaç satırları),
+`anketler` (sonuç tablosu kenarı) ve paylaşılan `Foto` bileşeninin
+**hata yer tutucusu** token diline geçti. Üçü de ayrı bir `dark:`
+eşlemesi taşıyordu; token zaten iki modda da doğru değeri veriyor.
+
+Ölçülen bir **boşluk**: tasarım sisteminde **yumuşak ton yok** —
+`Rozet` de dolgu kullanmıyor, yalnız kenar + metin. Unicode uyarısı bu
+yüzden `surface-sunken` zemin + `warning-edge` kenar + `warning-ink`
+metinle kuruldu. Uydurma bir pastel ton eklemek koyu modda ikinci bir
+eşleme borcu açardı. **Yumuşak ton ailesi gerekiyorsa aşama 10'un
+kararıdır**, bir sayfanın yan etkisi değil.
+
+## A8d.6 Kilit
+
+**YENİ** `p244-sakin-icerik` (8 test). **Üç kırma yakalandı:** duyuruda
+`foto_url`u yeniden düşürmek, kuralları `<ol>` dışına çıkarmak,
+etkinlikten katılım sayılarını kaldırmak. Ayrıca iki **negatif** iddia
+da kilitli: görsel yokken boş kutu çizilmemesi, etkinlikte katılım
+düğmesi **olmaması**.
+
+## A8d.7 Bu turda YAPILMAYAN — açıkça
+
+* **Yönetim tarafı iletişim ekranları** yalnız renk katmanında
+  temizlendi; düzenleri değişmedi: `/announcements` (408),
+  `/site-kurallari` (390), `/etkinlik-yonetimi` (299), `/mesajlar`
+  (564), `/anketler` (594), `/davetler` (199).
+* Duyuruda **hedef kitle rozeti** yapılmadı: hedefleme kuralları
+  P190 §3'te yönetim tarafında; sakin listesinde zaten yalnız kendisine
+  ulaşanlar var, rozet orada bilgi taşımazdı.
+* Etkinlikte **RSVP beyanı** yapılmadı (yukarıdaki gerekçe).
+* Renk katmanı borcu: **18 sayfa** kaldı (aşama 10).
+
+## A8d.8 Doğrulama
+
+`tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
+**tam takım 245 dosya / 2057 test yeşil.**

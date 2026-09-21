@@ -7,11 +7,13 @@
 // koymak, aynı veriyi iki yerden yönetilebilir gösterirdi.
 import useSWR from "swr";
 
+import { Avatar } from "@/components/Avatar";
 import {
   BosDurum,
   HataDurumu,
   IskeletMetin,
   Kart,
+  SayfaBasligi,
 } from "@/components/ui";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
@@ -34,10 +36,8 @@ export default function YonetimIletisimPage() {
   const yoneticiler = data?.yoneticiler ?? [];
 
   return (
-    <div className="space-y-5">
-      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-        {t("yonetimIletisimBaslik")}
-      </h1>
+    <div className="space-y-4">
+      <SayfaBasligi baslik={t("yonetimIletisimBaslik")} aciklama={t("yonetimIletisimAlt")} />
       {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
       {isLoading ? (
         <IskeletMetin satir={3} />
@@ -58,9 +58,16 @@ export default function YonetimIletisimPage() {
         </Kart>
       ) : null}
 
+      {/* (P244 §8d) AVATAR CIZILIYOR — uc onu ZATEN donduruyordu.
+          `avatar_url` bu sayfanin yerel tipinde VARDI ama hicbir yerde
+          KULLANILMIYORDU: yoneticinin profil fotografi cekiliyor, ekrana
+          hic gelmiyordu. Kartvizit gorunumunde yuz, ada eslik eden ilk
+          tanima isaretidir. */}
       {yoneticiler.map((y) => (
-        <Kart key={y.user_id} className="space-y-1">
-          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{y.ad_soyad}</h2>
+        <Kart key={y.user_id} className="flex items-center gap-3">
+          <Avatar ad={y.ad_soyad} src={y.avatar_url} boy={44} />
+          <div className="min-w-0 space-y-0.5">
+            <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{y.ad_soyad}</h2>
           {/* NUMARA `aranabilir` RIZASINA BAKMAZ — ve bu BILINCLIDIR:
               `yonetici` bir HIZMET rolu; numarayi tesis kurulurken admin
               girer ve sakinin yonetime ulasabilmesi urun geregidir. Kapiyi
@@ -74,6 +81,7 @@ export default function YonetimIletisimPage() {
           ) : (
             <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{t("yonetimIletisimTelefonYok")}</p>
           )}
+          </div>
         </Kart>
       ))}
     </div>

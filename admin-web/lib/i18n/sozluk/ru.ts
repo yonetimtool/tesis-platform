@@ -3389,4 +3389,10 @@ export const ru: Sozluk = {
   haritaOzetAcikSikayet: "Открытые жалобы",
   haritaOzetYogunDaire: "Проблемные квартиры",
   haritaOzetDaire: "Квартир на карте",
+  sakinDuyurularAlt: "Объявления управления для комплекса; новые сверху.",
+  sakinEtkinlikAlt: "Запланированные мероприятия и число участников.",
+  sakinEtkinlikKatiliyor: "{n} придут",
+  sakinEtkinlikKatilmiyor: "{n} не придут",
+  sakinKurallarAlt: "Правила, установленные управлением; порядок задан им.",
+  yonetimIletisimAlt: "Люди и адрес для прямой связи с управлением.",
 };

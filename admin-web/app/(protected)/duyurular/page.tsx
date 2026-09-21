@@ -14,17 +14,29 @@ import useSWR from "swr";
 import {
   BosDurum,
   HataDurumu,
+  IcerikKarti,
   IskeletMetin,
   Kart,
+  SayfaBasligi,
 } from "@/components/ui";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { tarihSaatUzun } from "@/lib/tarih";
 
+/**
+ * (P244 §8d) `foto_url` ve `olusturan_ad` EKLENDI.
+ *
+ * Ikisi de sozlesmenin `Announcement` semasinda SOZ VERILIYOR ve
+ * yonetim ekrani gorsel yuklemeyi destekliyor — ama bu yerel tip
+ * onlari HIC OKUMUYORDU. Yani yonetici duyuruya kapak gorseli
+ * ekliyor, sakin onu HIC GORMUYORDU.
+ */
 type Duyuru = {
   id: string;
   baslik: string;
   govde: string;
+  foto_url: string | null;
+  olusturan_ad: string | null;
   created_at: string;
 };
 
@@ -37,10 +49,8 @@ export default function DuyurularPage() {
   const kayitlar = data?.items ?? [];
 
   return (
-    <div className="space-y-5">
-      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-        {t("sakinDuyurularBaslik")}
-      </h1>
+    <div className="space-y-4">
+      <SayfaBasligi baslik={t("sakinDuyurularBaslik")} aciklama={t("sakinDuyurularAlt")} />
       {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
       {isLoading ? (
         <IskeletMetin satir={3} />
@@ -51,11 +61,21 @@ export default function DuyurularPage() {
         </Kart>
       ) : null}
       {kayitlar.map((d) => (
-        <Kart key={d.id} className="space-y-1">
-          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{d.baslik}</h2>
-          <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{tarihSaatUzun(d.created_at)}</p>
-          <p className="whitespace-pre-line" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>{d.govde}</p>
-        </Kart>
+        <IcerikKarti
+          key={d.id}
+          baslik={d.baslik}
+          fotoUrl={d.foto_url}
+          fotoAlt={t("gorselAlt", { baslik: d.baslik })}
+          // UST VERI ICIN SOZLUK ANAHTARI ACILMADI ve bu bilincli:
+          // "{zaman} · {kisi}" yedi dilde AYNI dizedir ve sozluk
+          // butunlugu kilidi onu hakli olarak "TR kopyasi" sayar.
+          // Ayrac bir cumle degil, bir NOKTALAMA — etkinlik ekrani da
+          // ayni deseni kullaniyor.
+          ustVeri={`${tarihSaatUzun(d.created_at)}${
+            d.olusturan_ad ? ` · ${d.olusturan_ad}` : ""
+          }`}
+          govde={d.govde}
+        />
       ))}
     </div>
   );

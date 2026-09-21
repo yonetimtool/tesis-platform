@@ -333,10 +333,16 @@ export default function MesajlarPage() {
         </div>
         {onizleme ? (
           <div className="mt-3 space-y-2">
-            <pre className="whitespace-pre-wrap rounded bg-yuzey-bg p-3 text-xs dark:bg-slate-800">
+            {/* (P244 §8d) Eski dilin renk katmanindan token'a: sinif
+                adlari ayri bir `dark:` eslemesi tasiyordu; token zaten
+                iki modda da dogru degeri veriyor. */}
+            <pre
+              className="whitespace-pre-wrap rounded p-3 text-xs"
+              style={{ background: "var(--yz-surface-sunken)", color: "var(--yz-text)" }}
+            >
               {onizleme.govde}
             </pre>
-            <div className="text-xs text-metin-body dark:text-slate-400">
+            <div className="text-xs" style={{ color: "var(--yz-text-2)" }}>
               {t("mesajSayacKarakter")}: <b className="tabular-nums">{onizleme.karakter}</b> ·{" "}
               {t("mesajSayacParca")}: <b className="tabular-nums">{onizleme.parca}</b> ·{" "}
               {t("mesajSayacKalan")}: <b className="tabular-nums">{onizleme.kalan}</b>
@@ -345,14 +351,27 @@ export default function MesajlarPage() {
               // ZORLAYAN KARAKTERLER GOSTERILIR: "neden 3 SMS oldu" sorusunu
               // kullanicinin metne bakip tahmin etmesine birakmak, sayaci
               // yarim gostermek olurdu.
-              <div className="rounded bg-amber-50 p-2 text-xs text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+              <div
+                className="rounded border p-2 text-xs"
+                // TASARIM SISTEMINDE "YUMUSAK TON" YOK ve bu bilincli
+                // bir bosluk degil, bilincli bir SECIM: `Rozet` de
+                // dolgu kullanmiyor, yalniz kenar + metin. Uyari
+                // isareti kenardan (`-edge`, >=3.0) ve metin renginden
+                // (`-ink`, AA) gelir; uydurma bir pastel ton eklemek
+                // koyu modda ikinci bir esleme borcu acardi.
+                style={{
+                  background: "var(--yz-surface-sunken)",
+                  borderColor: "var(--yz-warning-edge)",
+                  color: "var(--yz-warning-ink)",
+                }}
+              >
                 {t("mesajUnicodeUyari")} <b>{onizleme.zorlayan.join(" ")}</b>
               </div>
             ) : null}
           </div>
         ) : null}
         {sonuc ? (
-          <div className="mt-3 text-xs text-metin-body dark:text-slate-400">
+          <div className="mt-3 text-xs" style={{ color: "var(--yz-text-2)" }}>
             {t("mesajSonucGonderildi")}: {sonuc.gonderildi} · {t("mesajSonucRizaYok")}:{" "}
             {sonuc.riza_yok} · {t("mesajSonucAdresYok")}: {sonuc.adres_yok} ·{" "}
             {t("mesajSonucBasarisiz")}: {sonuc.basarisiz}

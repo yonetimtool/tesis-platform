@@ -69,6 +69,7 @@ export { SayfaBasligi } from "./sayfa-basligi";
 // Detay paneli 79 sayfanin 1'inde, KPI 3'unde vardi; paylasilan bir
 // filtre cubugu HIC yoktu.
 export { DetayCekmecesi, CekmeceSatiri, type CekmeceProps } from "./cekmece";
+export { IcerikKarti } from "./icerik-karti";
 export { FiltreCubugu } from "./filtre-cubugu";
 export {
   OzetKarti,

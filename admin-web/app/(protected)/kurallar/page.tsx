@@ -9,16 +9,27 @@ import useSWR from "swr";
 import {
   BosDurum,
   HataDurumu,
+  IcerikKarti,
   IskeletMetin,
   Kart,
+  SayfaBasligi,
 } from "@/components/ui";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 
+/**
+ * (P244 §8d) `foto_url` EKLENDI.
+ *
+ * Kural gorseli P190 §3'te OZELLIKLE eklenmisti — yonetici kural
+ * formundan bir gorsel yukluyor ("otopark plani", "atik ayristirma
+ * semasi" gibi seyler icin). Sakin tarafi bu alani hic okumuyordu,
+ * yani gorsel yuklendigi gunden beri GORUNMUYORDU.
+ */
 type Kural = {
   id: string;
   baslik: string;
   icerik: string;
+  foto_url: string | null;
   sira: number;
 };
 
@@ -31,10 +42,8 @@ export default function SiteKurallariPage() {
   const kurallar = data?.items ?? [];
 
   return (
-    <div className="space-y-5">
-      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-        {t("sakinKurallarBaslik")}
-      </h1>
+    <div className="space-y-4">
+      <SayfaBasligi baslik={t("sakinKurallarBaslik")} aciklama={t("sakinKurallarAlt")} />
       {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
       {isLoading ? (
         <IskeletMetin satir={3} />
@@ -44,11 +53,19 @@ export default function SiteKurallariPage() {
           <BosDurum baslik={t("sakinKurallarYok")} aciklama={t("sakinKurallarYokAlt")} />
         </Kart>
       ) : null}
-      <ol className="space-y-3">
+      {/* SIRA KORUNUR ve `<ol>` KALIR: kurallar numaralandirilmis bir
+          metindir, yonetimin verdigi sira anlamlidir ve ekran okuyucu
+          "1. ogeden N" der. Kart yuzeyi listenin ICINE girer, disina
+          degil. */}
+      <ol className="space-y-4">
         {kurallar.map((k) => (
-          <li key={k.id} className="space-y-1">
-            <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{k.baslik}</h2>
-            <p className="whitespace-pre-line" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>{k.icerik}</p>
+          <li key={k.id}>
+            <IcerikKarti
+              baslik={k.baslik}
+              fotoUrl={k.foto_url}
+              fotoAlt={t("gorselAlt", { baslik: k.baslik })}
+              govde={k.icerik}
+            />
           </li>
         ))}
       </ol>

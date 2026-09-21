@@ -348,7 +348,10 @@ export default function AnketlerPage() {
             /* ANONIMDE ISTEK HIC ATILMAZ: veri YOK, "yetkiniz yok" degil. */
             <BosDurum baslik={t("anketOyDokumuAnonim")} aciklama={t("anketOyDokumuAnonimAlt")} />
           ) : (
-            <div className="overflow-hidden rounded-lg border kart-kenar">
+            <div
+              className="overflow-hidden rounded-lg border"
+              style={{ borderColor: "var(--yz-border)" }}
+            >
               <div className="odak-ic overflow-x-auto" tabIndex={0}>
                 <Tablo>
                   <TabloBasligi>
@@ -359,7 +362,7 @@ export default function AnketlerPage() {
                   <tbody>
                     {(dokum?.items ?? []).map((o) => (
                       <Tr key={`${o.user_id}-${o.secenek_id}`}>
-                        <Td className="text-metin-body">
+                        <Td>
                           {formatDateTime(o.created_at)}
                         </Td>
                         <Td>{o.ad ?? "—"}</Td>

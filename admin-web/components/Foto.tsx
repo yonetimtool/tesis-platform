@@ -33,7 +33,15 @@ export function Foto({
         // duyar, gorenler ayni kutuda metni okur.
         role="img"
         aria-label={`${alt} — ${t("gorselGosterilemedi")}`}
-        className={`flex items-center justify-center border border-dashed border-slate-300 bg-yuzey-bg px-2 text-center text-[11px] leading-tight text-metin-muted dark:border-slate-600 dark:bg-slate-800 ${className ?? ""}`}
+        // (P244 §8d) Eski dilin renk katmanindan token'a: sinif adlari
+        // `dark:` varyantlariyla ayri bir koyu-mod eslemesi tasiyordu;
+        // token zaten iki modda da dogru degeri veriyor.
+        className={`flex items-center justify-center border border-dashed px-2 text-center text-[11px] leading-tight ${className ?? ""}`}
+        style={{
+          borderColor: "var(--yz-border)",
+          background: "var(--yz-surface-sunken)",
+          color: "var(--yz-text-2)",
+        }}
       >
         {t("gorselGosterilemedi")}
       </span>
