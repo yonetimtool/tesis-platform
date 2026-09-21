@@ -1353,3 +1353,109 @@ en kolay unutulan şeydi.
 `tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden; kendi
 ürettiğim iki uyarı `useMemo` ile kapatıldı) ·
 **tam takım 241 dosya / 2034 test yeşil.**
+
+---
+
+# AŞAMA 8b — TALEP ZİNCİRİ + DEMİRBAŞ · UYGULANDI
+
+## A8b.1 Talepler: liste bir duvardı
+
+`/complaints` her talebi **tam açık** gösteriyordu: tam mesaj + bütün
+fotoğraflar + bütün durum geçmişi. Yirmi talep = yirmi duvar; *"hangisi
+açık"* sorusu ancak kaydırarak yanıtlanıyordu.
+
+Kararın **iki yarısı** var ve ikisi de kilitli:
+
+1. **Ağır olan çekmeceye.** Mesaj, fotoğraflar, durum geçmişi ve bağlı
+   iş emri artık detay çekmecesinde.
+2. **Eylem satırda kaldı.** Bu ekranın işi **triyaj**: yönetici listeyi
+   tarar ve karar verir. "Çöz"ü çekmecenin içine koymak her karara bir
+   açma-kapama adımı eklerdi.
+
+İkisi birlikte ölçülmezse tasarım yanlış tarafa kayar: yalnız (1)
+ölçülse eylemler de çekmeceye taşınabilirdi; yalnız (2) ölçülse liste
+yine duvar kalırdı. Çekmecede Çöz/Reddet **bilerek yok** — aynı eylemi
+iki yerde sunmak "hangisi geçerli" sorusunu üreten ikinci bir karar
+noktası olurdu.
+
+## A8b.2 ÖLÇÜLEN: aşama 4 renk katmanını kapatmamış
+
+`p244-tek-tasarim-dili` kilidi **modül ithalatını** ölçüyor, sınıf
+adlarını değil — bu bilinçli bir seçimdi (jsdom renk çözmez, P226). Ama
+bir boşluk bıraktığını şimdi ölçtüm:
+
+`/complaints` yalnız `@/components/ui`den ithal ettiği için kilidi
+**haklı olarak geçiyordu**, oysa rozet renkleri hâlâ ham palet
+sınıflarıydı (`bg-amber-100 text-amber-700`).
+
+**Taradım: 22 sayfa** hâlâ ham tailwind palet sınıfı ya da eski dilin
+renk yardımcılarını (`text-metin-*`, `kart-kenar`, `yuzey-divider`)
+taşıyor. Bu turda **dokunduğum sayfalarda** kapattım; kalan liste
+**aşama 10'un hedefi** ve sayısı burada yazılı, böylece "bitti sanmak"
+mümkün değil.
+
+`/assets`te bulduğum şey daha basitti: ham paleti taşıyan tek sabit
+(`DURUM_STYLE`) **ölü koddu** — rozet rengi zaten `durumRengi` üzerinden
+token'dan geliyordu. Silindi.
+
+## A8b.3 Kart HER YERDE yanlış değil — iki yeni istisna
+
+Aşama 8a'da üç sayfayı karttan tabloya taşıdım. Bu turda **tersini**
+savundum ve kilide iki istisna ekledim:
+
+* **`/gorevlerim`** — kart okunacak değil **yapılacak** bir iş: içinde
+  bir not alanı ve bir tamamlama düğmesi var. Girdi taşıyan kaydı tablo
+  hücresine sıkıştırmak dokunma hedefini de küçültürdü.
+* **`/taleplerim`** — kart **okunacak bir metin**: konu + çok satırlı
+  serbest açıklama. Tabloya çevirmek mesajı tek hücreye sıkıştırırdı.
+  Paneldeki `/complaints` bunun **taranan** karşılığı ve orada tablo
+  doğru seçim. Aynı veri, iki farklı soru, iki farklı düzen.
+
+İkisinde de değişen şey **kartın kendisi değil, kartın yüzey
+kazanması**: kayıtlar çıplak `<article>` idi ve birbirine akıyordu.
+
+`/taleplerim`de ayrıca durum **renk de taşımaya başladı**: dört durum da
+aynı nötr gri balondaydı, oysa sakinin bu ekranda sorduğu tek soru
+"talebim ne oldu". Eşleme panelinkiyle **aynı** — aksi hâlde sakin ve
+yönetici aynı durumu farklı renkte görürdü.
+
+## A8b.4 Kilidin yakaladığı GERÇEK kusur
+
+`ham-enum` taraması `{g.durum}` satırını yakaladı: durum geçmişinde
+bilinmeyen bir durum için **ham veritabani sabiti** ekrana yazılıyordu.
+Bu kod **eskiden de vardı** (`{meta ? t(...) : g.durum}`) ama tek
+satırda olduğu için taramadan geçmişti; ayrı satıra düşerken yakalandı.
+Depoda bunun için zaten bir anahtar var (`talepDurumBilinmiyor`).
+
+Ayrıca `erisilebilir-etiket` taraması **kendi yorumumu** yakaladı
+(yorumda geçen `<Secim>`); yorum yeniden yazıldı. Tarama haklı: kaynak
+metni yorumla kodu ayırt etmez.
+
+## A8b.5 Kilitler
+
+**YENİ** `p244-talep-ekrani` (6 test) — kararın iki yarısını birlikte
+ölçer. **İki kırma yakalandı:** mesajı tabloya geri koymak (liste yine
+duvar), eylemleri satırdan kaldırıp çekmeceye taşımak.
+
+Bilinçli güncellenen iddia: `talep.dom`da Çöz/Reddet sorguları
+**diyaloğa kapsamlandı**. Eskiden satırdaki düğme form açılınca
+kayboluyordu (`canAct && !action`); artık eylemler satırda **kalıyor**.
+Diyalog `aria-modal` taşıdığı için ekran okuyucu arkadakini zaten
+görmez. İddia değişmedi.
+
+## A8b.6 Bu turda YAPILMAYAN — açıkça
+
+* **`/tasks`** (1313 satır) — dokunulmadı. Zaten `VeriTablosu` +
+  sekmeli görünüm kullanıyor; kalanı sayfa başlığı ve özet şeridi.
+* **`/bakim`** (672), **`/schematic`** (420) — dokunulmadı.
+* İletişim modülünün **tamamı** — dokunulmadı (8c).
+* `/assets`te zimmet geçmişi hâlâ tablonun **altında bir kart**;
+  çekmeceye taşınmadı (kaydırma çıpası `detayRef` ile birlikte ayrı bir
+  karar).
+* Renk katmanı borcu: **22 sayfadan** yalnız bu turda dokunulanlar
+  temizlendi.
+
+## A8b.7 Doğrulama
+
+`tsc` temiz · `eslint` 0 hata (4 uyarı, hepsi P244 öncesinden) ·
+**tam takım 242 dosya / 2040 test yeşil.**

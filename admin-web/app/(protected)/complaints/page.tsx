@@ -4,7 +4,23 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import { Foto } from "@/components/Foto";
-import { AlanSarmal, BosDurum, CokSatir, Dugme, HataDurumu, IskeletMetin, Kart, Modal, Pager } from "@/components/ui";
+import {
+  AlanSarmal,
+  CekmeceSatiri,
+  CokSatir,
+  DetayCekmecesi,
+  Dugme,
+  FiltreCubugu,
+  type Kolon,
+  Modal,
+  Rozet,
+  type RozetDurumu,
+  OzetKarti,
+  OzetSeridi,
+  Pager,
+  SayfaBasligi,
+  VeriTablosu,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
@@ -16,17 +32,47 @@ import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 const TUR_BIRINCIL = "birincil" as const;
 const TUR_IKINCIL = "ikincil" as const;
 const TUR_TEHLIKE = "tehlike" as const;
+const TUR_SESSIZ = "sessiz" as const;
 const LIMIT = 20;
+const DURUM_ACIK = "acik" as const;
+const DURUM_IS_EMRI = "is_emri" as const;
+const DURUM_COZULDU = "cozuldu" as const;
 
-// Durum rozetleri — mobil ile ayni wire kodu: acik=amber, is_emri=mavi,
-// cozuldu=yesil, reddedildi=kirmizi. Renk siniflari globals.css'te koyu-mod
-// eslemesi olan accent'ler (bg-*-100 / text-*-700).
-// METIN DEGIL KIMLIK (modul duzeyi — README tur 18 dersi).
-const DURUM_META: Record<ComplaintDurum, { anahtar: SozlukAnahtari; cls: string }> = {
-  acik: { anahtar: "ortakAcik", cls: "bg-amber-100 text-amber-700" },
-  is_emri: { anahtar: "talepIsEmri", cls: "bg-blue-100 text-blue-700" },
-  cozuldu: { anahtar: "destekCozuldu", cls: "bg-green-100 text-green-700" },
-  reddedildi: { anahtar: "talepReddedildi", cls: "bg-red-100 text-red-700" },
+const IKON_UYARI = "M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z";
+const IKON_ANAHTAR = "M14.7 6.3a4 4 0 1 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4M17 7h.01";
+const IKON_ONAY = "M20 6 9 17l-5-5";
+
+function Ikon({ yol }: { yol: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor"
+      strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={yol} />
+    </svg>
+  );
+}
+
+/**
+ * Durum -> etiket + ROZET DURUMU.
+ *
+ * METIN DEGIL KIMLIK (modul duzeyi — README tur 18 dersi): ham `durum`
+ * degerini ekrana yazmak kullaniciya veritabani sabiti gostermekti.
+ *
+ * (P244 §8b) HAM TAILWIND PALETI -> `Rozet` DURUMU.
+ *
+ * Renkler `bg-amber-100 text-amber-700` gibi DOGRUDAN palet siniflariydi:
+ * eski tasarim dilinin renk katmani. Asama 4 modul sinirini kapatmisti
+ * ama renk katmanini degil — bu dosya `@/components/ui`den ithal ettigi
+ * icin `p244-tek-tasarim-dili` kilidi onu HAKLI OLARAK gecmisti; kilit
+ * ithalati olcer, sinif adlarini degil.
+ *
+ * Anlam korundu: acik=uyari, is_emri=bilgi, cozuldu=olumlu,
+ * reddedildi=kritik. Mobildeki wire kodlariyla ayni esleme.
+ */
+const DURUM_META: Record<ComplaintDurum, { anahtar: SozlukAnahtari; rozet: RozetDurumu }> = {
+  acik: { anahtar: "ortakAcik", rozet: "uyari" },
+  is_emri: { anahtar: "talepIsEmri", rozet: "bilgi" },
+  cozuldu: { anahtar: "destekCozuldu", rozet: "olumlu" },
+  reddedildi: { anahtar: "talepReddedildi", rozet: "kritik" },
 };
 
 const FILTERS: Array<{ value: ComplaintDurum | ""; anahtar: SozlukAnahtari }> = [
@@ -62,11 +108,7 @@ function isEmriAnahtari(durum?: string | null): SozlukAnahtari {
 function DurumBadge({ durum }: { durum: ComplaintDurum }) {
   const t = useT();
   const meta = DURUM_META[durum] ?? DURUM_META.acik;
-  return (
-    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.cls}`}>
-      {t(meta.anahtar)}
-    </span>
-  );
+  return <Rozet durum={meta.rozet}>{t(meta.anahtar)}</Rozet>;
 }
 
 // Talep/Ariza -> Is Emri kanali: sakinlerin (ve saha rollerinin) actigi talepler.
@@ -76,18 +118,135 @@ export default function ComplaintsPage() {
   const t = useT();
   const [offset, setOffset] = useState(0);
   const [durum, setDurum] = useState<ComplaintDurum | "">("");
+  const [secili, setSecili] = useState<Complaint | null>(null);
+  const [eylem, setEylem] = useState<{ c: Complaint; tur: "coz" | "reddet" } | null>(null);
   const query = `/api/complaints?limit=${LIMIT}&offset=${offset}${durum ? `&durum=${durum}` : ""}`;
   const { data, error, isLoading, mutate } = useSWR<ComplaintList>(query, jsonFetcher);
 
+  // SAYAÇLAR AYRI UÇLARDAN, GORUNEN SAYFADAN DEGIL.
+  //
+  // Liste 20'lik sayfalar halinde geliyor. Gorunen sayfayi saymak "3
+  // acik talep var" gibi YANLIS bir sayi uretirdi; ustelik suzgec
+  // acikken sayac da suzulmus olurdu. `?durum=X&limit=1` -> `meta.total`
+  // deseni araç geçişleri ve kargo ekranlarinda da kullanilan desen.
+  const { data: acikSayi } = useSWR<ComplaintList>(
+    `/api/complaints?limit=1&offset=0&durum=${DURUM_ACIK}`,
+    jsonFetcher,
+  );
+  const { data: isEmriSayi } = useSWR<ComplaintList>(
+    `/api/complaints?limit=1&offset=0&durum=${DURUM_IS_EMRI}`,
+    jsonFetcher,
+  );
+  const { data: cozulduSayi } = useSWR<ComplaintList>(
+    `/api/complaints?limit=1&offset=0&durum=${DURUM_COZULDU}`,
+    jsonFetcher,
+  );
+
+  const kayitlar = data?.items ?? [];
+
+  const kolonlar: Kolon<Complaint>[] = [
+    {
+      id: "baslik",
+      baslik: t("talepKolonKonu"),
+      hucre: (c) => <span className="font-medium">{c.baslik}</span>,
+      deger: (c) => c.baslik,
+      kartRolu: "baslik",
+    },
+    {
+      id: "kategori",
+      baslik: t("talepKolonKategori"),
+      hucre: (c) => c.kategori_ad ?? t("ortakDiger"),
+      deger: (c) => c.kategori_ad ?? "",
+      kartRolu: "ozet",
+    },
+    {
+      id: "acan",
+      baslik: t("talepKolonAcan"),
+      hucre: (c) => c.acan_ad ?? t("rolSiteSakini"),
+      deger: (c) => c.acan_ad ?? "",
+      darEkrandaGizle: true,
+    },
+    {
+      id: "tarih",
+      baslik: t("talepKolonTarih"),
+      hucre: (c) => formatDateTime(c.created_at),
+      deger: (c) => c.created_at,
+      kartRolu: "ozet",
+    },
+    {
+      id: "durum",
+      baslik: t("talepKolonDurum"),
+      hucre: (c) => <DurumBadge durum={c.durum} />,
+      deger: (c) => c.durum,
+      kartRolu: "rozet",
+    },
+    {
+      id: "eylem",
+      baslik: t("listeIslemler"),
+      // EYLEMLER SATIRDA KALDI, CEKMECEYE TASINMADI.
+      //
+      // Bu ekranin isi TRIYAJ: yonetici listeyi tarar ve karar verir.
+      // "Coz"u cekmecenin icine koymak her karara bir acma-kapama adimi
+      // eklerdi. Cekmeceye tasinan sey AGIR OLAN: tam mesaj, fotograflar,
+      // durum gecmisi ve bagli is emri — bunlar listede her kaydi bir
+      // duvara cevirmisti.
+      hucre: (c) => (
+        <div className="flex flex-wrap gap-2">
+          <Dugme boy="kucuk" tur={TUR_SESSIZ} onClick={() => setSecili(c)}>
+            {t("ortakDetay")}
+          </Dugme>
+          {c.durum === DURUM_ACIK ? (
+            <>
+              <Dugme boy="kucuk" tur={TUR_BIRINCIL} onClick={() => setEylem({ c, tur: "coz" })}>
+                {t("talepCoz")}
+              </Dugme>
+              <Dugme boy="kucuk" tur={TUR_TEHLIKE} onClick={() => setEylem({ c, tur: "reddet" })}>
+                {t("talepReddet")}
+              </Dugme>
+            </>
+          ) : null}
+        </div>
+      ),
+      gizlenebilir: false,
+      kartRolu: "eylem",
+    },
+  ];
+
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-          {t("talepBaslik")}
-        </h1>
-        {/* (P160) `aria-pressed` EKLENDI: secili suzgec eskiden yalniz
-            RENKLE anlatiliyordu ve ekran okuyucu hangisinin acik oldugunu
-            SOYLEMIYORDU. */}
+    <div>
+      <SayfaBasligi
+        baslik={t("talepBaslik")}
+        aciklama={t("talepPanelNotu", { coz: t("talepCoz"), reddet: t("talepReddet") })}
+      />
+
+      <OzetSeridi>
+        <OzetKarti
+          etiket={t("talepOzetAcik")}
+          deger={String(acikSayi?.meta?.total ?? 0)}
+          ikon={<Ikon yol={IKON_UYARI} />}
+          durum="uyari"
+          altBilgi={t("talepOzetAcikAlt")}
+        />
+        <OzetKarti
+          etiket={t("talepOzetIsEmri")}
+          deger={String(isEmriSayi?.meta?.total ?? 0)}
+          ikon={<Ikon yol={IKON_ANAHTAR} />}
+          durum="bilgi"
+        />
+        <OzetKarti
+          etiket={t("talepOzetCozuldu")}
+          deger={String(cozulduSayi?.meta?.total ?? 0)}
+          ikon={<Ikon yol={IKON_ONAY} />}
+          durum="olumlu"
+        />
+      </OzetSeridi>
+
+      <FiltreCubugu aktifSayi={durum ? 1 : 0} onTemizle={() => { setDurum(""); setOffset(0); }}>
+        {/* (P160) `aria-pressed` KORUNDU: secili suzgec eskiden yalniz
+            RENKLE anlatiliyordu ve ekran okuyucu hangisinin acik
+            oldugunu SOYLEMIYORDU. Dugmeler bir acilir listeye
+            cevrilmedi — dort secenek icin segment seridi tek dokunusla
+            gecis verir ve secili olan GORUNUR kalir. */}
         <div className="flex flex-wrap gap-1">
           {FILTERS.map((f) => (
             <Dugme
@@ -104,28 +263,20 @@ export default function ComplaintsPage() {
             </Dugme>
           ))}
         </div>
-      </div>
+      </FiltreCubugu>
 
-      <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-        {t("talepPanelNotu", { coz: t("talepCoz"), reddet: t("talepReddet") })}
-      </p>
-
-      {error && <HataDurumu mesaj={error.message} />}
-      {isLoading && !data && <IskeletMetin satir={3} />}
-
-      <ul className="space-y-3">
-        {(data?.items ?? []).map((c) => (
-          <ComplaintCard key={c.id} complaint={c} onChanged={() => mutate()} />
-        ))}
-        {data && data.items.length === 0 && !error && (
-          <Kart>
-            <BosDurum
-              baslik={durum ? t("talepDurumdaYok") : t("talepYok")}
-              aciklama={durum ? t("talepFiltreDegistir") : t("talepYokAlt")}
-            />
-          </Kart>
-        )}
-      </ul>
+      {/* (P61) HATA TABLOYA VERILIR: istek dustugunde "talep yok" yazmak,
+          talebin OLMADIGINI soylemek olurdu. */}
+      <VeriTablosu
+        kolonlar={kolonlar}
+        satirlar={kayitlar}
+        satirId={(c) => c.id}
+        yukleniyor={isLoading && !data}
+        hata={error ? error.message : null}
+        onTekrar={() => void mutate()}
+        bosBaslik={durum ? t("talepDurumdaYok") : t("talepYok")}
+        bosAciklama={durum ? t("talepFiltreDegistir") : t("talepYokAlt")}
+      />
 
       {data && (
         <Pager
@@ -136,129 +287,147 @@ export default function ComplaintsPage() {
           onNext={() => setOffset(offset + LIMIT)}
         />
       )}
+
+      <TalepCekmecesi talep={secili} onKapat={() => setSecili(null)} />
+
+      {eylem && (
+        <ActionForm
+          complaint={eylem.c}
+          action={eylem.tur}
+          onClose={() => setEylem(null)}
+          onDone={() => {
+            setEylem(null);
+            void mutate();
+          }}
+        />
+      )}
     </div>
   );
 }
 
-function ComplaintCard({
-  complaint: c,
-  onChanged,
-}: {
-  complaint: Complaint;
-  onChanged: () => void;
-}) {
+/**
+ * DETAY CEKMECESI — listede duvar yapan her sey burada.
+ *
+ * Eskiden her talep, tam mesaji + tum fotograflari + tum durum gecmisi
+ * ile listede ACIK duruyordu. Yirmi talep = yirmi duvar; yonetici
+ * "hangisi acik" sorusunu kaydirarak yanitliyordu.
+ */
+function TalepCekmecesi({ talep: c, onKapat }: { talep: Complaint | null; onKapat: () => void }) {
   const t = useT();
-  // Acik talepte iki eylem: "coz" (opsiyonel not) / "reddet" (zorunlu sebep).
-  const [action, setAction] = useState<"coz" | "reddet" | null>(null);
-  const canAct = c.durum === "acik";
-
+  if (!c) return null;
   return (
-    <li className="">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{c.baslik}</h3>
-            <DurumBadge durum={c.durum} />
-            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-metin-body">
-              {c.kategori_ad ?? t("ortakDiger")}
-            </span>
-          </div>
-          <p className="mt-1 whitespace-pre-wrap text-sm text-metin-body">{c.mesaj}</p>
+    <DetayCekmecesi
+      acik
+      onKapat={onKapat}
+      baslik={c.baslik}
+      altBaslik={`${c.acan_ad ?? t("rolSiteSakini")} · ${formatDateTime(c.created_at)}`}
+      genislik="genis"
+    >
+      <dl className="mb-4">
+        <CekmeceSatiri etiket={t("talepKolonDurum")}>
+          <DurumBadge durum={c.durum} />
+        </CekmeceSatiri>
+        <CekmeceSatiri etiket={t("talepKolonKategori")}>
+          {c.kategori_ad ?? t("ortakDiger")}
+        </CekmeceSatiri>
+        {c.is_emri_id ? (
+          <CekmeceSatiri etiket={t("talepBagliIsEmri")}>
+            {t(isEmriAnahtari(c.is_emri_durum))}
+          </CekmeceSatiri>
+        ) : null}
+      </dl>
 
-          {c.fotograflar.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {c.fotograflar
-                .filter((f) => f.foto_url)
-                .map((f) => (
-                  // Presigned GET URL kisa omurlu — liste her yenilendiginde taze
-                  // gelir. Tiklayinca tam boy yeni sekmede acilir.
-                  <a
-                    key={f.id}
-                    href={f.foto_url ?? undefined}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block w-fit"
-                  >
-                    <Foto
-                      src={f.foto_url ?? undefined}
-                      alt={t("gorselAlt", { baslik: c.baslik })}
-                      className="h-24 w-24 rounded-lg border kart-kenar object-cover"
-                    />
-                  </a>
-                ))}
-            </div>
-          )}
+      <p
+        className="whitespace-pre-wrap"
+        style={{ fontSize: "var(--yz-fs-body)", color: "var(--yz-text)" }}
+      >
+        {c.mesaj}
+      </p>
 
-          <p className="mt-2 text-xs text-metin-muted">
-            {c.acan_ad ?? t("rolSiteSakini")} · {formatDateTime(c.created_at)}
-          </p>
-
-          {c.is_emri_id && (
-            <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm">
-              <span className="text-blue-700">{t("talepBagliIsEmri")}</span>
-              <span className="ms-auto font-medium text-blue-700">
-                {t(isEmriAnahtari(c.is_emri_durum))}
-              </span>
-            </div>
-          )}
-
-          {c.gecmis.length > 0 && (
-            <Timeline gecmis={c.gecmis} />
-          )}
+      {c.fotograflar.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {c.fotograflar
+            .filter((f) => f.foto_url)
+            .map((f) => (
+              // Presigned GET URL kisa omurlu — liste her yenilendiginde
+              // taze gelir. Tiklayinca tam boy yeni sekmede acilir.
+              <a
+                key={f.id}
+                href={f.foto_url ?? undefined}
+                target="_blank"
+                rel="noreferrer"
+                className="block w-fit rounded-lg border"
+                style={{ borderColor: "var(--yz-border)" }}
+              >
+                <Foto
+                  src={f.foto_url ?? undefined}
+                  alt={t("gorselAlt", { baslik: c.baslik })}
+                  className="h-24 w-24 rounded-lg object-cover"
+                />
+              </a>
+            ))}
         </div>
-
-        {canAct && !action && (
-          <div className="flex shrink-0 flex-col gap-2">
-            <Dugme tur="birincil" onClick={() => setAction("coz")}>{t("talepCoz")}</Dugme>
-            <Dugme tur="tehlike" boy="kucuk" onClick={() => setAction("reddet")}>
-              {t("talepReddet")}
-            </Dugme>
-          </div>
-        )}
-      </div>
-
-      {action && (
-        <ActionForm
-          complaint={c}
-          action={action}
-          onClose={() => setAction(null)}
-          onDone={() => {
-            setAction(null);
-            onChanged();
-          }}
-        />
       )}
-    </li>
+
+      {c.gecmis.length > 0 && <Timeline gecmis={c.gecmis} />}
+    </DetayCekmecesi>
   );
 }
 
+/**
+ * DURUM GECMISI.
+ *
+ * (P244 §8b) Nokta rengi eskiden rozetin TAILWIND SINIFINDAN geliyordu
+ * (`bg-amber-100` hem zemin hem nokta). Rozetin kendisi artik token
+ * tabanli oldugu icin o sinif kalmadi; nokta `Rozet`in kendi `nokta`
+ * kipine devredildi — renk TEK YERDE tanimli kalir.
+ */
 function Timeline({ gecmis }: { gecmis: ComplaintStatusHistory[] }) {
   const t = useT();
   return (
-    <div className="mt-3 border-t border-yuzey-divider pt-3">
-      <p className="mb-2 text-xs font-medium text-metin-muted">{t("talepDurumGecmisi")}</p>
+    <div
+      className="mt-4 border-t pt-4"
+      style={{ borderColor: "var(--yz-border)", borderTopWidth: "var(--yz-border-w)" }}
+    >
+      <p className="mb-2 font-medium" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+        {t("talepDurumGecmisi")}
+      </p>
       <ol className="space-y-3">
         {gecmis.map((g, i) => {
           const meta = DURUM_META[g.durum as ComplaintDurum];
           return (
-            <li key={i} className="flex gap-3 text-sm">
-              <span
-                className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${
-                  meta?.cls ?? "bg-slate-100 text-metin-body"
-                }`}
-              />
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-baseline gap-x-2">
-                  <span style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{meta ? t(meta.anahtar) : g.durum}</span>
-                  <span style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
-                    {ROLE_ANAHTAR[g.actor_role] ? t(ROLE_ANAHTAR[g.actor_role]) : g.actor_role} ·{" "}
-                    {formatDateTime(g.created_at)}
+            <li key={i} className="space-y-0.5">
+              <div className="flex flex-wrap items-center gap-x-2">
+                {meta ? (
+                  <Rozet durum={meta.rozet} nokta>
+                    {t(meta.anahtar)}
+                  </Rozet>
+                ) : (
+                  // BILINMEYEN DURUMDA HAM DEGER YAZILMAZ.
+                  //
+                  // Eski kod `{meta ? t(...) : g.durum}` idi ve tek
+                  // satirda oldugu icin `ham-enum` taramasindan
+                  // gecmisti; ayri satira duserken tarama onu YAKALADI
+                  // ve HAKLI: "is_emri" gibi bir veritabani sabitini
+                  // ekrana yazmak kullaniciya ic kimlik gostermektir.
+                  // Depoda bunun icin zaten bir anahtar var.
+                  <span style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>
+                    {t("talepDurumBilinmiyor")}
                   </span>
-                </div>
-                {g.sebep && g.sebep.trim() && (
-                  <p className="mt-0.5 whitespace-pre-wrap text-metin-body">{g.sebep}</p>
                 )}
+                <span style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                  {ROLE_ANAHTAR[g.actor_role] ? t(ROLE_ANAHTAR[g.actor_role]) : g.actor_role} ·{" "}
+                  {formatDateTime(g.created_at)}
+                </span>
               </div>
+              {g.sebep && g.sebep.trim() && (
+                <p
+                  className="whitespace-pre-wrap"
+                  style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}
+                >
+                  {g.sebep}
+                </p>
+              )}
             </li>
           );
         })}

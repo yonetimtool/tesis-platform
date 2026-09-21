@@ -24,6 +24,8 @@ import {
   Dugme,
   HataDurumu,
   IskeletMetin,
+  Kart,
+  SayfaBasligi,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend, genIdempotencyKey } from "@/lib/client";
@@ -78,10 +80,14 @@ export default function GorevlerimPage() {
   }
 
   return (
-    <div className="space-y-5">
-      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-        {t("gorevimBaslik")}
-      </h1>
+    <div className="space-y-4">
+      {/* (P244 §8b) KART DILI BURADA DOGRU — TABLO DEGIL.
+          Her satir okunacak degil YAPILACAK bir is: icinde bir not
+          alani ve bir tamamlama dugmesi var. Girdi tasiyan kaydi tablo
+          hucresine sikistirmak dokunma hedefini de kuculturdu.
+          Eksik olan sey KARTIN KENDISIYDI: kayitlar ciplak `<article>`
+          idi ve birbirine akiyordu. */}
+      <SayfaBasligi baslik={t("gorevimBaslik")} aciklama={t("gorevimSayfaAlt")} />
       {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
       {isLoading ? (
         <IskeletMetin satir={3} />
@@ -91,7 +97,7 @@ export default function GorevlerimPage() {
       ) : null}
 
       {gorevler.map((g) => (
-        <article key={g.id} className="space-y-2">
+        <Kart key={g.id} className="space-y-2">
           <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{g.ad}</h2>
           {g.sonraki_planlanan ? (
             <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
@@ -135,7 +141,7 @@ export default function GorevlerimPage() {
               </Dugme>
             </div>
           )}
-        </article>
+        </Kart>
       ))}
     </div>
   );

@@ -3,7 +3,24 @@
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { Alan, AlanSarmal, BosDurum, Dugme, EksikVeriUyarisi, HataDurumu, IskeletMetin, Kart, Modal, Rozet, Secim, type Kolon, type TabloDurumu, VeriTablosu } from "@/components/ui";
+import {
+  Alan,
+  AlanSarmal,
+  BosDurum,
+  Dugme,
+  EksikVeriUyarisi,
+  FiltreCubugu,
+  Kart,
+  Modal,
+  OzetKarti,
+  OzetSeridi,
+  Rozet,
+  SayfaBasligi,
+  Secim,
+  type Kolon,
+  type TabloDurumu,
+  VeriTablosu,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { kisaKimlik } from "@/lib/kimlik";
 import { DEMIRBAS_DURUM, DEMIRBAS_KATEGORI, enumAdi } from "@/lib/enum-adlari";
@@ -35,6 +52,23 @@ function durumRengi(d: string) {
   return R_NOTR;
 }
 const NFC_PLACEHOLDER = "04A1B2C3D4";
+// UCLUDE/SORGUDA DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const D_MUSAIT = "musait" as const;
+const D_ZIMMETLI = "zimmetli" as const;
+const D_BAKIMDA = "bakimda" as const;
+
+const IKON_KUTU = "M3 8.5 12 4l9 4.5M3 8.5V17l9 4.5M3 8.5l9 4.5m0 0v9m0-9 9-4.5M21 8.5V17l-9 4.5";
+const IKON_KISI = "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0";
+const IKON_ANAHTAR = "M14.7 6.3a4 4 0 1 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4M17 7h.01";
+
+function Ikon({ yol }: { yol: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor"
+      strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={yol} />
+    </svg>
+  );
+}
 // METIN DEGIL KIMLIK (modul duzeyinde `t()` yok — README tur 18 dersi).
 const KATEGORI: { value: AssetKategori; anahtar: SozlukAnahtari }[] = [
   { value: "ekipman", anahtar: "demirbasEkipman" },
@@ -42,11 +76,12 @@ const KATEGORI: { value: AssetKategori; anahtar: SozlukAnahtari }[] = [
   { value: "alet", anahtar: "demirbasAlet" },
   { value: "diger", anahtar: "ortakDiger" },
 ];
-const DURUM_STYLE: Record<string, string> = {
-  musait: "bg-emerald-100 text-emerald-800",
-  zimmetli: "bg-amber-100 text-amber-800",
-  bakimda: "bg-slate-200 text-metin-body",
-};
+// (P244 §8b) `DURUM_STYLE` SILINDI — OLU KODDU.
+//
+// Ham tailwind paleti (`bg-emerald-100 text-emerald-800`) tasiyan tek
+// sabitti ve HIC KULLANILMIYORDU: rozet rengi yukaridaki `durumRengi`
+// uzerinden `Rozet`in kendi token'larindan geliyor. Eski dilin renk
+// katmanindan geriye kalan bir kalintiydi.
 
 interface FormState {
   ad: string;
@@ -76,6 +111,21 @@ export default function AssetsPage() {
   if (durum) qs.set("durum", durum);
   const { data, error, isLoading, mutate } = useSWR<AssetList>(
     `/api/assets?${qs.toString()}`,
+    jsonFetcher,
+  );
+  // SAYAÇLAR AYRI UÇLARDAN, GORUNEN SAYFADAN DEGIL (`?durum=X&limit=1`
+  // -> `meta.total`). Gorunen sayfa hem sayfalanmis hem SUZULMUS olur;
+  // ondan saymak, suzgec acikken sayaci da suzerdi.
+  const { data: musaitSayi } = useSWR<AssetList>(
+    `/api/assets?limit=1&offset=0&durum=${D_MUSAIT}`,
+    jsonFetcher,
+  );
+  const { data: zimmetliSayi } = useSWR<AssetList>(
+    `/api/assets?limit=1&offset=0&durum=${D_ZIMMETLI}`,
+    jsonFetcher,
+  );
+  const { data: bakimdaSayi } = useSWR<AssetList>(
+    `/api/assets?limit=1&offset=0&durum=${D_BAKIMDA}`,
     jsonFetcher,
   );
   const { data: users, error: usersErr } = useSWR<UserListResponse>("/api/users?limit=200&offset=0", jsonFetcher);
@@ -229,59 +279,87 @@ export default function AssetsPage() {
   );
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-          {t("kabukDemirbas")}
-        </h1>
-        <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
-          {t("demirbasYeni")}
-        </Dugme>
-      </div>
+    <div>
+      <SayfaBasligi
+        baslik={t("kabukDemirbas")}
+        aciklama={t("demirbasSayfaAlt")}
+        eylem={
+          <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
+            {t("demirbasYeni")}
+          </Dugme>
+        }
+      />
+
+      {/* Sayaclar ayri uclardan gelir: liste hem sayfali hem suzgecli;
+          gorunen sayfadan saymak yanlis bir sayi uretirdi. */}
+      <OzetSeridi>
+        <OzetKarti
+          etiket={t("demirbasMusait")}
+          deger={String(musaitSayi?.meta?.total ?? 0)}
+          ikon={<Ikon yol={IKON_KUTU} />}
+          durum="olumlu"
+        />
+        <OzetKarti
+          etiket={t("demirbasZimmetli")}
+          deger={String(zimmetliSayi?.meta?.total ?? 0)}
+          ikon={<Ikon yol={IKON_KISI} />}
+          durum="uyari"
+          altBilgi={t("demirbasZimmetliAlt")}
+        />
+        <OzetKarti
+          etiket={t("demirbasBakimda")}
+          deger={String(bakimdaSayi?.meta?.total ?? 0)}
+          ikon={<Ikon yol={IKON_ANAHTAR} />}
+          durum="notr"
+        />
+      </OzetSeridi>
 
       <EksikVeriUyarisi
         mesaj={usersErr ? t("ortakSecenekYuklenemedi") : null}
       />
 
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="w-44">
-          <AlanSarmal etiket={t("gorevKategoriAlan")}>
-  {(b) => (
-    <Secim {...b} value={kategori}
-              onChange={(e) => {
-                setKategori(e.target.value);
-                setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
-              }}
-            >
-              <option value="">{t("ortakTumu")}</option>
-              {KATEGORI.map((k) => (
-                <option key={k.value} value={k.value}>
-                  {t(k.anahtar)}
-                </option>
-              ))}</Secim>
-  )}
-</AlanSarmal>
-        </div>
-        <div className="w-44">
-          <AlanSarmal etiket={t("ortakDurum")}>
-  {(b) => (
-    <Secim {...b} value={durum}
-              onChange={(e) => {
-                setDurum(e.target.value);
-                setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
-              }}
-            >
-              <option value="">{t("ortakTumu")}</option>
-              <option value="musait">{t("demirbasMusait")}</option>
-              <option value="zimmetli">{t("demirbasZimmetli")}</option>
-              <option value="bakimda">{t("demirbasBakimda")}</option></Secim>
-  )}
-</AlanSarmal>
-        </div>
-      </div>
-
-      {error && <HataDurumu mesaj={error.message} />}
-      {isLoading && !data && <IskeletMetin satir={3} />}
+      <FiltreCubugu
+        aktifSayi={(kategori ? 1 : 0) + (durum ? 1 : 0)}
+        onTemizle={() => {
+          setKategori("");
+          setDurum("");
+          setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
+        }}
+      >
+        {/* SECIMLER GORUNMEZ ETIKETLI: serit her kontrolun ustune bir
+            etiket satiri koyunca iki kata cikiyordu; ad `aria-label`
+            ile KALIR. */}
+        <Secim
+          aria-label={t("gorevKategoriAlan")}
+          value={kategori}
+          onChange={(e) => {
+            setKategori(e.target.value);
+            setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
+          }}
+          className="w-auto"
+        >
+          <option value="">{t("demirbasKategoriHepsi")}</option>
+          {KATEGORI.map((k) => (
+            <option key={k.value} value={k.value}>
+              {t(k.anahtar)}
+            </option>
+          ))}
+        </Secim>
+        <Secim
+          aria-label={t("ortakDurum")}
+          value={durum}
+          onChange={(e) => {
+            setDurum(e.target.value);
+            setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
+          }}
+          className="w-auto"
+        >
+          <option value="">{t("demirbasDurumHepsi")}</option>
+          <option value={D_MUSAIT}>{t("demirbasMusait")}</option>
+          <option value={D_ZIMMETLI}>{t("demirbasZimmetli")}</option>
+          <option value={D_BAKIMDA}>{t("demirbasBakimda")}</option>
+        </Secim>
+      </FiltreCubugu>
 
       <Modal
         acik={open}

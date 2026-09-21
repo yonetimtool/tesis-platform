@@ -5,7 +5,7 @@
 // gorunmesi (kullanici basar, sunucu 409 doner ve neden anlasilmaz),
 // (2) reddetme sebebinin bos gonderilebilmesi (backend 422; ama kullanici
 // formu doldurdugunu sanir).
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -56,12 +56,20 @@ describe("Talepler sayfasi", () => {
     await waitFor(() => expect(screen.getByText("Musluk akıtıyor")).toBeInTheDocument());
 
     await userEvent.click(screen.getByRole("button", { name: "Reddet" }));
-    // Form acildi: gonderim butonu ayni etiketi tasir ama artik `submit`.
-    const gonder = screen.getByRole("button", { name: "Reddet" });
-    expect(gonder).toBeDisabled();
+    // (P244 §8b) SORGU DIYALOGA KAPSAMLANDI.
+    //
+    // Eskiden satirdaki "Reddet" dugmesi form acilinca KAYBOLUYORDU
+    // (`canAct && !action`), bu yuzden kapsamsiz sorgu tek eleman
+    // buluyordu. Artik liste bir TABLO ve eylemler satirda KALIYOR —
+    // triyaj ekraninin isi bu. Diyalog `aria-modal` tasidigi icin ekran
+    // okuyucu arkadakini zaten gormez; testin de diyalogun icine
+    // bakmasi gerekir. Iddia degismedi: gonderim dugmesi sebep BOSKEN
+    // KAPALI, dolunca ACIK.
+    const diyalog = await screen.findByRole("dialog");
+    expect(within(diyalog).getByRole("button", { name: "Reddet" })).toBeDisabled();
 
-    await userEvent.type(screen.getByRole("textbox"), "Yetki alanımız dışında");
-    expect(screen.getByRole("button", { name: "Reddet" })).toBeEnabled();
+    await userEvent.type(within(diyalog).getByRole("textbox"), "Yetki alanımız dışında");
+    expect(within(diyalog).getByRole("button", { name: "Reddet" })).toBeEnabled();
   });
 
   it("COZ: not OPSIYONEL — bos notla gonderim ACIK", async () => {
@@ -72,7 +80,8 @@ describe("Talepler sayfasi", () => {
     ciz(ComplaintsPage);
     await waitFor(() => expect(screen.getByText("Musluk akıtıyor")).toBeInTheDocument());
     await userEvent.click(screen.getByRole("button", { name: "Çöz" }));
-    expect(screen.getByRole("button", { name: "Çöz" })).toBeEnabled();
+    const diyalog = await screen.findByRole("dialog");
+    expect(within(diyalog).getByRole("button", { name: "Çöz" })).toBeEnabled();
   });
 
   it("SUZGEC secilince istek durum parametresiyle gider", async () => {

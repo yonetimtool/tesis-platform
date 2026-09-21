@@ -25,7 +25,11 @@ import {
   Dugme,
   HataDurumu,
   IskeletMetin,
+  Kart,
+  Rozet,
+  SayfaBasligi,
 } from "@/components/ui";
+import type { RozetDurumu } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -42,6 +46,32 @@ const DURUM_ANAHTARI: Record<string, SozlukAnahtari> = {
   cozuldu: "destekCozuldu",
   reddedildi: "talepReddedildi",
 };
+
+/**
+ * (P244 §8b) DURUM ARTIK RENK DE TASIR — paneldeki esleme ile AYNI.
+ *
+ * Ekran durumu notr gri bir balonda gosteriyordu: dort durum da AYNI
+ * goruntu. Sakinin bu ekranda sordugu tek soru "talebim ne oldu" ve
+ * yanit yalnizca kelimede duruyordu. Esleme `complaints` sayfasindan
+ * KOPYALANMADI, ayni anlamlari tasir: acik=uyari, is_emri=bilgi,
+ * cozuldu=olumlu, reddedildi=kritik. (Iki ekran ayni sozluk
+ * anahtarlarini kullaniyor; renk de ayni anlamda olmali, yoksa sakin ve
+ * yonetici ayni durumu farkli renkte gorurdu.)
+ */
+const DURUM_ROZETI: Record<string, RozetDurumu> = {
+  acik: "uyari",
+  is_emri: "bilgi",
+  cozuldu: "olumlu",
+  reddedildi: "kritik",
+};
+
+const ROZET_NOTR = "notr" as const;
+
+function rozetDurumu(durum: string): RozetDurumu {
+  const r = DURUM_ROZETI[durum];
+  if (r) return r;
+  return ROZET_NOTR;
+}
 
 /**
  * Bilinmeyen durum icin geri dusus — CIZIM ICINDE degil, MODUL duzeyinde.
@@ -112,21 +142,26 @@ export default function TaleplerimPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-        {t("talebimBaslik")}
-      </h1>
-        <Dugme tur="birincil" boy="kucuk" onClick={() => {
-          // (P163 §2) ACILISTA ESKI HATA TEMIZLENIR: modal yeniden acildiginda
-          // onceki denemenin mesaji ekranda duruyordu ve kullanici hic
-          // denemeden hata gormus oluyordu.
-          setFormHata(null);
-          setModalAcik(true);
-        }}>
-          {t("talebimYeni")}
-        </Dugme>
-      </div>
+    <div>
+      <SayfaBasligi
+        baslik={t("talebimBaslik")}
+        aciklama={t("talebimSayfaAlt")}
+        eylem={
+          <Dugme
+            tur="birincil"
+            boy="kucuk"
+            onClick={() => {
+              // (P163 §2) ACILISTA ESKI HATA TEMIZLENIR: modal yeniden
+              // acildiginda onceki denemenin mesaji ekranda duruyordu ve
+              // kullanici hic denemeden hata gormus oluyordu.
+              setFormHata(null);
+              setModalAcik(true);
+            }}
+          >
+            {t("talebimYeni")}
+          </Dugme>
+        }
+      />
 
       <Modal
         acik={modalAcik}
@@ -173,6 +208,12 @@ export default function TaleplerimPage() {
         </div>
       </Modal>
 
+      {/* (P244 §8b) KART DILI BURADA DOGRU.
+          Sakinin talebi OKUNACAK bir metindir (konu + serbest aciklama),
+          taranacak bir satir degil; listesi de kisadir. Tabloya
+          cevirmek cok satirli mesaji tek hucreye sikistirirdi.
+          Degisen sey: kayitlar ciplak `<article>` idi ve birbirine
+          akiyordu; artik yuzeyleri var ve durum RENK de tasiyor. */}
       <section className="space-y-3">
         <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("talebimGecmis")}</h2>
         {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
@@ -183,16 +224,19 @@ export default function TaleplerimPage() {
           <BosDurum baslik={t("talebimYok")} aciklama={t("talebimYokAlt")} />
         ) : null}
         {talepler.map((c) => (
-          <article key={c.id} className="space-y-1">
+          <Kart key={c.id} className="space-y-1">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h3 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{c.baslik}</h3>
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs">
-                {t(durumAnahtari(c.durum))}
-              </span>
+              <Rozet durum={rozetDurumu(c.durum)}>{t(durumAnahtari(c.durum))}</Rozet>
             </div>
-            <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{tarihSaatUzun(c.created_at)}</p>
-            <p className="text-sm">{c.mesaj}</p>
-          </article>
+            <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+              {tarihSaatUzun(c.created_at)}
+              {c.kategori_ad ? ` · ${c.kategori_ad}` : ""}
+            </p>
+            <p className="whitespace-pre-wrap" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>
+              {c.mesaj}
+            </p>
+          </Kart>
         ))}
       </section>
     </div>

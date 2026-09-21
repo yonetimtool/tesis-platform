@@ -63,6 +63,18 @@ const ISTISNALAR: Record<string, string> = {
   // Yonetim iletisiminde kart bir KISI KARTVIZITI: ad + telefon + rol,
   // uc-dort satirlik bir kimlik bloku ve tiklanabilir `tel:` baglantisi.
   "yonetim-iletisim/page.tsx": "kart = kisi kartviziti",
+  // (P244 §8b) Gorevlerimde kart OKUNACAK degil YAPILACAK bir is: her
+  // kaydin icinde bir not alani ve bir tamamlama dugmesi var. Girdi
+  // tasiyan kaydi tablo hucresine sikistirmak dokunma hedefini de
+  // kucultururdu. Kayitlar ONCEDEN de ayri bloktu (ciplak `<article>`);
+  // degisen sey kartin YUZEY kazanmasi.
+  "gorevlerim/page.tsx": "kart = yapilacak is (icinde girdi + eylem)",
+  // (P244 §8b) Taleplerimde kart bir OKUNACAK METIN: konu + cok satirli
+  // serbest aciklama + yonetimin karari. Tabloya cevirmek cok satirli
+  // mesaji tek hucreye sikistirirdi; liste de kisadir (sakinin kendi
+  // talepleri). Paneldeki `/complaints` bunun TARANAN karsiligi ve
+  // orada tablo dogru secim.
+  "taleplerim/page.tsx": "kart = okunacak talep metni",
 };
 
 /**
