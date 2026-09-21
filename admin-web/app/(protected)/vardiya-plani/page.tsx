@@ -12,6 +12,7 @@ import {
   Kart,
   Modal,
   Rozet,
+  SayfaBasligi,
   Secim,
 } from "@/components/ui";
 import { AraclarCubugu } from "@/components/vardiya/araclar-cubugu";
@@ -401,32 +402,36 @@ export default function VardiyaPlaniSayfasi() {
   return (
     <div className="space-y-4">
       {/* ------------------------- 2.1 ANA EKRAN ------------------------- */}
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-            {t("vardiyaPlaniBaslik")}
-          </h1>
-          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-            {t("vardiyaCizelgeAlt")}
-          </p>
-        </div>
-        {/* (P240 §5a) SAYFANIN ASIL EYLEMI — BASLIK SATIRINDA ve MAVI.
+      {/* (P245) BASLIK PAYLASILAN BILESENE TASINDI.
+          -----------------------------------------------------------------
+          P240 §5a'nin karari KORUNDU ve aslinda GUCLENDI: sayfanin asil
+          eylemi ("Yeni vardiya") gezinme/goruntuleme araclariyla AYNI
+          kumede degil, BASLIK SATIRINDA ve tek birincil dugme.
+          `SayfaBasligi`nin `eylem` yuvasi tam olarak bu yeri tarif
+          ediyor; elle kurulmus baslik satiri artik gereksizdi.
 
-            OLCULEN KUSUR: dugme, gorunum secici + filtreler + tazele ile
-            AYNI sarilabilir satirdaydi ve hepsi `ikincil` (gri) oldugu
-            icin aralarinda KAYBOLUYORDU; dar ekranda alt satira sariyor
-            ve kullanici onu hic gormuyordu.
+          KONTROL KUMESINE DOKUNULMADI: gorunum secici, filtreler,
+          tazele ve araclar cubugu P240/P241/P207'de olculmus bir
+          duzendir. REFERANSTA DA (ui3) bu ekranda KPI SERIDI YOK —
+          tarih araligi + gorunum secici + tablo. Serit eklemek
+          referansi asmak olurdu.
 
-            Iki sey birden degisti ve ikisi de gerekli:
-              * YER — gezinme/goruntuleme araclariyla ayni kumede degil;
-                bu bir GORUNUM secimi degil, KAYIT OLUSTURMA.
-              * RENK — `birincil` (mavi dolgu). Bir ekranda tek birincil
-                dugme olur; o da budur. P239'da sablon dugmesiyle
-                ETIKETLERI ayirmistik, simdi GORSEL agirlik da ayri.
-
-            Sablon bolumunun "Yeni sablon" dugmesi de `birincil`, ama o
-            SAYFANIN ALTINDA, kendi bolum basliginin yaninda — ikisi ayni
-            ekran alaninda yan yana gorunmuyor. */}
+          Gezinme (geri / bugun / aralik / ileri) basligin ALT CUBUGUNA
+          alindi: bir GORUNUM secimidir, kayit olusturma degil. */}
+      <SayfaBasligi
+        baslik={t("vardiyaPlaniBaslik")}
+        aciklama={t("vardiyaCizelgeAlt")}
+        eylem={
+          <Dugme
+            type="button"
+            tur={BIRINCIL}
+            data-test="vardiya-yeni"
+            onClick={() => setEkleAcik(true)}
+          >
+            {t("vardiyaYeni")}
+          </Dugme>
+        }
+        altCubuk={
         <div className="flex flex-wrap items-center gap-2">
           <Dugme
             type="button"
@@ -462,16 +467,9 @@ export default function VardiyaPlaniSayfasi() {
           >
             {t("vardiyaIleri")}
           </Dugme>
-        <Dugme
-          type="button"
-          tur={BIRINCIL}
-          data-test="vardiya-yeni"
-          onClick={() => setEkleAcik(true)}
-        >
-          {t("vardiyaYeni")}
-        </Dugme>
         </div>
-      </div>
+        }
+      />
 
       <div className="flex flex-wrap items-center gap-2">
         {/* GORUNUM SECICI — uc dugme, secili olan ISARETLI. */}

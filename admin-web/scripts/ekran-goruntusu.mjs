@@ -37,6 +37,14 @@ const HESAPLAR = {
   yonetici: { kimlik: "yonetici@acme.com", parola: "Yonetici123!", taban: "http://app.localhost:3000" },
   denetci: { kimlik: "denetci@acme.com", parola: "Denetci123!", taban: "http://app.localhost:3000" },
   admin: { kimlik: "admin@acme.com", parola: "Admin123!", taban: "http://localhost:3000" },
+  // (P245) `/olaylar` ROL olarak yalniz `admin`e acik ama TESIS
+  // yuzeyinde yasiyor (`lib/yuzey.ts`): panel yuzeyinde acilinca
+  // `/tenants`e yonleniyor. Ayni hesap, `app.*` konagindan.
+  "admin-tesis": {
+    kimlik: "admin@acme.com",
+    parola: "Admin123!",
+    taban: "http://app.localhost:3000",
+  },
 };
 
 async function girisYap(sayfa, rol) {

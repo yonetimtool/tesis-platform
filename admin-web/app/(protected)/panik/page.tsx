@@ -23,6 +23,10 @@
 import { useState } from "react";
 import useSWR from "swr";
 
+// (P245) SUZGEC DEGERLERI — UCLUDE DIZE YAZILMAZ (`sabit-metin`).
+const SUZGEC_HEPSI = "" as const;
+const PANIK_DURUMLARI = ["beklemede", "acik", "mudahale", "kapandi", "iptal"] as const;
+
 // (P245) OZET SERIDI IKONLARI.
 const IKON_ALARM = "M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z";
 const IKON_TAKVIM = "M7 3v4M17 3v4M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z";
@@ -40,7 +44,10 @@ function PanikIkonu({ yol }: { yol: string }) {
 import { Alan, BosDurum, Dugme, HataDurumu, Kart, Modal, Rozet, Tablo, TabloBasligi, Td, Th, Tr,
   OzetKarti,
   OzetSeridi,
-  SayfaBasligi
+  SayfaBasligi,
+  FiltreCubugu,
+  Secim,
+  IskeletMetin,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -93,8 +100,17 @@ const BIRINCIL = "birincil" as const;
 export default function PanikPage() {
   const t = useT();
   const toast = useToast();
+  // (P245) DURUM SUZGECI — SUNUCUDA (`?durum=`).
+  const [durumSuzgec, setDurumSuzgec] = useState<string>(SUZGEC_HEPSI);
+  // SERIT SAYILARI SUZGECTEN BAGIMSIZ (P244 §8c dersi): suzgec acikken
+  // ayni kumeden saymak, "Kapanan" secildiginde "Acik cagri: 0" yazmak
+  // olurdu — yani ekran acik cagri OLMADIGINI soylerdi.
+  const { data: tumAlarmlar } = useSWR<{ items: Alarm[] }>(
+    "/api/panik?limit=200",
+    jsonFetcher,
+  );
   const { data, error, isLoading, mutate } = useSWR<{ items: Alarm[] }>(
-    "/api/panik?limit=50",
+    `/api/panik?limit=50${durumSuzgec ? `&durum=${durumSuzgec}` : ""}`,
     jsonFetcher,
     // ACIK ALARM CANLI OLMALI: bu ekran acikken biri "gidiyorum"
     // derse, yenilemeden gorunmeli.
@@ -126,11 +142,12 @@ export default function PanikPage() {
   // SAYILAR GORUNEN LISTEDEN ve bu BILINCLI: uc durum suzgeci
   // sunmuyor ve panik cagrisi tesis basina gunde birkac kayittir —
   // sayfalama sinirina carpmaz.
-  const acikCagri = satirlar.filter((a) => a.kapandi_at == null).length;
-  const kapananCagri = satirlar.length - acikCagri;
+  const tumSatirlar = tumAlarmlar?.items ?? [];
+  const acikCagri = tumSatirlar.filter((a) => a.kapandi_at == null).length;
+  const kapananCagri = tumSatirlar.length - acikCagri;
   const bugunBasi = new Date();
   bugunBasi.setHours(0, 0, 0, 0);
-  const bugunCagri = satirlar.filter(
+  const bugunCagri = tumSatirlar.filter(
     (a) => new Date(a.created_at).getTime() >= bugunBasi.getTime(),
   ).length;
 
@@ -169,26 +186,60 @@ export default function PanikPage() {
         />
       </OzetSeridi>
 
+      <FiltreCubugu
+        aktifSayi={durumSuzgec ? 1 : 0}
+        onTemizle={() => setDurumSuzgec(SUZGEC_HEPSI)}
+      >
+        <Secim
+          aria-label={t("panikDurumSuzgec")}
+          value={durumSuzgec}
+          onChange={(e) => setDurumSuzgec(e.target.value)}
+          className="w-auto"
+        >
+          <option value={SUZGEC_HEPSI}>{t("panikDurumHepsi")}</option>
+          {PANIK_DURUMLARI.map((d) => (
+            <option key={d} value={d}>
+              {t(DURUM_ETIKET[d] ?? DURUM_YEDEK)}
+            </option>
+          ))}
+        </Secim>
+      </FiltreCubugu>
+
       <HataDurumu mesaj={error ? t("ortakHataOlustu") : null} />
 
       <Kart>
         {/* BOS DURUM SARTI HATAYI DA ELER: `isLoading` bitmis ama istek
             DUSMUSSE liste bos gelir ve "kayit yok" yazmak, hatayi
             "veri yok" gibi gosterirdi (depo kilidi `hata-mesaji`). */}
-        {!isLoading && !error && satirlar.length === 0 ? (
-          <BosDurum ikon="alert" baslik={t("panikAlarmYok")} aciklama={t("panikAlarmYokAlt")} />
+        {/* (P245) YUKLENIRKEN ISKELET — eskiden BOS TABLO ciziliyordu.
+            Kosul yalniz "bos durum"u ayiriyordu; `isLoading` dogruyken
+            else dalina duserek BASLIKSIZ, SATIRSIZ bir tablo ciziyordu.
+            Gercek tarayicida olculdu: sayfa bir an "kayit yok" bile
+            demeden bos bir izgara gosteriyor. */}
+        {isLoading && !error ? (
+          <IskeletMetin satir={4} />
+        ) : !error && satirlar.length === 0 ? (
+          /* (P245) `ikon="alert"` DIZGESI EKRANA "alert" DIYE YAZILIYORDU.
+             `BosDurum.ikon` bir `ReactNode` bekler; dize verilince
+             aynen cizilir. Gercek tarayicida goruldu — jsdom'da da
+             "alert" metni vardi ama hicbir iddia onu sorgulamiyordu.
+             Varsayilan ikon zaten notr bir kutu; burada ALARM ikonu
+             anlamli, bu yuzden sayfanin kendi ikonu verildi. */
+          <BosDurum
+            ikon={<PanikIkonu yol={IKON_ALARM} />}
+            baslik={t("panikAlarmYok")}
+            aciklama={t("panikAlarmYokAlt")}
+          />
         ) : (
           <Tablo>
             <TabloBasligi>
-              <Tr>
-                <Th>{t("ortakTarih")}</Th>
-                <Th>{t("panikTipBasligi")}</Th>
-                <Th>{t("ortakDurum")}</Th>
-                <Th>{t("panikKimBasligi")}</Th>
-                <Th>{t("panikGorenSayisi", { goren: "", toplam: "" })}</Th>
-                <Th>{t("panikMudahaleSuresi")}</Th>
-                <Th aria-label={t("panikKapat")} />
-              </Tr>
+              <Th>{t("ortakTarih")}</Th>
+              <Th>{t("panikTipBasligi")}</Th>
+              <Th>{t("ortakDurum")}</Th>
+              <Th>{t("panikKimBasligi")}</Th>
+              <Th>{t("panikGorenSayisi", { goren: "", toplam: "" })}</Th>
+              <Th>{t("panikMudahaleSuresi")}</Th>
+              <Th aria-label={t("panikKapat")} />
             </TabloBasligi>
             <tbody>
               {satirlar.map((a) => {

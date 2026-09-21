@@ -348,12 +348,10 @@ export default function AkilliEvPage() {
       ) : (
         <Tablo>
           <TabloBasligi>
-            <Tr>
-              <Th>{t("ortakAd")}</Th>
-              <Th>{t("entegSaglik")}</Th>
-              <Th>{t("akilliEvJeton")}</Th>
-              <Th aria-label={t("ortakSil")} />
-            </Tr>
+            <Th>{t("ortakAd")}</Th>
+            <Th>{t("entegSaglik")}</Th>
+            <Th>{t("akilliEvJeton")}</Th>
+            <Th aria-label={t("ortakSil")} />
           </TabloBasligi>
           <tbody>
             {kopruListe.map((k) => (
@@ -426,12 +424,10 @@ export default function AkilliEvPage() {
       ) : (
         <Tablo>
           <TabloBasligi>
-            <Tr>
-              <Th>{t("ortakAd")}</Th>
-              <Th>{t("akilliEvTur")}</Th>
-              <Th>{t("akilliEvKonum")}</Th>
-              <Th aria-label={t("ortakSil")} />
-            </Tr>
+            <Th>{t("ortakAd")}</Th>
+            <Th>{t("akilliEvTur")}</Th>
+            <Th>{t("akilliEvKonum")}</Th>
+            <Th aria-label={t("ortakSil")} />
           </TabloBasligi>
           <tbody>
             {cihazListe.map((c) => (
@@ -505,12 +501,10 @@ export default function AkilliEvPage() {
       ) : (
         <Tablo>
           <TabloBasligi>
-            <Tr>
-              <Th>{t("akilliEvOlay")}</Th>
-              <Th>{t("ortakAd")}</Th>
-              <Th>{t("akilliEvEylem")}</Th>
-              <Th aria-label={t("ortakSil")} />
-            </Tr>
+            <Th>{t("akilliEvOlay")}</Th>
+            <Th>{t("ortakAd")}</Th>
+            <Th>{t("akilliEvEylem")}</Th>
+            <Th aria-label={t("ortakSil")} />
           </TabloBasligi>
           <tbody>
             {senaryoListe.map((s) => (

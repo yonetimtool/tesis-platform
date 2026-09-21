@@ -3,6 +3,12 @@
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 
+// (P245) SUZGEC DEGERLERI — UCLUDE DIZE YAZILMAZ (`sabit-metin`).
+const SUZGEC_HEPSI = "" as const;
+const SUZGEC_AKTIF = "true" as const;
+const SUZGEC_PASIF = "false" as const;
+
+
 import {
   Alan,
   AlanSarmal,
@@ -20,6 +26,7 @@ import {
   type TabloDurumu,
   useOnay,
   VeriTablosu,
+  FiltreCubugu,
 } from "@/components/ui";
 
 // (P245) OZET SERIDI IKONLARI — referansta her kartin solunda bir ikon.
@@ -154,8 +161,19 @@ export default function PatrolPlansPage() {
     siraYonu: "artan",
   });
   const offset = (tabloDurumu.sayfa - 1) * tabloDurumu.boy;
+  // (P245) AKTIFLIK SUZGECI — SUNUCUDA (`?aktif=`). Istemcide suzmek
+  // yalniz GORUNEN sayfayi arardi.
+  const [aktifSuzgec, setAktifSuzgec] = useState<string>(SUZGEC_HEPSI);
   const { data, error, isLoading, mutate } = useSWR<PatrolPlanList>(
-    `/api/patrol-plans?limit=${tabloDurumu.boy}&offset=${offset}`,
+    `/api/patrol-plans?limit=${tabloDurumu.boy}&offset=${offset}${
+      aktifSuzgec ? `&aktif=${aktifSuzgec}` : ""
+    }`,
+    jsonFetcher,
+  );
+  // SERIT SAYILARI SUZGECTEN BAGIMSIZ: ayri, suzgecsiz istek. Aksi
+  // halde "Pasif" secildiginde "Aktif plan: 0" yazardi.
+  const { data: tumPlanlar } = useSWR<PatrolPlanList>(
+    "/api/patrol-plans?limit=200&offset=0",
     jsonFetcher,
   );
   const { data: shifts, error: shiftsErr } = useSWR<ShiftList>(
@@ -188,8 +206,11 @@ export default function PatrolPlansPage() {
   // suzgec olmadigi icin GORUNEN SAYFADAN sayilir ve bu ACIK:
   // alt bilgi "bu sayfada" demez, cunku plan sayisi tek sayfaya sigan
   // bir buyukluktur (tesis basina onlarca degil, birkac plan).
-  const aktifPlan = (data?.items ?? []).filter((p) => p.aktif).length;
-  const pasifPlan = (data?.items ?? []).length - aktifPlan;
+  // SUZGECTEN BAGIMSIZ KUME: suzgec acikken `data` suzulmus gelir ve
+  // "Pasif" secildiginde "Aktif plan: 0" yazardi (P244 §8c dersi).
+  const tumSatirlar = tumPlanlar?.items ?? [];
+  const aktifPlan = tumSatirlar.filter((p) => p.aktif).length;
+  const pasifPlan = tumSatirlar.length - aktifPlan;
 
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -435,7 +456,7 @@ export default function PatrolPlansPage() {
         />
         <OzetKarti
           etiket={t("planOzetToplam")}
-          deger={String(data?.meta?.total ?? 0)}
+          deger={String(tumPlanlar?.meta?.total ?? 0)}
           durum="notr"
           ikon={<PlanIkonu yol={IKON_LISTE} />}
           altBilgi={pasifPlan > 0 ? t("planOzetPasifAlt", { n: pasifPlan }) : undefined}
@@ -455,6 +476,24 @@ export default function PatrolPlansPage() {
           href="/shifts"
         />
       </OzetSeridi>
+
+      {/* (P245) FILTRE CUBUGU — SUZGEC SUNUCUDA.
+          Sayilar AYRI, suzgecsiz istekten (P244 §8c dersi). */}
+      <FiltreCubugu
+        aktifSayi={aktifSuzgec ? 1 : 0}
+        onTemizle={() => setAktifSuzgec(SUZGEC_HEPSI)}
+      >
+        <Secim
+          aria-label={t("planDurumSuzgec")}
+          value={aktifSuzgec}
+          onChange={(e) => setAktifSuzgec(e.target.value)}
+          className="w-auto"
+        >
+          <option value={SUZGEC_HEPSI}>{t("planDurumHepsi")}</option>
+          <option value={SUZGEC_AKTIF}>{t("ortakAktif")}</option>
+          <option value={SUZGEC_PASIF}>{t("ortakPasif")}</option>
+        </Secim>
+      </FiltreCubugu>
 
       {/* Vardiya listesi cekilemediyse SECIM EKSIK olur; sessiz kalmak
           "bu planin vardiyasi yok" yanilgisini uretir. */}

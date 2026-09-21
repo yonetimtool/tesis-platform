@@ -27,6 +27,19 @@
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 
+// (P245) OZET SERIDI IKONLARI.
+const IKON_KAMERA = "M23 7l-7 5 7 5V7zM1 5h15a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H1z";
+const IKON_OYNAT = "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM10 8.5l5 3.5-5 3.5z";
+
+function KayitIkonu({ yol }: { yol: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor"
+      strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={yol} />
+    </svg>
+  );
+}
+
 import { KameraOynatici } from "@/components/KameraOynatici";
 import {
   Alan,
@@ -37,6 +50,9 @@ import {
   IskeletMetin,
   Kart,
   Secim,
+  OzetKarti,
+  OzetSeridi,
+  SayfaBasligi,
 } from "@/components/ui";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -130,14 +146,40 @@ export default function KameraKayitlariPage() {
     }
   }
 
+  // KAYIT SAYISI DEGIL, KAYIT ALABILEN KAMERA SAYISI: uc aralik sorar,
+  // liste dondurmez (bkz. serit yorumu).
+  const oynatilabilirSayisi = kameralar.filter((k) => k.oynatilabilir).length;
+
   if (isLoading) return <IskeletMetin satir={4} />;
   if (error) return <HataDurumu />;
 
   return (
-    <div className="grid gap-4">
-      <h1 style={{ fontSize: "var(--yz-fs-h2)", fontWeight: 600 }}>
-        {t("kamKayitBaslik")}
-      </h1>
+    <div>
+      <SayfaBasligi baslik={t("kamKayitBaslik")} aciklama={t("kamKayitSayfaAlt")} />
+
+      {/* (P245) OZET SERIDI — referansta (ui3) "Kamera Kayitlari"
+          ekraninin ustunde de bir serit var.
+          -----------------------------------------------------------------
+          SAYILAR KAMERA LISTESINDEN: bu ekranin ucu bir ARALIK sorar ve
+          kayit listesi DONDURMEZ; "kac kayit var" sorusunu yanitlayan
+          bir uc YOK. Uydurmak yerine listenin yanitladigi sey yazildi.
+          NVR KAYDI SITEDE KALIR (P213): bulutta bir kayit sayaci
+          zaten olamaz. */}
+      <OzetSeridi>
+        <OzetKarti
+          etiket={t("kamKayitOzetKamera")}
+          deger={String(kameralar.length)}
+          durum="notr"
+          ikon={<KayitIkonu yol={IKON_KAMERA} />}
+        />
+        <OzetKarti
+          etiket={t("kamKayitOzetOynatilabilir")}
+          deger={String(oynatilabilirSayisi)}
+          durum={oynatilabilirSayisi > 0 ? "olumlu" : "uyari"}
+          ikon={<KayitIkonu yol={IKON_OYNAT} />}
+          altBilgi={t("kamKayitOzetOynatilabilirAlt")}
+        />
+      </OzetSeridi>
 
       {kameralar.length === 0 ? (
         <BosDurum baslik={t("kamKayitKameraYok")} aciklama={t("kamKayitKameraYokAlt")} />

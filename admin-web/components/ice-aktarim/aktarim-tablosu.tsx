@@ -123,20 +123,18 @@ export function AktarimTablosu({
       <div className="overflow-x-auto">
         <Tablo>
           <TabloBasligi>
-            <Tr>
-              <Th>{t("iceAktarimSatirNo")}</Th>
-              {alanlar.map((a) => (
-                <Th key={a.kod}>
-                  {/* SUTUNUN NE OLDUGU ve ZORUNLULUGU BASLIKTA: altta
-                      bir aciklama satiri, kaydirinca ekrandan cikardi. */}
-                  <span>
-                    {a.kod}
-                    {a.zorunlu ? ` (${t("iceAktarimZorunluSutun")})` : ""}
-                  </span>
-                </Th>
-              ))}
-              <Th aria-label={t("iceAktarimSatirSil")} />
-            </Tr>
+            <Th>{t("iceAktarimSatirNo")}</Th>
+            {alanlar.map((a) => (
+              <Th key={a.kod}>
+                {/* SUTUNUN NE OLDUGU ve ZORUNLULUGU BASLIKTA: altta
+                    bir aciklama satiri, kaydirinca ekrandan cikardi. */}
+                <span>
+                  {a.kod}
+                  {a.zorunlu ? ` (${t("iceAktarimZorunluSutun")})` : ""}
+                </span>
+              </Th>
+            ))}
+            <Th aria-label={t("iceAktarimSatirSil")} />
           </TabloBasligi>
           <tbody>
             {satirlar.map((satir, i) => {

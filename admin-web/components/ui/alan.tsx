@@ -173,6 +173,21 @@ export const CokSatir = forwardRef<
   );
 });
 
+/**
+ * (P245) GENISLIK CAGIRANA BIRAKILABILIR.
+ *
+ * OLCULEN KUSUR: taban sinif `w-full` idi ve cagiran `w-auto` verse
+ * bile kazanmiyordu — iki sinifin OZGULLUGU AYNI, hangisinin kazandigini
+ * `className` SIRASI degil uretilen CSS'teki sira belirler. Sonuc:
+ * filtre cubugundaki durum secimi seridin TAMAMINI kapliyordu (gercek
+ * tarayicida olculdu).
+ *
+ * Kural acik: cagiran bir genislik sinifi verdiyse taban `w-full`
+ * EKLENMEZ. Varsayilan degismedi — genislik vermeyen her cagiran hala
+ * tam genislik alir.
+ */
+const GENISLIK_DESENI = /(^|\s)(w-|max-w-|min-w-)/;
+
 export function Secim({
   hatali = false,
   className = "",
@@ -180,10 +195,11 @@ export function Secim({
   children,
   ...rest
 }: SelectHTMLAttributes<HTMLSelectElement> & { hatali?: boolean }) {
+  const genislik = GENISLIK_DESENI.test(className) ? "" : "w-full";
   return (
     <select
       {...rest}
-      className={`odak-ic h-11 w-full px-3 outline-none ${className}`}
+      className={`odak-ic h-11 ${genislik} px-3 outline-none ${className}`}
       style={{ ...kutuStili(hatali), ...style }}
     >
       {children}

@@ -321,14 +321,12 @@ export default function BakimPage() {
       ) : (
         <Tablo>
           <TabloBasligi>
-            <Tr>
-              <Th>{t("ortakAd")}</Th>
-              <Th>{t("bakimPeriyot")}</Th>
-              <Th>{t("bakimSonrakiBakim")}</Th>
-              <Th>{t("ortakDurum")}</Th>
-              <Th>{t("bakimSorumlu")}</Th>
-              <Th aria-label={t("ortakSil")} />
-            </Tr>
+            <Th>{t("ortakAd")}</Th>
+            <Th>{t("bakimPeriyot")}</Th>
+            <Th>{t("bakimSonrakiBakim")}</Th>
+            <Th>{t("ortakDurum")}</Th>
+            <Th>{t("bakimSorumlu")}</Th>
+            <Th aria-label={t("ortakSil")} />
           </TabloBasligi>
           <tbody>
             {liste.map((e) => (
@@ -416,13 +414,11 @@ export default function BakimPage() {
       ) : (
         <Tablo>
           <TabloBasligi>
-            <Tr>
-              <Th>{t("bakimKayitTarihi")}</Th>
-              <Th>{t("ortakAd")}</Th>
-              <Th>{t("bakimYapan")}</Th>
-              <Th>{t("bakimIslem")}</Th>
-              <Th>{t("bakimTutar")}</Th>
-            </Tr>
+            <Th>{t("bakimKayitTarihi")}</Th>
+            <Th>{t("ortakAd")}</Th>
+            <Th>{t("bakimYapan")}</Th>
+            <Th>{t("bakimIslem")}</Th>
+            <Th>{t("bakimTutar")}</Th>
           </TabloBasligi>
           <tbody>
             {(kayitlar.data?.items ?? []).map((k) => (
@@ -474,13 +470,11 @@ export default function BakimPage() {
       </div>
       <Tablo>
         <TabloBasligi>
-          <Tr>
-            <Th>{t("ortakAd")}</Th>
-            <Th>{t("bakimOzetSayi")}</Th>
-            <Th>{t("bakimOzetToplam")}</Th>
-            <Th>{t("bakimSonBakim")}</Th>
-            <Th>{t("bakimSonrakiBakim")}</Th>
-          </Tr>
+          <Th>{t("ortakAd")}</Th>
+          <Th>{t("bakimOzetSayi")}</Th>
+          <Th>{t("bakimOzetToplam")}</Th>
+          <Th>{t("bakimSonBakim")}</Th>
+          <Th>{t("bakimSonrakiBakim")}</Th>
         </TabloBasligi>
         <tbody>
           {(ozet.data?.satirlar ?? []).map((s) => (

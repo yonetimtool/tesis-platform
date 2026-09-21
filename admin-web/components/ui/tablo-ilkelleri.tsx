@@ -127,6 +127,24 @@ export function Tablo({
 // `zeminsiz`: 30 tablonun 10'u baslik zeminini BILEREK kullanmiyordu
 // (panel icindeki kucuk tablolar). Ortak ilkele tasirken hepsine zemin
 // vermek, yapisal birlestirmeyi gorsel bir karara cevirirdi.
+/**
+ * Tablo baslik satiri.
+ *
+ * (P245) SOZLESME ACIKCA YAZILDI: `<tr>`i BU BILESEN cizer; cagiran
+ * DOGRUDAN `<Th>` verir.
+ *
+ * OLCULEN KUSUR: on bes cagri yerinin DOKUZU icerigi ayrica bir `<Tr>`
+ * ile sariyordu ve ortaya `<tr><tr>...` cikiyordu — GECERSIZ HTML.
+ * Tarayici ic `<tr>`i disari tasiyor, sunucu ciziminden FARKLI bir agac
+ * olusuyor ve React hidrasyonu DUSUYOR: "Hydration failed because the
+ * initial UI does not match what was rendered on the server". Sonucunda
+ * sayfanin tamami istemcide yeniden ciziliyordu.
+ *
+ * Bunu hicbir test gormedi: `tsc` JSX'in HTML gecerliligini denetlemez,
+ * jsdom ic ice `<tr>`i sessizce kabul eder ve gorunum neredeyse ayni
+ * kalir. Gercek tarayicida ekran goruntusu alinirken konsolda cikti
+ * (P245 yontemi).
+ */
 export function TabloBasligi({
   children,
   zeminsiz = false,

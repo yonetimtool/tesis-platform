@@ -25,6 +25,8 @@ import {
   Rozet,
   SayfaBasligi,
   VeriTablosu,
+  FiltreCubugu,
+  Secim,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -46,6 +48,9 @@ type Olay = {
 // METIN DEGIL KIMLIK (modul duzeyi).
 // (P244 §6c) UCLUDE DIZE YAZILMAZ (`sabit-metin`) — durum kimligi de dize.
 const DURUM_KAPALI = "kapatildi" as const;
+const HEPSI = "" as const;
+/** Suzgec secenekleri — `DURUM_ANAHTARI` ile AYNI kume. */
+const DURUM_SECENEKLERI = ["yeni", "inceleniyor", "kapatildi"] as const;
 const DURUM_ANAHTARI: Record<string, SozlukAnahtari> = {
   yeni: "olayYeni",
   inceleniyor: "olayInceleniyor",
@@ -72,8 +77,15 @@ function kaynakAnahtari(kaynak: string): SozlukAnahtari {
 export default function OlaylarPage() {
   const t = useT();
   const toast = useToast();
+  // (P245) DURUM SUZGECI — SUNUCUDA.
+  //
+  // Istemcide suzmek YALNIZ GORUNEN 50 kaydi arardi; kullanici
+  // "kapatilmis olay yok" der, oysa kayit ikinci sayfadadir. Arka uc
+  // `durum`u destekliyordu ama BFF onu dusuruyordu (ayni turda
+  // duzeltildi).
+  const [durumSuzgec, setDurumSuzgec] = useState<string>(HEPSI);
   const { data, error, isLoading, mutate } = useSWR<{ items: Olay[] }>(
-    "/api/violations?limit=50&offset=0",
+    `/api/violations?limit=50&offset=0${durumSuzgec ? `&durum=${durumSuzgec}` : ""}`,
     jsonFetcher,
   );
 
@@ -85,6 +97,20 @@ export default function OlaylarPage() {
   const [modalAcik, setModalAcik] = useState(false);
 
   const kayitlar = data?.items ?? [];
+
+  /**
+   * (P245) SERIT SAYILARI SUZGECTEN BAGIMSIZ — AYRI ISTEK.
+   *
+   * Suzgec eklenince `kayitlar` SUZULMUS kume oldu; seridi ondan
+   * beslemek "Kapatilmis" secildiginde "Acik olay: 0" yazmak olurdu —
+   * yani ekran, acik olay OLMADIGINI soylerdi. Bu kusur P244 §8c'de
+   * bakim ekraninda olculup kilitlenmisti; ayni tuzak burada da vardi.
+   */
+  const { data: tumu } = useSWR<{ items: Olay[] }>(
+    "/api/violations?limit=200&offset=0",
+    jsonFetcher,
+  );
+  const tumKayitlar = tumu?.items ?? [];
 
   async function bildir() {
     if (!baslik.trim()) {
@@ -116,7 +142,7 @@ export default function OlaylarPage() {
   // (P244 §6c) ACIK OLAY = kapatilmamis olan. Durum kimlikleri
   // `DURUM_ANAHTARI`de; "kapatildi" disindaki her sey acik sayilir ki
   // yeni bir durum eklendiginde sessizce "kapali" tarafina dusmesin.
-  const acikSayisi = kayitlar.filter((o) => o.durum !== DURUM_KAPALI).length;
+  const acikSayisi = tumKayitlar.filter((o) => o.durum !== DURUM_KAPALI).length;
 
   const kolonlar = [
     {
@@ -193,15 +219,16 @@ export default function OlaylarPage() {
         }
       />
 
-      {/* (P244 §6c) OZET SERIDI — sayilar GORUNEN listeden.
-          Liste sayfalanmiyor (sunucu tum olaylari donduruyor), yani
-          gorunen kume = tum kume. Sayfalansaydi `meta.total` gerekirdi
-          (arac gecislerinde oyle yapildi). */}
-      {!isLoading && !error && kayitlar.length > 0 && (
+      {/* (P244 §6c / P245) OZET SERIDI — SUZGECTEN BAGIMSIZ KUMEDEN.
+          Eskiden gorunen listeden sayiliyordu ve bu dogruydu: suzgec
+          YOKTU. Suzgec gelince ayni kod, "Kapatilmis" secildiginde
+          "Acik olay: 0" yazacakti. Sayilar artik AYRI, suzgecsiz bir
+          istekten. */}
+      {!isLoading && !error && tumKayitlar.length > 0 && (
         <OzetSeridi>
           <OzetKarti
             etiket={t("olayOzetToplam")}
-            deger={String(kayitlar.length)}
+            deger={String(tumKayitlar.length)}
             durum="notr"
           />
           <OzetKarti
@@ -212,11 +239,33 @@ export default function OlaylarPage() {
           />
           <OzetKarti
             etiket={t("olayOzetKapali")}
-            deger={String(kayitlar.length - acikSayisi)}
+            deger={String(tumKayitlar.length - acikSayisi)}
             durum="olumlu"
           />
         </OzetSeridi>
       )}
+
+      <FiltreCubugu
+        aktifSayi={durumSuzgec ? 1 : 0}
+        onTemizle={() => setDurumSuzgec(HEPSI)}
+      >
+        {/* SECIM GORUNMEZ ETIKETLI: serit her kontrolun ustune bir
+            etiket satiri koyunca iki kata cikiyordu; ad `aria-label`
+            ile KALIR. */}
+        <Secim
+          aria-label={t("olayDurumSuzgec")}
+          value={durumSuzgec}
+          onChange={(e) => setDurumSuzgec(e.target.value)}
+          className="w-auto"
+        >
+          <option value={HEPSI}>{t("olayDurumHepsi")}</option>
+          {DURUM_SECENEKLERI.map((d) => (
+            <option key={d} value={d}>
+              {t(DURUM_ANAHTARI[d])}
+            </option>
+          ))}
+        </Secim>
+      </FiltreCubugu>
 
       <Modal
         acik={modalAcik}

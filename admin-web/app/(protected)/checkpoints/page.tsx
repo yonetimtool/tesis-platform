@@ -3,6 +3,12 @@
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 
+// (P245) SUZGEC DEGERLERI — UCLUDE DIZE YAZILMAZ (`sabit-metin`).
+const SUZGEC_HEPSI = "" as const;
+const SUZGEC_AKTIF = "true" as const;
+const SUZGEC_PASIF = "false" as const;
+
+
 // (P245) OZET SERIDI IKONLARI.
 const IKON_NOKTA = "M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11ZM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z";
 const IKON_ONAY = "M20 6 9 17l-5-5";
@@ -33,6 +39,8 @@ import {
   OzetKarti,
   OzetSeridi,
   SayfaBasligi,
+  FiltreCubugu,
+  Secim,
 } from "@/components/ui";
 import { RotaSahnesiYukleyici } from "@/components/3d/sahne-yukleyici";
 import { KonumHaritasiYukleyici } from "@/components/harita/harita-yukleyici";
@@ -122,8 +130,17 @@ export default function CheckpointsPage() {
     siraYonu: "artan",
   });
   const offset = (tabloDurumu.sayfa - 1) * tabloDurumu.boy;
+  const [aktifSuzgec, setAktifSuzgec] = useState<string>(SUZGEC_HEPSI);
+  const { data: tumNoktalar } = useSWR<CheckpointList>(
+    "/api/checkpoints?limit=200&offset=0",
+    jsonFetcher,
+  );
+  // (P245) AKTIFLIK SUZGECI — SUNUCUDA (`?aktif=`). Istemcide suzmek
+  // yalniz GORUNEN sayfayi arardi.
   const { data, error, isLoading, mutate } = useSWR<CheckpointList>(
-    `/api/checkpoints?limit=${tabloDurumu.boy}&offset=${offset}`,
+    `/api/checkpoints?limit=${tabloDurumu.boy}&offset=${offset}${
+      aktifSuzgec ? `&aktif=${aktifSuzgec}` : ""
+    }`,
     jsonFetcher,
   );
 
@@ -221,8 +238,10 @@ export default function CheckpointsPage() {
   );
   // OZET SAYILARI: toplam `meta.total`dan (liste sayfali), aktif/pasif
   // ayrimi gorunen sayfadan — kontrol noktasi sayisi tek sayfaya sigar.
-  const aktifNokta = (data?.items ?? []).filter((c) => c.aktif).length;
-  const pasifNokta = (data?.items ?? []).length - aktifNokta;
+  // SUZGECTEN BAGIMSIZ KUME (P244 §8c dersi).
+  const tumSatirlar = tumNoktalar?.items ?? [];
+  const aktifNokta = tumSatirlar.filter((c) => c.aktif).length;
+  const pasifNokta = tumSatirlar.length - aktifNokta;
 
   const alarmlar = useMemo(
     () => alarmHaritasi((pano?.alarm_gruplari ?? []) as AlarmGrubu[]),
@@ -413,7 +432,7 @@ export default function CheckpointsPage() {
       <OzetSeridi>
         <OzetKarti
           etiket={t("noktaOzetToplam")}
-          deger={String(data?.meta?.total ?? 0)}
+          deger={String(tumNoktalar?.meta?.total ?? 0)}
           durum="notr"
           ikon={<NoktaIkonu yol={IKON_NOKTA} />}
         />
@@ -432,6 +451,24 @@ export default function CheckpointsPage() {
           altBilgi={t("noktaOzetOkutulanAlt")}
         />
       </OzetSeridi>
+
+      {/* (P245) FILTRE CUBUGU — SUZGEC SUNUCUDA.
+          Sayilar AYRI, suzgecsiz istekten (P244 §8c dersi). */}
+      <FiltreCubugu
+        aktifSayi={aktifSuzgec ? 1 : 0}
+        onTemizle={() => setAktifSuzgec(SUZGEC_HEPSI)}
+      >
+        <Secim
+          aria-label={t("noktaDurumSuzgec")}
+          value={aktifSuzgec}
+          onChange={(e) => setAktifSuzgec(e.target.value)}
+          className="w-auto"
+        >
+          <option value={SUZGEC_HEPSI}>{t("noktaDurumHepsi")}</option>
+          <option value={SUZGEC_AKTIF}>{t("ortakAktif")}</option>
+          <option value={SUZGEC_PASIF}>{t("ortakPasif")}</option>
+        </Secim>
+      </FiltreCubugu>
 
       {/* FORM ARTIK MODALDA. Odak tuzagi, ESC ve kapanista odagin geri
           donmesi `Modal`dan geliyor. */}

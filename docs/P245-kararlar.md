@@ -262,3 +262,102 @@ en sona bırakılır ve sonrasında dev sunucusu yeniden başlatılır.
 
 `npm run dogrula` → **çıkış kodu 0** · **2121 test yeşil**.
 Ekran görüntüleri: `docs/P245/` altında güvenlik grubundan yedi ekran.
+
+---
+
+# P245 §3 — GÜVENLİK GRUBU TAMAMLANDI
+
+## 12. Kalan iki ekran
+
+* **`/kamera-kayitlari`** — başlık + açıklama + iki kartlık şerit.
+  **Sayılar kamera listesinden**, kayıt sayısından değil: bu ekranın ucu
+  bir **aralık** sorar ve kayıt listesi **döndürmez**; "kaç kayıt var"
+  sorusunu yanıtlayan bir uç **yok**. Ayrıca NVR kaydı sitede kalır
+  (P213) — bulutta bir kayıt sayacı zaten olamaz.
+  **Mevcut sorgu kutusu `FiltreCubugu`'na çevrilmedi:** o kutu bir liste
+  süzgeci değil, kaydı getirmek için **zorunlu** alanlar; "temizle" ve
+  "aktif süzgeç sayısı" orada anlamsız olurdu.
+* **`/vardiya-plani`** — yalnız başlık paylaşılan bileşene taşındı.
+  P240 §5a'nın kararı korundu ve güçlendi: asıl eylem başlık satırında,
+  tek birincil düğme. Kontrol kümesine (görünüm seçici, filtreler,
+  tazele, araçlar) **dokunulmadı** — P240/P241/P207'de ölçülmüş bir
+  düzen. **KPI şeridi eklenmedi:** referansta da (ui3) bu ekranda şerit
+  **yok**; eklemek referansı aşmak olurdu.
+
+## 13. Filtre çubukları — ve sayaç tuzağı
+
+Dört ekrana süzgeç geldi: `/olaylar` (durum), `/patrol-plans` (aktiflik),
+`/checkpoints` (aktiflik), `/panik` (durum). **Hepsi sunucuda** —
+istemcide süzmek yalnız görünen sayfayı arar.
+
+**Her birinde aynı tuzak vardı ve dördünde de kapatıldı:** şerit
+sayıları aynı listeden besleniyordu; süzgeç eklenince *"Kapatılmış"*
+seçildiğinde **"Açık olay: 0"** yazacaktı — yani ekran, açık olay
+**olmadığını** söyleyecekti. Sayaçlar artık **ayrı, süzgeçsiz** bir
+istekten (P244 §8c'de bakım ekranında ölçülüp kilitlenen dersin aynısı).
+
+`/kameralar` ve `/kamera-kayitlari`ya süzgeç **eklenmedi**: ui3'te o
+ekranlardaki kontroller (ızgara yoğunluğu, harita, tam ekran, aralık)
+**görünüm** kontrolleri, liste süzgeci değil.
+
+## 14. BEŞİNCİ KEZ: `/api/violations` `durum`u düşürüyordu
+
+Arka uç `durum`u destekliyor; vekil yalnız `limit`/`offset` taşıyordu.
+Yani ekrana bir durum süzgeci eklendiği anda **sessizce çalışmayacaktı**.
+
+Aynı kusur sınıfının **beşinci** örneği (P173, P189, P213 + P244 §6, §8a,
+§8c). Kilitlendi; kırma denendi, yakalandı.
+
+## 15. Hat ÜÇ KUSUR DAHA buldu
+
+### 15.1 `<tr>` içinde `<tr>` — sekiz dosyada hidrasyon çöküyordu
+
+`TabloBasligi` `<tr>`i **kendi** çiziyor. On beş çağrı yerinin
+**dokuzu** içeriği ayrıca bir `<Tr>` ile sarıyordu → `<tr><tr>`,
+**geçersiz HTML**. Tarayıcı iç `<tr>`i dışarı taşıyor, sunucu
+çiziminden **farklı** bir ağaç oluşuyor ve React hidrasyonu **düşüyor**:
+*"Hydration failed because the initial UI does not match what was
+rendered on the server."* Sonuçta sayfanın tamamı istemcide yeniden
+çiziliyordu.
+
+**Hiçbir test görmedi:** `tsc` JSX'in HTML geçerliliğini denetlemez,
+jsdom iç içe `<tr>`i sessizce kabul eder ve görünüm neredeyse aynı
+kalır. Gerçek tarayıcıda, ekran görüntüsü alınırken konsolda çıktı.
+
+Bileşenin sözleşmesi yazıldı, dokuz çağrı yeri düzeltildi, **yeni
+`p245-tablo-basligi-tek-tr`** kilidi eklendi (kırma yakalandı).
+
+### 15.2 `w-full` kazanıyordu, `w-auto` kaybediyordu
+
+Filtre çubuğundaki durum seçimi şeridin **tamamını** kaplıyordu.
+`Secim`in taban sınıfı `w-full` ve çağıranın verdiği `w-auto`
+kazanmıyor: iki sınıfın **özgüllüğü aynı**, hangisinin kazandığını
+`className` sırası değil **üretilen CSS'teki sıra** belirler. Kural
+açıkça yazıldı: çağıran bir genişlik sınıfı verdiyse taban `w-full`
+**eklenmez**.
+
+### 15.3 `/panik`: yüklenirken boş tablo, boş durumda "alert" yazısı
+
+Koşul yalnız "boş durum"u ayırıyordu; `isLoading` doğruyken else dalına
+düşerek **başlıksız, satırsız bir tablo** çiziyordu. İskelet eklendi.
+
+Ayrıca `ikon="alert"` — `BosDurum.ikon` bir `ReactNode` bekler; dize
+verilince **aynen çizilir** ve ekranda "alert" yazıyordu. jsdom'da da
+öyleydi ama **hiçbir iddia onu sorgulamıyordu**.
+
+## 16. Bilinçli güncellenen iddia
+
+`guvenlik-ekranlari` testi "kaynak seçtirilmez" kuralını *"sayfada hiç
+`combobox` yok"* diye ölçüyordu — kuralın kendisi değil bir **vekil**.
+Sayfaya durum süzgeci gelince düştü. Sorgu **diyaloğa** kapsamlandı;
+iddia değişmedi.
+
+## 17. Bu turda YAPILMAYAN — açıkça
+
+* `/kameralar`a başlık/şerit **vardı**, süzgeç eklenmedi (yukarıda).
+* `ui3`ün "Bildirimler" ekranı (`/notifications`) hâlâ ölçülmedi.
+* Diğer beş grup açılmadı.
+
+## 18. Doğrulama
+
+`npm run dogrula` → **çıkış kodu 0** · **2126 test yeşil**.

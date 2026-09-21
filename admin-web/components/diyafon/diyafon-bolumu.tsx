@@ -206,14 +206,12 @@ export function DiyafonBolumu() {
         ) : (
           <Tablo>
             <TabloBasligi>
-              <Tr>
-                <Th>{t("ortakAd")}</Th>
-                <Th>{t("diyafonYontem")}</Th>
-                <Th>{t("diyafonYetenekler")}</Th>
-                <Th>{t("entegSaglik")}</Th>
-                <Th>{t("entegSonIletisim")}</Th>
-                <Th aria-label={t("ortakDuzenle")} />
-              </Tr>
+              <Th>{t("ortakAd")}</Th>
+              <Th>{t("diyafonYontem")}</Th>
+              <Th>{t("diyafonYetenekler")}</Th>
+              <Th>{t("entegSaglik")}</Th>
+              <Th>{t("entegSonIletisim")}</Th>
+              <Th aria-label={t("ortakDuzenle")} />
             </TabloBasligi>
             <tbody>
               {satirlar.map((d) => (

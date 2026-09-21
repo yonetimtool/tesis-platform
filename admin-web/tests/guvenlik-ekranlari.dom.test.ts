@@ -118,8 +118,19 @@ describe("Olaylar", () => {
       const post = c.find((x) => x.method === "POST");
       expect(post?.body).toMatchObject({ kaynak: "manuel" });
     });
-    // Kaynak secimi icin bir acilir liste OLMAMALI.
-    expect(screen.queryByRole("combobox")).toBeNull();
+    /**
+     * Kaynak secimi icin bir acilir liste OLMAMALI.
+     *
+     * (P245) IDDIA VEKILDEN GERCEGE CEVRILDI. Eski surum "SAYFADA hic
+     * `combobox` yok" diyordu; bu, kuralin kendisi degil bir
+     * VEKILIYDI ve sayfaya bir DURUM SUZGECI eklenince dustu —
+     * suzgecin kaynakla ilgisi yok.
+     *
+     * Olculen kural aynen duruyor: kaynak FORMDA sectirilmez. Sorgu
+     * artik DIYALOGA kapsamlaniyor.
+     */
+    const diyalog = screen.getByRole("dialog");
+    expect(within(diyalog).queryByRole("combobox")).toBeNull();
   });
 
   it("KONU olmadan gonderilmez", async () => {
@@ -139,7 +150,9 @@ describe("Olaylar", () => {
     ciz(OlaylarPage);
     expect(await screen.findByText("Kapı açık kalmış")).toBeInTheDocument();
     expect(screen.getByText(/Elle bildirim/)).toBeInTheDocument();
-    expect(screen.getByText("Yeni")).toBeInTheDocument();
+    // (P245) "Yeni" artik durum SUZGECININ seceneginde de geciyor;
+    // kapsamsiz sorgu iddiayi secenekle de karsilardi. Satirdan okunur.
+    expect(screen.getByRole("cell", { name: "Yeni" })).toBeInTheDocument();
   });
 });
 
