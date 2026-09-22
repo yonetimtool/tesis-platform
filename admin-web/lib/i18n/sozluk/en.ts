@@ -3490,4 +3490,6 @@ export const en: Sozluk = {
   mesaiOzetTutar: "Total amount",
   mesaiOzetTutarAlt: "{n} without a defined rate",
   borclandirmaSayfaAlt: "Dues and expense shares charged to units; single or bulk charging.",
+  ziyaretciDurumSuzgec: "Filter by status",
+  ziyaretciDurumHepsi: "Inside and left",
 };

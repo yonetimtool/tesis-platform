@@ -8,6 +8,11 @@
 import { useState } from "react";
 import useSWR from "swr";
 
+// (P245) UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const SUZGEC_HEPSI = "" as const;
+const SUZGEC_ICERDE = "true" as const;
+const SUZGEC_CIKMIS = "false" as const;
+
 import {
   Alan,
   AlanSarmal,
@@ -22,6 +27,8 @@ import {
   Rozet,
   SayfaBasligi,
   VeriTablosu,
+  FiltreCubugu,
+  Secim,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -41,10 +48,23 @@ type Ziyaretci = {
 export default function ZiyaretcilerPage() {
   const t = useT();
   const toast = useToast();
+  // (P245) ICERDE SUZGECI — SUNUCUDA (`?icerde=`). Istemcide suzmek
+  // yalniz GORUNEN 50 kaydi arardi.
+  const [icerdeSuzgec, setIcerdeSuzgec] = useState<string>(SUZGEC_HEPSI);
   const { data, error, isLoading, mutate } = useSWR<{ items: Ziyaretci[] }>(
-    "/api/visitors?limit=50&offset=0",
+    `/api/visitors?limit=50&offset=0${icerdeSuzgec ? `&icerde=${icerdeSuzgec}` : ""}`,
     jsonFetcher,
   );
+  // SERIT SAYILARI SUZGECTEN BAGIMSIZ — AYRI ISTEK.
+  //
+  // Suzgec eklenince `kayitlar` SUZULMUS kume oldu; seridi ondan
+  // beslemek "Cikmis" secildiginde "Icerideki: 0" yazmak olurdu — yani
+  // ekran, iceride kimse OLMADIGINI soylerdi. (P244 §8c dersi.)
+  const { data: tumu } = useSWR<{ items: Ziyaretci[] }>(
+    "/api/visitors?limit=200&offset=0",
+    jsonFetcher,
+  );
+  const tumKayitlar = tumu?.items ?? [];
 
   const [ad, setAd] = useState("");
   const [daireNo, setDaireNo] = useState("");
@@ -109,7 +129,7 @@ export default function ZiyaretcilerPage() {
   }
 
   // (P244 §6c) ICERIDEKI = cikis damgasi olmayan kayit.
-  const iceridekiler = kayitlar.filter((z) => !z.cikis_zamani).length;
+  const iceridekiler = tumKayitlar.filter((z) => !z.cikis_zamani).length;
 
   const kolonlar = [
     {
@@ -222,14 +242,15 @@ export default function ZiyaretcilerPage() {
         }
       />
 
-      {/* (P244 §6c) OZET SERIDI — sayilar GORUNEN listeden (liste
-          sayfalanmiyor). "Icerideki" sayisi operasyonun en sik sordugu
-          soru: kapida kac kisi var. */}
-      {!isLoading && !error && kayitlar.length > 0 && (
+      {/* (P244 §6c / P245) OZET SERIDI — SUZGECTEN BAGIMSIZ KUMEDEN.
+          Eskiden gorunen listeden sayiliyordu ve bu dogruydu: suzgec
+          YOKTU. "Icerideki" sayisi operasyonun en sik sordugu soru
+          (kapida kac kisi var) ve suzgec acikken de dogru kalmali. */}
+      {!isLoading && !error && tumKayitlar.length > 0 && (
         <OzetSeridi>
           <OzetKarti
             etiket={t("ziyaretciOzetToplam")}
-            deger={String(kayitlar.length)}
+            deger={String(tumKayitlar.length)}
             durum="notr"
           />
           <OzetKarti
@@ -240,11 +261,30 @@ export default function ZiyaretcilerPage() {
           />
           <OzetKarti
             etiket={t("ziyaretciOzetCikmis")}
-            deger={String(kayitlar.length - iceridekiler)}
+            deger={String(tumKayitlar.length - iceridekiler)}
             durum="olumlu"
           />
         </OzetSeridi>
       )}
+
+      <FiltreCubugu
+        aktifSayi={icerdeSuzgec ? 1 : 0}
+        onTemizle={() => setIcerdeSuzgec(SUZGEC_HEPSI)}
+      >
+        {/* SECIM GORUNMEZ ETIKETLI: serit her kontrolun ustune bir
+            etiket satiri koyunca iki kata cikiyordu; ad `aria-label`
+            ile KALIR. */}
+        <Secim
+          aria-label={t("ziyaretciDurumSuzgec")}
+          value={icerdeSuzgec}
+          onChange={(e) => setIcerdeSuzgec(e.target.value)}
+          className="w-auto"
+        >
+          <option value={SUZGEC_HEPSI}>{t("ziyaretciDurumHepsi")}</option>
+          <option value={SUZGEC_ICERDE}>{t("ziyaretciOzetIceride")}</option>
+          <option value={SUZGEC_CIKMIS}>{t("ziyaretciOzetCikmis")}</option>
+        </Secim>
+      </FiltreCubugu>
 
       <Modal
         acik={modalAcik}

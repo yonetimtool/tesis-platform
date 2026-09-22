@@ -3490,4 +3490,6 @@ export const fr: Sozluk = {
   mesaiOzetTutar: "Montant total",
   mesaiOzetTutarAlt: "{n} sans taux défini",
   borclandirmaSayfaAlt: "Charges et quotes-parts imputées aux logements ; imputation unitaire ou groupée.",
+  ziyaretciDurumSuzgec: "Filtrer par statut",
+  ziyaretciDurumHepsi: "Présents et partis",
 };

@@ -3490,4 +3490,6 @@ export const de: Sozluk = {
   mesaiOzetTutar: "Gesamtbetrag",
   mesaiOzetTutarAlt: "{n} ohne definierten Satz",
   borclandirmaSayfaAlt: "Den Wohnungen zugewiesene Beiträge und Kostenanteile; einzeln oder als Sammelbuchung.",
+  ziyaretciDurumSuzgec: "Nach Status filtern",
+  ziyaretciDurumHepsi: "Drinnen und gegangen",
 };

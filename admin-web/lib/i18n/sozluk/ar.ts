@@ -3490,4 +3490,6 @@ export const ar: Sozluk = {
   mesaiOzetTutar: "المبلغ الإجمالي",
   mesaiOzetTutarAlt: "{n} بدون أجر محدد",
   borclandirmaSayfaAlt: "الرسوم وحصص المصروفات المحمَّلة على الوحدات؛ فرديًا أو بالجملة.",
+  ziyaretciDurumSuzgec: "تصفية حسب الحالة",
+  ziyaretciDurumHepsi: "بالداخل وغادروا",
 };

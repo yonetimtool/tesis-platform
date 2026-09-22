@@ -42,6 +42,7 @@ import {
   Th,
   Tr,
   useOnay,
+  FiltreCubugu,
 } from "@/components/ui";
 import { TelefonAlani } from "@/components/TelefonAlani";
 import { apiSend } from "@/lib/client";
@@ -284,38 +285,47 @@ export default function BakimPage() {
   const liste = ekipmanlar.data?.items ?? [];
 
   const listeIcerik = (
-    <Kart>
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div style={{ maxWidth: "16rem" }}>
-          <AlanSarmal etiket={t("bakimFiltreDurum")}>
-            {(p) => (
-              <Secim
-                {...p}
-                data-test="bakim-durum-suzgeci"
-                value={durumSuzgeci}
-                onChange={(e) => setDurumSuzgeci(e.target.value)}
-              >
-                <option value="">{t("bakimFiltreTumu")}</option>
-                {DURUM_ANAHTARLARI.map((d) => (
-                  <option key={d} value={d}>
-                    {t(DURUMLAR[d])}
-                  </option>
-                ))}
-              </Secim>
-            )}
-          </AlanSarmal>
-        </div>
-        <Dugme
-          type="button"
-          boy={KUCUK}
-          tur={BIRINCIL}
-          data-test="bakim-ekipman-ekle"
-          onClick={() => setForm(true)}
+    <>
+      {/* (P245) SUZGEC KARTIN ICINDEN FILTRE CUBUGUNA CIKTI.
+          -----------------------------------------------------------------
+          Secim kartin ust satirindaydi ve her ekranda baska bir yerde
+          duran bir kontrol kumesi uretiyordu; referansta (ui2, periyodik
+          bakim ekrani) suzgecler tablonun USTUNDE kendi seritlerinde.
+          SERIT SAYILARI ETKILENMEZ: sayaclar P244 §8c'de AYRI, suzgecsiz
+          sorgulara baglanmisti — "planli" secilince "geciken bakim"
+          sayisi degismez. */}
+      <FiltreCubugu
+        aktifSayi={durumSuzgeci ? 1 : 0}
+        onTemizle={() => setDurumSuzgeci("")}
+        eylemler={
+          <Dugme
+            type="button"
+            boy={KUCUK}
+            tur={BIRINCIL}
+            data-test="bakim-ekipman-ekle"
+            onClick={() => setForm(true)}
+          >
+            {t("bakimEkipmanEkle")}
+          </Dugme>
+        }
+      >
+        <Secim
+          aria-label={t("bakimFiltreDurum")}
+          data-test="bakim-durum-suzgeci"
+          value={durumSuzgeci}
+          onChange={(e) => setDurumSuzgeci(e.target.value)}
+          className="w-auto"
         >
-          {t("bakimEkipmanEkle")}
-        </Dugme>
-      </div>
+          <option value="">{t("bakimFiltreTumu")}</option>
+          {DURUM_ANAHTARLARI.map((d) => (
+            <option key={d} value={d}>
+              {t(DURUMLAR[d])}
+            </option>
+          ))}
+        </Secim>
+      </FiltreCubugu>
 
+      <Kart>
       {liste.length === 0 ? (
         <BosDurum baslik={t("bakimEkipmanYok")} aciklama={t("bakimEkipmanYokAlt")} />
       ) : (
@@ -404,7 +414,8 @@ export default function BakimPage() {
           </tbody>
         </Tablo>
       )}
-    </Kart>
+      </Kart>
+    </>
   );
 
   const gecmisIcerik = (

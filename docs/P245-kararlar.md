@@ -596,3 +596,63 @@ dosyada düzeltildi — **altı finans ekranı** birden.
 
 `npm run dogrula` → **çıkış kodu 0** · **2130 test yeşil**.
 Ekran görüntüleri: `docs/P245/` altında finanstan dokuz ekran.
+
+---
+
+# P245 §7 — OPERASYON GRUBU
+
+## 39. Ölçüm: grup zaten büyük ölçüde hazırdı
+
+`/bakim`, `/tasks`, `/assets`, `/schematic`, `/complaints`, `/kargolar`,
+`/ziyaretciler`, `/gorevlerim`, `/taleplerim`, `/dis-hizmetler` —
+**hepsinde başlık var** (P244 §8a–§8c). Gerçek boşluklar:
+
+| ekran | eksik |
+|---|---|
+| `/ziyaretciler` | filtre yok — **ve BFF dört süzgeci düşürüyordu** |
+| `/bakim` | süzgeç kartın içinde, şerit değil |
+| `/schematic` | filtre yok |
+
+## 40. ALTINCI KEZ: `/api/visitors` dört süzgeci birden düşürüyordu
+
+Arka uç `icerde`, `unit_id`, `baslangic`, `bitis` destekliyor
+(`list_visitors`); vekil yalnız `limit`/`offset` taşıyordu. Yani ekran
+**"içerideki ziyaretçiler"** diye süzemiyordu — kapıdaki görevlinin en
+sık sorduğu soru.
+
+Aynı kusur sınıfının **altıncı** örneği: P173, P189, P213 + P244 §6
+(araç geçişleri), §8a (kargo), §8c (görevler), P245 §3 (olaylar).
+Kilitlendi; kırma yakalandı.
+
+## 41. Şerit tuzağı — yedinci kez aynı ders
+
+`/ziyaretciler`in şeridi görünen listeden sayıyordu ve bu **o gün
+doğruydu**: süzgeç yoktu. Süzgeç gelince aynı kod, *"Çıkmış"*
+seçildiğinde **"İçerideki: 0"** yazacaktı — yani ekran, içeride kimse
+**olmadığını** söyleyecekti. Sayaçlar ayrı, süzgeçsiz bir isteğe
+bağlandı.
+
+`/bakim`da bu tuzak **yoktu**: sayaçlar P244 §8c'de zaten ayrı
+sorgulara bağlanmıştı. Süzgeç kartın içinden şeride çıkarken hiçbir şey
+bozulmadı — o turda ödenen bedel bu turda işe yaradı.
+
+## 42. `/bakim`: süzgeç karttan şeride
+
+Seçim kartın üst satırındaydı ve her ekranda başka bir yerde duran bir
+kontrol kümesi üretiyordu; referansta süzgeçler tablonun **üstünde**
+kendi şeritlerinde. "Ekipman ekle" düğmesi de şeridin `eylemler`
+yuvasına geçti.
+
+## 43. Bu turda YAPILMAYAN — açıkça
+
+* `/schematic`e filtre eklenmedi (blok/yoğunluk süzgeci için uçta
+  parametre yok; haritanın kendisi zaten tüm binayı tek yanıtta veriyor).
+* `/taleplerim` ve `/gorevlerim`e şerit eklenmedi — P244 §8b'de
+  ölçülmüştü: ikisi de kart dili ve sakin/saha tarafının **kısa**
+  listeleri; şerit orada boş bir sayı satırı olurdu.
+* `/tasks`, `/assets`, `/complaints`, `/kargolar`, `/dis-hizmetler`
+  zaten üçlüyü taşıyor; dokunulmadı.
+
+## 44. Doğrulama
+
+`npm run dogrula` → **çıkış kodu 0** · **2134 test yeşil**.

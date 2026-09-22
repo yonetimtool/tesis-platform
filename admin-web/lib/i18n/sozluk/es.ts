@@ -3490,4 +3490,6 @@ export const es: Sozluk = {
   mesaiOzetTutar: "Importe total",
   mesaiOzetTutarAlt: "{n} sin tarifa definida",
   borclandirmaSayfaAlt: "Cuotas y partes de gasto imputadas a las viviendas; individual o masivo.",
+  ziyaretciDurumSuzgec: "Filtrar por estado",
+  ziyaretciDurumHepsi: "Dentro y salidos",
 };

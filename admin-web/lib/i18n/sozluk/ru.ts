@@ -3490,4 +3490,6 @@ export const ru: Sozluk = {
   mesaiOzetTutar: "Общая сумма",
   mesaiOzetTutarAlt: "у {n} не задана ставка",
   borclandirmaSayfaAlt: "Взносы и доли расходов, начисленные квартирам; по одной или массово.",
+  ziyaretciDurumSuzgec: "Фильтр по статусу",
+  ziyaretciDurumHepsi: "Внутри и вышедшие",
 };
