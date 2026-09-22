@@ -11,6 +11,7 @@ import {
   IskeletMetin,
   Kart,
   Secim,
+  SayfaBasligi,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -203,13 +204,15 @@ export default function SayacOkumaPage() {
   ];
 
   return (
-    <div className="space-y-4">
-      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-        {t("kabukSayacOkuma")}
-      </h1>
-      <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-        {t("sayacSihirbazNotu")}
-      </p>
+    <div>
+      {/* (P245) OZET SERIDI EKLENMEDI ve bu bir ATLAMA DEGIL.
+          Referansta (ui2, sayac okuma ekrani) ustte "128 Toplam / 6 Okunmadi /
+          122 Tamamlandi" serisi ve bir LISTE var. Bizdeki ekran bir
+          LISTE DEGIL, adim adim GIRIS SIHIRBAZI: donem sec -> bolum sec
+          -> degerleri gir -> onayla. Sihirbazin ustune "kac sayac var"
+          seridi koymak, kullanicinin SU ANKI adimiyla ilgisi olmayan
+          bir sayi gostermek olurdu; ilerleme zaten adim seridinde. */}
+      <SayfaBasligi baslik={t("kabukSayacOkuma")} aciklama={t("sayacSihirbazNotu")} />
 
       {/* ADIM SERIDI. (P160) Aktif adim eskiden YALNIZ RENKLE belliydi:
           ekran okuyucu dort etiketi ust uste okuyor, hangisinde

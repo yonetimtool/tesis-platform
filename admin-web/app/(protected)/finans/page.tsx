@@ -3,7 +3,27 @@
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { Alan, AlanSarmal, BosDurum, Dugme, FiltreCubugu, HataDurumu, Kart, Modal, Secim, Tablo, TabloBasligi, Td, Th, type Kolon, type TabloDurumu, VeriTablosu } from "@/components/ui";
+// (P245) OZET SERIDI IKONLARI.
+const IKON_FATURA = "M8 3h8a2 2 0 0 1 2 2v16l-3-2-3 2-3-2-3 2V5a2 2 0 0 1 2-2ZM9 8h6M9 12h6";
+const IKON_PARA = "M12 3v18M16 7.5C16 6 14.2 5 12 5S8 6 8 7.5 9.8 10 12 10s4 1 4 2.5S14.2 15 12 15s-4-1-4-2.5";
+const IKON_BORC = "M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z";
+const IKON_KASA = "M3 6h18v12H3zM3 10h18M7 14h4";
+const IKON_DOSYA = "M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5";
+
+function FinansIkonu({ yol }: { yol: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor"
+      strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={yol} />
+    </svg>
+  );
+}
+
+import { Alan, AlanSarmal, BosDurum, Dugme, FiltreCubugu, HataDurumu, Kart, Modal, Secim, Tablo, TabloBasligi, Td, Th, type Kolon, type TabloDurumu, VeriTablosu,
+  OzetKarti,
+  OzetSeridi,
+  SayfaBasligi,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend, genIdempotencyKey } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
@@ -202,37 +222,72 @@ export default function FinansPage() {
   );
 
   return (
-    <div className="space-y-6">
-      <div>
-        <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-          {t("finansBaslik")}
-        </h1>
-        <Dugme tur="birincil" boy="kucuk" onClick={() => {
-          // (P163 §2) ACILISTA ESKI HATA TEMIZLENIR: modal yeniden acildiginda
-          // onceki denemenin mesaji ekranda duruyordu ve kullanici hic
-          // denemeden hata gormus oluyordu.
-          setYHata(null);
-          setModalAcik(true);
-        }}>
-          {t("finansYeniHareket")}
-        </Dugme>
-      </div>
-        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-          {t("finansAlt")}
-        </p>
-      </div>
+    <div>
+      <SayfaBasligi
+        baslik={t("finansBaslik")}
+        aciklama={t("finansAlt")}
+        eylem={
+          <Dugme
+            tur="birincil"
+            boy="kucuk"
+            onClick={() => {
+              // (P163 §2) ACILISTA ESKI HATA TEMIZLENIR: modal yeniden
+              // acildiginda onceki denemenin mesaji ekranda duruyordu ve
+              // kullanici hic denemeden hata gormus oluyordu.
+              setYHata(null);
+              setModalAcik(true);
+            }}
+          >
+            {t("finansYeniHareket")}
+          </Dugme>
+        }
+      />
 
       {/* ------------------------------- ozet ------------------------------ */}
+      {/* (P245) YEREL `OzetKart` -> PAYLASILAN `OzetSeridi`/`OzetKarti`.
+          -----------------------------------------------------------------
+          Sayfa kendi kart bilesenini tasiyordu: etiket + sayi, ikon yok,
+          durum rengi yok. Ayni ekranda (referans ui2 "Finans") kartlar
+          ikonlu ve anlam tasiyor. Ikinci bir kart tanimi, bosluk ve
+          tipografinin iki yerde ayrismasi demekti; P244 boyunca
+          kapatilan tam o sinif.
+          DEGERLER DEGISMEDI: ayni uctan, ayni alanlar. */}
       {ozetErr && <HataDurumu mesaj={t("finansOzetHata")} />}
       {ozet ? (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <OzetKart etiket={t("finansOzetBorclandirilan")} deger={kurusToTL(ozet.borclandirilan_ay_kurus)} />
-          <OzetKart etiket={t("finansOzetTahsil")} deger={kurusToTL(ozet.tahsil_edilen_ay_kurus)} />
-          <OzetKart etiket={t("finansOzetAcikBorc")} deger={kurusToTL(ozet.acik_borc_kurus)} />
-          <OzetKart etiket={t("finansOzetKasa")} deger={kurusToTL(ozet.kasa_toplam_kurus)} />
-          <OzetKart etiket={t("finansOzetIcra")} deger={String(ozet.icra_acik_dosya)} />
-        </div>
+        <OzetSeridi>
+          <OzetKarti
+            etiket={t("finansOzetBorclandirilan")}
+            deger={kurusToTL(ozet.borclandirilan_ay_kurus)}
+            durum="notr"
+            ikon={<FinansIkonu yol={IKON_FATURA} />}
+          />
+          <OzetKarti
+            etiket={t("finansOzetTahsil")}
+            deger={kurusToTL(ozet.tahsil_edilen_ay_kurus)}
+            durum="olumlu"
+            ikon={<FinansIkonu yol={IKON_PARA} />}
+          />
+          <OzetKarti
+            etiket={t("finansOzetAcikBorc")}
+            deger={kurusToTL(ozet.acik_borc_kurus)}
+            durum={ozet.acik_borc_kurus > 0 ? "uyari" : "olumlu"}
+            ikon={<FinansIkonu yol={IKON_BORC} />}
+            href="/finans/borclular"
+          />
+          <OzetKarti
+            etiket={t("finansOzetKasa")}
+            deger={kurusToTL(ozet.kasa_toplam_kurus)}
+            durum="bilgi"
+            ikon={<FinansIkonu yol={IKON_KASA} />}
+          />
+          <OzetKarti
+            etiket={t("finansOzetIcra")}
+            deger={String(ozet.icra_acik_dosya)}
+            durum={ozet.icra_acik_dosya > 0 ? "kritik" : "olumlu"}
+            ikon={<FinansIkonu yol={IKON_DOSYA} />}
+            href="/icra"
+          />
+        </OzetSeridi>
       ) : null}
 
       {/* (P154 / Asama 7.4) Kasa yoksa tahsilat AKISI TAMAMLANAMAZ:
@@ -459,20 +514,4 @@ export default function FinansPage() {
  * Kart yine ayni metal dilini kullanir (kabartilmis yuzey, gumus kenar),
  * yalnizca sayi hemen dogru degerdedir.
  */
-function OzetKart({ etiket, deger }: { etiket: string; deger: string }) {
-  return (
-    <Kart className="!p-4">
-      <div style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{etiket}</div>
-      <div
-        className="mt-1 tabular-nums"
-        style={{
-          fontSize: "var(--yz-fs-h3)",
-          fontWeight: "var(--yz-fw-kpi)" as unknown as number,
-          color: "var(--yz-text)",
-        }}
-      >
-        {deger}
-      </div>
-    </Kart>
-  );
-}
+

@@ -455,3 +455,69 @@ hâl (`hareketVar`). Ayrıca `animations: "disabled"`.
 
 `npm run dogrula` → **çıkış kodu 0** · **2130 test yeşil**.
 Ekran görüntüleri: `docs/P245/` altında tesis grubundan altı ekran.
+
+---
+
+# P245 §5 — FİNANS GRUBU (ui2)
+
+## 25. Ölçüm: on yedi ekranın on üçünde başlık bile yok
+
+| ekran | başlık | KPI | filtre |
+|---|---|---|---|
+| `/dues` | ✔ | ✔ | ✔ (P244 §7b) |
+| `/finans/tahsilatlar`, `/giderler`, `/gelirler` | ✔ | ✔ | — (ortak `HareketSayfasi` kabuğu, P244 §7a) |
+| `/finans` | ✘ | yerel kart | ✔ |
+| `/finans/borclandirmalar`, `/banka`, `/virman`, `/iade`, `/acilis`, `/mesai`, `/borclular`, `/sayac-okuma`, `/raporlar` | ✘ | ✘ | ✘ |
+
+Bu turda **dördü** kapatıldı: `/finans`, `/finans/borclular`,
+`/finans/mesai`, `/sayac-okuma`.
+
+## 26. `/finans`: ikinci bir kart tanımı vardı
+
+Sayfa **kendi** `OzetKart` bileşenini taşıyordu — etiket + sayı, ikon
+yok, durum rengi yok. Aynı ekranda referans (ui2 "Finans") ikonlu ve
+anlam taşıyan kartlar gösteriyor. İkinci bir kart tanımı, boşluk ve
+tipografinin iki yerde ayrışması demekti — P244 boyunca kapatılan tam o
+sınıf. **Değerler değişmedi**: aynı uç, aynı alanlar.
+
+## 27. `/finans/borclular`: şerit kova seçiminden bağımsız
+
+Sayfadaki kova seçimi listeyi daraltır, **şeridi değil**. Aksi hâlde
+"90+" seçildiğinde *"Toplam borçlu: 3"* yazardı — oysa toplam borçlu
+değişmez.
+
+**Ortalama türetildi ama uydurulmadı:** daire sayısı sıfırken bölme
+yapılmaz, "—" yazılır.
+
+## 28. `/finans/mesai`: ücreti tanımsız kişi tutara girmez
+
+`fazla_mesai_kurus` null gelir; toplama katmak **olmayan bir parayı
+saymak** olurdu. Kaç kişinin ücretinin tanımsız olduğu alt bilgide
+ayrıca yazıyor.
+
+Bu ekranda şerit **seçilen ayın** özeti: dönem değişince sayıların da
+değişmesi **doğru** davranıştır (bir "genel toplam" değil).
+
+## 29. `/sayac-okuma`: ŞERİT EKLENMEDİ — ve bu bir atlama değil
+
+Referansta (ui2) üstte "128 Toplam / 6 Okunmadı / 122 Tamamlandı" ve bir
+**liste** var. Bizdeki ekran liste değil, adım adım **giriş sihirbazı**:
+dönem seç → bölüm seç → değerleri gir → onayla. Sihirbazın üstüne "kaç
+sayaç var" şeridi koymak, kullanıcının **şu anki adımıyla ilgisi
+olmayan** bir sayı göstermek olurdu; ilerleme zaten adım şeridinde.
+
+Yalnız başlık + açıklama eklendi.
+
+## 30. Bu turda YAPILMAYAN — açıkça
+
+* `/finans/borclandirmalar` (762), `/finans/banka` (629),
+  `/finans/otomasyon` (692), `/finans/virman` (150), `/finans/iade`
+  (177), `/finans/acilis` (181) — **dokunulmadı**.
+* `/raporlar` — P244 §7b'de ölçülmüştü: zaten kategorili kart ızgarası,
+  referansın deseni. Dokunulmadı.
+* Bu grupta **hiçbir yeni filtre çubuğu** eklenmedi.
+
+## 31. Doğrulama
+
+`npm run dogrula` → **çıkış kodu 0** · **2130 test yeşil**.
+Ekran görüntüleri: `docs/P245/` altında finans grubundan dört ekran.

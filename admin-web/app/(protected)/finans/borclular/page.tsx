@@ -16,6 +16,21 @@
 import { useState } from "react";
 import useSWR from "swr";
 
+// (P245) OZET SERIDI IKONLARI ve "veri yok" isareti.
+const YOK_ISARETI = "—";
+const IKON_KISI = "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z";
+const IKON_BORC = "M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z";
+const IKON_ORTALAMA = "M3 3v18h18M7 15l4-4 3 3 5-6";
+
+function BorcIkonu({ yol }: { yol: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor"
+      strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={yol} />
+    </svg>
+  );
+}
+
 import { useToast } from "@/components/Toast";
 import {
   Alan,
@@ -27,6 +42,9 @@ import {
   HataDurumu,
   VeriTablosu,
   type Kolon,
+  OzetKarti,
+  OzetSeridi,
+  SayfaBasligi,
 } from "@/components/ui";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -227,10 +245,43 @@ export default function BorclularPage() {
   ];
 
   return (
-    <div className="space-y-4">
-      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-        {t("finansBorclular")}
-      </h1>
+    <div>
+      <SayfaBasligi baslik={t("finansBorclular")} aciklama={t("borclularSayfaAlt")} />
+
+      {/* (P245) OZET SERIDI — referansta (ui2, borclular ekrani) ustte uc kart:
+          toplam borclu, toplam borc, ortalama.
+          -----------------------------------------------------------------
+          SAYILAR YASLANDIRMA UCUNDAN ve SUZGECSIZ: sayfadaki kova
+          secimi listeyi daraltir, SERIDI DEGIL. Aksi halde "90+"
+          secildiginde "Toplam borclu: 3" yazardi — oysa toplam borclu
+          degismez (P244 §8c dersi).
+          ORTALAMA TURETILIR ama UYDURULMAZ: daire sayisi sifirken
+          bolme yapilmaz, "—" yazilir. */}
+      <OzetSeridi>
+        <OzetKarti
+          etiket={t("borclularOzetDaire")}
+          deger={String(data?.toplam_daire ?? 0)}
+          durum={(data?.toplam_daire ?? 0) > 0 ? "uyari" : "olumlu"}
+          ikon={<BorcIkonu yol={IKON_KISI} />}
+        />
+        <OzetKarti
+          etiket={t("borclularOzetToplam")}
+          deger={kurusToTL(data?.toplam_kalan_kurus ?? 0)}
+          durum={(data?.toplam_kalan_kurus ?? 0) > 0 ? "kritik" : "olumlu"}
+          ikon={<BorcIkonu yol={IKON_BORC} />}
+        />
+        <OzetKarti
+          etiket={t("borclularOzetOrtalama")}
+          deger={
+            data && data.toplam_daire > 0
+              ? kurusToTL(Math.round(data.toplam_kalan_kurus / data.toplam_daire))
+              : YOK_ISARETI
+          }
+          durum="notr"
+          ikon={<BorcIkonu yol={IKON_ORTALAMA} />}
+          altBilgi={t("borclularOzetOrtalamaAlt")}
+        />
+      </OzetSeridi>
 
       <GostergeKarti />
 

@@ -3,8 +3,31 @@
 import { useState } from "react";
 import useSWR from "swr";
 
+// (P245) OZET SERIDI IKONLARI.
+const IKON_KISI = "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z";
+const IKON_SAAT = "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 7v5l3 2";
+const IKON_PARA = "M12 3v18M16 7.5C16 6 14.2 5 12 5S8 6 8 7.5 9.8 10 12 10s4 1 4 2.5S14.2 15 12 15s-4-1-4-2.5";
+
+function MesaiIkonu({ yol }: { yol: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor"
+      strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={yol} />
+    </svg>
+  );
+}
+
+/** Saat degeri — bir ondalik, gereksiz sifir yok. */
+function saatMetni(s: number): string {
+  return String(Math.round(s * 10) / 10);
+}
+
 import { useToast } from "@/components/Toast";
-import { Alan, AlanSarmal, Dugme, HataDurumu, Kart, Rozet, Secim } from "@/components/ui";
+import { Alan, AlanSarmal, Dugme, HataDurumu, Kart, Rozet, Secim,
+  OzetKarti,
+  OzetSeridi,
+  SayfaBasligi,
+} from "@/components/ui";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
@@ -107,16 +130,52 @@ export default function MesaiSayfasi() {
     }
   }
 
+  // SERIT SAYILARI — SECILI DONEMIN kisi listesinden.
+  const kisiler = data?.kisiler ?? [];
+  const fazlaMesaili = kisiler.filter((k) => k.fazla_saat > 0).length;
+  const toplamFazlaSaat = kisiler.reduce((n, k) => n + k.fazla_saat, 0);
+  // UCRETI TANIMSIZ KISI TOPLAMA GIRMEZ: `fazla_mesai_kurus` null gelir.
+  const toplamTutarKurus = kisiler.reduce((n, k) => n + (k.fazla_mesai_kurus ?? 0), 0);
+  const ucretsizSayisi = kisiler.filter((k) => k.ucret_tanimsiz).length;
+
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-          {t("mesaiBaslik")}
-        </h1>
-        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-          {t("mesaiAlt")}
-        </p>
-      </div>
+    <div>
+      <SayfaBasligi baslik={t("mesaiBaslik")} aciklama={t("mesaiAlt")} />
+
+      {/* (P245) OZET SERIDI — referansta (ui2 "Fazla Mesai") ustte
+          "28 Fazla Mesai / 16 Personel / ₺18.750 Toplam Tutar".
+          -----------------------------------------------------------------
+          SAYILAR SECILI DONEMIN OZETINDEN: uc zaten yil/ay ile
+          cagriliyor ve serit o donemi anlatiyor. Donem degisince
+          sayilarin da degismesi DOGRU davranis — burada serit bir
+          "genel toplam" degil, SECILEN AYIN ozeti.
+          UCRETI TANIMSIZ KISI TUTARA GIRMEZ: `fazla_mesai_kurus` null
+          gelir ve toplama katmak, olmayan bir parayi saymakti. Kac
+          kisinin ucreti tanimsiz oldugu AYRICA yaziliyor. */}
+      <OzetSeridi>
+        <OzetKarti
+          etiket={t("mesaiOzetPersonel")}
+          deger={String(fazlaMesaili)}
+          durum="bilgi"
+          ikon={<MesaiIkonu yol={IKON_KISI} />}
+          altBilgi={t("mesaiOzetPersonelAlt", { n: kisiler.length })}
+        />
+        <OzetKarti
+          etiket={t("mesaiOzetSaat")}
+          deger={saatMetni(toplamFazlaSaat)}
+          durum={toplamFazlaSaat > 0 ? "uyari" : "olumlu"}
+          ikon={<MesaiIkonu yol={IKON_SAAT} />}
+        />
+        <OzetKarti
+          etiket={t("mesaiOzetTutar")}
+          deger={kurusToTL(toplamTutarKurus)}
+          durum="notr"
+          ikon={<MesaiIkonu yol={IKON_PARA} />}
+          altBilgi={
+            ucretsizSayisi > 0 ? t("mesaiOzetTutarAlt", { n: ucretsizSayisi }) : undefined
+          }
+        />
+      </OzetSeridi>
 
       <HataDurumu mesaj={hata ?? (error ? t("ortakHataOlustu") : null)} />
 
