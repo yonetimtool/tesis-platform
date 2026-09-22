@@ -3470,4 +3470,13 @@ export const es: Sozluk = {
   noktaDurumHepsi: "Activos e inactivos",
   panikDurumSuzgec: "Filtrar por estado",
   panikDurumHepsi: "Todos los estados",
+  rezYonSayfaAlt: "Defina zonas comunes, revise reservas y cancélelas si es necesario.",
+  rezYonOzetAlan: "Zonas reservables",
+  rezYonOzetAlanAlt: "Definiciones activas",
+  rezYonOzetBugun: "Reservas de hoy",
+  rezYonOzetAktif: "Próximas",
+  rezYonOzetAktifAlt: "Aún no pasadas",
+  daireBlokHepsi: "Todos los bloques",
+  daireDurumHepsi: "Activas e inactivas",
+  dukkanSayfaAlt: "Comercios y ofertas cercanas para los residentes.",
 };

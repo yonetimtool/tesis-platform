@@ -3470,4 +3470,13 @@ export const ru: Sozluk = {
   noktaDurumHepsi: "Активные и неактивные",
   panikDurumSuzgec: "Фильтр по статусу",
   panikDurumHepsi: "Все статусы",
+  rezYonSayfaAlt: "Опишите общие зоны, просматривайте и при необходимости отменяйте брони.",
+  rezYonOzetAlan: "Зоны для брони",
+  rezYonOzetAlanAlt: "Активные описания",
+  rezYonOzetBugun: "Брони на сегодня",
+  rezYonOzetAktif: "Предстоящие",
+  rezYonOzetAktifAlt: "Ещё не прошли",
+  daireBlokHepsi: "Все блоки",
+  daireDurumHepsi: "Активные и неактивные",
+  dukkanSayfaAlt: "Ближайшие заведения и предложения для жильцов.",
 };

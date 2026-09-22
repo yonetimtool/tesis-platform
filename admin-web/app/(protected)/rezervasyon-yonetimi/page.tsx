@@ -28,6 +28,10 @@ import {
   Modal,
   Secim,
   Sekmeler,
+  OzetKarti,
+  OzetSeridi,
+  SayfaBasligi,
+  Rozet,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -55,6 +59,30 @@ type Rezervasyon = {
   durum: string;
   gecmis: boolean;
 };
+
+// (P245) UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const GECMIS_HAYIR = "false" as const;
+const DURUM_IPTAL = "iptal" as const;
+const R_OLUMLU = "olumlu" as const;
+const R_NOTR = "notr" as const;
+
+const IKON_ALAN = "M3 21h18M5 21V7l7-4 7 4v14M10 21v-5h4v5";
+const IKON_TAKVIM = "M7 3v4M17 3v4M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z";
+const IKON_ONAY = "M20 6 9 17l-5-5";
+
+function RezIkonu({ yol }: { yol: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor"
+      strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={yol} />
+    </svg>
+  );
+}
+
+/** Bugunun ISO gunu — sayac sorgusu icin. */
+function bugunIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
 
 const DURUM_ANAHTARI: Record<string, SozlukAnahtari> = {
   onaylandi: "rezervasyonOnayli",
@@ -86,11 +114,53 @@ export default function RezervasyonYonetimiPage() {
   const t = useT();
   const [sekme, setSekme] = useState<string>(SEKME_ALANLAR);
 
+  // (P245) SAYAÇLAR AYRI SORGULARDAN (`?...&limit=1` -> `meta.total`).
+  //
+  // Iki sekme de KENDI listesini cekiyor ve ikisi de SUZGECLI; serit
+  // onlardan beslenseydi, sekme ya da tarih degisince sayilar da
+  // degisirdi — yani "bugun 3 rezervasyon" yerine "secili suzgecte 3"
+  // yazardi. (P244 §8c'de bakim ekraninda olculen ders.)
+  const { data: alanSayisi } = useSWR<{ items: OrtakAlan[] }>(
+    "/api/common-areas",
+    jsonFetcher,
+  );
+  const { data: bugunSayisi } = useSWR<{ meta?: { total?: number } }>(
+    `/api/reservations?limit=1&offset=0&tarih=${bugunIso()}`,
+    jsonFetcher,
+  );
+  const { data: aktifSayisi } = useSWR<{ meta?: { total?: number } }>(
+    `/api/reservations?limit=1&offset=0&gecmis=${GECMIS_HAYIR}`,
+    jsonFetcher,
+  );
+  const aktifAlan = (alanSayisi?.items ?? []).filter((a) => a.aktif).length;
+
   return (
-    <div className="space-y-6">
-      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-        {t("rezYonBaslik")}
-      </h1>
+    <div>
+      <SayfaBasligi baslik={t("rezYonBaslik")} aciklama={t("rezYonSayfaAlt")} />
+
+      <OzetSeridi>
+        <OzetKarti
+          etiket={t("rezYonOzetAlan")}
+          deger={String(aktifAlan)}
+          durum="notr"
+          ikon={<RezIkonu yol={IKON_ALAN} />}
+          altBilgi={t("rezYonOzetAlanAlt")}
+        />
+        <OzetKarti
+          etiket={t("rezYonOzetBugun")}
+          deger={String(bugunSayisi?.meta?.total ?? 0)}
+          durum="bilgi"
+          ikon={<RezIkonu yol={IKON_TAKVIM} />}
+        />
+        <OzetKarti
+          etiket={t("rezYonOzetAktif")}
+          deger={String(aktifSayisi?.meta?.total ?? 0)}
+          durum="olumlu"
+          ikon={<RezIkonu yol={IKON_ONAY} />}
+          altBilgi={t("rezYonOzetAktifAlt")}
+        />
+      </OzetSeridi>
+
       <Sekmeler
         aktifId={sekme}
         onDegis={setSekme}
@@ -179,13 +249,16 @@ function AlanlarSekmesi() {
           <Kart key={a.id} className="space-y-1">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h3 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{a.ad}</h3>
-              <span className="rounded-full px-2 py-0.5 text-xs"
-                style={{
-                  background: a.aktif ? "var(--yz-success-edge)" : "var(--yz-surface-2)",
-                  color: a.aktif ? "var(--yz-success-ink)" : "var(--yz-text-2)",
-                }}>
+              {/* (P245) ELLE KURULMUS ROZET -> PAYLASILAN `Rozet`.
+                  OLCULEN KUSUR: zemin `--yz-success-edge` (#159946),
+                  metin `--yz-success-ink` (#107736) — yesil uzerine
+                  yesil, kontrast 1.53 (esik 4.5). Etiket okunmuyordu.
+                  Gercek tarayicida goruldu; jsdom renk cozmedigi icin
+                  hicbir test bunu olcemezdi (P226 dersi).
+                  `Rozet` kenar + metin kullanir, dolgu DEGIL. */}
+              <Rozet durum={a.aktif ? R_OLUMLU : R_NOTR}>
                 {a.aktif ? t("rezYonAktif") : t("rezYonPasif")}
-              </span>
+              </Rozet>
             </div>
             <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
               {a.acilis}–{a.kapanis} · {t("rezYonSlotOzet", { n: a.slot_dakika })}
@@ -342,12 +415,10 @@ function RezervasyonlarSekmesi() {
           <Kart key={r.id} className="space-y-1">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h3 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{r.alan_ad ?? "—"}</h3>
-              <span
-                className="rounded-full px-2 py-0.5 text-xs"
-                style={{ background: "var(--yz-surface-sunken)", color: "var(--yz-text-2)" }}
-              >
+              {/* Ayni gerekce: durum rozeti de paylasilan bilesenden. */}
+              <Rozet durum={r.durum === DURUM_IPTAL ? R_NOTR : R_OLUMLU}>
                 {t(durumAnahtari(r.durum))}
-              </span>
+              </Rozet>
             </div>
             <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
               {tarihBicimi(r.tarih)} · {r.baslangic}–{r.bitis} ·{" "}

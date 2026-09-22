@@ -3470,4 +3470,13 @@ export const ar: Sozluk = {
   noktaDurumHepsi: "نشطة وغير نشطة",
   panikDurumSuzgec: "تصفية حسب الحالة",
   panikDurumHepsi: "كل الحالات",
+  rezYonSayfaAlt: "عرِّف المناطق المشتركة وراجع الحجوزات وألغِها عند الحاجة.",
+  rezYonOzetAlan: "مناطق قابلة للحجز",
+  rezYonOzetAlanAlt: "تعريفات نشطة",
+  rezYonOzetBugun: "حجوزات اليوم",
+  rezYonOzetAktif: "القادمة",
+  rezYonOzetAktifAlt: "لم تمضِ بعد",
+  daireBlokHepsi: "كل البلوكات",
+  daireDurumHepsi: "نشطة وغير نشطة",
+  dukkanSayfaAlt: "المتاجر والعروض القريبة المتاحة للسكان.",
 };

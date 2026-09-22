@@ -3470,4 +3470,13 @@ export const de: Sozluk = {
   noktaDurumHepsi: "Aktiv und inaktiv",
   panikDurumSuzgec: "Nach Status filtern",
   panikDurumHepsi: "Alle Status",
+  rezYonSayfaAlt: "Gemeinschaftsbereiche definieren, Reservierungen prüfen und ggf. stornieren.",
+  rezYonOzetAlan: "Buchbare Bereiche",
+  rezYonOzetAlanAlt: "Aktive Definitionen",
+  rezYonOzetBugun: "Heutige Reservierungen",
+  rezYonOzetAktif: "Bevorstehend",
+  rezYonOzetAktifAlt: "Noch nicht vorbei",
+  daireBlokHepsi: "Alle Blöcke",
+  daireDurumHepsi: "Aktiv und inaktiv",
+  dukkanSayfaAlt: "Geschäfte und Angebote in der Nähe für Bewohner.",
 };

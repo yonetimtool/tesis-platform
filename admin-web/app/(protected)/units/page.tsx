@@ -1,6 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+
+// (P245) UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const SUZGEC_HEPSI = "" as const;
+const SUZGEC_AKTIF = "true" as const;
+const SUZGEC_PASIF = "false" as const;
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 
@@ -28,6 +33,7 @@ import {
   type SayfaBoyu,
   type TabloDurumu,
   useOnay,
+  FiltreCubugu
 } from "@/components/ui";
 import { sayiBicimi, sayiCoz, tamsayiCoz } from "@/lib/sayi";
 import type { Unit, UnitList } from "@/lib/types";
@@ -93,12 +99,21 @@ export default function UnitsPage() {
   const setOffset = (v: number) =>
     setTabloDurumu((d) => ({ ...d, sayfa: Math.floor(v / d.boy) + 1 }));
   const [blok, setBlok] = useState("");
-  const blokQs = blok ? `&blok=${encodeURIComponent(blok)}` : "";
+  const [aktifSuzgec, setAktifSuzgec] = useState<string>(SUZGEC_HEPSI);
+  const blokQs =
+    (blok ? `&blok=${encodeURIComponent(blok)}` : "") +
+    (aktifSuzgec ? `&aktif=${aktifSuzgec}` : "");
   // (P154 / Asama 7.4) Blok listesi YALNIZ bagimlilik uyarisi icin
   // cekiliyor: daire olusturmada `blok` ZORUNLU (canli-site kurali) ve
   // blok yoksa kullanici formu doldurup takiliyor. Liste kucuk ve
   // sayfa basina bir kez.
-  const { data: bloklar } = useSWR<{ items: unknown[] }>("/api/blocks", jsonFetcher);
+  // (P245) BLOK LISTESI ARTIK SUZGECI DE BESLIYOR: serbest metin yerine
+  // secim. Elle "A" yazmak, var olmayan bir blok adiyla BOS LISTE
+  // uretebiliyordu ve kullanici bunu "daire yok" diye okuyordu.
+  const { data: bloklar } = useSWR<{ items: { id: string; ad: string }[] }>(
+    "/api/blocks",
+    jsonFetcher,
+  );
 
   // ---------------- (P154 / Asama 5) TOPLU ISLEMLER ----------------------
   // Secim EKRANDAKI listeye gore yapilir; aralik ifadesi de oyle cozulur
@@ -424,20 +439,52 @@ export default function UnitsPage() {
         eksik={(bloklar?.items?.length ?? 1) === 0}
       />
 
-      <div className="flex items-end gap-2">
-        <div className="w-full sm:w-48">
-          <AlanSarmal etiket={t("daireBlokFiltresi")}>
-  {(b) => (
-    <Alan {...b} value={blok}
-              onChange={(e) => {
-                setBlok(e.target.value);
-                setOffset(0);
-              }}
-              placeholder="A" />
-  )}
-</AlanSarmal>
-        </div>
-      </div>
+      {/* (P245) FILTRE CUBUGU — referansta (ui2 "Daireler") blok, durum
+          ve arama tek seritte.
+          -----------------------------------------------------------------
+          SUZGECLER SUNUCUDA (`?blok=`, `?aktif=`): istemcide suzmek
+          yalniz GORUNEN sayfayi arardi.
+          SERIT SAYILARI ETKILENMEZ: ozet `/units/arsa-payi-ozeti`ten
+          gelir ve o uc suzgec ALMAZ — "A blok" secildiginde toplam
+          daire sayisi degismez (P244 §8c dersi). */}
+      <FiltreCubugu
+        aktifSayi={(blok ? 1 : 0) + (aktifSuzgec ? 1 : 0)}
+        onTemizle={() => {
+          setBlok("");
+          setAktifSuzgec(SUZGEC_HEPSI);
+          setOffset(0);
+        }}
+      >
+        <Secim
+          aria-label={t("daireBlokFiltresi")}
+          value={blok}
+          onChange={(e) => {
+            setBlok(e.target.value);
+            setOffset(0);
+          }}
+          className="w-auto"
+        >
+          <option value="">{t("daireBlokHepsi")}</option>
+          {(bloklar?.items ?? []).map((b) => (
+            <option key={b.id} value={b.ad}>
+              {b.ad}
+            </option>
+          ))}
+        </Secim>
+        <Secim
+          aria-label={t("ortakDurum")}
+          value={aktifSuzgec}
+          onChange={(e) => {
+            setAktifSuzgec(e.target.value);
+            setOffset(0);
+          }}
+          className="w-auto"
+        >
+          <option value={SUZGEC_HEPSI}>{t("daireDurumHepsi")}</option>
+          <option value={SUZGEC_AKTIF}>{t("ortakAktif")}</option>
+          <option value={SUZGEC_PASIF}>{t("ortakPasif")}</option>
+        </Secim>
+      </FiltreCubugu>
 
       {/* Liste cekilemezse BOS TABLO degil, sebep + "Tekrar dene".
           Yukleme durumu artik `VeriTablosu`nun ISKELETI. */}

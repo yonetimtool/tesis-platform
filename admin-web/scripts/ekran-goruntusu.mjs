@@ -92,6 +92,18 @@ async function cekHepsi({ rol, tema, mod, rotalar }) {
     deviceScaleFactor: 1,
     colorScheme: tema === "koyu" ? "dark" : "light",
     locale: "tr-TR",
+    /**
+     * HAREKET AZALTILDI — KAPRIS DEGIL, OLCUM GEREGI.
+     *
+     * `VeriTablosu` satirlari KADEMELI beliriyor (`siraGecikmesi`).
+     * Goruntu o kademe bitmeden alininca tablo YARIM cikiyordu: 27
+     * kayitli listede yalniz iki satir doluydu, gerisi bos serit
+     * (olculdu: /units).
+     *
+     * Depo `reducedMotion`a ZATEN saygi duyuyor (`hareketVar`), yani
+     * bu mod uydurma bir durum degil, urunun desteklenen bir hali.
+     */
+    reducedMotion: "reduce",
   });
   await baglam.addCookies([
     { name: "tema", value: tema === "koyu" ? "dark" : "light", url: TABAN },
@@ -151,7 +163,8 @@ async function cekHepsi({ rol, tema, mod, rotalar }) {
         }
         await sayfa.waitForTimeout(2500);
         const yol = `${CIKTI}/${ad}.png`;
-        await sayfa.screenshot({ path: yol, fullPage: true });
+        // `animations: "disabled"` CSS gecislerini de dondurur.
+        await sayfa.screenshot({ path: yol, fullPage: true, animations: "disabled" });
         console.log("OK  ", yol);
       } catch (e) {
         console.log("HATA", ad, String(e).split("\n")[0]);

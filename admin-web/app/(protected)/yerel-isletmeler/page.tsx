@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { SayfaBasligi } from "@/components/ui";
 import { useT } from "@/lib/i18n/kullan";
 import { useDukkanAcik } from "@/lib/ozellikler";
 
@@ -109,13 +110,22 @@ export default function YerelIsletmeler() {
     // yeri gostermek ise kotu izlenim birakirdi. Ucuncu yol: yer tutucu.
     // TARIH TAAHHUDU YOK — kacirilan bir tarih guvensizlik yaratir.
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-xl font-semibold">{t("dukkanYerelIsletmeler")}</h1>
-        </div>
-        <div className="rounded border border-[--yz-border] p-8 text-center">
+      <div>
+        <SayfaBasligi baslik={t("dukkanYerelIsletmeler")} aciklama={t("dukkanSayfaAlt")} />
+        {/* (P245) KENAR ve METIN RENGI SATIR-ICI STILE ALINDI.
+            Burada daha once CIPLAK OZEL OZELLIK sozdizimi vardi
+            (koseli parantez icinde dogrudan degisken adi, `color:`
+            oneki olmadan). Tailwind o bicimde degerin bir RENK
+            oldugunu CIKARAMAZ: kenar icin GENISLIK uretmeye calisir ve
+            renk hic uygulanmaz. `p244-token-var-mi` kilidi token'in
+            TANIMLI oldugunu olcer, SOZDIZIMINI degil — bu ikisi ondan
+            kacmisti; kilit ayni turda genisletildi. */}
+        <div
+          className="rounded border p-8 text-center"
+          style={{ borderColor: "var(--yz-border)" }}
+        >
           <p className="text-base font-medium">{t("dukkanYakindaBaslik")}</p>
-          <p className="mt-2 text-sm text-[--yz-text-2]">
+          <p className="mt-2 text-sm" style={{ color: "var(--yz-text-2)" }}>
             {t("dukkanYakindaMetin")}
           </p>
         </div>
@@ -124,7 +134,7 @@ export default function YerelIsletmeler() {
   }
 
   return (
-    <div className="space-y-6">
+    <div>
       <div>
         <h1 className="text-xl font-semibold">{t("dukkanYerelIsletmeler")}</h1>
         <p className="mt-1 text-sm text-[color:var(--yz-text-2)]">

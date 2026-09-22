@@ -139,8 +139,13 @@ export function WidgetSeridi({
                     className="absolute end-2 top-2 min-w-5 rounded-full px-1.5 text-center"
                     style={{
                       fontSize: "var(--yz-fs-xs)",
-                      background: "var(--yz-danger-edge)",
-                      color: "#fff",
+                      // (P245) `-edge` DEGIL `-fill`: beyaz metin
+                      // `--yz-danger-edge` (#ef4444) uzerinde 3.76 —
+                      // esik 4.5 ve bu KUCUK metin. `--yz-danger-fill`
+                      // (#dc2626) tam bu is icin var: 4.83.
+                      // `-edge` GRAFIK esigi (3.0) icindir, METIN degil.
+                      background: "var(--yz-danger-fill)",
+                      color: "var(--yz-on-fill)",
                     }}
                   >
                     {w.rozet}

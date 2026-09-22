@@ -682,8 +682,12 @@ function AjandaListesi({
                     className="rounded-full px-2"
                     style={{
                       fontSize: "var(--yz-fs-xs)",
+                      // Beyaz metin `--yz-accent-edge` (#2563eb)
+                      // uzerinde 5.17 — AA'yi TUTUYOR, bu yuzden ton
+                      // degismedi. Yalniz ham `#fff` yerine token
+                      // kullanildi (koyu temada da dogru degeri verir).
                       background: "var(--yz-accent-edge)",
-                      color: "#fff",
+                      color: "var(--yz-on-fill)",
                     }}
                   >
                     {t("takvimBugun")}

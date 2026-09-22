@@ -93,11 +93,20 @@ describe("Daireler", () => {
   it("BLOK suzgeci istegi yeniler ve sayfayi BASA alir", async () => {
     // Eski offset'te kalmak, suzgec sonrasi ilk sayfasi bos gorunen bir
     // liste demekti.
-    fetchSahtele({ "/api/units": DAIRELER });
+    //
+    // (P245) SUZGEC SERBEST METINDEN SECIME GECTI. Elle "B" yazmak,
+    // var olmayan bir blok adiyla BOS LISTE uretebiliyordu ve kullanici
+    // bunu "daire yok" diye okuyordu; secenekler artik `/api/blocks`ten
+    // geliyor. Olculen kural DEGISMEDI: suzgec degisince istek
+    // yenilenir ve sayfa BASA doner.
+    fetchSahtele({
+      "/api/units": DAIRELER,
+      "/api/blocks": { items: [{ id: "b1", ad: "B" }] },
+    });
     ciz(UnitsPage);
     await waitFor(() => expect(screen.getByText("A-1")).toBeInTheDocument());
 
-    await userEvent.type(screen.getByLabelText(/Blok/), "B");
+    await userEvent.selectOptions(screen.getByLabelText(/Blok/), "B");
     await waitFor(() =>
       expect(cagrilanUrller().some((u) => u.includes("blok=B"))).toBe(true),
     );

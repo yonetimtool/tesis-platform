@@ -361,3 +361,97 @@ iddia değişmedi.
 ## 18. Doğrulama
 
 `npm run dogrula` → **çıkış kodu 0** · **2126 test yeşil**.
+
+---
+
+# P245 §4 — TESİS GRUBU (ui2)
+
+Referans: **`ui2.png`** — tesis operasyonu + finans; 23 ekran, hepsinde
+aynı iskelet (KPI şeridi → filtre → yoğun tablo).
+
+## 19. Ölçüm: tesis grubu büyük ölçüde hazırdı
+
+P244'te dokunulan ekranlar (`/units`, `/assets`, `/bakim`, `/schematic`,
+`/tasks`, `/ziyaretciler`) zaten başlık + şerit taşıyordu. Gerçek
+boşluklar:
+
+| ekran | eksik |
+|---|---|
+| `/rezervasyon-yonetimi` | başlık, açıklama, şerit — **üçü de yok** |
+| `/yerel-isletmeler` | başlık yok |
+| `/units` | filtre çubuğu yok (ui2 "Daireler"de blok + durum + arama) |
+
+## 20. `/units`: serbest metin süzgeci → seçim
+
+Blok süzgeci elle yazılan bir metin alanıydı. Var olmayan bir blok adı
+yazmak **boş liste** üretiyordu ve kullanıcı bunu *"daire yok"* diye
+okuyordu. Seçenekler artık `/api/blocks`ten — o liste **zaten
+çekiliyordu** (bağımlılık uyarısı için).
+
+Aktiflik süzgeci de eklendi (arka uç `?aktif=` destekliyordu).
+**Şerit sayıları etkilenmez:** özet `/units/arsa-payi-ozeti`ten gelir ve
+o uç süzgeç **almaz** — "A blok" seçilince toplam daire sayısı değişmez.
+
+## 21. `/rezervasyon-yonetimi`: sayaçlar iki sekmeden de bağımsız
+
+Her iki sekme kendi listesini çekiyor ve **ikisi de süzgeçli**. Şerit
+onlardan beslenseydi, sekme ya da tarih değişince sayılar da değişirdi —
+*"bugün 3 rezervasyon"* yerine *"seçili süzgeçte 3"*. Ayrı sorgular
+(`?tarih=`, `?gecmis=false`, `limit=1` → `meta.total`).
+
+## 22. Hat ÜÇ KUSUR DAHA buldu
+
+### 22.1 Yeşil zemin üzerine yeşil metin — kontrast 1.53
+
+`/rezervasyon-yonetimi`nin elle kurulmuş "Aktif" rozeti:
+zemin `--yz-success-edge` (#159946), metin `--yz-success-ink` (#107736).
+**Ölçüldü: 1.53** (eşik 4.5). Etiket okunmuyordu.
+
+Tarama üç yerde daha aynı sınıfı aradı ve bir tane daha buldu:
+`pano/widget-seridi` beyaz metni `--yz-danger-edge` (#ef4444) üzerinde
+**3.76** ile çiziyordu — küçük metin, eşik 4.5. `--yz-danger-fill`
+(#dc2626) tam bu iş için var: **4.83**.
+
+**Kural P244 aşama 1'de yazılmıştı ama hiçbir yerde zorlanmıyordu:**
+`-edge` **grafik** eşiğidir (3.0), metin değil. **YENİ**
+`p245-dolgu-uzerinde-metin` kilidi; iki kırma yakalandı.
+
+`/panik`in kırmızı tam ekran alarmı **kontrol edildi ve temiz**: kırmızı
+yalnız arka örtü, metin `--yz-surface-1` kartın üzerinde.
+
+### 22.2 Çıplak özel özellik sözdizimi — renk hiç uygulanmıyordu
+
+`/yerel-isletmeler` köşeli parantez içinde `color:` öneki **olmadan**
+değişken adı yazıyordu. Tailwind bu biçimde değerin bir **renk**
+olduğunu çıkaramaz: kenar için **genişlik** üretmeye çalışır ve renk hiç
+uygulanmaz.
+
+`p244-token-var-mi` kilidi token'ın **tanımlı** olduğunu ölçüyordu,
+**sözdizimini** değil — bu ikisi ondan kaçmıştı. Kilit aynı turda
+genişletildi.
+
+### 22.3 Betikteki üçüncü yöntem hatası
+
+`/units` görüntüsünde 27 kayıtlı listenin yalnız **iki satırı** doluydu,
+gerisi boş şerit. Sebep veri değil: `VeriTablosu` satırları **kademeli**
+beliriyor ve görüntü o kademe bitmeden alınıyordu.
+
+Tarayıcı **azaltılmış harekete** alındı (`reducedMotion: "reduce"`) —
+uydurma bir durum değil, deponun **zaten saygı duyduğu** desteklenen bir
+hâl (`hareketVar`). Ayrıca `animations: "disabled"`.
+
+## 23. Bu turda YAPILMAYAN — açıkça
+
+* `/building-editor` (1327 satır) — yalnız başlık var, şerit/filtre
+  eklenmedi.
+* `/bakim`, `/schematic`, `/assets`, `/tasks`, `/ziyaretciler` — filtre
+  çubuğu **eklenmedi** (başlık + şerit zaten vardı).
+* `ui2`nin **finans** yarısı (Aidat, Finans, Borçlandırmalar,
+  Tahsilatlar, Giderler, Gelirler, Virman, İade, Açılış, Banka,
+  Otomasyon, Fazla Mesai, Borçlular, Bütçe, İcra, Sayaç, Raporlar) bu
+  turda açılmadı — ayrı bir grup.
+
+## 24. Doğrulama
+
+`npm run dogrula` → **çıkış kodu 0** · **2130 test yeşil**.
+Ekran görüntüleri: `docs/P245/` altında tesis grubundan altı ekran.

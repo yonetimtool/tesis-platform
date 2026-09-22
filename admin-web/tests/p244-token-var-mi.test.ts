@@ -77,4 +77,30 @@ describe("(P244 §10d) kullanilan `--yz-*` token'lari tanimli", () => {
       `tanimsiz token:\n${[...new Set(eksik)].join("\n")}`,
     ).toEqual([]);
   });
+
+  it("(P245) CIPLAK OZEL OZELLIK SOZDIZIMI KULLANILMIYOR", () => {
+    /**
+     * OLCULEN KUSUR: `/yerel-isletmeler` `border-[--yz-border]` ve
+     * `text-[--yz-text-2]` yaziyordu.
+     *
+     * Tailwind bu bicimde degerin bir RENK oldugunu CIKARAMAZ:
+     * `border-[...]` icin kenar GENISLIGI uretmeye calisir ve renk hic
+     * uygulanmaz; `text-[...]` icin de yazi boyu denenir. Dogru bicim
+     * `border-[color:var(--yz-border)]`.
+     *
+     * YUKARIDAKI IDDIA BUNU YAKALAMAZ: o token'in TANIMLI oldugunu
+     * olcer, SOZDIZIMINI degil — ve bu iki kullanimda token gercekten
+     * tanimliydi. Kusur yalniz gercek tarayicida, rengin HIC
+     * uygulanmamasi olarak gorunuyordu.
+     */
+    const suclular: string[] = [];
+    const desen = /\b(?:text|bg|border|fill|stroke|ring|shadow|outline)-\[--yz-/;
+    for (const [yol, kaynak] of DOSYALAR) {
+      if (desen.test(kaynak)) suclular.push(yol.slice(KOK.length + 1));
+    }
+    expect(
+      [...new Set(suclular)].sort(),
+      `ciplak ozel ozellik sozdizimi:\n${suclular.join("\n")}`,
+    ).toEqual([]);
+  });
 });

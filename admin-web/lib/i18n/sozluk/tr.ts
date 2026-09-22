@@ -3533,4 +3533,13 @@ export const tr = {
   noktaDurumHepsi: "Aktif ve pasif",
   panikDurumSuzgec: "Duruma göre süz",
   panikDurumHepsi: "Tüm durumlar",
+  rezYonSayfaAlt: "Ortak alanları tanımlayın, rezervasyonları görün ve gerekirse iptal edin.",
+  rezYonOzetAlan: "Rezerve edilebilir alan",
+  rezYonOzetAlanAlt: "Aktif tanım",
+  rezYonOzetBugun: "Bugünkü rezervasyon",
+  rezYonOzetAktif: "Yaklaşan",
+  rezYonOzetAktifAlt: "Saati geçmemiş",
+  daireBlokHepsi: "Tüm bloklar",
+  daireDurumHepsi: "Aktif ve pasif",
+  dukkanSayfaAlt: "Sakinlerin yararlanabileceği yakın çevredeki işletmeler ve kampanyalar.",
 } as const;
