@@ -3489,4 +3489,5 @@ export const fr: Sozluk = {
   mesaiOzetSaat: "Heures supp. totales",
   mesaiOzetTutar: "Montant total",
   mesaiOzetTutarAlt: "{n} sans taux défini",
+  borclandirmaSayfaAlt: "Charges et quotes-parts imputées aux logements ; imputation unitaire ou groupée.",
 };

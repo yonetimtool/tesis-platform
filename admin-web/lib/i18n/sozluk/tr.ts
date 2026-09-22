@@ -3552,4 +3552,5 @@ export const tr = {
   mesaiOzetSaat: "Toplam fazla saat",
   mesaiOzetTutar: "Toplam tutar",
   mesaiOzetTutarAlt: "{n} kişinin ücreti tanımsız",
+  borclandirmaSayfaAlt: "Dairelere yansıtılan aidat ve gider payları; tekil ya da toplu borçlandırma.",
 } as const;

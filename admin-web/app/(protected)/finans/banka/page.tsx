@@ -34,6 +34,7 @@ import {
   VeriTablosu,
   type Kolon,
   type RozetDurumu,
+  SayfaBasligi,
 } from "@/components/ui";
 import { Kart } from "@/components/ui";
 import { useToast } from "@/components/Toast";
@@ -479,15 +480,16 @@ export default function BankaSayfasi() {
   );
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-          {t("bankaBaslik")}
-        </h1>
-        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-          {t("bankaAciklama")}
-        </p>
-      </div>
+    <div>
+      {/* (P245) OZET SERIDI EKLENMEDI ve bu bir ATLAMA DEGIL.
+          Referansta (ui2, banka entegrasyonu ekrani) ustte SAYI SERIDI
+          yok; BANKA MARKA KARTLARI listesi var — her hesabin adi,
+          son senkron zamani ve durumu. O liste bir HESAP LISTESI
+          ekrani ister ve bizim ekranimiz bugun bir YUKLEME AKISI +
+          eslestirme tablosu (P244 §7b'de olculup acik madde yazildi).
+          Uydurma bir serit koymak, referansin sordugu soruyu
+          yanitlamadan yanitlamis gibi yapmakti. */}
+      <SayfaBasligi baslik={t("bankaBaslik")} aciklama={t("bankaAciklama")} />
 
       <Kart>
         <div className="space-y-4">

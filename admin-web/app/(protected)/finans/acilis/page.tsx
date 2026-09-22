@@ -13,6 +13,7 @@
 // ne oldugunu ancak actiktan sonra gosterir. Radyo ikisini de bir
 // bakista okutur.
 
+import { FinansOzetSeridi } from "@/components/finans/ozet-seridi";
 import { useState } from "react";
 
 import { useToast } from "@/components/Toast";
@@ -24,6 +25,8 @@ import { useT } from "@/lib/i18n/kullan";
 import { tlToKurus } from "@/lib/money";
 
 const TIP = "acilis";
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const OZET_TURU = "kasa" as const;
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const YON_GIRIS = "giris";
 const YON_CIKIS = "cikis";
@@ -37,6 +40,7 @@ export default function AcilisPage() {
     <HareketSayfasi
       baslikAnahtari="kabukAcilisFisleri"
       tip={TIP}
+      ozet={<FinansOzetSeridi tur={OZET_TURU} />}
       raporKodu="kasa_ekstresi"
       yenile={yenile}
       araclar={

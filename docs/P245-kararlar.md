@@ -521,3 +521,78 @@ Yalnız başlık + açıklama eklendi.
 
 `npm run dogrula` → **çıkış kodu 0** · **2130 test yeşil**.
 Ekran görüntüleri: `docs/P245/` altında finans grubundan dört ekran.
+
+---
+
+# P245 §6 — FİNANSIN KALANI
+
+## 32. Şerit YAZILMIŞTI ama HİÇ KULLANILMIYORDU
+
+`FinansOzetSeridi`de **`borclandirma` varyantı P244 §7a'da tanımlanmış**
+ama `/finans/borclandirmalar`a **bağlanmamıştı**: öteki altı finans
+ekranı ortak `HareketSayfasi` kabuğunu kullanıyor ve şerit onun `ozet`
+yuvasından geliyor; bu sayfa kendi düzenini taşıdığı için yuvası yoktu.
+
+Yani **kod vardı, ekranda yoktu**. Başlık + açıklama eklendi ve şerit
+bağlandı.
+
+## 33. Virman / iade / açılış: üç sayı yerine bir doğru sayı
+
+Referansta (ui2) üçünün de üstünde sayı serisi var; örneğin ödeme
+iadesinde *"12 Bekleyen / 8 Onaylanan / 3 Reddedilen"*.
+
+**Bizde o durumlar yok:** üçü de **tek deftere** (P192) yazılan hareket
+tipleri ve iade için bir **onay akışı tanımlı değil**. Üç sayı uydurmak
+yerine üçünün de gerçekten yanıtladığı soru gösterildi — **kasa
+toplamı**:
+
+* **virman** — para kasalar arasında taşınır, toplam **değişmemeli**
+* **açılış** — açılış fişleri toplamı **doğrudan kurar**
+* **iade** — iade kasadan **çıkar**
+
+Yani kasa toplamı bu üç ekranda da işlemin **sonucudur**. Yeni
+`tur: "kasa"` varyantı.
+
+## 34. `/finans/banka`: şerit EKLENMEDİ — ve bu bir atlama değil
+
+Referansta bu ekranın üstünde **sayı şeridi yok**; **banka marka
+kartları** listesi var (hesap adı, son senkron, durum). O liste bir
+**hesap listesi** ekranı ister; bizim ekranımız bugün bir **yükleme
+akışı + eşleştirme tablosu** (P244 §7b'de ölçülüp açık madde
+yazılmıştı). Uydurma bir şerit koymak, referansın sorduğu soruyu
+yanıtlamadan **yanıtlamış gibi yapmaktı**. Yalnız başlık taşındı.
+
+## 35. Ortak şerit ikonsuzdu
+
+`FinansOzetSeridi` kartları ikonsuz çiziliyordu; `/finans`, `/dues` ve
+güvenlik ekranlarının şeritleri ikonluydu. **Aynı bileşen ailesi iki
+farklı görünümdeydi** ve referansta her kartın solunda ikon var. Tek
+dosyada düzeltildi — **altı finans ekranı** birden.
+
+## 36. Finans grubu — durum
+
+| ekran | başlık | şerit |
+|---|---|---|
+| `/dues`, `/finans`, `/finans/borclular`, `/finans/mesai` | ✔ | ✔ |
+| `/finans/tahsilatlar`, `/giderler`, `/gelirler` | ✔ | ✔ |
+| `/finans/borclandirmalar` | ✔ | ✔ **(bu tur)** |
+| `/finans/virman`, `/iade`, `/acilis` | ✔ | ✔ **(bu tur, tek kart)** |
+| `/finans/banka`, `/sayac-okuma` | ✔ | **bilerek yok** (gerekçe yukarıda) |
+| `/finans/otomasyon` | ✔ (P244 §7b) | bilerek yok |
+| `/raporlar` | zaten referansın deseni (P244 §7b) | — |
+
+**Grubun tamamında başlık var.**
+
+## 37. Bu turda YAPILMAYAN — açıkça
+
+* Finans grubunda **hiçbir yeni filtre çubuğu** eklenmedi. `/finans`ta
+  tip süzgeci P244 §9c'de çubuğa taşınmıştı; ötekilerde süzgeç yok.
+* `/finans/banka`nın **marka kartı listesi** yapılmadı (ayrı düzen
+  kararı, P244 §7b'den beri açık).
+* `/finans/otomasyon`da **yerinde aç/kapat** hâlâ yok (yazma ucu yok,
+  P244 §7b).
+
+## 38. Doğrulama
+
+`npm run dogrula` → **çıkış kodu 0** · **2130 test yeşil**.
+Ekran görüntüleri: `docs/P245/` altında finanstan dokuz ekran.

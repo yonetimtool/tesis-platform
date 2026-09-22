@@ -10,6 +10,7 @@
 // "hesap tipi" kavrami UYDURULMADI — olmayan bir varliga ekran cizmek,
 // kullaniciya doldurulamayan bir alan gostermek olurdu.
 
+import { FinansOzetSeridi } from "@/components/finans/ozet-seridi";
 import { useState } from "react";
 
 import { useToast } from "@/components/Toast";
@@ -21,6 +22,8 @@ import { useT } from "@/lib/i18n/kullan";
 import { tlToKurus } from "@/lib/money";
 
 const TIP = "virman";
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const OZET_TURU = "kasa" as const;
 
 export default function VirmanPage() {
   const t = useT();
@@ -31,6 +34,7 @@ export default function VirmanPage() {
     <HareketSayfasi
       baslikAnahtari="kabukVirman"
       tip={TIP}
+      ozet={<FinansOzetSeridi tur={OZET_TURU} />}
       raporKodu="kasa_ekstresi"
       yenile={yenile}
       araclar={

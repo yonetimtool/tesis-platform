@@ -21,6 +21,9 @@
 import { useState } from "react";
 import useSWR from "swr";
 
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const BORCLANDIRMA_TURU = "borclandirma" as const;
+
 import { useToast } from "@/components/Toast";
 import {
   Alan,
@@ -33,6 +36,7 @@ import {
   useOnay,
   type Kolon,
   type TabloDurumu,
+  SayfaBasligi,
 } from "@/components/ui";
 import { DisaAktar } from "@/components/finans/hareket-sayfasi";
 import {
@@ -43,6 +47,7 @@ import {
 } from "@/components/finans/ortak";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
+import { FinansOzetSeridi } from "@/components/finans/ozet-seridi";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk/tipler";
 import { kurusToTL, tlToKurus } from "@/lib/money";
@@ -349,22 +354,34 @@ export default function BorclandirmalarPage() {
   ];
 
   return (
-    <div className="space-y-4">
+    <div>
       {diyalog}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-          {t("finansBorclandirmalar")}
-        </h1>
-        <div className="flex flex-wrap items-center gap-2">
-          <Dugme tur="birincil" boy="kucuk" onClick={() => setTekil(true)}>
-            {t("finansYeni")}
-          </Dugme>
-          <Dugme tur="ikincil" boy="kucuk" onClick={() => setToplu(true)}>
-            {t("finansTopluBorclandirma")}
-          </Dugme>
-          <DisaAktar kod="detayli_borc" />
-        </div>
-      </div>
+      <SayfaBasligi
+        baslik={t("finansBorclandirmalar")}
+        aciklama={t("borclandirmaSayfaAlt")}
+        eylem={
+          <div className="flex flex-wrap items-center gap-2">
+            <Dugme tur="birincil" boy="kucuk" onClick={() => setTekil(true)}>
+              {t("finansYeni")}
+            </Dugme>
+            <Dugme tur="ikincil" boy="kucuk" onClick={() => setToplu(true)}>
+              {t("finansTopluBorclandirma")}
+            </Dugme>
+            <DisaAktar kod="detayli_borc" />
+          </div>
+        }
+      />
+
+      {/* (P245) SERIT ZATEN YAZILMISTI — HIC KULLANILMIYORDU.
+          -----------------------------------------------------------------
+          `FinansOzetSeridi`de `borclandirma` varyanti P244 §7a'da
+          tanimlanmis ama bu sayfaya BAGLANMAMISTI: oteki alti finans
+          ekrani ortak `HareketSayfasi` kabugunu kullaniyor ve serit
+          onun `ozet` yuvasindan geliyor; bu sayfa ise kendi duzenini
+          tasidigi icin yuvasi yoktu. Yani kod vardi, ekranda yoktu.
+          SAYILAR SUNUCUDAN: gorunen sayfadaki borclandirmalardan toplam
+          almak, `/finans` ile iki farkli rakam demekti. */}
+      <FinansOzetSeridi tur={BORCLANDIRMA_TURU} />
 
       <GecikmeFaiziKarti />
 

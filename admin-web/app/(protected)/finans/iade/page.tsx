@@ -21,6 +21,7 @@
 // Brief'in istedigi alanlar EKRANDA GORUNUR — yalnizca hangisinin
 // yazilabilir hangisinin turetilmis oldugu degisti.
 
+import { FinansOzetSeridi } from "@/components/finans/ozet-seridi";
 import { useState } from "react";
 import useSWR from "swr";
 
@@ -37,6 +38,8 @@ import { useT } from "@/lib/i18n/kullan";
 import { kurusToTL, tlToKurus } from "@/lib/money";
 
 const TIP = "iade";
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const OZET_TURU = "kasa" as const;
 
 export default function IadePage() {
   const t = useT();
@@ -47,6 +50,7 @@ export default function IadePage() {
     <HareketSayfasi
       baslikAnahtari="kabukIade"
       tip={TIP}
+      ozet={<FinansOzetSeridi tur={OZET_TURU} />}
       raporKodu="finansal_hareketler"
       yenile={yenile}
       araclar={

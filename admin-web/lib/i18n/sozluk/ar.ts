@@ -3489,4 +3489,5 @@ export const ar: Sozluk = {
   mesaiOzetSaat: "إجمالي الساعات الإضافية",
   mesaiOzetTutar: "المبلغ الإجمالي",
   mesaiOzetTutarAlt: "{n} بدون أجر محدد",
+  borclandirmaSayfaAlt: "الرسوم وحصص المصروفات المحمَّلة على الوحدات؛ فرديًا أو بالجملة.",
 };

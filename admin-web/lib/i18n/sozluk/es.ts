@@ -3489,4 +3489,5 @@ export const es: Sozluk = {
   mesaiOzetSaat: "Horas extra totales",
   mesaiOzetTutar: "Importe total",
   mesaiOzetTutarAlt: "{n} sin tarifa definida",
+  borclandirmaSayfaAlt: "Cuotas y partes de gasto imputadas a las viviendas; individual o masivo.",
 };

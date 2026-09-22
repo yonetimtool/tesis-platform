@@ -3489,4 +3489,5 @@ export const ru: Sozluk = {
   mesaiOzetSaat: "Всего сверхурочных часов",
   mesaiOzetTutar: "Общая сумма",
   mesaiOzetTutarAlt: "у {n} не задана ставка",
+  borclandirmaSayfaAlt: "Взносы и доли расходов, начисленные квартирам; по одной или массово.",
 };

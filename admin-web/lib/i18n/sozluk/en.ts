@@ -3489,4 +3489,5 @@ export const en: Sozluk = {
   mesaiOzetSaat: "Total overtime hours",
   mesaiOzetTutar: "Total amount",
   mesaiOzetTutarAlt: "{n} without a defined rate",
+  borclandirmaSayfaAlt: "Dues and expense shares charged to units; single or bulk charging.",
 };

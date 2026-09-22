@@ -3489,4 +3489,5 @@ export const de: Sozluk = {
   mesaiOzetSaat: "Überstunden gesamt",
   mesaiOzetTutar: "Gesamtbetrag",
   mesaiOzetTutarAlt: "{n} ohne definierten Satz",
+  borclandirmaSayfaAlt: "Den Wohnungen zugewiesene Beiträge und Kostenanteile; einzeln oder als Sammelbuchung.",
 };
