@@ -24,6 +24,7 @@ from sqlalchemy import func, literal_column, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
+from ..hiz_siniri import DISA_AKTARIM_SINIRI
 from ..borclandirma import gecikme_kurus
 from .. import defter
 from ..deps import get_tenant_db, require_role
@@ -1193,7 +1194,7 @@ def _param(body: RaporParametre) -> RaporParam:
 
 
 # --------------------------------- uc --------------------------------------- #
-@router.post("/raporlar/{kod}")
+@router.post("/raporlar/{kod}", dependencies=[Depends(DISA_AKTARIM_SINIRI)])
 async def rapor_uret(
     kod: str,
     body: RaporParametre,
@@ -1275,7 +1276,7 @@ async def rapor_uret(
 # devam ederdi.
 
 
-@router.post("/raporlar/{kod}/kuyruk", response_model=RaporIsOut, status_code=202)
+@router.post("/raporlar/{kod}/kuyruk", response_model=RaporIsOut, status_code=202, dependencies=[Depends(DISA_AKTARIM_SINIRI)])
 async def rapor_kuyruga_al(
     kod: str,
     body: RaporParametre,
@@ -1339,7 +1340,7 @@ async def rapor_islerim(
     return list(rows)
 
 
-@router.get("/raporlar/isler/{is_id}/indir")
+@router.get("/raporlar/isler/{is_id}/indir", dependencies=[Depends(DISA_AKTARIM_SINIRI)])
 async def rapor_isi_indir(
     is_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),

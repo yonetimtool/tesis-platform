@@ -9,7 +9,7 @@ from typing import Annotated, Any, Literal
 from pydantic import (
     AfterValidator,
     AliasChoices,
-    BaseModel,
+    BaseModel as _PydanticBaseModel,
     ConfigDict,
     EmailStr,
     Field,
@@ -19,6 +19,20 @@ from pydantic import (
 
 from .security import normalize_phone
 from .temizleme import zengin_temizle
+
+#: (P247 §6) HER METIN ALANINA VARSAYILAN TAVAN.
+#:
+#: Uc guvenlik envanteri 159 metin alaninin sinirsiz oldugunu gosterdi.
+#: Alan duzeyi `max_length` DOGRU olandir ve yeni alanlarda beklenir (kilit:
+#: `test_p247_uc_guvenlik.py`); bu tavan ise UNUTULAN alanin son hattidir.
+#: Pydantic v2 `model_config`i alt siniflarda BIRLESTIRIR — `from_attributes`
+#: gibi ayarlar tavani silmez. Yanit semalarini da kapsadigi icin tavan
+#: bilincli olarak yuksek (en uzun mesru metin: KVKK aydinlatma metni).
+METIN_TAVANI = 200_000
+
+
+class BaseModel(_PydanticBaseModel):
+    model_config = ConfigDict(str_max_length=METIN_TAVANI)
 
 #: (P171) ZENGIN METIN GOVDESI — YAZMA ANINDA TEMIZLENIR.
 #
@@ -295,6 +309,17 @@ class UserOut(BaseModel):
     ui_gorunum: str = "standart"
     #: (P243 §6d) NULL = ilk giris turu HENUZ gosterilmedi.
     tur_goruldu_at: datetime | None = None
+    #: (P247 §2) Kisinin bu tesiste gecebilecegi roller; `role` AKTIF olan.
+    #: Tek eleman = gecis menusu YOK. Yalniz `GET /me` doldurur.
+    roller: list[str] = []
+
+
+class RolGecisIstek(BaseModel):
+    """(P247 §2) `POST /me/rol-gecis` govdesi."""
+
+    rol: Literal["yonetici", "resident"]
+    #: Eski baglamin refresh ailesi kapatilir (yeni yetki baglami).
+    refresh_token: str | None = Field(default=None, max_length=4096)
 
 
 class OzellikBayraklari(BaseModel):
@@ -2530,6 +2555,31 @@ class VardiyaKalibiCreate(BaseModel):
     #: vardiya uretilmesine kapi acardi.
     dilimler: list[VardiyaDilim] = Field(..., min_length=1, max_length=6)
     aktif: bool = True
+    #: (P247 §1) DONGU — verilirse bu kalip bir ROTASYONDUR.
+    #:
+    #: Gun uzunlugunda ADIM dizisi; her adim o gun calisilan dilimlerin
+    #: SIRA numaralari, bos dizi = TATIL. Ornekler:
+    #:   2 gece-2 gunduz-2 tatil : [[1],[1],[0],[0],[],[]]
+    #:   12/36 (gun asiri)       : [[0],[]]
+    #:   2 hf gece 12/36 + 2 hf gunduz 12/36 : 7x[[1],[]] + 7x[[0],[]]
+    #: SAAT TABANLI oranlar (12/36, 24/48, 12/24) gun katlarina acilir;
+    #: gerekce `docs/P247-kararlar.md` §1.
+    adimlar: list[list[int]] | None = Field(None, min_length=1, max_length=84)
+
+    @model_validator(mode="after")
+    def _adimlar_gecerli(self) -> "VardiyaKalibiCreate":
+        if self.adimlar is None:
+            return self
+        n = len(self.dilimler)
+        for adim in self.adimlar:
+            # Olmayan dilime isaret eden adim, uretimde SESSIZCE bos gun
+            # olurdu — kullanici "neden o gun kimse yok" diye arardi.
+            if any(i < 0 or i >= n for i in adim) or len(set(adim)) != len(adim):
+                raise ValueError("adimlar: gecersiz dilim sirasi")
+        if not any(self.adimlar):
+            # Hep tatil olan dongu hicbir sey uretmez.
+            raise ValueError("adimlar: en az bir calisma gunu olmali")
+        return self
 
 
 class VardiyaKalibiOut(BaseModel):
@@ -2539,6 +2589,108 @@ class VardiyaKalibiOut(BaseModel):
     ad: str
     dilimler: list[VardiyaDilim]
     aktif: bool
+    #: (P247 §1) NULL = klasik kalip, dolu = dongu.
+    adimlar: list[list[int]] | None = None
+
+
+class VardiyaDonguUygulaIstek(BaseModel):
+    """(P247 §1) Donguyu kisilere/ekibe baslangic tarihiyle ata.
+
+    EKIP KAYDIRMA: `kisiler` SIRALIDIR; i. kisinin dongusu `i * kaydirma`
+    gun kaydirilir ("3 kisi, 2'ser gun kaydir"). `ofsetler` verilirse
+    kisi basina kaydirmayi acikca belirler ve `kaydirma`yi ezer.
+    """
+
+    kalip_id: uuid.UUID
+    #: Uretimin ilk gunu; ofseti 0 olan kisi bu gun dongunun 0. adimindadir.
+    baslangic: date
+    kisiler: list[uuid.UUID] = Field(..., min_length=1, max_length=20)
+    kaydirma: int = Field(0, ge=0, le=83)
+    ofsetler: list[int] | None = Field(None, max_length=20)
+    molalar: list["VardiyaMola"] | None = None
+    not_metni: str | None = Field(None, max_length=500)
+    #: TRUE ise HICBIR SEY YAZILMAZ — onizleme (P207 K1.4: ayri uc degil).
+    kuru: bool = False
+    cakisanlari_atla: bool = False
+
+    @model_validator(mode="after")
+    def _ofset_uyumu(self) -> "VardiyaDonguUygulaIstek":
+        if len(set(self.kisiler)) != len(self.kisiler):
+            raise ValueError("kisiler: ayni kisi iki kez")
+        if self.ofsetler is not None and len(self.ofsetler) != len(self.kisiler):
+            raise ValueError("ofsetler kisiler ile ayni uzunlukta olmali")
+        if self.ofsetler is not None and any(o < 0 or o > 83 for o in self.ofsetler):
+            raise ValueError("ofsetler 0..83")
+        return self
+
+
+class VardiyaKapsamaAralik(BaseModel):
+    baslangic: time
+    #: 00:00 = gun sonu (24:00).
+    bitis: time
+
+
+class VardiyaKapsamaGun(BaseModel):
+    """(P247 §1) Bir gunun SAAT BAZINDA kapsamasi — kimsesiz dilimler."""
+
+    tarih: date
+    bos_dakika: int
+    bosluklar: list[VardiyaKapsamaAralik] = []
+
+
+class VardiyaDonguSonuc(BaseModel):
+    """Onizleme ya da uygulama sonucu — `VardiyaKalipSonuc` + kapsama."""
+
+    uygulandi: bool
+    parti_id: uuid.UUID | None = None
+    #: Uretilen/uretilecek ARALIK (kayan ufkun o anki sonu dahil).
+    baslangic: date
+    bitis: date
+    eklenecek: int = 0
+    eklenen: int = 0
+    cakisan: int = 0
+    zaten_var: int = 0
+    izinli: int = 0
+    #: durum: eklenecek | eklendi | cakisma | zaten_var | izinli
+    satirlar: list["VardiyaKalipGunDilim"] = []
+    kapsama: list[VardiyaKapsamaGun] = []
+    #: kisi -> ofset (gun). Web/mobil onizlemesi ayni hesabi gostersin diye.
+    ofsetler: dict[str, int] = {}
+    uyarilar: list[str] = []
+
+
+class VardiyaDonguAtamaOut(BaseModel):
+    id: uuid.UUID
+    kalip_id: uuid.UUID | None
+    kalip_ad: str | None = None
+    user_id: uuid.UUID
+    ad: str | None = None
+    referans: date
+    baslangic: date
+    bitis: date | None = None
+    uretildi_kadar: date | None = None
+    parti_id: uuid.UUID
+    #: aktif | sonlandi | geri_alindi
+    durum: str
+    #: Son uretimlerde ATLANAN gunler (izin/cakisma) — sessiz atlama yok.
+    atlanan: list[dict] = []
+
+
+class VardiyaDonguAtamaListResponse(BaseModel):
+    items: list[VardiyaDonguAtamaOut] = []
+    #: Kayan ufuk (gun) — ekranda "su tarihe kadar uretildi" aciklamasi.
+    ufuk_gun: int
+
+
+class VardiyaDonguSonlandirIstek(BaseModel):
+    #: Bu gunden ITIBAREN dongu yok (bu gun dahil satirlar iptal).
+    tarih: date
+
+
+class VardiyaDonguSonlandirSonuc(BaseModel):
+    id: uuid.UUID
+    bitis: date
+    iptal_edilen: int
 
 
 class VardiyaKalibiListResponse(BaseModel):
@@ -2787,6 +2939,9 @@ class VisitorOut(BaseModel):
     target_resident_ad: str | None = None
     # Cikis damgasi (G3) — null ise ziyaretci HALA ICERIDE.
     cikis_zamani: datetime | None = None
+    # (P247 §3) Cikisi beat isi kapatti (guvenlik cikisi GORMEDI) —
+    # ekran "Cikis kaydedilmedi" yazar; cikis_zamani kapanis anidir.
+    cikis_otomatik: bool = False
     created_at: datetime
 
 
@@ -2829,10 +2984,17 @@ class KargoCreate(BaseModel):
 
 
 class KargoUpdate(BaseModel):
-    """Sakin teslim isareti — tek gecerli hedef durum (geri donus yok);
-    teslim alan + zaman sunucuda damgalanir."""
+    """Teslim isareti — tek gecerli hedef durum (geri donus yok); zaman
+    sunucuda damgalanir.
+
+    (P247 §3) Iki yol: SAKIN "teslim aldim" der (teslim alan = kendisi) ya
+    da GUVENLIK "teslim ettim" der. Guvenlik paketi kime verdigini
+    `teslim_alan_user_id` ile belirtebilir (o dairenin AKTIF sakini olmali,
+    aksi 422); belirtmezse teslim alan bos kalir. Sakinin gonderdigi
+    `teslim_alan_user_id` YOK SAYILMAZ — 422 (baskasi adina imza atilmaz)."""
 
     durum: Literal["teslim_alindi"]
+    teslim_alan_user_id: uuid.UUID | None = None
 
 
 class KargoOut(BaseModel):
@@ -2855,6 +3017,13 @@ class KargoOut(BaseModel):
     # Teslim alan sakinin adi (join ile; teslim alinmadiysa null).
     teslim_alan_ad: str | None = None
     teslim_zamani: datetime | None = None
+    # (P247 §3) Teslimi guvenlik isaretlediyse o kisi + adi (sakin kendisi
+    # isaretlediyse null).
+    teslim_eden_user_id: uuid.UUID | None = None
+    teslim_eden_ad: str | None = None
+    # (P247 §3) `bekliyor` ve kaydin uzerinden KARGO_GECIKME_GUN gecti —
+    # durum DEGISMEZ (paket hala kapida); yalniz listede isaretlenir.
+    gecikmis: bool = False
     created_at: datetime
 
 

@@ -15,6 +15,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..hiz_siniri import ARAMA_SINIRI
 from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
@@ -381,7 +382,7 @@ async def arsa_payi_toplu(
     )
 
 
-@router.get("/ara", response_model=list[DaireAramaOut])
+@router.get("/ara", response_model=list[DaireAramaOut], dependencies=[Depends(ARAMA_SINIRI)])
 async def daire_ara(
     q: str = Query("", max_length=100),
     limit: int = Query(20, ge=1, le=50),

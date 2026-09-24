@@ -100,7 +100,13 @@ async def _alicilari_bul(
     return [k for k in kisiler if k.id != haric]
 
 
-async def _govde(db: AsyncSession, alarm: PanikAlarm) -> PanikAlarmOut:
+#: (P247 §6) Alarmi basanin TELEFONUNU gorebilen roller.
+_TELEFON_GORUR = frozenset({"admin", "yonetici", "security", "guvenlik_amiri"})
+
+
+async def _govde(
+    db: AsyncSession, alarm: PanikAlarm, izleyen: AppUser
+) -> PanikAlarmOut:
     """Alarm -> yanit govdesi (adlar, daire, konum adi, sayaclar)."""
     out = PanikAlarmOut.model_validate(alarm)
     out.iptal_penceresi_sn = IPTAL_PENCERESI_SN
@@ -118,7 +124,12 @@ async def _govde(db: AsyncSession, alarm: PanikAlarm) -> PanikAlarmOut:
             # riza araniyor; burada alarmi BASAN kisiye ULASMAK sozkonusu.
             # Alici kumesi zaten guvenlik+yonetim ile sinirli ve her
             # gosterim denetim kaydinda.
-            out.olusturan_telefon = kisi.telefon
+            #
+            # (P247 §6) YALNIZ MUDAHALE EDEN ROLLER: P243 §5c ile bina geneli
+            # kategoriler (deprem, yangin, gaz, tahliye) TUM SITEYE gidiyor;
+            # sakin alicilar alarmi basan komsunun telefonunu goruyordu.
+            if izleyen.role in _TELEFON_GORUR or izleyen.id == kisi.id:
+                out.olusturan_telefon = kisi.telefon
             out.son_24s_yanlis_alarm = int(
                 (
                     await db.execute(
@@ -224,7 +235,7 @@ async def tetikle(
         )
         if yeterince_eski:
             _yayin_planla(acik.id, user.tenant_id, 0)
-        return await _govde(db, acik)
+        return await _govde(db, acik, user)
 
     unit_id = body.unit_id
     if body.tip == "sakin" and unit_id is None:
@@ -273,7 +284,7 @@ async def tetikle(
         alarm.durum = "iptal"
         alarm.iptal_at = _simdi()
         await db.flush()
-        return await _govde(db, alarm)
+        return await _govde(db, alarm, user)
 
     if not _yayin_planla(alarm.id, user.tenant_id, IPTAL_PENCERESI_SN):
         # Broker yok -> SENKRON yayin. Iptal penceresi kaybedilir ama
@@ -282,7 +293,7 @@ async def tetikle(
 
         await yayinla_senkron(db, alarm)
 
-    return await _govde(db, alarm)
+    return await _govde(db, alarm, user)
 
 
 @router.post("/{alarm_id}/iptal", response_model=PanikAlarmOut)
@@ -314,7 +325,7 @@ async def iptal(
         from ..panik_yayin import yanlis_alarm_duyur
 
         await yanlis_alarm_duyur(db, alarm)
-    return await _govde(db, alarm)
+    return await _govde(db, alarm, user)
 
 
 @router.post("/{alarm_id}/gordum", response_model=PanikAlarmOut)
@@ -342,7 +353,7 @@ async def gordum(
             db, user, Action.PANIK_GORULDU, resource_type="panik_alarm",
             resource_id=alarm.id,
         )
-    return await _govde(db, alarm)
+    return await _govde(db, alarm, user)
 
 
 @router.post("/{alarm_id}/mudahale", response_model=PanikAlarmOut)
@@ -380,7 +391,7 @@ async def mudahale(
         db, user, Action.PANIK_MUDAHALE, resource_type="panik_alarm",
         resource_id=alarm.id,
     )
-    return await _govde(db, alarm)
+    return await _govde(db, alarm, user)
 
 
 @router.post("/{alarm_id}/kapat", response_model=PanikAlarmOut)
@@ -417,7 +428,7 @@ async def kapat(
     from ..panik_yayin import kapanis_duyur
 
     await kapanis_duyur(db, alarm)
-    return await _govde(db, alarm)
+    return await _govde(db, alarm, user)
 
 
 @router.get("/aktif", response_model=list[PanikAlarmOut])
@@ -451,7 +462,7 @@ async def aktifler(
         .order_by(PanikAlarm.created_at.desc(), PanikAlarm.id)
         .limit(20)
     )
-    return [await _govde(db, a) for a in (await db.execute(sorgu)).scalars().all()]
+    return [await _govde(db, a, user) for a in (await db.execute(sorgu)).scalars().all()]
 
 
 @router.get("", response_model=PanikListResponse)
@@ -488,7 +499,7 @@ async def liste(
     ).scalars().all()
     return PanikListResponse(
         meta=PageMetaOut(limit=limit, offset=offset, total=toplam),
-        items=[await _govde(db, a) for a in satirlar],
+        items=[await _govde(db, a, user) for a in satirlar],
     )
 
 
@@ -509,4 +520,4 @@ async def detay(
         ).scalar_one_or_none()
         if alici is None:
             raise APIError(404, "not_found", "panik_bulunamadi")
-    return await _govde(db, alarm)
+    return await _govde(db, alarm, user)

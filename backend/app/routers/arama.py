@@ -41,6 +41,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..hiz_siniri import ARAMA_SINIRI
 from ..deps import get_current_user, get_tenant_db
 from ..models import (
     AppUser,
@@ -367,7 +368,7 @@ KAYNAKLAR: tuple[Kaynak, ...] = (
 )
 
 
-@router.get("/arama", response_model=AramaSonucu)
+@router.get("/arama", response_model=AramaSonucu, dependencies=[Depends(ARAMA_SINIRI)])
 async def arama(
     q: str = Query(min_length=2, max_length=100),
     db: AsyncSession = Depends(get_tenant_db),

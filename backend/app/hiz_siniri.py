@@ -41,6 +41,7 @@ from __future__ import annotations
 import logging
 
 import redis.asyncio as aioredis
+from fastapi import Depends, Request
 
 from .errors import APIError
 
@@ -166,3 +167,52 @@ async def kod_istegi_geri_al(
         await redis.decr(f"hiz:{kapsam}:{anahtar_kimlik}")
     except Exception as e:  # pragma: no cover
         _log.warning("kod sayaci geri alinamadi: %s", e)
+
+
+# ========================================================================= #
+# (P247 §6) KULLANICI BASINA HIZ SINIRI — arama ve disa aktarim
+# ========================================================================= #
+# Uc guvenlik envanterinde arama (`/arama`, `/units/ara`, `/konum/ara`) ve
+# disa aktarim/PDF uclari SINIRSIZDI. Ikisi de tek istekle cok veri
+# ceker/uretir: arama bir "rehber cekme" aracina, rapor/PDF ucu ise bir
+# kaynak tuketme aracina donusebilir. Sinir KIMLIGE baglidir (jeton `sub`):
+# IP'ye guvenilmez (bkz. modul basligi).
+
+ISTEK_ASILDI = APIError(429, "rate_limited", "cok_fazla_istek_genel")
+
+
+def kullanici_siniri(kapsam: str, sinir: int, pencere_sn: int):
+    """FastAPI bagimliligi: `kapsam` icin kullanici basina `sinir`/`pencere_sn`.
+
+    Uretilen islev `hiz_siniri_kapsami` ozniteligini tasir — uc guvenlik
+    kilidi (`test_p247_uc_guvenlik.py`) hangi ucun sinirli oldugunu
+    KODDAN okur, beyandan degil.
+    """
+    from .deps import get_access_claims
+
+    # `Request` MODUL duzeyinde ice aktarildi: bu dosya `from __future__
+    # import annotations` kullaniyor ve FastAPI tip ipucunu fonksiyonun
+    # GLOBAL'lerinde cozer — yerel import edilen `Request` cozulemeyince
+    # parametre SORGU parametresi sanildi (422 "query.request").
+    async def _dep(request: Request, claims=Depends(get_access_claims)) -> None:
+        redis = getattr(request.app.state, "redis", None)
+        if redis is None:
+            return
+        anahtar = f"hiz:k:{kapsam}:{claims.get('sub')}"
+        try:
+            sayi = await redis.incr(anahtar)
+            if sayi == 1:
+                await redis.expire(anahtar, pencere_sn)
+        except Exception as e:  # pragma: no cover - fail-open
+            _log.warning("kullanici hiz sayaci yazilamadi: %s", e)
+            return
+        if sayi > sinir:
+            raise ISTEK_ASILDI
+
+    _dep.hiz_siniri_kapsami = kapsam  # type: ignore[attr-defined]
+    return _dep
+
+
+#: Hazir kapsamlar — sayilar mesru kullanimin ~10 kati.
+ARAMA_SINIRI = kullanici_siniri("arama", 120, 60)
+DISA_AKTARIM_SINIRI = kullanici_siniri("disa_aktarim", 60, 60)

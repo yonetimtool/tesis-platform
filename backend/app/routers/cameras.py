@@ -218,6 +218,17 @@ def _out(obj: Camera, rol: str | None = None) -> CameraOut:
         # sizintiyi IKINCI bir alanla yeniden acmak olurdu.
         if out.alt_stream_url:
             out.alt_stream_url = "rtsp://***"
+    # (P247 §6) NVR KAYIT ADRESI DE: ucuncu alan, ayni sizinti sinifi.
+    # Izleyici rollere (sakin dahil) donuyordu; `kul:par@` ya da ic ag
+    # adresini tasiyabilir ve izleyici onu hicbir sey icin kullanmaz
+    # (kayit oynatma sunucu vekilinden gider).
+    if rol not in ("admin", "yonetici"):
+        out.kayit_adres = None
+        out.kayit_kullanici = None
+        # (P247 §6) AKIS KULLANICI ADI DA: olculdu — sakin, tesis gorevlisi,
+        # guvenlik ve amir `stream_kullanici`yi DUZ okuyordu (adres maskeli
+        # iken kimligin yarisi ayri alandan siziyordu).
+        out.stream_kullanici = None
     return out
 
 

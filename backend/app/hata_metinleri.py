@@ -516,6 +516,27 @@ METINLER: dict[str, dict[str, str]] = {
     },
     # (P202) Surum politikasi platformu 'ios' | 'android' ile SINIRLI.
     # (P203 §2) Parola deneme yuzeyi (tesis listesi). "Kod istegi" DEGIL.
+    "istek_govdesi_cok_buyuk": {
+        "tr": "İstek gövdesi çok büyük.",
+        "en": "The request body is too large.",
+        "ar": "نص الطلب كبير جدًا.",
+        "ru": "Тело запроса слишком большое.",
+        "de": "Der Anfrageinhalt ist zu groß.",
+        "fr": "Le corps de la requête est trop volumineux.",
+        "es": "El cuerpo de la solicitud es demasiado grande.",
+    },
+    # (P247 §6) Arama / disa aktarim kullanici siniri. `cok_fazla_istek`
+    # P127'de tanitim formu icin ALINMIS ("cok fazla mesaj") — ayni anahtar
+    # sozlukte ikinci kez tanimlaninca sessizce eziliyordu.
+    "cok_fazla_istek_genel": {
+        "tr": "Kısa sürede çok fazla istek gönderildi. Lütfen biraz bekleyin.",
+        "en": "Too many requests in a short time. Please wait a moment.",
+        "ar": "تم إرسال طلبات كثيرة جدًا في وقت قصير. يرجى الانتظار قليلًا.",
+        "ru": "Слишком много запросов за короткое время. Подождите немного.",
+        "de": "Zu viele Anfragen in kurzer Zeit. Bitte warten Sie einen Moment.",
+        "fr": "Trop de requêtes en peu de temps. Veuillez patienter un instant.",
+        "es": "Demasiadas solicitudes en poco tiempo. Espere un momento.",
+    },
     "cok_fazla_deneme": {
         "tr": "Çok fazla deneme yapıldı. Lütfen bir süre sonra tekrar deneyin.",
         "en": "Too many attempts. Please try again later.",
@@ -526,6 +547,24 @@ METINLER: dict[str, dict[str, str]] = {
         "es": "Demasiados intentos. Inténtelo de nuevo más tarde.",
     },
     # (P203 §2) Uye olunmayan tesise gecis.
+    "kisi_bu_tesiste_baska_rolde": {
+        "tr": "Bu kişi bu tesiste başka bir rolde kayıtlı. Bir kişi bir tesiste tek rolde olabilir (yalnız yönetici aynı zamanda sakin olabilir).",
+        "en": "This person is already registered in another role at this site. A person can hold one role per site (only a manager can also be a resident).",
+        "ar": "هذا الشخص مسجل بدور آخر في هذا الموقع. يمكن للشخص أن يشغل دورًا واحدًا لكل موقع (المدير فقط يمكن أن يكون ساكنًا أيضًا).",
+        "ru": "Этот человек уже зарегистрирован на объекте в другой роли. На одном объекте у человека одна роль (только управляющий может быть также жителем).",
+        "de": "Diese Person ist in dieser Anlage bereits in einer anderen Rolle registriert. Eine Person hat pro Anlage eine Rolle (nur ein Verwalter kann zugleich Bewohner sein).",
+        "fr": "Cette personne est déjà inscrite avec un autre rôle sur ce site. Une personne a un seul rôle par site (seul un gestionnaire peut aussi être résident).",
+        "es": "Esta persona ya está registrada con otro rol en esta instalación. Una persona tiene un solo rol por instalación (solo un administrador puede ser también residente).",
+    },
+    "rol_gecisi_yok": {
+        "tr": "Bu hesap için rol geçişi yok.",
+        "en": "Role switching is not available for this account.",
+        "ar": "تبديل الدور غير متاح لهذا الحساب.",
+        "ru": "Смена роли недоступна для этой учётной записи.",
+        "de": "Für dieses Konto ist kein Rollenwechsel möglich.",
+        "fr": "Le changement de rôle n’est pas disponible pour ce compte.",
+        "es": "El cambio de rol no está disponible para esta cuenta.",
+    },
     "tesis_uyeligi_yok": {
         "tr": "Bu tesise erişiminiz yok.",
         "en": "You do not have access to this facility.",
@@ -534,6 +573,61 @@ METINLER: dict[str, dict[str, str]] = {
         "de": "Sie haben keinen Zugriff auf diese Anlage.",
         "fr": "Vous n'avez pas accès à cette résidence.",
         "es": "No tiene acceso a esta comunidad.",
+    },
+    # (P247 §1) Vardiya dongusu (rotasyon).
+    "vardiya_kalibi_kullanimda": {
+        "tr": "Bu kalıp etkin bir döngüde kullanılıyor; önce döngüyü sonlandırın ya da geri alın.",
+        "en": "This pattern is used by an active rotation; end or undo the rotation first.",
+        "ar": "هذا النمط مستخدم في تناوب نشط؛ أنهِ التناوب أو تراجع عنه أولاً.",
+        "ru": "Шаблон используется в активной ротации; сначала завершите или отмените ротацию.",
+        "de": "Dieses Muster wird von einer aktiven Rotation verwendet; beenden oder widerrufen Sie zuerst die Rotation.",
+        "fr": "Ce modèle est utilisé par une rotation active ; terminez ou annulez d'abord la rotation.",
+        "es": "Esta plantilla la usa una rotación activa; finalice o deshaga primero la rotación.",
+    },
+    "vardiya_kalibi_dongu": {
+        "tr": "Bu kalıp bir döngü; kişilere döngü olarak atayın.",
+        "en": "This pattern is a rotation; assign it to people as a rotation.",
+        "ar": "هذا النمط تناوب؛ عيّنه للأشخاص كتناوب.",
+        "ru": "Этот шаблон — ротация; назначьте его сотрудникам как ротацию.",
+        "de": "Dieses Muster ist eine Rotation; weisen Sie es Personen als Rotation zu.",
+        "fr": "Ce modèle est une rotation ; affectez-le aux personnes en tant que rotation.",
+        "es": "Esta plantilla es una rotación; asígnela a las personas como rotación.",
+    },
+    "vardiya_kalibi_dongu_degil": {
+        "tr": "Seçilen kalıp bir döngü değil; önce günlük adımlarını tanımlayın.",
+        "en": "The selected pattern is not a rotation; define its daily steps first.",
+        "ar": "النمط المحدد ليس تناوبًا؛ حدّد خطواته اليومية أولاً.",
+        "ru": "Выбранный шаблон не является ротацией; сначала задайте его дневные шаги.",
+        "de": "Das gewählte Muster ist keine Rotation; legen Sie zuerst die Tagesschritte fest.",
+        "fr": "Le modèle choisi n'est pas une rotation ; définissez d'abord ses étapes journalières.",
+        "es": "La plantilla elegida no es una rotación; defina primero sus pasos diarios.",
+    },
+    "vardiya_dongu_zaten_var": {
+        "tr": "Seçilen kişilerden birinin bu tarihte etkin bir döngüsü var; önce onu sonlandırın.",
+        "en": "One of the selected people already has an active rotation on this date; end it first.",
+        "ar": "لدى أحد الأشخاص المحددين تناوب نشط في هذا التاريخ؛ أنهِه أولاً.",
+        "ru": "У одного из выбранных сотрудников уже есть активная ротация на эту дату; сначала завершите её.",
+        "de": "Eine der gewählten Personen hat an diesem Datum bereits eine aktive Rotation; beenden Sie diese zuerst.",
+        "fr": "L'une des personnes choisies a déjà une rotation active à cette date ; terminez-la d'abord.",
+        "es": "Una de las personas elegidas ya tiene una rotación activa en esta fecha; finalícela primero.",
+    },
+    "vardiya_dongu_atamasi_bulunamadi": {
+        "tr": "Döngü ataması bulunamadı.",
+        "en": "Rotation assignment not found.",
+        "ar": "لم يتم العثور على تعيين التناوب.",
+        "ru": "Назначение ротации не найдено.",
+        "de": "Rotationszuweisung nicht gefunden.",
+        "fr": "Affectation de rotation introuvable.",
+        "es": "No se encontró la asignación de rotación.",
+    },
+    "vardiya_dongu_seri_desteklenmez": {
+        "tr": "Döngüden gelen vardiyada yalnız o gün düzenlenebilir; saatler değişecekse döngüyü sonlandırıp yeniden atayın.",
+        "en": "A rotation shift can only be edited for that day; to change the hours, end the rotation and assign it again.",
+        "ar": "لا يمكن تعديل وردية التناوب إلا لذلك اليوم؛ لتغيير الساعات أنهِ التناوب وعيّنه من جديد.",
+        "ru": "Смену из ротации можно изменить только на этот день; чтобы изменить часы, завершите ротацию и назначьте её заново.",
+        "de": "Eine Rotationsschicht kann nur für diesen Tag bearbeitet werden; um die Zeiten zu ändern, beenden Sie die Rotation und weisen Sie sie neu zu.",
+        "fr": "Un poste issu d'une rotation ne se modifie que pour ce jour ; pour changer les horaires, terminez la rotation et réaffectez-la.",
+        "es": "Un turno de rotación solo puede editarse para ese día; para cambiar el horario, finalice la rotación y vuelva a asignarla.",
     },
     # (P203 §4) Vardiya planlama.
     "vardiya_kalibi_ad_kullanimda": {
@@ -710,15 +804,6 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Entrée du planning introuvable.",
         "es": "No se encontró la entrada del plan de turnos.",
     },
-    "personel_bulunamadi": {
-        "tr": "Personel bulunamadı.",
-        "en": "Staff member not found.",
-        "ar": "لم يتم العثور على الموظف.",
-        "ru": "Сотрудник не найден.",
-        "de": "Mitarbeiter nicht gefunden.",
-        "fr": "Employé introuvable.",
-        "es": "No se encontró al empleado.",
-    },
     # (P203 §5) Mesai gideri yazilirken ucret tanimsiz.
     "personel_ucreti_tanimsiz": {
         "tr": "Bu personelin ücreti tanımlı değil. Aylık ya da saatlik ücret girin.",
@@ -792,15 +877,6 @@ METINLER: dict[str, dict[str, str]] = {
         "de": "Verletzung einer Wertebedingung.",
         "fr": "Violation d'une contrainte de valeur.",
         "es": "Violación de una restricción de valor.",
-    },
-    "zorunlu_alan_eksik": {
-        "tr": "Zorunlu alan eksik.",
-        "en": "A required field is missing.",
-        "ar": "حقل مطلوب مفقود.",
-        "ru": "Отсутствует обязательное поле.",
-        "de": "Ein Pflichtfeld fehlt.",
-        "fr": "Un champ obligatoire est manquant.",
-        "es": "Falta un campo obligatorio.",
     },
     "eposta_gerekli": {
         "tr": "E-posta adresi gerekli. Sağlayıcınız adresinizi paylaşmadı; lütfen e-posta ile kayıt yolunu kullanın.",

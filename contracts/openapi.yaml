@@ -4021,7 +4021,13 @@ paths:
           application/json:
             schema: { $ref: "#/components/schemas/PasswordChangeRequest" }
       responses:
-        "204": { description: Parola guncellendi }
+        "200":
+          description: >-
+            Parola guncellendi. (P247 §4) Bu ana kadar verilmis TUM oturumlar
+            (bu cihazinki dahil) iptal edilir; istemci donen taze cifti saklar.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenPair" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "422": { $ref: "#/components/responses/ValidationError" }
@@ -5665,6 +5671,11 @@ paths:
           in: query
           required: false
           schema: { type: string, enum: [bekliyor, teslim_alindi] }
+        - name: gecikmis
+          in: query
+          required: false
+          description: (P247 §3) true => yalniz bekliyor ve KARGO_GECIKME_GUN'den eski kayitlar
+          schema: { type: boolean }
         - name: unit_id
           in: query
           required: false
@@ -5741,15 +5752,19 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
     patch:
       tags: [kargo]
-      summary: Teslim aldim isaretle (YALNIZ o dairenin aktif sakini)
+      summary: Teslim isaretle (o dairenin aktif sakini VEYA security)
       description: |
-        Sakin teslim isareti: durum=teslim_alindi (tek gecerli deger).
-        teslim_alan_user_id + teslim_zamani sunucuda damgalanir. Atomik
-        durum='bekliyor' kosullu UPDATE: zaten teslim alinmis kayda ikinci
-        isaret 409 — kimin teslim aldigi DEGISMEZ (ayni dairede coklu sakin
-        guvenli). BASKA dairenin sakini 404 alir (varlik sizdirilmaz).
-        Personel rolleri bu uca ERISEMEZ (403). Teslimde geri-push YOK
-        (urun karari — kayit-push'u yeterli).
+        Teslim isareti: durum=teslim_alindi (tek gecerli deger).
+        Sakin: teslim_alan_user_id = kendisi; BASKA dairenin sakini 404 alir
+        (varlik sizdirilmaz).
+        (P247 §3) security: paketi kapida sakine VEREN odur; teslim_eden_user_id
+        damgalanir, teslim_alan_user_id istege bagli (o dairenin aktif sakini,
+        aksi 422). Guvenlik teslim ettiginde dairenin aktif sakinlerine
+        "kargo_teslim" push + kalici bildirim gider; sakin kendisi
+        isaretlediginde push YOK.
+        Atomik durum='bekliyor' kosullu UPDATE: zaten teslim alinmis kayda
+        ikinci isaret 409 — kimin teslim aldigi DEGISMEZ. Diger personel
+        rolleri (amir, gorevli, yonetim) ERISEMEZ (403).
       requestBody:
         required: true
         content:
@@ -10063,6 +10078,78 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
+  /vardiya-plani/dongu-uygula:
+    post:
+      tags: [vardiya]
+      summary: (P247 §1) Donguyu kisilere/ekibe ata — onizleme + suresiz uretim (admin + yonetici + amir)
+      description: >
+        Dongu kalibi (`adimlar` dolu) SIRALI kisilere `kaydirma` gun arayla
+        (ya da `ofsetler` ile) atanir. `kuru=true` hicbir sey yazmaz ve ayni
+        hesabi doner; yanit gun basina KIMSESIZ saat araliklarini
+        (`kapsama`) tasir. Satirlar bugun+62 gune kadar TASLAK uretilir,
+        sonrasini beat her gece ekler. Izinli gun uretilmez ama dongu
+        kaymaz (adim takvimden hesaplanir). Cakisma sessizce atlanmaz.
+        Tum satirlar ve atamalar tek `parti_id` tasir; geri alma onu kullanir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VardiyaDonguUygula" }
+      responses:
+        "200":
+          description: Onizleme ya da uygulama sonucu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VardiyaDonguSonuc" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /vardiya-plani/dongu-atamalari:
+    get:
+      tags: [vardiya]
+      summary: (P247 §1) Dongu atamalari (yonetim tumunu, saha yalniz kendisini gorur)
+      responses:
+        "200":
+          description: Atamalar + kayan ufuk
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VardiyaDonguAtamaListe" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /vardiya-plani/dongu-atamalari/{atama_id}/sonlandir:
+    post:
+      tags: [vardiya]
+      summary: (P247 §1) Bir kisinin dongusunu tarihten itibaren bitir (admin + yonetici + amir)
+      description: >
+        Yalniz BU atamanin `tarih` ve sonrasindaki planli satirlari iptal
+        edilir (silinmez); ekibin geri kalaninin dongusu surer.
+      parameters:
+        - { name: atama_id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tarih]
+              properties:
+                tarih: { type: string, format: date }
+      responses:
+        "200":
+          description: Sonlandirildi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string, format: uuid }
+                  bitis: { type: string, format: date }
+                  iptal_edilen: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /vardiya-plani/{plan_id}:
     patch:
       tags: [vardiya]
@@ -10193,6 +10280,32 @@ paths:
               schema: { $ref: "#/components/schemas/TokenPair" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+  /me/rol-gecis:
+    post:
+      tags: [me]
+      summary: "(P247 §2) Yonetici <-> sakin modu gecisi — yeni yetki baglami"
+      description: >
+        Yalniz YONETICI + aktif daire bagi olan kisi gecebilir (`roller`);
+        digerleri 403 `rol_gecisi_yok`. Gecis YENI bir yetki baglami acar:
+        mevcut erisim jetonu kara listeye alinir, verilen refresh ailesi
+        kapatilir ve aktif rolu tasiyan yeni cift doner. Sunucu aktif rolu
+        ZORLAR — sakin modunda yonetim uclari 403. Mod refresh jetonunda
+        (`arol`) tasinir; yenilemede korunur. Gecis denetime yazilir
+        (`rol_gecisi`, onceki/yeni).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RolGecisIstek" }
+      responses:
+        "200":
+          description: Aktif rol icin yeni jeton cifti
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenPair" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /surum/kontrol:
     post:
       tags: [surum]
@@ -16023,6 +16136,11 @@ paths:
         istemciye verilmez).
 
         Bilinen TUM roller kendi kaydini gorur.
+
+        (P247 §2) `roller`: kisinin gecebilecegi roller, ASIL rol once.
+        Yalniz yonetici + aktif daire bagi varsa `[yonetici, resident]`;
+        digerlerinde tek eleman. Profil menusundeki Yonetici/Sakin secimi
+        yalniz iki elemanliyken cizilir.
       responses:
         '200': { description: kullanici }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -18650,6 +18768,16 @@ components:
           maxItems: 6
           items: { $ref: "#/components/schemas/VardiyaDilim" }
         aktif: { type: boolean, default: true }
+        adimlar:
+          type: array
+          nullable: true
+          minItems: 1
+          maxItems: 84
+          description: >
+            (P247 §1) DONGU — gun uzunlugunda adim dizisi; her adim o gun
+            calisilan dilimlerin sira numaralari, bos dizi = tatil. 12/36 =
+            [[0],[]]. NULL = klasik kalip.
+          items: { type: array, items: { type: integer, minimum: 0 } }
     VardiyaKalip:
       type: object
       required: [id, ad, dilimler, aktif]
@@ -18660,6 +18788,88 @@ components:
           type: array
           items: { $ref: "#/components/schemas/VardiyaDilim" }
         aktif: { type: boolean }
+        adimlar:
+          type: array
+          nullable: true
+          items: { type: array, items: { type: integer } }
+    VardiyaDonguUygula:
+      type: object
+      required: [kalip_id, baslangic, kisiler]
+      properties:
+        kalip_id: { type: string, format: uuid }
+        baslangic: { type: string, format: date }
+        kisiler:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items: { type: string, format: uuid }
+        kaydirma: { type: integer, minimum: 0, maximum: 83, default: 0 }
+        ofsetler:
+          type: array
+          nullable: true
+          items: { type: integer, minimum: 0, maximum: 83 }
+        molalar:
+          type: array
+          nullable: true
+          items: { type: object }
+        not_metni: { type: string, nullable: true, maxLength: 500 }
+        kuru: { type: boolean, default: false }
+        cakisanlari_atla: { type: boolean, default: false }
+    VardiyaDonguSonuc:
+      type: object
+      required: [uygulandi, baslangic, bitis]
+      properties:
+        uygulandi: { type: boolean }
+        parti_id: { type: string, format: uuid, nullable: true }
+        baslangic: { type: string, format: date }
+        bitis: { type: string, format: date }
+        eklenecek: { type: integer }
+        eklenen: { type: integer }
+        cakisan: { type: integer }
+        zaten_var: { type: integer }
+        izinli: { type: integer }
+        satirlar:
+          type: array
+          items: { $ref: "#/components/schemas/VardiyaKalipSatir" }
+        kapsama:
+          type: array
+          items:
+            type: object
+            properties:
+              tarih: { type: string, format: date }
+              bos_dakika: { type: integer }
+              bosluklar:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    baslangic: { type: string }
+                    bitis: { type: string }
+        ofsetler:
+          type: object
+          additionalProperties: { type: integer }
+        uyarilar: { type: array, items: { type: string } }
+    VardiyaDonguAtamaListe:
+      type: object
+      properties:
+        ufuk_gun: { type: integer }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string, format: uuid }
+              kalip_id: { type: string, format: uuid, nullable: true }
+              kalip_ad: { type: string, nullable: true }
+              user_id: { type: string, format: uuid }
+              ad: { type: string, nullable: true }
+              referans: { type: string, format: date }
+              baslangic: { type: string, format: date }
+              bitis: { type: string, format: date, nullable: true }
+              uretildi_kadar: { type: string, format: date, nullable: true }
+              parti_id: { type: string, format: uuid }
+              durum: { type: string, enum: [aktif, sonlandi, geri_alindi] }
+              atlanan: { type: array, items: { type: object } }
     VardiyaKalipListe:
       type: object
       properties:
@@ -18842,6 +19052,16 @@ components:
       required: [tenant_id]
       properties:
         tenant_id: { type: string, format: uuid }
+    RolGecisIstek:
+      type: object
+      required: [rol]
+      properties:
+        rol: { type: string, enum: [yonetici, resident] }
+        refresh_token:
+          type: string
+          nullable: true
+          maxLength: 4096
+          description: Verilirse eski refresh ailesi sunucuda kapatilir.
     SurumKontrolIstek:
       type: object
       required: [platform, surum]
@@ -20702,6 +20922,12 @@ components:
             (G3, ADDITIVE) Cikis damgasi. **null => ziyaretci HALA ICERIDE**
             ("icerde" sayisi bu alandan turer). `POST /visitors/{id}/checkout`
             ile doldurulur; ikinci damga 409 (ilk deger degismez).
+        cikis_otomatik:
+          type: boolean
+          description: >
+            (P247 §3) true => cikisi guvenlik DEGIL beat isi kapatti (24 saat
+            cikis damgalanmadi): "cikis kaydedilmedi". cikis_zamani kapanis
+            anidir, gercek cikis degil.
         created_at: { type: string, format: date-time }
     VisitorCreate:
       type: object
@@ -20777,6 +21003,17 @@ components:
           description: Teslim alan sakin (teslim alinmadiysa null)
         teslim_alan_ad: { type: string, nullable: true }
         teslim_zamani: { type: string, format: date-time, nullable: true }
+        teslim_eden_user_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: (P247 §3) Teslimi isaretleyen security (sakin kendisi isaretlediyse null)
+        teslim_eden_ad: { type: string, nullable: true }
+        gecikmis:
+          type: boolean
+          description: >
+            (P247 §3) durum=bekliyor ve kayit KARGO_GECIKME_GUN (varsayilan 3)
+            gunden eski. Durum DEGISMEZ; yalniz listede isaretlenir.
         created_at: { type: string, format: date-time }
     KargoCreate:
       type: object
@@ -20798,10 +21035,21 @@ components:
         notlar: { type: string, nullable: true, minLength: 1, maxLength: 1000 }
     KargoUpdate:
       type: object
-      description: Sakin teslim isareti — tek gecerli deger (geri donus yok)
+      description: >
+        Teslim isareti — tek gecerli deger (geri donus yok). (P247 §3)
+        Sakin "teslim aldim" ya da security "teslim ettim" gonderir.
       required: [durum]
       properties:
         durum: { type: string, enum: [teslim_alindi] }
+        teslim_alan_user_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: >
+            (P247 §3) Yalniz security icin anlamli: paketi alan sakin (o
+            dairenin AKTIF sakini olmali, aksi 422 invalid_reference).
+            Verilmezse teslim alan bos kalir. Sakin kendisinden baskasini
+            verirse 422.
 
     UnitAccessRequest:
       type: object

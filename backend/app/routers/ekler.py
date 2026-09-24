@@ -33,6 +33,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..deps import get_current_user, get_tenant_db, require_role
 from ..errors import APIError
+from ..roller import gorunur_roller
 from ..models import (
     AppUser,
     BakimEkipmani,
@@ -52,12 +53,14 @@ from ..schemas import EkCreate, EkListResponse, EkOut
 # Rol kumeleri ILGILI ROUTERDAN okunur — kopyalanmaz (bkz. modul basligi).
 from .blocks import _MANAGER as _BLOK_YAZAR, _READER as _BLOK_OKUR
 from .complaints import _MANAGER as _TALEP_YAZAR, _READER as _TALEP_OKUR
+from .complaints import _amir_kapsami as _talep_amir_kapsami, _own_scope as _talep_kendi_kapsami
 # (P206 §1) `_ADMIN` -> `_YAZMA`: finansal yazma yoneticiye acildi
 # ve icra EKI de o kumeyi izler (kume ILGILI ROUTERDAN okunur,
 # kopyalanmaz — modul basligindaki kural).
 from .finans import _YAZMA as _ICRA_YAZAR, _OKUMA as _ICRA_OKUR
 from .muhasebe_tanimlari import _TANIM_OKUR as _FIRMA_OKUR, _YONETIM as _FIRMA_YAZAR
 from .tasks import _READER as _GOREV_OKUR, _WRITER as _GOREV_YAZAR
+from .tasks import _assignee_visibility as _gorev_gorunurlugu
 from .units import _LAYOUT_EDITOR as _DAIRE_YAZAR, _LAYOUT_READER as _DAIRE_OKUR
 from .users import _READER as _KISI_OKUR, _USER_CREATOR as _KISI_YAZAR
 from .bakim import _OKUR as _BAKIM_OKUR, _YAZAR as _BAKIM_YAZAR
@@ -156,6 +159,28 @@ _YAZABILENLER: frozenset[str] = frozenset().union(
 _YAZMA_KAPISI = require_role(*sorted(_YAZABILENLER))
 
 
+def _kayit_kapsami(stmt, varlik_tipi: str, user: AppUser):
+    """(P247 §6) KAYIT KAPSAMI — rol yetmez, UST KAYDI GOREBILMELI.
+
+    OLCULEN (IDOR): rol kumesi ana routerdan okunuyordu ama o routerin
+    KAYIT kapsami okunmuyordu. Sakin B, sakin A'nin talebine yazilan
+    notlari `?varlik_tipi=complaint&varlik_id=<A>` ile okuyordu; guvenlik
+    gorevlisi baskasina atanmis gorevin notlarini, amir ekibi disindaki
+    kisilerin (sakin dahil) kisi notlarini okuyup yazabiliyordu. Kapsam
+    ana routerin KENDI yardimcisindan gelir (kopyalanmaz): tek kaynak.
+    Kapsam disi ust kayit 404 — varligi da sizmaz.
+    """
+    if varlik_tipi == "task":
+        kosul = _gorev_gorunurlugu(user)
+        return stmt if kosul is None else stmt.where(kosul)
+    if varlik_tipi == "complaint":
+        return _talep_amir_kapsami(_talep_kendi_kapsami(stmt, user), user)
+    if varlik_tipi == "app_user":
+        gorunur = gorunur_roller(user.role)
+        return stmt if gorunur is None else stmt.where(AppUser.role.in_(gorunur))
+    return stmt
+
+
 async def _ust_kaydi_dogrula(
     db: AsyncSession, varlik_tipi: str, varlik_id: uuid.UUID, user: AppUser, yazma: bool
 ) -> None:
@@ -172,7 +197,9 @@ async def _ust_kaydi_dogrula(
         raise _YETKI
     # RLS tenant'i zaten kapatiyor; burada YALNIZ varlik sorgulaniyor.
     varmi = (
-        await db.execute(select(v.model.id).where(v.model.id == varlik_id))
+        await db.execute(
+            _kayit_kapsami(select(v.model.id).where(v.model.id == varlik_id), varlik_tipi, user)
+        )
     ).first()
     if varmi is None:
         raise _YOK
@@ -275,7 +302,9 @@ async def sil(
     v = VARLIKLAR.get(obj.varlik_tipi)
     if v is None:
         raise _YOK
-    if obj.olusturan_user_id != user.id and user.role not in v.yazar:
-        raise _YETKI
+    # (P247 §6) Baskasinin ekini silmek icin ust kayda YAZMA yetkisi + KAPSAM
+    # gerekir: amir, ekibi disindaki bir kisinin/gorevin notunu siliyordu.
+    if obj.olusturan_user_id != user.id:
+        await _ust_kaydi_dogrula(db, obj.varlik_tipi, obj.varlik_id, user, yazma=True)
     await db.delete(obj)
     return Response(status_code=204)

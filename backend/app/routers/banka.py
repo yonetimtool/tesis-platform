@@ -38,6 +38,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..hiz_siniri import DISA_AKTARIM_SINIRI
 from .. import storage
 from ..audit import Action, audit_user
 from ..banka import ESIK_OTOMATIK, Karar, iban_maskele
@@ -505,7 +506,7 @@ async def geri_al_uc(
 
 
 # =============================== 7) MAKBUZ ================================== #
-@router.get("/makbuz/{receipt_id}", response_model=BankaMakbuzOut)
+@router.get("/makbuz/{receipt_id}", response_model=BankaMakbuzOut, dependencies=[Depends(DISA_AKTARIM_SINIRI)])
 async def makbuz_getir(
     receipt_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),

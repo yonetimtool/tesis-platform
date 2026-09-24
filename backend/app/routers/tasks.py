@@ -113,14 +113,31 @@ def _assignee_visibility(user: AppUser):
     (None doner)."""
     if user.role in _SAHA_ROLLERI:
         return Task.atanan_user_id == user.id
+    # (P247 §6) EKIP KAPSAMI: amir yalniz EKIBINE (gorunur_roller) atanmis
+    # ya da henuz atanmamis gorevi gorur. OLCULEN: amir tesis gorevlisine
+    # atanmis bir gorevi id ile okuyup DEGISTIREBILIYORDU (adim ekle/sil,
+    # aciklama) — atama kurali (P231 §3) yalniz YENI atamayi daraltiyordu.
+    gorunur = gorunur_roller(user.role)
+    if gorunur is not None:
+        return or_(
+            Task.atanan_user_id.is_(None),
+            Task.atanan_user_id.in_(
+                select(AppUser.id).where(AppUser.role.in_(gorunur))
+            ),
+        )
     return None
 
 
 async def _visible_task_or_404(db: AsyncSession, task_id: uuid.UUID, user: AppUser) -> Task:
     """Task'i atanan-gorunurluk kurali altinda yukle; saha kullanicisi YALNIZ
-    kendine atanan gorevi gorur (aksi 404 — varligi da sizdirilmaz)."""
-    task = await get_or_404(db, Task, task_id)
-    if user.role in _SAHA_ROLLERI and task.atanan_user_id != user.id:
+    kendine atanan gorevi, amir yalniz ekibinin gorevini gorur (aksi 404 —
+    varligi da sizdirilmaz)."""
+    kosul = _assignee_visibility(user)
+    stmt = select(Task).where(Task.id == task_id)
+    if kosul is not None:
+        stmt = stmt.where(kosul)
+    task = (await db.execute(stmt)).scalar_one_or_none()
+    if task is None:
         raise APIError(404, "not_found", "kayit_bulunamadi")
     return task
 
@@ -653,7 +670,7 @@ async def update_task(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_WRITER),
 ) -> TaskOut:
-    obj = await get_or_404(db, Task, task_id)
+    obj = await _visible_task_or_404(db, task_id, user)
     data = body.model_dump(exclude_unset=True)
     # (P191 §2) ATAMA DEGISTIYSE yeni kisi bildirilmeli — gorevin ona
     # gectigini yalnizca listeye bakarak ogrenmesi beklenemez. Ayni kisiye
@@ -682,9 +699,9 @@ async def update_task(
 async def delete_task(
     task_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_WRITER),
+    user: AppUser = Depends(_WRITER),
 ) -> Response:
-    obj = await get_or_404(db, Task, task_id)
+    obj = await _visible_task_or_404(db, task_id, user)
     await db.delete(obj)
     try:
         await db.flush()
@@ -1253,7 +1270,7 @@ async def add_task_step(
     user: AppUser = Depends(_ADIM_YAZAR),
 ) -> TaskStepOut:
     """SONRADAN ADIM EKLEME — bilincli olarak acik (bkz. TaskCreate.adimlar)."""
-    task = await get_or_404(db, Task, task_id)
+    task = await _visible_task_or_404(db, task_id, user)
     obj = TaskStep(
         tenant_id=user.tenant_id,
         task_id=task.id,
@@ -1283,7 +1300,7 @@ async def update_task_step(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_ADIM_YAZAR),
 ) -> TaskStepOut:
-    task = await get_or_404(db, Task, task_id)
+    task = await _visible_task_or_404(db, task_id, user)
     obj = await _adim_or_404(db, task, step_id)
     veri = body.model_dump(exclude_unset=True)
     if "foto_zorunlu" in veri:
@@ -1308,7 +1325,7 @@ async def delete_task_step(
     Silmeyi yasaklamak, yanlis yazilmis bir adimi sonsuza kadar listede
     tutmak olurdu. Kayit `audit_log`a tamamlayaniyla birlikte yazilir.
     """
-    task = await get_or_404(db, Task, task_id)
+    task = await _visible_task_or_404(db, task_id, user)
     obj = await _adim_or_404(db, task, step_id)
     await audit_user(
         db, user, Action.TASK_STEP_SIL,
@@ -1390,7 +1407,7 @@ async def reopen_task_step(
     """YALNIZ YONETIM GERI ALIR — gorev tamamlamasinin silinmesiyle ayni
     gerekce: isi yapanin kendi izini temizleyebilmesi denetimi bosa
     cikarirdi."""
-    task = await get_or_404(db, Task, task_id)
+    task = await _visible_task_or_404(db, task_id, user)
     obj = await _adim_or_404(db, task, step_id)
     await audit_user(
         db, user, Action.TASK_STEP_GERI_AL,

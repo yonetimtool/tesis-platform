@@ -1,0 +1,616 @@
+# (P247 §6) UC GUVENLIK KILIDI — bkz. tests/test_p247_uc_guvenlik.py
+metot	yol	kimlik	kapsam	sahiplik	hiz	denetim	hassas	tavan	not
+GET	/activity	zorunlu	tesis	-	-	-	-	-	
+GET	/admin/overview	zorunlu	tesis	-	-	-	-	-	
+GET	/aidat-planlari	zorunlu	tesis	-	-	-	-	-	
+POST	/aidat-planlari	zorunlu	tesis	-	-	ozel	-	-	
+DELETE	/aidat-planlari/{plan_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/aidat-planlari/{plan_id}	zorunlu	tesis	rol	-	ozel	-	-	
+POST	/aidat-planlari/{plan_id}/ertele	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/akilli-ev/bolumler	zorunlu	tesis	-	-	-	-	-	
+PUT	/akilli-ev/bolumler	zorunlu	tesis	-	-	ozel	-	bolumler.bolum	
+GET	/akilli-ev/cihazlar	zorunlu	tesis	-	-	-	-	-	
+POST	/akilli-ev/cihazlar	zorunlu	tesis	-	-	ozel	-	tip	
+DELETE	/akilli-ev/cihazlar/{cihaz_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/akilli-ev/cihazlar/{cihaz_id}	zorunlu	tesis	rol	-	ozel	-	-	
+POST	/akilli-ev/cihazlar/{cihaz_id}/komut	zorunlu	tesis	kendi	-	ozel	-	eylem	
+GET	/akilli-ev/koprular	zorunlu	tesis	-	-	-	-	-	
+POST	/akilli-ev/koprular	zorunlu	tesis	-	-	ozel	-	tur	
+DELETE	/akilli-ev/koprular/{kopru_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/akilli-ev/koprular/{kopru_id}	zorunlu	tesis	rol	-	ozel	-	-	
+POST	/akilli-ev/koprular/{kopru_id}/olay-jetonu	zorunlu	tesis	rol	-	ozel	-	-	
+POST	/akilli-ev/koprular/{kopru_id}/saglik	zorunlu	tesis	rol	-	genel	-	-	
+POST	/akilli-ev/olay	kamu	platform	-	-	haric	-	olay	cihaz/entegrasyon anahtari ile kimlik (baslik); kisi oturumu yok
+GET	/akilli-ev/senaryolar	zorunlu	tesis	-	-	-	-	-	
+POST	/akilli-ev/senaryolar	zorunlu	tesis	-	-	ozel	-	eylem,olay	
+DELETE	/akilli-ev/senaryolar/{senaryo_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/anketler	zorunlu	tesis	-	-	-	-	-	
+POST	/anketler	zorunlu	tesis	-	-	ozel	-	hedef_sakin_tipi	
+PATCH	/anketler/{anket_id}	zorunlu	tesis	rol	-	genel	-	-	
+POST	/anketler/{anket_id}/oy	zorunlu	tesis	hedef	-	genel	-	-	
+GET	/anketler/{anket_id}/oylar	zorunlu	tesis	rol	-	-	-	-	
+GET	/announcements	zorunlu	tesis	-	-	-	-	-	
+POST	/announcements	zorunlu	tesis	-	-	genel	-	foto_key,hedef_sakin_tipi	
+DELETE	/announcements/{announcement_id}	zorunlu	tesis	rol	-	genel	-	-	
+GET	/announcements/{announcement_id}	zorunlu	tesis	hedef	-	-	-	-	
+PATCH	/announcements/{announcement_id}	zorunlu	tesis	rol	-	genel	-	foto_key	
+GET	/arac-kayitlari	zorunlu	tesis	-	-	-	plaka	-	
+POST	/arac-kayitlari	zorunlu	tesis	-	-	ozel	plaka	-	
+DELETE	/arac-kayitlari/{arac_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/arac-kayitlari/{arac_id}	zorunlu	tesis	rol	-	ozel	plaka	-	
+GET	/arama	zorunlu	tesis	-	var	-	-	-	
+GET	/assets	zorunlu	tesis	-	-	-	-	-	
+POST	/assets	zorunlu	tesis	-	-	genel	-	aciklama,ad,nfc_tag_uid	
+DELETE	/assets/{asset_id}	zorunlu	tesis	rol	-	genel	-	-	
+GET	/assets/{asset_id}	zorunlu	tesis	rol	-	-	-	-	
+PATCH	/assets/{asset_id}	zorunlu	tesis	rol	-	genel	-	aciklama,ad,nfc_tag_uid	
+POST	/assets/{asset_id}/checkin	zorunlu	tesis	rol	-	genel	-	nfc_tag_uid,notlar	
+POST	/assets/{asset_id}/checkout	zorunlu	tesis	rol	-	genel	-	nfc_tag_uid,notlar	
+GET	/assets/{asset_id}/history	zorunlu	tesis	rol	-	-	-	-	
+GET	/audit	zorunlu	tesis	-	-	-	-	-	
+POST	/auth/giris/eposta-kod-dogrula	kamu	platform	-	-	ozel	access_token,refresh_token	-	kod/jeton dogrulama: kod basina MAX_DENEME=5, omur 10 dk; setup_token kisa omurlu
+POST	/auth/giris/eposta-kod-iste	kamu	platform	-	var	haric	-	-	kod gonderme: kimlik basina hiz siniri; yanit hesap varligini sizdirmaz
+POST	/auth/giris/kod-dogrula	kamu	platform	-	-	haric	access_token,refresh_token	-	kod/jeton dogrulama: kod basina MAX_DENEME=5, omur 10 dk; setup_token kisa omurlu
+POST	/auth/giris/kod-iste	kamu	platform	-	var	haric	-	-	kod gonderme: kimlik basina hiz siniri; yanit hesap varligini sizdirmaz
+POST	/auth/kayit/rol-basla	kamu	platform	-	var	haric	-	-	kod gonderme: kimlik basina hiz siniri; yanit hesap varligini sizdirmaz
+POST	/auth/kayit/rol-dogrula	kamu	platform	-	-	haric	setup_token	-	kod/jeton dogrulama: kod basina MAX_DENEME=5, omur 10 dk; setup_token kisa omurlu
+POST	/auth/kayit/rol-eposta-basla	kamu	platform	-	var	haric	-	rol	kod gonderme: kimlik basina hiz siniri; yanit hesap varligini sizdirmaz
+POST	/auth/kayit/rol-eposta-dogrula	kamu	platform	-	-	haric	setup_token	-	kod/jeton dogrulama: kod basina MAX_DENEME=5, omur 10 dk; setup_token kisa omurlu
+POST	/auth/kayit/tesis-olustur	kamu	platform	-	var	ozel	access_token,refresh_token	baglama_jetonu	kayit akisi: dogrulanmis kayit jetonu (YENI_KAYIT_AKISI bayragi)
+POST	/auth/kayit/yonetici-basvuru	kamu	platform	-	var	haric	-	-	kod gonderme: kimlik basina hiz siniri; yanit hesap varligini sizdirmaz
+POST	/auth/kayit/yonetici-dogrula	kamu	platform	-	-	haric	-	-	kod/jeton dogrulama: kod basina MAX_DENEME=5, omur 10 dk; setup_token kisa omurlu
+POST	/auth/kayit/yonetici-tesis	kamu	platform	-	-	ozel	access_token,refresh_token	kurulum_jetonu	kayit akisi: dogrulanmis kayit jetonu (YENI_KAYIT_AKISI bayragi)
+POST	/auth/login	kamu	platform	-	var	ozel	access_token,refresh_token	password,tenant_slug	giris: kimlik burada kurulur; basarisizlik siniri + zamanlama esitligi (E2E 2026-09)
+POST	/auth/login-phone	kamu	platform	-	var	ozel	access_token,refresh_token,setup_token	password,phone	giris: kimlik burada kurulur; basarisizlik siniri + zamanlama esitligi (E2E 2026-09)
+POST	/auth/logout	kamu	platform	-	-	haric	-	-	Bearer istege bagli: suresi dolmus oturumla da cikilabilmeli; yalniz kendi oturumunu kapatir
+POST	/auth/oauth/baglan/basla	kamu	platform	-	var	haric	-	baglama_jetonu	kod gonderme: kimlik basina hiz siniri; yanit hesap varligini sizdirmaz
+POST	/auth/oauth/baglan/dogrula	kamu	platform	-	-	ozel	access_token,refresh_token	baglama_jetonu	kod/jeton dogrulama: kod basina MAX_DENEME=5, omur 10 dk; setup_token kisa omurlu
+GET	/auth/oauth/baglantilarim	zorunlu	tesis	-	-	-	eposta	-	
+POST	/auth/oauth/baglantilarim	zorunlu	tesis	-	-	genel	eposta	-	
+DELETE	/auth/oauth/baglantilarim/{saglayici}	zorunlu	tesis	kendi	-	genel	-	-	
+POST	/auth/oauth/baslat/{saglayici}	kamu	platform	-	-	haric	adres	niyet,yuzey	OAuth akisi: saglayici + state/baglama jetonu ile kimlik
+GET	/auth/oauth/callback/{saglayici}	kamu	platform	-	-	-	-	-	OAuth akisi: saglayici + state/baglama jetonu ile kimlik
+POST	/auth/oauth/callback/{saglayici}	kamu	platform	-	-	haric	-	-	OAuth akisi: saglayici + state/baglama jetonu ile kimlik
+POST	/auth/oauth/rol-tamamla	kamu	platform	-	-	ozel	access_token,refresh_token	baglama_jetonu,rol	OAuth akisi: saglayici + state/baglama jetonu ile kimlik
+POST	/auth/oauth/rol-tamamla-dogrula	kamu	platform	-	-	ozel	access_token,refresh_token	baglama_jetonu,rol	kod/jeton dogrulama: kod basina MAX_DENEME=5, omur 10 dk; setup_token kisa omurlu
+GET	/auth/oauth/saglayicilar	kamu	platform	-	-	-	-	-	OAuth akisi: saglayici + state/baglama jetonu ile kimlik
+POST	/auth/oauth/sonuc	kamu	platform	-	-	ozel	access_token,eposta,refresh_token	-	OAuth akisi: saglayici + state/baglama jetonu ile kimlik
+POST	/auth/oauth/tesis-sec	kamu	platform	-	-	ozel	access_token,eposta,refresh_token	-	OAuth akisi: saglayici + state/baglama jetonu ile kimlik
+POST	/auth/refresh	kamu	platform	-	-	haric	access_token,refresh_token	refresh_token	refresh jetonu govdede: rotasyon + yeniden kullanim tespiti + oturum iptal damgasi
+POST	/auth/set-password	kamu	platform	-	-	ozel	access_token,refresh_token	new_password,setup_token	kod/jeton dogrulama: kod basina MAX_DENEME=5, omur 10 dk; setup_token kisa omurlu
+POST	/auth/sifre/dogrula-ve-ayarla	kamu	platform	-	-	ozel	-	yeni_parola	kod/jeton dogrulama: kod basina MAX_DENEME=5, omur 10 dk; setup_token kisa omurlu
+POST	/auth/sifre/kod-iste	kamu	platform	-	var	haric	-	-	kod gonderme: kimlik basina hiz siniri; yanit hesap varligini sizdirmaz
+POST	/auth/tesislerim	kamu	platform	-	var	haric	-	password	giris: kimlik burada kurulur; basarisizlik siniri + zamanlama esitligi (E2E 2026-09)
+GET	/bakim/ekipmanlar	zorunlu	tesis	-	-	-	sorumlu_telefon	-	
+POST	/bakim/ekipmanlar	zorunlu	tesis	-	-	ozel	sorumlu_telefon	-	
+DELETE	/bakim/ekipmanlar/{ekipman_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/bakim/ekipmanlar/{ekipman_id}	zorunlu	tesis	rol	-	ozel	sorumlu_telefon	-	
+POST	/bakim/ekipmanlar/{ekipman_id}/kayitlar	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/bakim/kayitlar	zorunlu	tesis	-	-	-	-	-	
+GET	/bakim/ozet	zorunlu	tesis	-	-	-	-	-	
+POST	/banka/eslestir	zorunlu	tesis	-	-	ozel	-	-	
+GET	/banka/hareketler	zorunlu	tesis	-	-	-	-	-	
+POST	/banka/hareketler/{hareket_id}/geri-al	zorunlu	tesis	rol	-	ozel	-	durum	
+POST	/banka/hareketler/{hareket_id}/isaretle	zorunlu	tesis	rol	-	ozel	-	durum	
+POST	/banka/hareketler/{hareket_id}/manuel-eslestir	zorunlu	tesis	rol	-	ozel	-	-	
+POST	/banka/ice-aktar	zorunlu	tesis	-	-	ozel	-	kaynak,mt940,satirlar.aciklama,satirlar.karsi_ad,satirlar.karsi_iban,satirlar.para_birimi,satirlar.referans,satirlar.tarih,satirlar.tutar,satirlar.yon	
+GET	/banka/makbuz/{receipt_id}	zorunlu	tesis	rol	var	-	-	-	
+GET	/blocks	zorunlu	tesis	-	-	-	-	-	
+POST	/blocks	zorunlu	tesis	-	-	ozel	-	-	
+POST	/blocks/toplu-sil	zorunlu	tesis	-	-	ozel	-	-	
+DELETE	/blocks/{block_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/blocks/{block_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/borclandirma/gecikme-ayari	zorunlu	tesis	-	-	-	-	-	
+PATCH	/borclandirma/gecikme-ayari	zorunlu	tesis	-	-	ozel	-	-	
+POST	/borclandirma/gecikme-faizi/isle	zorunlu	tesis	-	-	ozel	-	-	
+GET	/borclandirma/gecikme-faizi/onizleme	zorunlu	tesis	-	-	-	-	-	
+POST	/borclandirma/ice-aktarim	zorunlu	tesis	-	-	ozel	-	satirlar.aciklama,satirlar.unit_no	
+POST	/borclandirma/sayac	zorunlu	tesis	-	-	ozel	-	-	
+POST	/borclandirma/toplu	zorunlu	tesis	-	-	ozel	-	suzgec.blok	
+POST	/borclandirma/toplu/onizleme	zorunlu	tesis	-	-	genel	-	suzgec.blok	
+GET	/budget/categories	zorunlu	tesis	-	-	-	-	-	
+POST	/budget/categories	zorunlu	tesis	-	-	genel	-	-	
+PATCH	/budget/categories/{category_id}	zorunlu	tesis	rol	-	genel	-	-	
+GET	/budget/entries	zorunlu	tesis	-	-	-	-	-	
+POST	/budget/entries	zorunlu	tesis	-	-	ozel	-	-	
+DELETE	/budget/entries/{entry_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/budget/entries/{entry_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/budget/hedefler	zorunlu	tesis	-	-	-	-	-	
+POST	/budget/hedefler	zorunlu	tesis	-	-	ozel	-	-	
+DELETE	/budget/hedefler/{hedef_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/budget/karsilastirma	zorunlu	tesis	-	-	-	-	-	
+GET	/budget/summary	zorunlu	tesis	-	-	-	-	-	
+GET	/call-target/{user_id}	zorunlu	tesis	hedef	-	ozel	telefon	-	
+GET	/cameras	zorunlu	tesis	-	-	-	kayit_adres,kayit_kullanici,stream_kullanici	-	
+POST	/cameras	zorunlu	tesis	-	-	ozel	kayit_adres,kayit_kullanici,stream_kullanici	alt_stream_url,kayit_adres,kayit_kanal,kayit_kullanici,kayit_parola,restream_url,snapshot_url,stream_url	
+POST	/cameras/test-baglanti	zorunlu	tesis	-	-	genel	-	stream_url	
+DELETE	/cameras/{camera_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/cameras/{camera_id}	zorunlu	tesis	rol	-	ozel	kayit_adres,kayit_kullanici,stream_kullanici	alt_stream_url,kayit_adres,kayit_kanal,kayit_kullanici,kayit_parola,restream_url,snapshot_url,stream_kullanici,stream_parola,stream_url	
+GET	/cameras/{camera_id}/canli/{dosya}	zorunlu	tesis	rol	-	-	-	-	
+GET	/cameras/{camera_id}/kare	zorunlu	tesis	rol	-	-	-	-	
+GET	/cameras/{camera_id}/kayit/araliklar	zorunlu	tesis	rol	-	ozel	-	-	
+POST	/cameras/{camera_id}/kayit/oynat	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/cameras/{camera_id}/kayit/{yol}/{dosya}	zorunlu	tesis	rol	-	-	-	-	
+GET	/checkpoints	zorunlu	tesis	-	-	-	-	-	
+POST	/checkpoints	zorunlu	tesis	-	-	genel	-	ad,nfc_tag_uid	
+DELETE	/checkpoints/{checkpoint_id}	zorunlu	tesis	rol	-	genel	-	-	
+GET	/checkpoints/{checkpoint_id}	zorunlu	tesis	rol	-	-	-	-	
+PATCH	/checkpoints/{checkpoint_id}	zorunlu	tesis	rol	-	genel	-	ad,nfc_tag_uid	
+PUT	/checkpoints/{checkpoint_id}/sdm-key	zorunlu	tesis	rol	-	genel	-	key	
+GET	/common-areas	zorunlu	tesis	-	-	-	-	-	
+POST	/common-areas	zorunlu	tesis	-	-	genel	-	-	
+PATCH	/common-areas/{area_id}	zorunlu	tesis	rol	-	genel	-	-	
+GET	/common-areas/{area_id}/slots	zorunlu	tesis	rol	-	-	-	-	
+GET	/complaints	zorunlu	tesis	-	-	-	-	-	
+POST	/complaints	zorunlu	tesis	-	-	ozel	-	-	
+GET	/complaints/{complaint_id}	zorunlu	tesis	kendi	-	-	-	-	
+PATCH	/complaints/{complaint_id}	zorunlu	tesis	rol	-	ozel	-	-	
+POST	/complaints/{complaint_id}/convert	zorunlu	tesis	rol	-	ozel	-	-	
+POST	/complaints/{complaint_id}/decline	zorunlu	tesis	rol	-	ozel	-	-	
+POST	/complaints/{complaint_id}/resolve	zorunlu	tesis	rol	-	ozel	-	-	
+POST	/complaints/{complaint_id}/withdraw	zorunlu	tesis	kendi	-	ozel	-	-	
+GET	/dashboard/live	zorunlu	tesis	-	-	-	-	-	
+GET	/davet	zorunlu	tesis	-	-	-	telefon	-	
+POST	/davet/coz	kamu	platform	-	-	haric	-	-	davet jetonu: 256 bit, tek kullanimlik, sureli; yanit maskeli
+POST	/davet/parola	kamu	platform	-	-	ozel	access_token,refresh_token	new_password	davet jetonu: 256 bit, tek kullanimlik, sureli; yanit maskeli
+POST	/davet/sosyal	kamu	platform	-	-	ozel	access_token,refresh_token	baglama_jetonu	davet jetonu: 256 bit, tek kullanimlik, sureli; yanit maskeli
+POST	/davet/vazgec/{jeton}	kamu	platform	-	-	haric	-	-	davet jetonu: 256 bit, tek kullanimlik, sureli; yanit maskeli
+POST	/davet/{user_id}/yeniden	zorunlu	tesis	rol	-	ozel	telefon	-	
+GET	/devices	zorunlu	tesis	-	-	-	fcm_token	-	
+POST	/devices	zorunlu	tesis	-	-	haric	fcm_token	fcm_token	push cihaz kaydi: kendi cihazi; /me/cihazlar ozel denetimli
+DELETE	/devices/{fcm_token}	zorunlu	tesis	kendi	-	haric	-	-	push cihaz kaydi: kendi cihazi; /me/cihazlar ozel denetimli
+GET	/diyafon	zorunlu	tesis	-	-	-	kullanici	-	
+POST	/diyafon	zorunlu	tesis	-	-	ozel	kullanici	yontem	
+DELETE	/diyafon/{diyafon_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/diyafon/{diyafon_id}	zorunlu	tesis	rol	-	-	kullanici	-	
+PATCH	/diyafon/{diyafon_id}	zorunlu	tesis	rol	-	ozel	kullanici	-	
+POST	/diyafon/{diyafon_id}/anons	zorunlu	tesis	rol	-	ozel	-	-	
+POST	/diyafon/{diyafon_id}/kapi-ac	zorunlu	tesis	rol	-	ozel	-	-	
+POST	/diyafon/{diyafon_id}/saglik	zorunlu	tesis	rol	-	genel	-	-	
+POST	/diyafon/{diyafon_id}/zil	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/dokumanlar	zorunlu	tesis	-	-	-	-	-	
+POST	/dokumanlar	zorunlu	tesis	-	-	ozel	-	-	
+DELETE	/dokumanlar/{dokuman_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/dokumanlar/{dokuman_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/dokumanlar/{dokuman_id}/indir	zorunlu	tesis	rol	var	-	-	-	
+GET	/dues/assessments	zorunlu	tesis	-	-	-	-	-	
+POST	/dues/assessments	zorunlu	tesis	-	-	ozel	-	aciklama	
+POST	/dues/assessments/{assessment_id}/ters-kayit	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/dues/payments	zorunlu	tesis	-	-	-	-	-	
+POST	/dues/payments	zorunlu	tesis	-	-	ozel	-	makbuz_no	
+POST	/dukkan/abonelik/{abonelik_id}/iptal	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/auth/ben	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/auth/telefon/dogrula	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/auth/telefon/kod	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/auth/yonetiyor	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/bildirim	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/bildirim-tercihi	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+PATCH	/dukkan/bildirim-tercihi	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/bildirim/okundu	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+DELETE	/dukkan/cihaz	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/cihaz	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/is/{is_id}/tamamlandi	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/is/{is_id}/yorum	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/isletme	kamu	platform	-	-	haric	-	adres_detay,adres_il_slug,adres_ilce_slug,adres_mahalle_slug,eposta,vergi_dairesi,whatsapp	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/isletme-ara	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/isletme-profil/{slug}	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/isletme-profil/{slug}/yorum	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/isletme/benim	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/isletme/{isletme_id}	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+PATCH	/dukkan/isletme/{isletme_id}	kamu	platform	-	-	haric	-	adres_detay,eposta,telefon,vergi_dairesi,whatsapp	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/isletme/{isletme_id}/basvur	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/isletme/{isletme_id}/belge	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/isletme/{isletme_id}/belge/presign	kamu	platform	-	-	haric	-	content_type,dosya_adi	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+PUT	/dukkan/isletme/{isletme_id}/hizmet-alanlari	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+PUT	/dukkan/isletme/{isletme_id}/kategoriler	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/isletme/{isletme_id}/talepler	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/isletme/{isletme_id}/telefon/dogrula	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/isletme/{isletme_id}/telefon/kod	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/isletme/{isletme_id}/yorum-daveti	kamu	platform	-	-	ozel	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/isletme/{isletme_id}/yorum-daveti/kota	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/kategori	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/lokasyon/il	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/lokasyon/il/{il_slug}/ilce	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/lokasyon/il/{il_slug}/ilce/{ilce_slug}/mahalle	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/moderasyon/aski-adaylari	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/moderasyon/belge/{belge_id}/karar	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/moderasyon/isletme/{isletme_id}/denetim	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/moderasyon/isletme/{isletme_id}/karar	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/moderasyon/kuyruk	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/moderasyon/sikayet-kuyrugu	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/moderasyon/sikayet/{sikayet_id}/karar	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/moderasyon/yorum-kuyrugu	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/moderasyon/yorum/{yorum_id}/karar	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/odeme-yontemi	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/odeme-yontemi	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+DELETE	/dukkan/odeme-yontemi/{yontem_id}	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/reklam	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/reklam/bekleme	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+DELETE	/dukkan/reklam/bekleme/{bekleme_id}	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/reklam/benim	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/reklam/paketler	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/reklam/satin-al	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/reklam/slot-durumu	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/sayfa/{il}/{ilce}/{mahalle}/{kategori}	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/sikayet	kamu	platform	-	-	haric	-	isletme_slug	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/sitemap/sayfalar	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/talep	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/talep	kamu	platform	-	-	haric	-	il_slug,ilce_slug,kategori_slug,mahalle_slug	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/talep/{talep_id}	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/talep/{talep_id}/iptal	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/talep/{talep_id}/teklif	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/dukkan/talep/{talep_id}/teklifler	kamu	platform	-	-	-	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/teklif/{teklif_id}/kabul	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/yorum-daveti/dogrula	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/yorum/{yorum_id}/bildir	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+POST	/dukkan/yorum/{yorum_id}/cevap	kamu	platform	-	-	haric	-	-	Dukkan modulu: kendi kimligi (dukkan jetonu, P221) — ayri urun yuzeyi
+GET	/duzenli-giderler	zorunlu	tesis	-	-	-	-	-	
+POST	/duzenli-giderler	zorunlu	tesis	-	-	ozel	-	-	
+DELETE	/duzenli-giderler/{gider_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/duzenli-giderler/{gider_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/ekler	zorunlu	tesis	-	-	-	-	-	
+POST	/ekler	zorunlu	tesis	-	-	genel	-	-	
+DELETE	/ekler/{ek_id}	zorunlu	tesis	kendi	-	genel	-	-	
+GET	/events	zorunlu	tesis	-	-	-	-	-	
+POST	/events	zorunlu	tesis	-	-	genel	-	foto_key	
+DELETE	/events/{event_id}	zorunlu	tesis	rol	-	genel	-	-	
+GET	/events/{event_id}	zorunlu	tesis	rol	-	-	-	-	
+PATCH	/events/{event_id}	zorunlu	tesis	rol	-	genel	-	foto_key	
+PUT	/events/{event_id}/rsvp	zorunlu	tesis	rol	-	genel	-	-	
+GET	/external-services	zorunlu	tesis	-	-	-	telefon	-	
+POST	/external-services	zorunlu	tesis	-	-	genel	telefon	-	
+PUT	/external-services/note	zorunlu	tesis	-	-	genel	telefon	-	
+DELETE	/external-services/{service_id}	zorunlu	tesis	rol	-	genel	-	-	
+PATCH	/external-services/{service_id}	zorunlu	tesis	rol	-	genel	telefon	-	
+POST	/finans/acilis	zorunlu	tesis	-	-	ozel	-	-	
+POST	/finans/banka-eslestir	zorunlu	tesis	-	-	genel	-	-	
+POST	/finans/borclulara/faiz-affi	zorunlu	tesis	-	-	ozel	-	-	
+POST	/finans/borclulara/hatirlat	zorunlu	tesis	-	-	ozel	-	-	
+POST	/finans/borclulara/odeme-plani	zorunlu	tesis	-	-	ozel	-	-	
+GET	/finans/hareketler	zorunlu	tesis	-	-	-	-	-	
+POST	/finans/hareketler	zorunlu	tesis	-	-	ozel	-	-	
+POST	/finans/hareketler/{hareket_id}/iptal	zorunlu	tesis	rol	-	ozel	-	-	
+POST	/finans/hareketler/{hareket_id}/onayla	zorunlu	tesis	rol	-	ozel	-	-	
+POST	/finans/hareketler/{hareket_id}/reddet	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/finans/hatirlatma-gecmisi	zorunlu	tesis	-	-	-	-	-	
+POST	/finans/iade	zorunlu	tesis	-	-	ozel	-	-	
+GET	/finans/icra-dosyalari	zorunlu	tesis	-	-	-	-	-	
+POST	/finans/icra-dosyalari	zorunlu	tesis	-	-	ozel	-	-	
+DELETE	/finans/icra-dosyalari/{dosya_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/finans/icra-dosyalari/{dosya_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/finans/kasa-bakiyeleri	zorunlu	tesis	-	-	-	iban	-	
+GET	/finans/ozet	zorunlu	tesis	-	-	-	-	-	
+POST	/finans/tahsilat	zorunlu	tesis	-	-	ozel	-	-	
+GET	/finans/tahsilat-gostergesi	zorunlu	tesis	-	-	-	-	-	
+POST	/finans/tahsilat/toplu	zorunlu	tesis	-	-	ozel	-	satirlar.aciklama	
+POST	/finans/virman	zorunlu	tesis	-	-	ozel	-	-	
+GET	/finans/yaslandirma	zorunlu	tesis	-	-	-	-	-	
+GET	/firmalar	zorunlu	tesis	-	-	-	adres,email,telefon,yetkili_telefon	-	
+POST	/firmalar	zorunlu	tesis	-	-	ozel	adres,email,telefon,yetkili_telefon	-	
+DELETE	/firmalar/{firma_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/firmalar/{firma_id}	zorunlu	tesis	rol	-	ozel	adres,email,telefon,yetkili_telefon	-	
+GET	/gelir-gider-gruplari	zorunlu	tesis	-	-	-	-	-	
+POST	/gelir-gider-gruplari	zorunlu	tesis	-	-	ozel	-	-	
+DELETE	/gelir-gider-gruplari/{grup_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/gelir-gider-gruplari/{grup_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/gelir-gider-tanimlari	zorunlu	tesis	-	-	-	-	-	
+POST	/gelir-gider-tanimlari	zorunlu	tesis	-	-	ozel	-	-	
+DELETE	/gelir-gider-tanimlari/{tanim_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/gelir-gider-tanimlari/{tanim_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/hatirlatma-ayari	zorunlu	tesis	-	-	-	-	-	
+PATCH	/hatirlatma-ayari	zorunlu	tesis	-	-	ozel	-	-	
+GET	/hatirlatmalar	zorunlu	tesis	-	-	-	-	-	
+POST	/hatirlatmalar	zorunlu	tesis	-	-	ozel	-	-	
+DELETE	/hatirlatmalar/{hatirlatma_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/hatirlatmalar/{hatirlatma_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/health	kamu	platform	-	-	-	-	-	saglik yoklamasi; veri donmez
+GET	/ice-aktarim	zorunlu	tesis	-	-	-	-	-	
+GET	/ice-aktarim/turler	zorunlu	tesis	-	-	-	-	-	
+POST	/ice-aktarim/{aktarim_id}/geri-al	zorunlu	tesis	rol	-	ozel	-	-	
+POST	/ice-aktarim/{tur}	zorunlu	tesis	rol	-	ozel	-	satirlar.degerler	
+GET	/integrations	zorunlu	tesis	-	-	-	-	-	
+POST	/integrations	zorunlu	tesis	-	-	genel	-	headers_json	
+GET	/integrations/anpr/events	zorunlu	tesis	-	-	-	plaka	-	
+POST	/integrations/anpr/events	kamu	platform	-	-	haric	plaka	ham,kaynak,yon	cihaz/entegrasyon anahtari ile kimlik (baslik); kisi oturumu yok
+POST	/integrations/anpr/events/{event_id}/onay	zorunlu	tesis	rol	-	ozel	plaka	-	
+GET	/integrations/anpr/keys	zorunlu	tesis	-	-	-	-	-	
+POST	/integrations/anpr/keys	zorunlu	tesis	-	-	ozel	anahtar	-	
+DELETE	/integrations/anpr/keys/{key_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/integrations/presets	zorunlu	tesis	-	-	-	-	-	
+DELETE	/integrations/{integration_id}	zorunlu	tesis	rol	-	genel	-	-	
+GET	/integrations/{integration_id}	zorunlu	tesis	rol	-	-	-	-	
+PATCH	/integrations/{integration_id}	zorunlu	tesis	rol	-	genel	-	headers_json	
+POST	/integrations/{integration_id}/saglik	zorunlu	tesis	rol	-	genel	-	-	
+POST	/integrations/{integration_id}/trigger	zorunlu	tesis	rol	-	genel	-	-	
+GET	/karar-defteri	zorunlu	tesis	-	-	-	-	-	
+POST	/karar-defteri	zorunlu	tesis	-	-	ozel	-	-	
+DELETE	/karar-defteri/{karar_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/karar-defteri/{karar_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/karar-defteri/{karar_id}/pdf	zorunlu	tesis	rol	var	-	-	-	
+GET	/kargo	zorunlu	tesis	-	-	-	-	-	
+POST	/kargo	zorunlu	tesis	-	-	ozel	-	foto_key	
+GET	/kargo/{kargo_id}	zorunlu	tesis	hedef	-	ozel	-	-	
+PATCH	/kargo/{kargo_id}	zorunlu	tesis	hedef	-	ozel	-	-	
+GET	/kasalar	zorunlu	tesis	-	-	-	iban	-	
+POST	/kasalar	zorunlu	tesis	-	-	ozel	iban	-	
+DELETE	/kasalar/{kasa_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/kasalar/{kasa_id}	zorunlu	tesis	rol	-	ozel	iban	-	
+GET	/konum/ara	zorunlu	tesis	-	var	-	-	-	
+GET	/kurulum	zorunlu	tesis	-	-	-	-	-	
+PATCH	/kurulum	zorunlu	tesis	-	-	genel	-	-	
+GET	/kvkk/durum	zorunlu	tesis	-	-	-	-	-	
+GET	/kvkk/metin	zorunlu	tesis	-	-	-	-	-	
+POST	/kvkk/onay	zorunlu	tesis	-	-	ozel	-	-	
+GET	/kvkk/onaylarim	zorunlu	tesis	-	-	-	-	-	
+GET	/me	zorunlu	tesis	-	-	-	email	-	
+PATCH	/me/avatar	zorunlu	tesis	-	-	ozel	email	avatar_key	
+GET	/me/bildirim-tercihleri	zorunlu	tesis	-	-	-	bildirim_eposta	-	
+PATCH	/me/bildirim-tercihleri	zorunlu	tesis	-	-	ozel	bildirim_eposta	-	
+GET	/me/checkpoints	zorunlu	tesis	-	-	-	-	-	
+GET	/me/cihazlar	zorunlu	tesis	-	-	-	-	-	
+POST	/me/cihazlar/tumunden-cik	zorunlu	tesis	-	-	ozel	-	-	
+DELETE	/me/cihazlar/{cihaz_id}	zorunlu	tesis	kendi	-	ozel	-	-	
+PATCH	/me/contact	zorunlu	tesis	-	-	ozel	email,telefon	-	
+GET	/me/dokumanlar	zorunlu	tesis	-	-	-	-	-	
+GET	/me/dokumanlar/{dokuman_id}/indir	zorunlu	tesis	rol	var	-	-	-	
+GET	/me/dues	zorunlu	tesis	-	-	-	-	-	
+POST	/me/eposta/dogrula	zorunlu	tesis	-	-	ozel	email	-	
+POST	/me/eposta/kod-iste	zorunlu	tesis	-	var	genel	-	-	
+GET	/me/etkinlik	zorunlu	tesis	-	-	ozel	-	-	
+PATCH	/me/gorunum	zorunlu	tesis	-	-	haric	email	-	kisinin kendi arayuz tercihi / okundu isareti — bilgi degeri yok (silme ozel denetimli)
+POST	/me/hesap-sil	zorunlu	tesis	-	-	ozel	-	kod	
+POST	/me/hesap-sil/eposta-kod-iste	zorunlu	tesis	-	var	genel	-	-	
+GET	/me/makbuzlar	zorunlu	tesis	-	-	-	-	-	
+GET	/me/odeme-bilgileri	zorunlu	tesis	-	-	-	iban	-	
+POST	/me/odeme/kart	zorunlu	tesis	-	-	ozel	-	-	
+GET	/me/pano-tercihi	zorunlu	tesis	-	-	-	-	-	
+PUT	/me/pano-tercihi	zorunlu	tesis	-	-	haric	-	-	kisinin kendi arayuz tercihi / okundu isareti — bilgi degeri yok (silme ozel denetimli)
+PATCH	/me/password	zorunlu	tesis	-	-	ozel	access_token,refresh_token	kod,new_password	
+GET	/me/patrol-window	zorunlu	tesis	-	-	-	-	-	
+GET	/me/pazarlama-tercihleri	zorunlu	tesis	-	-	-	eposta	-	
+PATCH	/me/pazarlama-tercihleri	zorunlu	tesis	-	-	ozel	eposta	-	
+GET	/me/profile	zorunlu	tesis	-	-	-	email,telefon	-	
+POST	/me/rol-gecis	zorunlu	tesis	-	-	ozel	access_token,refresh_token	-	kendi yetki baglami; hedef rol secenekleri sunucuda (roller), aksi 403
+PATCH	/me/tema	zorunlu	tesis	-	-	haric	email	-	kisinin kendi arayuz tercihi / okundu isareti — bilgi degeri yok (silme ozel denetimli)
+POST	/me/tesis-degistir	zorunlu	tesis	-	-	ozel	access_token,refresh_token	-	
+GET	/me/tesislerim	zorunlu	tesis	-	-	-	-	-	
+POST	/me/tur-goruldu	zorunlu	tesis	-	-	haric	email	-	kisinin kendi arayuz tercihi / okundu isareti — bilgi degeri yok (silme ozel denetimli)
+GET	/mesai/ayar	zorunlu	tesis	-	-	-	-	-	
+PATCH	/mesai/ayar	zorunlu	tesis	-	-	ozel	-	-	
+POST	/mesai/gidere-yaz	zorunlu	tesis	-	-	ozel	-	-	
+GET	/mesai/ozet	zorunlu	tesis	-	-	-	-	-	
+GET	/mesaj-ayarlari	zorunlu	tesis	-	-	-	sms_kullanici,smtp_kullanici	-	
+PUT	/mesaj-ayarlari	zorunlu	tesis	-	-	ozel	sms_kullanici,smtp_kullanici	-	
+POST	/mesaj-ayarlari/test	zorunlu	tesis	-	-	ozel	-	-	
+GET	/mesaj-sablonlari	zorunlu	tesis	-	-	-	-	-	
+POST	/mesaj-sablonlari	zorunlu	tesis	-	-	ozel	-	-	
+DELETE	/mesaj-sablonlari/{sablon_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/mesaj-sablonlari/{sablon_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/mesajlar/gecmis	zorunlu	tesis	-	-	-	-	-	
+POST	/mesajlar/gonder	zorunlu	tesis	-	-	ozel	-	blok	
+POST	/mesajlar/onizleme	zorunlu	tesis	-	-	genel	-	-	
+GET	/muhasebe-ayarlari	zorunlu	tesis	-	-	-	-	-	
+PATCH	/muhasebe-ayarlari	zorunlu	tesis	-	-	ozel	-	-	
+GET	/notifications	zorunlu	tesis	-	-	-	-	-	
+POST	/notifications/toplu-okundu	zorunlu	tesis	-	-	haric	-	-	kisinin kendi arayuz tercihi / okundu isareti — bilgi degeri yok (silme ozel denetimli)
+POST	/notifications/toplu-sil	zorunlu	tesis	-	-	ozel	-	-	
+POST	/notifications/tumunu-okundu	zorunlu	tesis	-	-	haric	-	-	kisinin kendi arayuz tercihi / okundu isareti — bilgi degeri yok (silme ozel denetimli)
+PATCH	/notifications/{notification_id}	zorunlu	tesis	hedef	-	haric	-	-	kisinin kendi arayuz tercihi / okundu isareti — bilgi degeri yok (silme ozel denetimli)
+GET	/otomasyon-gunlugu	zorunlu	tesis	-	-	-	-	-	
+GET	/ozellikler	kamu	platform	-	-	-	-	-	herkese acik yapilandirma; kisisel veri yok
+GET	/panik	zorunlu	tesis	-	-	-	olusturan_telefon	-	
+POST	/panik	zorunlu	tesis	-	-	ozel	olusturan_telefon	tip	
+GET	/panik/aktif	zorunlu	tesis	-	-	-	olusturan_telefon	-	
+GET	/panik/{alarm_id}	zorunlu	tesis	hedef	-	-	olusturan_telefon	-	
+POST	/panik/{alarm_id}/gordum	zorunlu	tesis	hedef	-	ozel	olusturan_telefon	-	
+POST	/panik/{alarm_id}/iptal	zorunlu	tesis	hedef	-	ozel	olusturan_telefon	-	
+POST	/panik/{alarm_id}/kapat	zorunlu	tesis	hedef	-	ozel	olusturan_telefon	-	
+POST	/panik/{alarm_id}/mudahale	zorunlu	tesis	hedef	-	ozel	olusturan_telefon	-	
+GET	/parking/occupancy	zorunlu	tesis	-	-	-	-	-	
+GET	/patrol-plans	zorunlu	tesis	-	-	-	-	-	
+POST	/patrol-plans	zorunlu	tesis	-	-	genel	-	ad	
+DELETE	/patrol-plans/{plan_id}	zorunlu	tesis	rol	-	genel	-	-	
+GET	/patrol-plans/{plan_id}	zorunlu	tesis	rol	-	-	-	-	
+PATCH	/patrol-plans/{plan_id}	zorunlu	tesis	rol	-	genel	-	ad	
+GET	/patrol-plans/{plan_id}/checkpoints	zorunlu	tesis	rol	-	-	-	-	
+PUT	/patrol-plans/{plan_id}/checkpoints	zorunlu	tesis	rol	-	genel	-	-	
+GET	/patrol-windows	zorunlu	tesis	-	-	-	-	-	
+GET	/personel-kayitlari	zorunlu	tesis	-	-	-	email,tc,telefon	-	
+POST	/personel-kayitlari	zorunlu	tesis	-	-	ozel	email,tc,telefon	-	
+DELETE	/personel-kayitlari/{personel_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/personel-kayitlari/{personel_id}	zorunlu	tesis	rol	-	ozel	email,tc,telefon	-	
+POST	/public/tanitim-iletisim	kamu	platform	-	-	haric	-	-	tanitim sitesi formu; hiz sinirli, yalniz yazma
+POST	/push/cihaz-temizle	zorunlu	tesis	-	-	ozel	-	-	
+GET	/push/teshis	zorunlu	tesis	-	-	-	cihaz_kullanici	-	
+POST	/push/test	zorunlu	tesis	-	-	genel	-	-	
+GET	/raporlar/isler	zorunlu	tesis	-	-	-	-	-	
+GET	/raporlar/isler/{is_id}/indir	zorunlu	tesis	rol	var	-	-	-	
+GET	/raporlar/katalog	zorunlu	tesis	-	-	-	-	-	
+POST	/raporlar/{kod}	zorunlu	tesis	rol	var	genel	-	blok	
+POST	/raporlar/{kod}/kuyruk	zorunlu	tesis	rol	var	genel	-	blok	
+GET	/reports/financial-summary	zorunlu	tesis	-	-	-	-	-	
+GET	/reservations	zorunlu	tesis	-	-	-	-	-	
+POST	/reservations	zorunlu	tesis	-	-	genel	-	-	
+GET	/reservations/{reservation_id}	zorunlu	tesis	kendi	-	-	-	-	
+POST	/reservations/{reservation_id}/cancel	zorunlu	tesis	kendi	-	genel	-	-	
+GET	/residents	zorunlu	tesis	-	-	-	-	-	
+POST	/residents	zorunlu	tesis	-	-	ozel	email	blok,telefon,unit_no	
+DELETE	/residents/{user_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/residents/{user_id}	zorunlu	tesis	rol	-	ozel	-	telefon	
+GET	/sayaclar/ana	zorunlu	tesis	-	-	-	-	-	
+POST	/sayaclar/ana	zorunlu	tesis	-	-	ozel	-	-	
+DELETE	/sayaclar/ana/{sayac_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/sayaclar/ana/{sayac_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/sayaclar/bolum	zorunlu	tesis	-	-	-	-	-	
+POST	/sayaclar/bolum	zorunlu	tesis	-	-	ozel	-	-	
+POST	/sayaclar/bolum/otomatik	zorunlu	tesis	-	-	ozel	-	-	
+DELETE	/sayaclar/bolum/{sayac_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/sayaclar/bolum/{sayac_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/scans	zorunlu	tesis	-	-	-	-	-	
+POST	/scans	zorunlu	tesis	-	-	haric	-	foto_url,nfc_tag_uid	yuksek frekansli okutma; `scan_event` kendisi kayittir
+POST	/scans/simule	zorunlu	tesis	-	-	genel	-	-	
+GET	/shifts	zorunlu	tesis	-	-	-	-	-	
+POST	/shifts	zorunlu	tesis	-	-	genel	-	ad	
+DELETE	/shifts/{shift_id}	zorunlu	tesis	rol	-	genel	-	-	
+GET	/shifts/{shift_id}	zorunlu	tesis	rol	-	-	-	-	
+PATCH	/shifts/{shift_id}	zorunlu	tesis	rol	-	genel	-	ad	
+PUT	/shifts/{shift_id}/assignments	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/site-rules	zorunlu	tesis	-	-	-	-	-	
+POST	/site-rules	zorunlu	tesis	-	-	genel	-	foto_key	
+DELETE	/site-rules/{rule_id}	zorunlu	tesis	rol	-	genel	-	-	
+GET	/site-rules/{rule_id}	zorunlu	tesis	rol	-	-	-	-	
+PATCH	/site-rules/{rule_id}	zorunlu	tesis	rol	-	genel	-	foto_key	
+GET	/support	zorunlu	tesis	-	-	-	-	-	
+POST	/support	zorunlu	tesis	-	-	ozel	-	foto_key	
+GET	/support/all	zorunlu	tesis	-	-	-	-	-	
+PATCH	/support/{ticket_id}	zorunlu	tesis	rol	-	ozel	-	admin_cevap_foto_key	
+GET	/surum-politikasi	zorunlu	tesis	-	-	-	-	-	
+PUT	/surum-politikasi/{platform}	zorunlu	tesis	rol	-	ozel	-	asgari_surum,mesaj,onerilen_surum	
+POST	/surum/kontrol	kamu	platform	-	-	haric	-	-	herkese acik yapilandirma; kisisel veri yok
+GET	/takvim	zorunlu	tesis	-	-	-	-	-	
+GET	/tanitim-iletisim	zorunlu	tesis	-	-	-	email,telefon	-	
+PATCH	/tanitim-iletisim/{kayit_id}	zorunlu	tesis	rol	-	genel	email,telefon	-	
+GET	/task-categories	zorunlu	tesis	-	-	-	-	-	
+POST	/task-categories	zorunlu	tesis	-	-	genel	-	-	
+DELETE	/task-categories/{category_id}	zorunlu	tesis	rol	-	genel	-	-	
+PATCH	/task-categories/{category_id}	zorunlu	tesis	rol	-	genel	-	-	
+GET	/task-completions	zorunlu	tesis	-	-	-	-	-	
+GET	/tasks	zorunlu	tesis	-	-	-	-	-	
+POST	/tasks	zorunlu	tesis	-	-	genel	-	-	
+DELETE	/tasks/{task_id}	zorunlu	tesis	atama	-	genel	-	-	
+GET	/tasks/{task_id}	zorunlu	tesis	atama	-	-	-	-	
+PATCH	/tasks/{task_id}	zorunlu	tesis	atama	-	genel	-	-	
+GET	/tasks/{task_id}/adimlar	zorunlu	tesis	atama	-	-	-	-	
+POST	/tasks/{task_id}/adimlar	zorunlu	tesis	atama	-	ozel	-	-	
+DELETE	/tasks/{task_id}/adimlar/{step_id}	zorunlu	tesis	atama	-	ozel	-	-	
+PATCH	/tasks/{task_id}/adimlar/{step_id}	zorunlu	tesis	atama	-	genel	-	-	
+POST	/tasks/{task_id}/adimlar/{step_id}/geri-al	zorunlu	tesis	atama	-	ozel	-	-	
+POST	/tasks/{task_id}/adimlar/{step_id}/tamamla	zorunlu	tesis	atama	-	ozel	-	foto_key	
+POST	/tasks/{task_id}/basla	zorunlu	tesis	atama	-	ozel	-	-	
+GET	/tasks/{task_id}/completions	zorunlu	tesis	atama	-	-	-	-	
+POST	/tasks/{task_id}/completions	zorunlu	tesis	atama	-	ozel	-	foto_key,nfc_tag_uid,notlar	
+DELETE	/tasks/{task_id}/completions/{completion_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/tenant/settings	zorunlu	tesis	-	-	-	adres,yonetim_email	-	
+PATCH	/tenant/settings	zorunlu	tesis	-	-	ozel	adres,yonetim_email	ad,konum_ad,timezone,yonetim_email	
+POST	/tenant/setup	zorunlu	tesis	-	-	genel	adres,yonetim_email	-	
+GET	/tenants	zorunlu	tesis	-	-	-	-	-	
+POST	/tenants	zorunlu	tesis	-	-	genel	-	yoneticiler.password,yoneticiler.phone,yonetim_email	
+DELETE	/tenants/{tenant_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/tenants/{tenant_id}	zorunlu	tesis	rol	-	-	telefon	-	
+PATCH	/tenants/{tenant_id}	zorunlu	tesis	rol	-	genel	telefon	-	
+POST	/tenants/{tenant_id}/arsivle	zorunlu	tesis	rol	-	ozel	kullanici	-	
+POST	/tenants/{tenant_id}/geri-al	zorunlu	tesis	rol	-	ozel	kullanici	-	
+GET	/tenants/{tenant_id}/kvkk	zorunlu	tesis	rol	-	-	-	-	
+POST	/tenants/{tenant_id}/kvkk	zorunlu	tesis	rol	-	genel	-	-	
+GET	/tenants/{tenant_id}/silme-ozeti	zorunlu	tesis	rol	-	-	kullanici	-	
+PATCH	/tenants/{tenant_id}/yonetici	zorunlu	tesis	rol	-	genel	telefon	phone	
+POST	/tenants/{tenant_id}/yonetici/reset-credential	zorunlu	tesis	rol	-	genel	-	-	
+GET	/tenants/{tenant_id}/yoneticiler	zorunlu	tesis	rol	-	-	telefon	-	
+POST	/tenants/{tenant_id}/yoneticiler	zorunlu	tesis	rol	-	genel	-	phone	
+DELETE	/tenants/{tenant_id}/yoneticiler/{user_id}	zorunlu	tesis	rol	-	genel	-	-	
+GET	/transparency	zorunlu	tesis	-	-	-	-	-	
+GET	/transparency/{ay}	zorunlu	tesis	rol	-	-	-	-	
+PUT	/transparency/{ay}/publish	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/unit-access-request	zorunlu	tesis	-	-	-	-	-	
+POST	/unit-access-request	zorunlu	tesis	-	-	ozel	-	-	
+POST	/unit-access-request/bulk	zorunlu	tesis	-	-	ozel	-	-	
+GET	/unit-access-request/granted-units	zorunlu	tesis	-	-	-	-	-	
+PATCH	/unit-access-request/{request_id}	zorunlu	tesis	kendi	-	ozel	-	-	
+GET	/unit-complaints	zorunlu	tesis	-	-	-	-	-	
+POST	/unit-complaints	zorunlu	tesis	-	-	ozel	-	-	
+GET	/unit-complaints/building-map	zorunlu	tesis	-	-	-	-	-	
+GET	/unit-complaints/density	zorunlu	tesis	-	-	-	-	-	
+GET	/unit-complaints/gorunur-sayi	zorunlu	tesis	-	-	-	-	-	
+GET	/unit-complaints/mine	zorunlu	tesis	-	-	-	-	-	
+PATCH	/unit-complaints/{complaint_id}	zorunlu	tesis	rol	-	ozel	-	-	
+POST	/unit-complaints/{complaint_id}/okundu	zorunlu	tesis	rol	-	genel	-	-	
+POST	/unit-complaints/{complaint_id}/withdraw	zorunlu	tesis	kendi	-	ozel	-	-	
+GET	/unit-gruplari	zorunlu	tesis	-	-	-	-	-	
+POST	/unit-gruplari	zorunlu	tesis	-	-	ozel	-	-	
+DELETE	/unit-gruplari/{grup_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/unit-gruplari/{grup_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/unit-tipleri	zorunlu	tesis	-	-	-	-	-	
+POST	/unit-tipleri	zorunlu	tesis	-	-	ozel	-	-	
+DELETE	/unit-tipleri/{tip_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/unit-tipleri/{tip_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/unit-uyarilari	zorunlu	tesis	-	-	-	-	-	
+POST	/unit-uyarilari/kuyruk-isle	zorunlu	tesis	-	-	genel	-	-	
+POST	/unit-uyarilari/{uyari_id}/yapildi	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/units	zorunlu	tesis	-	-	-	-	-	
+POST	/units	zorunlu	tesis	-	-	ozel	-	-	
+GET	/units/ara	zorunlu	tesis	-	var	-	-	-	
+PATCH	/units/arsa-payi	zorunlu	tesis	-	-	ozel	-	-	
+GET	/units/arsa-payi-ozeti	zorunlu	tesis	-	-	-	-	-	
+POST	/units/bulk	zorunlu	tesis	-	-	ozel	-	-	
+GET	/units/by-no/{unit_no}/residents	zorunlu	tesis	rol	-	-	-	-	
+GET	/units/kat-onizleme	zorunlu	tesis	-	-	-	-	-	
+POST	/units/kat-sil	zorunlu	tesis	-	-	ozel	-	-	
+PATCH	/units/siralama	zorunlu	tesis	-	-	ozel	-	-	
+PATCH	/units/toplu	zorunlu	tesis	-	-	ozel	-	-	
+DELETE	/units/{unit_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/units/{unit_id}	zorunlu	tesis	rol	-	-	-	-	
+PATCH	/units/{unit_id}	zorunlu	tesis	rol	-	genel	-	-	
+GET	/units/{unit_id}/dues	zorunlu	tesis	rol	-	-	-	-	
+PATCH	/units/{unit_id}/layout	zorunlu	tesis	rol	-	genel	-	-	
+GET	/units/{unit_id}/residents	zorunlu	tesis	rol	-	-	-	-	
+POST	/units/{unit_id}/residents	zorunlu	tesis	rol	-	ozel	-	-	
+DELETE	/units/{unit_id}/residents/{user_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/units/{unit_id}/residents/{user_id}	zorunlu	tesis	rol	-	ozel	-	-	
+POST	/uploads/presign	zorunlu	tesis	-	-	haric	-	content_type,dosya_adi	yalniz imzali adres uretir; kayit baglandigi uc denetlenir
+GET	/users	zorunlu	tesis	-	-	-	email	-	
+POST	/users	zorunlu	tesis	-	-	ozel	email,telefon	telefon	
+GET	/users/acilabilir-roller	zorunlu	tesis	-	-	-	-	-	
+POST	/users/odeme-kodlari	zorunlu	tesis	-	-	genel	-	-	
+DELETE	/users/{user_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/users/{user_id}	zorunlu	tesis	rol	-	-	bildirim_eposta,email,telefon	-	
+PATCH	/users/{user_id}	zorunlu	tesis	rol	-	ozel	bildirim_eposta,email,telefon	telefon	
+PATCH	/users/{user_id}/avatar	zorunlu	tesis	rol	-	ozel	bildirim_eposta,email,telefon	avatar_key	
+PATCH	/users/{user_id}/contact	zorunlu	tesis	rol	-	ozel	bildirim_eposta,email,telefon	-	
+DELETE	/users/{user_id}/panik-aski	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/users/{user_id}/panik-aski	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/vardiya-izin	zorunlu	tesis	-	-	-	-	-	
+POST	/vardiya-izin	zorunlu	tesis	-	-	ozel	-	-	
+DELETE	/vardiya-izin/{izin_id}	zorunlu	tesis	kendi	-	ozel	-	-	
+POST	/vardiya-izin/{izin_id}/onayla	zorunlu	tesis	rol	-	ozel	-	-	
+POST	/vardiya-izin/{izin_id}/reddet	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/vardiya-plani	zorunlu	tesis	-	-	-	-	-	
+POST	/vardiya-plani	zorunlu	tesis	-	-	ozel	-	-	
+GET	/vardiya-plani/cizelge	zorunlu	tesis	-	-	-	-	-	
+GET	/vardiya-plani/disa-aktar	zorunlu	tesis	-	var	-	-	-	
+GET	/vardiya-plani/dongu-atamalari	zorunlu	tesis	-	-	-	-	-	
+POST	/vardiya-plani/dongu-atamalari/{atama_id}/sonlandir	zorunlu	tesis	rol	-	ozel	-	-	
+POST	/vardiya-plani/dongu-uygula	zorunlu	tesis	-	-	ozel	-	-	
+POST	/vardiya-plani/haftadan-kopyala	zorunlu	tesis	-	-	ozel	-	-	
+POST	/vardiya-plani/haftayi-doldur	zorunlu	tesis	-	-	ozel	-	-	
+POST	/vardiya-plani/ice-aktar	zorunlu	tesis	-	-	ozel	-	satirlar.degerler	
+POST	/vardiya-plani/kalip-uygula	zorunlu	tesis	-	-	ozel	-	-	
+GET	/vardiya-plani/kaliplar	zorunlu	tesis	-	-	-	-	-	
+POST	/vardiya-plani/kaliplar	zorunlu	tesis	-	-	ozel	-	-	
+DELETE	/vardiya-plani/kaliplar/{kalip_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/vardiya-plani/mola-onerisi	zorunlu	tesis	-	-	-	-	-	
+GET	/vardiya-plani/ornek-sablon	zorunlu	tesis	-	-	-	-	-	
+POST	/vardiya-plani/parti/{parti_id}/geri-al	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/vardiya-plani/simdi	zorunlu	tesis	-	-	-	-	-	
+POST	/vardiya-plani/toplu	zorunlu	tesis	-	-	ozel	-	-	
+GET	/vardiya-plani/yayin-ozeti	zorunlu	tesis	-	-	-	-	-	
+POST	/vardiya-plani/yayinla	zorunlu	tesis	-	-	ozel	-	-	
+DELETE	/vardiya-plani/{plan_id}	zorunlu	tesis	rol	-	ozel	-	-	
+PATCH	/vardiya-plani/{plan_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/vehicle-passes	zorunlu	tesis	-	-	-	plaka	-	
+POST	/vehicle-passes	zorunlu	tesis	-	-	ozel	plaka	-	
+GET	/vehicle-passes/{pass_id}	zorunlu	tesis	rol	-	-	plaka	-	
+POST	/vehicle-passes/{pass_id}/checkout	zorunlu	tesis	rol	-	ozel	plaka	-	
+GET	/violations	zorunlu	tesis	-	-	-	-	-	
+POST	/violations	zorunlu	tesis	-	-	ozel	-	-	
+GET	/violations/{violation_id}	zorunlu	tesis	rol	-	-	-	-	
+PATCH	/violations/{violation_id}	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/visitors	zorunlu	tesis	-	-	-	-	-	
+POST	/visitors	zorunlu	tesis	-	-	ozel	-	-	
+GET	/visitors/{visitor_id}	zorunlu	tesis	hedef	-	-	-	-	
+PATCH	/visitors/{visitor_id}	zorunlu	tesis	rol	-	ozel	-	-	
+POST	/visitors/{visitor_id}/checkout	zorunlu	tesis	rol	-	ozel	-	-	
+GET	/weather	zorunlu	tesis	-	-	-	-	-	
+POST	/webhooks/eposta/resend	kamu	platform	-	-	haric	-	-	saglayici imzasi (Svix/HMAC) dogrulanir; imzasiz 401
+POST	/webhooks/payments/{provider}	kamu	platform	-	-	haric	-	-	saglayici imzasi (Svix/HMAC) dogrulanir; imzasiz 401
+GET	/yetki-matrisi	zorunlu	tesis	-	-	-	-	-	
+GET	/yonetici-iletisim	zorunlu	tesis	-	-	-	telefon,yonetim_email	-	

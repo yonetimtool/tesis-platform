@@ -281,3 +281,23 @@ def test_is_kurali_hatasi_cevrilir(client, world):
         r.json()["error"]["message"]
         == METINLER["blok_etiketi_zaten_kayitli"]["es"]
     )
+
+
+def test_KATALOGLARDA_CIFT_ANAHTAR_YOK():
+    """(P247 §6) Sozluk literalinde ayni anahtar iki kez yazilirsa Python
+    SESSIZCE sonrakini alir. Olculdu: `cok_fazla_istek` P127'de tanitim
+    formu icin vardi; ayni anahtar yeni bir anlamla eklendi ve metni
+    "cok fazla mesaj" olarak kaldi — hicbir test dusmedi."""
+    import ast
+    from pathlib import Path
+
+    app = Path(__file__).resolve().parents[1] / "app"
+    for dosya in ("hata_metinleri.py", "push_metinleri.py"):
+        agac = ast.parse((app / dosya).read_text(encoding="utf-8"))
+        for dugum in ast.walk(agac):
+            if isinstance(dugum, ast.Dict):
+                gorulen: set[str] = set()
+                for k in dugum.keys:
+                    if isinstance(k, ast.Constant) and isinstance(k.value, str):
+                        assert k.value not in gorulen, f"{dosya}: cift anahtar {k.value!r}"
+                        gorulen.add(k.value)

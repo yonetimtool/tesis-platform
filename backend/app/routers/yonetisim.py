@@ -19,6 +19,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..hiz_siniri import DISA_AKTARIM_SINIRI
 from ..audit import Action, audit_user
 from ..belge_no import belge_no_ata
 from ..crud_helpers import get_or_404, translate_integrity
@@ -195,7 +196,7 @@ async def karar_sil(
     await db.flush()
 
 
-@router.get("/karar-defteri/{karar_id}/pdf")
+@router.get("/karar-defteri/{karar_id}/pdf", dependencies=[Depends(DISA_AKTARIM_SINIRI)])
 async def karar_pdf(
     karar_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
@@ -423,7 +424,7 @@ async def sakin_dokumanlari(
     )
 
 
-@router.get("/me/dokumanlar/{dokuman_id}/indir")
+@router.get("/me/dokumanlar/{dokuman_id}/indir", dependencies=[Depends(DISA_AKTARIM_SINIRI)])
 async def sakin_dokuman_indir(
     dokuman_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
@@ -447,7 +448,7 @@ async def sakin_dokuman_indir(
     return {"url": presign_get(obj.obje_anahtari), "dosya_adi": obj.ad}
 
 
-@router.get("/dokumanlar/{dokuman_id}/indir")
+@router.get("/dokumanlar/{dokuman_id}/indir", dependencies=[Depends(DISA_AKTARIM_SINIRI)])
 async def dokuman_indir(
     dokuman_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),

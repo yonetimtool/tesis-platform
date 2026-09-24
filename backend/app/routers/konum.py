@@ -47,6 +47,7 @@ from __future__ import annotations
 import httpx
 from fastapi import APIRouter, Depends, Query
 
+from ..hiz_siniri import ARAMA_SINIRI
 from ..config import settings
 from ..deps import require_role
 from ..errors import APIError
@@ -64,7 +65,7 @@ _ARAYAN = require_role("admin", "yonetici")
 _GEOCODE_URL = "https://geocoding-api.open-meteo.com/v1/search"
 
 
-@router.get("/ara", response_model=KonumAramaSonucu)
+@router.get("/ara", response_model=KonumAramaSonucu, dependencies=[Depends(ARAMA_SINIRI)])
 async def konum_ara(
     q: str = Query(min_length=2, max_length=120),
     dil: str = Query("tr", max_length=5),

@@ -182,6 +182,16 @@ app = FastAPI(
 
 install_error_handlers(app)
 
+# (P247 §6) Govde boyut siniri — bkz. `govde_siniri.py`.
+from .govde_siniri import GovdeSiniri  # noqa: E402
+
+app.add_middleware(GovdeSiniri)
+
+# (P247 §6) Genel yazma denetimi — bkz. `genel_denetim.py`.
+from .genel_denetim import GenelDenetim  # noqa: E402
+
+app.add_middleware(GenelDenetim)
+
 # CORS — YALNIZ prod'da (CORS_ORIGINS set edilince) eklenir. Dev'de liste bos =>
 # middleware yok => mevcut davranis (ve testler) degismez.
 if settings.cors_origin_list:

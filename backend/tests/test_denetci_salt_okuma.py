@@ -243,6 +243,9 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     # --- KENDI hesabi (kisinin haklari) ---
     ("PATCH", "/me/contact"),
     ("PATCH", "/me/password"),
+    # (P247 §2) Yonetici <-> sakin modu: kisinin KENDI yetki baglami.
+    # Denetci icin uc zaten 403 (`roller` tek eleman) — yazma yolu yok.
+    ("POST", "/me/rol-gecis"),
     ("PATCH", "/me/pazarlama-tercihleri"),
     ("POST", "/me/hesap-sil"),
     # (P149) Parolasiz kullanicinin silme onay kodu. `/me/hesap-sil` ile
