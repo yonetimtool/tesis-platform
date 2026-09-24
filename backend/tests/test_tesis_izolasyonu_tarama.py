@@ -74,6 +74,8 @@ TESIS_UCLARI: tuple[str, ...] = (
     "/diyafon",
     # (P241 §2) Izin listesi — tesis-kapsamli.
     "/vardiya-izin",
+    # (P247 §1) Dongu atamalari — kisi adlari + atlanan gunler tasir.
+    "/vardiya-plani/dongu-atamalari",
     # (P241 §1) Yillik bakim ozeti de tesis verisi tasir (ekipman adlari).
     "/bakim/ozet",
     # (P240 §3) Bolum anahtarlari tesise aittir.

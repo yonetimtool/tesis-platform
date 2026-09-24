@@ -396,3 +396,169 @@ class VardiyaKalipSonuc {
         partiId: json['parti_id'] as String?,
       );
 }
+
+// =========================================================================== //
+// (P247 §1) VARDIYA DONGUSU (ROTASYON)
+// =========================================================================== //
+
+/// Kayitli kalip. `adimlar` doluysa DONGUDUR (gun uzunlugunda adim dizisi;
+/// her adim o gunun dilim sira numaralari, bos = tatil).
+class VardiyaKalibi {
+  const VardiyaKalibi({
+    required this.id,
+    required this.ad,
+    required this.dilimler,
+    this.adimlar,
+  });
+
+  final String id;
+  final String ad;
+  final List<VardiyaDilim> dilimler;
+  final List<List<int>>? adimlar;
+
+  bool get donguMu => adimlar != null;
+
+  factory VardiyaKalibi.fromJson(Map<String, dynamic> j) => VardiyaKalibi(
+    id: j['id'] as String,
+    ad: j['ad'] as String,
+    dilimler: (j['dilimler'] as List? ?? const [])
+        .map((m) => Map<String, dynamic>.from(m as Map))
+        .map((m) => VardiyaDilim(
+              ad: m['ad'] as String,
+              baslangic: (m['baslangic'] as String).substring(0, 5),
+              bitis: (m['bitis'] as String).substring(0, 5),
+            ))
+        .toList(),
+    adimlar: (j['adimlar'] as List?)
+        ?.map((a) => (a as List).map((x) => x as int).toList())
+        .toList(),
+  );
+}
+
+/// Onizleme/sonuc satiri: gun x kisi x dilim + durum.
+class VardiyaDonguSatiri {
+  const VardiyaDonguSatiri({
+    required this.tarih,
+    required this.dilim,
+    required this.userId,
+    required this.durum,
+  });
+
+  final String tarih;
+  final String dilim;
+  final String userId;
+
+  /// eklenecek | eklendi | cakisma | zaten_var | izinli
+  final String durum;
+
+  factory VardiyaDonguSatiri.fromJson(Map<String, dynamic> j) =>
+      VardiyaDonguSatiri(
+        tarih: j['tarih'] as String,
+        dilim: j['dilim'] as String,
+        userId: j['user_id'] as String,
+        durum: j['durum'] as String,
+      );
+}
+
+/// Bir gunun kimsesiz saat araliklari (sunucu hesaplar).
+class VardiyaKapsamaGunu {
+  const VardiyaKapsamaGunu({
+    required this.tarih,
+    required this.bosDakika,
+    required this.bosluklar,
+  });
+
+  final String tarih;
+  final int bosDakika;
+
+  /// "00:00-08:00" bicimli araliklar.
+  final List<String> bosluklar;
+
+  factory VardiyaKapsamaGunu.fromJson(Map<String, dynamic> j) =>
+      VardiyaKapsamaGunu(
+        tarih: j['tarih'] as String,
+        bosDakika: (j['bos_dakika'] as num).toInt(),
+        bosluklar: (j['bosluklar'] as List? ?? const [])
+            .map((m) => Map<String, dynamic>.from(m as Map))
+            .map((m) =>
+                '${(m['baslangic'] as String).substring(0, 5)}-${(m['bitis'] as String).substring(0, 5)}')
+            .toList(),
+      );
+}
+
+class VardiyaDonguSonuc {
+  const VardiyaDonguSonuc({
+    required this.uygulandi,
+    required this.partiId,
+    required this.bitis,
+    required this.eklenecek,
+    required this.eklenen,
+    required this.cakisan,
+    required this.izinli,
+    required this.satirlar,
+    required this.kapsama,
+  });
+
+  final bool uygulandi;
+  final String? partiId;
+  final String bitis;
+  final int eklenecek;
+  final int eklenen;
+  final int cakisan;
+  final int izinli;
+  final List<VardiyaDonguSatiri> satirlar;
+  final List<VardiyaKapsamaGunu> kapsama;
+
+  List<VardiyaKapsamaGunu> get bosGunler =>
+      kapsama.where((k) => k.bosDakika > 0).toList();
+
+  factory VardiyaDonguSonuc.fromJson(Map<String, dynamic> j) =>
+      VardiyaDonguSonuc(
+        uygulandi: j['uygulandi'] as bool,
+        partiId: j['parti_id'] as String?,
+        bitis: j['bitis'] as String,
+        eklenecek: (j['eklenecek'] as num? ?? 0).toInt(),
+        eklenen: (j['eklenen'] as num? ?? 0).toInt(),
+        cakisan: (j['cakisan'] as num? ?? 0).toInt(),
+        izinli: (j['izinli'] as num? ?? 0).toInt(),
+        satirlar: (j['satirlar'] as List? ?? const [])
+            .map((m) =>
+                VardiyaDonguSatiri.fromJson(Map<String, dynamic>.from(m as Map)))
+            .toList(),
+        kapsama: (j['kapsama'] as List? ?? const [])
+            .map((m) =>
+                VardiyaKapsamaGunu.fromJson(Map<String, dynamic>.from(m as Map)))
+            .toList(),
+      );
+}
+
+class VardiyaDonguAtama {
+  const VardiyaDonguAtama({
+    required this.id,
+    required this.ad,
+    required this.kalipAd,
+    required this.partiId,
+    required this.durum,
+    required this.uretildiKadar,
+    required this.atlanan,
+  });
+
+  final String id;
+  final String ad;
+  final String kalipAd;
+  final String partiId;
+  final String durum;
+  final String? uretildiKadar;
+  final int atlanan;
+
+  factory VardiyaDonguAtama.fromJson(Map<String, dynamic> j) =>
+      VardiyaDonguAtama(
+        id: j['id'] as String,
+        ad: (j['ad'] as String?) ?? '',
+        kalipAd: (j['kalip_ad'] as String?) ?? '',
+        partiId: j['parti_id'] as String,
+        durum: j['durum'] as String,
+        uretildiKadar: j['uretildi_kadar'] as String?,
+        atlanan: (j['atlanan'] as List? ?? const []).length,
+      );
+}

@@ -248,6 +248,94 @@ class VardiyaPlaniApi {
       throw ApiException.fromDio(e);
     }
   }
+
+  // ===================== (P247 §1) DONGU (ROTASYON) ===================== //
+
+  /// Kayitli kaliplar — dongu olanlar `adimlar` tasir.
+  Future<List<VardiyaKalibi>> kaliplar() async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>('/vardiya-plani/kaliplar');
+      return (res.data?['items'] as List? ?? const [])
+          .map((m) => VardiyaKalibi.fromJson(Map<String, dynamic>.from(m as Map)))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// Dongu kalibi kaydet (hazir sablonlardan). Web'deki tanim ile AYNI uc.
+  Future<VardiyaKalibi> donguKalibiOlustur({
+    required String ad,
+    required List<VardiyaDilim> dilimler,
+    required List<List<int>> adimlar,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/vardiya-plani/kaliplar',
+        data: {
+          'ad': ad,
+          'dilimler': [for (final d in dilimler) d.toJson()],
+          'adimlar': adimlar,
+        },
+      );
+      return VardiyaKalibi.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// Donguyu ekibe ata. [kuru] true ise HICBIR SEY YAZILMAZ (onizleme);
+  /// kaydetme AYNI uca `kuru=false` ile gider (P207 K1.4).
+  Future<VardiyaDonguSonuc> donguUygula({
+    required String kalipId,
+    required DateTime baslangic,
+    required List<String> kisiler,
+    int kaydirma = 0,
+    bool kuru = false,
+    bool cakisanlariAtla = false,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/vardiya-plani/dongu-uygula',
+        data: {
+          'kalip_id': kalipId,
+          'baslangic': _tarih(baslangic),
+          'kisiler': kisiler,
+          'kaydirma': kaydirma,
+          'kuru': kuru,
+          'cakisanlari_atla': cakisanlariAtla,
+        },
+      );
+      return VardiyaDonguSonuc.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  Future<List<VardiyaDonguAtama>> donguAtamalari() async {
+    try {
+      final res =
+          await _dio.get<Map<String, dynamic>>('/vardiya-plani/dongu-atamalari');
+      return (res.data?['items'] as List? ?? const [])
+          .map((m) =>
+              VardiyaDonguAtama.fromJson(Map<String, dynamic>.from(m as Map)))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// Toplu islemi (dongu partisi dahil: satirlar + atamalar) geri al.
+  Future<int> partiGeriAl(String partiId) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/vardiya-plani/parti/$partiId/geri-al',
+      );
+      return (res.data?['iptal_edilen'] as num?)?.toInt() ?? 0;
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
 }
 
 final vardiyaPlaniApiProvider =

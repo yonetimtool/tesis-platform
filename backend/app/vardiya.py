@@ -204,3 +204,49 @@ def plan_saat(plan, shift) -> float:
     ham = saat_farki(bas, son)
     dusen = mola_dakika(getattr(plan, "molalar", None)) / 60.0
     return max(0.0, ham - dusen)
+
+
+# =========================================================================== #
+# (P247 §1) DONGU (ROTASYON) — saf hesaplar
+# =========================================================================== #
+#
+# ===========================================================================
+# ADIM TAKVIMDEN HESAPLANIR, SAYACTAN DEGIL
+# ===========================================================================
+# Adim(gun) = (gun - referans) mod uzunluk. "Kacinci calisma gunu" diye
+# SAYAN bir sayac, izinli gunde durur ve donguyu KAYDIRIRDI: 2 gun izin
+# alan kisi donunce ekibin geri kalaniyla ayni gece nobetine dusardi ve
+# o gunun gunduzu kimsesiz kalirdi. Takvime bagli adimda izin yalniz O
+# GUNU bosaltir; ertesi gun kisi, izin almamis gibi dongudeki yerindedir.
+
+
+def dongu_adimi(gun: dt.date, referans: dt.date, uzunluk: int) -> int:
+    """`gun`de dongunun kacinci adimi. Referanstan ONCEKI gunler de gecerli
+    (Python `%` negatif farkta da 0..uzunluk-1 doner): kaydirilmis ekip
+    uyesi baslangic gununde dongunun SONUNDAN gelir — boylece ekip ilk
+    gunden itibaren nobeti kesintisiz doldurur."""
+    return (gun - referans).days % uzunluk
+
+
+def kapsama_bosluklari(
+    gun: dt.date, araliklar: list[tuple[dt.datetime, dt.datetime]]
+) -> list[tuple[dt.datetime, dt.datetime]]:
+    """(P247 §1) `gun`un 00:00-24:00 penceresinde KIMSENIN olmadigi araliklar.
+
+    Araliklar gece asan vardiyalari da icerir (dunku 20:00-08:00 bugunun
+    sabahini kapsar); pencereye kirpilir, birlestirilir, tumleyeni alinir.
+    """
+    bas = dt.datetime.combine(gun, dt.time(0, 0))
+    son = bas + dt.timedelta(days=1)
+    kirpik = sorted(
+        (max(a, bas), min(b, son)) for a, b in araliklar if a < son and b > bas
+    )
+    bosluk: list[tuple[dt.datetime, dt.datetime]] = []
+    imlec = bas
+    for a, b in kirpik:
+        if a > imlec:
+            bosluk.append((imlec, a))
+        imlec = max(imlec, b)
+    if imlec < son:
+        bosluk.append((imlec, son))
+    return bosluk

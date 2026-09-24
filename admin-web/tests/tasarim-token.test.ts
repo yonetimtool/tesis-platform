@@ -452,6 +452,14 @@ describe("(P138) TABLO ILKELI — elle iskelet geri gelmesin", () => {
     // (toplu tahsilat, gider, gelir) bunu KULLANIR, kendi tablosunu
     // yazmaz.
     "components/finans/satir-tablosu.tsx",
+    // (P247 §1) `components/vardiya/dongu-modali.tsx` — DONGU ONIZLEMESI.
+    //
+    // Satir-tablosu ile AYNI gerekce: bu bir liste degil bir KISI x GUN
+    // MATRISI (hucre = o gun o kisinin dilimi; son satir kimsesiz saat
+    // araliklari). `VeriTablosu`nun siralama/sayfalama/kolon gorunurlugu
+    // burada anlamsiz — gunleri siralamak matrisi bozar. `<table>`
+    // ekran okuyucuda "3 Ekim, Ahmet: Gece" iliskisini koruyan TEK isaret.
+    "components/vardiya/dongu-modali.tsx",
   ];
   const ilkelMi = (y: string) => ILKELLER.some((i) => y.endsWith(i));
 

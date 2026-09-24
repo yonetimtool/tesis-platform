@@ -27,6 +27,7 @@ from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..hiz_siniri import DISA_AKTARIM_SINIRI
 from ..audit import Action, audit_user
 from ..deps import get_tenant_db, require_role
 from ..roller import gorunur_roller
@@ -42,6 +43,7 @@ from ..models import (
     Shift,
     ShiftAssignment,
     Tenant,
+    VardiyaDonguAtama,
     VardiyaIzin,
     VardiyaKalibi,
     VardiyaPlani,
@@ -59,6 +61,14 @@ from ..schemas import (
     VardiyaYayinOzet,
     VardiyaYayinSonuc,
     VardiyaDilim,
+    VardiyaDonguAtamaListResponse,
+    VardiyaDonguAtamaOut,
+    VardiyaDonguSonlandirIstek,
+    VardiyaDonguSonlandirSonuc,
+    VardiyaDonguSonuc,
+    VardiyaDonguUygulaIstek,
+    VardiyaKapsamaAralik,
+    VardiyaKapsamaGun,
     VardiyaKalibiCreate,
     VardiyaKalibiListResponse,
     VardiyaKalibiOut,
@@ -84,7 +94,9 @@ from ..vardiya import (
     GUNLUK_AZAMI_SAAT,
     HAFTALIK_NORMAL_SAAT,
     cakisiyor_mu,
+    dongu_adimi,
     gece_asiyor_mu,
+    kapsama_bosluklari,
     mola_dakika,
     plan_araligi,
     plan_saat,
@@ -947,6 +959,7 @@ async def kalip_olustur(
         ad=body.ad,
         dilimler=[d.model_dump(mode="json") for d in body.dilimler],
         aktif=body.aktif,
+        adimlar=body.adimlar,
     )
     db.add(kalip)
     await db.flush()
@@ -971,6 +984,11 @@ async def kalip_sil(
     ).scalar_one_or_none()
     if kalip is None:
         raise APIError(404, "not_found", "vardiya_kalibi_bulunamadi")
+    # (P247 §1) ETKIN DONGU ATAMASI VARSA SILINMEZ: beat kayan ufku bu
+    # kaliptan uretiyor. Silinseydi ekip ertesi aydan itibaren SESSIZCE
+    # plansiz kalirdi. Once atamalar sonlandirilir/geri alinir.
+    if await _etkin_atama_var(db, kalip_id):
+        raise APIError(409, "conflict", "vardiya_kalibi_kullanimda")
     # KALIP SILINIR, OLUSMUS PLANLAR KALIR: kalip bir SABLONDUR, plan
     # satirlarinin ona bagli bir yasami yok (`parti_id` ile geri alinir).
     await db.delete(kalip)
@@ -1033,6 +1051,12 @@ async def _gruplari_coz(
         ).scalar_one_or_none()
         if kalip is None:
             raise APIError(422, "validation_error", "vardiya_kalibi_bulunamadi")
+        if kalip.adimlar is not None:
+            # (P247 §1) DONGU KALIBI buradan UYGULANMAZ: bu uc her secili
+            # gune TUM dilimleri yazar; bir dongude o gun hangi dilimin
+            # (ya da tatilin) gelecegini bilmez ve 2-2-2 dongusunu "her gun
+            # gece + gunduz" diye yazardi. Dongu `/dongu-uygula`dan gider.
+            raise APIError(422, "validation_error", "vardiya_kalibi_dongu")
         return [VardiyaDilim.model_validate(d) for d in kalip.dilimler]
 
     if body.gruplar:
@@ -1242,20 +1266,604 @@ async def parti_geri_al(
             )
         )
     ).scalars().all()
-    if not satirlar:
+    # (P247 §1) DONGU PARTISI: satirlarla birlikte ATAMALAR da geri alinir.
+    # Yalniz satirlari iptal etmek yetmezdi — beat ertesi gece kayan ufku
+    # ayni atamadan YENIDEN doldururdu ve "geri al" bir gun surerdi.
+    atamalar = (
+        await db.execute(
+            select(VardiyaDonguAtama).where(
+                VardiyaDonguAtama.parti_id == parti_id,
+                VardiyaDonguAtama.iptal_at.is_(None),
+                *_atama_kosulu(user),
+            )
+        )
+    ).scalars().all()
+    if not satirlar and not atamalar:
         raise APIError(404, "not_found", "vardiya_partisi_bulunamadi")
     for plan in satirlar:
         plan.durum = "iptal"
+        plan.updated_at = func.now()
+    for a in atamalar:
+        a.iptal_at = func.now()
+        a.updated_at = func.now()
     await db.flush()
     await audit_user(
         db, user, Action.VARDIYA_PLAN_UPDATE, resource_type="vardiya_plani",
         resource_id=None,
         meta={"islem": "parti_geri_al", "parti_id": str(parti_id),
-              "iptal_edilen": len(satirlar)},
+              "iptal_edilen": len(satirlar), "dongu_atama": len(atamalar)},
     )
     return VardiyaPartiGeriAlSonuc(
         parti_id=parti_id, iptal_edilen=len(satirlar)
     )
+
+
+# =========================================================================== #
+# (P247 §1) VARDIYA ROTASYONU — DONGU KALIPLARI
+# =========================================================================== #
+#
+# ===========================================================================
+# OLCUM: BUGUNE KADAR NE VARDI
+# ===========================================================================
+# P207 haftalik, P243 aylik "rotasyon" getirdi: ikisi de dilim ATAMALARINI
+# donem basina bir KAYDIRIR (A ekibi bu hafta gunduz, gelecek hafta gece).
+# Sahadaki dongulerin hicbiri bu kaliba uymuyordu: "2 gece-2 gunduz-2
+# tatil" bir GUN dizisidir (haftaya bolunmez: 6 gunluk dongu her hafta
+# baska gune duser), 12/36 ise GUN ASIRI calismadir ve "her gun tum
+# dilimler" diyen kalip onu anlatamaz. Ustelik ikisi de bir kerelik
+# PARTI uretiyordu: donguyu surdurmek icin yonetici her ay bastan
+# uygulamak ve ofseti (kim hangi gunde) elle tutturmak zorundaydi —
+# tutturamadigi ay nobet delinir.
+#
+# ===========================================================================
+# MODEL: GUN UZUNLUGUNDA ADIM DIZISI (kalibin `adimlar`i)
+# ===========================================================================
+# Her adim o gun calisilan DILIMLERIN sira numaralari, bos = tatil.
+# 12/36 bu dizinin OZEL HALIDIR: [[gece],[]] — 20:00-08:00 calis, ertesi
+# 08:00'den sonraki gun 20:00'e kadar 36 saat dinlen. Saat tabanli bir
+# model (calis N saat, dinlen M saat) AYRICA yazilmadi: plan satiri zaten
+# GUNE bagli (`vardiya_plani.tarih` + saat + gece asma) ve periyodu 24'un
+# kati olmayan her oran (12/24 = 36 saat) iki-uc gunluk bir adim dizisine
+# acilir. Iki model, ayni satiri iki farkli yoldan ureten iki kod yolu
+# demekti.
+#
+# ===========================================================================
+# UFUK: SURESIZ ATAMA + KAYAN URETIM
+# ===========================================================================
+# Atama suresizdir; satirlar `bugun + DONGU_UFUK_GUN`e kadar uretilir ve
+# beat her gece ufku bir gun ileri tasir. 62 gun: her an bir sonraki TAM
+# takvim ayi uretilmis olur (ayin 1'inde bile ertesi ayin sonu 61 gun
+# ileride) — yonetici gelecek ayi gorup YAYINLAYABILIR. Daha uzun ufuk,
+# gozden gecirilmemis taslak yigini ve izin/ayrilik durumunda iptal
+# edilecek satir demekti.
+#
+# ===========================================================================
+# IZIN / TATIL / ELLE DEGISIKLIK — DONGU KAYMAZ
+# ===========================================================================
+# * Adim TAKVIMDEN hesaplanir (`dongu_adimi`), sayactan degil: izinli
+#   gunde satir uretilmez ama dongu ilerler; ertesi gun kisi yerindedir.
+# * Uretici `uretildi_kadar` FILIGRANININ gerisine DONMEZ: elle
+#   duzenlenen ya da iptal edilen satir sonraki uretimde ezilmez/geri
+#   gelmez. Tek gunluk degisiklik yalniz o gunu etkiler.
+# * Resmi tatil: sistemde tatil takvimi YOK (`_gun_tipi` notu). Dongu
+#   tatilde de doner — nobet tatilde de tutulur; kisinin tatil izni
+#   `vardiya_izin` (tur=resmi_tatil) ile girilir ve izin kuralina tabidir.
+
+#: Kayan ufuk (gun) — gerekce yukarida.
+DONGU_UFUK_GUN = 62
+#: Atama basina saklanan son atlanan gun sayisi (sessiz atlama yok, ama
+#: sinirsiz buyuyen bir JSON de yok).
+_ATLANAN_UST = 60
+
+
+def _atama_kosulu(user: AppUser) -> list:
+    """`_plan_kosulu`nun atama karsiligi — amir yalniz kendi ekibi."""
+    gorunur = gorunur_roller(user.role)
+    if gorunur is None:
+        return []
+    return [
+        VardiyaDonguAtama.user_id.in_(
+            select(AppUser.id).where(AppUser.role.in_(tuple(gorunur)))
+        )
+    ]
+
+
+async def _etkin_atama_var(db: AsyncSession, kalip_id: uuid.UUID) -> bool:
+    satir = (
+        await db.execute(
+            select(VardiyaDonguAtama.id).where(
+                VardiyaDonguAtama.kalip_id == kalip_id,
+                VardiyaDonguAtama.iptal_at.is_(None),
+                (VardiyaDonguAtama.bitis.is_(None))
+                | (VardiyaDonguAtama.uretildi_kadar.is_(None))
+                | (VardiyaDonguAtama.uretildi_kadar < VardiyaDonguAtama.bitis),
+            ).limit(1)
+        )
+    ).first()
+    return satir is not None
+
+
+async def tesis_bugunu(db: AsyncSession, tenant_id: uuid.UUID) -> dt.date:
+    """Tesisin YEREL bugunu (`simdi` ile ayni kural)."""
+    tz_ad = (
+        await db.execute(select(Tenant.timezone).where(Tenant.id == tenant_id))
+    ).scalar_one_or_none()
+    return dt.datetime.now(ZoneInfo(tz_ad or "Europe/Istanbul")).date()
+
+
+def _dongu_tanimi(kalip: VardiyaKalibi) -> tuple[list[VardiyaDilim], list[list[int]]]:
+    if kalip.adimlar is None:
+        raise APIError(422, "validation_error", "vardiya_kalibi_dongu_degil")
+    return (
+        [VardiyaDilim.model_validate(d) for d in kalip.dilimler],
+        [list(a) for a in kalip.adimlar],
+    )
+
+
+async def _dongu_plani(
+    db: AsyncSession,
+    *,
+    dilimler: list[VardiyaDilim],
+    adimlar: list[list[int]],
+    kisi_id: uuid.UUID,
+    referans: dt.date,
+    bas: dt.date,
+    son: dt.date,
+) -> tuple[list[tuple[dt.date, VardiyaDilim, str]], set[str]]:
+    """Bir kisinin [bas, son] araliginda dongu satirlari + her birinin durumu.
+
+    Denetimler `kalip-uygula` ile AYNI yardimcilardan gecer
+    (`_izin_denetle`, `_cakisma_denetle`) — dongu icin ayri bir cakisma
+    kurali yazmak, iki kuralin ayrismasi demekti.
+    """
+    sonuc: list[tuple[dt.date, VardiyaDilim, str]] = []
+    uyarilar: set[str] = set()
+    # AYNI ISTEKTE URETILEN satirlar birbiriyle de cakisabilir (dongu
+    # 20:00-08:00 gecesinin ertesi gunune 06:00 baslayan bir dilim koymus
+    # olabilir). Satirlar sonda yazildigi icin veritabani denetimi onlari
+    # GORMEZ; burada bellekte tutulur.
+    bekleyen: list[tuple[dt.datetime, dt.datetime]] = []
+    gun = bas
+    while gun <= son:
+        adim = adimlar[dongu_adimi(gun, referans, len(adimlar))]
+        for sira in adim:
+            dilim = dilimler[sira]
+            aralik = vardiya_araligi(gun, dilim.baslangic, dilim.bitis)
+            mevcut = (
+                await db.execute(
+                    select(VardiyaPlani.id).where(
+                        VardiyaPlani.tarih == gun,
+                        VardiyaPlani.user_id == kisi_id,
+                        VardiyaPlani.durum == "planli",
+                        VardiyaPlani.baslangic_saat == dilim.baslangic,
+                        VardiyaPlani.bitis_saat == dilim.bitis,
+                    ).limit(1)
+                )
+            ).first()
+            if mevcut is not None:
+                sonuc.append((gun, dilim, "zaten_var"))
+                continue
+            try:
+                await _izin_denetle(db, kisi_id, gun)
+            except APIError:
+                # IZIN CAKISMA DEGILDIR: beklenen bir bosluktur ve karar
+                # gerektirmez (dongu sayaci yine ilerler). Ayri durum.
+                sonuc.append((gun, dilim, "izinli"))
+                continue
+            try:
+                uyarilar.update(
+                    await _cakisma_denetle(db, user_id=kisi_id, tarih=gun, aralik=aralik)
+                )
+                if any(cakisiyor_mu(aralik, b) for b in bekleyen):
+                    raise APIError(422, "validation_error", "vardiya_cakisiyor")
+            except APIError:
+                sonuc.append((gun, dilim, "cakisma"))
+                continue
+            bekleyen.append(aralik)
+            sonuc.append((gun, dilim, "eklenecek"))
+        gun += dt.timedelta(days=1)
+    return sonuc, uyarilar
+
+
+def _plan_satiri(
+    *, tenant_id, gun: dt.date, dilim: VardiyaDilim, kisi_id, parti_id,
+    atama_id, molalar, not_metni,
+) -> VardiyaPlani:
+    # (P241 §2) TASLAK ACILIR (`yayinlandi_at` NULL): uretilen dongu de
+    # bir plandir; personel yonetici yayinlayinca gorur.
+    return VardiyaPlani(
+        tenant_id=tenant_id,
+        shift_id=None,
+        tarih=gun,
+        user_id=kisi_id,
+        baslangic_saat=dilim.baslangic,
+        bitis_saat=dilim.bitis,
+        not_metni=not_metni,
+        molalar=list(molalar or []),
+        parti_id=parti_id,
+        dongu_atama_id=atama_id,
+    )
+
+
+def _atlanan_ekle(atama: VardiyaDonguAtama, satirlar) -> None:
+    yeni = [
+        {"tarih": g.isoformat(), "dilim": d.ad, "sebep": durum}
+        for g, d, durum in satirlar
+        if durum in ("izinli", "cakisma")
+    ]
+    if yeni:
+        atama.atlanan = (list(atama.atlanan or []) + yeni)[-_ATLANAN_UST:]
+
+
+async def _kapsama(
+    db: AsyncSession,
+    user: AppUser,
+    roller: set[str],
+    bas: dt.date,
+    son: dt.date,
+    ekler: list[tuple[dt.datetime, dt.datetime]],
+) -> list[VardiyaKapsamaGun]:
+    """(P247 §1) SAAT BAZINDA KAPSAMA — "24 saatin hangi dilimleri kimsesiz".
+
+    KAPSAM: secilen kisilerin ROLLERINDEKI tum personelin planli satirlari
+    (+ onizlemedeki yeni satirlar). Yalniz secilen kisilere bakmak, ayni
+    nobeti tutan ekip disi bir gorevlinin gecesini "bos" gosterirdi; tum
+    rollere bakmak ise tesis gorevlisinin gunduzunu guvenlik nobeti
+    sanardi.
+    """
+    araliklar = list(ekler)
+    satirlar = (
+        await db.execute(
+            select(VardiyaPlani, Shift)
+            .outerjoin(Shift, Shift.id == VardiyaPlani.shift_id)
+            .join(AppUser, AppUser.id == VardiyaPlani.user_id)
+            .where(
+                VardiyaPlani.durum == "planli",
+                VardiyaPlani.tarih >= bas - dt.timedelta(days=1),
+                VardiyaPlani.tarih <= son,
+                AppUser.role.in_(tuple(roller)),
+                *_rol_kosulu(user),
+            )
+        )
+    ).all()
+    for plan, shift in satirlar:
+        try:
+            araliklar.append(plan_araligi(plan, shift))
+        except ValueError:
+            continue
+    gunler: list[VardiyaKapsamaGun] = []
+    gun = bas
+    while gun <= son:
+        bosluk = kapsama_bosluklari(gun, araliklar)
+        gunler.append(
+            VardiyaKapsamaGun(
+                tarih=gun,
+                bos_dakika=int(sum((b - a).total_seconds() for a, b in bosluk) // 60),
+                bosluklar=[
+                    VardiyaKapsamaAralik(baslangic=a.time(), bitis=b.time())
+                    for a, b in bosluk
+                ],
+            )
+        )
+        gun += dt.timedelta(days=1)
+    return gunler
+
+
+@router.post("/dongu-uygula", response_model=VardiyaDonguSonuc)
+async def dongu_uygula(
+    body: VardiyaDonguUygulaIstek,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YAZAR),
+) -> VardiyaDonguSonuc:
+    """(P247 §1) Donguyu kisilere/ekibe ata — onizleme + suresiz uretim.
+
+    `kalip-uygula` ile AYNI sozlesme: `kuru=true` hicbir sey yazmaz ve ayni
+    hesabi doner; cakisma varsa ve `cakisanlari_atla=false` ise HICBIR SEY
+    yazilmaz; yazilan her satir ayni `parti_id`yi tasir ve
+    `/parti/{id}/geri-al` satirlari VE atamalari birlikte geri alir.
+    """
+    kalip = (
+        await db.execute(select(VardiyaKalibi).where(VardiyaKalibi.id == body.kalip_id))
+    ).scalar_one_or_none()
+    if kalip is None:
+        raise APIError(422, "validation_error", "vardiya_kalibi_bulunamadi")
+    dilimler, adimlar = _dongu_tanimi(kalip)
+
+    kisiler = {
+        k.id: k
+        for k in (
+            await db.execute(select(AppUser).where(AppUser.id.in_(body.kisiler)))
+        ).scalars().all()
+    }
+    if set(body.kisiler) - set(kisiler) or any(not k.is_active for k in kisiler.values()):
+        raise APIError(422, "validation_error", "personel_bulunamadi")
+    for k in kisiler.values():
+        _hedef_gorunur(user, k.role)
+
+    bugun = await tesis_bugunu(db, user.tenant_id)
+    # GECMISE UZUN URETIM YOK: bir aydan eski bir baslangic, gecmisi
+    # "planlanmis" gosterip mesai hesabini bozardi.
+    if body.baslangic < bugun - dt.timedelta(days=31):
+        raise APIError(422, "validation_error", "vardiya_aralik_cok_uzun")
+    son = max(bugun, body.baslangic) + dt.timedelta(days=DONGU_UFUK_GUN - 1)
+
+    # AYNI KISIYE IKI ETKIN DONGU OLMAZ: iki dongu ayni kisiye ayni
+    # geceyi iki kez yazmaya calisir ve beat her gece "cakisma" uretirdi.
+    # Once eskisi sonlandirilir (acik eylem, sessiz devir degil).
+    cakisan_atama = (
+        await db.execute(
+            select(VardiyaDonguAtama.id).where(
+                VardiyaDonguAtama.user_id.in_(body.kisiler),
+                VardiyaDonguAtama.iptal_at.is_(None),
+                (VardiyaDonguAtama.bitis.is_(None))
+                | (VardiyaDonguAtama.bitis >= body.baslangic),
+            ).limit(1)
+        )
+    ).first()
+    if cakisan_atama is not None:
+        raise APIError(409, "conflict", "vardiya_dongu_zaten_var")
+
+    ofsetler = body.ofsetler or [i * body.kaydirma for i in range(len(body.kisiler))]
+    planlar: list[tuple[uuid.UUID, dt.date, list]] = []
+    uyarilar: set[str] = set()
+    for kisi_id, ofset in zip(body.kisiler, ofsetler):
+        referans = body.baslangic + dt.timedelta(days=ofset)
+        satirlar, u = await _dongu_plani(
+            db, dilimler=dilimler, adimlar=adimlar, kisi_id=kisi_id,
+            referans=referans, bas=body.baslangic, son=son,
+        )
+        uyarilar |= u
+        planlar.append((kisi_id, referans, satirlar))
+
+    cikti = [
+        VardiyaKalipGunDilim(
+            tarih=g, dilim=d.ad, baslangic=d.baslangic, bitis=d.bitis,
+            user_id=kisi_id, ad=kisiler[kisi_id].ad, durum=durum,
+        )
+        for kisi_id, _, satirlar in planlar
+        for g, d, durum in satirlar
+    ]
+    say = lambda durum: sum(1 for r in cikti if r.durum == durum)  # noqa: E731
+    cakisan = say("cakisma")
+    eklenecek = say("eklenecek")
+    kapsama = await _kapsama(
+        db, user, {k.role for k in kisiler.values()}, body.baslangic, son,
+        [
+            vardiya_araligi(g, d.baslangic, d.bitis)
+            for _, _, satirlar in planlar
+            for g, d, durum in satirlar
+            if durum == "eklenecek"
+        ],
+    )
+    ortak = dict(
+        baslangic=body.baslangic, bitis=son, eklenecek=eklenecek, cakisan=cakisan,
+        zaten_var=say("zaten_var"), izinli=say("izinli"), kapsama=kapsama,
+        ofsetler={str(k): o for k, o in zip(body.kisiler, ofsetler)},
+        uyarilar=sorted(uyarilar),
+    )
+    if body.kuru or (cakisan and not body.cakisanlari_atla):
+        return VardiyaDonguSonuc(uygulandi=False, satirlar=cikti, **ortak)
+
+    parti_id = uuid.uuid4()
+    molalar = [m.model_dump(mode="json") for m in (body.molalar or [])]
+    for kisi_id, referans, satirlar in planlar:
+        atama = VardiyaDonguAtama(
+            tenant_id=user.tenant_id, kalip_id=kalip.id, user_id=kisi_id,
+            referans=referans, baslangic=body.baslangic, uretildi_kadar=son,
+            parti_id=parti_id, molalar=molalar, not_metni=body.not_metni,
+            olusturan_user_id=user.id,
+        )
+        _atlanan_ekle(atama, satirlar)
+        db.add(atama)
+        await db.flush()
+        for g, d, durum in satirlar:
+            if durum == "eklenecek":
+                db.add(_plan_satiri(
+                    tenant_id=user.tenant_id, gun=g, dilim=d, kisi_id=kisi_id,
+                    parti_id=parti_id, atama_id=atama.id, molalar=molalar,
+                    not_metni=body.not_metni,
+                ))
+    await db.flush()
+    for r in cikti:
+        if r.durum == "eklenecek":
+            r.durum = "eklendi"
+    await audit_user(
+        db, user, Action.VARDIYA_PLAN_UPDATE, resource_type="vardiya_plani",
+        resource_id=None,
+        meta={
+            "islem": "dongu_uygula", "parti_id": str(parti_id),
+            "kalip_id": str(kalip.id), "kisi": len(body.kisiler),
+            "baslangic": body.baslangic.isoformat(), "bitis": son.isoformat(),
+            "ofsetler": ofsetler, "eklenen": eklenecek, "cakisan": cakisan,
+        },
+    )
+    return VardiyaDonguSonuc(
+        uygulandi=True, parti_id=parti_id, eklenen=eklenecek, satirlar=cikti,
+        **ortak,
+    )
+
+
+def _atama_durumu(a: VardiyaDonguAtama, bugun: dt.date) -> str:
+    if a.iptal_at is not None:
+        return "geri_alindi"
+    if a.bitis is not None and a.bitis < bugun:
+        return "sonlandi"
+    return "aktif"
+
+
+@router.get("/dongu-atamalari", response_model=VardiyaDonguAtamaListResponse)
+async def dongu_atamalari(
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_OKUR),
+) -> VardiyaDonguAtamaListResponse:
+    """(P247 §1) Etkin ve sonlanmis dongu atamalari (geri alinanlar HARIC).
+
+    Okuma sahaya da acik (kalip okumasi gibi): "bir sonraki gecem ne
+    zaman" sorusu sahanin sorusudur. Rol suzgeci `_atama_kosulu`.
+    """
+    bugun = await tesis_bugunu(db, user.tenant_id)
+    kosul = list(_atama_kosulu(user))
+    if user.role in ("security", "tesis_gorevlisi"):
+        # SAHA YALNIZ KENDI DONGUSUNU gorur — ekip arkadasinin izin/atlama
+        # kaydi onun isi degil.
+        kosul.append(VardiyaDonguAtama.user_id == user.id)
+    satirlar = (
+        await db.execute(
+            select(VardiyaDonguAtama, AppUser.ad, VardiyaKalibi.ad)
+            .join(AppUser, AppUser.id == VardiyaDonguAtama.user_id)
+            .outerjoin(VardiyaKalibi, VardiyaKalibi.id == VardiyaDonguAtama.kalip_id)
+            .where(VardiyaDonguAtama.iptal_at.is_(None), *kosul)
+            .order_by(VardiyaDonguAtama.created_at.desc(), AppUser.ad)
+        )
+    ).all()
+    return VardiyaDonguAtamaListResponse(
+        ufuk_gun=DONGU_UFUK_GUN,
+        items=[
+            VardiyaDonguAtamaOut(
+                id=a.id, kalip_id=a.kalip_id, kalip_ad=kalip_ad, user_id=a.user_id,
+                ad=ad, referans=a.referans, baslangic=a.baslangic, bitis=a.bitis,
+                uretildi_kadar=a.uretildi_kadar, parti_id=a.parti_id,
+                durum=_atama_durumu(a, bugun), atlanan=list(a.atlanan or []),
+            )
+            for a, ad, kalip_ad in satirlar
+        ],
+    )
+
+
+@router.post(
+    "/dongu-atamalari/{atama_id}/sonlandir",
+    response_model=VardiyaDonguSonlandirSonuc,
+)
+async def dongu_sonlandir(
+    atama_id: uuid.UUID,
+    body: VardiyaDonguSonlandirIstek,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YAZAR),
+) -> VardiyaDonguSonlandirSonuc:
+    """(P247 §1) Bir kisinin dongusunu `tarih`ten itibaren bitir.
+
+    Ekibin partisini geri almaktan FARKLI: kisi ayrildi/baska ekibe gecti,
+    otekilerin dongusu surer. Yalniz BU atamanin `tarih` ve sonrasindaki
+    planli satirlari iptal edilir (SILINMEZ — P203 kurali).
+    """
+    atama = (
+        await db.execute(
+            select(VardiyaDonguAtama).where(
+                VardiyaDonguAtama.id == atama_id,
+                VardiyaDonguAtama.iptal_at.is_(None),
+                *_atama_kosulu(user),
+            )
+        )
+    ).scalar_one_or_none()
+    if atama is None:
+        raise APIError(404, "not_found", "vardiya_dongu_atamasi_bulunamadi")
+    # Baslangictan once bitirmek anlamsiz: en erken baslangic gunu (dongu
+    # hic calismamis olur).
+    tarih = max(body.tarih, atama.baslangic)
+    bitis = tarih - dt.timedelta(days=1)
+    if atama.bitis is not None and atama.bitis < bitis:
+        bitis = atama.bitis  # daha once erken bitirilmis; uzatma bu uc degil
+    atama.bitis = bitis
+    atama.updated_at = func.now()
+    satirlar = (
+        await db.execute(
+            select(VardiyaPlani).where(
+                VardiyaPlani.dongu_atama_id == atama.id,
+                VardiyaPlani.durum == "planli",
+                VardiyaPlani.tarih > bitis,
+            )
+        )
+    ).scalars().all()
+    for p in satirlar:
+        p.durum = "iptal"
+        p.updated_at = func.now()
+    await db.flush()
+    await audit_user(
+        db, user, Action.VARDIYA_PLAN_UPDATE, resource_type="vardiya_dongu_atama",
+        resource_id=atama.id,
+        meta={"islem": "dongu_sonlandir", "bitis": bitis.isoformat(),
+              "iptal_edilen": len(satirlar)},
+    )
+    return VardiyaDonguSonlandirSonuc(
+        id=atama.id, bitis=bitis, iptal_edilen=len(satirlar)
+    )
+
+
+async def dongu_ufkunu_doldur(
+    db: AsyncSession, tenant_id: uuid.UUID, bugun: dt.date | None = None
+) -> dict:
+    """(P247 §1) BEAT: tesisin etkin atamalarinin kayan ufkunu doldur.
+
+    Filigranin (`uretildi_kadar`) GERISINE DONMEZ — elle degistirilen,
+    iptal edilen ya da izin yuzunden bos kalan gun yeniden yazilmaz.
+    Cakisan/izinli gun SESSIZCE kaybolmaz: atamanin `atlanan` listesine
+    yazilir (dongu listesinde gorunur) ve onizlemedeki kapsama boslugu
+    olarak zaten isaretlidir.
+
+    Satir kilidi (`FOR UPDATE SKIP LOCKED`): ayni anda kosan iki beat ya da
+    beat + atama istegi ayni gunu iki kez uretmesin.
+    """
+    gun = bugun or await tesis_bugunu(db, tenant_id)
+    ufuk = gun + dt.timedelta(days=DONGU_UFUK_GUN - 1)
+    atamalar = (
+        await db.execute(
+            select(VardiyaDonguAtama)
+            .where(
+                VardiyaDonguAtama.iptal_at.is_(None),
+                VardiyaDonguAtama.kalip_id.is_not(None),
+                (VardiyaDonguAtama.uretildi_kadar.is_(None))
+                | (VardiyaDonguAtama.uretildi_kadar < ufuk),
+                (VardiyaDonguAtama.bitis.is_(None))
+                | (VardiyaDonguAtama.uretildi_kadar.is_(None))
+                | (VardiyaDonguAtama.uretildi_kadar < VardiyaDonguAtama.bitis),
+            )
+            .with_for_update(skip_locked=True)
+        )
+    ).scalars().all()
+    ozet = {"atama": 0, "eklenen": 0, "atlanan": 0}
+    for atama in atamalar:
+        kisi = (
+            await db.execute(select(AppUser).where(AppUser.id == atama.user_id))
+        ).scalar_one_or_none()
+        if kisi is None or not kisi.is_active:
+            continue  # pasif hesaba nobet yazilmaz; atama yerinde kalir
+        kalip = (
+            await db.execute(
+                select(VardiyaKalibi).where(VardiyaKalibi.id == atama.kalip_id)
+            )
+        ).scalar_one_or_none()
+        if kalip is None or kalip.adimlar is None:
+            continue
+        dilimler, adimlar = _dongu_tanimi(kalip)
+        bas = (
+            atama.uretildi_kadar + dt.timedelta(days=1)
+            if atama.uretildi_kadar is not None
+            else atama.baslangic
+        )
+        bas = max(bas, atama.baslangic)
+        son = min(ufuk, atama.bitis) if atama.bitis is not None else ufuk
+        if bas > son:
+            continue
+        satirlar, _ = await _dongu_plani(
+            db, dilimler=dilimler, adimlar=adimlar, kisi_id=atama.user_id,
+            referans=atama.referans, bas=bas, son=son,
+        )
+        for g, d, durum in satirlar:
+            if durum == "eklenecek":
+                db.add(_plan_satiri(
+                    tenant_id=tenant_id, gun=g, dilim=d, kisi_id=atama.user_id,
+                    parti_id=atama.parti_id, atama_id=atama.id,
+                    molalar=atama.molalar, not_metni=atama.not_metni,
+                ))
+                ozet["eklenen"] += 1
+            elif durum in ("izinli", "cakisma"):
+                ozet["atlanan"] += 1
+        _atlanan_ekle(atama, satirlar)
+        atama.uretildi_kadar = son
+        atama.updated_at = func.now()
+        ozet["atama"] += 1
+        await db.flush()
+    return ozet
 
 
 @router.patch("/{plan_id}", response_model=VardiyaPlanOut)
@@ -1296,6 +1904,14 @@ async def guncelle(
             raise APIError(422, "validation_error", "vardiya_seride_tarih_degismez")
         if plan.parti_id is None:
             raise APIError(422, "validation_error", "vardiya_seri_yok")
+        if plan.dongu_atama_id is not None:
+            # (P247 §1) DONGU SATIRINDA "TUM SERI" YOK: dongu partisi EKIBIN
+            # tum gece ve gunduzlerini tasir; hepsini tek saate cekmek
+            # dongunun kendisini silmek olurdu — ve beat ertesi gece yeni
+            # gunleri kalibin ESKI saatiyle uretmeye devam ederdi. Tek gun
+            # duzenlenir; kalip degisecekse atama sonlandirilip yeniden
+            # atanir.
+            raise APIError(422, "validation_error", "vardiya_dongu_seri_desteklenmez")
 
     yeni_tarih = body.tarih or plan.tarih
     yeni_bas = body.baslangic_saat or onceki[0].time()
@@ -1903,7 +2519,7 @@ async def ornek_sablon_indir(
 _PLANLAYAN_ROLLER: frozenset[str] = _YAZAR.izinli_roller  # type: ignore[attr-defined]
 
 
-@router.get("/disa-aktar")
+@router.get("/disa-aktar", dependencies=[Depends(DISA_AKTARIM_SINIRI)])
 async def disa_aktar(
     baslangic: dt.date = Query(...),
     gun: int = Query(7, ge=1, le=AZAMI_GUN),

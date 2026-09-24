@@ -31,6 +31,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'widgets/gun_takvimi.dart';
 import 'izin_formu.dart';
+import 'dongu_ata_dialogu.dart';
 import '../../../routing/app_router.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 
@@ -156,6 +157,19 @@ class VardiyaPlaniScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // (P247 §1) DONGU GIRISI GOVDEDE, APPBAR'DA DEGIL: 360 dp'de
+            // AppBar eylemleri zaten tasiyor (olculdu, P247 §1 raporu);
+            // dorduncu bir eylem tasmayi buyutecekti. Adi gorunur (P237).
+            if (yonetici)
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: OutlinedButton.icon(
+                  key: const Key('vardiya-dongu-ac'),
+                  icon: const Icon(Icons.autorenew),
+                  label: Text(l10n.donguAc),
+                  onPressed: () => _donguAc(context, ref),
+                ),
+              ),
             // ---------------- 4.2 ANLIK DURUM ----------------
             simdi.when(
               data: (d) => Card(
@@ -347,6 +361,18 @@ class VardiyaPlaniScreen extends ConsumerWidget {
     if (eklendi == true) {
       ref.invalidate(vardiyaCizelgeProvider);
       ref.invalidate(vardiyaSimdiProvider);
+    }
+  }
+
+  /// (P247 §1) Dongu atama/onizleme/geri alma diyalogu.
+  Future<void> _donguAc(BuildContext context, WidgetRef ref) async {
+    final degisti = await showDialog<bool>(
+      context: context,
+      builder: (_) => const DonguAtaDialogu(),
+    );
+    if (degisti == true) {
+      ref.invalidate(vardiyaCizelgeProvider);
+      ref.invalidate(vardiyaYayinOzetiProvider);
     }
   }
 

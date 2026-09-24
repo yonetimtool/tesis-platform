@@ -19,6 +19,7 @@ import {
 import { AraclarCubugu } from "@/components/vardiya/araclar-cubugu";
 import { TakvimGorunumu } from "@/components/vardiya/takvim-gorunumu";
 import { VardiyaEkleModali } from "@/components/vardiya/vardiya-ekle-modali";
+import { DonguModali } from "@/components/vardiya/dongu-modali";
 import { SablonBolumu } from "@/components/vardiya/sablon-bolumu";
 import { KisiModali, type KisiOzeti } from "@/components/vardiya/kisi-modali";
 import { apiSend } from "@/lib/client";
@@ -234,6 +235,9 @@ export default function VardiyaPlaniSayfasi() {
   // pazartesiler"); aralik (baslangic-bitis) bunu anlatamazdi.
   const [seciliGunler, setSeciliGunler] = useState<Set<string>>(new Set());
   const [kalipAcik, setKalipAcik] = useState(false);
+  // (P247 §1) DONGU (rotasyon) modali — kalip modalindan AYRI: dongu
+  // secili gunlere degil, kisiye BASLANGIC TARIHIYLE atanir ve suresizdir.
+  const [donguAcik, setDonguAcik] = useState(false);
   // Son toplu islemin kimligi — GERI ALMA bunu kullanir. Yalnizca son
   // islem tutulur: "hangi partiyi geri alacagim" sorusu yoneticiye
   // sorulacak bir sey degil; yanlis planin ardindan yapilan ILK sey
@@ -525,6 +529,15 @@ export default function VardiyaPlaniSayfasi() {
           onClick={() => void mutate()}
         >
           {t("vardiyaTazele")}
+        </Dugme>
+        <Dugme
+          type="button"
+          boy="kucuk"
+          tur="ikincil"
+          data-test="vardiya-dongu-ac"
+          onClick={() => setDonguAcik(true)}
+        >
+          {t("donguAc")}
         </Dugme>
         {/* (P241 §2) ARACLAR + EXCEL + YAYINLA. */}
         <AraclarCubugu
@@ -1197,6 +1210,15 @@ export default function VardiyaPlaniSayfasi() {
           sirayla soruyordu. Mobilde tek akis var (takvim -> kisi/saat ->
           gruba ekle -> onizleme) ve web ona esitlendi. */}
       <KisiModali kisi={seciliKisi} onKapat={() => setSeciliKisi(null)} />
+
+      <DonguModali
+        acik={donguAcik}
+        personel={(personel?.items ?? []).filter((p) => p.role !== "resident")}
+        varsayilanBaslangic={baslangic}
+        onParti={(partiId) => setSonParti(partiId)}
+        onKapat={() => setDonguAcik(false)}
+        onBitti={() => void mutate()}
+      />
 
       <VardiyaEkleModali
         acik={ekleAcik || kalipAcik}

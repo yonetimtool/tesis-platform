@@ -75,7 +75,14 @@ const IZIN_TURLERI = [
 ] as const;
 
 type Dilim = { ad: string; baslangic: string; bitis: string };
-type Kalip = { id: string; ad: string; dilimler: Dilim[]; aktif: boolean };
+type Kalip = {
+  id: string;
+  ad: string;
+  dilimler: Dilim[];
+  aktif: boolean;
+  /** (P247 §1) Dolu = DONGU kalibi; bu modalda secilemez (dongu modali). */
+  adimlar?: number[][] | null;
+};
 type Personel = { id: string; ad: string; role: string };
 type Grup = {
   gunler: string[];
@@ -643,7 +650,10 @@ export function VardiyaEkleModali({
             >
               <option value={SERBEST}>{t("vardiyaSerbestSaat")}</option>
               {(kaliplar?.items ?? [])
-                .filter((k) => k.aktif)
+                // (P247 §1) DONGU KALIBI BURADA YOK: bu modal her secili
+                // gune TUM dilimleri yazar; sunucu dongu kalibini 422 ile
+                // reddeder (`vardiya_kalibi_dongu`). Dongu kendi modalinda.
+                .filter((k) => k.aktif && !k.adimlar)
                 .map((k) => (
                   <option key={k.id} value={k.id}>
                     {k.ad}
