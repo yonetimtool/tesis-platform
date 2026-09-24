@@ -165,6 +165,12 @@ const IKON_LISTE = "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01";
 const IKON_SAAT = "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 7v5l3 2";
 const IKON_ONAY = "M20 6 9 17l-5-5";
 
+/** (E2E 2026-09) Ozet sayaci: uc dustuyse "—" (bilinmiyor), "0" DEGIL. */
+function sayacDegeri(veri: TaskList | undefined, hata: unknown): string {
+  if (hata && !veri) return YOK;
+  return String(veri?.meta?.total ?? 0);
+}
+
 function Ikon({ yol }: { yol: string }) {
   return (
     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor"
@@ -234,15 +240,17 @@ export default function TasksPage() {
   // Sayaclar ayri uclardan (`?durum=X&limit=1` -> `meta.total`).
   // Gorunen sayfa hem sayfali hem suzgecli; ondan saymak suzgec acikken
   // sayaci da suzerdi.
-  const { data: acikSayi } = useSWR<TaskList>(
+  // (E2E 2026-09) HATA DA ALINIR: uc dustugunde sayac "0" gosteriyordu —
+  // gercek bir sayi gibi ("aktif gorev yok"). Bilinmeyen sayi "—" olur.
+  const { data: acikSayi, error: acikHata } = useSWR<TaskList>(
     `/api/tasks?limit=1&offset=0&aktif=${AKTIF_EVET}`,
     jsonFetcher,
   );
-  const { data: gecikenSayi } = useSWR<TaskList>(
+  const { data: gecikenSayi, error: gecikenHata } = useSWR<TaskList>(
     `/api/tasks?limit=1&offset=0&durum=${D_GECIKTI}`,
     jsonFetcher,
   );
-  const { data: tamamSayi } = useSWR<TaskList>(
+  const { data: tamamSayi, error: tamamHata } = useSWR<TaskList>(
     `/api/tasks?limit=1&offset=0&durum=${D_TAMAMLANDI}`,
     jsonFetcher,
   );
@@ -588,20 +596,20 @@ export default function TasksPage() {
       <OzetSeridi>
         <OzetKarti
           etiket={t("gorevOzetAcik")}
-          deger={String(acikSayi?.meta?.total ?? 0)}
+          deger={sayacDegeri(acikSayi, acikHata)}
           ikon={<Ikon yol={IKON_LISTE} />}
           durum="bilgi"
         />
         <OzetKarti
           etiket={t("gorevDurumGecikti")}
-          deger={String(gecikenSayi?.meta?.total ?? 0)}
+          deger={sayacDegeri(gecikenSayi, gecikenHata)}
           ikon={<Ikon yol={IKON_SAAT} />}
           durum="uyari"
           altBilgi={t("gorevOzetGecikenAlt")}
         />
         <OzetKarti
           etiket={t("gorevDurumTamamlandi")}
-          deger={String(tamamSayi?.meta?.total ?? 0)}
+          deger={sayacDegeri(tamamSayi, tamamHata)}
           ikon={<Ikon yol={IKON_ONAY} />}
           durum="olumlu"
         />
@@ -636,7 +644,7 @@ export default function TasksPage() {
             setKategoriFiltre(e.target.value);
             setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
           }}
-          className="w-auto"
+          className="w-auto max-w-xs"
         >
           <option value="">{t("gorevKategoriHepsi")}</option>
           <option value={KATEGORISIZ}>{t("gorevKategorisiz")}</option>
@@ -657,7 +665,7 @@ export default function TasksPage() {
             setDurumFiltre(e.target.value);
             setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
           }}
-          className="w-auto"
+          className="w-auto max-w-xs"
         >
           <option value="">{t("gorevDurumHepsi")}</option>
           {DURUM_SECENEKLERI.map((d) => (
@@ -673,7 +681,7 @@ export default function TasksPage() {
             setAktif(e.target.value);
             setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
           }}
-          className="w-auto"
+          className="w-auto max-w-xs"
         >
           <option value="">{t("gorevAktiflikHepsi")}</option>
           <option value={AKTIF_EVET}>{t("ortakAktif")}</option>
@@ -686,7 +694,7 @@ export default function TasksPage() {
             setAtananFiltre(e.target.value);
             setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
           }}
-          className="w-auto"
+          className="w-auto max-w-xs"
         >
           <option value="">{t("gorevAtananHepsi")}</option>
           {personel.map((u) => (
@@ -942,7 +950,13 @@ export default function TasksPage() {
         onTekrar={() => void mutate()}
         yukleniyor={isLoading && !data}
                 bosBaslik={t("gorevYok")}
-                bosAciklama={t("gorevYokAlt")}
+                // (E2E 2026-09) "Filtreyi degistirin" YALNIZ suzgec aciksa:
+                // yeni tesiste suzgec yokken bu cumle yaniltiyordu.
+                bosAciklama={
+                  kategoriFiltre || aktif || atananFiltre || durumFiltre
+                    ? t("gorevYokAlt")
+                    : t("gorevYokIlk")
+                }
                 sunucuTarafli
                 toplam={data?.meta?.total ?? 0}
                 durum={tabloDurumu}
@@ -982,7 +996,12 @@ export default function TasksPage() {
           <GorevAdimlari
             taskId={detail.id}
             adimSirali={detail.adim_sirali}
-            onDegisti={() => void mutate()}
+            // (E2E 2026-09) TESIS-03: son adim gorevi sunucuda kapatir —
+            // tamamlama kayitlari da tazelenmeli, yoksa tablo "bos" kalir.
+            onDegisti={() => {
+              void mutate();
+              void mutateCompletions();
+            }}
           />
           <div
             className="overflow-hidden rounded-lg border"

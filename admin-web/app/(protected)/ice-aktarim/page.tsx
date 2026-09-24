@@ -70,6 +70,8 @@ interface Sonuc {
   davet_gonderildi: number;
   davet_basarisiz: number;
   davet_hatalari: Hata[];
+  /** (E2E 2026-09 / TESIS-10) Atlanan satirlar — satir no + sebep. */
+  atlananlar?: Hata[];
   aktarim_id: string | null;
 }
 interface Kosum {
@@ -676,6 +678,29 @@ function ornekSatirlari(tur: Tur): string[][] {
                 </li>
               ))}
             </ul>
+          )}
+
+          {/* (E2E 2026-09 / TESIS-10) ATLANANLAR DA SATIR SATIR: eskiden
+              yalniz "Zaten var: 3" sayisi vardi; hangi satirin neden
+              yazilmadigi bilinmiyordu. Hata degil (renk notr) ama gorunur. */}
+          {(sonuc.atlananlar ?? []).length > 0 && (
+            <div className="space-y-1">
+              <p style={{ fontSize: "var(--yz-fs-sm)", fontWeight: 600 }}>
+                {t("iceAktarimAtlananlarBaslik")}
+              </p>
+              <ul
+                className="space-y-1 text-xs"
+                style={{ color: "var(--yz-text-2)" }}
+                data-testid="ice-aktarim-atlananlar"
+              >
+                {(sonuc.atlananlar ?? []).map((h, i) => (
+                  <li key={i}>
+                    {t("iceAktarimSatir", { no: h.satir_no })}
+                    {h.alan ? ` · ${h.alan}` : ""} — {h.hata}
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
 
           {/* DAVET OZETI — "kac kisi eklendi" ile "kac kisiye ULASILDI"

@@ -80,6 +80,9 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     ("POST", "/auth/login"),
     ("POST", "/auth/login-phone"),
     ("POST", "/auth/refresh"),
+    # (E2E 2026-09) Cikis: kimlik ISTEGE BAGLI (suresi dolmus oturumla da
+    # cikilabilmeli); yalniz kendi oturumunu kapatir, veri yazmaz.
+    ("POST", "/auth/logout"),
     ("POST", "/auth/set-password"),
     # (P154 / Asama 7.2) `/public/{slug}/iletisim` KALDIRILDI — portal
     # iletisim formu, portalla birlikte silindi.

@@ -13,6 +13,7 @@ class BuildingMapState {
     this.errorMessage,
     this.hataKimligi,
     this.map,
+    this.kategori,
   });
 
   final bool loading;
@@ -23,11 +24,15 @@ class BuildingMapState {
   final AkisHatasi? hataKimligi;
   final BuildingMap? map;
 
+  /// (E2E 2026-09) TESIS-17: secili sikayet turu (`wire`); null = tumu.
+  final String? kategori;
+
   BuildingMapState copyWith({
     bool? loading,
     Object? errorMessage = _sentinel,
     Object? hataKimligi = _sentinel,
     BuildingMap? map,
+    Object? kategori = _sentinel,
   }) {
     return BuildingMapState(
       loading: loading ?? this.loading,
@@ -38,6 +43,7 @@ class BuildingMapState {
           ? this.hataKimligi
           : hataKimligi as AkisHatasi?,
       map: map ?? this.map,
+      kategori: kategori == _sentinel ? this.kategori : kategori as String?,
     );
   }
 
@@ -62,7 +68,9 @@ class BuildingMapController extends Notifier<BuildingMapState> {
       hataKimligi: null,
     );
     try {
-      final map = await ref.read(buildingMapApiProvider).fetchMap();
+      final map = await ref
+          .read(buildingMapApiProvider)
+          .fetchMap(kategori: state.kategori);
       if (!ref.mounted) return;
       state = state.copyWith(
         loading: false,
@@ -87,6 +95,18 @@ class BuildingMapController extends Notifier<BuildingMapState> {
     } finally {
       _refreshing = false;
     }
+  }
+
+  /// (E2E 2026-09) TESIS-17: tur secicisi — haritayi o ture gore yeniden
+  /// okur. Suren bir yenileme varsa bitince secim yine uygulanir.
+  Future<void> setKategori(String? kategori) async {
+    if (kategori == state.kategori) return;
+    state = state.copyWith(kategori: kategori);
+    while (_refreshing) {
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      if (!ref.mounted) return;
+    }
+    await refresh();
   }
 
   /// Yerlesim guncelle (yonetim). Basari sonrasi haritayi yeniden okur ki

@@ -27,6 +27,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/izin/belirgin_aciklama.dart';
 import '../../../core/para.dart';
 import '../../tasks/presentation/task_complete_controller.dart'
     show imagePickerProvider;
@@ -68,12 +69,26 @@ class _GiderScreenState extends ConsumerState<GiderScreen> {
   }
 
   Future<void> _fotoSec() async {
-    final secilen = await ref.read(imagePickerProvider).pickImage(
-          source: ImageSource.camera,
-          maxWidth: 1600,
-          imageQuality: 80,
-        );
-    if (secilen != null && mounted) setState(() => _fis = secilen);
+    // (E2E 2026-09) MOBIL-7: kamera cagrisi try/catch'SIZDI — izin reddinde
+    // PlatformException yakalanmiyor, dugme tepkisiz kaliyordu. Diger foto
+    // akislariyla AYNI desen: once belirgin aciklama, sonra korunakli cagri
+    // + gorunur hata metni.
+    final l10n = context.l10n;
+    final onay = await belirginAciklamaGoster(context, IzinTuru.talepFotograf);
+    if (!onay || !mounted) return;
+    final XFile? secilen;
+    try {
+      secilen = await ref.read(imagePickerProvider).pickImage(
+            source: ImageSource.camera,
+            maxWidth: 1600,
+            imageQuality: 80,
+          );
+    } catch (e) {
+      if (mounted) setState(() => _hata = l10n.gorevFotoAlinamadi('$e'));
+      return;
+    }
+    final foto = secilen;
+    if (foto != null && mounted) setState(() => _fis = foto);
   }
 
   Future<void> _kaydet() async {

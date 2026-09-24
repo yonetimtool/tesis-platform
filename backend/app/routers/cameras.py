@@ -48,9 +48,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, translate_integrity
 from ..config import settings
+from ..db import SessionLocal, set_tenant
+from ..gunlukleme import maskele_url_kimligi
 from ..kamera_kayit import (
     SAGLAYICILAR,
     AramaDesteklenmiyor,
+    SablonGecersiz,
+    sablon_dogrula,
     saglayici_kur,
 )
 from ..kamera_kimlik import (
@@ -293,6 +297,22 @@ def _snapshot_dogrula(snapshot_url: str | None) -> None:
         ) from exc
 
 
+def _kayit_sablonu_dogrula(saglayici: str | None, adres: str | None) -> None:
+    """(E2E 2026-09 / GUVENLIK-03) `sablon` saglayicisinin adresi KAYIT
+    ANINDA dogrulanir — bozuk sablon oynatmada 500 veriyordu (bkz.
+    `kamera_kayit.sablon.sablon_dogrula`). Diger saglayicilarda
+    `kayit_adres` bir HTTP tabanidir, sablon degil: dokunulmaz."""
+    if saglayici != "sablon" or not adres:
+        return
+    try:
+        sablon_dogrula(adres)
+    except SablonGecersiz as exc:
+        raise APIError(
+            422, "validation_error", "kamera_kayit_sablon_gecersiz",
+            yer_tutucu=str(exc),
+        ) from exc
+
+
 @router.get("", response_model=CameraListResponse)
 async def list_cameras(
     limit: int = Query(50, ge=1, le=200),
@@ -356,6 +376,7 @@ async def create_camera(
     _alt_akis_dogrula(body.alt_stream_url)
     _restream_dogrula(body.restream_url)
     _snapshot_dogrula(body.snapshot_url)
+    _kayit_sablonu_dogrula(body.kayit_saglayici, body.kayit_adres)
     veri = body.model_dump()
     _kimligi_ayikla(veri)
     obj = Camera(tenant_id=user.tenant_id, **veri)
@@ -397,6 +418,13 @@ async def update_camera(
         _snapshot_dogrula(alanlar["snapshot_url"])
     if alanlar.get("ana_ekranda") and not obj.ana_ekranda:
         await _ana_ekran_siniri_dogrula(db)
+    # (E2E 2026-09 / GUVENLIK-03) MEVCUT kayitla birlestirilerek: yalniz
+    # saglayiciyi `sablon`a ceviren istek de eski adresi dogrulatir.
+    if "kayit_saglayici" in alanlar or "kayit_adres" in alanlar:
+        _kayit_sablonu_dogrula(
+            alanlar.get("kayit_saglayici", obj.kayit_saglayici),
+            alanlar.get("kayit_adres", obj.kayit_adres),
+        )
     _kimligi_ayikla(alanlar)
     for key, value in alanlar.items():
         setattr(obj, key, value)
@@ -673,11 +701,59 @@ def _rtsp_dogrula(obj: Camera) -> None:
 _TEST_SINIR = 20  # tesis basina / dakika
 
 
+def _konak_anahtari(url: str | None) -> tuple[str, str, int | None] | None:
+    """(sema, konak, port) — kimlik ve yol HARIC. Karsilastirma icin."""
+    if not url:
+        return None
+    try:
+        p = urlparse(url)
+        port = p.port
+    except ValueError:
+        return None
+    if not p.hostname:
+        return None
+    return (p.scheme.lower(), p.hostname.lower().rstrip("."), port)
+
+
+async def _test_adresi(body: KameraTestIstek, db: AsyncSession) -> str:
+    """(E2E 2026-09 / GUVENLIK-15) Testte kullanilacak adres + kimlik.
+
+    ONCELIK: adresteki kimlik > ayri alanlar (`stream_kullanici`/
+    `stream_parola`) > `camera_id` ile KAYITLI kimlik. `kimligi_uygula`
+    adreste kimlik varsa DOKUNMAZ, yani ilk kural kendiliginden saglanir.
+
+    KAYITLI PAROLA YALNIZ AYNI KONAGA: parola hicbir yanitta donmez
+    (yazilir-okunmaz). Adres baska bir konaga cevrilmisken kayitli kimligi
+    takmak, parolayi ffmpeg araciligiyla o konaga — yani adresi yazan
+    kisinin kontrol edebilecegi bir sunucuya — gondermek olurdu. Konak
+    farkliysa test kimliksiz yapilir; yeni konak icin kimlik zaten
+    yeniden girilmelidir.
+    """
+    adres = body.stream_url
+    if body.stream_kullanici or body.stream_parola:
+        return kimligi_uygula(adres, body.stream_kullanici, body.stream_parola)
+    if body.camera_id is None:
+        return adres
+    obj = await get_or_404(db, Camera, body.camera_id)
+    hedef = _konak_anahtari(adres)
+    if hedef is None or hedef not in {
+        _konak_anahtari(obj.stream_url),
+        _konak_anahtari(getattr(obj, "alt_stream_url", None)),
+    }:
+        return adres
+    return kimligi_uygula(
+        adres,
+        getattr(obj, "stream_kullanici", None),
+        parola_coz(getattr(obj, "stream_parola_sifreli", None)),
+    )
+
+
 @router.post("/test-baglanti", response_model=KameraTestSonuc)
 async def kamera_test(
     body: KameraTestIstek,
     user: AppUser = Depends(_WRITER),
     redis: aioredis.Redis = Depends(get_redis),
+    db: AsyncSession = Depends(get_tenant_db),
 ) -> KameraTestSonuc:
     """Verilen RTSP adresinden tek kare cekmeyi dener; KAYIT YAPMAZ.
 
@@ -700,15 +776,16 @@ async def kamera_test(
     if sayi > _TEST_SINIR:
         raise APIError(429, "rate_limited", "kamera_test_sinir")
 
+    adres = await _test_adresi(body, db)
     async with _KARE_SEMAFOR:
-        veri, kimlik = await _kare_cek(body.stream_url)
+        veri, kimlik = await _kare_cek(adres)
     if not veri:
         raise _kare_hatasi(kimlik or "kamera_baglanti_yok")
     # (P216) KODEK DE RAPORLANIR: yonetici KAYDETMEDEN once bu kameranin
     # tarayicida izlenip izlenemeyecegini bilsin. Kare gelmis olmasi
     # yeterli degil — kare cekimi ffmpeg'in isidir ve H265'te de calisir;
     # tarayicida oynatma AYRI bir sorudur.
-    kodek = await kodek_tespit(body.stream_url)
+    kodek = await kodek_tespit(adres)
     return KameraTestSonuc(
         basarili=True,
         kare_bayt=len(veri),
@@ -863,10 +940,18 @@ async def _kare_cek(stream_url: str) -> tuple[bytes, str]:
     kimlik = _ffmpeg_teshis(hata, zaman_asimi)
     # HAM CIKTI YALNIZ LOGDA (ve kirpilmis): teshisin ayrintisi operatorun,
     # kimlik bilgisi kimsenin isi degil.
+    #
+    # (E2E 2026-09 / GUVENLIK-01) "kimsenin isi degil" YAZIYORDU AMA
+    # UYGULANMIYORDU: ffmpeg adresi stderr'e AYNEN yaziyor
+    # (`Error opening input file rtsp://kul:parola@...`) ve bu satir
+    # parolayi api.log'a DUZ METIN koyuyordu — LOG_PII kapaliyken de.
+    # MASKE KIRPMADAN ONCE: kirpma bir adresi `@`inden once kesebilir
+    # ve yarim kalan `rtsp://kul:par` desene uymaz. Gunluk handler'indaki
+    # filtre (`gunlukleme.KimlikMaskeleFiltresi`) ikinci kattir.
     logger.warning(
         "[kamera] kare alinamadi: teshis=%s ffmpeg=%r",
         kimlik,
-        (hata or b"").decode("utf-8", "replace")[:300],
+        maskele_url_kimligi((hata or b"").decode("utf-8", "replace"))[:300],
     )
     return b"", kimlik
 
@@ -1010,7 +1095,12 @@ async def _gecit_ayakta() -> bool:
         return False
 
 
-async def _playlist_bekle(hedef: str, kamera_id: uuid.UUID) -> httpx.Response:
+async def _playlist_bekle(
+    hedef: str,
+    kamera_id: uuid.UUID,
+    *,
+    hazir_degil: str = "kamera_yayin_hazir_degil",
+) -> httpx.Response:
     """(P223 §2) `sourceOnDemand` kaynagi hazir olana kadar TEK istek.
 
     =====================================================================
@@ -1054,7 +1144,9 @@ async def _playlist_bekle(hedef: str, kamera_id: uuid.UUID) -> httpx.Response:
                 "[kamera] %s canli yayin %s sn icinde hazir olmadi",
                 kamera_id, _CANLI_HAZIRLIK_BUTCESI,
             )
-            raise APIError(502, "bad_gateway", "kamera_yayin_hazir_degil")
+            # (E2E 2026-09 / GUVENLIK-04) Kimlik cagirandan: kayit oynatmada
+            # "canli yayin" cumlesi yanlis yere gonderiyordu.
+            raise APIError(502, "bad_gateway", hazir_degil)
         logger.error("[kamera] MediaMTX HLS gecidine ulasilamadi (%s)", api_adresi())
         raise APIError(502, SUNUCU_YAPILANDIRMA, "kamera_gecit_yok")
 
@@ -1084,6 +1176,76 @@ async def _yol_kodegi(yol: str) -> str | None:
         if ad in SORUNLU_KODEKLER:
             return ad
     return None
+
+
+# (E2E 2026-09 / GUVENLIK-16) CANLI ES-ZAMANLILIK — TESIS BASINA + GENEL TAVAN.
+#
+# OLCULEN KUSUR: aktif kume `redis.keys("kamera:canli:*")` ile sayiliyordu.
+#   * Anahtar TESIS icermiyordu: sinir (3) TUM PLATFORMA uygulaniyordu ve
+#     bir tesiste 3 izleyici diger butun tesislerin canli yayinini
+#     kilitliyordu.
+#   * `KEYS` Redis'i tarama boyunca KILITLER (O(N), tek is parcacigi) —
+#     uretimde her playlist isteginde calisan bir tam tarama.
+#
+# YENI: iki sirali kume (ZSET), uye = kamera, skor = son kullanma ani.
+#   `kamera:canli:tesis:<tenant>` -> tesis basina sinir (`kamera_canli_sinir`)
+#   `kamera:canli:genel`          -> platform tavani (`kamera_canli_genel_sinir`)
+# Suresi dolan uyeler her istekte ZREMRANGEBYSCORE ile atilir (TTL'in
+# yerini tutar). Denetle-ve-ekle TEK Lua betiginde: iki paralel istek
+# ayni son yeri ikisi birden alamaz.
+_CANLI_LUA = """
+local simdi = tonumber(ARGV[1])
+local bitis = tonumber(ARGV[2])
+local tesis_sinir = tonumber(ARGV[3])
+local genel_sinir = tonumber(ARGV[4])
+redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', simdi)
+redis.call('ZREMRANGEBYSCORE', KEYS[2], '-inf', simdi)
+if not redis.call('ZSCORE', KEYS[1], ARGV[5]) then
+  if tesis_sinir > 0 and redis.call('ZCARD', KEYS[1]) >= tesis_sinir then
+    return 1
+  end
+  if genel_sinir > 0 and redis.call('ZCARD', KEYS[2]) >= genel_sinir then
+    return 2
+  end
+end
+redis.call('ZADD', KEYS[1], bitis, ARGV[5])
+redis.call('ZADD', KEYS[2], bitis, ARGV[6])
+redis.call('EXPIRE', KEYS[1], ARGV[7])
+redis.call('EXPIRE', KEYS[2], ARGV[7])
+return 0
+"""
+
+
+async def canli_yer_ayir(
+    redis: aioredis.Redis,
+    tenant_id: uuid.UUID | str,
+    kamera_id: uuid.UUID | str,
+    *,
+    tesis_sinir: int | None = None,
+    genel_sinir: int | None = None,
+    anahtar_oneki: str = "kamera:canli",
+) -> bool:
+    """Kamera icin canli yer ayirir/tazeler; sinir asiliyorsa False.
+
+    Zaten izlenen kamera sinira TAKILMAZ (ikinci izleyici ayni muxer'i
+    kullanir, yeni is yuku degildir). `anahtar_oneki` yalniz testler icin:
+    olcum canli sayaclari kirletmesin.
+    """
+    simdi = time.time()
+    sonuc = await redis.eval(
+        _CANLI_LUA,
+        2,
+        f"{anahtar_oneki}:tesis:{tenant_id}",
+        f"{anahtar_oneki}:genel",
+        str(simdi),
+        str(simdi + _CANLI_TTL_SN),
+        str(settings.kamera_canli_sinir if tesis_sinir is None else tesis_sinir),
+        str(settings.kamera_canli_genel_sinir if genel_sinir is None else genel_sinir),
+        str(kamera_id),
+        f"{tenant_id}:{kamera_id}",
+        str(_CANLI_TTL_SN * 4),
+    )
+    return int(sonuc) == 0
 
 
 #: (P190 §6 guvenlik) HLS dosya adi TEK bilesendir: harf/rakam/._- + uzanti.
@@ -1127,11 +1289,8 @@ async def kamera_canli(
 
     # Es-zamanlilik: aktif kume Redis'te; playlist istekleri kaydi tazeler.
     if dosya.endswith(".m3u8"):
-        aktifler = await redis.keys("kamera:canli:*")
-        benim = f"kamera:canli:{obj.id}"
-        if benim not in aktifler and len(aktifler) >= settings.kamera_canli_sinir:
+        if not await canli_yer_ayir(redis, user.tenant_id, obj.id):
             raise APIError(429, "rate_limited", "kamera_canli_sinir")
-        await redis.set(benim, "1", ex=_CANLI_TTL_SN)
         try:
             await _canli_yolu_kaydet(obj)
         except httpx.HTTPError:
@@ -1221,6 +1380,32 @@ SUNUCU_YAPILANDIRMA = "server_config"
 _KAYIT_PENCERE_AZAMI = dt.timedelta(hours=24)
 
 
+async def _kayit_denetimi(
+    user: AppUser, eylem: str, obj: Camera, meta: dict
+) -> None:
+    """(E2E 2026-09 / GUVENLIK-02) KAYIT ERISIM DENETIMI — AYRI, KISA TX.
+
+    OLCULEN KUSUR: denetim satiri istegin transaction'indaydi
+    (`get_tenant_db` tek `session.begin()`). NVR 502 verince APIError
+    firliyor, transaction GERI ALINIYOR ve "bu kullanici su araligi
+    acmaya calisti" izi de onunla siliniyordu — 4 basarisiz aramadan
+    sonra `camera_kayit_arama` sayisi 1'de kaldi. Kodun kendi yorumu
+    ("gecit hata verse bile iz kalsin") tam olarak bunu vaat ediyordu.
+
+    Gecmis kayit geriye donuk gozetimdir (KVKK): BASARISIZ deneme de bir
+    erisim girisimidir ve iz birakmalidir. Ayri oturum HEMEN commit eder;
+    istegin sonraki hatasi onu geri alamaz. Tenant baglami ayni kuralla
+    kurulur (RLS).
+    """
+    async with SessionLocal() as oturum:
+        async with oturum.begin():
+            await set_tenant(oturum, user.tenant_id)
+            await audit_user(
+                oturum, user, eylem, resource_type="camera",
+                resource_id=obj.id, meta=meta,
+            )
+
+
 def _kayit_kamerasi(obj: Camera) -> None:
     """Kamerada gecmis kayit ACIK mi ve saglayici SECILI mi?"""
     if not obj.kayit_aktif:
@@ -1259,11 +1444,10 @@ async def kayit_araliklari(
     obj = await get_or_404(db, Camera, camera_id)
     _kayit_kamerasi(obj)
     b, s = _kayit_araligi(bas, bit)
-    await audit_user(
-        db, user, Action.CAMERA_KAYIT_ARAMA, resource_type="camera",
-        resource_id=obj.id,
-        meta={"bas": b.isoformat(), "bit": s.isoformat(),
-              "saglayici": obj.kayit_saglayici},
+    await _kayit_denetimi(
+        user, Action.CAMERA_KAYIT_ARAMA, obj,
+        {"bas": b.isoformat(), "bit": s.isoformat(),
+         "saglayici": obj.kayit_saglayici},
     )
     async with httpx.AsyncClient(timeout=30) as istemci:
         saglayici = saglayici_kur(obj, istemci)
@@ -1313,11 +1497,12 @@ async def kayit_oynat(
 
     # DENETIM KAYDI ONCE: izleme baslamadan yazilir ki gecit hata verse
     # bile "bu kullanici su araligi acmaya calisti" izi kalsin.
-    await audit_user(
-        db, user, Action.CAMERA_KAYIT_IZLEME, resource_type="camera",
-        resource_id=obj.id,
-        meta={"bas": b.isoformat(), "bit": s.isoformat(),
-              "saglayici": obj.kayit_saglayici},
+    # (E2E 2026-09 / GUVENLIK-02) AYRI TRANSACTION'DA — aksi halde asagidaki
+    # her hata izi de geri aliyordu.
+    await _kayit_denetimi(
+        user, Action.CAMERA_KAYIT_IZLEME, obj,
+        {"bas": b.isoformat(), "bit": s.isoformat(),
+         "saglayici": obj.kayit_saglayici},
     )
     async with httpx.AsyncClient(timeout=30) as istemci:
         saglayici = saglayici_kur(obj, istemci)
@@ -1326,6 +1511,13 @@ async def kayit_oynat(
         except httpx.HTTPError as exc:
             logger.error("[kayit] oynatma adresi alinamadi kamera=%s: %s", obj.id, exc)
             raise APIError(502, "bad_gateway", "kamera_kayit_ulasilamiyor")
+        except SablonGecersiz as exc:
+            # (E2E 2026-09 / GUVENLIK-03) Dogrulama oncesi kaydedilmis bozuk
+            # sablon: 500 degil, duzeltilecek yeri soyleyen 422.
+            raise APIError(
+                422, "validation_error", "kamera_kayit_sablon_gecersiz",
+                yer_tutucu=str(exc),
+            ) from exc
 
     yol = _kayit_yolu(obj, b, s)
     await _mediamtx_yol_kaydet(yol, kaynak)
@@ -1366,15 +1558,40 @@ async def kayit_hls(
         raise APIError(404, "not_found", "kayit_bulunamadi")
 
     hedef = f"{settings.mediamtx_url.rstrip('/')}/{yol}/{dosya}"
-    try:
-        async with httpx.AsyncClient(timeout=15) as istemci:
-            yanit = await istemci.get(hedef)
-    except httpx.HTTPError:
-        logger.error("[kayit] MediaMTX HLS gecidine ulasilamadi (%s)", api_adresi())
-        raise APIError(502, SUNUCU_YAPILANDIRMA, "kamera_gecit_yok")
+    if dosya.endswith(".m3u8"):
+        # (E2E 2026-09 / GUVENLIK-04) PLAYLIST CANLIDAKI BUTCEYLE BEKLER.
+        # Kayit kaynagi da `sourceOnDemand`; NVR'in oynatma oturumunu
+        # acmasi canli kameradan hizli degil. Sabit 15 sn, soguk
+        # baslangicta P223'un olctugu "ilk tiklama hep basarisiz"
+        # kusurunu kayit tarafinda yeniden uretiyordu.
+        yanit = await _playlist_bekle(
+            hedef, obj.id, hazir_degil="kamera_kayit_oynatilamadi"
+        )
+    else:
+        try:
+            async with httpx.AsyncClient(timeout=15) as istemci:
+                yanit = await istemci.get(hedef)
+        except httpx.HTTPError:
+            logger.error("[kayit] MediaMTX HLS gecidine ulasilamadi (%s)", api_adresi())
+            raise APIError(502, SUNUCU_YAPILANDIRMA, "kamera_gecit_yok")
     if yanit.status_code >= 400:
-        logger.warning("[kayit] gecit %s icin %s dondu", yol, yanit.status_code)
-        raise APIError(502, "bad_gateway", "kamera_yayin_hazir_degil")
+        # (E2E 2026-09 / GUVENLIK-04) KAYIT HATASI CANLI METNIYLE ANLATILMAZ.
+        # Eskiden `kamera_yayin_hazir_degil` ("Canli yayin henuz hazir
+        # degil ... birkac saniye sonra tekrar deneyin") donuyordu; oysa
+        # olculen sebep NVR'in 404'u idi (secilen aralikta kayit yok ya da
+        # sablon/adres yanlis) ve tekrar denemek HICBIR SEY degistirmez.
+        # Kodek sorunu canlidaki gibi ayrilir: kayit saglam olabilir.
+        kodek = await _yol_kodegi(yol)
+        logger.warning(
+            "[kayit] gecit %s icin %s dondu (kodek=%s)",
+            yol, yanit.status_code, kodek or "?",
+        )
+        if kodek:
+            raise APIError(
+                502, "codec_unsupported", "kamera_kodek_desteklenmiyor",
+                kodek=kodek,
+            )
+        raise APIError(502, "bad_gateway", "kamera_kayit_oynatilamadi")
     return Response(
         yanit.content,
         media_type=yanit.headers.get(

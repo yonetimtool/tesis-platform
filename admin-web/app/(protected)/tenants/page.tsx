@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
@@ -14,6 +14,7 @@ import {
   Rozet,
   VeriTablosu,
   type Kolon,
+  type TabloDurumu,
   Kart,
   Alan,
   AlanSarmal,
@@ -34,7 +35,7 @@ import { useGecikmeli } from "@/lib/gecikmeli";
 import type { TenantAdminCreate, TenantAdminCreatedOut } from "@/lib/types";
 import { ParolaAlani } from "@/components/ParolaAlani";
 import { EpostaAlani } from "@/components/EpostaAlani";
-import { TelefonAlani } from "@/components/TelefonAlani";
+import { TelefonAlani, telefonHataMetni } from "@/components/TelefonAlani";
 import { useT } from "@/lib/i18n/kullan";
 import { ApiHatasi } from "@/lib/client";
 import { tarihSaatUzun } from "@/lib/tarih";
@@ -57,7 +58,12 @@ interface TenantRow {
 }
 interface TenantListResponse {
   items: TenantRow[];
+  /** (E2E 2026-09) Suzgece uyan TUM tesis sayisi — sayfa degil. */
+  toplam?: number;
 }
+
+/** (E2E 2026-09) Ilk sayfa boyu — `VeriTablosu` varsayilaniyla ayni. */
+const ILK_BOY = 25 as const;
 
 // Formdaki tek yonetici satiri. Parola bos string = "verilmedi" (govdeye hic
 // konmaz) -> backend tek seferlik gecici kod uretir.
@@ -120,11 +126,30 @@ export default function TenantsPage() {
   // kullanici yazarken mesaj titremesin.
   const aramaAktif = Boolean(gecikmeliArama.trim() || kurulumSuzgec);
 
-  const sorgu = new URLSearchParams();
+  // (E2E 2026-09) SAYFALAMA SUNUCUDA. Olculen: 3788 tesis, 805 KB tek
+  // yanit, ilk acilis 11-27 s — tablo 25 satir gosterirken listenin
+  // TAMAMI iniyordu. Arama ve kurulum suzgeci sunucuda sayfadan ONCE
+  // uygulanir; numara `VeriTablosu` tarafindan sayfa ofsetiyle surer.
+  const [durum, setDurum] = useState<TabloDurumu>({
+    sayfa: 1,
+    boy: ILK_BOY,
+    siraKolon: null,
+    siraYonu: "artan",
+  });
+  // SUZGEC DEGISINCE ILK SAYFAYA DON: 7. sayfadayken arama yapan kisi
+  // 3 sonuclu listenin var olmayan 7. sayfasinda bos tablo gorurdu.
+  useEffect(() => {
+    setDurum((d) => (d.sayfa === 1 ? d : { ...d, sayfa: 1 }));
+  }, [gecikmeliArama, kurulumSuzgec]);
+
+  const sorgu = new URLSearchParams({
+    limit: String(durum.boy),
+    offset: String((durum.sayfa - 1) * durum.boy),
+  });
   if (gecikmeliArama.trim()) sorgu.set("q", gecikmeliArama.trim());
   if (kurulumSuzgec) sorgu.set("kurulum", String(kurulumSuzgec === "tamam"));
   const { data, error, isLoading, mutate } = useSWR<TenantListResponse>(
-    `/api/tenants${sorgu.toString() ? `?${sorgu}` : ""}`,
+    `/api/tenants?${sorgu}`,
     jsonFetcher,
   );
 
@@ -132,6 +157,10 @@ export default function TenantsPage() {
   const [form, setForm] = useState<FormState>(bosForm);
   const [formErr, setFormErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // (E2E 2026-09) OLUSTURMA SONUCU PENCEREDE, `window.alert`TE DEGIL.
+  // Gecici kod YALNIZ BIR KEZ doner; native alert kapaninca kayboluyor,
+  // kopyalanamiyor ve tema/dil disinda kaliyordu. `null` = pencere kapali.
+  const [sonuc, setSonuc] = useState<TenantAdminCreatedOut | null>(null);
 
   function openNew() {
     setForm(bosForm());
@@ -181,8 +210,19 @@ export default function TenantsPage() {
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
     setFormErr(null);
+    // (E2E 2026-09) TELEFON ISTEMCIDE DENETLENIR. Alanin altindaki hata
+    // ("Önce ülke kodunu seçin") yalniz GOSTERIMDI; gonderim yine sunucuya
+    // gidiyor ve formun altinda ham "İstek gövdesi geçersiz." (422)
+    // beliriyordu. Ayni kural, ayni metin: `telefonHataMetni`.
+    for (const y of form.yoneticiler) {
+      const hata = telefonHataMetni(y.phone, true, t);
+      if (hata) {
+        setFormErr(hata);
+        return;
+      }
+    }
+    setSaving(true);
     try {
       const body: TenantAdminCreate = {
         yoneticiler: form.yoneticiler.map((y) => ({
@@ -203,20 +243,7 @@ export default function TenantsPage() {
 
       // Gecici kod YALNIZ parolasiz acilan yonetici icin ve BIR KEZ doner —
       // her kod kendi yoneticisinin adiyla listelenir ki yanlis kisiye gitmesin.
-      const kodlar = (created?.yoneticiler ?? []).filter((y) => y.temp_code);
-      if (kodlar.length) {
-        window.alert(
-          t("tesisKodlarBaslik") +
-            kodlar
-              .map((y) => `• ${y.ad}${y.birincil ? t("tesisYoneticiBirincilEki") : ""}: ${y.temp_code}`)
-              .join("\n") +
-            t("tesisKodlarNot"),
-        );
-      } else {
-        window.alert(
-          t("tesisParolaIleGiris"),
-        );
-      }
+      setSonuc(created ?? { tenant_id: "", yoneticiler: [] });
       setOpen(false);
       mutate();
     } catch (err) {
@@ -244,6 +271,10 @@ export default function TenantsPage() {
         baslik: t("ayarTesisAdi"),
         gizlenebilir: false,
         deger: (x) => x.ad,
+        // (E2E 2026-09) SUNUCU SAYFALIYOR: istemcide siralamak yalniz
+        // gorunen sayfayi siralardi ("A" ile baslayan tesis 40. sayfada
+        // kalirdi). Sira sunucuda: en yeni tesis ustte.
+        siralanabilir: false,
         hucre: (x) => (
           <Link
             href={`/tenants/${x.id}`}
@@ -479,6 +510,46 @@ export default function TenantsPage() {
         </form>
       </Modal>
 
+      <Modal
+        acik={sonuc !== null}
+        onKapat={() => setSonuc(null)}
+        baslik={t("tesisOlusturuldu")}
+        eylemler={
+          <Dugme tur="birincil" onClick={() => setSonuc(null)}>
+            {t("tesisSonucTamam")}
+          </Dugme>
+        }
+      >
+        {(() => {
+          const kodlar = (sonuc?.yoneticiler ?? []).filter((y) => y.temp_code);
+          if (!kodlar.length) {
+            return (
+              <p style={{ fontSize: "var(--yz-fs-sm)", whiteSpace: "pre-line" }}>
+                {t("tesisParolaIleGiris")}
+              </p>
+            );
+          }
+          return (
+            <div className="space-y-3" data-test="tesis-gecici-kodlar">
+              <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+                {t("tesisGeciciKodNotu")}
+              </p>
+              <ul className="space-y-2">
+                {kodlar.map((y) => (
+                  <li key={y.user_id} className="flex flex-wrap items-center justify-between gap-2">
+                    <span style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>
+                      {y.ad}
+                      {y.birincil ? t("tesisYoneticiBirincilEki") : ""}
+                    </span>
+                    <KopyaKod deger={y.temp_code as string} etiket={t("tesisGeciciKodEtiketi")} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })()}
+      </Modal>
+
       {/* (P244 §9c) SUZGECLER TABLONUN DISINDA — liste hata alinca
           kaybolmamali (§9b'de /users'ta olculen kusurun aynisi). */}
       <FiltreCubugu
@@ -555,6 +626,12 @@ export default function TenantsPage() {
         // Satirlar 1'den numaralanir; numara SAYFA BASINA degil LISTENIN
         // TAMAMINA gore (gerekce `VeriTablosu.numarali`).
         numarali
+        sunucuTarafli
+        // Eski yanit `toplam` tasimiyorsa (geriye uyum) sayfadaki satir
+        // sayisi kullanilir — tablo yine cizilir, yalniz sayfa cubugu kisa.
+        toplam={data?.toplam ?? data?.items.length ?? 0}
+        durum={durum}
+        onDurumDegisti={setDurum}
       />
       {diyalog}
     </div>

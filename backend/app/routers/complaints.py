@@ -50,6 +50,7 @@ from ..schemas import (
     TalepOncelik,
 )
 from ..storage import presign_get
+from ..sakin_bildirimi import sakin_bildirimi_yaz
 from ..ticketing import add_history, assert_transition, notify_opener
 
 router = APIRouter(prefix="/complaints", tags=["complaints"])
@@ -228,12 +229,17 @@ def _own_scope(stmt, user: AppUser):
 async def _get_or_404(
     db: AsyncSession, complaint_id: uuid.UUID, user: AppUser
 ) -> tuple[Complaint, str | None]:
+    # (E2E 2026-09) AMIR KAPSAMI TEKIL UCTA DA: yalniz listede uygulaniyordu;
+    # amir kategorisiz bir sikayeti id ile acip sakinin adini okuyabiliyordu.
     row = (
         await db.execute(
-            _own_scope(
-                select(Complaint, AppUser.ad)
-                .join(AppUser, AppUser.id == Complaint.acan_user_id)
-                .where(Complaint.id == complaint_id),
+            _amir_kapsami(
+                _own_scope(
+                    select(Complaint, AppUser.ad)
+                    .join(AppUser, AppUser.id == Complaint.acan_user_id)
+                    .where(Complaint.id == complaint_id),
+                    user,
+                ),
                 user,
             )
         )
@@ -455,6 +461,13 @@ async def convert_complaint(
             "task_id": str(task.id),
             "complaint_id": str(obj.id),
         },
+    )
+    # (E2E 2026-09) Push'un KALICI ikizi (P147): atanan personel bildirimi
+    # kacirirsa listede bulabilmeli — onceden yalniz push gidiyordu.
+    sakin_bildirimi_yaz(
+        db, tenant_id=user.tenant_id, tip="is_emri_atandi",
+        user_ids=(body.atanan_user_id,), veri={"baslik": obj.baslik},
+        task_id=task.id,
     )
     await audit_user(
         db, user, Action.COMPLAINT_CONVERT, resource_type="complaint",

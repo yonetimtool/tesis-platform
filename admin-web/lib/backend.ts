@@ -4,7 +4,7 @@
 // birlestirilir (reuse-revoke onlenir).
 
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
 import { API_KAPALI_KODU } from "./backend-kodlari";
 import { API_BASE } from "./config";
@@ -321,6 +321,12 @@ export async function backendGiris(
   yol: string,
   govde: unknown,
   jetonBekle: boolean,
+  /**
+   * (E2E 2026-09) Verilirse oturum ROL KAPISINDAN (`oturumAc`) gecer.
+   * Kodla giris (e-posta OTP) kapiyi atliyordu: mobil-yalniz bir rol
+   * web paneline kodla girebiliyordu.
+   */
+  req?: NextRequest,
 ): Promise<NextResponse> {
   const res = await callBackend(yol, "POST", undefined, govde);
   const data = await res.json().catch(() => null);
@@ -336,7 +342,32 @@ export async function backendGiris(
       { status: 502 },
     );
   }
+  if (req) {
+    // Dairesel import olmasin diye gec yukleme (oturum-kapisi bu modulu kullanir).
+    const { oturumAc } = await import("./oturum-kapisi");
+    return oturumAc(req, t.access_token, t.refresh_token);
+  }
   return loginResponse(t.access_token, t.refresh_token);
+}
+
+/**
+ * (E2E 2026-09) SUNUCU TARAFI CIKIS — oturumu backend'de kapatir.
+ *
+ * OLCULEN KUSUR: cikis yalniz cerezleri siliyordu; cerezdeki refresh
+ * jetonu backend'de 30 gun gecerli kaliyordu (kopyalanmis bir cerez
+ * cikistan sonra da yeni oturum uretiyordu). Hata YUTULUR: sunucuya
+ * ulasilamasa da kullanici yerel olarak cikmis olmali.
+ */
+export async function backendCikis(): Promise<void> {
+  const jar = cookies();
+  const access = jar.get(ACCESS_COOKIE)?.value;
+  const refresh = jar.get(REFRESH_COOKIE)?.value;
+  if (!access && !refresh) return;
+  try {
+    await callBackend("/auth/logout", "POST", access, { refresh_token: refresh ?? null });
+  } catch {
+    // yerel cikis yine de yapilir
+  }
 }
 
 export function logoutResponse(): NextResponse {

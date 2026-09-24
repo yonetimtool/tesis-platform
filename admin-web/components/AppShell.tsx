@@ -375,6 +375,8 @@ function MenuSatiri({
       <span
         className={dar ? "sr-only" : "truncate transition-opacity"}
         style={dar ? undefined : { transitionDuration: "var(--yz-dur-base)" }}
+        // (E2E 2026-09) Kesilen menu etiketinin tami ipucunda.
+        title={dar ? undefined : etiket}
       >
         {etiket}
       </span>
@@ -478,7 +480,10 @@ function Bolum({
         >
           <Icon name={GRUP_IKONU[grup.id]} />
         </span>
-        <span className="flex-1 truncate">{baslik}</span>
+        {/* (E2E 2026-09) `title`: dar kenar cubugunda / Buyuk modda grup
+            adi kesiliyordu (finansal islemler grubu olculdu); tam ad
+            ipucunda okunur. */}
+        <span className="flex-1 truncate" title={baslik}>{baslik}</span>
         <Ok acik={acik} />
       </button>
       {acik && <div className="space-y-0.5">{satirlar(false)}</div>}
@@ -642,7 +647,9 @@ function SidebarBody({
         <Link href={kokHedef} aria-label="Yönetiyor" onClick={onNavigate}>
           {/* (P184-ek §10) KUCULTULMUS (dar) modda kelime isareti GIZLENIR —
               68px seride "yönetiyor" sigmaz; yalniz isaret kalir. */}
-          <YonetioLogo size={32} kelimeGoster={!dar} />
+          {/* (E2E 2026-09) `koyuZemin`: kenar cubugu iki temada da
+              lacivert; acik temada logo 1.51:1 ile okunmuyordu. */}
+          <YonetioLogo size={32} kelimeGoster={!dar} koyuZemin />
         </Link>
         {/* KATLAMA DUGMESI YALNIZ MASAUSTUNDE (`onDarCevir` verildiginde).
             Cekmecede cizilmez: mobilde daraltmanin karsiligi yok. */}
@@ -928,6 +935,9 @@ export function AppShell({
         {/* RTL: `left/border-r` yerine MANTIKSAL kenar — Arapcada kenar
             cubugu saga gecer (tur 17). */}
         <aside
+          // (E2E 2026-09) Kenar cubugu odak halkasi kurali bu isarete bagli
+          // (globals.css `[data-kabuk="kenar"]`).
+          data-kabuk="kenar"
           className={`fixed inset-y-0 start-0 hidden border-e transition-[width] lg:block ${
             dar ? "w-[68px]" : "w-64"
           }`}
@@ -1012,6 +1022,7 @@ export function AppShell({
         )}
         <aside
           ref={cekmeceRef}
+          data-kabuk="kenar"
           // Cekmece RTL'de SAGDAN girer: `start-0` + `rtl:translate-x-full`
           // (Tailwind'in `-translate-x-full`u yon farkindaligi TASIMAZ).
           style={{

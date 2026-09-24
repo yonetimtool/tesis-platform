@@ -147,7 +147,7 @@ export default function KurulumPage() {
 
   return (
     <div>
-      <SayfaBasligi baslik={t("kurulumBaslik")} aciklama={t("kurulumAlt")} />
+      <SayfaBasligi baslik={t("kurulumBaslik")} aciklama={t("kurulumAltAdimlar")} />
       <HataDurumu mesaj={hata ?? (error ? t("kurulumHata") : null)} />
 
       {/* (P243 §6a) BASLAMAK ICIN GEREKENLER — sihirbazin ILK sozu.

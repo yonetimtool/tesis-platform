@@ -22,6 +22,7 @@ from datetime import date, datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import func, literal_column, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 
 from ..borclandirma import gecikme_kurus
 from .. import defter
@@ -376,14 +377,31 @@ async def _kisi_borclari(
         )
     tahakkuklar = (await db.execute(q)).all()
 
-    hq = select(
-        FinansalHareket.unit_id,
-        FinansalHareket.user_id,
-        FinansalHareket.tip,
-        FinansalHareket.tutar_kurus,
-        FinansalHareket.tarih,
-    ).where(FinansalHareket.tip.in_(["tahsilat", "iade"]))
-    hareketler = (await db.execute(hq)).all()
+    # (E2E 2026-09, FINANS-06) ODENEN TEK TANIMDAN: `defter.tahsilat_etkisi`
+    # (yalniz gerceklesmis; iade VE IPTAL isaretiyle, atif orijinalden).
+    # Onceden ham `tahsilat`/`iade` satirlari okunuyordu: iptal hic
+    # sayilmiyor, onay bekleyen kart odemesi tahsilat sayiliyordu.
+    etki = defter.tahsilat_etkisi().subquery()
+    hareketler = (
+        await db.execute(
+            select(
+                etki.c.unit_id, etki.c.user_id, etki.c.assessment_id,
+                etki.c.etki, etki.c.tarih,
+            )
+        )
+    ).all()
+    # Kaleme bagli odeme KALEMIN SAHIBININ satirina yazilir (odeyen
+    # kiraci olsa bile malikin kalemini kapatiyorsa).
+    kalem_sahibi = {
+        aid: (uid, hedef)
+        for aid, uid, hedef in (
+            await db.execute(
+                select(DuesAssessment.id, DuesAssessment.unit_id,
+                       DuesAssessment.hedef_user_id)
+            )
+        ).all()
+    }
+    daire_no = dict((await db.execute(select(Unit.id, Unit.no))).all())
 
     adlar = dict(
         (await db.execute(select(AppUser.id, AppUser.ad))).all()
@@ -426,16 +444,29 @@ async def _kisi_borclari(
         anahtar = str(tanim) if tanim else "diger"
         k["kalemler"][anahtar] = k["kalemler"].get(anahtar, 0) + int(tutar)
 
-    for uid, kullanici, tip, tutar, tarih in hareketler:
-        if p.baslangic and tarih and tarih < p.baslangic:
-            continue
+    for uid, kullanici, aid, etki_kurus, tarih in hareketler:
         if p.bitis and tarih and tarih > p.bitis:
             continue
-        k = _kutu(uid, None, kullanici)
-        if tip == "tahsilat":
-            k["ici_tahsilat"] += int(tutar)
+        if aid is not None and aid in kalem_sahibi:
+            uid, kullanici = kalem_sahibi[aid]
+        elif (uid, kullanici) not in kisiler and (uid, None) in kisiler:
+            # (E2E 2026-09) Kisinin kendi satiri yoksa (hedefsiz daire
+            # borcu) odeme DAIRE satirina yazilir; ayri, borcsuz bir kisi
+            # satiri acmak odemeyi borcundan ayirirdi.
+            kullanici = None
+        k = _kutu(uid, daire_no.get(uid), kullanici)
+        if k["unit_no"] is None:
+            k["unit_no"] = daire_no.get(uid)
+        tutar = int(etki_kurus)
+        if p.baslangic and tarih and tarih < p.baslangic:
+            # (E2E 2026-09) Donem ONCESI odeme donem basi bakiyeyi dusurur;
+            # atilmasi donem basi borcu sisiriyordu.
+            k["bas_ana_para"] -= tutar
+            continue
+        if tutar >= 0:
+            k["ici_tahsilat"] += tutar
         else:
-            k["ici_iade"] += int(tutar)
+            k["ici_iade"] += -tutar
 
     return list(kisiler.values())
 
@@ -794,25 +825,19 @@ async def _uret(
         return await _hareket_raporu(db, kod, p)
 
     if kod == "gelir_gider_ozet":
-        rows = (
-            await db.execute(
-                select(
-                    GelirGiderTanim.ad,
-                    FinansalHareket.tip,
-                    func.sum(FinansalHareket.tutar_kurus),
-                )
-                .join(
-                    GelirGiderTanim,
-                    GelirGiderTanim.id == FinansalHareket.gelir_gider_tanim_id,
-                )
-                .where(FinansalHareket.tip.in_(["gelir", "gider"]))
-                .group_by(GelirGiderTanim.ad, FinansalHareket.tip)
-            )
-        ).all()
+        # (E2E 2026-09, FINANS-11) TEK KURAL: `defter.kategori_kirilimi` —
+        # seffaflik ve finans ozeti de ayni toplamlari kullanir. Onceden
+        # (a) yalniz gelir-gider TANIMI olan satirlar sayiliyordu (bakim,
+        # mesai, banka masrafi, aidat tahsilatlari yoktu), (b) tarih
+        # araligi HIC uygulanmiyordu, (c) iptal/iade dusulmuyordu.
+        # Tanimsiz satirlar "Diğer" basliginda.
         birlesik: dict[str, dict] = {}
-        for ad, tip, toplam in rows:
-            kutu = birlesik.setdefault(ad, {"kalem": ad, "gelir": 0, "gider": 0})
-            kutu[tip] += int(toplam)
+        for tip, tipler in (("gelir", defter.GELIR_TIPLERI), ("gider", ("gider",))):
+            for ad, toplam in await defter.kategori_kirilimi(
+                db, tipler, baslangic=p.baslangic, bitis=p.bitis
+            ):
+                kutu = birlesik.setdefault(ad, {"kalem": ad, "gelir": 0, "gider": 0})
+                kutu[tip] += int(toplam)
         satirlar = list(birlesik.values())
         for s in satirlar:
             s["fark"] = s["gelir"] - s["gider"]
@@ -858,6 +883,16 @@ async def _hareket_raporu(db: AsyncSession, kod: str, p: RaporParam) -> RaporSon
         q = q.where(FinansalHareket.tip == "tahsilat")
     elif kod == "isletme_defteri":
         q = q.where(FinansalHareket.tip.in_(["gelir", "gider"]))
+    kasa_id = None
+    if kod == "kasa_ekstresi":
+        # (E2E 2026-09, FINANS-14) KASA SUZGECI UYGULANIR. `kasa_id=KASA`
+        # verildiginde banka ve kasasiz satirlar da geliyordu; toplam
+        # anlamsizdi. Ekstre yalniz GERCEKLESMIS hareketleri gosterir
+        # (kasa bakiyesiyle ayni kural, P192 §2.2).
+        q = q.where(FinansalHareket.durum == defter.GERCEKLESEN)
+        if p.kasa_id:
+            kasa_id = uuid.UUID(str(p.kasa_id))
+            q = q.where(FinansalHareket.kasa_id == kasa_id)
     if p.baslangic:
         q = q.where(FinansalHareket.tarih >= p.baslangic)
     if p.bitis:
@@ -884,6 +919,36 @@ async def _hareket_raporu(db: AsyncSession, kod: str, p: RaporParam) -> RaporSon
         Sutun("aciklama", "Açıklama", genislik=4),
         Sutun("tutar_kurus", "Tutar", "kurus", 2),
     ]
+    if kod == "kasa_ekstresi" and kasa_id is not None:
+        # (E2E 2026-09, FINANS-14) EKSTRE = DEVIR + ISARETLI HAREKET + KAPANIS.
+        # Tutar yonuyle isaretlenir; toplam bu kasanin DONEM SONU bakiyesi.
+        kasa = (
+            await db.execute(select(Kasa).where(Kasa.id == kasa_id))
+        ).scalar_one_or_none()
+        devir = kasa.acilis_bakiye_kurus if kasa else 0
+        if p.baslangic:
+            onceki = (
+                await db.execute(
+                    select(func.coalesce(
+                        func.sum(defter.isaret() * FinansalHareket.tutar_kurus), 0
+                    )).where(
+                        FinansalHareket.kasa_id == kasa_id,
+                        FinansalHareket.durum == defter.GERCEKLESEN,
+                        FinansalHareket.tarih < p.baslangic,
+                    )
+                )
+            ).scalar_one()
+            devir += int(onceki)
+        for s in satirlar:
+            if s["yon"] == "cikis":
+                s["tutar_kurus"] = -s["tutar_kurus"]
+        satirlar.insert(0, {
+            "tarih": p.baslangic.isoformat() if p.baslangic else "",
+            "tip": "devir", "yon": "", "tutar_kurus": devir,
+            "belge_no": "", "aciklama": "Devreden bakiye",
+            "kasa": kasa.ad if kasa else "",
+            **({"kisi": ""} if p.ismi_goster else {}),
+        })
     return RaporSonuc(kod, KATALOG[kod][0], sutunlar, satirlar, {
         "tutar_kurus": sum(s["tutar_kurus"] for s in satirlar)
     })
@@ -899,17 +964,11 @@ async def _tahsilat_performansi(
             .group_by(DuesAssessment.donem)
         )).all()
     )
-    tahsil = dict(
-        (await db.execute(
-            select(
-                _DONEM_IFADESI,
-                func.sum(FinansalHareket.tutar_kurus),
-            )
-            .where(FinansalHareket.tip == "tahsilat",
-                   FinansalHareket.durum == defter.GERCEKLESEN)
-            .group_by(_DONEM_IFADESI)
-        )).all()
-    )
+    # (E2E 2026-09, FINANS-07) TEK KAYNAK: donemin kalemlerinden KAPANAN
+    # tutar (`defter.donem_tahsil_edilen`) — gosterge ve seffaflik da bunu
+    # cagirir. Onceden bu rapor islem tarihinin ayina, gosterge tahsilat
+    # satirinin donem alanina bakiyordu: ayni ay %28 ve %3.
+    tahsil = await defter.donem_tahsil_edilen(db)
     donemler = [
         {"donem": d, "borclandirilan": int(borc.get(d, 0)),
          "tahsil": int(tahsil.get(d, 0))}
@@ -917,27 +976,16 @@ async def _tahsilat_performansi(
     ]
 
     # YASLANDIRMA: vadesi gecmis borclarin kova dagilimi.
+    # (E2E 2026-09, FINANS-04) KALAN borc, TUTAR degil: tamamen odenmis
+    # borc "61-90 gun: 2.000,00" diye gorunuyordu. Kova hesabi panel
+    # kartiyla AYNI modulden (`yaslandirma.hesapla`, FIFO dagitimli).
+    from .. import yaslandirma as _yas
+
     bugun = p.tazminat_tarihi or datetime.now(timezone.utc).date()
-    vadeli = (
-        await db.execute(
-            select(DuesAssessment.son_odeme_tarihi, DuesAssessment.tutar_kurus)
-            .where(DuesAssessment.son_odeme_tarihi.is_not(None),
-                   *defter.gecerli_tahakkuk())
-        )
-    ).all()
-    kovalar = {"0-30 gün": 0, "31-60 gün": 0, "61-90 gün": 0, "90+ gün": 0}
-    for vade, tutar in vadeli:
-        gun = (bugun - vade).days
-        if gun <= 0:
-            continue
-        if gun <= 30:
-            kovalar["0-30 gün"] += int(tutar)
-        elif gun <= 60:
-            kovalar["31-60 gün"] += int(tutar)
-        elif gun <= 90:
-            kovalar["61-90 gün"] += int(tutar)
-        else:
-            kovalar["90+ gün"] += int(tutar)
+    kovalar = {
+        f"{k.kova} gün": k.kalan_kurus
+        for k in await _yas.hesapla(db, bugun=bugun)
+    }
     _ = oran
     return tahsilat_performansi(
         donemler, [{"kova": k, "tutar_kurus": v} for k, v in kovalar.items()]
@@ -961,6 +1009,13 @@ async def _muhasebe_aktarim(db: AsyncSession, p: RaporParam) -> RaporSonuc:
     if p.bitis:
         where.append(FinansalHareket.tarih <= p.bitis)
 
+    # (E2E 2026-09, FINANS-16) Iade/iptal satirinin donemi ve dairesi bossa
+    # ORIJINAL satirdan tamamlanir — muhasebeci ters kaydi neyin tersi
+    # oldugunu bilmeden eslestiremez.
+    orj = aliased(FinansalHareket)
+    ilgili = func.coalesce(
+        FinansalHareket.iade_edilen_id, FinansalHareket.ters_kayit_id
+    )
     rows = (
         await db.execute(
             select(
@@ -970,12 +1025,16 @@ async def _muhasebe_aktarim(db: AsyncSession, p: RaporParam) -> RaporSonuc:
                 FinansalHareket.yon,
                 FinansalHareket.tutar_kurus,
                 FinansalHareket.aciklama,
-                FinansalHareket.donem,
+                func.coalesce(FinansalHareket.donem, orj.donem),
                 Kasa.kod,
                 Unit.no,
             )
+            .outerjoin(orj, orj.id == ilgili)
             .outerjoin(Kasa, Kasa.id == FinansalHareket.kasa_id)
-            .outerjoin(Unit, Unit.id == FinansalHareket.unit_id)
+            .outerjoin(
+                Unit,
+                Unit.id == func.coalesce(FinansalHareket.unit_id, orj.unit_id),
+            )
             .where(*where)
             .order_by(FinansalHareket.tarih, FinansalHareket.belge_no,
                       FinansalHareket.id)
@@ -1069,8 +1128,11 @@ async def _denetim(db: AsyncSession, p: RaporParam) -> RaporSonuc:
         a: sum(s[a] for s in satirlar)
         for a in ("acilis", "giris", "cikis", "bakiye")
     })
-    gelir = sum(s["giris"] for s in satirlar)
-    gider = sum(s["cikis"] for s in satirlar)
+    # (E2E 2026-09, FINANS-11) Metindeki gelir/gider KASA GIRIS/CIKISI
+    # DEGIL: virman bacaklari, iadeler ve acilislar kasa hareketidir ama
+    # gelir/gider degildir. Tek tanim `defter.gelir_toplami/gider_toplami`.
+    gelir = await defter.gelir_toplami(db, baslangic=p.baslangic, bitis=p.bitis)
+    gider = await defter.gider_toplami(db, baslangic=p.baslangic, bitis=p.bitis)
     sonuc.metin = (
         f"Dönem gelir toplamı: {kurus_metin(gelir)} TL · "
         f"Dönem gider toplamı: {kurus_metin(gider)} TL · "

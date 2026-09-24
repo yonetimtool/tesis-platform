@@ -37,7 +37,7 @@ def _uphone() -> str:
 
 def _add(client, yon, telefon, ad="Sakin", unit="R-1"):
     r = client.post(
-        "/residents", headers=yon, json={"ad": ad, "telefon": telefon, "unit_no": unit, "email": _p197_mail()}
+        "/residents", headers=yon, json={"ad": ad, "telefon": telefon, "blok": "A", "unit_no": unit, "email": _p197_mail()}
     )
     assert r.status_code == 201, r.text
     return r.json()
@@ -87,7 +87,7 @@ def test_add_resident_passwordless_and_davet(client, world, owner_conn):
     r = client.post(
         "/residents",
         headers=yon,
-        json={"ad": "Parolasiz", "telefon": phone, "unit_no": "P-9", "email": _p197_mail()},
+        json={"ad": "Parolasiz", "telefon": phone, "blok": "A", "unit_no": "P-9", "email": _p197_mail()},
     )
     assert r.status_code == 201, r.text
     body = r.json()
@@ -125,7 +125,7 @@ def test_edit_resident_and_phone_freed(client, world):
 
     # eski numara serbest -> yeni sakin acilir; yeni numara dolu -> cakisma 409
     assert _add(client, yon, phone_a, unit="R-2")  # 201
-    dup = client.post("/residents", headers=yon, json={"ad": "x", "telefon": phone_b, "unit_no": "R-3", "email": _p197_mail()})
+    dup = client.post("/residents", headers=yon, json={"ad": "x", "telefon": phone_b, "blok": "A", "unit_no": "R-3", "email": _p197_mail()})
     assert dup.status_code == 409
 
     # bos govde 422; olmayan sakin 404
@@ -197,7 +197,7 @@ _TEL_SAYAC = [7000000]
 def _yeni_sakin(client, yonetim, unit_no):
     _TEL_SAYAC[0] += 1
     r = client.post("/residents", headers=yonetim, json={
-        "unit_no": unit_no, "ad": "P23 Sakin",
+        "blok": "A", "unit_no": unit_no, "ad": "P23 Sakin",
         "telefon": f"+90532{_TEL_SAYAC[0]}", "rol_tipi": "kiraci", "email": _p197_mail()})
     assert r.status_code == 201, r.text
     return r.json()

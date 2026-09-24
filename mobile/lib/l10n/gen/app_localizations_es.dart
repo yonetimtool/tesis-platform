@@ -1387,6 +1387,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get panikIptalEdildi => 'Cancelado: no se envió nada.';
 
   @override
+  String get panikZatenAcik =>
+      'Ya tiene una alarma abierta: seguridad y administración han sido avisadas.';
+
+  @override
   String get panikYanlisAlarmGonderildi => 'Falsa alarma notificada.';
 
   @override
@@ -1718,6 +1722,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get binaDaireNoZatenVar => 'Este número de unidad ya está registrado.';
 
   @override
+  String binaDaireNoOnizleme(String no) {
+    return 'Se guardará como: $no';
+  }
+
+  @override
   String binaDaireDuzenleBaslik(Object no) {
     return 'Unidad $no — editar';
   }
@@ -1813,6 +1822,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get semaYogunluk => 'Densidad:';
+
+  @override
+  String get semaTurSuzgeci => 'Tipo de queja';
 
   @override
   String get semaYerlesimAciklama =>
@@ -3059,6 +3071,172 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get duyuruYayinla => 'Publicar';
+
+  @override
+  String get duyuruHedefBloklar => 'Bloques (todos si no se elige ninguno)';
+
+  @override
+  String get duyuruHedefNotu =>
+      'Quienes están fuera del público no ven el anuncio ni reciben notificación. Los filtros de bloque y propietario/inquilino solo se aplican a los residentes. El público no se puede cambiar después de guardar.';
+
+  @override
+  String duyuruHedefOzet(Object ozet) {
+    return 'Público: $ozet';
+  }
+
+  @override
+  String duyuruHedefBlok(Object bloklar) {
+    return 'Bloque: $bloklar';
+  }
+
+  @override
+  String get modulDavetler => 'Invitaciones';
+
+  @override
+  String get davetYonAciklama => 'Invitaciones enviadas y su estado.';
+
+  @override
+  String get davetYonTesisKoduIpucu =>
+      'Si una invitación falló, puede compartir el código del sitio manualmente:';
+
+  @override
+  String get davetYonKodKopyala => 'Copiar código del sitio';
+
+  @override
+  String get davetYonKodKopyalandi => 'Código del sitio copiado.';
+
+  @override
+  String get davetYonBos => 'Aún no hay invitaciones.';
+
+  @override
+  String get davetYonAlinamadi => 'No se pudieron cargar las invitaciones.';
+
+  @override
+  String davetYonSonGonderim(Object zaman) {
+    return 'Último envío: $zaman';
+  }
+
+  @override
+  String get davetYonDurumKaydoldu => 'Registrado';
+
+  @override
+  String get davetYonDurumGeriDondu => 'Rebotado';
+
+  @override
+  String get davetYonDurumGitmedi => 'No enviado';
+
+  @override
+  String get davetYonDurumAyarYok => 'Correo no configurado';
+
+  @override
+  String get davetYonDurumAcildi => 'Abierto';
+
+  @override
+  String get davetYonDurumIletildi => 'Entregado';
+
+  @override
+  String get davetYonDurumGonderildi => 'Enviado';
+
+  @override
+  String get davetYonDurumBekliyor => 'Pendiente';
+
+  @override
+  String get davetYonYenidenGonder => 'Reenviar';
+
+  @override
+  String get davetYonYenidenGonderildi => 'Invitación reenviada.';
+
+  @override
+  String get modulGurultuUyarilari => 'Avisos por ruido';
+
+  @override
+  String get gurultuAciklama =>
+      'Quejas de ruido por encima del umbral y estado del aviso.';
+
+  @override
+  String get gurultuYok => 'Sin avisos';
+
+  @override
+  String get gurultuYokAlt => 'Aún no se ha alcanzado el umbral.';
+
+  @override
+  String get gurultuAlinamadi => 'No se pudieron cargar los avisos.';
+
+  @override
+  String gurultuSayac(int sayac, int esik) {
+    return 'Contador: $sayac/$esik';
+  }
+
+  @override
+  String get gurultuDaireYok => 'Vivienda desconocida';
+
+  @override
+  String get gurultuDurumGonderildi => 'Enviado';
+
+  @override
+  String get gurultuDurumBasarisiz => 'Fallido';
+
+  @override
+  String get gurultuDurumBekliyor => 'Pendiente de aviso';
+
+  @override
+  String get gurultuDurumYapildi => 'Aviso realizado';
+
+  @override
+  String get gurultuIsaretlendi => 'Aviso marcado.';
+
+  @override
+  String get girisKodIleEposta =>
+      'Enviarme un código por correo en lugar de contraseña';
+
+  @override
+  String get girisKodYalnizEposta =>
+      'El acceso con código funciona con una dirección de correo. Para entrar con el número de teléfono, use su contraseña.';
+
+  @override
+  String get girisParolaylaDon => 'Iniciar sesión con contraseña';
+
+  @override
+  String get girisEpostaKodGonder => 'Enviar código';
+
+  @override
+  String get girisEpostaKodGonderildi =>
+      'Si la dirección está registrada, se ha enviado un código. Es válido 10 minutos.';
+
+  @override
+  String get girisKodTesisKoduAciklama =>
+      'Este código es válido en varias instalaciones. Escriba el código de la instalación a la que desea entrar.';
+
+  @override
+  String get girisTesisKodu => 'Código de instalación';
+
+  @override
+  String get girisSlugGecersiz =>
+      'El código de instalación solo puede contener minúsculas, dígitos y guiones.';
+
+  @override
+  String get girisSifremiUnuttum => '¿Olvidó su contraseña?';
+
+  @override
+  String get sifreSifirlaBaslik => 'Olvidé mi contraseña';
+
+  @override
+  String get sifreSifirlaAciklama =>
+      'Introduzca el código de su instalación y su correo. El código solo se envía a cuentas con correo verificado; si no recibe un correo en unos minutos, es posible que su correo aún no esté verificado. Por seguridad no revelamos si una cuenta existe.';
+
+  @override
+  String get sifreSifirlaGonderildi =>
+      'Si existe una cuenta, se envió un código a su correo. Introduzca el código y su nueva contraseña.';
+
+  @override
+  String get sifreSifirlaKur => 'Actualizar contraseña';
+
+  @override
+  String get sifreSifirlaBasarili =>
+      'Su contraseña se ha actualizado. Puede iniciar sesión con su nueva contraseña.';
+
+  @override
+  String get sifreSifirlaGirise => 'Volver al inicio de sesión';
 
   @override
   String get ortakIslemler => 'Acciones';
@@ -7061,6 +7239,33 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get bakimTutar => 'Coste';
+
+  @override
+  String get bakimFotoEkle => 'Añadir foto';
+
+  @override
+  String get bakimFotoHazir => 'La foto se subirá con el registro';
+
+  @override
+  String get bakimFotoYuklenemedi =>
+      'Mantenimiento guardado, pero no se pudo subir la foto.';
+
+  @override
+  String get bakimGecmis => 'Historial de mantenimiento';
+
+  @override
+  String get bakimGecmisYok =>
+      'No hay mantenimientos registrados para este equipo.';
+
+  @override
+  String get bakimGecmisYokAlt =>
+      'Cuando la administración registre mantenimientos, aparecerán aquí con fecha, coste y adjuntos.';
+
+  @override
+  String get bakimEkler => 'Fotos y documentos';
+
+  @override
+  String get bakimEkYok => 'Este registro no tiene fotos ni documentos.';
 
   @override
   String get bakimGidereYaz => 'Registrar como gasto';

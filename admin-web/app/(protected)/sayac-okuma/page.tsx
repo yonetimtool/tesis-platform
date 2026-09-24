@@ -21,6 +21,32 @@ import { kurusToTL, tlToKurus } from "@/lib/money";
 import { sayiBicimi, sayiCoz } from "@/lib/sayi";
 
 /**
+ * (E2E 2026-09, TESIS-01) Sayac fotografini DAIREYE ek olarak bagla —
+ * mobil `sayac_api.okumaEkle` ile AYNI sozlesme (presign -> PUT -> /ekler,
+ * `varlik_tipi=unit`, metin "donem · deger").
+ */
+async function sayacFotografiYukle(dosya: File, unitId: string, metin: string) {
+  const bilet = (await apiSend("/api/uploads/presign", "POST", {
+    content_type: dosya.type || "image/jpeg",
+    dosya_adi: dosya.name,
+  })) as { foto_key: string; upload_url: string };
+  const put = await fetch(bilet.upload_url, {
+    method: "PUT",
+    headers: { "Content-Type": dosya.type || "image/jpeg" },
+    body: dosya,
+  });
+  if (!put.ok) throw new Error(String(put.status));
+  await apiSend("/api/panel/ekler", "POST", {
+    varlik_tipi: "unit",
+    varlik_id: unitId,
+    tur: "dosya",
+    dosya_key: bilet.foto_key,
+    dosya_adi: dosya.name,
+    metin,
+  });
+}
+
+/**
  * (P111) SAYAC OKUMA SIHIRBAZI — dort adim, TEK istek.
  *
  * SUNUCUNUN SOZLESMESI BELIRLEYICI: `SayacBorcIstek` docstring'i
@@ -85,6 +111,11 @@ export default function SayacOkumaPage() {
   const [birimFiyat, setBirimFiyat] = useState("");
   // --- adim 3 ---
   const [tuketimler, setTuketimler] = useState<Record<string, string>>({});
+  // (E2E 2026-09, TESIS-01) SAYAC FOTOGRAFI web'de de eklenebilir (mobil
+  // zaten ekliyordu). Borclandirmadan SONRA yuklenir: yukleme basarisiz
+  // olsa bile borclandirma gecerlidir; once yuklemek, yarim kalan akista
+  // daireye sahipsiz ek birakirdi (mobil ile ayni sira).
+  const [fotolar, setFotolar] = useState<Record<string, File>>({});
   // --- adim 4 ---
   const [sonOdeme, setSonOdeme] = useState("");
   const [aciklama, setAciklama] = useState("");
@@ -184,6 +215,23 @@ export default function SayacOkumaPage() {
       toast.success(
         t("sayacSonuc", { atlanan: String(sonuc?.atlanan ?? 0) }),
       );
+      let yuklenemeyen = 0;
+      for (const b of bolumler) {
+        const dosya = fotolar[String(b.id)];
+        if (!dosya || !b.unit_id) continue;
+        try {
+          await sayacFotografiYukle(
+            dosya, String(b.unit_id),
+            `${donem.trim()} · ${tuketimler[String(b.id)] ?? ""}`,
+          );
+        } catch {
+          yuklenemeyen += 1;
+        }
+      }
+      if (yuklenemeyen > 0) {
+        toast.error(t("sayacFotoYuklenemedi", { n: String(yuklenemeyen) }));
+      }
+      setFotolar({});
       setHata(null);
       // Sihirbaz BASA DONER: ayni donemi yanlislikla iki kez
       // borclandirmak, ekranda hazir duran formla bir tiklama uzakta olurdu.
@@ -336,6 +384,27 @@ export default function SayacOkumaPage() {
                     />
                   )}
                 </AlanSarmal>
+              ))}
+              {bolumler.map((b) => (
+                <label
+                  key={`foto-${String(b.id)}`}
+                  className="flex items-center gap-2"
+                  style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
+                >
+                  <span>{t("sayacFotoEkle", { daire: String(b.unit_no ?? b.id) })}</span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/heic"
+                    data-test={`sayac-foto-${String(b.id)}`}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      const yeni = { ...fotolar };
+                      if (f) yeni[String(b.id)] = f;
+                      else delete yeni[String(b.id)];
+                      setFotolar(yeni);
+                    }}
+                  />
+                </label>
               ))}
             </div>
           )

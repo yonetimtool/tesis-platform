@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/i18n/l10n.dart';
 import '../../../core/ui/merkez_diyalog.dart';
+import '../../auth/data/current_user_provider.dart';
 import '../../home/presentation/widgets/activity_row.dart';
 import '../data/notifications_controller.dart';
 import '../domain/notification_models.dart';
@@ -112,13 +113,14 @@ class _NotificationsState extends ConsumerState<NotificationsScreen> {
   ) async {
     setState(() => _islemde = true);
     final messenger = ScaffoldMessenger.of(context);
+    final basarisiz = context.l10n.bildirimTopluBasarisiz;
     try {
       final n = await islem();
       _secimiKapat();
       messenger.showSnackBar(SnackBar(content: Text(mesaj(n))));
     } catch (_) {
       messenger.showSnackBar(
-        SnackBar(content: Text(context.l10n.bildirimTopluBasarisiz)),
+        SnackBar(content: Text(basarisiz)),
       );
     } finally {
       if (mounted) setState(() => _islemde = false);
@@ -466,7 +468,10 @@ class _NotificationRow extends ConsumerWidget {
               }
               // Hedefi olan bildirim ilgili ekrani acar; hedefi yoksa
               // dokunma yalnizca okundu isaretlemis olur.
-              final rota = bildirimRotasi(bildirim);
+              final rota = bildirimRotasi(
+                bildirim,
+                role: ref.read(currentUserRoleProvider).value,
+              );
               if (rota != null) context.push(rota);
             },
           ),

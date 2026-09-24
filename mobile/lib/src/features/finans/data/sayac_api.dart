@@ -88,7 +88,8 @@ class SayacApi {
     required String anaSayacId,
     required double anaTuketim,
     required int birimFiyatKurus,
-    required Map<String, double> bolumTuketimleri,
+    Map<String, double> bolumTuketimleri = const {},
+    Map<String, double> bolumOkumalari = const {},
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
@@ -99,7 +100,10 @@ class SayacApi {
           'ana_sayac_id': anaSayacId,
           'ana_tuketim': anaTuketim,
           'birim_fiyat_kurus': birimFiyatKurus,
-          'bolum_tuketimleri': bolumTuketimleri,
+          // (E2E 2026-09, TESIS-01) Ikisinden BIRI gonderilir: saha ekrani
+          // ENDEKS okur (`bolum_okumalari`, tuketimi sunucu hesaplar).
+          if (bolumOkumalari.isNotEmpty) 'bolum_okumalari': bolumOkumalari
+          else 'bolum_tuketimleri': bolumTuketimleri,
         },
       );
       return (res.data?['atlanan'] as int?) ?? 0;

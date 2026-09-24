@@ -106,13 +106,21 @@ async def ensure_checkpoints_in_tenant(
         )
 
 
+#: (E2E 2026-09) TESIS-07 / GUVENLIK-05: NFC okuyucu uygulamalari UID'yi
+#: `04:A1:B2:...` ya da `04-A1-...` bicimde gosterir; mobil ayracsiz uretir
+#: (`nfc_service.dart`). Ayraclar atilmazsa ayni etiket iki kez kaydolur ve
+#: okutma eslesmez. Goc 0151 ayni ifadeyi (`[[:space:]:-]`) SQL'de kullanir.
+_NFC_AYRAC = re.compile(r"[\s:\-]")
+
+
 def norm_nfc(uid: str | None) -> str | None:
-    """NFC UID normalizasyonu (strip + upper) — tum uclarda AYNI karsilastirma.
+    """NFC UID normalizasyonu (ayrac/bosluk at + upper) — tum uclarda AYNI.
 
     Mobil UID'yi buyuk harf uretir ama panelden farkli formatta girilebilir;
-    eslesme buyuk/kucuk harfe ve bas/son bosluga takilmasin (mobil §11 #3).
+    eslesme buyuk/kucuk harfe, bosluga ve ':'/'-' ayracina takilmasin
+    (mobil §11 #3). Kontrol noktasi KAYDI da bu bicimde saklanir.
     """
-    return uid.strip().upper() if uid is not None else None
+    return _NFC_AYRAC.sub("", uid).upper() if uid is not None else None
 
 
 def nfc_eq(a: str | None, b: str | None) -> bool:

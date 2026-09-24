@@ -38,6 +38,10 @@ export const BILDIRIM_TIP: EnumHarita = {
   sikayet_cozuldu: "bildirimTipSikayetCozuldu",
   // (P181 Bölüm 10.2) Vardiya sonu özeti (batching) — "X/Y nokta okutuldu".
   vardiya_ozeti: "bildirimTipVardiyaOzeti",
+  // (E2E 2026-09) Sunucu enum'unda VARDI, haritada yoktu (model de
+  // eksikti; `GET /notifications` 500 veriyordu).
+  vardiya_hatirlatma: "bildirimTipVardiyaHatirlatma",
+  vardiya_baslamadi: "bildirimTipVardiyaBaslamadi",
   // (P191 §2, göç 0078) Görev atama ve aidat borcu — ikisinin de bildirimi
   // HIC YOKTU; "görev oluşturdum, telefona hiçbir şey gelmedi" bundandı.
   gorev_atandi: "bildirimTipGorevAtandi",

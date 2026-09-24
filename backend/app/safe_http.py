@@ -164,3 +164,156 @@ def send_webhook(
         return WebhookResult(ok=200 <= status < 300, status=status)
     except httpx.HTTPError as exc:
         return WebhookResult(ok=False, status=None, error=str(exc)[:200])
+
+
+# =========================================================================== #
+# (E2E 2026-09) SAHA CIHAZI HEDEF KAPISI — diyafon + akilli ev koprusu
+# =========================================================================== #
+# OLCULEN KUSUR (TESIS-11): diyafon/kopru "baglanti testi" SSRF kapisindan
+# hic gecmiyordu (P240: "ic ag serbest — cihaz zaten ic agda"). Bir tesis
+# yoneticisi `host=redis port=6379`, `db:5432`, `minio:9000`, `api:8000`
+# yazip `ok:true`, `localhost:1` yazip "ulasilamiyor" aliyordu: cok
+# kiracili platformda MUSTERI rolunun elinde bir PORT TARAYICISI. P240
+# karari yalniz yanit GOVDESINI dusunmustu; `ok` bayragi tek basina
+# yeterli bir kahin (oracle).
+#
+# NEDEN `validate_public_url` DEGIL: diyafon paneli ve HA kutusu gercekten
+# SITENIN YEREL AGINDA yasar (192.168.x.x, 10.x — VPN/site baglantisi
+# arkasinda). RFC1918'in tamamini kapatmak ozelligi oldururdu (P213 K3.2
+# kameralarda ayni gerekceyle ayni karari verdi).
+#
+# BU KAPI NEYI KESIN KAPATIR:
+#   1. TEK ETIKETLI ADLAR (`redis`, `db`, `api`, `minio`, `localhost`) —
+#      konteyner agindaki servis adlari tam olarak budur ve saha cihazi
+#      hicbir zaman noktasiz bir adla tanimlanmaz. COZULMEDEN reddedilir:
+#      cozup bakmak "boyle bir servis var mi" sorusunu yanitlardi.
+#   2. `*.localhost`, `*.internal` (host.docker.internal, bulut meta-veri).
+#   3. Cozulen adreslerden: loopback, link-local (169.254 — bulut
+#      meta-veri), belirtilmemis, cok-noktaya yayin, bilinen meta-veri IP'leri.
+#   4. SUNUCUNUN KENDI BAGLI AGLARI (`/proc/net/route`): konteynerin
+#      bulundugu docker agi (db/redis/minio'nun IP'leri) burada. Dogrudan
+#      bagli aglar route tablosundan okunur — ag adresini ELLE yazmak
+#      compose alt agi degistiginde sessizce eskirdi.
+#
+# ACIK KALAN (bilincli): sunucunun disindaki RFC1918 adresleri. Prod
+# sunucusunun kendi LAN IP'si konteyner icinden gorunmez; o adresin
+# yayinlanmis portlari hala yoklanabilir. Kalici cozum yoklamayi sitedeki
+# kopru ajanina tasimaktir (docs'a not).
+#
+# YANIT AYIRT EDILEMEZ: engellenen hedef, kapali bir portla AYNI kimligi
+# dondurur (`*_ulasilamiyor`) ve ayrinti tekduzedir; "engellendi" ile
+# "kapali" farki da bir bilgi olurdu.
+_SAHA_YASAK_AGLAR = tuple(
+    ipaddress.ip_network(a)
+    for a in (
+        "0.0.0.0/8",
+        "127.0.0.0/8",
+        "169.254.0.0/16",
+        "224.0.0.0/4",
+        "255.255.255.255/32",
+        "100.100.100.200/32",  # Alibaba meta-veri
+        "192.0.0.192/32",      # Oracle meta-veri
+        "::/128",
+        "::1/128",
+        "fe80::/10",
+        "ff00::/8",
+        "fd00:ec2::254/128",   # AWS IMDS IPv6
+    )
+)
+_LOOPBACK_AGLAR = (
+    ipaddress.ip_network("127.0.0.0/8"),
+    ipaddress.ip_network("::1/128"),
+)
+
+#: Tekduze ayrinti — kaydedilen `son_hata_ayrinti` de ayni.
+SAHA_ENGEL_AYRINTI = "hedef ulasilamiyor"
+
+
+def _loopback_serbest() -> bool:
+    """YALNIZ GELISTIRME/TEST: dev compose `SAHA_LOOPBACK_SERBEST=1` verir.
+
+    Test takimi sahte SIP/HA sunucusunu pytest surecinde 127.0.0.1'de
+    acar ve CANLI API'ye (ayni konteyner) oraya baglanmasini soyler;
+    loopback'i kapatmak o testleri olcum yapamaz hale getirirdi. Prod
+    compose bu degiskeni TANIMLAMAZ -> kapali. Tek etiketli adlar ve
+    konteyner agi bayraktan BAGIMSIZ olarak kapalidir (E2E olcumundeki
+    `localhost:8000`, `redis:6379` dev'de de reddedilir).
+    """
+    import os
+
+    return os.environ.get("SAHA_LOOPBACK_SERBEST", "").strip() in ("1", "true")
+
+
+def _bagli_aglar() -> list[ipaddress.IPv4Network]:
+    """Sunucunun DOGRUDAN BAGLI IPv4 aglari (`/proc/net/route`, gateway=0).
+
+    Varsayilan rota (0.0.0.0/0) atlanir — o "her yer" demek. Okunamazsa
+    (Linux degil) bos liste: kapinin geri kalani yine calisir.
+    """
+    aglar: list[ipaddress.IPv4Network] = []
+    try:
+        with open("/proc/net/route", encoding="ascii") as f:
+            next(f, None)
+            for satir in f:
+                p = satir.split()
+                if len(p) < 8:
+                    continue
+                hedef, gecit, maske = p[1], p[2], p[7]
+                if gecit != "00000000" or hedef == "00000000":
+                    continue
+                ag = ipaddress.IPv4Address(bytes.fromhex(hedef)[::-1])
+                m = ipaddress.IPv4Address(bytes.fromhex(maske)[::-1])
+                try:
+                    aglar.append(ipaddress.IPv4Network(f"{ag}/{m}", strict=False))
+                except ValueError:
+                    continue
+    except (OSError, ValueError):
+        return []
+    return aglar
+
+
+def saha_hedefi_engelli(host: str | None) -> bool:
+    """Diyafon/kopru hedefi platformun KENDI agina mi isaret ediyor?"""
+    ad = (host or "").strip().rstrip(".").lower()
+    if ad.startswith("[") and ad.endswith("]"):
+        ad = ad[1:-1]
+    if not ad:
+        return True
+    ip_literal: ipaddress.IPv4Address | ipaddress.IPv6Address | None
+    try:
+        ip_literal = ipaddress.ip_address(ad.split("%")[0])
+    except ValueError:
+        ip_literal = None
+    if ip_literal is None:
+        if "." not in ad:
+            return True  # servis adi / localhost — COZULMEDEN
+        if ad.endswith((".localhost", ".internal")):
+            return True
+        # Sayisal kodlamalar (`2852039166`, `0177.0.0.1`) getaddrinfo'da
+        # IP'ye cevrilir; asagidaki adres denetimi onlari da yakalar.
+        try:
+            adresler = [
+                b[4][0] for b in socket.getaddrinfo(ad, None, proto=socket.IPPROTO_TCP)
+            ]
+        except OSError:
+            # Cozulemeyen ad: baglanti zaten kurulamaz; "engelli" demek
+            # yazim hatasini guvenlik sorunu gibi gosterirdi.
+            return False
+    else:
+        adresler = [str(ip_literal)]
+    bagli = _bagli_aglar()
+    serbest_loop = _loopback_serbest()
+    for ham in adresler:
+        try:
+            ip = ipaddress.ip_address(ham.split("%")[0])
+        except ValueError:
+            return True
+        if getattr(ip, "ipv4_mapped", None):
+            ip = ip.ipv4_mapped
+        if serbest_loop and any(ip in a for a in _LOOPBACK_AGLAR):
+            continue
+        if any(ip in a for a in _SAHA_YASAK_AGLAR):
+            return True
+        if ip.version == 4 and any(ip in a for a in bagli):
+            return True
+    return False

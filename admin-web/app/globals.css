@@ -268,20 +268,20 @@ textarea:focus-visible,
    zeminde WCAG AA'yi tutmaz (#2563EB / #0F131A = 3.60:1, esik 4.5).
    Ayni ailenin acik tonu ANLAMI korur ve kontrasti tutar.
    Ikon/dolgu/tint HAM renkte kalir — sorun yalniz METINDEDIR. */
-.dark .text-accent-blue { color: #7ca9ff; }
+.dark .text-accent-blue { color: #9dbfff; }
 .dark .text-accent-green { color: #4ade80; }
 .dark .text-accent-orange { color: #fbbf24; }
-.dark .text-accent-purple { color: #b69cfb; }
+.dark .text-accent-purple { color: #c4b5fd; }
 .dark .text-accent-red { color: #fca5a5; }
-.dark .text-primary { color: #7ca9ff; }
+.dark .text-primary { color: #9dbfff; }
 
 /* (P132.6) VURGU METNI — acik temada KOYULASTIRILMIS ton (tailwind
    `vurguInk`), koyu temada ACIK ton. Ikisi de ayni kontrast sorununun iki
    yonudur ve mobildeki `okunurVurgu()` ile ayni mantiktir. */
-.dark .text-vurguInk-blue { color: #7ca9ff; }
+.dark .text-vurguInk-blue { color: #9dbfff; }
 .dark .text-vurguInk-green { color: #4ade80; }
 .dark .text-vurguInk-orange { color: #fbbf24; }
-.dark .text-vurguInk-purple { color: #b69cfb; }
+.dark .text-vurguInk-purple { color: #c4b5fd; }
 .dark .text-vurguInk-red { color: #fca5a5; }
 
 /* ODAK HALKASI ARTIK BIRINCIL RENKTE (mavi) — kabuk mavi vurguya gecti,
@@ -309,6 +309,24 @@ textarea:focus-visible,
 .odak-ters:focus-visible,
 .dark .odak-ters:focus-visible {
   outline-color: #ffffff;
+}
+
+/* (E2E 2026-09) KENAR CUBUGU ODAK HALKASI. Olculen: "Menüyü daralt" ve
+   kenar cubugu ogelerinde Tab ile odak GORUNMUYORDU. Kenar cubugu IKI
+   TEMADA DA lacivert; acik temanin halka rengi #2563eb laciverde karsi
+   2.97 (1.4.11 esigi 3.0'in altinda) ve `.odak-ic` halkayi dugmenin
+   ICINE, hover zemininin ustune cizdigi icin fiilen kayboluyordu.
+   Kenar cubugunun kendi isaret tonu (`--yz-sidebar-marker`, laciverde
+   karsi 6.04) kullanilir; kalinlik ve konum ACIKCA yazilir ki baska bir
+   kural (ornek: `outline: none` tasiyan bir bilesen sinifi) sessizce
+   silemesin. Ozgulluk (0,2,0) acik temanin `button:focus-visible`
+   (0,1,1) kuralini yener. */
+[data-kabuk="kenar"] :focus-visible {
+  outline: 2px solid var(--yz-sidebar-marker);
+  outline-offset: -2px;
+}
+.dark [data-kabuk="kenar"] :focus-visible {
+  outline-color: var(--yz-sidebar-marker);
 }
 
 /* ---------------------------------------------------------------------------

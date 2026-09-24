@@ -34,9 +34,10 @@ import datetime as dt
 import uuid
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import defter
 from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404
 from ..deps import get_tenant_db, require_role
@@ -45,6 +46,7 @@ from ..mesai import KisiOzeti, ay_araligi, saatlik_ucret
 from ..models import (
     AppUser,
     FinansalHareket,
+    Kasa,
     PersonelKayit,
     Shift,
     Tenant,
@@ -184,20 +186,7 @@ async def ozet(
 
     bas, son = ay_araligi(yil, ay)
     # ZATEN YAZILMIS mesai giderleri: ayni ay iki kez yazilmasin.
-    yazilanlar = {
-        r[0]
-        for r in (
-            await db.execute(
-                select(FinansalHareket.user_id).where(
-                    FinansalHareket.tip == "gider",
-                    FinansalHareket.tarih >= bas,
-                    FinansalHareket.tarih <= son,
-                    FinansalHareket.aciklama.like(f"{ACIKLAMA_ONEKI}%"),
-                    FinansalHareket.ters_kayit_id.is_(None),
-                )
-            )
-        ).all()
-    }
+    yazilanlar = await _yazilmis_mesai(db, bas, son)
 
     return MesaiOzetOut(
         yil=yil,
@@ -220,6 +209,32 @@ async def ozet(
     )
 
 
+async def _yazilmis_mesai(db: AsyncSession, bas, son) -> set[uuid.UUID]:
+    """Bu ay mesaisi GECERLI bir gidere yazilmis personel.
+
+    (E2E 2026-09, FINANS-08) REDDEDILMIS (`durum='iptal'`) ve ters kayitla
+    IPTAL EDILMIS gider "yazilmis" sayilmaz — yonetici duzeltip yeniden
+    yazabilmeli. Onceden reddedilen de "yazildi" goruniyordu.
+    """
+    return {
+        r[0]
+        for r in (
+            await db.execute(
+                select(FinansalHareket.user_id).where(
+                    FinansalHareket.tip == "gider",
+                    FinansalHareket.tarih >= bas,
+                    FinansalHareket.tarih <= son,
+                    FinansalHareket.aciklama.like(f"{ACIKLAMA_ONEKI}%"),
+                    FinansalHareket.ters_kayit_id.is_(None),
+                    FinansalHareket.durum != "iptal",
+                    FinansalHareket.id.notin_(defter.iptal_edilmis()),
+                )
+            )
+        ).all()
+        if r[0] is not None
+    }
+
+
 @router.post("/gidere-yaz", response_model=list[uuid.UUID], status_code=201)
 async def gidere_yaz(
     body: MesaiGidereYazIstek,
@@ -239,11 +254,33 @@ async def gidere_yaz(
     bas, son = ay_araligi(body.yil, body.ay)
     ozetler = {k.user_id: k for k in await _ozet_hesapla(db, tenant, body.yil, body.ay)}
 
+    # (E2E 2026-09, FINANS-08) IKI KORUMA:
+    #  1. TEKILLIK — (personel, ay) basina tek gecerli mesai gideri. "Gidere
+    #     yaz"a ikinci basis IKINCI 8.100 TL gider yaziyordu. Es zamanli iki
+    #     istek ayni anda "yazilmamis" gormesin diye (tesis, ay) basina
+    #     islem-kapsamli danisma kilidi alinir; kilit islem bitince duser.
+    #  2. KASA — gider bir kasadan cikar. Kasasiz yazilan gider onaylaninca
+    #     hicbir kasa bakiyesi dusmuyor ama "odenmis fatura"ya giriyordu.
+    await db.execute(
+        text("SELECT pg_advisory_xact_lock(hashtext(:anahtar))"),
+        {"anahtar": f"mesai-gider:{user.tenant_id}:{body.yil}-{body.ay:02d}"},
+    )
+    yazilmis = await _yazilmis_mesai(db, bas, son)
+    if body.kasa_id is not None:
+        var = (
+            await db.execute(select(Kasa.id).where(Kasa.id == body.kasa_id))
+        ).scalar_one_or_none()
+        if var is None:
+            raise APIError(422, "invalid_reference", "kasa_bulunamadi")
+    kasa_id = await defter.kasa_coz(db, user.tenant_id, body.kasa_id)
+
     olusan: list[uuid.UUID] = []
     for satir in body.satirlar:
         k = ozetler.get(str(satir.user_id))
         if k is None:
             raise APIError(422, "validation_error", "personel_bulunamadi")
+        if satir.user_id in yazilmis:
+            raise APIError(409, "conflict", "mesai_zaten_gidere_yazildi")
         # SAAT DUZELTILEBILIR: sistemde gercek mesai kaydi yok, hesap
         # PLAN uzerinden. Yonetici gercegi biliyorsa onu yazabilmeli.
         saat = satir.gerceklesen_fazla_saat
@@ -264,6 +301,7 @@ async def gidere_yaz(
             yon="cikis",
             tutar_kurus=tutar,
             user_id=satir.user_id,
+            kasa_id=kasa_id,
             tarih=son,
             aciklama=(
                 f"{ACIKLAMA_ONEKI} {body.yil}-{body.ay:02d} · "

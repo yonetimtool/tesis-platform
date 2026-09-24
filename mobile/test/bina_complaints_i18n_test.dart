@@ -50,7 +50,7 @@ class _FakeMapApi extends BuildingMapApi {
   final BuildingMap _map;
 
   @override
-  Future<BuildingMap> fetchMap() async => _map;
+  Future<BuildingMap> fetchMap({String? kategori}) async => _map;
 }
 
 class _FakeBinaApi extends BinaDuzenlemeApi {
@@ -818,5 +818,6 @@ class _PatlayanMapApi extends BuildingMapApi {
   _PatlayanMapApi() : super(Dio());
 
   @override
-  Future<BuildingMap> fetchMap() async => throw StateError('bozuk');
+  Future<BuildingMap> fetchMap({String? kategori}) async =>
+      throw StateError('bozuk');
 }

@@ -20,7 +20,7 @@ import jwt
 import redis.asyncio as aioredis
 from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy import select
+from sqlalchemy import literal_column, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .db import SessionLocal, set_tenant
@@ -83,16 +83,34 @@ def gorev_penceresi_disinda(user: AppUser, bugun: date | None = None) -> bool:
 
 
 async def get_current_user(
+    request: Request,
     claims: dict[str, Any] = Depends(get_access_claims),
     db: AsyncSession = Depends(get_tenant_db),
 ) -> AppUser:
+    # (E2E 2026-09) CIKIS / PAROLA SIFIRLAMA SONRASI ESKI JETON GECMEZ.
+    from .oturum_iptal import iptal_edilmis_mi
+
+    if await iptal_edilmis_mi(getattr(request.app.state, "redis", None), claims):
+        raise APIError(401, "invalid_token", "oturum_sonlandirildi")
     user_id = claims.get("sub")
     # RLS aktif: yalnizca token'daki tenant'a ait satir gorunur.
-    user = (
-        await db.execute(select(AppUser).where(AppUser.id == user_id))
-    ).scalar_one_or_none()
+    # (E2E 2026-09) Tesisin ARSIV damgasi AYNI sorguda okunur: arsivlenen
+    # tesiste eldeki erisim jetonu (15 dk) calismaya devam ediyordu —
+    # yenileme kapaliydi ama o pencerede yazma yapilabiliyordu.
+    satir = (
+        await db.execute(
+            # `arsivlendi_at` ORM modelinde eslenmemis (goc P224) — kolon
+            # adiyla okunur.
+            select(AppUser, literal_column("tenant.arsivlendi_at"))
+            .join(Tenant, Tenant.id == AppUser.tenant_id)
+            .where(AppUser.id == user_id)
+        )
+    ).first()
+    user = satir[0] if satir else None
     if user is None or not user.is_active:
         raise APIError(401, "invalid_token", "kullanici_bulunamadi_veya_pasif")
+    if satir[1] is not None:
+        raise APIError(401, "invalid_token", "tesis_arsivde")
     # (P128) GOREV PENCERESI HER ISTEKTE OLCULUR, yalniz giriste degil:
     # access token 15 dakika yasar ve gorevi biten bir denetcinin ACIK
     # oturumu, yalniz giriste olcseydik o sure boyunca gecerli kalirdi.
@@ -157,6 +175,11 @@ def require_guvenlik_yazma():
         db: AsyncSession = Depends(get_tenant_db),
         user: AppUser = Depends(get_current_user),
     ) -> AppUser:
+        # (E2E 2026-09) HICBIR MODDA yazamayan rol (security, sakin...)
+        # MOD mesaji almaz: "guvenlik amiri degistiremez" demek, soran
+        # guvenlik gorevlisine yanlis rol adi soylemekti.
+        if not any(user.role in roller for roller in GUVENLIK_YAZAN.values()):
+            raise APIError(403, "forbidden", "yetkiniz_yok")
         mod = await guvenlik_modu(db)
         if user.role not in GUVENLIK_YAZAN[mod]:
             # Mesaj MODU soyler: "yetkiniz yok" demek, yoneticiye ayarin

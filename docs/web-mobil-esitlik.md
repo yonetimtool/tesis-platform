@@ -224,7 +224,7 @@ iki fark — takvim ekranı ve üç finansal kart alanı — Aşama 1'in bırakt
 | Doküman Yönetimi (yükleme) | var | yok | Sürükle-bırak, 25 MB'lik dosya, çoklu seçim — masa başı işi. |
 | Doküman **okuma** | var | **var (P167 ek)** | Karar verildi ve açıldı — ama arşivin tamamı değil: `sakine_acik` bayrağı (varsayılan **kapalı**) ve ayrı `/me/dokumanlar` ucu. Ayrıntı aşağıda. |
 | KVKK metni yayınlama | var | yok | Hukuki metin; sürüm mantığı ve geri alınamazlık masaüstünde kalmalı. |
-| Gürültü uyarıları | var | **uç hazır, ekran yok** | Anons "yapıldı" işaretlemesi saha işi olabilir; mobil isterse aynı uç kullanılır. |
+| Gürültü uyarıları | var | **var (E2E 2026-09)** | ~~uç hazır, ekran yok~~ — MOBIL-10 ile yazıldı: aynı uç (`/unit-uyarilari`), aynı etiketler, "Anons yapıldı" yalnız bekleyende. Ayrıntı aşağıda. |
 | Merkezî karar numarası (`KRR-…`) | — | **otomatik eşit** | Sunucuda; hangi istemci yazarsa yazsın aynı seriden numara alır. |
 | Doküman yumuşak silme + gecelik süpürme | — | **otomatik eşit** | Sunucuda; mobil bir gün silme yaparsa aynı kurala tabi olur. |
 | Doküman indirme ucu | var | **uç hazır** | `GET /dokumanlar/{id}/indir` istemciden bağımsız. |
@@ -244,3 +244,27 @@ Kullanıcı kararı: *"mobilde sakinler dokümanları okuyabilsin."*
 | Dosyayı açma | tarayıcı | **sistem uygulaması** | PDF/Word görüntüleyici gömülmedi: her biçim için okuyucu taşımak uygulamayı büyütür ve çoğu biçimde yine eksik kalırdı. |
 | Saha personeli (güvenlik/görevli) | — | **hayır** | Uç *sakin* için açıldı; onlar tesisin sakini değil çalışanıdır. Menüde de yok — göstermek, tıklanınca 403 veren bir karo olurdu. |
 
+
+---
+
+## E2E 2026-09 — MOBIL-10: web'de olup mobilde olmayan yönetici özellikleri
+
+Ölçüm (bulgular/mobil.md MOBIL-10): `admin-web/app/(protected)/**/page.tsx`
+rotaları ↔ `app_router.dart` rotaları + mobilin çağırdığı uçlar. Bu bölüm
+her kalemin **kararını** yazar: ya yapıldı ya da gerekçeli olarak ertelendi /
+bilinçli fark. Hiçbiri "sessizce eksik" kalmadı.
+
+| Özellik | Web | Mobil | Karar ve gerekçe |
+|---|---|---|---|
+| **Davetler** (liste + yeniden gönder) | `/davetler` | **var (E2E 2026-09)** | P204 "Evet — sahada gerçek ihtiyaç". Yalnız yönetici menüsünde (Tanımlar, "Sakinler"in yanında). Aynı uçlar (`GET /davet`, `POST /davet/{id}/yeniden`), aynı durum ayrımı: gönderildi / iletildi / açıldı / geri döndü / gönderilemedi / e-posta ayarı yok / bekliyor / kaydoldu; sağlayıcı yokken tesis kodu kopyalanır. |
+| **Gürültü uyarıları** | `/gurultu-uyarilari` | **var (E2E 2026-09)** | Yukarıdaki P167 satırı güncellendi. Yalnız yönetici (İletişim grubu). |
+| **Duyuru hedef kitlesi** (BILDIRIM-12) | var | **var (E2E 2026-09)** | İki yüzey birlikte yazıldı: rol / malik-kiracı / blok; yönetim listesinde hedef rozeti. |
+| **E-posta koduyla giriş + Şifremi unuttum** (YETKI-13) | var | **var (E2E 2026-09)** | Giriş ekranında aynı iki yol. Açık madde: kod birden çok tesiste tutarsa (409) sunucu aday listesi dönmüyor; mobil bu durumda tesis kodunu **sorar** (web bugün yalnız hata metni gösteriyor). Sunucu 409'da `tesisler` listesini taşırsa iki yüzey de parola yolundaki seçim listesine geçmeli. |
+| Gelir kaydı | `/finans/gelirler` | yok | **SONRAKİ TUR.** P204 "Evet". E2E 2026-09 turunda finans düzeltmeleri (tek defter, tahakkuk, borç) aynı dosyalarda sürerken ertelendi; iki ajanın aynı finans istemcisini aynı anda değiştirmesi, düzeltmenin kendisini riske atardı. Uçlar hazır (`defter.py` üzerinden). |
+| Tekil aidat tahakkuku | `/dues` | yok | **SONRAKİ TUR.** Aynı gerekçe (finans düzeltmeleri sürüyor). Mobil bugün toplu değil tekil tahakkuku da yazamıyor; sayaç okuma ekranındaki "oracıkta borçlandır" yolu tek istisna. |
+| Fazla mesai | `/finans/mesai` | yok | **SONRAKİ TUR.** P204 "Kısmen — özet evet, yazma evet". Mesai tek deftere (P203) bağlı ve finans turunun kapsamında; ertelendi. |
+| Virman / İade | `/finans/virman`, `/finans/iade` | yok | **SONRAKİ TUR.** P204 "Evet ama nadir". Aynı finans gerekçesi; nadir işlem olduğu için öncelik gelir kaydından sonra. |
+| İcra takibi | `/icra` | yok | **BİLİNÇLİ FARK (şimdilik).** P167 Aşama 4 kararı geçerli: hukuki dosya takibi masa başı işi (belge, tarihçe, avukat yazışması). P204 "Kısmen" dediği salt-okuma özeti finans turundan sonra yeniden değerlendirilecek. |
+| SMS/e-posta mesajları | `/mesajlar` | yok | **BİLİNÇLİ FARK.** Toplu ileti hedef seçimi + şablon + maliyet onayı (SMS ücretli) masa başında yapılmalı; telefonda yanlış hedefe toplu ileti geri alınamaz. Mobilde anlık duyuru ihtiyacı **duyuru + hedef kitle** ile karşılanıyor (push). P204 "Kısmen" dediği gönderim-durumu okuması sonraki tura. |
+| Kamera kayıtları (NVR oynatma) | `/kamera-kayitlari` | yok | **BİLİNÇLİ FARK.** Kayıt oynatma yüksek bant genişliği ister (mobil veri) ve **KVKK**: kayıttan izleme her erişimde denetim izi ve amaç sınırlaması gerektirir; mobilde ekran kaydı/paylaşım kontrolü web'den zayıf. Canlı izleme mobilde var (`/kamera-izle`); geçmiş kayıt masa başında. |
+| Denetim kaydı | `/audit` | yok | **BİLİNÇLİ FARK.** Platform/uyum yönetimi işi (filtreleme, dışa aktarma, uzun tablo); saha rolünün ihtiyacı değil. Yönetici kendi işlemlerinin izini web'den okur. |

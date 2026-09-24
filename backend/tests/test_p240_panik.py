@@ -358,3 +358,37 @@ def test_TEKRAR_DUYURU_GECIKMESIZ_olmali():
     assert "_yayin_planla(acik.id, user.tenant_id, 0)" in kaynak.read_text(
         encoding="utf-8"
     )
+
+
+def test_DAIRESI_OLAN_sakinin_panigi_OLUSUR_ve_YERI_DAIREDIR(client, world):
+    """(E2E 2026-09) Dairesi olan sakinin alarmi 500 veriyordu.
+
+    `Unit`in kolonu `no`; kod `daire_no` okuyordu. Mevcut testlerin sakini
+    daireye BAGLI DEGILDI, bu yuzden `unit_id` dali hic kosmuyordu.
+    """
+    sakin = _headers(client, world["slug_a"], world["resident_a"])
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    no = f"PNK-{uuid.uuid4().hex[:6]}"
+    r = client.post("/blocks", headers=admin, json={"ad": "PNK"})
+    assert r.status_code in (200, 201, 409, 422), r.text
+    r = client.post("/units", headers=admin, json={"no": no, "blok": "PNK"})
+    assert r.status_code == 201, r.text
+    unit_id = r.json()["id"]
+    sakin_id = _uid(client, sakin)
+    r = client.post(
+        f"/units/{unit_id}/residents", headers=admin,
+        json={"user_id": sakin_id, "rol_tipi": "malik", "oturuyor": True},
+    )
+    assert r.status_code in (200, 201), r.text
+    try:
+        r = client.post("/panik", headers=sakin, json={"tip": "sakin"})
+        assert r.status_code == 201, r.text
+        alarm = r.json()
+        assert alarm["daire_no"] == no
+        # Yayin da daireyi okur (`panik_yayin._veri`) — ikinci patlama yeri.
+        _yayinla(alarm["id"], world["slug_a"], client, admin)
+        d = client.get(f"/panik/{alarm['id']}", headers=admin).json()
+        assert d["durum"] == "acik", d
+    finally:
+        client.delete(f"/units/{unit_id}/residents/{sakin_id}", headers=admin)
+        client.delete(f"/units/{unit_id}", headers=admin)

@@ -329,7 +329,14 @@ def test_HATIRLATMA_UC_KADEME_ve_TEK_SEFER(client, world, owner_conn):
     assert tipler.get("Geciken") == "bakim_gecikti"
     # TESIS ALARMI: `user_id IS NULL` olmazsa yonetim bunu GOREMEZ
     # (`notifications._kapsam`, P240 §4'te olculdu).
-    assert all(uid is None for _, _, uid in satirlar)
+    #
+    # (E2E 2026-09) ISTISNA: "bugun" kademesi tesis gorevlisine KISI
+    # satiriyla da yazilir (o rol NULL satiri goremiyor). Kisi satiri
+    # YALNIZ bugun kademesinde olmali.
+    for tip, _, uid in satirlar:
+        if uid is not None:
+            assert tip == "bakim_bugun", tip
+    assert any(uid is None for tip, _, uid in satirlar if tip == "bakim_bugun")
 
     # IKINCI KOSUM SESSIZ: damgalar ayni gun tekrar gondermez.
     ikinci = tum_tenantlar_icin(bugun=bugun)
@@ -415,9 +422,13 @@ def test_ASANSOR_AKISI_bastan_sona(client, world, owner_conn):
         assert [r[0] for r in cur.fetchall()] == ["bakim_yaklasti"]
 
     # 3) BAKIM YAPILDI — fatura da girildi.
+    #
+    # (E2E 2026-09) Firma 10 gun ERKEN geldi: kayit BUGUN tarihli.
+    # Once burada "bugun + 10" yaziliyordu — gelecek tarihli kayit artik
+    # 422 (bkz. test_GELECEK_TARIHLI_KAYIT_REDDEDILIR).
     kayit = client.post(
         f"/bakim/ekipmanlar/{e['id']}/kayitlar", headers=admin,
-        json={"tarih": str(bugun + timedelta(days=10)),
+        json={"tarih": str(bugun),
               "yapan_ad": "Kone Servis", "islem": "Yıllık kontrol + halat",
               "tutar_kurus": 480000},
     )
@@ -429,7 +440,7 @@ def test_ASANSOR_AKISI_bastan_sona(client, world, owner_conn):
             "/bakim/ekipmanlar", headers=admin, params={"limit": 200}
         ).json()["items"] if x["id"] == e["id"]
     )
-    yapilan = bugun + timedelta(days=10)
+    yapilan = bugun
     beklenen_ay = (yapilan.month - 1 + 6) % 12 + 1
     beklenen_yil = yapilan.year + (yapilan.month - 1 + 6) // 12
     assert detay["sonraki_bakim"].startswith(f"{beklenen_yil:04d}-{beklenen_ay:02d}")
@@ -442,3 +453,142 @@ def test_ASANSOR_AKISI_bastan_sona(client, world, owner_conn):
     satir = next(x for x in ozet["satirlar"] if x["ekipman_id"] == e["id"])
     assert satir["bakim_sayisi"] == 1 and satir["toplam_kurus"] == 480000
     assert "A Blok asansörü" not in ozet["yasal_eksik"]
+
+
+# ================= (E2E 2026-09) TARIH GERI/ILERI ATMAZ =================== #
+def test_ESKI_TARIHLI_KAYIT_PLANI_GERI_ALMAZ(client, world):
+    """TESIS-06: 20.09 bakimindan sonra unutulmus 15.08 kaydi girilince
+    asansor "gecikti" oluyordu."""
+    admin = _h(client, world["slug_a"], world["admin_a"])
+    e = _ekipman(client, admin, periyot="aylik")
+    bugun = date.today()
+    yeni = bugun - timedelta(days=3)
+    eski = bugun - timedelta(days=40)
+    r1 = client.post(f"/bakim/ekipmanlar/{e['id']}/kayitlar", headers=admin,
+                     json={"tarih": str(yeni), "gidere_yaz": False})
+    assert r1.status_code == 201, r1.text
+    once = next(x for x in client.get("/bakim/ekipmanlar", headers=admin,
+                                      params={"limit": 200}).json()["items"]
+                if x["id"] == e["id"])
+    r2 = client.post(f"/bakim/ekipmanlar/{e['id']}/kayitlar", headers=admin,
+                     json={"tarih": str(eski), "gidere_yaz": False})
+    assert r2.status_code == 201, r2.text
+    sonra = next(x for x in client.get("/bakim/ekipmanlar", headers=admin,
+                                       params={"limit": 200}).json()["items"]
+                 if x["id"] == e["id"])
+    assert sonra["son_bakim"] == str(yeni)
+    assert sonra["sonraki_bakim"] == once["sonraki_bakim"]
+    assert sonra["durum"] != "gecikti"
+    # Eski kayit GECMISTE yine de gorunur.
+    tarihler = [x["tarih"] for x in client.get(
+        "/bakim/kayitlar", headers=admin, params={"ekipman_id": e["id"]}
+    ).json()["items"]]
+    assert str(eski) in tarihler
+
+
+def test_GELECEK_TARIHLI_KAYIT_REDDEDILIR(client, world):
+    """TESIS-06: 2030 tarihli kayit yasal muayeneyi yillarca gizliyordu."""
+    from app.hata_metinleri import METINLER
+
+    admin = _h(client, world["slug_a"], world["admin_a"])
+    e = _ekipman(client, admin)
+    r = client.post(f"/bakim/ekipmanlar/{e['id']}/kayitlar", headers=admin,
+                    json={"tarih": "2030-01-01", "gidere_yaz": False})
+    assert r.status_code == 422, r.text
+    assert r.json()["error"]["message"] == METINLER["bakim_tarihi_gelecekte"]["tr"]
+    # Plan degismedi.
+    detay = next(x for x in client.get("/bakim/ekipmanlar", headers=admin,
+                                       params={"limit": 200}).json()["items"]
+                 if x["id"] == e["id"])
+    assert detay["sonraki_bakim"] == e["sonraki_bakim"]
+    # Bir gun tolerans: UTC ile yerel gun farki "bugun"u reddetmemeli.
+    ok = client.post(f"/bakim/ekipmanlar/{e['id']}/kayitlar", headers=admin,
+                     json={"tarih": str(date.today() + timedelta(days=1)),
+                           "gidere_yaz": False})
+    assert ok.status_code == 201, ok.text
+
+
+def test_PERIYOT_DEGISINCE_SONRAKI_TARIH_YENIDEN_HESAPLANIR(client, world):
+    """Diger gozlem: yillik -> aylik sonrasi tarih aynı kaliyordu."""
+    admin = _h(client, world["slug_a"], world["admin_a"])
+    e = _ekipman(client, admin, periyot="yillik", son_bakim="2026-03-15")
+    assert e["sonraki_bakim"] == "2027-03-15"
+    r = client.patch(f"/bakim/ekipmanlar/{e['id']}", headers=admin,
+                     json={"periyot": "aylik"})
+    assert r.status_code == 200, r.text
+    assert r.json()["sonraki_bakim"] == "2026-04-15"
+    # Tarih ACIKCA verilirse ona dokunulmaz.
+    r2 = client.patch(f"/bakim/ekipmanlar/{e['id']}", headers=admin,
+                      json={"periyot": "uc_aylik", "sonraki_bakim": "2026-12-01"})
+    assert r2.status_code == 200, r2.text
+    assert r2.json()["sonraki_bakim"] == "2026-12-01"
+
+
+def test_BUGUN_BILDIRIMI_TESIS_GOREVLISINE_GORUNUR(client, world):
+    """TESIS-15 (bakim): gorevli NULL satiri goremedigi icin "bugun"
+    bildirimini listede hic bulamiyordu."""
+    from app.bakim_hatirlatma_isi import tum_tenantlar_icin
+
+    admin = _h(client, world["slug_a"], world["admin_a"])
+    ad = f"Bugün {uuid.uuid4().hex[:5]}"
+    _ekipman(client, admin, ad=ad, sonraki_bakim=str(date.today()))
+    tum_tenantlar_icin(bugun=date.today())
+    gorevli = _h(client, world["slug_a"], world["gorevli_a"])
+    items = client.get("/notifications", headers=gorevli,
+                       params={"limit": 200}).json()["items"]
+    assert any(x.get("tip") == "bakim_bugun" for x in items), items
+
+
+def test_BAKIM_KAYDINA_PDF_BELGE_EKLENIR_ve_ACILABILIR(client, world):
+    """TESIS-05: PDF presign 422 aliyordu; ek listesi yalniz ad gosteriyordu."""
+    admin = _h(client, world["slug_a"], world["admin_a"])
+    e = _ekipman(client, admin)
+    k = client.post(
+        f"/bakim/ekipmanlar/{e['id']}/kayitlar", headers=admin,
+        json={"tarih": str(date.today()), "gidere_yaz": False},
+    ).json()
+    bilet = client.post(
+        "/uploads/presign", headers=admin,
+        json={"content_type": "application/pdf", "amac": "belge",
+              "dosya_adi": "muayene.pdf"},
+    )
+    assert bilet.status_code == 200, bilet.text
+    key = bilet.json()["foto_key"]
+    r = client.post(
+        "/ekler", headers=admin,
+        json={"varlik_tipi": "bakim_kaydi", "varlik_id": k["id"],
+              "tur": "dosya", "dosya_key": key, "dosya_adi": "muayene.pdf"},
+    )
+    assert r.status_code == 201, r.text
+    ekler = client.get(
+        "/ekler", headers=admin,
+        params={"varlik_tipi": "bakim_kaydi", "varlik_id": k["id"]},
+    ).json()["items"]
+    ek = next(x for x in ekler if x["dosya_key"] == key)
+    assert ek["dosya_url"] and key in ek["dosya_url"]
+    # Saha (okur) da raporu acabilir.
+    gorevli = _h(client, world["slug_a"], world["gorevli_a"])
+    g = client.get(
+        "/ekler", headers=gorevli,
+        params={"varlik_tipi": "bakim_kaydi", "varlik_id": k["id"]},
+    )
+    assert g.status_code == 200
+    assert any(x["dosya_url"] for x in g.json()["items"])
+
+
+def test_EK_URL_BASKA_TENANT_ANAHTARINI_IMZALAMAZ(client, world):
+    """dosya_key istemciden gelir; yabanci onekli anahtar imzalanmamali."""
+    admin = _h(client, world["slug_a"], world["admin_a"])
+    e = _ekipman(client, admin)
+    k = client.post(
+        f"/bakim/ekipmanlar/{e['id']}/kayitlar", headers=admin,
+        json={"tarih": str(date.today()), "gidere_yaz": False},
+    ).json()
+    yabanci = f"{world['b']}/belge/{uuid.uuid4().hex}.pdf"
+    r = client.post(
+        "/ekler", headers=admin,
+        json={"varlik_tipi": "bakim_kaydi", "varlik_id": k["id"],
+              "tur": "dosya", "dosya_key": yabanci},
+    )
+    assert r.status_code == 201
+    assert r.json()["dosya_url"] is None

@@ -18,9 +18,16 @@ class SurumKarari {
     required this.durum,
     this.mesaj,
     this.magazaUrl,
+    this.ulasilamadi = false,
   });
 
   final SurumDurumu durum;
+
+  /// (E2E 2026-09) Karar SUNUCUDAN DEGIL ag hatasindan geldi ("guncel"
+  /// varsayimi). Denetleyici bunu ONCEKI kesin karari silmek icin
+  /// kullanmaz: zorunlu ekrandaki kullanici ucak moduna gecip uygulamayi
+  /// arka plana alinca kapi aciliyordu.
+  final bool ulasilamadi;
 
   /// Operatorun yazdigi metin (sunucu dile gore secer). BOS olabilir —
   /// o zaman uygulama KENDI yerellestirilmis metnini gosterir.

@@ -26,7 +26,8 @@ import { Alan, AlanSarmal, BosDurum, Dugme, FiltreCubugu, HataDurumu, Kart, Moda
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend, genIdempotencyKey } from "@/lib/client";
-import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
+import { jsonFetcher } from "@/lib/fetcher";
+import { saltTarihBicimi } from "@/lib/tarih";
 import { useT } from "@/lib/i18n/kullan";
 import { BagimlilikUyarisi } from "@/components/BagimlilikUyarisi";
 import { kurusToTL, tlToKurus } from "@/lib/money";
@@ -180,7 +181,10 @@ export default function FinansPage() {
         id: "tarih",
         baslik: t("finansTarih"),
         gizlenebilir: false,
-        hucre: (h) => <span className="whitespace-nowrap">{formatDateTime(h.tarih)}</span>,
+        // (E2E 2026-09, ARAYUZ-16) `tarih` SAATSIZ bir gundur; saatli
+        // bicimleyici UTC gece yarisini yerel saate kaydirip gun
+        // degistiriyordu ("23.09" -> "22.09.2026 20:00").
+        hucre: (h) => <span className="whitespace-nowrap">{saltTarihBicimi(h.tarih)}</span>,
       },
       { id: "tip", baslik: t("finansTip"), hucre: (h) => t(`finansTip_${h.tip}` as never) },
       { id: "kasa", baslik: t("finansKasa"), hucre: (h) => h.kasa_ad ?? "—" },

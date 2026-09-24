@@ -5,6 +5,7 @@
 // Burada olculen sey tam olarak bu esleme — ve bir de esleme YOKKEN
 // uydurma hedef verilmedigi.
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/src/features/auth/domain/user_role.dart';
 import 'package:mobile/src/features/notifications/domain/notification_models.dart';
 import 'package:mobile/src/features/notifications/presentation/bildirim_rotasi.dart';
 import 'package:mobile/src/routing/app_router.dart';
@@ -57,5 +58,13 @@ void main() {
 
   test('bilinmeyen tip UYDURMA hedefe gitmez — null doner', () {
     expect(bildirimRotasi(_b('bir_gun_eklenecek')), isNull);
+  });
+
+  // (E2E 2026-09) Rol verildiginde liste haritasi PUSH HARITASINI kullanir:
+  // sakin talep bildirimine dokununca menusunde OLMAYAN `/complaints`e
+  // degil, kendi "Sikayetlerim"ine gider.
+  test('ROLLU: sakin talep_cozuldu -> sikayetlerim', () {
+    expect(bildirimRotasi(_b('talep_cozuldu'), role: UserRole.resident),
+        AppRoutes.sikayetlerim);
   });
 }

@@ -224,6 +224,11 @@ void main() {
     expect(post.govde['gelir_gider_tanim_id'], 'kalem-1');
     expect(post.govde['ana_tuketim'], 100);
     expect(post.govde['birim_fiyat_kurus'], 3550);
-    expect((post.govde['bolum_tuketimleri'] as Map)['b-1'], 150);
+    // (E2E 2026-09, TESIS-01) Ekran ENDEKS okur: deger OKUMA olarak gider,
+    // tuketimi (yeni - onceki) sunucu hesaplar. Onceden ayni deger
+    // `bolum_tuketimleri`ne konuyordu ve endeks tuketim diye borclandi.
+    expect((post.govde['bolum_okumalari'] as Map)['b-1'], 150);
+    expect(post.govde.containsKey('bolum_tuketimleri'), isFalse,
+        reason: 'endeks TUKETIM diye gonderilmemeli');
   });
 }

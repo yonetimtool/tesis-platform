@@ -15,10 +15,13 @@ class BuildingMapApi {
 
   final Dio _dio;
 
-  Future<BuildingMap> fetchMap() async {
+  /// (E2E 2026-09) TESIS-17: [kategori] (sunucu `wire` degeri) verilirse
+  /// sayim/renk yalniz o turden hesaplanir; null = tum turler.
+  Future<BuildingMap> fetchMap({String? kategori}) async {
     try {
       final res = await _dio.get<Map<String, dynamic>>(
         '/unit-complaints/building-map',
+        queryParameters: {'kategori': ?kategori},
       );
       return BuildingMap.fromJson(res.data ?? const {});
     } on DioException catch (e) {

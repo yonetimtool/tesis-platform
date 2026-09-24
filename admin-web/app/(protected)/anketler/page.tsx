@@ -227,7 +227,9 @@ export default function AnketlerPage() {
 
       <Kart>
         {anketler && anketler.items.length === 0 ? (
-          <BosDurum baslik={t("anketYok")} aciklama={t("anketYokAlt")} />
+          // (E2E 2026-09) "Asagidan" diyordu; dugme USTTE. Metin dugmenin
+          // adini soyler, yon soylemez.
+          <BosDurum baslik={t("anketYok")} aciklama={t("anketYokIlk")} />
         ) : null}
 
         <div className="space-y-3">

@@ -11,6 +11,7 @@ class AkilliEvCihaz {
     this.daireNo,
     this.alan,
     this.aktif = true,
+    this.bolum,
   });
 
   final String id;
@@ -29,6 +30,10 @@ class AkilliEvCihaz {
   final String? alan;
   final bool aktif;
 
+  /// (E2E 2026-09) TESIS-13: cihazin sayildigi bolum — SUNUCUDAN gelir
+  /// (`TIP_BOLUM`). Eski sunucu gondermezse istemci tablosuna duser.
+  final String? bolum;
+
   factory AkilliEvCihaz.fromJson(Map<String, dynamic> j) => AkilliEvCihaz(
         id: j['id'] as String,
         ad: j['ad'] as String? ?? '',
@@ -40,6 +45,7 @@ class AkilliEvCihaz {
         daireNo: j['daire_no'] as String?,
         alan: j['alan'] as String?,
         aktif: j['aktif'] as bool? ?? true,
+        bolum: j['bolum'] as String?,
       );
 }
 

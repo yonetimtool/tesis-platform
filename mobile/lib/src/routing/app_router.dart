@@ -88,6 +88,8 @@ import '../features/dokumanlar/presentation/dokuman_screen.dart';
 import '../features/kvkk/presentation/yasal_metinler_screen.dart';
 import 'splash_screen.dart';
 import '../features/arama/presentation/arama_screen.dart';
+import '../features/davetler/presentation/davetler_screen.dart';
+import '../features/gurultu/presentation/gurultu_uyarilari_screen.dart';
 
 class AppRoutes {
   const AppRoutes._();
@@ -220,6 +222,9 @@ class AppRoutes {
   static const izgaraDuzenle = '/ana-ekran-duzenle';
   static const ihlaller = '/ihlaller';
   static const plakaOlaylari = '/plaka-okumalari';
+  /// (E2E 2026-09, MOBIL-10) Web ikizi yonetici ekranlari.
+  static const davetler = '/davetler';
+  static const gurultuUyarilari = '/gurultu-uyarilari';
 }
 
 /// (P217) `routeForPushData` KALDIRILDI — yerine `push_yonlendirme.dart`.
@@ -629,6 +634,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.anketler,
         builder: (context, state) => const AnketScreen(),
+      ),
+      // (E2E 2026-09, MOBIL-10) Davetler + gurultu uyarilari (yonetici).
+      GoRoute(
+        path: AppRoutes.davetler,
+        builder: (context, state) => const DavetlerScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.gurultuUyarilari,
+        builder: (context, state) => const GurultuUyarilariScreen(),
       ),
       GoRoute(
         path: AppRoutes.kvkkMetin,

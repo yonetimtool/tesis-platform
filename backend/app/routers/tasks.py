@@ -93,6 +93,20 @@ _YONETICI_ATANABILIR = {"security", "tesis_gorevlisi"}
 _SAHA_ROLLERI = {"security", "tesis_gorevlisi"}
 
 
+def _foto_key_dogrula(foto_key: str | None, tenant_id: uuid.UUID) -> str | None:
+    """(E2E 2026-09) TESIS-02: bos/bosluk anahtar = foto YOK (None).
+
+    Dolu anahtar kendi tenant on ekinde olmali — baska tenant'in objesini
+    kanit diye baglamak IDOR olurdu (kargo/complaints/scans ile ayni kural).
+    """
+    if foto_key is None or not foto_key.strip():
+        return None
+    foto_key = foto_key.strip()
+    if not foto_key.startswith(f"{tenant_id}/"):
+        raise APIError(422, "invalid_foto_key", "foto_key_alan_disi")
+    return foto_key
+
+
 def _assignee_visibility(user: AppUser):
     """Saha kullanicisi icin gorunurluk kosulu: YALNIZ kendine atanan gorev.
     Havuz (atanmamis) + grup gorunurlugu YOK. Yonetim (admin/yonetici) kisitsiz
@@ -155,7 +169,9 @@ async def _tamamlama_ozeti_doldur(
             tamamlayan_user_id=c.tamamlayan_user_id,
             tamamlayan_ad=ad,
             tamamlanma_zamani=c.tamamlanma_zamani,
-            foto_var=c.foto_key is not None,
+            # (E2E 2026-09) TESIS-02: eski `foto_key: ""` satirlari "foto var"
+            # gostermesin.
+            foto_var=bool(c.foto_key),
             notlar=c.notlar,
         )
     for t, out in zip(tasks, outs):
@@ -373,7 +389,10 @@ async def _ensure_user_in_tenant(
     # tesis gorevlisine gorev atayabilir hale gelirdi.
     gorunur = gorunur_roller(actor.role)
     if gorunur is not None and target_role not in gorunur:
-        raise APIError(422, "invalid_reference", "gorev_atama_rol_kisiti")
+        # (E2E 2026-09) AYRI METIN: ortak metin "Yonetici ... tesis
+        # gorevlisine atayabilir" diyordu — amire hem yanlis rol hem de
+        # izinli saydigi bir hedef soyluyordu.
+        raise APIError(422, "invalid_reference", "gorev_atama_yalniz_ekip")
 
 
 async def _ensure_kategori_in_tenant(db: AsyncSession, kategori_id: uuid.UUID | None) -> None:
@@ -740,6 +759,64 @@ def _same_completion(existing: TaskCompletion, **v) -> bool:
     )
 
 
+async def _tamamlama_sonrasi(
+    db: AsyncSession, task: Task, user: AppUser, obj: TaskCompletion
+) -> None:
+    """Taze tamamlama kaydinin YAN ETKILERI — periyot ilerletme, bagli
+    talebi cozme, yonetime bildirim, denetim kaydi.
+
+    (E2E 2026-09) TESIS-03: tek yerde toplandi cunku artik IKI yol
+    tamamlama kaydi uretiyor — `POST /completions` ve son adimin
+    tamamlanmasi. Ikinci yol bu yan etkileri kopyalasaydi biri
+    unutulurdu (olculen kusur: son adimla `gorev_tamamlandi` hic gitmiyordu).
+    """
+    # Periyodik gorev (peyzaj dahil) tamamlaninca bir sonraki planlanan tarihi ilerlet.
+    if task.periyot_dakika and task.sonraki_planlanan is not None:
+        task.sonraki_planlanan = task.sonraki_planlanan + timedelta(
+            minutes=task.periyot_dakika
+        )
+        await db.flush()
+    # Ticket-linked gorev tamamlaninca bagli talebi oto-coz (YALNIZ taze
+    # insert'te — idempotent replay'de degil; aksi halde yonetici tekrar
+    # actigi talebi ezip mukerrer history/push uretebilir).
+    if task.ticket_id is not None:
+        complaint = (
+            await db.execute(
+                select(Complaint).where(Complaint.id == task.ticket_id)
+            )
+        ).scalars().first()
+        if complaint is not None and complaint.durum == "is_emri":
+            complaint.durum = "cozuldu"
+            complaint.updated_at = func.now()
+            add_history(
+                db, complaint=complaint, durum="cozuldu",
+                actor_role=user.role, sebep=None,
+            )
+            await db.flush()
+            # (E2E 2026-09) `db` VERILIR: otomatik cozumde yalniz push
+            # gidiyordu, kalici bildirim satiri yazilmiyordu (elle
+            # cozumde yaziliyordu) — push'u kaciran sakin listede
+            # bulamiyordu.
+            notify_opener(
+                db=db,
+                complaint=complaint,
+                tenant_id=user.tenant_id,
+                tip="talep_cozuldu",
+            )
+    # (P229 §3) YONETIME BILDIRIM — "is bitti".
+    await _tamamlandi_bildir(db, task, user)
+
+    # (P229 §3) DENETIM KAYDI — tamamlama bir IS KANITIDIR.
+    #
+    # YALNIZ TAZE INSERT'TE: idempotent tekrar (ag koptu, istemci
+    # yeniden gonderdi) ayni isi IKI KEZ yapilmis gibi gostermemeli.
+    await audit_user(
+        db, user, Action.TASK_COMPLETE,
+        resource_type="task", resource_id=task.id,
+        meta={"completion_id": str(obj.id), "foto": bool(obj.foto_key)},
+    )
+
+
 @router.post("/{task_id}/completions")
 async def create_completion(
     task_id: uuid.UUID,
@@ -761,8 +838,40 @@ async def create_completion(
         raise APIError(403, "forbidden", "gorev_yalniz_atanan_tamamlar")
 
     # Foto kaniti: gorev foto_zorunlu ise foto_key olmadan tamamlanamaz (mobil §11 #2).
-    if task.foto_zorunlu and body.foto_key is None:
+    # (E2E 2026-09) TESIS-02: `is None` denetimi `foto_key: ""` ile
+    # atlatiliyordu (201 + listede `foto_var: true`). Bos/bosluk anahtar
+    # "foto yok" sayilir; dolu anahtar kendi tenant on ekinde olmali
+    # (kargo/complaints ile ayni IDOR korumasi).
+    foto_key = _foto_key_dogrula(body.foto_key, user.tenant_id)
+    if task.foto_zorunlu and foto_key is None:
         raise APIError(422, "validation_error", "gorev_foto_kaniti_zorunlu")
+
+    # (E2E 2026-09) TESIS-03: acik adim varken gorev KAPANMAZ. Onceden
+    # 2/3 adimla `durum=tamamlandi` goruluyordu — yonetici bitmemis isi
+    # bitmis sanir. Son adim tamamlaninca gorev zaten kendiliginden
+    # kapanir (`complete_task_step`), yani bu yol yalniz "adimlari atla"
+    # denemesini durdurur.
+    acik_adim = (
+        await db.execute(
+            select(func.count()).select_from(TaskStep).where(
+                TaskStep.task_id == task.id,
+                TaskStep.tamamlanma_zamani.is_(None),
+            )
+        )
+    ).scalar_one()
+    if acik_adim:
+        raise APIError(409, "conflict", "gorev_adimlari_tamamlanmadi")
+
+    # (E2E 2026-09) TESIS-07: kontrol noktasina bagli gorevi SAHA rolu
+    # NFC okutmadan kapatamaz — aksi halde "noktaya gittim" kaniti hic
+    # istenmemis olurdu. Yonetim (admin/yonetici) muaf: izinli/ayrilmis
+    # personelin gorevini masadan kapatabilmeli (P229 §3 gerekcesi).
+    if (
+        task.checkpoint_id is not None
+        and user.role in _SAHA_ROLLERI
+        and not (body.nfc_tag_uid or "").strip()
+    ):
+        raise APIError(422, "validation_error", "gorev_nfc_zorunlu")
 
     # NFC kaniti: task'in checkpoint'i varsa ve nfc gonderildiyse eslesmeli
     # (normalize karsilastirma — mobil §11 #3).
@@ -784,7 +893,7 @@ async def create_completion(
         nfc_tag_uid=body.nfc_tag_uid,
         gps_lat=body.gps_lat,
         gps_lng=body.gps_lng,
-        foto_key=body.foto_key,
+        foto_key=foto_key,
         notlar=body.notlar,
     )
     obj = TaskCompletion(tenant_id=user.tenant_id, idempotency_key=idempotency_key, **fields)
@@ -804,46 +913,7 @@ async def create_completion(
             pass
 
     if created:
-        # Periyodik gorev (peyzaj dahil) tamamlaninca bir sonraki planlanan tarihi ilerlet.
-        if task.periyot_dakika and task.sonraki_planlanan is not None:
-            task.sonraki_planlanan = task.sonraki_planlanan + timedelta(
-                minutes=task.periyot_dakika
-            )
-            await db.flush()
-        # Ticket-linked gorev tamamlaninca bagli talebi oto-coz (YALNIZ taze
-        # insert'te — idempotent replay'de degil; aksi halde yonetici tekrar
-        # actigi talebi ezip mukerrer history/push uretebilir).
-        if task.ticket_id is not None:
-            complaint = (
-                await db.execute(
-                    select(Complaint).where(Complaint.id == task.ticket_id)
-                )
-            ).scalars().first()
-            if complaint is not None and complaint.durum == "is_emri":
-                complaint.durum = "cozuldu"
-                complaint.updated_at = func.now()
-                add_history(
-                    db, complaint=complaint, durum="cozuldu",
-                    actor_role=user.role, sebep=None,
-                )
-                await db.flush()
-                notify_opener(
-                    complaint=complaint,
-                    tenant_id=user.tenant_id,
-                    tip="talep_cozuldu",
-                )
-        # (P229 §3) YONETIME BILDIRIM — "is bitti".
-        await _tamamlandi_bildir(db, task, user)
-
-        # (P229 §3) DENETIM KAYDI — tamamlama bir IS KANITIDIR.
-        #
-        # YALNIZ TAZE INSERT'TE: idempotent tekrar (ag koptu, istemci
-        # yeniden gonderdi) ayni isi IKI KEZ yapilmis gibi gostermemeli.
-        await audit_user(
-            db, user, Action.TASK_COMPLETE,
-            resource_type="task", resource_id=task_id,
-            meta={"completion_id": str(obj.id), "foto": obj.foto_key is not None},
-        )
+        await _tamamlama_sonrasi(db, task, user, obj)
         await db.refresh(obj)
         return JSONResponse(
             # (P131) `_completion_out`: yeni kaydin fotografi ANINDA
@@ -1104,6 +1174,64 @@ async def _adim_ilerleme_bildir(
     )
 
 
+async def _son_adimsa_gorevi_kapat(
+    db: AsyncSession, task: Task, user: AppUser, adim: TaskStep
+) -> bool:
+    """(E2E 2026-09) TESIS-03: SON adim gorevi kapatir (P237 KARAR 4).
+
+    OLCULEN: 2/2 adim tamamlanmis gorev `durum=atandi` kaliyordu ve
+    `gorev_tamamlandi` bildirimi hic gitmiyordu — karar "son adim ->
+    gorev zaten tamamlanir" diyordu ama kod yazilmamisti. Istemciden
+    ayrica "gorevi kapat" istemek, sahadaki kisinin son adimdan sonra
+    uygulamayi kapatmasiyla gorevin sonsuza kadar acik kalmasi demekti.
+
+    Tamamlama kaydi SON ADIMIN kanitini tasir (tamamlayan, zaman, foto,
+    not); NFC yoktur (adimlar NFC istemez) — bu yol yalniz adimli
+    gorevlerde calisir, `gorev_nfc_zorunlu` kurali tamamlama ucundadir.
+
+    Periyodik olmayan gorev ZATEN tamamlanmissa (adim sonradan geri alinip
+    yeniden tamamlandi) ikinci kayit ACILMAZ — ayni is iki kez yapilmis
+    gorunurdu. Periyodik gorevde her tur ayri kayittir.
+
+    Doner: gorev kapatildiysa True (cagiran ara ilerleme bildirimini atlar;
+    yerine `gorev_tamamlandi` gitti).
+    """
+    toplam, tamam = (
+        await db.execute(
+            select(func.count(), func.count(TaskStep.tamamlanma_zamani)).where(
+                TaskStep.task_id == task.id
+            )
+        )
+    ).one()
+    if toplam == 0 or tamam < toplam:
+        return False
+    if not task.periyot_dakika:
+        var = (
+            await db.execute(
+                select(TaskCompletion.id)
+                .where(TaskCompletion.task_id == task.id)
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+        if var is not None:
+            return False
+    kayit = TaskCompletion(
+        tenant_id=user.tenant_id,
+        # Istemci anahtari yok: adim ucu idempotent degil (tekrar 409).
+        # Anahtar adima + ana baglanir; geri al/yeniden tamamla yeni kayit.
+        idempotency_key=f"adim-son:{adim.id}:{uuid.uuid4().hex}",
+        task_id=task.id,
+        tamamlayan_user_id=user.id,
+        tamamlanma_zamani=adim.tamamlanma_zamani or datetime.now(timezone.utc),
+        foto_key=adim.foto_key,
+        notlar=adim.notlar,
+    )
+    db.add(kayit)
+    await db.flush()
+    await _tamamlama_sonrasi(db, task, user, kayit)
+    return True
+
+
 @router.get("/{task_id}/adimlar", response_model=TaskStepListResponse)
 async def list_task_steps(
     task_id: uuid.UUID,
@@ -1219,7 +1347,8 @@ async def complete_task_step(
         # tasiyor olabilir ve sessizce yutmak, yuklenen kaniti kaybetmek
         # olurdu. Once geri al, sonra yeniden tamamla.
         raise APIError(409, "conflict", "gorev_adimi_zaten_tamam")
-    if obj.foto_zorunlu and not body.foto_key:
+    adim_foto = _foto_key_dogrula(body.foto_key, user.tenant_id)
+    if obj.foto_zorunlu and adim_foto is None:
         raise APIError(422, "validation_error", "gorev_adimi_foto_zorunlu")
     if task.adim_sirali:
         onceki = (
@@ -1236,7 +1365,7 @@ async def complete_task_step(
 
     obj.tamamlayan_user_id = user.id
     obj.tamamlanma_zamani = datetime.now(timezone.utc)
-    obj.foto_key = body.foto_key
+    obj.foto_key = adim_foto
     obj.notlar = body.notlar
     obj.updated_at = func.now()
     await db.flush()
@@ -1245,7 +1374,8 @@ async def complete_task_step(
         resource_type="task", resource_id=task.id,
         meta={"step_id": str(obj.id), "ad": obj.ad},
     )
-    await _adim_ilerleme_bildir(db, task, user, obj)
+    if not await _son_adimsa_gorevi_kapat(db, task, user, obj):
+        await _adim_ilerleme_bildir(db, task, user, obj)
     await db.flush()
     return next(a for a in await _adimlari_getir(db, task.id) if a.id == obj.id)
 

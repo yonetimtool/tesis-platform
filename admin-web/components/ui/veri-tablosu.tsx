@@ -674,7 +674,10 @@ function BaslikHucresi<T>({
           type="button"
           onClick={onSirala}
           aria-label={t("tabloSirala", { kolon: kolon.baslik })}
-          className="odak-ic inline-flex items-center gap-1"
+          // (E2E 2026-09) `min-h-6`: siralama dugmesi 48-77x18 olculdu;
+          // WCAG 2.5.8 hedefi >= 24px. Baslik satiri gorsel olarak buyumez
+          // (hucre dolgusu zaten 24'ten fazla).
+          className="odak-ic inline-flex min-h-6 items-center gap-1"
         >
           {kolon.baslik}
           <SiraOku aktif={aktif} yon={yon} />

@@ -62,6 +62,10 @@ const ZIYARETCI = {
   notlar: "Kargo",
   giris_zamani: "2026-08-15T10:00:00Z",
   cikis_zamani: null,
+  // (E2E 2026-09 / GUVENLIK-14) Hedef sakin artik formda secilir ve
+  // duzenlemede ON-SECILI gelir; sunucu onsuz kaydi 422 ile reddeder.
+  target_resident_user_id: "u-1",
+  target_resident_ad: "Ayşe Can",
 };
 
 const HIZMET = {
@@ -93,13 +97,15 @@ describe("(P162) 1. ziyaretci kaydi DUZENLENEBILIR", () => {
     // Form ON DOLU gelmeli; bos acilsaydi "duzenleme" silip yeniden
     // yazmaya donusurdu ve kayit kimligi korunsa da veri kaybi olurdu.
     expect(kutu.getByDisplayValue("Ali Veli")).toBeInTheDocument();
-    expect(kutu.getByDisplayValue("A-3")).toBeInTheDocument();
+    // Daire artik SECILI gosterilir (serbest metin kutusu degil).
+    expect(kutu.getByText("A-3")).toBeInTheDocument();
 
     await userEvent.click(kutu.getByRole("button", { name: "Kaydet" }));
     await waitFor(() => {
       const p = c.find((x) => x.yontem === "PATCH");
       expect(p, "PATCH atilmadi").toBeTruthy();
       expect(p!.url).toContain("/api/visitors/z1");
+      expect(p!.govde).toMatchObject({ unit_no: "A-3", target_resident_user_id: "u-1" });
     });
   });
 

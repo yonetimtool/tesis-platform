@@ -15,6 +15,7 @@ shift/checkpoint referansi uygulama katmaninda 422 ile reddedilir.
 """
 from __future__ import annotations
 
+import datetime as dt
 import uuid
 
 from fastapi import APIRouter, Depends, Query, Response
@@ -129,6 +130,41 @@ async def get_plan(
     )
 
 
+def _ek_tarih_dogrula(
+    ek_tarihler: list[dt.date] | None,
+    onceki_ek: list[dt.date] | None = None,
+) -> None:
+    """(E2E 2026-09 / GUVENLIK-17) GECMIS EK GUN REDDEDILIR.
+
+    OLCULEN: `2020-01-01` gibi gecmis bir ek gun 201 ile kabul ediliyordu
+    — hicbir zaman yurumeyecek bir gun, yonetici ise plani "o gun de
+    calisiyor" sanir.
+
+    YAPILMAYAN (bilincli): `periyot_dakika` > plan suresi ("hic pencere
+    uretmeyen sessiz plan") burada REDDEDILMEDI. `tests/test_me_patrol.py`
+    bu bosluga BILEREK yaslaniyor (pencereleri elle ekleyebilmek icin
+    1440 dk periyotlu 6 saatlik plan) ve alternatifi (pasif plan) ayni
+    turda degisen pasif-plan temizligine (scheduler/service.py) takilir.
+    Karar scheduler sahibinde.
+
+    GECMIS = UTC bugunden ONCEKI gun (1 gun pay): tenant saat dilimini
+    okumak icin ek sorgu yerine; Turkiye (UTC+3) gece yarisindan sonraki
+    uc saatte "bugun"u yanlislikla reddetmemek icin pay birakildi.
+    Guncellemede YALNIZ YENI eklenen tarihler olculur: istemci listeyi
+    butun olarak geri gonderir ve dun gecerli olan bir tarih bugun
+    gecmistir — onu reddetmek plani duzenlenemez kilardi.
+    """
+    if ek_tarihler:
+        esik = dt.datetime.now(dt.timezone.utc).date() - dt.timedelta(days=1)
+        eski = set(onceki_ek or [])
+        for gun in ek_tarihler:
+            if gun < esik and gun not in eski:
+                raise APIError(
+                    422, "validation_error", "devriye_ek_tarih_gecmis",
+                    tarih=gun.isoformat(),
+                )
+
+
 @router.post("", response_model=PatrolPlanOut, status_code=201)
 async def create_plan(
     body: PatrolPlanCreate,
@@ -136,6 +172,7 @@ async def create_plan(
     user: AppUser = Depends(_WRITER),
 ) -> PatrolPlan:
     await _ensure_shift_in_tenant(db, body.shift_id)
+    _ek_tarih_dogrula(body.ek_tarihler)
     obj = PatrolPlan(tenant_id=user.tenant_id, **body.model_dump(exclude_unset=True))
     db.add(obj)
     try:
@@ -158,6 +195,9 @@ async def update_plan(
     data = body.model_dump(exclude_unset=True)
     if "shift_id" in data:
         await _ensure_shift_in_tenant(db, data["shift_id"])
+    # (E2E 2026-09 / GUVENLIK-17) Yalniz YENI eklenen ek gunler olculur.
+    if data.get("ek_tarihler"):
+        _ek_tarih_dogrula(data["ek_tarihler"], list(obj.ek_tarihler or []))
     for key, value in data.items():
         setattr(obj, key, value)
     obj.updated_at = func.now()

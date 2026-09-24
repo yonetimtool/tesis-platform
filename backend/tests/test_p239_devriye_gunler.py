@@ -92,17 +92,20 @@ def test_PATCH_ile_HER_GUNE_DONULEBILIR(client, world):
 
 def test_EK_TARIHLER_kaydedilir_ve_sinirlanir(client, world):
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    # (E2E 2026-09 / GUVENLIK-17) GORELI GELECEK TARIH: sabit "2026-08-30"
+    # zamanla gecmise dustu ve gecmis ek gun artik 422 (ayri test).
+    ileri = (dt.date.today() + dt.timedelta(days=30)).isoformat()
     r = client.post(
         "/patrol-plans",
         headers=yon,
-        json=_plan_body(gunler=[1], ek_tarihler=["2026-08-30", "2026-08-30"]),
+        json=_plan_body(gunler=[1], ek_tarihler=[ileri, ileri]),
     )
     assert r.status_code == 201, r.text
-    assert r.json()["ek_tarihler"] == ["2026-08-30"], "tekrar tekillestirilmeli"
+    assert r.json()["ek_tarihler"] == [ileri], "tekrar tekillestirilmeli"
 
     # 61 gun -> RED. "Bir kerelik ek gun" bir takvim degildir; sinirsiz
     # birakmak plani somut tarih listesine cevirmenin arka kapisi olurdu.
-    cok = [(dt.date(2026, 1, 1) + dt.timedelta(days=i)).isoformat() for i in range(61)]
+    cok = [(dt.date.today() + dt.timedelta(days=i + 1)).isoformat() for i in range(61)]
     r = client.post("/patrol-plans", headers=yon, json=_plan_body(ek_tarihler=cok))
     assert r.status_code == 422, r.text
 
@@ -188,3 +191,37 @@ def test_EK_TARIH_secilmeyen_gunde_de_PENCERE_URETIR():
     assert any(
         b.astimezone(ZoneInfo(tz)).date() == sali for b, _ in artı_sali
     )
+
+
+def test_GECMIS_EK_TARIH_reddedilir_ama_ESKISI_duzenlemeyi_kilitlemez(client, world, owner_conn):
+    """(E2E 2026-09 / GUVENLIK-17) `2020-01-01` 201 ile kabul ediliyordu —
+    hic yurumeyecek bir gun. Artik 422 ve mesaj tarihi adlandirir.
+
+    Ters yon: DUN gecerli olan ek gun bugun gecmistir; istemci listeyi
+    butun olarak geri gonderdiginde plan duzenlenemez hale gelmemeli.
+    """
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    r = client.post("/patrol-plans", headers=yon,
+                    json=_plan_body(ek_tarihler=["2020-01-01"]))
+    assert r.status_code == 422, r.text
+    assert "2020-01-01" in r.json()["error"]["message"]
+
+    ileri = (dt.date.today() + dt.timedelta(days=10)).isoformat()
+    r = client.post("/patrol-plans", headers=yon, json=_plan_body(ek_tarihler=[ileri]))
+    assert r.status_code == 201, r.text
+    pid = r.json()["id"]
+    try:
+        # Kaydedilmis tarihi zamanda geriye cek (gecmise dustu varsayimi).
+        owner_conn.execute(
+            "UPDATE patrol_plan SET ek_tarihler = ARRAY['2020-01-01'::date] WHERE id = %s",
+            (pid,),
+        )
+        r = client.patch(f"/patrol-plans/{pid}", headers=yon,
+                         json={"ek_tarihler": ["2020-01-01", ileri]})
+        assert r.status_code == 200, r.text
+        # YENI gecmis tarih yine reddedilir.
+        r = client.patch(f"/patrol-plans/{pid}", headers=yon,
+                         json={"ek_tarihler": ["2019-05-05", ileri]})
+        assert r.status_code == 422, r.text
+    finally:
+        client.delete(f"/patrol-plans/{pid}", headers=yon)

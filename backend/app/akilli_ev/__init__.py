@@ -12,10 +12,12 @@ from .taban import (  # noqa: F401
     HOME_ASSISTANT,
     HTTP,
     MQTT,
+    TIP_BOLUM,
     TIP_EYLEM,
     KopruArayuzu,
     KopruSonuc,
     eylem_gecerli,
+    tip_bolumu,
 )
 
 
@@ -35,7 +37,40 @@ def kopru(kayit) -> KopruArayuzu:
     # `http` de HA istemcisiyle konusur: ikisi de duz HTTP; fark
     # YOLLARDADIR ve `http` turunde cihazin kendi yolu `dis_kimlik`te
     # tutulur (bkz. routers/akilli_ev.py).
-    return HomeAssistantKopru(host=kayit.host, port=kayit.port, token=token)
+    return _KapiliKopru(
+        kayit.host, HomeAssistantKopru(host=kayit.host, port=kayit.port, token=token)
+    )
+
+
+class _KapiliKopru:
+    """(E2E 2026-09) Hedef kapisi — `diyafon._KapiliDiyafon` ile ayni karar.
+
+    Kopru `komut` ile sitede KAPI ACAR; platformun kendi agina (redis,
+    db, api...) giden bir "komut" hem bir port tarayicisi hem de ic
+    servislere keyfi yollu istek demekti. Engel "ulasilamiyor" ile ayirt
+    edilemez.
+    """
+
+    def __init__(self, host: str | None, ic) -> None:
+        self._host = host
+        self._ic = ic
+        self.tur = ic.tur
+
+    def _engelli(self) -> KopruSonuc | None:
+        from ..safe_http import SAHA_ENGEL_AYRINTI, saha_hedefi_engelli
+
+        if saha_hedefi_engelli(self._host):
+            return KopruSonuc(False, HATA_ULASILAMIYOR, SAHA_ENGEL_AYRINTI)
+        return None
+
+    def saglik(self) -> KopruSonuc:
+        return self._engelli() or self._ic.saglik()
+
+    def durum(self, dis_kimlik: str) -> KopruSonuc:
+        return self._engelli() or self._ic.durum(dis_kimlik)
+
+    def komut(self, dis_kimlik: str, eylem: str, tip: str) -> KopruSonuc:
+        return self._engelli() or self._ic.komut(dis_kimlik, eylem, tip)
 
 
 class _UygulanmayanKopru:

@@ -95,3 +95,74 @@ async def kod_istegi_say(
         return
     if sayi > sinir:
         raise hata
+
+
+# ========================================================================= #
+# (E2E 2026-09) PAROLA GIRISI — YALNIZ BASARISIZ DENEMELER SAYILIR
+# ========================================================================= #
+# OLCULEN KUSUR: `/auth/login` ve `/auth/login-phone` HIC sinirli degildi
+# (20/20 yanlis parola -> 401, 429 yok); ayni yuzeyin ucuncu kapisi
+# `tesislerim` sinirliydi. Saldirgan kilitsiz kapiyi kullanir.
+#
+# NEDEN YALNIZ BASARISIZLAR: basarili giris bir KULLANICI eylemidir —
+# ayni hesapla gun icinde defalarca giris yapan bir yonetici (web + mobil +
+# tarayici degisimi) kilitlenmemeli. Sayac kimlik icin (var olsun olmasin)
+# HER basarisizlikta artar; yani sinir hesap varligini sizdirmaz.
+#
+# Basarili giris sayaci SIFIRLAR: dogru parolayi bilen biri zaten
+# saldirgan degildir.
+
+
+def _giris_anahtari(kimlik: str) -> str:
+    return f"hiz:giris_parola:{kimlik.lower()}"
+
+
+async def giris_kilidi_denetle(redis: aioredis.Redis | None, kimlik: str) -> None:
+    """Kimlik icin basarisiz deneme siniri asildiysa 429 (parola DENENMEDEN)."""
+    if redis is None:
+        return
+    try:
+        sayi = await redis.get(_giris_anahtari(kimlik))
+    except Exception as e:  # pragma: no cover - Redis dususu (fail-open)
+        _log.warning("giris sayaci okunamadi: %s", e)
+        return
+    if sayi is not None and int(sayi) >= DENEME_SINIRI:
+        raise DENEME_ASILDI
+
+
+async def giris_basarisiz(redis: aioredis.Redis | None, kimlik: str) -> None:
+    if redis is None:
+        return
+    anahtar = _giris_anahtari(kimlik)
+    try:
+        sayi = await redis.incr(anahtar)
+        if sayi == 1:
+            await redis.expire(anahtar, KOD_ISTEK_PENCERE_SN)
+    except Exception as e:  # pragma: no cover
+        _log.warning("giris sayaci yazilamadi: %s", e)
+
+
+async def giris_basarili(redis: aioredis.Redis | None, kimlik: str) -> None:
+    if redis is None:
+        return
+    try:
+        await redis.delete(_giris_anahtari(kimlik))
+    except Exception as e:  # pragma: no cover
+        _log.warning("giris sayaci silinemedi: %s", e)
+
+
+async def kod_istegi_geri_al(
+    redis: aioredis.Redis | None, anahtar_kimlik: str, *, kapsam: str
+) -> None:
+    """GONDERILEMEYEN kod istegini sayactan dusur.
+
+    Kullanici kodu hic almadiysa (saglayici hatasi) "tekrar gonder" hakki
+    yanmamali — Dukkan SMS kuraliyla ayni (basarisiz gonderim hiz sinirini
+    yemez).
+    """
+    if redis is None:
+        return
+    try:
+        await redis.decr(f"hiz:{kapsam}:{anahtar_kimlik}")
+    except Exception as e:  # pragma: no cover
+        _log.warning("kod sayaci geri alinamadi: %s", e)

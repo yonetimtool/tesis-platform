@@ -237,6 +237,36 @@ String? _hamHedef(Map<String, String> data, UserRole? role) {
     case 'virman':
     case 'acilis':
       return AppRoutes.myDues;
+    // (E2E 2026-09) ESLEMESIZ KALAN TIPLER. Uygulama ici liste haritasi
+    // (`bildirim_rotasi.dart`) bunlari zaten esliyordu ama push dokunmasi
+    // `default -> null`a dusuyordu: su/gaz kacagi ya da YANGIN push'una
+    // dokunan kullanici hicbir yere gitmiyordu. Liste haritasi artik
+    // BURAYI cagiriyor — tek tablo.
+    case 'panik_alarm':
+    case 'panik_yanlis_alarm':
+    case 'panik_kapandi':
+      return AppRoutes.panikTakip;
+    case 'akilli_ev_kacak':
+    case 'akilli_ev_yangin':
+      return AppRoutes.akilliEv;
+    case 'entegrasyon_koptu':
+      return AppRoutes.integrations;
+    case 'bakim_yaklasti':
+    case 'bakim_bugun':
+    case 'bakim_gecikti':
+      return AppRoutes.bakim;
+    case 'vardiya_yayinlandi':
+      return AppRoutes.vardiyaPlani;
+    case 'gorev_tamamlandi':
+    case 'gorev_adim_ilerleme':
+      return AppRoutes.tasks;
+    case 'anket_acildi':
+      return AppRoutes.anketler;
+    case 'aidat_onizleme':
+    case 'aylik_ozet':
+      return AppRoutes.financialSummary;
+    case 'gider_onay':
+      return AppRoutes.gider;
     // `dogrulama` (token saglik yoklamasi) ve `test` (push teshisi)
     // KULLANICIYA GORUNMEZ bir yere gitmeli: yonlendirme YOK.
     case 'dogrulama':

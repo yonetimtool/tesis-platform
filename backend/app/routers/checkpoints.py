@@ -14,7 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import settings
-from ..crud_helpers import get_or_404, translate_integrity
+from ..crud_helpers import get_or_404, norm_nfc, translate_integrity
 from ..deps import get_tenant_db, require_guvenlik_yazma, require_role
 from ..errors import APIError
 from ..models import AppUser, Checkpoint
@@ -42,6 +42,20 @@ _READER = require_role(
 _NFC_CONFLICT = APIError(409, "conflict", "nfc_uid_zaten_kayitli")
 
 
+def _kanonik_uid(uid: str) -> str:
+    """(E2E 2026-09) GUVENLIK-05 / TESIS-07: UID KANONIK bicimde saklanir.
+
+    OLCULEN: `04A1..`, `04a1..` ve `04:A1:..` uc ayri kontrol noktasi
+    olarak kaydediliyordu (tekillik ham degerde); okutma normalize
+    karsilastirdigi icin MultipleResultsFound -> 500. Kanonik bicimde
+    saklayinca `uq_checkpoint_tenant_nfc` ayni etiketi 409 ile reddeder.
+    """
+    kanonik = norm_nfc(uid) or ""
+    if not kanonik:
+        raise APIError(422, "validation_error", "nfc_uid_gecersiz")
+    return kanonik
+
+
 @router.get("", response_model=CheckpointListResponse)
 async def list_checkpoints(
     limit: int = Query(50, ge=1, le=200),
@@ -55,7 +69,8 @@ async def list_checkpoints(
     if aktif is not None:
         where.append(Checkpoint.aktif == aktif)
     if nfc_tag_uid is not None:
-        where.append(Checkpoint.nfc_tag_uid == nfc_tag_uid)
+        # (E2E 2026-09) kayitlar kanonik — sorgu da kanonige cevrilir.
+        where.append(Checkpoint.nfc_tag_uid == norm_nfc(nfc_tag_uid))
     total = (
         await db.execute(select(func.count()).select_from(Checkpoint).where(*where))
     ).scalar_one()
@@ -85,7 +100,9 @@ async def create_checkpoint(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_WRITER),
 ) -> Checkpoint:
-    obj = Checkpoint(tenant_id=user.tenant_id, **body.model_dump(exclude_unset=True))
+    veri = body.model_dump(exclude_unset=True)
+    veri["nfc_tag_uid"] = _kanonik_uid(veri["nfc_tag_uid"])
+    obj = Checkpoint(tenant_id=user.tenant_id, **veri)
     db.add(obj)
     try:
         await db.flush()
@@ -103,7 +120,10 @@ async def update_checkpoint(
     _: AppUser = Depends(_WRITER),
 ) -> Checkpoint:
     obj = await get_or_404(db, Checkpoint, checkpoint_id)
-    for key, value in body.model_dump(exclude_unset=True).items():
+    veri = body.model_dump(exclude_unset=True)
+    if veri.get("nfc_tag_uid") is not None:
+        veri["nfc_tag_uid"] = _kanonik_uid(veri["nfc_tag_uid"])
+    for key, value in veri.items():
         setattr(obj, key, value)
     obj.updated_at = func.now()
     try:

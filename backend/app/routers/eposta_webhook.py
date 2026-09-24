@@ -44,7 +44,7 @@ from sqlalchemy import select, text
 from ..config import settings
 from ..db import SessionLocal, set_tenant
 from ..errors import APIError
-from ..models import MesajGonderim
+from ..models import Davet, MesajGonderim
 
 logger = logging.getLogger(__name__)
 
@@ -188,5 +188,25 @@ async def resend_webhook(request: Request) -> dict:
             elif ILERLEME.get(yeni_durum, 0) > ILERLEME.get(kayit.durum, 0):
                 kayit.durum = yeni_durum
                 kayit.hata = None
+
+            # (E2E 2026-09) DAVET PANELI DE GUNCELLENIR. Panel
+            # `davet.son_durum` anlik kopyasini okuyor ve o yalniz gonderim
+            # aninda yaziliyordu: geri donen (bounce) bir davet panelde
+            # sonsuza kadar "Gonderildi" gorunuyordu. Kapsam dar tutulur:
+            # yalniz e-postayla gitmis ve HENUZ KULLANILMAMIS davet —
+            # sonraki bir kod e-postasinin geri donmesi kabul edilmis
+            # daveti "gonderilemedi"ye cevirmemeli.
+            if kayit.user_id is not None and kayit.kanal == "eposta":
+                davet = (
+                    await session.execute(
+                        select(Davet).where(
+                            Davet.user_id == kayit.user_id,
+                            Davet.used_at.is_(None),
+                        )
+                    )
+                ).scalar_one_or_none()
+                if davet is not None and davet.son_kanal == "eposta":
+                    davet.son_durum = kayit.durum
+                    davet.son_hata = kayit.hata
 
     return {"durum": "islendi"}

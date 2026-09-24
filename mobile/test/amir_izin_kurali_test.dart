@@ -65,7 +65,8 @@ void main() {
         taban.hizliErisim(HomeVaryant.gorevli), UserRole.guvenlikAmiri);
     final rotalar = kartlar.map((k) => k.rota).toSet();
     expect(rotalar, isNot(contains(moduleCardSpec(HomeMenuEntry.kargo).route)));
-    expect(rotalar, isNot(contains(moduleCardSpec(HomeMenuEntry.visitors).route)));
+    // (P231 §3) Ziyaretci amire OKUMA olarak acik — kart da gorunur.
+    expect(rotalar, contains(moduleCardSpec(HomeMenuEntry.visitors).route));
     // Ve kart listesi BOSALMADI (suzgec her seyi silmesin).
     expect(kartlar, isNotEmpty);
   });

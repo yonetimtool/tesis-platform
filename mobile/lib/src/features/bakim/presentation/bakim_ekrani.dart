@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../core/ui/bos_durum.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../../auth/domain/user_role.dart';
+import '../../tasks/presentation/task_complete_controller.dart'
+    show imagePickerProvider;
 import '../data/bakim_api.dart';
 import '../domain/bakim_models.dart';
 
@@ -159,6 +164,12 @@ class _EkipmanKarti extends ConsumerWidget {
         : l10n.bakimKalanGun(e.kalanGun);
     return ListTile(
       key: ValueKey('bakim-ekipman-${e.id}'),
+      // (E2E 2026-09) SATIR GECMISI ACAR — kayitlar ve ekleri (TESIS-05).
+      // Onceden mobilde gecmis ve ek HICBIR yerde yoktu.
+      onTap: () => merkezSayfaAc<void>(
+        context,
+        builder: (_) => BakimGecmisi(ekipman: e),
+      ),
       leading: Icon(Icons.build_outlined,
           color: bakimDurumRengi(renkler, e.durum)),
       title: Text(e.yasal ? '${e.ad} · ${l10n.bakimYasal}' : e.ad),
@@ -200,6 +211,16 @@ class _KayitFormuState extends ConsumerState<_KayitFormu> {
   bool _gidereYaz = true;
   bool _bekliyor = false;
   DateTime _tarih = DateTime.now();
+  XFile? _foto;
+
+  Future<void> _fotoSec() async {
+    final secilen = await ref.read(imagePickerProvider).pickImage(
+          source: ImageSource.camera,
+          maxWidth: 1600,
+          imageQuality: 80,
+        );
+    if (secilen != null && mounted) setState(() => _foto = secilen);
+  }
 
   @override
   void dispose() {
@@ -215,7 +236,8 @@ class _KayitFormuState extends ConsumerState<_KayitFormu> {
       final kurus = _tutar.text.trim().isEmpty
           ? null
           : (double.tryParse(_tutar.text.replaceAll(',', '.')) ?? 0) * 100;
-      await ref.read(bakimApiProvider).kayitEkle(
+      final api = ref.read(bakimApiProvider);
+      final kayit = await api.kayitEkle(
             widget.ekipman.id,
             BakimKaydiTaslak(
               tarih: _tarih.toIso8601String().substring(0, 10),
@@ -225,6 +247,23 @@ class _KayitFormuState extends ConsumerState<_KayitFormu> {
               gidereYaz: _gidereYaz,
             ),
           );
+      // (E2E 2026-09) FOTOGRAF KAYDI KIRMAZ: bakim YAZILDI; fotograf
+      // yuklenemezse kullaniciya soylenir ama kayit geri alinmaz (gider
+      // fisindeki karar).
+      if (_foto != null) {
+        try {
+          await api.fotoEkle(
+            kayitId: kayit.id,
+            baytlar: await _foto!.readAsBytes(),
+          );
+        } on ApiException {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(context.l10n.bakimFotoYuklenemedi)),
+            );
+          }
+        }
+      }
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (e) {
@@ -258,7 +297,9 @@ class _KayitFormuState extends ConsumerState<_KayitFormu> {
                 context: context,
                 initialDate: _tarih,
                 firstDate: DateTime(2000),
-                lastDate: DateTime(2100),
+                // (E2E 2026-09) Gelecek tarih sunucuda 422 (TESIS-06):
+                // secicide de sunulmaz. Bir gun pay: UTC/yerel gun farki.
+                lastDate: DateTime.now().add(const Duration(days: 1)),
               );
               if (secilen != null) setState(() => _tarih = secilen);
             },
@@ -289,6 +330,12 @@ class _KayitFormuState extends ConsumerState<_KayitFormu> {
             title: Text(l10n.bakimGidereYaz),
             subtitle: Text(l10n.bakimGidereYazIpucu),
           ),
+          OutlinedButton.icon(
+            key: const ValueKey('bakim-kayit-foto'),
+            onPressed: _bekliyor ? null : _fotoSec,
+            icon: const Icon(Icons.photo_camera_outlined),
+            label: Text(_foto == null ? l10n.bakimFotoEkle : l10n.bakimFotoHazir),
+          ),
           const SizedBox(height: 12),
           FilledButton(
             key: const ValueKey('bakim-kayit-kaydet'),
@@ -297,6 +344,102 @@ class _KayitFormuState extends ConsumerState<_KayitFormu> {
           ),
         ],
       ),
+    );
+  }
+}
+
+
+/// (E2E 2026-09) BIR EKIPMANIN BAKIM GECMISI + KAYIT EKLERI (TESIS-05).
+///
+/// Web'de "Gecmis" sekmesi ve ek penceresi var; mobilde ikisi de YOKTU —
+/// sahada muayene raporunu gormek isteyen gorevli (sunucu ona OKUMA izni
+/// veriyor) hicbir yerden ulasamiyordu.
+class BakimGecmisi extends ConsumerWidget {
+  const BakimGecmisi({super.key, required this.ekipman});
+
+  final BakimEkipmani ekipman;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final kayitlar = ref.watch(bakimKayitlariProvider(ekipman.id));
+    return Scaffold(
+      appBar: AppBar(title: Text('${ekipman.ad} · ${l10n.bakimGecmis}')),
+      body: kayitlar.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('$e')),
+        data: (liste) => liste.isEmpty
+            ? BosDurum(
+                ikon: Icons.history,
+                baslik: l10n.bakimGecmisYok,
+                aciklama: l10n.bakimGecmisYokAlt,
+              )
+            : ListView.separated(
+                itemCount: liste.length,
+                separatorBuilder: (_, _) => const Divider(height: 1),
+                itemBuilder: (context, i) {
+                  final k = liste[i];
+                  return ExpansionTile(
+                    key: ValueKey('bakim-gecmis-${k.id}'),
+                    title: Text(k.tarih),
+                    subtitle: Text(
+                      [k.yapanAd, k.islem]
+                          .whereType<String>()
+                          .where((x) => x.isNotEmpty)
+                          .join(' · '),
+                    ),
+                    children: [_KayitEkleri(kayitId: k.id)],
+                  );
+                },
+              ),
+      ),
+    );
+  }
+}
+
+class _KayitEkleri extends ConsumerWidget {
+  const _KayitEkleri({required this.kayitId});
+
+  final String kayitId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final ekler = ref.watch(bakimEkleriProvider(kayitId));
+    return ekler.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(12),
+        child: LinearProgressIndicator(),
+      ),
+      error: (e, _) => Padding(
+        padding: const EdgeInsets.all(12),
+        child: Text('$e'),
+      ),
+      data: (liste) => liste.isEmpty
+          ? ListTile(title: Text(l10n.bakimEkYok))
+          : Column(
+              children: [
+                for (final ek in liste)
+                  ListTile(
+                    key: ValueKey('bakim-ek-${ek.id}'),
+                    leading: Icon(ek.tur == 'not'
+                        ? Icons.notes_outlined
+                        : Icons.attach_file),
+                    title: Text(
+                      ek.tur == 'not' ? (ek.metin ?? '') : (ek.dosyaAdi ?? ''),
+                    ),
+                    trailing: ek.dosyaUrl == null
+                        ? null
+                        : const Icon(Icons.open_in_new),
+                    onTap: ek.dosyaUrl == null
+                        ? null
+                        : () => launchUrl(
+                              Uri.parse(ek.dosyaUrl!),
+                              mode: LaunchMode.externalApplication,
+                            ),
+                  ),
+              ],
+            ),
     );
   }
 }

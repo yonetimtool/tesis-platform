@@ -86,26 +86,22 @@ async def _aidat(db: AsyncSession, ay: str) -> TransparencyAidat:
             select(func.coalesce(func.sum(DuesAssessment.tutar_kurus), 0)).where(*a_where)
         )).scalar_one()
     )
-    # TEK KAYNAK (P192 §1): rapor ve panel ozeti de bunu cagirir.
-    tahsilat = await defter.tahsilat_toplami(db, donem=ay)
+    # (E2E 2026-09, FINANS-07) TEK KAYNAK: o donemin kalemlerinden KAPANAN
+    # tutar (`defter.donem_tahsil_edilen`, FIFO dahil) — gosterge ve
+    # Tahsilat Performansi raporu da bunu cagirir. Onceden tahsilat
+    # SATIRININ donem alanina bakiliyordu; vezneden donemsiz alinan 15
+    # tahsilat hic sayilmadi ve SAKINLERE "%3, odeyen daire 0" yayinlandi.
+    tahsilat = (await defter.donem_tahsil_edilen(db, donem=ay)).get(ay, 0)
     # Geciken (tam odenmemis) daire: SAYI ONLY (hangi daire ASLA cekilmez).
-    tahakkuk_daire = (
-        await db.execute(
-            select(
-                DuesAssessment.unit_id,
-                func.coalesce(func.sum(DuesAssessment.tutar_kurus), 0),
-            )
-            .where(*a_where)
-            .group_by(DuesAssessment.unit_id)
-        )
-    ).all()
-    toplam_daire = len(tahakkuk_daire)
-    odenen = await defter.daire_odenen(
-        db, [uid for uid, _ in tahakkuk_daire], donem=ay
+    # Daire, o donemin kalemlerinden BIRI acik kaldiysa gecikendir.
+    kalemler = list(
+        (await db.execute(select(DuesAssessment).where(*a_where))).scalars().all()
     )
-    geciken = sum(
-        1 for uid, toplam in tahakkuk_daire if int(toplam) > odenen.get(uid, 0)
-    )
+    kalan = await defter.kalem_kalanlari(db, kalemler)
+    daireler = {k.unit_id for k in kalemler}
+    acik_daireler = {k.unit_id for k in kalemler if kalan.get(k.id, 0) > 0}
+    toplam_daire = len(daireler)
+    geciken = len(acik_daireler)
     odeyen = toplam_daire - geciken
     return TransparencyAidat(
         tahakkuk_kurus=tahakkuk,
@@ -213,21 +209,15 @@ async def list_months(
         months = {m for m in months if pubs.get(m)}
     ordered = sorted((m for m in months if m), reverse=True)[:_LIST_LIMIT]
 
-    # Net (agregat) toplu hesap — tek gruplu sorgu (N+1 yok).
-    #: Liste NET degeri icin ay bazli tek gruplu sorgu (N+1 yok). Ayrinti
-    #: sayfasindan farkli olarak iptal/iade satirlari da `yon` isaretiyle
-    #: dogru yonde toplanir.
-    net_rows = (
-        await db.execute(
-            select(
-                ay_col,
-                func.sum(defter.isaret() * FinansalHareket.tutar_kurus),
-            )
-            .where(FinansalHareket.durum == defter.GERCEKLESEN)
-            .group_by(ay_col)
-        )
-    ).all()
-    net_by = {m: int(toplam) for m, toplam in net_rows}
+    # (E2E 2026-09, FINANS-12) LISTE NETI = AYRINTI NETI (gelir - gider).
+    # Liste onceden TUM isaretli hareketleri topluyordu (virman bacagi,
+    # iade, acilis dahil) ve ayni ay listede -787.008, ayrintida -786.008
+    # gorunuyordu. Artik ayni fonksiyon (`_month_gelir_gider`); en fazla
+    # `_LIST_LIMIT` ay oldugu icin ay basina iki sorgu kabul edilebilir.
+    net_by: dict[str, int] = {}
+    for m in ordered:
+        gelir, gider = await _month_gelir_gider(db, m)
+        net_by[m] = gelir - gider
 
     items = [
         TransparencyAyOzet(

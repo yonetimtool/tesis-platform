@@ -168,6 +168,48 @@ _REASON_ERRORS: dict[str, tuple[int, str, str]] = {
 }
 
 
+# (E2E 2026-09 / TESIS-12) IZGARA HIZASI + AZAMI SURE.
+#
+# OLCULEN: `slot_dakika=60`, 08:00-23:00 alanda tek rezervasyon 08:00-23:00
+# (15 saat) ve 21:07-21:13 (izgara disi 6 dk) ikisi de 201 aliyordu.
+# "Gunde bir rezervasyon" kotasi rezervasyonu SAYIYOR, suresini degil — tek
+# kayitla alan butun gun herkese kapaniyordu; kotanin amaci (adil paylasim)
+# delinmis oluyordu. Eski yorum "slot izgara hizasi UX isi" diyordu ama web
+# formu serbest saat aliyor, yani izgarayi yalniz sunucu zorlayabilir.
+#
+# AZAMI SURE: alan basina bir sutun GOC + iki yuzeyde form alani
+# gerektirirdi; bu tur icin SABIT: 3 slot (60 dk'lik alanda 3 saat). 1-2
+# yerine 3: mevcut kullanim (3 saatlik toplanti/davet) bozulmasin; bir alani
+# butun gun kapatmak yine imkansiz. Alan basina ayar gerekirse sabit
+# `ortak_alan.azami_slot` sutununa tasinir (varsayilan bu deger).
+AZAMI_SLOT_SAYISI = 3
+
+
+def _dakika(t) -> int:
+    return t.hour * 60 + t.minute
+
+
+def _izgara_ve_sure_dogrula(alan: OrtakAlan, baslangic, bitis) -> None:
+    slot = int(alan.slot_dakika or 60)
+    if baslangic.second or baslangic.microsecond or bitis.second or bitis.microsecond:
+        raise APIError(
+            422, "validation_error", "rezervasyon_izgara_disi",
+            slot=slot, acilis=alan.acilis.strftime("%H:%M"),
+        )
+    ofset = _dakika(baslangic) - _dakika(alan.acilis)
+    sure = _dakika(bitis) - _dakika(baslangic)
+    if ofset % slot or sure % slot:
+        raise APIError(
+            422, "validation_error", "rezervasyon_izgara_disi",
+            slot=slot, acilis=alan.acilis.strftime("%H:%M"),
+        )
+    if sure > slot * AZAMI_SLOT_SAYISI:
+        raise APIError(
+            422, "validation_error", "rezervasyon_azami_sure",
+            azami=slot * AZAMI_SLOT_SAYISI,
+        )
+
+
 # ------------------------------- rezerve et -------------------------------- #
 @router.post("", response_model=RezervasyonOut, status_code=201)
 async def create_reservation(
@@ -185,6 +227,7 @@ async def create_reservation(
     # olmali (slot izgara hizasi UX isi; cakismasizligi EXCLUDE saglar).
     if body.baslangic < alan.acilis or body.bitis > alan.kapanis:
         raise APIError(422, "validation_error", "aralik_musaitlik_disinda")
+    _izgara_ve_sure_dogrula(alan, body.baslangic, body.bitis)
 
     # Daire: sakinin aktif dairelerinden; unit_id verildiyse KENDI dairesi
     # olmali (baska daire adina talep acilamaz), verilmediyse tek/ilk daire.

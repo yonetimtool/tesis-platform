@@ -416,7 +416,7 @@ def test_p186_role_change_clears_unit_binding(client, world):
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
     created = client.post(
         "/residents", headers=yon,
-        json={"telefon": _tel186(), "unit_no": f"P186-{uuid.uuid4().hex[:4]}", "email": _p197_mail()},
+        json={"telefon": _tel186(), "blok": "A", "unit_no": f"P186-{uuid.uuid4().hex[:4]}", "email": _p197_mail()},
     ).json()
     uid = created["user_id"]
     detay = client.get(f"/users/{uid}", headers=yon).json()

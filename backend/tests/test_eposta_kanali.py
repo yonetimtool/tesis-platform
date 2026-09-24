@@ -312,7 +312,7 @@ def test_DAVET_JETONU_TEK_KULLANIMLIK_VE_SURELI(client, world, owner_conn):
     y = _headers(client, world["slug_a"], world["yonetici_a"])
     tel = f"+9053{uuid.uuid4().int % 10**8:08d}"
     r = client.post("/residents", headers=y, json={
-        "telefon": tel, "unit_no": f"DV-{uuid.uuid4().hex[:4]}", "email": _p197_mail()})
+        "telefon": tel, "blok": "A", "unit_no": f"DV-{uuid.uuid4().hex[:4]}", "email": _p197_mail()})
     assert r.status_code == 201, r.text
 
     satir = owner_conn.execute(
@@ -337,7 +337,7 @@ def test_DAVET_YAPILANDIRMA_YOKKEN_GONDERILDI_DEMEZ(client, world):
     y = _headers(client, world["slug_a"], world["yonetici_a"])
     r = client.post("/residents", headers=y, json={
         "telefon": f"+9053{uuid.uuid4().int % 10**8:08d}",
-        "unit_no": f"DV-{uuid.uuid4().hex[:4]}", "email": _p197_mail()})
+        "blok": "A", "unit_no": f"DV-{uuid.uuid4().hex[:4]}", "email": _p197_mail()})
     assert r.status_code == 201, r.text
     assert r.json()["davet"]["gonderildi"] is False
 
@@ -348,7 +348,7 @@ def test_DAVET_MESAJI_TESIS_KODUNU_TASIR(client, world, owner_conn):
     y = _headers(client, world["slug_a"], world["yonetici_a"])
     client.post("/residents", headers=y, json={
         "telefon": f"+9053{uuid.uuid4().int % 10**8:08d}",
-        "unit_no": f"DV-{uuid.uuid4().hex[:4]}",
+        "blok": "A", "unit_no": f"DV-{uuid.uuid4().hex[:4]}",
         "email": f"kod-{uuid.uuid4().hex[:8]}@example.com"})
 
     kod = owner_conn.execute(
@@ -370,7 +370,7 @@ def test_DAVET_KANALLARI_AYNI_DAVET_BAGINI_TASIR(client, world, owner_conn):
     y = _headers(client, world["slug_a"], world["yonetici_a"])
     tel = f"+9053{uuid.uuid4().int % 10**8:08d}"
     r = client.post("/residents", headers=y, json={
-        "telefon": tel, "unit_no": f"DV-{uuid.uuid4().hex[:4]}",
+        "telefon": tel, "blok": "A", "unit_no": f"DV-{uuid.uuid4().hex[:4]}",
         "email": f"d{uuid.uuid4().hex[:6]}@example.com"})
     assert r.status_code == 201, r.text
 

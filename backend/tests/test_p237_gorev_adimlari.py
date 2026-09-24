@@ -48,7 +48,7 @@ def _gorev(client, yon, guard_id, **k):
 
 # =========================== BRIEF AKISI ================================== #
 def test_uc_adim_ikisi_fotografla_tamamlanir_yonetici_ilerlemeyi_gorur(
-    client, yon, guard, guard_id
+    client, world, yon, guard, guard_id
 ):
     # 1) Yonetici gorevi UC ADIMLA olusturur.
     gorev = _gorev(
@@ -72,7 +72,9 @@ def test_uc_adim_ikisi_fotografla_tamamlanir_yonetici_ilerlemeyi_gorur(
         r = client.post(
             f"/tasks/{gorev['id']}/adimlar/{adim['id']}/tamamla",
             headers=guard,
-            json={"foto_key": f"gorev/{uuid.uuid4().hex}.jpg", "notlar": "bitti"},
+            # (E2E 2026-09) foto_key kendi tenant on ekinde olmali.
+            json={"foto_key": f"{world['a']}/tasks/{uuid.uuid4().hex}.jpg",
+                  "notlar": "bitti"},
         )
         assert r.status_code == 200, r.text
         assert r.json()["tamamlandi"] is True

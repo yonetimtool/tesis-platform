@@ -277,6 +277,11 @@ def test_SIMDI_gorevde_ve_sonraki(client, world, duzen, owner_conn):
     h = _giris(client, world["slug_a"], world["yonetici_a"])
     yarin = dt.date.today() + dt.timedelta(days=1)
     _ata(client, h, duzen, "gunduz", tarih=yarin)
+    # (E2E 2026-09) TASLAK GOREVDE SAYILMAZ: kart yalniz YAYINLANMIS
+    # satirlari gosterir (P241 §2.4) — once yayinlanir.
+    r = client.post("/vardiya-plani/yayinla", headers=h,
+                    params={"baslangic": yarin.isoformat(), "gun": 1})
+    assert r.status_code == 200, r.text
     r = client.get("/vardiya-plani/simdi", headers=h)
     assert r.status_code == 200, r.text
     d = r.json()

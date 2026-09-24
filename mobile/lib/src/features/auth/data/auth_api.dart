@@ -50,7 +50,11 @@ class AuthApi {
   ///
   /// 409 = BIRDEN COK TESIS. Hata DEGIL: cagiri `tesislerim` ile liste
   /// alip SECIM gosterir.
-  Future<TokenPair> login({
+  ///
+  /// (E2E 2026-09) Sunucu artik GECICI KODU burada da taniyor: kod tutarsa
+  /// `password_setup_required=true` + `setup_token` doner (login-phone ile
+  /// ayni sozlesme). Donus bu yuzden [PhoneLoginResult].
+  Future<PhoneLoginResult> login({
     required String kimlik,
     required String password,
     String? tenantSlug,
@@ -64,7 +68,7 @@ class AuthApi {
           'tenant_slug': ?tenantSlug,
         },
       );
-      return TokenPair.fromJson(res.data!);
+      return PhoneLoginResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
@@ -102,6 +106,86 @@ class AuthApi {
       await _dio.post<Map<String, dynamic>>(
         '/auth/giris/kod-iste',
         data: {'telefon': telefon},
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  // ============ (E2E 2026-09, YETKI-13) E-POSTA KODU + SIFREMI UNUTTUM ============ #
+  //
+  // Web'de P172/P181'den beri vardi, mobil cagirmiyordu: parolasini unutan
+  // mobil kullanicinin uygulama ici yolu yoktu, parolasiz giris yalniz
+  // (kapali) SMS'e bagliydi. Uclar ve davranis web ile AYNI
+  // (`admin-web/components/GirisFormu.tsx`, `app/giris/sifremi-unuttum`).
+
+  /// `POST /auth/giris/eposta-kod-iste` — tesis kodu GONDERILMEZ (P205
+  /// §1): sunucu kodu adresin tum uyeliklerine yazar. Yanit HER DURUMDA
+  /// aynidir (adres varligini sizdirmaz).
+  Future<void> epostaGirisKoduIste({required String eposta}) async {
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        '/auth/giris/eposta-kod-iste',
+        data: {'eposta': eposta},
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// `POST /auth/giris/eposta-kod-dogrula` — kod dogruysa TAM OTURUM.
+  /// Kod birden cok tesiste tutarsa 409 `tesis_secimi_gerekli`; cagiran
+  /// [tenantSlug] ile yeniden dener.
+  Future<TokenPair> epostaGirisKoduDogrula({
+    required String eposta,
+    required String kod,
+    String? tenantSlug,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/auth/giris/eposta-kod-dogrula',
+        data: {'eposta': eposta, 'kod': kod, 'tenant_slug': ?tenantSlug},
+      );
+      return TokenPair.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// `POST /auth/sifre/kod-iste` — "Sifremi unuttum" 1. adim. TESIS KODU
+  /// ZORUNLU (sunucu semasi; web de soruyor). Yanit sizintisiz; yalniz
+  /// hiz sinirinda (429) hata doner.
+  Future<void> sifreKodIste({
+    required String tenantSlug,
+    required String eposta,
+  }) async {
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        '/auth/sifre/kod-iste',
+        data: {'tenant_slug': tenantSlug, 'eposta': eposta},
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// `POST /auth/sifre/dogrula-ve-ayarla` — kod dogruysa yeni parolayi
+  /// kurar. OTURUM ACMAZ (web ile ayni): kullanici yeni parolasiyla girer.
+  Future<void> sifreDogrulaVeAyarla({
+    required String tenantSlug,
+    required String eposta,
+    required String kod,
+    required String yeniParola,
+  }) async {
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        '/auth/sifre/dogrula-ve-ayarla',
+        data: {
+          'tenant_slug': tenantSlug,
+          'eposta': eposta,
+          'kod': kod,
+          'yeni_parola': yeniParola,
+        },
       );
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
@@ -506,6 +590,30 @@ class AuthApi {
       return TokenPair.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (E2E 2026-09) `POST /auth/logout` — oturumu SUNUCUDA kapatir.
+  ///
+  /// Onceden cikis yalniz yerel depoyu siliyordu; refresh jetonu sunucuda
+  /// 30 gun gecerli kaliyordu. Erisim jetonu ACIKCA verilir (bu Dio
+  /// ornegi kimliksiz olabilir). Hata firlatmaz — cagiran yine de yerel
+  /// oturumu siler.
+  Future<void> logout({String? accessToken, String? refreshToken}) async {
+    try {
+      await _dio.post<void>(
+        '/auth/logout',
+        data: {'refresh_token': refreshToken},
+        options: Options(
+          headers: {
+            if (accessToken != null) 'Authorization': 'Bearer $accessToken',
+          },
+          sendTimeout: const Duration(seconds: 5),
+          receiveTimeout: const Duration(seconds: 5),
+        ),
+      );
+    } catch (_) {
+      // Sunucuya ulasilamasa da kullanici yerel olarak cikmis olmali.
     }
   }
 

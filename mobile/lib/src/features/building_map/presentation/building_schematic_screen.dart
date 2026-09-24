@@ -145,7 +145,12 @@ class _Body extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
-        if (map.showsDensity) const _Legend() else const _StructureNote(),
+        if (map.showsDensity) ...[
+          const _Legend(),
+          const SizedBox(height: 8),
+          const _TurSuzgeci(),
+        ] else
+          const _StructureNote(),
         const SizedBox(height: 12),
         for (final blok in map.bloklar)
           _BlokSchematic(blok: blok, map: map, isResident: isResident),
@@ -156,7 +161,7 @@ class _Body extends StatelessWidget {
   }
 }
 
-/// Renk esiklerini aciklayan gosterge (0-2 yesil, 3-4 sari, 5+ kirmizi) —
+/// Renk esiklerini aciklayan gosterge (0 yesil, 1-2 sari, 3-4 kirmizi, 5+ mor) —
 /// yalniz yonetim gorunumunde.
 class _Legend extends StatelessWidget {
   const _Legend();
@@ -197,6 +202,50 @@ class _Legend extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// (E2E 2026-09) TESIS-17: SIKAYET TURU secicisi — yalniz yonetim
+/// gorunumunde (sayim/renk yalniz orada var). Web `/schematic` ile ayni
+/// davranis: bos = tum turler, secim sunucuya `?kategori=` gider.
+class _TurSuzgeci extends ConsumerWidget {
+  const _TurSuzgeci();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final secili = ref.watch(
+      buildingMapControllerProvider.select((s) => s.kategori),
+    );
+    // SUTUN, SATIR DEGIL: 2x yazi olceginde etiket + secici yan yana
+    // tasiyordu (olcek kilidi 9.5px tasma yakaladi).
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(l10n.semaTurSuzgeci),
+        Builder(
+          builder: (_) => DropdownButton<String?>(
+            key: const Key('sema-tur-suzgeci'),
+            isExpanded: true,
+            value: secili,
+            items: [
+              DropdownMenuItem<String?>(
+                value: null,
+                child: Text(l10n.sikayetSekmeTumu),
+              ),
+              for (final k in UnitComplaintKategori.values)
+                DropdownMenuItem<String?>(
+                  value: k.wire,
+                  child: Text(unitComplaintKategoriAdi(l10n, k)),
+                ),
+            ],
+            onChanged: (v) => ref
+                .read(buildingMapControllerProvider.notifier)
+                .setKategori(v),
+          ),
+        ),
+      ],
     );
   }
 }

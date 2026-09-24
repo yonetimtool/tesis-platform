@@ -294,3 +294,25 @@ def test_P190_tema_tercihi_hesapta_saklanir(client, world):
     assert client.patch(
         "/me/tema", headers=d, json={"tema": "light"}
     ).status_code == 200
+
+
+def test_TERCIH_UCU_EPOSTAYI_DOGRULAYAMAZ(client, world, owner_conn):
+    """(E2E 2026-09) Semada kopyalanmis bir `eposta_dogrulandi` alani vardi;
+    uc her alani `setattr` ile yazdigi icin kullanici kendi adresini KODSUZ
+    dogrulanmis yapabiliyordu. Artik bilinmeyen alan 422."""
+    r = client.post("/auth/login", json={
+        "tenant_slug": world["slug_a"], "email": world["guard_a"]["email"],
+        "password": world["guard_a"]["password"]})
+    h = {"Authorization": f"Bearer {r.json()['access_token']}"}
+    with owner_conn.cursor() as cur:
+        cur.execute("SELECT eposta_dogrulandi FROM app_user WHERE email = %s AND "
+                    "tenant_id = (SELECT id FROM tenant WHERE slug = %s)",
+                    (world["guard_a"]["email"], world["slug_a"]))
+        once = cur.fetchone()[0]
+    r = client.patch("/me/bildirim-tercihleri", headers=h, json={"eposta_dogrulandi": True})
+    assert r.status_code == 422, r.text
+    with owner_conn.cursor() as cur:
+        cur.execute("SELECT eposta_dogrulandi FROM app_user WHERE email = %s AND "
+                    "tenant_id = (SELECT id FROM tenant WHERE slug = %s)",
+                    (world["guard_a"]["email"], world["slug_a"]))
+        assert cur.fetchone()[0] == once

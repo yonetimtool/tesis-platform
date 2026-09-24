@@ -57,7 +57,10 @@ router = APIRouter(prefix="/integrations/anpr", tags=["anpr"])
 
 # Okuma + onay: admin + security (arac gecisi listesiyle AYNI kume — plaka
 # kisisel veriye baglanabilir, KVKK).
-_OKUYUCU = require_role("admin", "security")
+_OKUYUCU = require_role("admin", "security", "guvenlik_amiri")
+#: (E2E 2026-09) ONAY (yazma) amire ACIK DEGIL: auth.md §4a amire plaka
+#: olaylarini OKUMA verir; karar kapidaki gorevlinindir.
+_ONAYLAYAN = require_role("admin", "security")
 # Anahtar yonetimi YALNIZ admin: anahtar tenant'in tum gecis akisini yazma
 # yetkisidir; site yoneticisine acilmaz.
 _ANAHTAR_YONETICI = require_role("admin")
@@ -290,7 +293,7 @@ async def onayla(
     event_id: uuid.UUID,
     govde: AnprOnayIn,
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_OKUYUCU),
+    user: AppUser = Depends(_ONAYLAYAN),
 ) -> AnprEventOut:
     """Dusuk guvenli okumanin INSAN karari.
 

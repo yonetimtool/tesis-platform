@@ -136,6 +136,19 @@ def test_parola_ile_TAMAMLA_ve_gir(client, world, owner_conn):
     assert lp.status_code == 200 and lp.json()["password_setup_required"] is False
 
 
+def test_DAVETLE_TAMAMLANAN_hesabin_EPOSTASI_DOGRULANMIS(client, world, owner_conn):
+    """(E2E 2026-09) Davet YALNIZ e-postayla gider (SMS kapali); jetonu
+    kullanmak adresin kanitidir. Bayrak kapali kaliyordu: "sifremi
+    unuttum" sessizce hic kod gondermiyor, tesis degistirme 403 veriyordu."""
+    uid, _ = _davet_yaz(owner_conn, world["slug_a"], jeton="eposta-kanit-daveti")
+    r = client.post("/davet/parola", json={
+        "jeton": "eposta-kanit-daveti", "new_password": "DavetParola1!"})
+    assert r.status_code == 200, r.text
+    with owner_conn.cursor() as cur:
+        cur.execute("SELECT eposta_dogrulandi FROM app_user WHERE id = %s", (uid,))
+        assert cur.fetchone()[0] is True
+
+
 def test_TEK_KULLANIM_ikinci_parola_410(client, world, owner_conn):
     _davet_yaz(owner_conn, world["slug_a"], jeton="tek-kullanim",
                daire=f"D-{uuid.uuid4().hex[:4]}")
@@ -162,7 +175,7 @@ def test_sakin_eklemede_DAVET_gonderilir(client, world):
     kanal E-POSTA; SMS kapali oldugu icin denenmez."""
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
     r = client.post("/residents", headers=yon, json={
-        "telefon": _tel(), "unit_no": f"DV-{uuid.uuid4().hex[:4]}", "email": _p197_mail()})
+        "telefon": _tel(), "blok": "A", "unit_no": f"DV-{uuid.uuid4().hex[:4]}", "email": _p197_mail()})
     assert r.status_code == 201, r.text
     davet = r.json()["davet"]
     assert davet is not None
@@ -189,7 +202,7 @@ def test_P188_davet_EPOSTA_birincil_SMS_kapaliyken_DENENMEZ(client, world, owner
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
     eposta = f"davet-{uuid.uuid4().hex[:8]}@example.com"
     r = client.post("/residents", headers=yon, json={
-        "telefon": _tel(), "unit_no": f"DV-{uuid.uuid4().hex[:4]}", "email": eposta})
+        "telefon": _tel(), "blok": "A", "unit_no": f"DV-{uuid.uuid4().hex[:4]}", "email": eposta})
     assert r.status_code == 201, r.text
     assert r.json()["davet"]["kanal"] == "eposta"
     user_id = r.json()["user_id"]
@@ -236,7 +249,7 @@ def test_davet_paneli_ROL_KAPISI(client, world, owner_conn):
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
     tel = _tel()
     created = client.post("/residents", headers=yon, json={
-        "telefon": tel, "unit_no": f"DV-{uuid.uuid4().hex[:4]}", "email": _p197_mail()})
+        "telefon": tel, "blok": "A", "unit_no": f"DV-{uuid.uuid4().hex[:4]}", "email": _p197_mail()})
     assert created.status_code == 201, created.text
     with owner_conn.cursor() as cur:
         cur.execute(
@@ -276,7 +289,7 @@ def test_P190_list_unsubscribe_tek_tik_davet_epostasini_DURDURUR(client, world, 
 
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
     created = client.post("/residents", headers=yon, json={
-        "telefon": _tel(), "unit_no": f"VZ-{uuid.uuid4().hex[:4]}",
+        "telefon": _tel(), "blok": "A", "unit_no": f"VZ-{uuid.uuid4().hex[:4]}",
         "email": f"vz-{uuid.uuid4().hex[:8]}@example.com"}).json()
     uid = created["user_id"]
 

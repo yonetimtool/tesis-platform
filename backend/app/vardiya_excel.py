@@ -94,6 +94,14 @@ def saat_coz(deger: str) -> dt.time | None:
     metin = (deger or "").strip()
     if not metin:
         return None
+    # (E2E 2026-09) "22,00" ve yalniz saat ("22") da KABUL: Excel sayi
+    # hucresi `22.00`'i "22" / "22,0" olarak dokebiliyor ve TR kullanicisi
+    # virgulle yaziyor; ikisi de "08:00 bicimi" hatasina dusuyordu.
+    if metin.replace(",", ".").replace(".", "", 1).isdigit() and "." in metin.replace(",", "."):
+        saat, _, dakika = metin.replace(",", ".").partition(".")
+        metin = f"{saat}:{dakika.ljust(2, '0')[:2]}"
+    elif metin.isdigit() and len(metin) <= 2:
+        metin = f"{metin}:00"
     for bicim in ("%H:%M", "%H:%M:%S", "%H.%M"):
         try:
             return dt.datetime.strptime(metin, bicim).time()

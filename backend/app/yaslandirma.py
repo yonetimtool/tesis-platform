@@ -65,6 +65,10 @@ class DaireYaslandirma:
     kalan_kurus: int
     borclu_ad: str | None = None
     borclu_user_id: uuid.UUID | None = None
+    #: (E2E 2026-09, BILDIRIM-14) En eski acik borcun SON ODEME TARIHI.
+    #: Hatirlatma metni "son odeme: {vade}" diyor ve oraya gun SAYISI
+    #: (`en_eski_gun`) yaziliyordu: "son odeme: 22".
+    en_eski_vade: date | None = None
 
 
 @dataclass
@@ -121,12 +125,14 @@ async def hesapla(
             daireler[borc.unit_id] = DaireYaslandirma(
                 unit_id=borc.unit_id, unit_no=satir.no,
                 en_eski_gun=gun, kova=kova, kalan_kurus=kalan,
+                en_eski_vade=borc.son_odeme_tarihi,
             )
         else:
             mevcut.kalan_kurus += kalan
             if gun > mevcut.en_eski_gun:
                 mevcut.en_eski_gun = gun
                 mevcut.kova = kova
+                mevcut.en_eski_vade = borc.son_odeme_tarihi
         if borc.hedef_user_id is not None:
             hedefler.setdefault(borc.unit_id, borc.hedef_user_id)
 

@@ -132,8 +132,20 @@ class _Carpan extends TextScaler {
   final TextScaler _taban;
   final double _carpan;
 
+  /// (E2E 2026-09) UST SINIR: carpim toplam olcegi en fazla 2.0'ye ceker
+  /// — ama cihazin KENDI olcegi zaten daha buyukse ona DOKUNMAZ (buyuk
+  /// mod hicbir zaman kucultmez). Onceden iOS erisilebilirlik boyutunda
+  /// (~3.1x) sonuc ~4x oluyor ve sabit yukseklikli kartlar tasiyordu.
+  static const tavan = 2.0;
+
   @override
-  double scale(double fontSize) => _taban.scale(fontSize) * _carpan;
+  double scale(double fontSize) {
+    final sistem = _taban.scale(fontSize);
+    final carpim = sistem * _carpan;
+    final sinir = fontSize * tavan;
+    if (carpim <= sinir) return carpim;
+    return sistem > sinir ? sistem : sinir;
+  }
 
   // `textScaleFactor` KULLANIMDAN KALDIRILDI ama `TextScaler` onu hala
   // SOYUT uye olarak istiyor; tanimlamamak derleme hatasi, duz tanimlamak
@@ -141,5 +153,5 @@ class _Carpan extends TextScaler {
   // gerekcesiyle bastirmak.
   @override
   // ignore: deprecated_member_use
-  double get textScaleFactor => _taban.textScaleFactor * _carpan;
+  double get textScaleFactor => scale(14) / 14;
 }

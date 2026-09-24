@@ -39,7 +39,7 @@ const ROL_ANAHTARI: Record<string, string> = {
   denetci: "kayitRolDenetci",
 };
 
-type Durum = "yukleniyor" | "gecerli" | "gecersiz" | "parola";
+type Durum = "yukleniyor" | "gecerli" | "gecersiz" | "parola" | "mobilTamam";
 
 interface Cozum {
   tesis_ad: string;
@@ -118,8 +118,15 @@ export default function DavetSayfasi() {
       });
       if (!r.ok) {
         const veri = (await r.json().catch(() => null)) as
-          | { error?: { message?: string } }
+          | { error?: { code?: string; message?: string } }
           | null;
+        // (E2E 2026-09) MOBIL-YALNIZ ROL: kayit TAMAM ama web oturumu
+        // acilmaz — basari ekrani + magaza baglantilari.
+        if (r.status === 403 && veri?.error?.code === "mobil_uygulama") {
+          setDurum("mobilTamam");
+          setBekliyor(false);
+          return;
+        }
         throw new Error(veri?.error?.message ?? String(r.status));
       }
       // Cerezler yazildi; kok rota rolu cozup dogru sayfaya atar.
@@ -140,6 +147,14 @@ export default function DavetSayfasi() {
 
       {durum === "yukleniyor" && (
         <p className="text-sm text-[color:var(--yz-text-2)]">{t("ortakYukleniyor")}</p>
+      )}
+
+      {durum === "mobilTamam" && (
+        <div className={`${cardCls} space-y-4 p-6`} data-test="davet-mobil-tamam">
+          <h1 className="text-xl font-semibold">{t("davetMobilTamamBaslik")}</h1>
+          <p className="text-sm text-[color:var(--yz-text)]">{t("davetMobilTamamMetin")}</p>
+          <MagazaDugmeleri />
+        </div>
       )}
 
       {durum === "gecersiz" && (

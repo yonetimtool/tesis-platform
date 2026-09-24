@@ -193,19 +193,41 @@ async def sayac_ile_borclandir(
     if ana is None:
         raise APIError(422, "invalid_reference", "ana_sayac_bulunamadi")
 
+    # (E2E 2026-09, TESIS-01) IKI GIRDI BICIMI, TEK HESAP:
+    #   * `bolum_tuketimleri` — istemci tuketimi kendisi hesapladi (web),
+    #   * `bolum_okumalari`   — istemci ENDEKS okudu (mobil saha ekrani);
+    #     tuketim = yeni okuma - sayacin onceki okumasi, SUNUCUDA.
+    # Onceden mobil endeksi tuketim diye gonderiyordu: onceki okuma 1450,
+    # yeni 1462 olan daireye 12 degil 1462 m3 borc yazildi (71.000 TL).
+    if body.bolum_okumalari and body.bolum_tuketimleri:
+        raise APIError(422, "validation_error", "sayac_girdi_bicimi_tek")
+    girdiler = body.bolum_okumalari or body.bolum_tuketimleri
+    if not girdiler:
+        raise APIError(422, "validation_error", "sayac_girdi_bicimi_tek")
     sayaclar = (
         (
             await db.execute(
-                select(SayacBolum).where(
-                    SayacBolum.id.in_(list(body.bolum_tuketimleri.keys()))
-                )
+                select(SayacBolum).where(SayacBolum.id.in_(list(girdiler.keys())))
             )
         ).scalars().all()
     )
-    if len(sayaclar) != len(body.bolum_tuketimleri):
+    if len(sayaclar) != len(girdiler):
         raise APIError(422, "invalid_reference", "bolum_sayaci_bulunamadi")
 
-    tuketimler = [float(body.bolum_tuketimleri[s.id]) for s in sayaclar]
+    if body.bolum_okumalari:
+        tuketimler = []
+        for s in sayaclar:
+            yeni = float(body.bolum_okumalari[s.id])
+            if s.ilk_okuma is None:
+                # Onceki okuma YOKSA tuketim tanimsizdir; endeksin tamamini
+                # tuketim saymak ayni fahis borcu uretirdi.
+                raise APIError(422, "validation_error", "sayac_onceki_okuma_yok")
+            onceki = float(s.ilk_okuma)
+            if yeni < onceki:
+                raise APIError(422, "validation_error", "sayac_okuma_geri")
+            tuketimler.append(yeni - onceki)
+    else:
+        tuketimler = [float(body.bolum_tuketimleri[s.id]) for s in sayaclar]
     borclar, _ortak = sayac_tuketim_dagitimi(
         float(body.ana_tuketim),
         tuketimler,
@@ -240,11 +262,24 @@ async def sayac_ile_borclandir(
             kalemler.append(
                 (sayac.unit_id, uuid.UUID(hedef) if hedef else None, body.donem, borc)
             )
-    if olusan:
+    # (E2E 2026-09, TESIS-01) OKUMA SAKLANIR: sayacin "onceki okuma"si yeni
+    # endekse ilerler — bir sonraki donemin tuketimi buradan hesaplanir.
+    # Okuma gecmisi denetim kaydinda (asagida `okumalar`) durur.
+    okumalar: dict[str, dict] = {}
+    if body.bolum_okumalari:
+        for s in sayaclar:
+            yeni = float(body.bolum_okumalari[s.id])
+            okumalar[str(s.id)] = {
+                "onceki": float(s.ilk_okuma), "yeni": yeni,
+            }
+            s.ilk_okuma = yeni
+        await db.flush()
+    if olusan or okumalar:
         await audit_user(
             db, user, Action.DUES_ASSESSMENT_CREATE,
             resource_type="dues_assessment",
-            meta={"kaynak": "sayac", "count": olusan, "ana_sayac": str(ana.id)},
+            meta={"kaynak": "sayac", "count": olusan, "ana_sayac": str(ana.id),
+                  **({"okumalar": okumalar} if okumalar else {})},
         )
     # (P191 §2) Sayac borclandirmasi da sakine bildirilir.
     await aidat_bildir(db, tenant_id=user.tenant_id, kalemler=kalemler)

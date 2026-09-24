@@ -2758,11 +2758,16 @@ paths:
               $ref: "#/components/schemas/LoginRequest"
       responses:
         "200":
-          description: Basarili
+          description: >
+            Basarili. (E2E 2026-09) GECICI KOD tutarsa oturum ACILMAZ:
+            PhoneLoginResponse (`password_setup_required=true` + `setup_token`)
+            doner; istemci `/auth/set-password` ile kalici parolayi kurar.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TokenPair"
+                oneOf:
+                  - $ref: "#/components/schemas/TokenPair"
+                  - $ref: "#/components/schemas/PhoneLoginResponse"
         "400": { $ref: "#/components/responses/BadRequest" }
         "401":
           description: Hatali kimlik bilgisi
@@ -2846,7 +2851,11 @@ paths:
       description: |
         Yonetici (veya admin) daire + sakin hesabini tek adimda acar. Ayni
         `unit_no` varsa YENI daire acilmaz, mevcuta baglanir (ayni dairede
-        coklu sakin). Yanittaki `temp_code` YALNIZ BU YANITTA bir kez duz
+        coklu sakin). (E2E 2026-09 / TESIS-18) Daire YOKSA: `blok` verildiyse
+        daire tekil `POST /units` ile ayni kanonik no ile acilir ("12" + A ->
+        "A-12"); `blok` yoksa 422 `invalid_reference` (bloksuz hayalet daire
+        acilmaz — ice aktarimdaki "Daire bulunamadi" ile tutarli).
+        Yanittaki `temp_code` YALNIZ BU YANITTA bir kez duz
         metin doner — yonetici sakine iletir; sunucuda bcrypt hash'i saklanir
         ve sakin kalici parolasini belirleyince gecersizlesir.
         RBAC: admin + yonetici (unit CRUD'un admin-only olmasindan ayri,
@@ -2958,6 +2967,27 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
+
+  # (E2E 2026-09) CIKIS — oturumu SUNUCUDA kapatir.
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: Cikis — refresh ailesini ve erisim jetonunu gecersiz kilar
+      description: >
+        Bearer istege baglidir (suresi dolmus oturumla da cikilabilir).
+        `her_yerden=true` gecerli bir erisim jetonuyla kullanicinin TUM
+        jetonlarini gecersiz kilar. Gecersiz jetonla da 204 doner.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CikisIstek"
+      responses:
+        "204":
+          description: Oturum kapatildi
+        "400": { $ref: "#/components/responses/BadRequest" }
 
   # ----------------------------------------------------------------- #
   # (P155r2 / §3) YONETICI SELF-SIGNUP — tesis UYGULAMADAN acilir.
@@ -4439,6 +4469,12 @@ paths:
     post:
       tags: [checkpoints]
       summary: Checkpoint olustur (nfc_tag_uid eslemesi dahil)
+      description: |
+        (E2E 2026-09) GUVENLIK-05: `nfc_tag_uid` KANONIK bicimde saklanir —
+        bosluk, ':' ve '-' atilir, BUYUK harfe cevrilir (`04:a1:b2` ->
+        `04A1B2`). Ayni etiketin farkli yazimi 409 `nfc_uid_zaten_kayitli`;
+        ayraclar atilinca bos kalan UID 422 `nfc_uid_gecersiz`. PATCH ve
+        `?nfc_tag_uid=` sorgusu da ayni kurali uygular.
       requestBody:
         required: true
         content:
@@ -6044,6 +6080,11 @@ paths:
         edene onay push'u denenir (data: tip=rezervasyon, rezervasyon_id).
         CAKISMA: ayni alanin ONAYLI rezervasyonuyla kesisen slot 409 — nihai
         guvence INSERT anindaki DB EXCLUDE kisiti (yaris-guvenli).
+        (E2E 2026-09 / TESIS-12) IZGARA + AZAMI SURE: baslangic ve sure
+        alanin `slot_dakika` izgarasina (acilistan itibaren) hizali olmali
+        (aksi 422 `rezervasyon_izgara_disi`); tek rezervasyon en fazla 3 slot
+        (aksi 422 `rezervasyon_azami_sure`). Gunluk kota kaydi sayar; azami
+        sure olmadan tek kayit alani butun gun kapatabiliyordu.
         ZAMANLAMA (slot baslangicina gore, tenant tz):
           * 24 saat penceresi: slota <24s kala rezerve edilir; erken -> 422
             "Rezervasyon en erken 24 saat kala yapilabilir."; gecmis slot -> 422.
@@ -6662,6 +6703,11 @@ paths:
         Gorev `adim_sirali` ise onceki adimlar bitmeden 409 doner.
         Bildirim ESIKLIDIR: ilk adim ve 30 dakikada bir, arada biriken
         ilerlemeyi TOPLU tasiyarak.
+        (E2E 2026-09) SON adim tamamlaninca gorev KAPANIR: son adimin
+        kanitiyla (tamamlayan, zaman, foto, not) bir tamamlama kaydi
+        uretilir ve `gorev_tamamlandi` bildirimi gider (ara ilerleme
+        bildirimi gitmez). Periyodik olmayan ve zaten tamamlanmis goreve
+        ikinci kayit acilmaz. `foto_key` kendi tenant on ekinde olmali.
       requestBody:
         required: true
         content:
@@ -6737,8 +6783,17 @@ paths:
         `foto_key` OLMADAN tamamlama **422** doner (anlamli mesajla).
 
         NFC eslesmesi NORMALIZE (mobil §11 #3): gorevin checkpoint'i varsa
-        gonderilen `nfc_tag_uid` strip + upper sonrasi karsilastirilir
-        (buyuk/kucuk harf, bas/son bosluk farki 422 dusurmez).
+        gonderilen `nfc_tag_uid` normalize edilip karsilastirilir
+        (buyuk/kucuk harf, bosluk, ':' / '-' ayraci farki 422 dusurmez).
+
+        (E2E 2026-09):
+        * `foto_key: ""` / bosluk = foto YOK (foto_zorunlu'da 422); dolu
+          anahtar kendi tenant on ekinde olmali (`foto_key_alan_disi` 422).
+        * Checkpoint'e bagli gorevi SAHA rolu `nfc_tag_uid` olmadan
+          kapatamaz: 422 `gorev_nfc_zorunlu` (yonetim muaf).
+        * Gorevin tamamlanmamis alt adimi varsa 409
+          `gorev_adimlari_tamamlanmadi`. Son adim tamamlaninca gorev
+          ZATEN kapanir (bkz. `/adimlar/{step_id}/tamamla`).
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
@@ -7873,6 +7928,16 @@ paths:
           description: >
             (P225) true: yalniz kurulumu TAMAMLANMIS, false: yalniz
             BEKLEYEN. Bos: hepsi. Yarim kalmis kurulumlari bulmak icin.
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200 }
+          description: >
+            (E2E 2026-09) Sayfa boyu. Verilmezse TUM liste doner (geriye
+            uyum). Suzgecler sayfadan ONCE uygulanir.
+        - name: offset
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+          description: (E2E 2026-09) Atlanacak satir sayisi.
       tags: [tenant]
       summary: Admin — tum tesisler (id + ad + kurulum durumu)
       responses:
@@ -12734,6 +12799,13 @@ paths:
     post:
       tags: [aidat]
       summary: Daire olustur (admin)
+      description: |
+        (E2E 2026-09 / TESIS-16 + ANA-4) `no` YALNIZ RAKAMSA toplu olusturmayla
+        ayni bicime getirilir: `{blok}-{no}` ("11" + A -> "A-11"). `no` tesiste
+        kayitli BASKA bir blogun onekini tasiyorsa ("B-12", blok A) 422
+        `daire_no_blok_uyusmuyor`. Ayni kural `PATCH /units/{id}` `no` icin de
+        gecerli. Daire no tesis genelinde tektir; 409 metni cakisan numarayi
+        ve blok onekini soyler.
       requestBody:
         required: true
         content:
@@ -14063,6 +14135,12 @@ paths:
         GUVENLIK SINIRI: `resident` rolu icin sorgu kendi dairelerine
         kisitlanir; ortak alan cihazlari (unit_id NULL) da DAHIL DEGIL.
         Ayni kapi `/komut` ucunda kimlik bazinda tekrar zorlanir (IDOR).
+
+        (E2E 2026-09) SAHA ROLLERI (security, tesis_gorevlisi,
+        guvenlik_amiri) YALNIZ ortak alan cihazlarini gorur — sakinin
+        dairesindeki kapi kilidi saha rolune gorunmez. Yonetim DISINDAKI
+        roller kapali bolumun cihazini hic gormez. Her satir `bolum`
+        alani tasir (tip -> bolum eslemesi sunucuda, `TIP_BOLUM`).
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -14104,7 +14182,11 @@ paths:
       summary: Cihaza komut — HER ZAMAN denetim kaydi
       description: |
         403: cihaz baskasinin dairesinde (ya da ortak alanda) — sakin
-        icin. 404 DEGIL 403, cunku cihaz VARDIR.
+        icin; (E2E 2026-09) saha rolleri icin cihaz bir DAIREDE. 404 DEGIL
+        403, cunku cihaz VARDIR.
+
+        409 `akilli_ev_bolum_kapali` (E2E 2026-09): cihazin bolumu tesiste
+        kapali — yonetim (admin/yonetici) DISINDAKI roller icin.
 
         422: cihaz TIPI bu eylemi desteklemiyor (duman dedektorune "ac"
         demek gibi). Kapi bizde: kopruye gonderip anlasilmaz bir hata
@@ -14116,7 +14198,8 @@ paths:
             schema: { $ref: "#/components/schemas/AkilliEvKomutIn" }
       responses:
         "200": { description: sonuc }
-        "403": { description: baska dairenin cihazi }
+        "403": { description: baska dairenin cihazi / saha rolu icin daire cihazi }
+        "409": { description: cihazin bolumu kapali (akilli_ev_bolum_kapali) }
         "422": { description: tip bu eylemi desteklemiyor }
   /akilli-ev/bolumler:
     get:
@@ -14882,6 +14965,14 @@ paths:
         (P24 DORT KADEME: 0 yesil, 1-2 sari, 3-4 kirmizi, 5+ mor).
         residentlar sayilari GOREMEZ (403);
         yapi gorunumu icin /building-map (rol-farkinda) kullanilir.
+        (E2E 2026-09) `?kategori=` yalniz o turdeki acik sikayetleri sayar.
+      parameters:
+        - name: kategori
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [gurultu, kapi_onu_ayakkabi, zarar_verme, goruntu_kirliligi, diger]
       responses:
         "200":
           description: Yogunluk
@@ -14919,6 +15010,14 @@ paths:
         blogunun yapisini (sayim/renk null — sikayet secici); security/
         tesis_gorevlisi tum yapiyi (sayim/renk null). Yerlesimi eksik daireler
         'unplaced'. complainant hicbir role donmez.
+        (E2E 2026-09) `?kategori=` sayim/renk yalniz o turden hesaplanir.
+      parameters:
+        - name: kategori
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [gurultu, kapi_onu_ayakkabi, zarar_verme, goruntu_kirliligi, diger]
       responses:
         "200":
           description: Bina haritasi
@@ -15506,6 +15605,21 @@ paths:
               properties:
                 stream_url: { type: string }
                 tur: { type: string, enum: [rtsp] }
+                camera_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+                  description: >
+                    (E2E 2026-09 / GUVENLIK-15) Duzenlemede KAYITLI kimlik:
+                    sunucu kameranin sifreli parolasini adrese takar — yalniz
+                    adres kaydin (ana ya da alt akis) AYNI sema/konak/portunu
+                    gosteriyorsa. Parola hicbir yanitta donmez.
+                stream_kullanici: { type: string, nullable: true, maxLength: 200 }
+                stream_parola:
+                  type: string
+                  nullable: true
+                  maxLength: 200
+                  description: Ayri kimlik — `camera_id`den onceliklidir.
       responses:
         "200":
           description: Kare alindi
@@ -15737,7 +15851,11 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "422": { $ref: "#/components/responses/ValidationError" }
         "502":
-          description: "`kamera_gecit_yok` / `kamera_yayin_hazir_degil`"
+          description: >
+            `kamera_gecit_yok` (server_config) / `kamera_kayit_oynatilamadi`
+            (E2E 2026-09 / GUVENLIK-04: NVR bu aralik icin goruntu vermedi —
+            eskiden yanlislikla canli yayin metni `kamera_yayin_hazir_degil`
+            donuyordu) / `kamera_kodek_desteklenmiyor` (codec_unsupported)
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "503":
@@ -15760,8 +15878,11 @@ paths:
         RTSP kamerayi MediaMTX gecidi HLS'e cevirir; bu uc gecide kimlik-
         kapili vekildir (istemci gecidi/RTSP adresini gormez). Gecit
         `sourceOnDemand` calisir: kimse izlemezken RTSP cekilmez. Ayni anda
-        en cok `KAMERA_CANLI_SINIR` (varsayilan 3) farkli kamera donusturulur
-        (asimda 429). MediaMTX yapilandirilmamissa 503 `kamera_canli_kapali`.
+        TESIS BASINA en cok `KAMERA_CANLI_SINIR` (varsayilan 3), platform
+        genelinde en cok `KAMERA_CANLI_GENEL_SINIR` (varsayilan 30) farkli
+        kamera donusturulur (asimda 429; E2E 2026-09 / GUVENLIK-16 — eskiden
+        tek sinir TUM tesislere uygulaniyordu). MediaMTX yapilandirilmamissa
+        503 `kamera_canli_kapali`.
       responses:
         "200":
           description: HLS playlist ya da segment
@@ -16899,7 +17020,7 @@ components:
         hesap parolasiz acilir ve kisi DAVET (Tesis ID) ile kendi kimligini kurar.
       required: [ad, telefon, email, role]
       properties:
-        ad: { type: string }
+        ad: { type: string, maxLength: 150 }
         telefon:
           type: string
           description: GLOBAL benzersiz giris anahtari (E.164 normalize)
@@ -16944,7 +17065,7 @@ components:
         (P186) `password` YOK — yonetici bir kullanicinin parolasini
         degistiremez; kullanici kendi `PATCH /me/password` yolunu kullanir.
       properties:
-        ad: { type: string }
+        ad: { type: string, maxLength: 150 }
         email: { type: string, format: email }
         telefon: { type: string, nullable: true }
         aranabilir: { type: boolean }
@@ -17667,6 +17788,9 @@ components:
         items:
           type: array
           items: { $ref: "#/components/schemas/TenantAdminListItem" }
+        toplam:
+          type: integer
+          description: (E2E 2026-09) Suzgece uyan tum tesis sayisi (sayfa degil).
     TenantSetupRequest:
       type: object
       required: [ad]
@@ -18007,6 +18131,11 @@ components:
         metin:     { type: string, nullable: true }
         dosya_key: { type: string, nullable: true }
         dosya_adi: { type: string, nullable: true }
+        dosya_url:
+          type: string
+          nullable: true
+          description: (E2E 2026-09) Kisa omurlu imzali okuma adresi; yalniz
+            kendi tenant onekli anahtarlarda dolu.
         olusturan_ad:
           type: string
           nullable: true
@@ -18234,6 +18363,15 @@ components:
           type: array
           default: []
           items: { $ref: "#/components/schemas/IceAktarimHata" }
+        atlananlar:
+          type: array
+          default: []
+          description: >
+            (E2E 2026-09 / TESIS-10) Atlanan satirlar satir numarasi + sebeple
+            (`hata` = sebebin istek dilindeki metni). Eskiden yalniz `atlanan`
+            sayisi donuyordu. Onizleme ve gercek aktarim AYNI listeyi uretir
+            (dosya ici telefon/e-posta yinelemesi kuru kosumda da izlenir).
+          items: { $ref: "#/components/schemas/IceAktarimHata" }
     IceAktarimKosum:
       type: object
       required: [id, tur, satir_sayisi, olusan, atlanan, hatali, durum, created_at]
@@ -18316,7 +18454,11 @@ components:
       type: object
       required: [shift_id, shift_ad, baslangic_saat, bitis_saat]
       properties:
-        shift_id: { type: string, format: uuid }
+        shift_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: (E2E 2026-09) Sablonsuz (serbest) vardiyada null.
         shift_ad: { type: string }
         baslangic_saat: { type: string }
         bitis_saat: { type: string }
@@ -18452,6 +18594,11 @@ components:
           description: >
             FALSE = HICBIR SEY YAZILMADI (cakisma var, kullanici henuz
             karar vermedi).
+        parti_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: (E2E 2026-09) `parti/{id}/geri-al` ile geri alinir.
         eklenen: { type: integer }
         cakisan: { type: integer }
         gunler:
@@ -18938,7 +19085,7 @@ components:
           type: string
           nullable: true
           description: Yalniz YENI acilan daireye islenir
-        ad: { type: string, example: "Ayse Yilmaz" }
+        ad: { type: string, maxLength: 150, example: "Ayse Yilmaz" }
         telefon:
           type: string
           description: GLOBAL benzersiz giris anahtari (E.164 normalize)
@@ -19027,6 +19174,11 @@ components:
       required: [refresh_token]
       properties:
         refresh_token: { type: string }
+    CikisIstek:
+      type: object
+      properties:
+        refresh_token: { type: string, nullable: true, maxLength: 4096 }
+        her_yerden: { type: boolean, default: false }
     TokenPair:
       type: object
       required: [access_token, refresh_token, token_type, expires_in]
@@ -20001,6 +20153,19 @@ components:
           type: string
           nullable: true
           description: Gonderen kullanicinin adi (liste/detayda join ile)
+        hedef_roller:
+          type: array
+          items: { type: string }
+          description: "(E2E 2026-09, BILDIRIM-12) Hedef roller; bos = herkes."
+        hedef_sakin_tipi:
+          type: string
+          nullable: true
+          enum: [malik, kiraci, null]
+          description: Yalniz sakinlere uygulanir; null = ayrim yok.
+        hedef_bloklar:
+          type: array
+          items: { type: string }
+          description: Yalniz sakinlere uygulanir (unit.blok); bos = tum bloklar.
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
     AnnouncementCreate:
@@ -20013,6 +20178,27 @@ components:
           type: string
           nullable: true
           description: "Opsiyonel gorsel: once /uploads/presign ile alinan obje anahtari"
+        hedef_roller:
+          type: array
+          maxItems: 6
+          items:
+            type: string
+            enum: [security, guvenlik_amiri, tesis_gorevlisi, resident, yonetici, admin]
+          description: |
+            (E2E 2026-09, BILDIRIM-12) HEDEF KITLE — bos = herkes. Push YALNIZ
+            hedefe gider (olusturan haric) ve hedef disi kullanici duyuruyu
+            listede GORMEZ (tekil GET 404); yonetim hepsini gorur. Sonradan
+            degistirilemez (PATCH tasimaz).
+        hedef_sakin_tipi:
+          type: string
+          nullable: true
+          enum: [malik, kiraci, null]
+          description: Yalniz sakinlere; blokla AYNI dairede birlikte aranir.
+        hedef_bloklar:
+          type: array
+          maxItems: 100
+          items: { type: string }
+          description: Yalniz sakinlere (unit.blok); bos = tum bloklar.
     AnnouncementUpdate:
       type: object
       properties:
@@ -21196,8 +21382,8 @@ components:
       type: object
       required: [ad]
       properties:
-        ad: { type: string }
-        aciklama: { type: string, nullable: true }
+        ad: { type: string, maxLength: 200 }
+        aciklama: { type: string, nullable: true, maxLength: 5000 }
         atanan_user_id: { type: string, format: uuid, nullable: true }
         checkpoint_id: { type: string, format: uuid, nullable: true }
         kategori_id: { type: string, format: uuid, nullable: true, description: "null = Diğer" }
@@ -21218,8 +21404,8 @@ components:
       type: object
       minProperties: 1
       properties:
-        ad: { type: string }
-        aciklama: { type: string, nullable: true }
+        ad: { type: string, maxLength: 200 }
+        aciklama: { type: string, nullable: true, maxLength: 5000 }
         atanan_user_id: { type: string, format: uuid, nullable: true }
         checkpoint_id: { type: string, format: uuid, nullable: true }
         kategori_id: { type: string, format: uuid, nullable: true }
@@ -21419,6 +21605,15 @@ components:
           nullable: true
           minimum: 1
           description: "Istemci-beyanli dosya boyutu (byte); max ~8MB (asarsa 422). Best-effort — sunucu dosyayi bizzat olcmez."
+        amac:
+          type: string
+          enum: [gorsel, belge]
+          default: gorsel
+          description: >
+            (E2E 2026-09) `belge` = ek sistemi (not/dosya). Bu amacta
+            gorsellere ek olarak `application/pdf` kabul edilir ve anahtar
+            `{tenant}/belge/<hex>.pdf` olur. `gorsel` (varsayilan) amacinda
+            PDF 422 — foto_key bekleyen yerlere belge sizmaz.
     PresignResponse:
       type: object
       required: [foto_key, upload_url, method, expires_in]
@@ -22289,6 +22484,16 @@ components:
             bir varsayilan, gecmis butun defteri bir gecede "odenmemis"
             gostermek olurdu.
         created_at: { type: string, format: date-time }
+        iptal_edildi:
+          type: boolean
+          default: false
+          description: >
+            (E2E 2026-09, FINANS-21) Satir TERS KAYITLA iptal edildi mi.
+            Istemci "Iptal edildi" gosterir ve "Iptal et" dugmesini cizmez.
+        unit_no:
+          type: string
+          nullable: true
+          description: (E2E 2026-09, FINANS-21) Daire etiketi — kimin odedigi.
     FinansalHareketListe:
       type: object
       required: [meta, items]
@@ -23004,9 +23209,18 @@ components:
         toplam_kurus: { type: integer, format: int64 }
     SayacBorcIstek:
       type: object
-      required: [donem, gelir_gider_tanim_id, ana_sayac_id, ana_tuketim, birim_fiyat_kurus, bolum_tuketimleri]
+      required: [donem, gelir_gider_tanim_id, ana_sayac_id, ana_tuketim, birim_fiyat_kurus]
+      description: >
+        (E2E 2026-09, TESIS-01) `bolum_tuketimleri` (tuketim) YA DA
+        `bolum_okumalari` (endeks) — tam olarak biri. Okuma verilirse tuketim
+        sunucuda `yeni - onceki okuma` olarak hesaplanir ve sayacin onceki
+        okumasi ilerletilir; geri sayan okuma 422 `sayac_okuma_geri`.
       properties:
-        donem: { type: string, maxLength: 7 }
+        donem: { type: string, maxLength: 7, pattern: "^20\\d{2}-(0[1-9]|1[0-2])$" }
+        bolum_okumalari:
+          type: object
+          description: "daire sayac id -> YENI okuma (endeks)"
+          additionalProperties: { type: number, format: double }
         gelir_gider_tanim_id: { type: string, format: uuid }
         ana_sayac_id: { type: string, format: uuid }
         ana_tuketim: { type: number, format: double, minimum: 0 }

@@ -90,9 +90,10 @@ NfcHatasi iosHatasiCoz(NfcReaderErrorCodeIos kod) => switch (kod) {
 /// Uint8List UID'i sozlesme (contracts/openapi.yaml) formatina cevirir:
 /// BUYUK HARF, IKI NOKTA (`:`) AYRACLI. Ornek: [0x04, 0xA3, 0xB2] -> "04:A3:B2".
 ///
-/// Backend `nfc_tag_uid`'i tam string olarak eslestirir (Checkpoint/ScanCreate
-/// ornekleri "04:A3:B2:C1:90:00"); mobil de ayni bicimi uretmezse okutma
-/// hicbir checkpoint ile eslesmez (404).
+/// (E2E 2026-09) Backend artik UID'yi ayraclardan ve harf buyuklugunden
+/// BAGIMSIZ eslestirir (`norm_nfc`: bosluk/':'/'-' at + BUYUK harf) ve
+/// kontrol noktasini kanonik (ayracsiz) saklar; bu bicim yalniz EKRANDA
+/// okunakli gostermek icindir.
 String bytesToHex(Uint8List bytes) {
   return bytes
       .map((b) => b.toRadixString(16).padLeft(2, '0').toUpperCase())

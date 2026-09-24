@@ -45,47 +45,48 @@ from .models import (
 )
 
 
-async def _acik_borclar(db: AsyncSession) -> dict[uuid.UUID, list[Borc]]:
-    """Daire başına AÇIK tahakkuklar (kalan tutarıyla).
+async def _acik_borclar(
+    db: AsyncSession,
+) -> dict[uuid.UUID, list[tuple[uuid.UUID | None, Borc]]]:
+    """Daire başına AÇIK tahakkuklar (kalan tutarıyla) + borcun HEDEFİ.
 
-    Kalan = tahakkuk - o tahakkuka yazılmış BAŞARILI ödemeler. Kapanmış
+    Kalan = tahakkuk - o tahakkuka mahsup edilmiş ödemeler. Kapanmış
     borçlar listeye GİRMEZ: FIFO'nun "en eski açık borç" tanımı budur.
+
+    (E2E 2026-09, FINANS-04/05) Üç düzeltme:
+      * "Ödenen" kalem düzeyindeki TEK tanımdan (`defter.tahakkuk_odenen`,
+        kalemsiz daire ödemesinin FIFO dağılımı DAHİL). Vezneden kalemsiz
+        ödenmiş aidat açık sayılıyor ve malikin havalesi ona yazılıyordu.
+      * Ters kayıtlı tahakkuk (`defter.gecerli_tahakkuk`) borç sayılmaz.
+      * Borcun hedefi döner: aday yalnız KENDİ ve dairenin hedefsiz
+        borçlarını alır (bkz. `adaylari_topla`).
     """
-    # (P192 §1) "Ödenen" tanımı TEK YERDE: `defter.tahsilat_etkisi()`.
-    # İkinci bir kopyasını burada yazmak, iade/iptal kurallarının bir gün
-    # ayrışması demekti.
-    _etki = defter_modulu.tahsilat_etkisi().subquery()
-    odenen = (
-        select(
-            _etki.c.assessment_id.label("aid"),
-            func.coalesce(func.sum(_etki.c.etki), 0).label("odenen"),
-        )
-        .where(_etki.c.assessment_id.isnot(None))
-        .group_by(_etki.c.assessment_id)
-        .subquery()
+    kalemler = list(
+        (
+            await db.execute(
+                select(DuesAssessment).where(*defter_modulu.gecerli_tahakkuk())
+            )
+        ).scalars().all()
     )
-    rows = (
-        await db.execute(
-            select(DuesAssessment, func.coalesce(odenen.c.odenen, 0))
-            .outerjoin(odenen, odenen.c.aid == DuesAssessment.id)
-            .order_by(DuesAssessment.donem)
-        )
-    ).all()
-    sonuc: dict[uuid.UUID, list[Borc]] = {}
-    for tahakkuk, odenen_kurus in rows:
-        kalan = int(tahakkuk.tutar_kurus) - int(odenen_kurus or 0)
-        if kalan <= 0:
+    kalan = await defter_modulu.kalem_kalanlari(db, kalemler)
+    sonuc: dict[uuid.UUID, list[tuple[uuid.UUID | None, Borc]]] = {}
+    for tahakkuk in sorted(kalemler, key=defter_modulu.fifo_sirasi):
+        k = kalan.get(tahakkuk.id, 0)
+        if k <= 0:
             continue
         sonuc.setdefault(tahakkuk.unit_id, []).append(
-            Borc(
-                assessment_id=str(tahakkuk.id),
-                unit_id=str(tahakkuk.unit_id),
-                donem=tahakkuk.donem,
-                kalan_kurus=kalan,
-                vade=(
-                    tahakkuk.son_odeme_tarihi.isoformat()
-                    if tahakkuk.son_odeme_tarihi
-                    else None
+            (
+                tahakkuk.hedef_user_id,
+                Borc(
+                    assessment_id=str(tahakkuk.id),
+                    unit_id=str(tahakkuk.unit_id),
+                    donem=tahakkuk.donem,
+                    kalan_kurus=k,
+                    vade=(
+                        tahakkuk.son_odeme_tarihi.isoformat()
+                        if tahakkuk.son_odeme_tarihi
+                        else None
+                    ),
                 ),
             )
         )
@@ -147,7 +148,13 @@ async def adaylari_topla(db: AsyncSession) -> list[Aday]:
                 unit_id=str(unit_id),
                 odeme_kodu=kullanici.odeme_kodu,
                 bilinen_ibanlar=tuple(sorted(ibanlar.get(kullanici.id, set()))),
-                borclar=tuple(borclar.get(unit_id, [])),
+                # (E2E 2026-09, FINANS-05) ADAYIN BORCLARI = kendisine ya da
+                # daireye (hedefsiz) yazilmis olanlar. Dairenin TUM borclari
+                # verildiginde malikin havalesi kiracinin kalemine dagitildi.
+                borclar=tuple(
+                    b for hedef, b in borclar.get(unit_id, [])
+                    if hedef is None or hedef == kullanici.id
+                ),
             )
         )
     return adaylar

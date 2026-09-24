@@ -132,6 +132,10 @@ void main() {
         find.byKey(const ValueKey('bakim-kayit-yapan')), 'Kone Servis');
     await tester.enterText(
         find.byKey(const ValueKey('bakim-kayit-tutar')), '4800');
+    // (E2E 2026-09) Form fotograf dugmesiyle uzadi; test ekraninda
+    // dugme gorunur alanin disina dusebilir.
+    await tester.ensureVisible(find.byKey(const ValueKey('bakim-kayit-kaydet')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('bakim-kayit-kaydet')));
     await tester.pumpAndSettle();
 

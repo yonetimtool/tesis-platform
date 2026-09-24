@@ -42,6 +42,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import sys
 from typing import Any, Mapping
 
@@ -124,6 +125,68 @@ def guvenli_alanlar(params: Mapping[str, Any] | None) -> Any:
     return sorted((params or {}).keys())
 
 
+#: (E2E 2026-09 / GUVENLIK-01) `sema://kullanici:parola@` — adresin KIMLIK
+#: parcasi. Karakter sinifi `@`, `/`, bosluk ve tirnakta durur: ffmpeg
+#: ciktisinda adres tirnak icinde gelir ve parola `quote()` ile kacisli
+#: saklandigi icin (bkz. `kamera_kimlik.kimligi_uygula`) ham `@`/`/`
+#: TASIMAZ.
+_URL_KIMLIGI = re.compile(r"([A-Za-z][A-Za-z0-9+.\-]*://)[^\s/@'\"<>]+@")
+
+
+def maskele_url_kimligi(metin: str | None) -> str:
+    """Metindeki HER `sema://kul:parola@` parcasini `sema://***@` yapar.
+
+    (E2E 2026-09 / GUVENLIK-01) OLCULEN SIZINTI: ffmpeg basarisiz olunca
+    stderr'ine adresi AYNEN yaziyor (`Error opening input file
+    rtsp://kul:GizliParola77@...`) ve kamera ucu o ciktiyi uyari olarak
+    gunluge koyuyordu — kamera parolasi `api.log`da DUZ METIN duruyordu.
+
+    `LOG_PII`DEN BAGIMSIZ: parola KISISEL VERI degil SIRdir. `LOG_PII=1`
+    yerel gelistirmede mesaj govdesini gormek icindir; bir kamera ya da
+    NVR parolasini gunluge yazmanin hicbir teshis degeri yok ve anahtar
+    yanlislikla uretimde acik kalirsa bedeli sizinti olurdu.
+
+    Kullanici adi da maskelenir: kimlik bir CIFTTIR ve yarisini birakmak
+    kaba kuvvet denemesinin yarisini vermektir.
+    """
+    if not metin:
+        return metin or ""
+    return _URL_KIMLIGI.sub(r"\1***@", metin)
+
+
+class KimlikMaskeleFiltresi(logging.Filter):
+    """(E2E 2026-09 / GUVENLIK-01) HER gunluk satirinda URL kimligini maskeler.
+
+    TEK TEK CAGRI YERINDE MASKELEMEK YETMEZ: sizinti ffmpeg ciktisindan
+    geldi ama ayni adres bir istisna metninde (`httpx` hatasi, traceback)
+    ya da yarin eklenecek bir `logger.info("... %s", adres)` satirinda da
+    gecebilir. Filtre HANDLER'a takilir; yani cocuk logger'lardan yayilan
+    her kayit — traceback dahil — yazilmadan once buradan gecer.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:  # noqa: A003
+        try:
+            mesaj = record.getMessage()
+        except Exception:  # noqa: BLE001 — bicimlenemeyen kayit: dokunma
+            return True
+        maskeli = maskele_url_kimligi(mesaj)
+        if maskeli != mesaj:
+            record.msg = maskeli
+            record.args = None
+        if record.exc_info and not record.exc_text:
+            # Traceback'i SIMDI metne cevir ki maskelenebilsin; Formatter
+            # `exc_text` doluysa onu kullanir, yeniden uretmez.
+            record.exc_text = logging.Formatter().formatException(record.exc_info)
+        if record.exc_text:
+            record.exc_text = maskele_url_kimligi(record.exc_text)
+        return True
+
+
+def _maskeyi_tak(handler: logging.Handler) -> None:
+    if not any(isinstance(f, KimlikMaskeleFiltresi) for f in handler.filters):
+        handler.addFilter(KimlikMaskeleFiltresi())
+
+
 def yapilandir(seviye: str | None = None) -> None:
     """Kok logger'i kur — uvicorn'un KENDI kaydini bozmadan.
 
@@ -152,6 +215,16 @@ def yapilandir(seviye: str | None = None) -> None:
     )
     for ad in _SESSIZ_KUTUPHANELER:
         logging.getLogger(ad).setLevel(max(cozulen, logging.WARNING))
+    # (E2E 2026-09 / GUVENLIK-01) URL KIMLIGI MASKESI — kok handler'a VE
+    # uvicorn'un kendi handler'larina. Uvicorn'un bicimine/seviyesine
+    # DOKUNULMAZ (yukaridaki not); filtre yalniz metni maskeler.
+    # `uvicorn.error` yakalanmamis istisnanin traceback'ini yazar ve
+    # istisna metni bir adres tasiyabilir.
+    for handler in logging.getLogger().handlers:
+        _maskeyi_tak(handler)
+    for ad in ("uvicorn", "uvicorn.error", "uvicorn.access"):
+        for handler in logging.getLogger(ad).handlers:
+            _maskeyi_tak(handler)
 
     if gecersiz:
         logging.getLogger(__name__).warning(

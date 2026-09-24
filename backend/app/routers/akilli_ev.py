@@ -33,7 +33,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
 from ..audit import Action, audit_user
-from ..akilli_ev import TIP_EYLEM, eylem_gecerli, kopru
+from ..akilli_ev import TIP_EYLEM, eylem_gecerli, kopru, tip_bolumu
 from ..crud_helpers import get_or_404, translate_integrity
 from ..crypto import encrypt_secret
 from ..db import SessionLocal, set_tenant
@@ -75,6 +75,15 @@ router = APIRouter(prefix="/akilli-ev", tags=["akilli-ev"])
 _MANAGER = require_role("admin", "yonetici")
 #: Cihaz LISTESI daha genis: sakin kendi dairesini, guvenlik ortak
 #: alani gorur. Kapsam sorguda daraltilir.
+#:
+#: (E2E 2026-09) TESIS-04b: yorum boyleydi ama kod yalniz `resident`i
+#: daraltiyordu — security/tesis_gorevlisi/guvenlik_amiri sakinin
+#: dairesindeki KAPI KILIDINI listeleyip `kilit_ac` gonderebiliyordu
+#: (yalniz kopru ulasilamadigi icin acilmadi). Saha rolleri artik YALNIZ
+#: ortak alan (`unit_id IS NULL`) cihazlarini gorur ve kumanda eder;
+#: daire cihazi = yonetim + o dairenin sakini.
+_SAHA_ROLLERI = frozenset({"security", "tesis_gorevlisi", "guvenlik_amiri"})
+_YONETIM = frozenset({"admin", "yonetici"})
 _OKUR = require_role(
     "admin", "yonetici", "guvenlik_amiri", "security", "tesis_gorevlisi", "resident"
 )
@@ -109,8 +118,28 @@ def _cihaz_out(c: AkilliEvCihaz, daire_no: str | None = None) -> AkilliEvCihazOu
         id=c.id, kopru_id=c.kopru_id, ad=c.ad, tip=c.tip, unit_id=c.unit_id,
         daire_no=daire_no, alan=c.alan, dis_kimlik=c.dis_kimlik,
         son_durum=c.son_durum, son_veri_at=c.son_veri_at, aktif=c.aktif,
+        bolum=tip_bolumu(c.tip),
         eylemler=sorted(TIP_EYLEM.get(c.tip, frozenset())),
     )
+
+
+async def _daire_no(db: AsyncSession, unit_id: uuid.UUID | None) -> str | None:
+    """(E2E 2026-09) Olusturma/guncelleme yaniti `daire_no: null` donuyordu
+    (liste dolduruyordu) — istemci yeni satiri "ortak alan" sanabilirdi."""
+    if unit_id is None:
+        return None
+    return (
+        await db.execute(select(Unit.no).where(Unit.id == unit_id))
+    ).scalar_one_or_none()
+
+
+async def _acik_bolumler(db: AsyncSession) -> set[str]:
+    """Acik bolum anahtarlari. YOKLUK = KAPALI (`bolum_liste` ile ayni)."""
+    return {
+        r.bolum
+        for r in (await db.execute(select(AkilliEvBolumAyari))).scalars().all()
+        if r.acik
+    }
 
 
 # ============================== KOPRU ===================================== #
@@ -276,7 +305,7 @@ async def cihaz_olustur(
         db, user, Action.AKILLI_EV_YAZ, resource_type="akilli_ev_cihaz",
         resource_id=obj.id, meta={"islem": "olustur", "tip": obj.tip},
     )
-    return _cihaz_out(obj)
+    return _cihaz_out(obj, await _daire_no(db, obj.unit_id))
 
 
 @router.get("/cihazlar", response_model=AkilliEvCihazListResponse)
@@ -296,6 +325,17 @@ async def cihaz_liste(
                 meta=PageMetaOut(limit=limit, offset=offset, total=0), items=[]
             )
         kosullar.append(AkilliEvCihaz.unit_id.in_(daireler))
+    elif user.role in _SAHA_ROLLERI:
+        # (E2E 2026-09) TESIS-04b: saha YALNIZ ortak alan.
+        kosullar.append(AkilliEvCihaz.unit_id.is_(None))
+    if user.role not in _YONETIM:
+        # (E2E 2026-09) TESIS-13: kapali bolumun cihazi yonetim DISINA hic
+        # gorunmez (mobil de suzuyordu, ama sunucu suzmeyince uc dogrudan
+        # cagrilarak kapali bolum kullanilabiliyordu). Yonetim gorur: bolumu
+        # acmadan once cihazi kurup deneyebilmeli.
+        acik = await _acik_bolumler(db)
+        tipler = [t for t in TIP_EYLEM if tip_bolumu(t) in acik]
+        kosullar.append(AkilliEvCihaz.tip.in_(tipler))
 
     toplam = int(
         (
@@ -324,8 +364,14 @@ async def _cihaza_erisebilir(
     db: AsyncSession, user: AppUser, cihaz: AkilliEvCihaz
 ) -> bool:
     """IDOR KAPISI — kimlik elle yazilsa bile burada durur."""
-    if user.role != "resident":
+    if user.role in _YONETIM:
         return True
+    if user.role in _SAHA_ROLLERI:
+        # (E2E 2026-09) TESIS-04b: saha rolu daire cihazina (kapi kilidi!)
+        # erisemez; yalniz ortak alan.
+        return cihaz.unit_id is None
+    if user.role != "resident":
+        return False
     if cihaz.unit_id is None:
         return False
     return cihaz.unit_id in await _sakin_daireleri(db, user)
@@ -348,7 +394,7 @@ async def cihaz_guncelle(
         db, user, Action.AKILLI_EV_YAZ, resource_type="akilli_ev_cihaz",
         resource_id=obj.id, meta={"islem": "guncelle"},
     )
-    return _cihaz_out(obj)
+    return _cihaz_out(obj, await _daire_no(db, obj.unit_id))
 
 
 @router.delete("/cihazlar/{cihaz_id}", status_code=204)
@@ -386,6 +432,10 @@ async def cihaz_komut(
         raise APIError(403, "forbidden", "akilli_ev_cihaz_yetkisiz")
     if not eylem_gecerli(cihaz.tip, body.eylem):
         raise APIError(422, "validation_error", "akilli_ev_eylem_desteklenmiyor")
+    if user.role not in _YONETIM and tip_bolumu(cihaz.tip) not in await _acik_bolumler(db):
+        # (E2E 2026-09) TESIS-13: kapali bolum SUNUCUDA uygulanir. Yonetim
+        # muaf: kurulumda bolumu acmadan cihazi deneyebilmeli.
+        raise APIError(409, "conflict", "akilli_ev_bolum_kapali")
 
     kayit = await get_or_404(db, AkilliEvKopru, cihaz.kopru_id)
     sonuc = await run_in_threadpool(

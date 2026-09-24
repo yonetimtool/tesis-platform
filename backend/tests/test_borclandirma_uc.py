@@ -67,7 +67,7 @@ def _sakin(client, adm, unit_no, rol_tipi):
     """Sakin olustur — `/residents` DAIRE NO ve TELEFON ister (unit_id degil)."""
     _TEL[0] += 1
     r = client.post("/residents", headers=adm, json={
-        "ad": f"Sakin {_sfx()}", "unit_no": unit_no,
+        "ad": f"Sakin {_sfx()}", "blok": "A", "unit_no": unit_no,
         "telefon": f"+9055{_TEL[0]:08d}", "rol_tipi": rol_tipi, "email": _p197_mail()})
     assert r.status_code in (200, 201), r.text
     return r.json()

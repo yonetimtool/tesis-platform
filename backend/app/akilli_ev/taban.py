@@ -107,3 +107,32 @@ class KopruArayuzu(Protocol):
 
 def eylem_gecerli(tip: str, eylem: str) -> bool:
     return eylem in TIP_EYLEM.get(tip, frozenset())
+
+
+#: (E2E 2026-09) TESIS-13: cihaz TIPI -> hangi BOLUM anahtarinin altinda.
+#:
+#: OLCULEN: esleme yalniz MOBILDEYDI (P240 karari "tip -> bolum mobilde
+#: KODDA"); kapali bolumun cihazi sunucuda komut aliyordu. Ustelik mobil
+#: esleme sunucunun dokuz bolumunde OLMAYAN adlar uretiyordu
+#: (`kilit`, `aydinlatma`, `iklim`...) — kapi kilidi hicbir bolum acilsa
+#: da gorunmuyordu. Esleme artik TEK YERDE, burada; cihaz yanitinda
+#: `bolum` alani olarak istemciye gider. Yeni tip eklenirse buraya da
+#: yazilmali — yazilmazsa `enerji` sayilir (sessizce gizlenmez).
+TIP_BOLUM: Final[dict[str, str]] = {
+    "kilit": "kapi",
+    "vana": "kacak",
+    "sensor_su": "kacak",
+    "sensor_gaz": "yangin",
+    "sensor_duman": "yangin",
+    "termostat": "isitma",
+    "isik": "enerji",
+    "role": "enerji",
+    "sayac": "enerji",
+    "asansor": "ortak_alan",
+    "sulama": "ortak_alan",
+    "sensor_hareket": "protokol",
+}
+
+
+def tip_bolumu(tip: str) -> str:
+    return TIP_BOLUM.get(tip, "enerji")

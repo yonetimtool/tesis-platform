@@ -113,9 +113,11 @@ def davet_vazgec_coz(jeton: str) -> tuple[uuid.UUID, uuid.UUID] | None:
 def davet_bagi(duz_jeton: str) -> str:
     """`https://<portal>/davet/<jeton>` — taban ortam degiskeninden.
 
-    Taban `PORTAL_BASE_URL` ile ayarlanir (kod degismez); kanonik deger
-    `https://yonetiyor.com`."""
-    taban = settings.portal_base_url.rstrip("/")
+    Taban `DAVET_BASE_URL` ile ayarlanir (kod degismez); kanonik deger
+    `https://yonetiyor.com`. (E2E 2026-09) Onceden `portal_base_url`
+    (IDN) kullaniliyordu ve derin baglanti uygulamayi acmiyordu — gerekce
+    `config.davet_base_url` basliginda."""
+    taban = settings.davet_base_url.rstrip("/")
     return f"{taban}/davet/{duz_jeton}"
 
 

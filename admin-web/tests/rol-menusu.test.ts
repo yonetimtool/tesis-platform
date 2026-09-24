@@ -155,6 +155,8 @@ const BIRINCIL_UC: Record<string, string> = {
   "/panik": "GET /panik",
   "/akilli-ev": "GET /akilli-ev/cihazlar",
   "/bakim": "GET /bakim/ekipmanlar",
+  // (E2E 2026-09) Entegrasyon + diyafon sayfasi tesis yuzeyine tasindi.
+  "/integrations": "GET /integrations",
   "/arac-gecisleri": "GET /vehicle-passes",
   "/gorevlerim": "GET /tasks",
   "/kameralar": "GET /cameras",

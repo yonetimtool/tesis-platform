@@ -94,19 +94,74 @@ describe("Ziyaretçiler", () => {
     expect(c.some((x) => x.method === "POST")).toBe(false);
   });
 
-  it("KAYIT daire NUMARASI ile gonderilir", async () => {
+  it("KAYIT daire NUMARASI + HEDEF SAKIN ile gonderilir", async () => {
     // Kapida gorevli daire NUMARASINI bilir, kaydin kimligini degil.
-    const c = taklit({ "/api/visitors": { items: [] } });
+    //
+    // (E2E 2026-09 / GUVENLIK-14) Olculen: govde `{unit_no, ziyaretci_ad}`
+    // idi; `target_resident_user_id` sunucuda ZORUNLU oldugu icin her
+    // kayit 422 aliyordu. Daire artik ARANIR (numara VEYA sakin adi —
+    // mobildeki `units/ara`), sakin SECILIR.
+    const c = taklit({
+      "/api/visitors": { items: [] },
+      "/api/units/ara": [
+        {
+          id: "u-a12",
+          no: "A-12",
+          blok: "A",
+          sakinler: [
+            { user_id: "s-1", ad: "Ayşe Can" },
+            { user_id: "s-2", ad: "Mehmet Can" },
+          ],
+        },
+      ],
+    });
     ciz(ZiyaretcilerPage);
     await userEvent.click(
       await screen.findByRole("button", { name: "Yeni ziyaretçi girişi" }),
     );
     await userEvent.type(await screen.findByLabelText(/Ziyaretçi adı/i), "Ali Veli");
-    await userEvent.type(screen.getByLabelText(/Daire no/i), "A-12");
+    await userEvent.type(screen.getByLabelText(/Daire no veya sakin adı/i), "Can");
+    // SAKIN ADIYLA arama sunucuya gider (numara bilinmeyebilir).
+    await userEvent.click(await screen.findByRole("button", { name: /A-12/ }));
+    await waitFor(() =>
+      expect(c.some((x) => x.url.startsWith("/api/units/ara?q=Can"))).toBe(true),
+    );
+
+    // Iki sakin var: SECILMEDEN kayit GONDERILMEZ.
+    await userEvent.click(screen.getByRole("button", { name: /Girişi kaydet/i }));
+    expect(await screen.findByText(/bildirileceği sakini seçin/i)).toBeInTheDocument();
+    expect(c.some((x) => x.method === "POST")).toBe(false);
+
+    await userEvent.selectOptions(screen.getByLabelText(/Bildirilecek sakin/i), "s-2");
     await userEvent.click(screen.getByRole("button", { name: /Girişi kaydet/i }));
     await waitFor(() => {
       const post = c.find((x) => x.method === "POST");
-      expect(post?.body).toMatchObject({ unit_no: "A-12", ziyaretci_ad: "Ali Veli" });
+      expect(post?.body).toMatchObject({
+        unit_no: "A-12",
+        target_resident_user_id: "s-2",
+        ziyaretci_ad: "Ali Veli",
+      });
+    });
+  });
+
+  it("TEK SAKINLI dairede sakin OTOMATIK secilir", async () => {
+    const c = taklit({
+      "/api/visitors": { items: [] },
+      "/api/units/ara": [
+        { id: "u-b5", no: "B-5", blok: "B", sakinler: [{ user_id: "s-9", ad: "Zeynep" }] },
+      ],
+    });
+    ciz(ZiyaretcilerPage);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Yeni ziyaretçi girişi" }),
+    );
+    await userEvent.type(await screen.findByLabelText(/Ziyaretçi adı/i), "Kurye");
+    await userEvent.type(screen.getByLabelText(/Daire no veya sakin adı/i), "B-5");
+    await userEvent.click(await screen.findByRole("button", { name: /B-5/ }));
+    await userEvent.click(screen.getByRole("button", { name: /Girişi kaydet/i }));
+    await waitFor(() => {
+      const post = c.find((x) => x.method === "POST");
+      expect(post?.body).toMatchObject({ unit_no: "B-5", target_resident_user_id: "s-9" });
     });
   });
 });

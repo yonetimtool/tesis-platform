@@ -7,14 +7,15 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, Header, Query
-from sqlalchemy import func, or_, select, update
+from sqlalchemy import and_, case, func, or_, select, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, audit_user
 from ..errors import APIError
 from ..deps import get_tenant_db, require_role
 from ..hata_metinleri import istek_dili
-from ..models import AppUser, Notification
+from ..models import AppUser, Notification, NotificationKisiDurumu
 from ..push_metinleri import push_basligi, push_govdesi
 from ..schemas import (
     NotificationListResponse,
@@ -42,6 +43,9 @@ _VIEWER = require_role(
 
 # Yonetim alarmlarini goren roller. Sakin BURADA YOK.
 _YONETIM_GOZU = ("admin", "yonetici", "security", "guvenlik_amiri")
+#: Guvenlik rolleri: paylasilan satirlarin bir kismini gormez (asagida).
+_GUVENLIK_GOZU = ("security", "guvenlik_amiri")
+_GUVENLIK_DISI_TIPLER = ("bakim_yaklasti", "bakim_bugun", "bakim_gecikti")
 
 
 def _kapsam(user: AppUser):
@@ -71,18 +75,100 @@ def _kapsam(user: AppUser):
         # satiri" degil. `test_yonetim_KISISEL_akisi_gormez` (sakinin
         # akisi yonetime kapali) AYNEN gecerli — o satirin `user_id`si
         # baskasinin.
-        return or_(
-            Notification.user_id.is_(None), Notification.user_id == user.id
-        )
+        ortak = Notification.user_id.is_(None)
+        if user.role in _GUVENLIK_GOZU:
+            # (E2E 2026-09) Tesis BAKIM alarmlari guvenlik ekibinin isi
+            # degildir (asansor/jenerator periyodik bakimi): paylasilan
+            # satirlardan disarida kalir. Guvenlige ait olanlar (kacirilan
+            # tur, panik, gurultu eskalasyonu...) aynen gorunur.
+            ortak = ortak & Notification.tip.not_in(_GUVENLIK_DISI_TIPLER)
+        return or_(ortak, Notification.user_id == user.id)
     return Notification.user_id == user.id
+
+
+# =========================================================================== #
+# (E2E 2026-09, goc 0149) PAYLASILAN SATIRDA DURUM KISIYE AIT
+# =========================================================================== #
+# `user_id IS NULL` yonetim alarmlari herkesin ORTAK satiridir; okundu ve
+# silindi `notification_kisi_durumu`nda KISI basina tutulur. Onceden bir
+# gorevlinin okumasi/silmesi yoneticinin listesini de degistiriyordu.
+_D = NotificationKisiDurumu
+
+
+def _durum_kosulu(user: AppUser):
+    return and_(_D.notification_id == Notification.id, _D.user_id == user.id)
+
+
+def _etkin_okundu():
+    """Kullanicinin GORDUGU okundu degeri (outer join `_D` gerektirir)."""
+    return case(
+        (Notification.user_id.is_(None), _D.okundu_at.is_not(None)),
+        else_=Notification.okundu,
+    )
 
 
 #: (P181 Bölüm 6.5) YUMUŞAK silinen satır listede/işlemde YOK sayılır.
 def _canli():
-    return Notification.silindi_at.is_(None)
+    """Satir hic silinmemis VE (paylasilansa) BU KISI icin silinmemis.
+
+    `_D` outer join'i gerektirir.
+    """
+    return and_(
+        Notification.silindi_at.is_(None),
+        or_(Notification.user_id.is_not(None), _D.silindi_at.is_(None)),
+    )
 
 
-def _out(row: Notification, dil: str) -> NotificationOut:
+def _secim(user: AppUser, *ek):
+    """Kapsam + kisiye ait durum join'i hazir `select(Notification, okundu)`."""
+    return (
+        select(Notification, _etkin_okundu().label("etkin_okundu"))
+        .outerjoin(_D, _durum_kosulu(user))
+        .where(_kapsam(user), _canli(), *ek)
+    )
+
+
+async def _durum_yaz(
+    db: AsyncSession, user: AppUser, ids: list[uuid.UUID], *, okundu: bool | None = None,
+    sil: bool = False,
+) -> None:
+    """Paylasilan satirlar icin KISININ durumunu yaz (upsert)."""
+    if not ids:
+        return
+    degerler = {}
+    if okundu is not None:
+        degerler["okundu_at"] = func.now() if okundu else None
+    if sil:
+        degerler["silindi_at"] = func.now()
+    stmt = pg_insert(_D).values([
+        {"tenant_id": user.tenant_id, "notification_id": i, "user_id": user.id,
+         **{k: (None if v is None else v) for k, v in degerler.items()}}
+        for i in ids
+    ])
+    stmt = stmt.on_conflict_do_update(
+        index_elements=[_D.notification_id, _D.user_id],
+        set_={k: getattr(stmt.excluded, k) for k in degerler},
+    )
+    await db.execute(stmt)
+
+
+async def _ayir(
+    db: AsyncSession, user: AppUser, ids: list[uuid.UUID]
+) -> tuple[list[uuid.UUID], list[uuid.UUID]]:
+    """Kapsamdaki canli id'leri (kendi satirlarim, paylasilanlar) diye ayir."""
+    satirlar = (
+        await db.execute(
+            select(Notification.id, Notification.user_id)
+            .outerjoin(_D, _durum_kosulu(user))
+            .where(Notification.id.in_(ids), _kapsam(user), _canli())
+        )
+    ).all()
+    kendi = [i for i, uid in satirlar if uid is not None]
+    ortak = [i for i, uid in satirlar if uid is None]
+    return kendi, ortak
+
+
+def _out(row: Notification, dil: str, okundu: bool | None = None) -> NotificationOut:
     """Kayit -> yanit; metin ISTEGIN dilinde uretilir.
 
     Kimlik yoksa (tur 16 oncesi satir) kayittaki `mesaj` aynen doner —
@@ -94,6 +180,8 @@ def _out(row: Notification, dil: str) -> NotificationOut:
     uygulamada baska bir cumle gormesi olurdu.
     """
     out = NotificationOut.model_validate(row)
+    if okundu is not None:
+        out.okundu = bool(okundu)
     veri = row.mesaj_veri or {}
     ozel = veri.get("metin") if isinstance(veri, dict) else None
     if ozel:
@@ -177,9 +265,9 @@ async def list_notifications(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_VIEWER),
 ) -> NotificationListResponse:
-    where = [_kapsam(user), _canli()]
+    ek = []
     if okundu is not None:
-        where.append(Notification.okundu == okundu)
+        ek.append(_etkin_okundu() == okundu)
 
     dil = istek_dili(accept_language)
     aranan = _kucult((q or "").strip())
@@ -189,35 +277,36 @@ async def list_notifications(
         # listelerde tek satir bile fazladan uretilmiyor.
         total = (
             await db.execute(
-                select(func.count()).select_from(Notification).where(*where)
+                select(func.count())
+                .select_from(Notification)
+                .outerjoin(_D, _durum_kosulu(user))
+                .where(_kapsam(user), _canli(), *ek)
             )
         ).scalar_one()
         rows = (
             await db.execute(
-                select(Notification)
-                .where(*where)
+                _secim(user, *ek)
                 .order_by(Notification.created_at.desc(), Notification.id.desc())
                 .limit(limit)
                 .offset(offset)
             )
-        ).scalars().all()
+        ).all()
         return NotificationListResponse(
             meta={"limit": limit, "offset": offset, "total": total},
-            items=[_out(r, dil) for r in rows],
+            items=[_out(r, dil, ok) for r, ok in rows],
         )
 
     # ---------------------------- ARAMALI YOL ---------------------------- #
     ham = (
         await db.execute(
-            select(Notification)
-            .where(*where)
+            _secim(user, *ek)
             .order_by(Notification.created_at.desc(), Notification.id.desc())
             .limit(ARAMA_TAVANI)
         )
-    ).scalars().all()
+    ).all()
     eslesenler = [
         out
-        for out in (_out(r, dil) for r in ham)
+        for out in (_out(r, dil, ok) for r, ok in ham)
         if _arama_eslesir(
             out,
             push_basligi(out.mesaj_kimlik, dil) if out.mesaj_kimlik else "",
@@ -253,17 +342,21 @@ async def update_notification(
     # uygulaniyor; kapsam disi kayit icin 404 (varligi da sizmaz).
     obj = (
         await db.execute(
-            select(Notification).where(
-                Notification.id == notification_id, _kapsam(user), _canli()
-            )
+            select(Notification)
+            .outerjoin(_D, _durum_kosulu(user))
+            .where(Notification.id == notification_id, _kapsam(user), _canli())
         )
     ).scalar_one_or_none()
     if obj is None:
         raise APIError(404, "not_found", "kayit_bulunamadi")
-    obj.okundu = body.okundu
+    if obj.user_id is None:
+        # PAYLASILAN satir DEGISMEZ; yalniz bu kisinin durumu.
+        await _durum_yaz(db, user, [obj.id], okundu=body.okundu)
+    else:
+        obj.okundu = body.okundu
     await db.flush()
     await db.refresh(obj)
-    return _out(obj, istek_dili(accept_language))
+    return _out(obj, istek_dili(accept_language), body.okundu)
 
 
 # --------------------------------------------------------------------------- #
@@ -277,12 +370,15 @@ async def toplu_okundu(
     user: AppUser = Depends(_VIEWER),
 ) -> NotificationTopluSonuc:
     """Seçili bildirimleri okundu/okunmadı işaretle (yalnız kendi kapsamı)."""
-    res = await db.execute(
-        update(Notification)
-        .where(Notification.id.in_(body.ids), _kapsam(user), _canli())
-        .values(okundu=body.okundu)
-    )
-    return NotificationTopluSonuc(etkilenen=res.rowcount or 0)
+    kendi, ortak = await _ayir(db, user, list(body.ids))
+    if kendi:
+        await db.execute(
+            update(Notification)
+            .where(Notification.id.in_(kendi))
+            .values(okundu=body.okundu)
+        )
+    await _durum_yaz(db, user, ortak, okundu=body.okundu)
+    return NotificationTopluSonuc(etkilenen=len(kendi) + len(ortak))
 
 
 @router.post("/tumunu-okundu", response_model=NotificationTopluSonuc)
@@ -291,12 +387,21 @@ async def tumunu_okundu(
     user: AppUser = Depends(_VIEWER),
 ) -> NotificationTopluSonuc:
     """Kapsamdaki TÜM okunmamışları okundu işaretle."""
-    res = await db.execute(
-        update(Notification)
-        .where(_kapsam(user), _canli(), Notification.okundu.is_(False))
-        .values(okundu=True)
-    )
-    return NotificationTopluSonuc(etkilenen=res.rowcount or 0)
+    okunmamis = (
+        await db.execute(
+            select(Notification.id, Notification.user_id)
+            .outerjoin(_D, _durum_kosulu(user))
+            .where(_kapsam(user), _canli(), _etkin_okundu().is_(False))
+        )
+    ).all()
+    kendi = [i for i, uid in okunmamis if uid is not None]
+    ortak = [i for i, uid in okunmamis if uid is None]
+    if kendi:
+        await db.execute(
+            update(Notification).where(Notification.id.in_(kendi)).values(okundu=True)
+        )
+    await _durum_yaz(db, user, ortak, okundu=True)
+    return NotificationTopluSonuc(etkilenen=len(okunmamis))
 
 
 @router.post("/toplu-sil", response_model=NotificationTopluSonuc)
@@ -306,12 +411,15 @@ async def toplu_sil(
     user: AppUser = Depends(_VIEWER),
 ) -> NotificationTopluSonuc:
     """Seçili bildirimleri YUMUŞAK sil (silindi_at=now) + denetim kaydı."""
-    res = await db.execute(
-        update(Notification)
-        .where(Notification.id.in_(body.ids), _kapsam(user), _canli())
-        .values(silindi_at=func.now())
-    )
-    etkilenen = res.rowcount or 0
+    kendi, ortak = await _ayir(db, user, list(body.ids))
+    if kendi:
+        await db.execute(
+            update(Notification)
+            .where(Notification.id.in_(kendi))
+            .values(silindi_at=func.now())
+        )
+    await _durum_yaz(db, user, ortak, sil=True)
+    etkilenen = len(kendi) + len(ortak)
     if etkilenen:
         # "Bu bildirim neden kayboldu" sorusunun kanıtı — adet + aktör yeter.
         await audit_user(

@@ -128,8 +128,14 @@
      P132.6'da ayni sinif kusur olculmustu: kartta gecip zeminde dusen ton. */
   --yz-text-2: #566173;
   /* Brief #A3ADB8; sayfa zemininde 2.16 idi. Bu kademe YALNIZ buyuk metin
-     ve dekoratif etiket icindir (esik 3.0), govde metninde kullanilmaz. */
-  --yz-text-3: #707d8f;
+     ve dekoratif etiket icindi (esik 3.0).
+     (E2E 2026-09) ESIK 4.5'E CIKTI. Olculen: kademe fiilen 12px metinde
+     kullaniliyor (altbilgi 3.72, "Ctrl K" 3.61, hesap dugmesindeki tesis
+     adi 4.18) — "yalniz buyuk metin" kurali kodda tutulmuyordu. Kurali
+     yuzlerce kullanimda tek tek zorlamak yerine token AA'ya cekildi:
+     en zor yuzeyde (surface-sunken #e2e8f0) 4.58. `--yz-text-2` (5.08)
+     ile sirasi korunur. */
+  --yz-text-3: #5c687a;
 
   /* Durum renkleri. RENK YALNIZ SINYALDIR (halka, rozet, uyari seridi);
      dolgu blok olarak KULLANILMAZ — P133'un "tinted blocks" dili bu
@@ -252,8 +258,14 @@
   --yz-text: #e8edf2;
   /* Brief #98A3AE; kart uzerinde (#333C45) 4.37 — esigin hemen altinda. */
   --yz-text-2: #bcc3ca;
-  /* Brief #6E7883; sayfa zemininde 2.86. */
-  --yz-text-3: #989fa8;
+  /* Brief #6E7883; sayfa zemininde 2.86.
+     (E2E 2026-09) 4.5 ESIGI: eski #989fa8 kartta 3.61, surface-2'de
+     (tablo basligi/toplam satiri) 3.03 idi. surface-2 #46515c o kadar
+     acik ki `--yz-text-2` BILE orada 4.55 veriyor; 4.5'i tutan her ton
+     text-2 ile ayni parlakliga cikar. Bu yuzden koyu temada iki kademe
+     AYNI renkte birlesir (hiyerarsiyi yazi boyu/agirligi tasir) —
+     text-2'yi aciga cekmek mobil `muted` (#BCC3CA) paritesini bozardi. */
+  --yz-text-3: #bcc3ca;
 
   /* (P244 §1) Koyu temada HAM referans tonlari KULLANILAMAZ — olculdu:
      en acik yuzeyde (surface-2 #46515c) accent 1.57 · success 2.46 ·
@@ -588,6 +600,19 @@
 
    `:where()` SIFIR OZGULLUK tasir — bilesenlerin kendi siniflari bu
    kurali her zaman ezebilir. */
+/* (E2E 2026-09) WCAG 2.5.8 (AA) — FARE ISARETCISINDE DE >= 24x24.
+   Olculen: onay kutulari 13x13 / 16x16 (tablo secimi, kolon secici).
+   Kutu GORSEL olarak buyumez; seffaf dolgu dokunma/tiklama alanini
+   24 px'e cikarir, negatif kenar bosluklari yerlesimi korur. Asagidaki
+   `pointer: coarse` blogu ayni hileyi 48 px ile ezer (ayni ozgulluk,
+   sonra gelir). `:where()` = sifir ozgulluk. */
+:where(input[type="checkbox"], input[type="radio"]) {
+  box-sizing: content-box;
+  background-clip: content-box;
+  padding: 4px;
+  margin: -4px;
+}
+
 @media (pointer: coarse) {
   :where(button, [role="button"], a[href], summary, input[type="checkbox"], input[type="radio"]) {
     min-height: 48px;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
 
 import { useToast } from "@/components/Toast";
@@ -9,6 +9,7 @@ import {
   AlanSarmal,
   Dugme,
   HataDurumu,
+  IskeletMetin,
   Kart,
   Modal,
   Rozet,
@@ -260,11 +261,29 @@ export default function VardiyaPlaniSayfasi() {
   // KENDI KAYDIM LISTEDE CIZILMEZ: kendi gorevde oldugumu zaten
   // biliyorum ve kendi numaramı aramak anlamsiz.
   const { data: kimlik } = useSWR<{ id?: string }>("/api/me", jsonFetcher);
-  const { data: simdiDurum } = useSWR<Simdi>(
+  // (E2E 2026-09 / GUVENLIK-07) YUKLENIYOR != KIMSE YOK. Yalniz `data`
+  // alindigi icin veri gelene dek (yuk altinda 90 sn olculdu) kart "Su
+  // anda planli gorevli yok" diyordu — gorevde biri varken.
+  const {
+    data: simdiDurum,
+    error: simdiHatasi,
+    isLoading: simdiYukleniyor,
+  } = useSWR<Simdi>(
     "/api/vardiya-plani/simdi",
     jsonFetcher,
     { refreshInterval: 60_000 },
   );
+  // Veri yokken bos-durum cumlesi YERINE gosterilecek sey (null = veri var).
+  let simdiBelirsiz: ReactNode = null;
+  if (!simdiDurum && simdiHatasi) {
+    simdiBelirsiz = (
+      <p role="alert" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-3)" }}>
+        {t("ortakVeriYuklenemedi")}
+      </p>
+    );
+  } else if (!simdiDurum && simdiYukleniyor) {
+    simdiBelirsiz = <IskeletMetin satir={2} />;
+  }
 
   // ANLIK SAAT CIZGISI: dakikada bir yeter — saniyede bir yenilemek
   // pil ve cizim maliyeti uretir, cizgi bir piksel bile oynamaz.
@@ -513,6 +532,7 @@ export default function VardiyaPlaniSayfasi() {
           gun={gun}
           onDegisti={() => void mutate()}
           onKalipAc={() => setKalipAcik(true)}
+          onParti={(partiId) => setSonParti(partiId)}
           onSablonlaraGit={() =>
             document
               .querySelector('[data-test="vardiya-sablon-bolumu"]')
@@ -729,9 +749,11 @@ export default function VardiyaPlaniSayfasi() {
                 />
               </>
             ) : (
-              <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-3)" }}>
-                {t("vardiyaSuAnKimseYok")}
-              </p>
+              simdiBelirsiz ?? (
+                <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-3)" }}>
+                  {t("vardiyaSuAnKimseYok")}
+                </p>
+              )
             )}
           </div>
           <div data-test="vardiya-simdi-sonraki">
@@ -754,9 +776,11 @@ export default function VardiyaPlaniSayfasi() {
                 />
               </>
             ) : (
-              <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-3)" }}>
-                {t("vardiyaSiradakiYok")}
-              </p>
+              simdiBelirsiz ?? (
+                <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-3)" }}>
+                  {t("vardiyaSiradakiYok")}
+                </p>
+              )
             )}
           </div>
         </div>

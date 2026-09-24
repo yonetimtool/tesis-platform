@@ -31,7 +31,7 @@ isletme kaydidir, kisisel bir hizmet degil.
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import func, select
@@ -250,6 +250,23 @@ async def ekipman_guncelle(
     eski_sonraki = obj.sonraki_bakim
     for k, v in alanlar.items():
         setattr(obj, k, v)
+    # (E2E 2026-09) PERIYOT DEGISINCE SONRAKI TARIH YENIDEN HESAPLANIR.
+    #
+    # Olculen: yillik -> aylik yapilan asansorun `sonraki_bakim`i eski
+    # (bir yil sonraki) tarihte kaldi; yani periyodu kisaltmak 11 ay
+    # boyunca hicbir sey degistirmiyordu. Kural: yonetici tarihi ACIKCA
+    # vermediyse ve bir temel (son bakim) varsa, tarih yeni periyottan
+    # turetilir. Son bakim hic yoksa tahmin uretilmez — mevcut tarih kalir.
+    periyot_degisti = ("periyot" in alanlar or "periyot_gun" in alanlar
+                       or "son_bakim" in alanlar)
+    if (
+        periyot_degisti
+        and "sonraki_bakim" not in alanlar
+        and obj.son_bakim is not None
+    ):
+        obj.sonraki_bakim = sonraki_tarih(
+            obj.son_bakim, obj.periyot, obj.periyot_gun
+        )
     obj.updated_at = func.now()
     # TARIH DEGISTIYSE DAMGALAR TEMIZLENIR: yoneticinin elle ileri
     # aldigi bir tarih icin eski "gecikti" damgasi kalsaydi, yeni tarih
@@ -346,6 +363,15 @@ async def kayit_ekle(
 ) -> BakimKaydiOut:
     """Bakim yapildi: kayit + tarih ilerlemesi + (istege bagli) gider."""
     ekipman = await get_or_404(db, BakimEkipmani, ekipman_id)
+    # (E2E 2026-09) GELECEK TARIHLI KAYIT REDDEDILIR.
+    #
+    # Olculen: 01.01.2030 tarihli bir kayit 201 aldi ve yasal asansor
+    # muayenesini `sonraki=2030-02-01, planli` yapti — bir yazim hatasi
+    # zorunlu bakimi yillarca gizliyordu. "Bakim yapildi" gecmise dair bir
+    # beyandir. BIR GUN TOLERANS: `_bugun` UTC; Turkiye UTC+3 oldugu icin
+    # gece 00:00-03:00 arasi girilen "bugun" kaydi UTC'de yarin gorunur.
+    if body.tarih > _bugun() + timedelta(days=1):
+        raise APIError(422, "validation_error", "bakim_tarihi_gelecekte")
     kayit = BakimKaydi(
         tenant_id=user.tenant_id,
         ekipman_id=ekipman.id,
@@ -381,15 +407,22 @@ async def kayit_ekle(
         kayit.hareket_id = hareket.id
 
     # TARIH ILERLER: yeni `sonraki_bakim` ya verilen deger ya periyottan.
-    ekipman.son_bakim = body.tarih
-    ekipman.sonraki_bakim = body.sonraki_bakim or sonraki_tarih(
-        body.tarih, ekipman.periyot, ekipman.periyot_gun
-    )
-    # YENI DONEM YENIDEN BILDIRILSIN.
-    ekipman.yaklasti_bildirildi_at = None
-    ekipman.bugun_bildirildi_at = None
-    ekipman.gecikme_bildirildi_at = None
-    ekipman.updated_at = func.now()
+    #
+    # (E2E 2026-09) YALNIZ ILERI. Olculen: 20.09 bakimindan sonra
+    # unutulmus 15.08 kaydi girilince `son_bakim` 15.08'e, `sonraki`
+    # 15.09'a GERI dustu ve az once bakimi yapilmis asansor "gecikti"
+    # gorundu. Eski tarihli kayit GECMISE eklenir (yillik ozette sayilir,
+    # gideri deftere duser) ama plani geri almaz.
+    if ekipman.son_bakim is None or body.tarih >= ekipman.son_bakim:
+        ekipman.son_bakim = body.tarih
+        ekipman.sonraki_bakim = body.sonraki_bakim or sonraki_tarih(
+            body.tarih, ekipman.periyot, ekipman.periyot_gun
+        )
+        # YENI DONEM YENIDEN BILDIRILSIN.
+        ekipman.yaklasti_bildirildi_at = None
+        ekipman.bugun_bildirildi_at = None
+        ekipman.gecikme_bildirildi_at = None
+        ekipman.updated_at = func.now()
 
     await db.flush()
     await db.refresh(kayit)

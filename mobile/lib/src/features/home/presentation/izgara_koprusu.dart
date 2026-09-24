@@ -72,9 +72,12 @@ HizliErisimKart izgaraKartiUret(
 ///
 /// Bu yuzden kural, `auth.md`nin ACIKCA KAPATTIGI listeden turuyor —
 /// cikarimla degil, YAZILI karardan.
+///
+/// (E2E 2026-09) `/visitors` CIKARILDI: P231 §3 amire ziyaretci kayitlarini
+/// OKUMA olarak acti ve menude de var (backend 200). Kart kapali, menu acik
+/// kalmisti — ayni ekran iki yerde farkli davraniyordu.
 const _amireKapali = <String>{
   '/kargo',
-  '/visitors',
 };
 
 List<HizliErisimKart> rolunKartlari(

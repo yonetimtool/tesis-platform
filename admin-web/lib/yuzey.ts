@@ -33,7 +33,7 @@ export const PLATFORM_ROTALARI = [
   "/tenants",
   "/audit",
   "/support",
-  "/integrations",
+  // (E2E 2026-09) `/integrations` TESIS yuzeyine TASINDI — asagida.
   "/yetki",
   "/settings",
   // (P170 §2) KVKK/yasal metin YONETIMI platforma tasindi. Veri tenant'a
@@ -163,6 +163,15 @@ export const TESIS_ROTALARI = [
   "/yonetim-iletisim",
   // (P155 §7) Davet gonderim durumu — tesis yuzeyi (yonetici).
   "/davetler",
+  // (E2E 2026-09) ENTEGRASYONLAR + DIYAFON + SAGLIK — TESIS yuzeyi.
+  //
+  // Olculen (TESIS-19): sayfa PLATFORM kumesindeydi; tesis yoneticisi
+  // `app.*/integrations`i actiginda ozete yonleniyordu. Oysa her uc
+  // (`/integrations`, `/diyafon`) TENANT kapsamli ve yoneticiye acik;
+  // `entegrasyon_koptu` bildirimi de buraya baglaniyor — yonetici kendi
+  // tesisinin kopan diyafonunu HICBIR yerden goremiyordu. Webhook/diyafon
+  // bir sitenin isidir, platformlar-arasi bir gorunum degil.
+  "/integrations",
 ] as const;
 
 /**
@@ -459,6 +468,8 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   // sinirli) — ayrilan sey YETKI degil YUZEY: sakin kendi cihazlarini
   // MOBILDEN yonetir, web paneli yonetim yuzeyidir.
   "/akilli-ev": ["admin", "yonetici"],
+  // (E2E 2026-09) Sunucudaki `_MANAGER` (integrations + diyafon) ile AYNI.
+  "/integrations": ["admin", "yonetici"],
   // (P241 §1) BAKIM — yonetim + DENETCI (yillik ozet denetimin belgesi).
   // Saha rolleri sunucuda listeyi OKUR ama `app.*`ta sayfa gormez
   // (P129); onlarin yuzeyi MOBIL.

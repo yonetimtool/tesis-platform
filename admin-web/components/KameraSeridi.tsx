@@ -1,6 +1,6 @@
 "use client";
 
-import { BolumBasligi, Kart } from "@/components/ui";
+import { BolumBasligi, IskeletMetin, Kart } from "@/components/ui";
 // (P132/4b) PANODA KAMERA SERIDI — mobil `kamera_seridi.dart`in web ikizi.
 //
 // P43'UN KARARI AYNEN GECERLI: karo DURAGAN KARE cizer (`snapshot_url`),
@@ -13,7 +13,7 @@ import { BolumBasligi, Kart } from "@/components/ui";
 //
 // SERIT PANONUN SONUNDA: kare tazeleme yalniz sekme GORUNURKEN calisir
 // (asagida) — arka planda birakilmis bir pano istek atmaz.
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import useSWR from "swr";
 
 import { KameraOynatici } from "@/components/KameraOynatici";
@@ -42,14 +42,31 @@ export function kareKaynagi(k: Kamera): string | null {
 export function KameraSeridi({
   kameralar,
   rol,
+  yukleniyor = false,
+  hata = false,
 }: {
   kameralar: Kamera[];
   /** Bos hal mesaji YALNIZ isareti koyabilene gosterilir. */
   rol?: string | null;
+  /**
+   * (E2E 2026-09 / GUVENLIK-07) LISTE ISTEGININ DURUMU. Eskiden serit
+   * yalniz `data`yi aliyordu: istek 503 dondugunde ya da henuz
+   * gelmemisken liste BOS sayiliyor ve yoneticiye "Ana ekranda
+   * gosterilecek kamera secilmedi ... isaretleyin" deniyordu — zaten
+   * yaptigi ayari yeniden yapmaya yollaniyordu.
+   */
+  yukleniyor?: boolean;
+  hata?: boolean;
 }) {
   const t = useT();
   const [nesil, setNesil] = useState(0);
   const [oynatilan, setOynatilan] = useState<Kamera | null>(null);
+  // (E2E 2026-09 / GUVENLIK-07) KARE CEKILEMEYEN KAROLAR. `<img>`de
+  // `onError` yoktu: kare 502 dondugunde tarayici kirik resim ikonu +
+  // alt metin ciziyordu (kameralar sayfasi ayni durumda "Baglanti yok"
+  // der). Kume her tazeleme turunda bosaltilir — kamera geri gelince
+  // karo kendiliginden duzelir (kameralar sayfasiyla AYNI kural).
+  const [kareHatalari, setKareHatalari] = useState<Set<string>>(new Set());
 
   // (P213 §4) SECIM SUNUCUDA YAPILDI (`ana_ekranda`); burada yalnizca
   // pasif kameralar elenir. `slice(0, 4)` KALDIRILDI: siniri uc
@@ -63,7 +80,10 @@ export function KameraSeridi({
     let zamanlayici: ReturnType<typeof setInterval> | null = null;
     const baslat = () => {
       if (!zamanlayici) {
-        zamanlayici = setInterval(() => setNesil((n) => n + 1), KARE_ARALIGI_MS);
+        zamanlayici = setInterval(() => {
+          setKareHatalari(new Set());
+          setNesil((n) => n + 1);
+        }, KARE_ARALIGI_MS);
       }
     };
     const durdur = () => {
@@ -102,23 +122,47 @@ export function KameraSeridi({
   const yonetim = rol === "admin" || rol === "yonetici";
   // Tesiste HIC kamera yoksa "secilmedi" demek yanlis yonlendirme olur;
   // ayrimi ancak isaretli liste BOSKEN sormaya deger (tek hafif istek).
-  const { data: tumKameralar } = useSWR<{ meta?: { total?: number } }>(
-    yonetim && gorunen.length === 0 ? "/api/cameras?limit=1&offset=0" : null,
+  //
+  // (E2E 2026-09 / GUVENLIK-07) Sayim YALNIZ liste GERCEKTEN bos geldiyse
+  // istenir — yuklenirken/hata varken "bos" bilinmiyor.
+  const listeBos = !yukleniyor && !hata && gorunen.length === 0;
+  const {
+    data: tumKameralar,
+    error: sayimHatasi,
+    isLoading: sayimYukleniyor,
+  } = useSWR<{ meta?: { total?: number } }>(
+    yonetim && listeBos ? "/api/cameras?limit=1&offset=0" : null,
     jsonFetcher,
     { revalidateOnFocus: false },
   );
 
   if (gorunen.length === 0) {
     if (!yonetim) return null;
-    const hicKameraYok = tumKameralar?.meta?.total === 0;
+    // DURUM SIRASI: hata -> yukleniyor -> gercekten bos. "Secilmedi"
+    // cumlesi YALNIZ sunucu bos liste dondurdugunde ve sayim geldikten
+    // sonra soylenir; aksi hâlde veri gelene dek yanip sonuyordu.
+    let govde: ReactNode;
+    if (hata || sayimHatasi) {
+      govde = (
+        <p role="alert" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+          {t("panoKameraYuklenemedi")}
+        </p>
+      );
+    } else if (yukleniyor || sayimYukleniyor || !tumKameralar) {
+      govde = <IskeletMetin satir={2} />;
+    } else {
+      govde = (
+        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+          {tumKameralar.meta?.total === 0
+            ? t("panoKameraHicYok")
+            : t("panoKameraSecilmedi")}
+        </p>
+      );
+    }
     return (
       <section>
         <BolumBasligi baslik={t("panoKameralar")} href="/kameralar" />
-        <Kart className="p-kart">
-          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-            {hicKameraYok ? t("panoKameraHicYok") : t("panoKameraSecilmedi")}
-          </p>
-        </Kart>
+        <Kart className="p-kart">{govde}</Kart>
       </section>
     );
   }
@@ -169,7 +213,15 @@ export function KameraSeridi({
                 className="block w-full text-start disabled:cursor-default"
               >
                 <span className="relative block aspect-video bg-[color:var(--yz-surface-sunken)]">
-                  {kareKaynagi(k) ? (
+                  {kareHatalari.has(k.id) ? (
+                    // (E2E 2026-09 / GUVENLIK-07) ACIK DURUM, kirik resim degil.
+                    <span
+                      data-test="kamera-serit-baglanti-yok"
+                      className="flex h-full items-center justify-center text-satiralt text-[color:var(--yz-text-2)]"
+                    >
+                      {t("kameraBaglantiYokWeb")}
+                    </span>
+                  ) : kareKaynagi(k) ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={`${kareKaynagi(k)}${kareKaynagi(k)!.includes("?") ? "&" : "?"}_k=${nesil}`}
@@ -177,6 +229,9 @@ export function KameraSeridi({
                       loading="lazy"
                       decoding="async"
                       className="h-full w-full object-cover"
+                      onError={() =>
+                        setKareHatalari((o) => new Set(o).add(k.id))
+                      }
                     />
                   ) : (
                     <span className="flex h-full items-center justify-center text-satiralt text-[color:var(--yz-text-2)]">

@@ -158,6 +158,10 @@ const PANEL_SATIRI = 3;
 const BAGLANTI_STILI = {
   fontSize: "var(--yz-fs-xs)",
   color: "var(--yz-accent-ink)",
+  // (E2E 2026-09) WCAG 2.5.8: "Tümünü Gör" 79x18 olculdu; hedef >= 24px.
+  display: "inline-flex",
+  alignItems: "center",
+  minHeight: "24px",
 } as const;
 
 /** (P33) Talep onceligi -> rozet durumu + sozluk anahtari. */
@@ -190,8 +194,11 @@ function TahsilatSatiri({ renk, ad, deger }: { renk: string; ad: string; deger: 
           className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
           style={{ background: renk }}
         />
+        {/* (E2E 2026-09) SARAR, KESILMEZ: tahsilat gostergesi aciklamasi
+            standart modda yarim kelimeye, Buyuk modda iki harfe iniyordu
+            (olculdu) — anlamini tamamen kaybediyordu. */}
         <span
-          className="truncate"
+          className="min-w-0 break-words"
           style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
         >
           {ad}
@@ -554,7 +561,15 @@ export default function DashboardPage() {
   // sayida kamerada aciyor (her kare bir ffmpeg sureci).
   //
   // Isaretli kamera yoksa liste BOS gelir ve serit HIC cizilmez.
-  const { data: kameraYanit } = useSWR<KameraListResponse>(
+  //
+  // (E2E 2026-09 / GUVENLIK-07) `error`/`isLoading` SERIDE GECER: yalniz
+  // `data` alinirken 503 ya da ilk yukleme "kamera secilmedi" diye
+  // cizilip yoneticiyi yaptigi ayari yeniden yapmaya yolluyordu.
+  const {
+    data: kameraYanit,
+    error: kameraHatasi,
+    isLoading: kameraYukleniyor,
+  } = useSWR<KameraListResponse>(
     "/api/cameras?ana_ekranda=true&limit=10&offset=0",
     jsonFetcher,
     { revalidateOnFocus: false },
@@ -852,7 +867,12 @@ export default function DashboardPage() {
     0,
   );
   const blokSayisi = (binaHaritasi?.bloklar ?? []).length;
-  const acikTalep = gorunurSikayet?.acik_sayisi ?? null;
+  // (E2E 2026-09) "ACIK TALEP" KARTI TALEPTEN SAYAR. Eskiden
+  // `gorunurSikayet.acik_sayisi` (DAIRE SIKAYETI — `unit_complaint`, baska
+  // bir varlik) kullaniliyordu; kart "Açık talep 0 — 8 yüksek öncelikli"
+  // diyordu. Sayi artik asagidaki `/complaints?durum=acik` yanitinin
+  // `meta.total`i (sayfa zaten cekiliyor, yeni istek yok). Rozet
+  // (`/schematic`) daire sikayetinde KALIR — o dogru kaynak.
 
   // =====================================================================
   // (P245) REFERANSIN DORT KPI'SI — GERCEK VERIYLE
@@ -886,7 +906,7 @@ export default function DashboardPage() {
     jsonFetcher,
     { shouldRetryOnError: false },
   );
-  const { data: sonTalepler } = useSWR<{ items: PanoTalep[] }>(
+  const { data: sonTalepler } = useSWR<{ items: PanoTalep[]; meta?: { total?: number } }>(
     `/api/complaints?limit=${PANEL_SATIRI + 1}&offset=0&durum=${TALEP_ACIK}`,
     jsonFetcher,
     { shouldRetryOnError: false },
@@ -906,6 +926,7 @@ export default function DashboardPage() {
     jsonFetcher,
     { shouldRetryOnError: false },
   );
+  const acikTalep = sonTalepler?.meta?.total ?? null;
   const { data: yuksekTalep } = useSWR<{ meta?: { total?: number } }>(
     `/api/complaints?limit=1&offset=0&durum=${TALEP_ACIK}&oncelik=${ONCELIK_YUKSEK}`,
     jsonFetcher,
@@ -1422,7 +1443,14 @@ export default function DashboardPage() {
           </Kart>
         );
       case "kameralar":
-        return <KameraSeridi kameralar={kameralar} rol={rol} />;
+        return (
+          <KameraSeridi
+            kameralar={kameralar}
+            rol={rol}
+            yukleniyor={kameraYukleniyor && !kameraYanit}
+            hata={!!kameraHatasi && !kameraYanit}
+          />
+        );
       case "alarmlar":
         return isLoading && !data ? (
           <IskeletMetin satir={3} />

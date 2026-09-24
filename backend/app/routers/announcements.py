@@ -3,8 +3,11 @@
 RBAC (auth.md §4): OLUSTURMA yonetici (mobil) + admin (platform/panel);
 duzenleme/silme admin+yonetici; OKUMA tum roller
 (resident dahil — sakinin ilk operasyon-disi kaynagi). tenant token'dan; RLS
-izole. Olusturmada tenant'in TUM aktif cihazlarina push denenir (EK gonderim —
-hatasi duyuru kaydini kirmaz).
+izole. Olusturmada HEDEF KITLENIN aktif cihazlarina push denenir (EK
+gonderim — hatasi duyuru kaydini kirmaz); olusturan haric.
+
+(E2E 2026-09, BILDIRIM-12) Hedef kitle (rol / malik-kiraci / blok): okuma
+kapsami da hedefe baglidir — karar ve gerekcesi `duyuru_okuma_kosulu` ustunde.
 
 Opsiyonel gorsel: olusturmada /uploads/presign ile yuklenmis foto_key kabul
 edilir; okumada goruntuleme icin kisa omurlu presigned GET foto_url doner.
@@ -14,7 +17,8 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, Header, Query, Response
-from sqlalchemy import func, select
+from sqlalchemy import and_, any_, cast, exists, func, or_, select
+from sqlalchemy import Text as _Text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -27,7 +31,7 @@ from ..ceviri_api import (
 from ..crud_helpers import get_or_404, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import Announcement, AppUser
+from ..models import Announcement, AppUser, Unit, UnitResident
 from ..scheduler.notify import dispatch_external
 from ..storage import presign_get
 from ..schemas import (
@@ -44,11 +48,14 @@ router = APIRouter(prefix="/announcements", tags=["announcements"])
 # resident 403. Duzenleme/silme de admin+yonetici.
 _CREATOR = require_role("yonetici", "admin")
 _SENDER = require_role("admin", "yonetici")
-_READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi", "resident")
+_READER = require_role(
+    "admin", "yonetici", "security", "guvenlik_amiri", "tesis_gorevlisi", "resident"
+)
 
-# Duyuru push'u TUM rollere gider (okuma herkese acik oldugu icin).
+# Hedefsiz duyurunun push'u bu rollere gider (okuma bu rollere acik).
 _ALL_ROLES: tuple[str, ...] = (
-    "admin", "yonetici", "security", "tesis_gorevlisi", "resident",
+    "admin", "yonetici", "security", "guvenlik_amiri", "tesis_gorevlisi",
+    "resident",
 )
 
 
@@ -64,6 +71,104 @@ def _validate_foto_key(foto_key: str | None, tenant_id: uuid.UUID) -> None:
 
 #: Ceviri kaydindaki tip adi (bkz. app/ceviri.py TIPLER).
 _TIP = "duyuru"
+
+#: Hedef kitleden bagimsiz her duyuruyu goren roller.
+_YONETIM_ROLLERI = ("admin", "yonetici")
+
+
+# ------------------------------------------------------------------------- #
+# (E2E 2026-09, BILDIRIM-12) HEDEF KITLE
+#
+# OKUMA KAPSAMI KARARI: hedef disindaki kullanici duyuruyu LISTEDE GORMEZ
+# (tekil GET 404). Anket bunun tersini yapar (herkes listede gorur, hedef
+# yalniz oy + bildirim kapisidir) — cunku anketin VARLIGI bir sakinlik
+# bilgisidir: "hangi konuda oylama yapildi" seffaflik geregi herkese acik.
+# Duyurunun ise tek islevi OKUNMAKTIR; hedef secmek "bunu kim okusun"
+# demektir. Iki somut sonuc: (1) yalniz personele yazilan is duyurusu
+# ("X dairesine kapida hatirlatma yapin") sakinlere sizmaz; (2) "yalniz A
+# blok su kesintisi" B blogun panosunu kirletmez. Yonetim (admin/yonetici)
+# kendi duyurularini yonetebilmek icin HER ZAMAN hepsini gorur.
+#
+# Sakin tipi ve blok YALNIZ sakinlere uygulanir (personelin dairesi yok).
+# Ikisi AYNI dairede birlikte aranir: A'da kiraci, B'de malik biri "A blok
+# malikleri" duyurusunun hedefinde DEGILDIR.
+# ------------------------------------------------------------------------- #
+def _bos(kolon):
+    return or_(kolon.is_(None), func.cardinality(kolon) == 0)
+
+
+def duyuru_okuma_kosulu(user: AppUser):
+    """Kullanicinin okuyabilecegi duyurular icin WHERE ifadesi (None = hepsi)."""
+    if user.role in _YONETIM_ROLLERI:
+        return None
+    rol_uyar = or_(
+        _bos(Announcement.hedef_roller),
+        Announcement.hedef_roller.any(user.role),
+    )
+    if user.role != "resident":
+        return rol_uyar
+    dairem_uyar = exists(
+        select(UnitResident.id)
+        .join(Unit, Unit.id == UnitResident.unit_id)
+        .where(
+            UnitResident.user_id == user.id,
+            UnitResident.bitis.is_(None),
+            or_(
+                Announcement.hedef_sakin_tipi.is_(None),
+                cast(UnitResident.rol_tipi, _Text) == Announcement.hedef_sakin_tipi,
+            ),
+            or_(
+                _bos(Announcement.hedef_bloklar),
+                Unit.blok == any_(Announcement.hedef_bloklar),
+            ),
+        )
+    )
+    return and_(
+        rol_uyar,
+        or_(
+            and_(
+                Announcement.hedef_sakin_tipi.is_(None),
+                _bos(Announcement.hedef_bloklar),
+            ),
+            dairem_uyar,
+        ),
+    )
+
+
+async def _push_alicilari(
+    db: AsyncSession, obj: Announcement, olusturan: AppUser
+) -> list[uuid.UUID]:
+    """Hedef kitledeki AKTIF kullanicilar — OLUSTURAN HARIC.
+
+    (BILDIRIM-12) Eskiden push rol listesine gidiyordu ve duyuruyu yazan
+    yonetici kendi duyurusunun bildirimini aliyordu.
+    """
+    roller = list(obj.hedef_roller or []) or list(_ALL_ROLES)
+    kosullar = [
+        AppUser.is_active.is_(True),
+        AppUser.id != olusturan.id,
+        AppUser.role.in_(roller),
+    ]
+    if obj.hedef_sakin_tipi or obj.hedef_bloklar:
+        daire_kosul = [UnitResident.bitis.is_(None)]
+        if obj.hedef_sakin_tipi:
+            daire_kosul.append(
+                cast(UnitResident.rol_tipi, _Text) == obj.hedef_sakin_tipi
+            )
+        if obj.hedef_bloklar:
+            daire_kosul.append(Unit.blok.in_(list(obj.hedef_bloklar)))
+        sakinler = (
+            select(UnitResident.user_id)
+            .join(Unit, Unit.id == UnitResident.unit_id)
+            .where(*daire_kosul)
+            .scalar_subquery()
+        )
+        kosullar.append(
+            or_(AppUser.role != "resident", AppUser.id.in_(sakinler))
+        )
+    return [
+        r for (r,) in (await db.execute(select(AppUser.id).where(*kosullar))).all()
+    ]
 
 
 def _out(
@@ -95,15 +200,20 @@ async def list_announcements(
     ),
     accept_language: str | None = Header(None, alias="Accept-Language"),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_READER),
+    user: AppUser = Depends(_READER),
 ) -> AnnouncementListResponse:
+    kosul = duyuru_okuma_kosulu(user)
+    kosullar = [kosul] if kosul is not None else []
     total = (
-        await db.execute(select(func.count()).select_from(Announcement))
+        await db.execute(
+            select(func.count()).select_from(Announcement).where(*kosullar)
+        )
     ).scalar_one()
     rows = (
         await db.execute(
             select(Announcement, AppUser.ad)
             .join(AppUser, AppUser.id == Announcement.olusturan_user_id)
+            .where(*kosullar)
             .order_by(Announcement.created_at.desc(), Announcement.id.desc())
             .limit(limit)
             .offset(offset)
@@ -128,9 +238,21 @@ async def get_announcement(
     dil: str | None = Query(None, description="Accept-Language'i ezer (bkz. liste)."),
     accept_language: str | None = Header(None, alias="Accept-Language"),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_READER),
+    user: AppUser = Depends(_READER),
 ) -> AnnouncementOut:
     obj = await get_or_404(db, Announcement, announcement_id)
+    kosul = duyuru_okuma_kosulu(user)
+    if kosul is not None:
+        # (BILDIRIM-12) Hedef disi: VARLIGI da sizmasin -> 404 (403 degil).
+        gorur = (
+            await db.execute(
+                select(Announcement.id).where(
+                    Announcement.id == obj.id, kosul
+                )
+            )
+        ).scalar_one_or_none()
+        if gorur is None:
+            raise APIError(404, "not_found", "kayit_bulunamadi")
     ad = (
         await db.execute(select(AppUser.ad).where(AppUser.id == obj.olusturan_user_id))
     ).scalar_one_or_none()
@@ -157,6 +279,9 @@ async def create_announcement(
         govde=body.govde,
         foto_key=body.foto_key,
         olusturan_user_id=user.id,
+        hedef_roller=(body.hedef_roller or None),
+        hedef_sakin_tipi=body.hedef_sakin_tipi,
+        hedef_bloklar=(body.hedef_bloklar or None),
     )
     db.add(obj)
     try:
@@ -175,13 +300,16 @@ async def create_announcement(
         kaynak_dil=obj.kaynak_dil,
     )
     # EK push (in-app kaydi duyurunun kendisi; push hatasi akisi kirmaz).
-    dispatch_external(
-        "duyuru",
-        tenant_id=user.tenant_id,
-        target_roles=_ALL_ROLES,
-        params={"baslik": body.baslik},
-        data={"tip": "duyuru", "announcement_id": str(obj.id)},
-    )
+    # (BILDIRIM-12) Rol listesi degil HEDEF KITLE; olusturan haric.
+    alicilar = await _push_alicilari(db, obj, user)
+    if alicilar:
+        dispatch_external(
+            "duyuru",
+            tenant_id=user.tenant_id,
+            target_user_ids=tuple(alicilar),
+            params={"baslik": body.baslik},
+            data={"tip": "duyuru", "announcement_id": str(obj.id)},
+        )
     return _out(obj, user.ad)
 
 

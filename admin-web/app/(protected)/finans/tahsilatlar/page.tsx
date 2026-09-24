@@ -21,6 +21,7 @@ import {
   HataDurumu,
   Modal,
   Secim,
+  type Kolon,
 } from "@/components/ui";
 import {
   bugun,
@@ -30,7 +31,7 @@ import {
   useKasalar,
   useKisiler,
 } from "@/components/finans/ortak";
-import { HareketSayfasi } from "@/components/finans/hareket-sayfasi";
+import { HareketSayfasi, type Hareket } from "@/components/finans/hareket-sayfasi";
 import {
   SatirTablosu,
   yeniSatirAnahtari,
@@ -67,6 +68,20 @@ const ARAMA_ESIGI = 10;
 
 export default function TahsilatlarPage() {
   const t = useT();
+  const ekSutunlar: Kolon<Hareket>[] = [
+    {
+      id: "daire",
+      baslik: t("finansSutunDaire"),
+      hucre: (h) => h.unit_no ?? "—",
+      deger: (h) => h.unit_no ?? "",
+    },
+    {
+      id: "kisi",
+      baslik: t("finansKisi"),
+      hucre: (h) => h.user_ad ?? "—",
+      deger: (h) => h.user_ad ?? "",
+    },
+  ];
   const [tekil, setTekil] = useState(false);
   const [toplu, setToplu] = useState(false);
   const [yenile, setYenile] = useState(0);
@@ -79,6 +94,9 @@ export default function TahsilatlarPage() {
       tip={TIP}
       raporKodu="makbuz_dokumu"
       yenile={yenile}
+      // (E2E 2026-09, FINANS-21) KIMIN ODEDIGI gorunmuyordu: liste yalniz
+      // Tarih/Belge/Tutar/Durum/Aciklama idi.
+      ekSutunlar={ekSutunlar}
       araclar={
         <>
           <Dugme tur="birincil" boy="kucuk" onClick={() => setTekil(true)}>

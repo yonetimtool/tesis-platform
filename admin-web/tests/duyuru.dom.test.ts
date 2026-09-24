@@ -62,3 +62,92 @@ describe("Duyurular", () => {
     );
   });
 });
+
+// (E2E 2026-09, BILDIRIM-12) HEDEF KITLE. Eskiden duyuru herkese gidiyordu;
+// form hedef sormuyordu. Kilit: (1) secilen hedef POST govdesine girer,
+// (2) personel-yalniz secimde blok/sakin tipi GOVDEDEN temizlenir (gizli
+// suzgec kalmaz), (3) hedefli duyuru listede rozetle gorunur.
+describe("Duyuru hedef kitlesi (BILDIRIM-12)", () => {
+  function sahteFetch(govdeler: unknown[]) {
+    globalThis.fetch = (async (girdi: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(girdi);
+      const json = (v: unknown, status = 200) =>
+        new Response(JSON.stringify(v), {
+          status,
+          headers: { "Content-Type": "application/json" },
+        });
+      if (init?.method === "POST" && url.startsWith("/api/announcements")) {
+        govdeler.push(JSON.parse(String(init.body)));
+        return json({ ...DUYURU, id: "yeni" }, 201);
+      }
+      if (url.startsWith("/api/blocks")) {
+        return json({ items: [{ id: "b1", ad: "A", unit_sayisi: 3, created_at: T0 }] });
+      }
+      if (url.startsWith("/api/announcements")) return json(liste([]));
+      return json({ error: { message: "yok" } }, 404);
+    }) as typeof fetch;
+  }
+
+  it("secilen BLOK ve SAKIN TIPI POST govdesine girer", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    const govdeler: Record<string, unknown>[] = [];
+    sahteFetch(govdeler);
+    const { container } = ciz(AnnouncementsPage);
+    await userEvent.click((await screen.findAllByRole("button", { name: "Yeni duyuru" }))[0]);
+    await userEvent.type(screen.getByLabelText(/Başlık/), "Su");
+    await userEvent.type(screen.getByLabelText(/Duyuru metni/), "Kesinti");
+    await waitFor(() =>
+      expect(container.ownerDocument.querySelector('[data-test="duyuru-blok-A"]')).not.toBeNull(),
+    );
+    await userEvent.click(container.ownerDocument.querySelector('[data-test="duyuru-blok-A"]')!);
+    await userEvent.selectOptions(
+      container.ownerDocument.querySelector('[data-test="duyuru-sakin-tipi"]')!,
+      "malik",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Kaydet" }));
+    await waitFor(() => expect(govdeler).toHaveLength(1));
+    expect(govdeler[0]).toMatchObject({
+      hedef_roller: [],
+      hedef_sakin_tipi: "malik",
+      hedef_bloklar: ["A"],
+    });
+  });
+
+  it("YALNIZ PERSONEL secilince blok/sakin tipi govdeden TEMIZLENIR", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    const govdeler: Record<string, unknown>[] = [];
+    sahteFetch(govdeler);
+    const { container } = ciz(AnnouncementsPage);
+    const doc = container.ownerDocument;
+    await userEvent.click((await screen.findAllByRole("button", { name: "Yeni duyuru" }))[0]);
+    await userEvent.type(screen.getByLabelText(/Başlık/), "Toplanti");
+    await userEvent.type(screen.getByLabelText(/Duyuru metni/), "Saat 9");
+    await waitFor(() => expect(doc.querySelector('[data-test="duyuru-blok-A"]')).not.toBeNull());
+    await userEvent.click(doc.querySelector('[data-test="duyuru-blok-A"]')!);
+    await userEvent.click(doc.querySelector('[data-test="duyuru-hedef-security"]')!);
+    // sakin suzgeci anlamsiz -> gizlendi
+    expect(doc.querySelector('[data-test="duyuru-blok-A"]')).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Kaydet" }));
+    await waitFor(() => expect(govdeler).toHaveLength(1));
+    expect(govdeler[0]).toMatchObject({
+      hedef_roller: ["security"],
+      hedef_sakin_tipi: null,
+      hedef_bloklar: [],
+    });
+  });
+
+  it("HEDEFLI duyuru listede rozetle, hedefsiz rozetsiz", async () => {
+    fetchSahtele({
+      "/api/announcements": liste([
+        { ...DUYURU, id: "h1", baslik: "Hedefli", hedef_roller: [], hedef_bloklar: ["A"], hedef_sakin_tipi: "malik" },
+        { ...DUYURU, id: "h2", baslik: "Herkese", hedef_roller: [], hedef_bloklar: [] },
+      ]),
+    });
+    const { container } = ciz(AnnouncementsPage);
+    await waitFor(() => expect(screen.getByText("Hedefli")).toBeInTheDocument());
+    const rozetler = container.querySelectorAll('[data-test="duyuru-hedef-rozet"]');
+    expect(rozetler).toHaveLength(1);
+    expect(rozetler[0].textContent).toContain("Blok: A");
+    expect(rozetler[0].textContent).toContain("Yalnız malikler");
+  });
+});

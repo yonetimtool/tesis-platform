@@ -20,7 +20,9 @@ from ..weather import cache_get, cache_get_stale, cache_put, kod_durum
 
 router = APIRouter(prefix="/weather", tags=["weather"])
 
-_READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi", "resident")
+_READER = require_role(
+    "admin", "yonetici", "security", "guvenlik_amiri", "tesis_gorevlisi", "resident"
+)
 
 
 @router.get("", response_model=WeatherOut)

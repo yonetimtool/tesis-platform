@@ -27,7 +27,7 @@ from datetime import datetime, time, timezone
 
 from fastapi import APIRouter, Depends, Header, Query
 from fastapi.responses import JSONResponse
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -42,6 +42,7 @@ from ..crud_helpers import (
 from .. import defter
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
+from ..makbuz import tahsilat_makbuzu
 from ..sakin_bildirimi import aidat_bildir
 from ..borclandirma import Bag, gecikme_kurus, hedef_sec
 from ..models import (
@@ -376,6 +377,62 @@ async def _unit_status(db: AsyncSession, unit: Unit) -> UnitDuesStatus:
     )
 
 
+async def _ayni_donem_aidati(
+    db: AsyncSession,
+    unit_ids: list[uuid.UUID],
+    donem: str,
+    kalem_tipi: str,
+    tanim_id: uuid.UUID | None,
+) -> set[uuid.UUID]:
+    """Bu donem icin AYNI AIDATI zaten tasiyan daireler.
+
+    (E2E 2026-09, FINANS-10) Tekillik indeksi `COALESCE(tanim_id, nobetci)`
+    icerdigi icin TANIMSIZ ("Aidat" sayfasinin toplu formu) ve TANIMLI
+    (Finans -> Borclandirma, "Aidat" tanimi) aidat FARKLI anahtar sayiliyor
+    ve ayni ay ikinci kez borclandirilabiliyordu (A-9: 2 x 1.750).
+
+    Kural yalniz `aidat` kalemi icin ve yalniz bir taraf TANIMSIZ ise:
+    tanimsiz aidat "o ayin aidati"dir, ayni ayin tanimli aidatiyla
+    birlikte var olamaz. Iki FARKLI tanim (orn. "Aidat" + "Ek aidat")
+    bilincli bir karardir ve serbest kalir; ayni tanimi tekillik indeksi
+    zaten korur.
+    """
+    if kalem_tipi != "aidat" or not unit_ids:
+        return set()
+    # "AIDAT TANIMI" = adinda "aidat" gecen tanim. `kalem_tipi` tek basina
+    # yetmez: varsayilani `aidat` oldugu icin demirbas/sayac gibi tanimli
+    # kalemler de `aidat` tasiyabilir ve onlar ayni ayin aidatina engel
+    # OLMAMALI.
+    aidat_tanimlari = select(GelirGiderTanim.id).where(
+        func.lower(GelirGiderTanim.ad).like("%aidat%")
+    )
+    kosul = [
+        DuesAssessment.unit_id.in_(unit_ids),
+        DuesAssessment.donem == donem,
+        DuesAssessment.kalem_tipi == "aidat",
+        *defter.gecerli_tahakkuk(),
+    ]
+    if tanim_id is not None:
+        # Tanimli yeni kalem: yalniz kendisi bir AIDAT tanimiysa ve yalniz
+        # TANIMSIZ mevcut kalemle catisir.
+        aidat_mi = (
+            await db.execute(aidat_tanimlari.where(GelirGiderTanim.id == tanim_id))
+        ).scalar_one_or_none()
+        if aidat_mi is None:
+            return set()
+        kosul.append(DuesAssessment.gelir_gider_tanim_id.is_(None))
+    else:
+        kosul.append(or_(
+            DuesAssessment.gelir_gider_tanim_id.is_(None),
+            DuesAssessment.gelir_gider_tanim_id.in_(aidat_tanimlari),
+        ))
+    return set(
+        (await db.execute(select(DuesAssessment.unit_id).where(*kosul)))
+        .scalars()
+        .all()
+    )
+
+
 # ------------------------------ tahakkuk ----------------------------------- #
 @router.post("/dues/assessments", response_model=DuesAssessmentResult, status_code=201)
 async def create_assessments(
@@ -403,6 +460,11 @@ async def create_assessments(
     if body.unit_id is not None:
         if (await db.execute(select(Unit.id).where(Unit.id == body.unit_id))).scalar_one_or_none() is None:
             raise APIError(422, "invalid_reference", "daire_bulunamadi")
+        if body.unit_id in await _ayni_donem_aidati(
+            db, [body.unit_id], body.donem, body.kalem_tipi,
+            body.gelir_gider_tanim_id,
+        ):
+            raise APIError(409, "conflict", "tahakkuk_zaten_var")
         hedef = await _hedef_coz(db, body.unit_id, tanim, body.hedef_kurali)
         obj = DuesAssessment(
             tenant_id=user.tenant_id, unit_id=body.unit_id,
@@ -453,7 +515,15 @@ async def create_assessments(
 
     created: list[DuesAssessmentOut] = []
     atlananlar: list[TahakkukAtlanan] = []
+    zaten = await _ayni_donem_aidati(
+        db, targets, body.donem, body.kalem_tipi, body.gelir_gider_tanim_id
+    )
     for uid in targets:
+        if uid in zaten:
+            atlananlar.append(TahakkukAtlanan(
+                unit_id=uid, neden="donem_zaten_borclandirildi"
+            ))
+            continue
         obj = DuesAssessment(
             tenant_id=user.tenant_id, unit_id=uid,
             hedef_user_id=await _hedef_coz(db, uid, tanim, body.hedef_kurali),
@@ -586,7 +656,12 @@ async def tahakkuk_ters_kayit(
     ).first()
     if zaten is not None:
         raise APIError(409, "conflict", "tahakkuk_zaten_ters_kayitli")
-    odenen = (await defter.tahakkuk_odenen(db, [asil.id])).get(asil.id, 0)
+    # DOGRUDAN bu kaleme yazilmis para (FIFO dagitimi DEGIL): kalemsiz
+    # daire odemesi ters kayittan sonra dairenin diger kalemlerine akar,
+    # alinmis para karsiliksiz kalmaz.
+    odenen = (
+        await defter.tahakkuk_odenen(db, [asil.id], fifo=False)
+    ).get(asil.id, 0)
     if odenen > 0:
         raise APIError(409, "conflict", "tahakkuk_odenmis_ters_kayitlanamaz")
 
@@ -642,7 +717,7 @@ def _ayni_odeme(
         and mevcut.tutar_kurus == tutar_kurus
         and (mevcut.yontem or "diger") == yontem
         and mevcut.kaydeden_user_id == kaydeden
-        and mevcut.donem == donem
+        and (donem is None or mevcut.donem == donem)
     )
 
 
@@ -689,13 +764,23 @@ async def create_payment(
             raise APIError(422, "invalid_reference", "tahakkuk_bulunamadi")
         assessment_donem, hedef_user_id = satir
 
-    # donem: acikca verilen > assessment'tan tureyen > NULL (serbest odeme).
+    # donem: acikca verilen > assessment'tan tureyen > (E2E 2026-09,
+    # FINANS-07) dairenin FIFO ile ilk kapanacak acik kalemi / islem ayi.
+    # NULL birakmak, odemeyi donem bazli tahsilat oranindan dusuruyordu.
     donem = body.donem if body.donem is not None else assessment_donem
+    if donem is None:
+        donem = await defter.kalemsiz_tahsilat_donemi(
+            db, body.unit_id,
+            body.odeme_zamani.date() if body.odeme_zamani else None,
+        )
 
     cmp = dict(
         unit_id=body.unit_id, assessment_id=body.assessment_id,
         tutar_kurus=body.tutar_kurus, yontem=body.yontem, kaydeden=user.id,
-        donem=donem,
+        # Turetilmis donem karsilastirmaya GIRMEZ: ilk istekten sonra kalem
+        # kapandigi icin tekrar istekte farkli donem turer ve ayni odeme
+        # "govde farkli" sanilirdi.
+        donem=body.donem if body.donem is not None else assessment_donem,
     )
     mevcut = await _idem_bul(db, anahtar)
     if mevcut is not None:
@@ -731,6 +816,24 @@ async def create_payment(
         db, user.tenant_id, body.kasa_id,
         banka=body.yontem in ("havale", "kart"),
     )
+    if hedef_user_id is None:
+        # (E2E 2026-09, FINANS-06) ODEYEN KISI: kalem hedefsizse dairenin
+        # TEK aktif sakini. Kisisiz odeme Borc-Alacak raporunda hicbir
+        # kisinin satirina girmiyordu. Cok sakinli dairede TAHMIN yok.
+        sakinler = list(
+            dict.fromkeys(
+                (
+                    await db.execute(
+                        select(UnitResident.user_id).where(
+                            UnitResident.unit_id == body.unit_id,
+                            UnitResident.bitis.is_(None),
+                        )
+                    )
+                ).scalars().all()
+            )
+        )
+        if len(sakinler) == 1:
+            hedef_user_id = sakinler[0]
 
     obj = FinansalHareket(
         tenant_id=user.tenant_id,
@@ -793,6 +896,15 @@ async def create_payment(
         meta={"unit_id": str(obj.unit_id), "yontem": body.yontem,
               "tutar_kurus": obj.tutar_kurus},
     )
+    # (E2E 2026-09, FINANS-02) Makbuz + sakine "odemeniz alindi" bildirimi.
+    # Yalniz GERCEKLESMIS odemede: kart odemesi saglayicidan donunce
+    # (webhook) belgelenir.
+    if obj.durum == defter.GERCEKLESEN:
+        await tahsilat_makbuzu(
+            db, tenant_id=user.tenant_id, satirlar=[obj],
+            user_id=obj.user_id, unit_id=obj.unit_id,
+            tarih=obj.tarih, aciklama=None,
+        )
     content = _odeme_out(obj).model_dump(mode="json")
     if init.redirect_url:  # kart: saglayici odeme sayfasi URL'i
         content["odeme_url"] = init.redirect_url
@@ -855,19 +967,63 @@ async def me_dues(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_RESIDENT),
 ) -> MeDuesResponse:
-    # Sakinin AKTIF dairelerinin borc durumu (yalniz kendi daireleri).
-    unit_ids = (
-        await db.execute(
-            select(UnitResident.unit_id).where(
-                UnitResident.user_id == user.id, UnitResident.bitis.is_(None)
+    """Sakinin GORDUGU borc — `defter.sakin_kalemleri` (TEK TANIM).
+
+    (E2E 2026-09, YETKI-06 / TESIS-08 / FINANS-19) Onceden sakinin aktif
+    dairelerinin `_unit_status`u oldugu gibi donuyordu: kiraci malikin
+    demirbasini, yeni kiraci onceki sakinin borcunu goruyor; ayrilan sakin
+    kendi borcunu HIC goremiyordu ve `/me/odeme-bilgileri` baska bir borc
+    soyluyordu. Artik ikisi de ayni kalem kumesinden hesaplanir.
+
+    Bicim korundu (daire basina `UnitDuesStatus`): mobil ve web istemcisi
+    kirilmasin. Rakamlar SAKININ PAYIDIR: `toplam_tahakkuk` gordugu
+    kalemlerin toplami, `toplam_odenen` o kalemlere mahsup edilen tutar,
+    `bakiye` kalan. Kalemler hedef adi/sifatiyla zenginlestirilir — sakin
+    hangi kalemin kime yazildigini gorur.
+    """
+    kalemler = await defter.sakin_kalemleri(db, user.id)
+    aktif = set(
+        (
+            await db.execute(
+                select(UnitResident.unit_id).where(
+                    UnitResident.user_id == user.id, UnitResident.bitis.is_(None)
+                )
             )
+        ).scalars().all()
+    )
+    daire_idleri = aktif | {k.unit_id for k, _ in kalemler}
+    if not daire_idleri:
+        return MeDuesResponse(items=[])
+    daireler = (
+        await db.execute(
+            select(Unit).where(Unit.id.in_(list(daire_idleri))).order_by(Unit.no)
         )
     ).scalars().all()
+    zengin = {
+        z.id: z for z in await _zenginlestir(db, [k for k, _ in kalemler])
+    }
     items = []
-    if unit_ids:
-        units = (
-            await db.execute(select(Unit).where(Unit.id.in_(list(unit_ids))).order_by(Unit.no))
-        ).scalars().all()
-        for u in units:
-            items.append(await _unit_status(db, u))
+    for u in daireler:
+        benim = [(k, kalan) for k, kalan in kalemler if k.unit_id == u.id]
+        toplam = sum(k.tutar_kurus for k, _ in benim)
+        kalan_top = sum(kalan for _, kalan in benim)
+        # ODEMELER: bu dairede BENIM yaptigim odemeler (iade/iptal dahil).
+        # Dairenin baska sakininin odemesini gostermek, onun mali verisini
+        # gostermek olurdu.
+        # Kisiye baglanmamis (eski) odeme yalniz AKTIF dairemde gorunur.
+        odemeler = [
+            h for h in await _daire_tahsilatlari(db, u.id)
+            if h.user_id == user.id or (h.user_id is None and u.id in aktif)
+        ]
+        items.append(
+            UnitDuesStatus(
+                unit_id=u.id,
+                no=u.no,
+                toplam_tahakkuk_kurus=toplam,
+                toplam_odenen_kurus=toplam - kalan_top,
+                bakiye_kurus=kalan_top,
+                assessments=[zengin[k.id] for k, _ in benim],
+                payments=[_odeme_out(h) for h in odemeler],
+            )
+        )
     return MeDuesResponse(items=items)

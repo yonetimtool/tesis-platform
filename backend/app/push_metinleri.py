@@ -67,9 +67,15 @@ def push_govdesi(
     if not params:
         return sablon
     try:
-        return sablon.format(**params)
+        metin = sablon.format(**params)
     except (KeyError, IndexError, ValueError):
         return sablon
+    # (E2E 2026-09) BOS YER TUTUCU KUYRUGU: konumu olmayan alarm
+    # "... kapatildi — -" diye bitiyordu. Tire yer tutucusu metinde
+    # anlam tasimaz; ayraciyla birlikte atilir.
+    if metin.endswith(" — -"):
+        metin = metin[: -len(" — -")]
+    return metin
 
 
 # --------------------------------------------------------------------------- #
@@ -807,13 +813,13 @@ METINLER: dict[str, PushMetni] = {
             "es": "Alarma cerrada",
         },
         govde={
-            "tr": "{ad} için açılan alarm kapatıldı — {yer}",
-            "en": "The alarm raised for {ad} was closed — {yer}",
-            "ar": "تم إغلاق الإنذار الخاص بـ {ad} — {yer}",
-            "ru": "Тревога по {ad} закрыта — {yer}",
-            "de": "Der Alarm für {ad} wurde geschlossen — {yer}",
-            "fr": "L’alerte pour {ad} a été clôturée — {yer}",
-            "es": "La alarma de {ad} fue cerrada — {yer}",
+            "tr": "{ad} tarafından açılan alarm kapatıldı — {yer}",
+            "en": "The alarm raised by {ad} was closed — {yer}",
+            "ar": "تم إغلاق الإنذار الذي أطلقه {ad} — {yer}",
+            "ru": "Тревога, поднятая {ad}, закрыта — {yer}",
+            "de": "Der von {ad} ausgelöste Alarm wurde geschlossen — {yer}",
+            "fr": "L’alerte lancée par {ad} a été clôturée — {yer}",
+            "es": "La alarma activada por {ad} fue cerrada — {yer}",
         },
         params=('ad', 'yer'),
     ),
@@ -1284,13 +1290,15 @@ METINLER: dict[str, PushMetni] = {
             "es": "Pago recibido",
         },
         govde={
-            "tr": "Banka ödemeniz hesabınıza işlendi. Makbuzunuz hazır.",
-            "en": "Your bank payment has been applied to your account. Your receipt is ready.",
-            "ar": "تمت معالجة دفعتك البنكية في حسابك. الإيصال جاهز.",
-            "ru": "Ваш банковский платёж зачислен. Квитанция готова.",
-            "de": "Ihre Banküberweisung wurde verbucht. Ihre Quittung ist bereit.",
-            "fr": "Votre virement a été enregistré. Votre reçu est prêt.",
-            "es": "Su pago bancario se ha registrado. Su recibo está listo.",
+            # (E2E 2026-09, FINANS-02) "Banka odemeniz" DEGIL: ayni bildirim
+            # artik vezne ve aidat ucundan alinan odemede de gidiyor.
+            "tr": "Ödemeniz hesabınıza işlendi. Makbuzunuz hazır.",
+            "en": "Your payment has been applied to your account. Your receipt is ready.",
+            "ar": "تمت معالجة دفعتك في حسابك. الإيصال جاهز.",
+            "ru": "Ваш платёж зачислен. Квитанция готова.",
+            "de": "Ihre Zahlung wurde verbucht. Ihre Quittung ist bereit.",
+            "fr": "Votre paiement a été enregistré. Votre reçu est prêt.",
+            "es": "Su pago se ha registrado. Su recibo está listo.",
         },
     ),
 }

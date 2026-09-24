@@ -7,6 +7,7 @@ import {
   AramaAlani,
   BosDurum,
   Dugme,
+  DugmeBaglantisi,
   FiltreCubugu,
   HataDurumu,
   IskeletMetin,
@@ -196,6 +197,15 @@ export default function ResidentsPage() {
               : t("sakinYok")
           }
           aciklama={aramaGecerli || blok !== null ? undefined : t("sakinYokAlt")}
+          // (E2E 2026-09) Metin "Kullanicilar ekranindan acabilirsiniz"
+          // diyor ama oraya giden bir yol vermiyordu.
+          eylem={
+            aramaGecerli || blok !== null ? undefined : (
+              <DugmeBaglantisi href="/users" tur="birincil" boy="kucuk">
+                {t("sakinKullanicilaraGit")}
+              </DugmeBaglantisi>
+            )
+          }
         />
       ) : (
         <div className="space-y-4">

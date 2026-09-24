@@ -19,6 +19,8 @@
 library;
 
 import '../../../routing/app_router.dart';
+import '../../../routing/push_yonlendirme.dart';
+import '../../auth/domain/user_role.dart';
 import '../domain/notification_models.dart';
 
 /// Bildirimin acilmasi gereken rota; hedef bilinmiyorsa `null`.
@@ -26,7 +28,27 @@ import '../domain/notification_models.dart';
 /// `null` donmesi bir HATA DEGILDIR: o bildirim tipinin gidecegi bir ekran
 /// yok demektir ve ekran yalnizca "okundu" isaretler. Bilinmeyen bir tipe
 /// uydurma bir hedef vermek, kullaniciyi alakasiz bir ekrana atmak olurdu.
-String? bildirimRotasi(AppNotification b) {
+///
+/// (E2E 2026-09) ROL VERILIRSE PUSH HARITASI KULLANILIR — TEK TABLO.
+/// Iki ayri tablo ayrismisti: push dokunmasi 15 tipi eslemiyordu, liste
+/// ise rol suzgeci uygulamiyordu (sakin `talep_cozuldu` -> menusunde
+/// olmayan `/complaints`; P217'nin push icin duzelttigi kusur). Rol
+/// bilindiginde karar `pushHedefi`nde verilir (rol ayrimi + erisim
+/// suzgeci); asagidaki harita yalniz rol yokken ve referans yedegi
+/// olarak kalir.
+String? bildirimRotasi(AppNotification b, {UserRole? role}) {
+  if (role != null) {
+    final data = <String, String>{
+      'tip': b.tip,
+      if (b.taskId != null) 'task_id': b.taskId!,
+      if (b.patrolWindowId != null) 'patrol_window_id': b.patrolWindowId!,
+    };
+    final hedef = pushHedefi(data, role);
+    if (hedef != null) return hedef;
+    // Tip push haritasinda yoksa referanstan turet — ama ERISILEBILIRSE.
+    final yedek = _referanstan(b);
+    return yedek != null && rotaErisilebilir(yedek, role) ? yedek : null;
+  }
   final tipten = switch (b.tip) {
     // Devriye alarmlari — tur takibi ekrani pencereleri/okutmalari gosterir.
     'kacirilan_tur' || 'eksik_checkpoint' || 'gecikmis_okutma' =>
@@ -75,9 +97,12 @@ String? bildirimRotasi(AppNotification b) {
     _ => null,
   };
   if (tipten != null) return tipten;
+  return _referanstan(b);
+}
 
-  // Tip bilinmiyor (eski/yeni bir deger) ama kayit bir REFERANS tasiyorsa
-  // ondan turet — tip listesi bayatlasa bile dokunma olu kalmasin.
+/// Tip bilinmiyor (eski/yeni bir deger) ama kayit bir REFERANS tasiyorsa
+/// ondan turet — tip listesi bayatlasa bile dokunma olu kalmasin.
+String? _referanstan(AppNotification b) {
   if (b.taskId != null && b.taskId!.isNotEmpty) return AppRoutes.tasks;
   if (b.patrolWindowId != null && b.patrolWindowId!.isNotEmpty) {
     return AppRoutes.patrolTracking;

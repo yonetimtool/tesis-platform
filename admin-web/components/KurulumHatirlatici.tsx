@@ -68,6 +68,14 @@ interface Durum {
   gecilen: number;
 }
 
+/** (E2E 2026-09) Profil — ilk giris turunun acik olup olmayacagini
+ *  `IlkGirisTuru` ile AYNI kuraldan okumak icin (ayni SWR anahtari: tek istek). */
+interface Profil {
+  role?: string;
+  tur_goruldu_at?: string | null;
+}
+const PROFIL_UC = "/api/me";
+
 /** Ayarlardan "tekrar goster" icin: kapatma kaydini siler. */
 export function kurulumHatirlaticiyiAc(): void {
   try {
@@ -82,6 +90,25 @@ export function KurulumHatirlatici({ rol }: { rol: string | null }) {
   const pathname = usePathname();
   const yetkili = rol !== null && YONETIM_ROLLERI.includes(rol);
   const { data } = useSWR<Durum>(yetkili ? UC : null, jsonFetcher);
+  // (E2E 2026-09) TUR ACIKKEN HATIRLATICI BASTIRILIR. Olculen: ilk
+  // giriste iki `role=dialog` ayni anda aciliyordu ("Kurulumu
+  // tamamlayın 0/19" arkada, "Hoş geldiniz 1/4" onde); tur bitince
+  // kullanici ikinci bir pencereyi daha kapatmak zorunda kaliyordu.
+  // Tur `tur_goruldu_at` bos oldugu surece acik (bkz. `IlkGirisTuru`);
+  // tur bitince isaret yazilir, SWR tazelenir ve hatirlatici SONRA gelir.
+  // Profil yuklenene kadar da acilmaz — yoksa bir kare hatirlatici
+  // gorunup turla yer degistirirdi. Profil ucu HATA verirse bastirma
+  // uygulanmaz: hatirlatici tur yuzunden kaybolmamali.
+  const { data: profil, error: profilHata } = useSWR<Profil>(
+    yetkili ? PROFIL_UC : null,
+    jsonFetcher,
+  );
+  const profilHazir = profil !== undefined || profilHata !== undefined;
+  const turAcik =
+    profil !== undefined &&
+    profil.role !== undefined &&
+    YONETIM_ROLLERI.includes(profil.role) &&
+    profil.tur_goruldu_at == null;
 
   // `null` BASLAR ve etkide doldurulur: sunucu karesinde `localStorage`
   // yok. `false` ile baslasaydik sunucu modali cizer, istemci bir kare
@@ -109,6 +136,8 @@ export function KurulumHatirlatici({ rol }: { rol: string | null }) {
     yetkili &&
     kapatildi === false &&
     data !== undefined &&
+    profilHazir &&
+    !turAcik &&
     !bitti &&
     pathname !== KURULUM_ROTASI;
 

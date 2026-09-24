@@ -265,7 +265,10 @@ export default function BorclularPage() {
           ikon={<BorcIkonu yol={IKON_KISI} />}
         />
         <OzetKarti
-          etiket={t("borclularOzetToplam")}
+          // (E2E 2026-09, FINANS-06) Bu rakam yalniz VADESI GECMIS borcun
+          // toplamidir; "Toplam acik borc" adi Finans ekranindaki (tum acik
+          // borc) rakamla ayni adi tasiyordu.
+          etiket={t("borclularOzetVadesiGecmis")}
           deger={kurusToTL(data?.toplam_kalan_kurus ?? 0)}
           durum={(data?.toplam_kalan_kurus ?? 0) > 0 ? "kritik" : "olumlu"}
           ikon={<BorcIkonu yol={IKON_BORC} />}
@@ -306,11 +309,15 @@ export default function BorclularPage() {
               tur="yatay"
               baslik={t("yasGrafikBaslik")}
               bosBaslik={t("yasKovaYok")}
+              // (E2E 2026-09, FINANS-20) GRAFIGE TL VERILIR. Cubuk ekseni
+              // `bicimle`yi kullanmiyor ve kurusu ham yaziyordu: 2.000 TL'lik
+              // kova ekseni 200000'e uzaniyor, 100 kat buyuk okunuyordu.
+              // Tablo satiri TL'yi kurusa geri cevirip ayni bicimle yazar.
               dilimler={(data?.kovalar ?? []).map((k) => ({
                 ad: k.kova,
-                deger: k.kalan_kurus,
+                deger: k.kalan_kurus / 100,
               }))}
-              bicimle={(n) => kurusToTL(n)}
+              bicimle={(n) => kurusToTL(Math.round(n * 100))}
             />
           </div>
         )}
@@ -374,7 +381,10 @@ export default function BorclularPage() {
             satirlar={satirlar}
             satirId={(d) => d.unit_id}
             yukleniyor={isLoading}
-            bosBaslik={t("otoKayitYok")}
+            // (E2E 2026-09) "Henuz kayit yok" borclu listesinde bir sey
+            // soylemiyordu: borc yoksa bu NORMAL durumdur ve oyle denir.
+            bosBaslik={t("borclularBos")}
+            bosAciklama={t("borclularBosAlt")}
           />
         </Kart>
       )}

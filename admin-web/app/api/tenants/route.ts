@@ -26,7 +26,9 @@ export const dynamic = "force-dynamic";
 // BEYAZ LISTE, ham yeniden yayin DEGIL: BFF'in gelen her parametreyi
 // koru korune iletmesi, ileride eklenen bir uc parametresini de
 // (orn. `limit`) farkinda olmadan acmak olurdu (P213 §3 dersi).
-const IZINLI_SORGU = ["q", "kurulum", "arsivli"] as const;
+// (E2E 2026-09) `limit`/`offset` BILEREK eklendi: tesis listesi artik
+// sunucuda sayfalanir (3788 tesiste tek yanit 805 KB idi).
+const IZINLI_SORGU = ["q", "kurulum", "arsivli", "limit", "offset"] as const;
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const gelen = new URL(req.url).searchParams;

@@ -189,3 +189,57 @@ def test_GECERSIZ_PLATFORM_REDDEDILIR(client, world):
         "/surum-politikasi/windows", headers=adm, json={"asgari_surum": "1.0.0"}
     )
     assert r.status_code == 422, r.text
+
+
+# ================ (E2E 2026-09) ONERILEN >= ASGARI ======================== #
+def test_ONERILEN_ASGARIDEN_DUSUK_422(client, world, owner_conn):
+    """Olculen: `2.0.0 / 1.0.0` 200 ile kaydediliyordu. Onerilen esik
+    asgarinin altindaysa hic calismaz; operator iki esik girdigini sanir."""
+    adm = _giris(client, world["slug_a"], world["admin_a"])
+    sorgu = (
+        "SELECT asgari_surum, onerilen_surum FROM surum_politikasi "
+        "WHERE platform='android'"
+    )
+    with owner_conn.cursor() as cur:
+        cur.execute(sorgu)
+        once = cur.fetchone()
+    try:
+        r = client.put(
+            "/surum-politikasi/android",
+            headers=adm,
+            json={"asgari_surum": "2.0.0", "onerilen_surum": "1.0.0"},
+        )
+        assert r.status_code == 422, r.text
+        assert r.json()["error"]["code"] == "validation_error"
+        # Kayit DEGISMEDI.
+        with owner_conn.cursor() as cur:
+            cur.execute(sorgu)
+            assert cur.fetchone() == once
+
+        # SAYISAL: 2.10.0 >= 2.9.0 (metin sirasi olsaydi reddedilirdi).
+        r = client.put(
+            "/surum-politikasi/android",
+            headers=adm,
+            json={"asgari_surum": "2.9.0", "onerilen_surum": "2.10.0"},
+        )
+        assert r.status_code == 200, r.text
+        # ESIT serbest.
+        r = client.put(
+            "/surum-politikasi/android",
+            headers=adm,
+            json={"onerilen_surum": "2.9.0"},
+        )
+        assert r.status_code == 200, r.text
+        # KISMI guncelleme de KAYITLI asgariyle karsilastirilir.
+        r = client.put(
+            "/surum-politikasi/android",
+            headers=adm,
+            json={"onerilen_surum": "2.8.0"},
+        )
+        assert r.status_code == 422, r.text
+    finally:
+        client.put(
+            "/surum-politikasi/android",
+            headers=adm,
+            json={"asgari_surum": None, "onerilen_surum": None, "mesaj": {}},
+        )

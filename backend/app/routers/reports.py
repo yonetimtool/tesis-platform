@@ -54,30 +54,24 @@ async def _tahsilat_ozet(db: AsyncSession, donem: str | None) -> TahsilatOzet:
             select(func.coalesce(func.sum(DuesAssessment.tutar_kurus), 0)).where(*a_where)
         )
     ).scalar_one()
-    # TEK KAYNAK: panel ozeti, seffaflik ve mobil ana ekran da bunu cagirir.
-    tahsilat = await defter.tahsilat_toplami(db, donem=donem)
+    # (E2E 2026-09, FINANS-07) TEK KAYNAK: donemin kalemlerinden KAPANAN
+    # tutar (`defter.donem_tahsil_edilen`, FIFO dahil) — gosterge ve
+    # seffaflik da bunu cagirir. Donem verilmezse tum donemlerin toplami.
+    tahsil_map = await defter.donem_tahsil_edilen(db, donem=donem)
+    tahsilat = sum(tahsil_map.values())
 
     # Geciken daire: donem tahakkuk toplami, tahsilat toplamini asan
     # daireler. Karsilastirma PYTHON'da yapiliyor cunku "odenen" tanimi
     # (iade/iptal dusulmus, yalniz gerceklesmis satirlar) tek yerde
     # yasiyor; SQL'e ikinci bir kopyasini yazmak, bu turun duzelttigi
     # kusuru geri getirirdi.
-    tahakkuk_daire = (
-        await db.execute(
-            select(
-                DuesAssessment.unit_id,
-                func.coalesce(func.sum(DuesAssessment.tutar_kurus), 0),
-            )
-            .where(*a_where)
-            .group_by(DuesAssessment.unit_id)
-        )
-    ).all()
-    odenen = await defter.daire_odenen(
-        db, [uid for uid, _ in tahakkuk_daire], donem=donem
+    # Geciken daire = donemin kalemlerinden biri ACIK kalan daire (kalem
+    # duzeyinde FIFO; seffaflikla ayni tanim).
+    kalemler = list(
+        (await db.execute(select(DuesAssessment).where(*a_where))).scalars().all()
     )
-    geciken = sum(
-        1 for uid, toplam in tahakkuk_daire if int(toplam) > odenen.get(uid, 0)
-    )
+    kalan = await defter.kalem_kalanlari(db, kalemler)
+    geciken = len({k.unit_id for k in kalemler if kalan.get(k.id, 0) > 0})
 
     orani = None
     if tahakkuk > 0:

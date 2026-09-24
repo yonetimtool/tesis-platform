@@ -55,6 +55,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
+  // (E2E 2026-09) GECICI KODLA ILK GIRIS: oturum YOK, yalniz kisa omurlu
+  // `setup_token` — cerez yazilmaz; form parola belirleme adimina gecer
+  // (`/api/auth/set-password`, rol kapisindan gecer).
+  const kurulum = data as { password_setup_required?: boolean; setup_token?: string };
+  if (kurulum?.password_setup_required && kurulum.setup_token) {
+    return NextResponse.json({
+      password_setup_required: true,
+      setup_token: kurulum.setup_token,
+    });
+  }
+
   const tokens = data as { access_token: string; refresh_token: string };
 
   // (P126.1) KAPI ARTIK YUZEYE GORE.

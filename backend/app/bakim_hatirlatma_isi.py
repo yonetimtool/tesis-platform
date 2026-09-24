@@ -160,6 +160,37 @@ def tum_tenantlar_icin(
                             json.dumps(veri),
                         ),
                     )
+                    # (E2E 2026-09) "BUGUN" SAHAYA KISI SATIRIYLA DA YAZILIR.
+                    #
+                    # Olculen (TESIS-15): `user_id = NULL` satirini
+                    # `notifications._kapsam` yalniz `_YONETIM_GOZU`
+                    # rollerine gosteriyor; `tesis_gorevlisi` orada YOK.
+                    # Push'u kaciran gorevli "bugun asansor firmasi gelecek"
+                    # bilgisini listede HIC bulamiyordu — oysa bu kademenin
+                    # saha icin var olma sebebi tam olarak o. Gorevliye
+                    # KENDI satiri yazilir (kisi akisini gorur).
+                    #
+                    # `security`/`guvenlik_amiri` NULL satiri zaten goruyor.
+                    # Onlarin "yaklasti/gecikti"yi de gormesi (karar disi)
+                    # `notifications._kapsam`in tip suzmemesinden geliyor;
+                    # o dosya bu turun kapsami disinda — raporda not edildi.
+                    if kademe == "bugun":
+                        gorevliler = conn.execute(
+                            "SELECT id FROM app_user WHERE role = "
+                            "'tesis_gorevlisi' AND is_active = true"
+                        ).fetchall()
+                        for (uid,) in gorevliler:
+                            conn.execute(
+                                "INSERT INTO notification "
+                                "(tenant_id, user_id, tip, mesaj, "
+                                " mesaj_kimlik, mesaj_veri) "
+                                "VALUES (%s, %s, %s, %s, %s, %s::jsonb)",
+                                (
+                                    tenant_id, uid, tip,
+                                    push_govdesi(tip, "tr", veri), tip,
+                                    json.dumps(veri),
+                                ),
+                            )
                     roller = (
                         BUGUN_ROLLERI if kademe == "bugun" else YONETIM_ROLLERI
                     )

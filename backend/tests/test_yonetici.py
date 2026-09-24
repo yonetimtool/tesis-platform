@@ -193,7 +193,12 @@ def test_yonetici_yapilandirma_ve_saha_kaniti_403(client, world):
     ).status_code == 201
     # NOT: patrol-plan CRUD artik admin+YONETICI (yonetici uygulamada devriye
     # plani tanimlar); bkz. test_patrol_plans.py.
-    assert client.post("/assets", headers=yonetici, json={"ad": "x"}).status_code == 403
+    # (E2E 2026-09) TESIS-04: demirbas CRUD artik admin+YONETICI — yeni
+    # tesiste platform admini olmadigi icin kimse demirbas acamiyordu.
+    # Bkz. test_e2e_tesis_operasyon.py.
+    r = client.post("/assets", headers=yonetici, json={"ad": f"x-{uuid.uuid4().hex[:6]}"})
+    assert r.status_code == 201, r.text
+    assert client.delete(f"/assets/{r.json()['id']}", headers=yonetici).status_code == 204
     # NOT: daire (unit) CRUD artik admin+YONETICI (D-viz Rev-1 bina yerlesimi);
     # bkz. test_blocks.py + test_building_map.py. Burada admin-only olanlar kalir.
     # Yonetici tesis ADINI degistirebilir ama yapilandirmayi (timezone) DEGIL.

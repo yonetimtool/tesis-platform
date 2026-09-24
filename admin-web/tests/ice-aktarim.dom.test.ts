@@ -218,6 +218,30 @@ describe("(P154/8) ice aktarim — istemci ayristirmasi", () => {
     ).toBeInTheDocument();
   });
 
+  it("(E2E 2026-09 / TESIS-10) ATLANAN satirlar SATIR NO + SEBEPLE listelenir", async () => {
+    sahtele({
+      satir_sayisi: 2, olusan: 1, atlanan: 1, hatali: 0, hatalar: [],
+      aktarim_id: null, uygulanmadi: false,
+      davet_gonderildi: 0, davet_basarisiz: 0, davet_hatalari: [],
+      atlananlar: [{ satir_no: 5, alan: "daire_no", hata: "Daire zaten kayıtlı; atlandı." }],
+    });
+    ciz(IceAktarimPage);
+    await veriGir("blok;daire_no\nA;A-1\nA;A-1");
+
+    const secimler = await screen.findAllByRole("combobox");
+    await userEvent.selectOptions(secimler[1], "blok");
+    await userEvent.selectOptions(secimler[2], "daire_no");
+    await userEvent.click(screen.getByRole("button", { name: /Aktar/ }));
+
+    const liste = await waitFor(() => {
+      const el = document.querySelector('[data-testid="ice-aktarim-atlananlar"]');
+      expect(el).not.toBeNull();
+      return el as HTMLElement;
+    });
+    expect(liste.textContent).toMatch(/5/);
+    expect(liste.textContent).toMatch(/Daire zaten kayıtlı/);
+  });
+
   it("ZORUNLU SUTUNLAR sablon bilgisinde yaziyor", async () => {
     sahtele();
     ciz(IceAktarimPage);

@@ -332,6 +332,10 @@ export interface Announcement {
   foto_url?: string | null;
   olusturan_user_id: string;
   olusturan_ad?: string | null;
+  /** (E2E 2026-09, BILDIRIM-12) Hedef kitle; bos = herkes. */
+  hedef_roller?: string[];
+  hedef_sakin_tipi?: string | null;
+  hedef_bloklar?: string[];
   created_at: string;
   updated_at: string;
 }
@@ -816,7 +820,9 @@ export interface IntegrationTriggerResult {
 // ---------------- bina semasi / sikayet haritasi (D-viz-2) ---------------- #
 // GET /unit-complaints/building-map — renk API'den gelir (yesil/sari/kirmizi =
 // 0-2/3-4/5+); istemci ESIK HESAPLAMAZ.
-export type DensityRenk = "yesil" | "sari" | "kirmizi";
+// (E2E 2026-09) TESIS-20: backend P24'ten beri DORT kademe uretiyor; "mor"
+// eksikti ve 5+ sikayetli daire haritada YESIL ciziliyordu (renkTonu yedegi).
+export type DensityRenk = "yesil" | "sari" | "kirmizi" | "mor";
 
 // (P165) `GET /units/kat-onizleme` — kat silinirse ne kaybedilecek.
 // Kategoriler AYRI: "12 bagli kayit" bir sey soylemez, "3 sakin 9

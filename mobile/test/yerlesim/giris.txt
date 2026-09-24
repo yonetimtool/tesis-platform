@@ -1,12 +1,14 @@
- 254,  77  236x26  yönetiyor
- 324,  36  24x24  U+E497
- 324,  76  274x24  ornek@eposta.com veya 5XX XXX XX XX
- 328,  76  274x16  E-posta veya telefon numarası
- 368,  40  310x32  E-posta veya telefon numaranız ile giriş yapın
- 432,  36  24x24  U+E3B1
- 432, 330  24x24  U+F4A1
- 436,  76  238x16  Parola veya geçici kod
- 476,  40  310x32  İlk girişte yönetimden aldığınız geçici kodu yazın.
- 530,  80  286x20  Beni hatırla
- 604, 132  127x20  Giriş yap
- 656,  36  318x40  Hesabınız yok mu? Kayıt olun
+ 202,  77  236x26  yönetiyor
+ 272,  36  24x24  U+E497
+ 272,  76  274x24  ornek@eposta.com veya 5XX XXX XX XX
+ 276,  76  274x16  E-posta veya telefon numarası
+ 316,  40  310x32  E-posta veya telefon numaranız ile giriş yapın
+ 380,  36  24x24  U+E3B1
+ 380, 330  24x24  U+F4A1
+ 384,  76  238x16  Parola veya geçici kod
+ 424,  40  310x32  İlk girişte yönetimden aldığınız geçici kodu yazın.
+ 478,  80  286x20  Beni hatırla
+ 552, 132  127x20  Giriş yap
+ 596,  36  318x40  Parola yerine e-postaya kod gönder
+ 658,  89  212x20  Şifremi unuttum
+ 708,  36  318x40  Hesabınız yok mu? Kayıt olun

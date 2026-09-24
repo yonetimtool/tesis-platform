@@ -296,7 +296,8 @@ export function BolumBasligi({
       {href ? (
         <Link
           href={href}
-          className="odak-ic shrink-0 hover:underline"
+          // (E2E 2026-09) `min-h-6`: dokunma hedefi >= 24px (WCAG 2.5.8).
+          className="odak-ic inline-flex min-h-6 shrink-0 items-center hover:underline"
           style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-accent-ink)" }}
         >
           {t("tasarimTumunuGor")}

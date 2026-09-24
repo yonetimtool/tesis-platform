@@ -21,7 +21,9 @@ export const EKRAN_YARDIMI: Record<string, SozlukAnahtari> = {
   "/dashboard": "yardimDashboard",
   "/kurulum": "yardimKurulum",
   "/users": "yardimUsers",
-  "/residents": "yardimUsers",
+  // (E2E 2026-09) Sakinler ekrani hesap ACMAZ; Kullanicilar metni
+  // ("kisiyi eklediginizde davet gider") burada yanlisti.
+  "/residents": "yardimResidents",
   "/building-editor": "yardimBuildingEditor",
   "/tasks": "yardimTasks",
   "/dues": "yardimDues",
@@ -39,6 +41,29 @@ export const EKRAN_YARDIMI: Record<string, SozlukAnahtari> = {
   "/reports": "yardimRaporlar",
   "/tesis-ayarlari": "yardimAyarlar",
   "/settings": "yardimAyarlar",
+  // (E2E 2026-09) KURULUM-11: yeni yoneticinin ilk haftada dokundugu ama
+  // "?" dugmesi OLMAYAN ekranlar. Her metin sayfanin koduna bakilarak
+  // yazildi (ne yapar / ne YAPMAZ / nereye gidilir).
+  "/units": "yardimUnits",
+  "/assets": "yardimAssets",
+  "/checkpoints": "yardimCheckpoints",
+  "/patrol-plans": "yardimPatrolPlans",
+  "/anketler": "yardimAnketler",
+  "/etkinlik-yonetimi": "yardimEtkinlik",
+  "/complaints": "yardimComplaints",
+  "/rezervasyon-yonetimi": "yardimRezervasyon",
+  "/arac-gecisleri": "yardimAracGecisleri",
+  "/akilli-ev": "yardimAkilliEv",
+  "/sayac-okuma": "yardimSayacOkuma",
+  "/transparency": "yardimTransparency",
+  // Finans alt sayfalari: `/finans` ortak metni ("tek defter") butce ve
+  // borclular ekranini ANLATMIYORDU. Bu dort ekran kendi isini soyler;
+  // kalanlar (virman, iade, acilis...) `/finans` metnine duser.
+  "/finans/borclular": "yardimBorclular",
+  "/finans/butce": "yardimButce",
+  "/finans/giderler": "yardimGiderler",
+  "/finans/tahsilatlar": "yardimTahsilatlar",
+  "/finans/gelirler": "yardimGelirler",
 };
 
 /** Yol icin aciklama anahtari — en uzun onek kazanir; yoksa `null`. */

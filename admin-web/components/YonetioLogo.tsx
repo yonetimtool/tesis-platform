@@ -66,6 +66,12 @@ import Image from "next/image";
  * ORAN KORUNUR: `width`/`height` esit veriliyor ve `Image` kaynak orani
  * kare oldugu icin isaret hicbir bantta EZILMEZ.
  */
+// (E2E 2026-09) Sinif dizeleri ADLI — ucluda dize yazilmaz (`sabit-metin`).
+const ISARET_HEP = "shrink-0";
+const ISARET_TEMALI = "hidden shrink-0 dark:block";
+const KELIME_HEP_ACIK = "text-white";
+const KELIME_TEMALI = "text-[#0E3C91] dark:text-white";
+
 export function YonetioLogo({
   size = 34,
   /** `false` ise kelime isareti YALNIZ `sm` ustunde cizilir (ust bar). */
@@ -77,36 +83,50 @@ export function YonetioLogo({
    * kucuk seritte logo linkinin erisilebilir adi zaten `aria-label`da.
    */
   kelimeGoster = true,
+  /**
+   * (E2E 2026-09) `true` ise logo TEMADAN BAGIMSIZ olarak acik murekkeple
+   * cizilir. Kenar cubugu IKI TEMADA DA lacivert (`--yz-bg-sidebar`);
+   * temaya gore renk secmek acik temada lacivert ustune lacivert
+   * kelime (#0E3C91 / #14263a = 1.51:1, 65/65 rotada axe ihlali) ve koyu
+   * isaret cizmekti.
+   */
+  koyuZemin = false,
 }: {
   size?: number;
   kelimeDar?: boolean;
   kelimeGoster?: boolean;
+  koyuZemin?: boolean;
 }) {
+  // Koyu zeminde yalniz acik varyant; aksi hâlde temaya gore.
+  const koyuIsaretSinifi = koyuZemin ? ISARET_HEP : ISARET_TEMALI;
+  const kelimeRengi = koyuZemin ? KELIME_HEP_ACIK : KELIME_TEMALI;
   return (
     <span className="flex min-w-0 items-center gap-2">
       {/* ACIK TEMA: koyu lacivert isaret. */}
-      <Image
-        src="/yonetio-logo.png"
-        alt="Yönetiyor"
-        width={size}
-        height={size}
-        priority
-        className="shrink-0 dark:hidden"
-      />
+      {!koyuZemin && (
+        <Image
+          src="/yonetio-logo.png"
+          alt="Yönetiyor"
+          width={size}
+          height={size}
+          priority
+          className="shrink-0 dark:hidden"
+        />
+      )}
       {/* KOYU TEMA: ters (acik murekkep) varyant. `alt` BOS ve
           `aria-hidden`: ayni logonun ikinci kopyasi, ekran okuyucuya iki
           kez "Yönetiyor" demek olurdu. */}
       <Image
         src="/yonetio-logo-acik.png"
-        alt=""
-        aria-hidden="true"
+        alt={koyuZemin ? "Yönetiyor" : ""}
+        aria-hidden={koyuZemin ? undefined : true}
         width={size}
         height={size}
-        className="hidden shrink-0 dark:block"
+        className={koyuIsaretSinifi}
       />
       {kelimeGoster && (
         <span
-          className={`whitespace-nowrap text-xl font-semibold tracking-tight text-[#0E3C91] dark:text-white${
+          className={`whitespace-nowrap text-xl font-semibold tracking-tight ${kelimeRengi}${
             kelimeDar ? "" : " hidden sm:inline"
           }`}
         >

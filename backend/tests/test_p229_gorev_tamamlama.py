@@ -214,8 +214,9 @@ def test_FOTO_ZORUNLU_GOREV_FOTOSUZ_TAMAMLANAMAZ(client, yon, guard_id, guard):
     assert red.status_code == 422, red.text
 
 
-def test_FOTO_VARLIGI_OZETTE_GORUNUR(client, yon, guard, gorev):
-    r = _tamamla(client, guard, gorev, foto_key="tenant/x/p229.jpg")
+def test_FOTO_VARLIGI_OZETTE_GORUNUR(client, world, yon, guard, gorev):
+    # (E2E 2026-09) foto_key kendi tenant on ekinde olmali (IDOR korumasi).
+    r = _tamamla(client, guard, gorev, foto_key=f"{world['a']}/tasks/p229.jpg")
     assert r.status_code == 201, r.text
     v = client.get(f"/tasks/{gorev}", headers=yon).json()
     assert v["son_tamamlama"]["foto_var"] is True

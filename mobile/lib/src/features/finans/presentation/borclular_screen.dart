@@ -103,7 +103,13 @@ class _BorclularScreenState extends ConsumerState<BorclularScreen> {
               ),
               // KOVA SERIDI — yatay kaydirir.
               SizedBox(
-                height: 92,
+                // (E2E 2026-09) YUKSEKLIK YAZI OLCEGIYLE BUYUR: sabit 92px
+                // buyuk yazida (Buyuk mod / sistem olcegi) kart icerigini
+                // kesiyordu. Yatay liste sinirli yukseklik ister; olcek
+                // oraninda buyutmek iki kosulu da saglar.
+                height: 92 *
+                    (MediaQuery.textScalerOf(context).scale(14) / 14)
+                        .clamp(1.0, 2.2),
                 child: ListView(
                   key: const Key('borclular-kovalar'),
                   scrollDirection: Axis.horizontal,

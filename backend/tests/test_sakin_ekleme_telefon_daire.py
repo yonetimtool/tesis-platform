@@ -63,7 +63,7 @@ def test_YALNIZ_telefon_ve_daire_ile_sakin_acilir(client, world):
     r = client.post(
         "/residents",
         headers=yon,
-        json={"telefon": _tel(), "unit_no": daire, "email": _p197_mail()},
+        json={"telefon": _tel(), "blok": "A", "unit_no": daire, "email": _p197_mail()},
     )
     assert r.status_code == 201, r.text
     govde = r.json()
@@ -85,7 +85,7 @@ def test_ad_verilmezse_DAIREDEN_turetilir(client, world):
     daire = _daire()
 
     r = client.post(
-        "/residents", headers=yon, json={"telefon": _tel(), "unit_no": daire, "email": _p197_mail()}
+        "/residents", headers=yon, json={"telefon": _tel(), "blok": "A", "unit_no": daire, "email": _p197_mail()}
     )
     assert r.status_code == 201, r.text
     assert r.json()["ad"] == f"{daire} sakini"
@@ -98,7 +98,7 @@ def test_ad_VERILIRSE_aynen_korunur(client, world):
     r = client.post(
         "/residents",
         headers=yon,
-        json={"telefon": _tel(), "unit_no": _daire(), "ad": "Ayşe Yılmaz", "email": _p197_mail()},
+        json={"telefon": _tel(), "blok": "A", "unit_no": _daire(), "ad": "Ayşe Yılmaz", "email": _p197_mail()},
     )
     assert r.status_code == 201, r.text
     assert r.json()["ad"] == "Ayşe Yılmaz"
@@ -111,11 +111,11 @@ def test_ayni_daireye_IKINCI_malik_eklenemez(client, world):
     daire = _daire()
 
     ilk = client.post("/residents", headers=yon, json={
-        "telefon": _tel(), "unit_no": daire, "rol_tipi": "malik", "email": _p197_mail()})
+        "telefon": _tel(), "blok": "A", "unit_no": daire, "rol_tipi": "malik", "email": _p197_mail()})
     assert ilk.status_code == 201, ilk.text
 
     ikinci = client.post("/residents", headers=yon, json={
-        "telefon": _tel(), "unit_no": daire, "rol_tipi": "malik", "email": _p197_mail()})
+        "telefon": _tel(), "blok": "A", "unit_no": daire, "rol_tipi": "malik", "email": _p197_mail()})
     assert ikinci.status_code == 409, ikinci.text
     assert ikinci.json()["error"]["code"] == "conflict"
 
@@ -131,11 +131,11 @@ def test_MALIK_ve_KIRACI_ayni_dairede_BIRLIKTE_durur(client, world):
     daire = _daire()
 
     m = client.post("/residents", headers=yon, json={
-        "telefon": _tel(), "unit_no": daire, "rol_tipi": "malik", "email": _p197_mail()})
+        "telefon": _tel(), "blok": "A", "unit_no": daire, "rol_tipi": "malik", "email": _p197_mail()})
     assert m.status_code == 201, m.text
 
     k = client.post("/residents", headers=yon, json={
-        "telefon": _tel(), "unit_no": daire, "rol_tipi": "kiraci", "email": _p197_mail()})
+        "telefon": _tel(), "blok": "A", "unit_no": daire, "rol_tipi": "kiraci", "email": _p197_mail()})
     assert k.status_code == 201, k.text
     # AYNI daire — ikisi de aktif.
     assert k.json()["unit_id"] == m.json()["unit_id"]
@@ -151,11 +151,11 @@ def test_ROL_TIPI_VERILMEDEN_ikinci_sakin_de_reddedilir(client, world):
     daire = _daire()
 
     ilk = client.post(
-        "/residents", headers=yon, json={"telefon": _tel(), "unit_no": daire, "email": _p197_mail()}
+        "/residents", headers=yon, json={"telefon": _tel(), "blok": "A", "unit_no": daire, "email": _p197_mail()}
     )
     assert ilk.status_code == 201, ilk.text
 
     ikinci = client.post(
-        "/residents", headers=yon, json={"telefon": _tel(), "unit_no": daire, "email": _p197_mail()}
+        "/residents", headers=yon, json={"telefon": _tel(), "blok": "A", "unit_no": daire, "email": _p197_mail()}
     )
     assert ikinci.status_code == 409, ikinci.text

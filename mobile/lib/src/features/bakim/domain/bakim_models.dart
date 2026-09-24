@@ -118,3 +118,31 @@ class BakimKaydiTaslak {
         'gidere_yaz': gidereYaz,
       };
 }
+
+
+/// (E2E 2026-09) Bakim kaydinin eki — not ya da dosya (`/ekler`).
+class BakimEki {
+  const BakimEki({
+    required this.id,
+    required this.tur,
+    this.metin,
+    this.dosyaAdi,
+    this.dosyaUrl,
+  });
+
+  final String id;
+  final String tur;
+  final String? metin;
+  final String? dosyaAdi;
+
+  /// Kisa omurlu imzali okuma adresi; yoksa ek yalniz adiyla gosterilir.
+  final String? dosyaUrl;
+
+  factory BakimEki.fromJson(Map<String, dynamic> j) => BakimEki(
+        id: j['id'] as String? ?? '',
+        tur: j['tur'] as String? ?? 'not',
+        metin: j['metin'] as String?,
+        dosyaAdi: j['dosya_adi'] as String? ?? j['dosya_key'] as String?,
+        dosyaUrl: j['dosya_url'] as String?,
+      );
+}

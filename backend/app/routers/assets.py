@@ -1,6 +1,6 @@
 """Asset (demirbas) CRUD + zimmet (checkout/checkin/history) — /contracts/openapi.yaml.
 
-RBAC: Asset CRUD admin; checkout/checkin/history + GET admin/security/tesis_gorevlisi.
+RBAC: Asset CRUD admin/yonetici (E2E 2026-09); checkout/checkin/history + GET admin/security/tesis_gorevlisi.
 Checkin SAHIPLIK kontrollu (mobil §13 #6): acik zimmeti yalniz SAHIBI veya admin
 kapatabilir; baskasi 403. Idempotency scan desenini (SAVEPOINT) yeniden kullanir.
 Tek aktif zimmet DB'de partial unique ile garanti; uygulama da onceden kontrol
@@ -20,7 +20,14 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
-from ..crud_helpers import coord_eq, get_or_404, is_unique_violation, nfc_eq, translate_integrity
+from ..crud_helpers import (
+    coord_eq,
+    get_or_404,
+    is_unique_violation,
+    nfc_eq,
+    norm_nfc,
+    translate_integrity,
+)
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import Asset, AssetCheckout, AppUser
@@ -40,7 +47,12 @@ from ..schemas import (
 
 router = APIRouter(prefix="/assets", tags=["assets"])
 
-_ADMIN = require_role("admin")
+# (E2E 2026-09) TESIS-04: CRUD yalniz platform `admin`ine acikti. `admin`
+# hesabi tek bir tenant'ta durdugu icin YENI bir tesiste demirbasi KIMSE
+# olusturamiyordu (zimmet akisi da baslayamiyordu); web ise yoneticiye
+# "Yeni demirbas" dugmesini ciziyordu. Demirbas tesisin kendi envanteridir
+# — sahibi tesis yonetimi. Zimmet (checkout/checkin) saha rollerinde kalir.
+_ADMIN = require_role("admin", "yonetici")
 _FIELD = require_role("admin", "security", "tesis_gorevlisi")
 _VIEWER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
 
@@ -102,7 +114,13 @@ async def list_assets(
     if aktif is not None:
         where.append(Asset.aktif == aktif)
     if nfc_tag_uid is not None:
-        where.append(Asset.nfc_tag_uid == nfc_tag_uid)
+        # (E2E 2026-09) GUVENLIK-05 ile ayni kok neden: mobil `04:A3:..`
+        # okur, panelden `04A3..` girilmis olabilir — iki yan da `norm_nfc`
+        # kuralina (bosluk/':'/'-' at + BUYUK) cekilerek karsilastirilir.
+        where.append(
+            func.upper(func.regexp_replace(Asset.nfc_tag_uid, "[[:space:]:-]", "", "g"))
+            == norm_nfc(nfc_tag_uid)
+        )
     if checked_out_by is not None:
         if checked_out_by == "me":
             target = user.id

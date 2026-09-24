@@ -19,6 +19,7 @@ import 'announcements_controller.dart';
 import '../../../core/ui/gorsel_cozme.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 import '../../../core/ui/bos_durum.dart';
+import '../../anket/presentation/anket_form.dart' show rolAdiKisa;
 
 /// "Duyurular" — tum roller okur; admin/yonetici olusturur/duzenler/siler
 /// (FAB + kart menusu yalniz onlarda gorunur; gercek yetki backend'de).
@@ -225,6 +226,22 @@ class _AnnouncementCardState extends ConsumerState<_AnnouncementCard> {
               ),
               style: Theme.of(context).textTheme.bodySmall,
             ),
+            // (E2E 2026-09, BILDIRIM-12) HEDEFLI duyuruda "kime gitti"
+            // yonetimde gorunur. Sakin zaten yalniz kendisine gideni gorur
+            // (sunucu suzer); rozet ona bilgi tasimaz.
+            if (canManage && a.hedefli) ...[
+              const SizedBox(height: 6),
+              Chip(
+                key: Key('duyuru-hedef-rozet-${a.id}'),
+                visualDensity: VisualDensity.compact,
+                avatar: const Icon(Icons.group_outlined, size: 16),
+                label: Text(
+                  l10n.duyuruHedefOzet(duyuruHedefOzeti(l10n, a)),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -391,6 +408,13 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
   String? _photoError;
   String? _fotoKey;
 
+  /// (E2E 2026-09, BILDIRIM-12) Hedef kitle — yalniz YENI duyuruda.
+  final Set<String> _hedefRoller = {};
+  String? _hedefSakinTipi;
+  final Set<String> _hedefBloklar = {};
+
+  bool get _sakinSuzgeci => DuyuruHedef.sakinSuzgeciAnlamli(_hedefRoller);
+
   bool get _fotoBekliyor => _photoPath != null && _fotoKey == null;
 
   @override
@@ -515,6 +539,14 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
       govde: _govdeCtrl.text.trim(),
       // Duzenlemede foto alani yok; null → JSON'a yazilmaz, mevcut korunur.
       fotoKey: _fotoKey,
+      // Hedef YALNIZ olusturmada; duzenlemede sunucu tasimaz.
+      hedef: widget.announcement == null
+          ? DuyuruHedef(
+              roller: _hedefRoller.toList(),
+              sakinTipi: _hedefSakinTipi,
+              bloklar: _hedefBloklar.toList(),
+            )
+          : null,
     );
     final controller = ref.read(announcementsControllerProvider.notifier);
     try {
@@ -539,6 +571,116 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
         });
       }
     }
+  }
+
+  /// Hedef kitle bolumu — anket formundaki desen: rol cipleri (bos =
+  /// herkes), sakin suzgeci anlamliysa malik/kiraci + blok cipleri.
+  Widget _hedefBolumu(BuildContext context) {
+    final l10n = context.l10n;
+    final ozet = duyuruHedefOzeti(
+      l10n,
+      Announcement(
+        id: '',
+        baslik: '',
+        govde: '',
+        olusturanUserId: '',
+        createdAt: DateTime.fromMillisecondsSinceEpoch(0),
+        updatedAt: DateTime.fromMillisecondsSinceEpoch(0),
+        hedefRoller: _hedefRoller.toList(),
+        hedefSakinTipi: _sakinSuzgeci ? _hedefSakinTipi : null,
+        hedefBloklar: _sakinSuzgeci ? _hedefBloklar.toList() : const [],
+      ),
+    );
+    return ExpansionTile(
+      key: const Key('duyuru-hedef'),
+      tilePadding: EdgeInsets.zero,
+      childrenPadding: EdgeInsets.zero,
+      expandedCrossAxisAlignment: CrossAxisAlignment.start,
+      leading: const Icon(Icons.group_outlined),
+      title: Text(l10n.anketHedefKitle),
+      subtitle: Text(ozet.isEmpty ? l10n.anketHedefHerkes : ozet),
+      // Consumer: blok listesi yalniz bolum ACILINCA istenir (kapaliyken
+      // ExpansionTile cocuklari cizmez).
+      children: [
+        Consumer(builder: (context, ref, _) => _hedefSecimleri(context, ref)),
+      ],
+    );
+  }
+
+  /// Acilan bolumun icerigi — yalniz ExpansionTile ACIKKEN cizilir; blok
+  /// listesi de o zaman istenir.
+  Widget _hedefSecimleri(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final bloklar = ref.watch(duyuruBlokAdlariProvider).value ?? const [];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          children: [
+            for (final r in duyuruHedefRolleri)
+              FilterChip(
+                key: Key('duyuru-hedef-$r'),
+                label: Text(rolAdiKisa(l10n, r)),
+                selected: _hedefRoller.contains(r),
+                onSelected: (s) => setState(() {
+                  if (s) {
+                    _hedefRoller.add(r);
+                  } else {
+                    _hedefRoller.remove(r);
+                  }
+                  // Suzgec anlamsizlastiysa degeri de temizle: gizli bir
+                  // secim govdede kalmasin.
+                  if (!_sakinSuzgeci) {
+                    _hedefSakinTipi = null;
+                    _hedefBloklar.clear();
+                  }
+                }),
+              ),
+          ],
+        ),
+        if (_sakinSuzgeci) ...[
+          DropdownButtonFormField<String>(
+            key: const Key('duyuru-sakin-tipi'),
+            initialValue: _hedefSakinTipi,
+            isExpanded: true,
+            decoration: InputDecoration(labelText: l10n.anketHedefSakinTipi),
+            items: [
+              DropdownMenuItem(value: null, child: Text(l10n.anketSakinHepsi)),
+              DropdownMenuItem(value: 'malik', child: Text(l10n.anketMalik)),
+              DropdownMenuItem(value: 'kiraci', child: Text(l10n.anketKiraci)),
+            ],
+            onChanged: (v) => setState(() => _hedefSakinTipi = v),
+          ),
+          if (bloklar.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(l10n.duyuruHedefBloklar,
+                style: Theme.of(context).textTheme.bodySmall),
+            Wrap(
+              spacing: 8,
+              children: [
+                for (final b in bloklar)
+                  FilterChip(
+                    key: Key('duyuru-blok-$b'),
+                    label: Text(b),
+                    selected: _hedefBloklar.contains(b),
+                    onSelected: (s) => setState(() {
+                      if (s) {
+                        _hedefBloklar.add(b);
+                      } else {
+                        _hedefBloklar.remove(b);
+                      }
+                    }),
+                  ),
+              ],
+            ),
+          ],
+        ],
+        const SizedBox(height: 4),
+        Text(l10n.duyuruHedefNotu,
+            style: Theme.of(context).textTheme.bodySmall),
+      ],
+    );
   }
 
   @override
@@ -679,6 +821,11 @@ class _AnnouncementFormState extends ConsumerState<_AnnouncementForm> {
                   ],
                 ),
               ],
+              // (E2E 2026-09, BILDIRIM-12) HEDEF KITLE — yalniz YENI duyuruda.
+              // GORSELIN ALTINDA ve KAPALI baslar: en sik hal "herkes"tir;
+              // acik bir secim bolumu formu uzatip gorsel dugmelerini dar
+              // ekranda asagi itiyordu (duyuru yukleme dedektoru yakaladi).
+              if (!editing) _hedefBolumu(context),
               if (_error != null) ...[
                 const SizedBox(height: 8),
                 Text(_error!, style: const TextStyle(color: Colors.red)),
@@ -723,3 +870,29 @@ String _contentTypeFor(XFile file) {
   }
   return 'image/jpeg';
 }
+
+
+/// (E2E 2026-09, BILDIRIM-12) Hedef kitlenin tek satirlik ozeti — web
+/// `announcements/page.tsx` `hedefOzeti` ile ayni parcalar ve sira.
+String duyuruHedefOzeti(AppLocalizations l10n, Announcement a) {
+  final parcalar = <String>[
+    if (a.hedefRoller.isNotEmpty)
+      a.hedefRoller.map((r) => rolAdiKisa(l10n, r)).join(', '),
+    if (a.hedefBloklar.isNotEmpty)
+      l10n.duyuruHedefBlok(a.hedefBloklar.join(', ')),
+    if (a.hedefSakinTipi == 'malik') l10n.anketMalik,
+    if (a.hedefSakinTipi == 'kiraci') l10n.anketKiraci,
+  ];
+  return parcalar.join(' · ');
+}
+
+/// Hedeflenebilir roller — arka uctaki `ANKET_HEDEF_ROLLER` ile AYNI
+/// (duyuru ayni listeyi dogrular).
+const duyuruHedefRolleri = [
+  'resident',
+  'security',
+  'guvenlik_amiri',
+  'tesis_gorevlisi',
+  'yonetici',
+  'admin',
+];

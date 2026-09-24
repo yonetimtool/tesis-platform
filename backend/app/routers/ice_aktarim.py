@@ -122,12 +122,35 @@ class _Bag:
     # kosum basinda BIR KEZ okunur (satir basina sorgu olmasin).
     tenant_ad: str = ""
     iz: list[tuple[str, uuid.UUID]] = dc_field(default_factory=list)
+    # (E2E 2026-09 / TESIS-10) DOSYA ICI BELLEK — ONIZLEME = SONUC.
+    #
+    # Kuru kosum hicbir sey yazmadigi icin DB'ye bakan her kontrol dosya
+    # icindeki yinelemeyi GORMUYORDU: ayni telefon iki satirda gelince
+    # onizleme ikisini de "olusacak" sayiyor, gercek aktarim ikinciyi
+    # ancak yazarken "zaten var" diye (satir no'suz) atliyordu. Olculen:
+    # onizleme `olusan:3, atlanan:2`, sonuc `olusan:2, atlanan:3`.
+    # Asagidaki kumeler IKI kosumda da ayni kurali uygular.
+    dosya_telefon: dict[str, int] = dc_field(default_factory=dict)
+    dosya_eposta: dict[str, int] = dc_field(default_factory=dict)
+    dosya_daire_rol: set[tuple[str, str, str | None]] = dc_field(default_factory=set)
+    dosya_blok: set[str] = dc_field(default_factory=set)
+    dosya_daire: set[str] = dc_field(default_factory=set)
 
-    def hata(self, satir_no: int, alan: str | None, kimlik: str) -> None:
+    def hata(self, satir_no: int, alan: str | None, kimlik: str, **params) -> None:
         self.sonuc.hatalar.append(
-            {"satir_no": satir_no, "alan": alan, "hata": hata_metni(kimlik, self.dil)}
+            {"satir_no": satir_no, "alan": alan,
+             "hata": hata_metni(kimlik, self.dil, params or None)}
         )
         self.sonuc.hatali += 1
+
+    def atla(self, satir_no: int, alan: str | None, kimlik: str) -> None:
+        """(E2E 2026-09 / TESIS-10) Atlanan satir SAYI degil KAYIT: satir no +
+        sebep. Sessiz "zaten var" sayaci hangi satirin neden yazilmadigini
+        soylemiyordu."""
+        self.sonuc.atlananlar.append(
+            {"satir_no": satir_no, "alan": alan, "hata": hata_metni(kimlik, self.dil)}
+        )
+        self.sonuc.atlanan += 1
 
     def yarat(self, tablo: str, kayit_id: uuid.UUID) -> None:
         self.iz.append((tablo, kayit_id))
@@ -215,13 +238,16 @@ async def _uygula_daire(b: _Bag, satir_no: int, d: dict) -> None:
     var_blok = (
         await b.db.execute(select(BuildingBlock.id).where(BuildingBlock.ad == blok))
     ).first()
-    if var_blok is None:
+    # (E2E 2026-09 / TESIS-10) Kuru kosumda blok yazilmadigi icin ayni yeni
+    # blok HER satirda "olusacak" sayiliyordu; gercek kosum bir kez yaratir.
+    if var_blok is None and blok not in b.dosya_blok:
         if not b.yalniz_dogrula:
             obj = BuildingBlock(tenant_id=b.user.tenant_id, ad=blok)
             b.db.add(obj)
             await b.db.flush()
             b.yarat("building_block", obj.id)
         b.sonuc.olusan += 1
+    b.dosya_blok.add(blok)
 
     mevcut = (
         await b.db.execute(select(Unit).where(Unit.no == daire))
@@ -243,14 +269,24 @@ async def _uygula_daire(b: _Bag, satir_no: int, d: dict) -> None:
             b.sonuc.guncellenen += 1
         else:
             # IDEMPOTENT: yeni bilgi tasimayan satir ATLANIR (dosya
-            # yeniden yuklenebilir).
-            b.sonuc.atlanan += 1
+            # yeniden yuklenebilir) — ama satir no + sebeple (TESIS-10).
+            b.atla(satir_no, "daire_no", "ice_aktarim_daire_zaten_kayitli")
         # (P243 §3) VAR OLAN DAIREYE DE SAKIN YAZILIR: "once daireleri
         # olustur, sonra sakinleri ekle" akisi tam da budur.
         await _daire_sakini(b, satir_no, d, unit_id=mevcut.id)
         return
     if b.yalniz_dogrula:
-        b.sonuc.olusan += 1
+        # (E2E 2026-09 / TESIS-10) Dosyada ayni yeni daire ikinci kez: gercek
+        # kosumda ikinci satir "var olan daire" dalina duser; kuru kosum da
+        # oyle saymali.
+        if daire in b.dosya_daire:
+            if sayilar:
+                b.sonuc.guncellenen += 1
+            else:
+                b.atla(satir_no, "daire_no", "ice_aktarim_daire_zaten_kayitli")
+        else:
+            b.sonuc.olusan += 1
+        b.dosya_daire.add(daire)
         await _daire_sakini(b, satir_no, d, unit_id=None)
         return
     u = Unit(tenant_id=b.user.tenant_id, no=daire, blok=blok, **sayilar)
@@ -372,12 +408,32 @@ async def _uygula_kisi(
     #   * e-posta  -> TESIS ICINDE benzersiz.
     # Bu yuzden e-posta sorgusu TENANT'A daraltilir; daraltmazsak baska
     # bir tesisin ayni adresli kullanicisi yuzunden satiri atlardik.
-    kosullar = [AppUser.email == eposta]
+    # (E2E 2026-09 / TESIS-10) DOSYA ICI YINELEME — iki kosumda da AYNI.
+    # Ikinci satir HATADIR (satir no'suyla, ilk satiri da soyleyerek):
+    # sessizce atlamak, yoneticinin dosyada ayni numarayi iki kisiye
+    # yazdigini hic fark etmemesi demekti.
+    eposta_k = eposta.lower()
+    if eposta_k in b.dosya_eposta:
+        b.hata(satir_no, "eposta", "ice_aktarim_dosyada_yineleniyor",
+               satir=b.dosya_eposta[eposta_k])
+        return
+    if telefon and telefon in b.dosya_telefon:
+        b.hata(satir_no, "telefon", "ice_aktarim_dosyada_yineleniyor",
+               satir=b.dosya_telefon[telefon])
+        return
+    b.dosya_eposta[eposta_k] = satir_no
+    if telefon:
+        b.dosya_telefon[telefon] = satir_no
+
+    daire_no = _metin(d, "daire_no")
+    blok = _metin(d, "blok")
+
+    kosullar = [func.lower(AppUser.email) == eposta_k]
     if telefon:
         kosullar.append(AppUser.telefon == telefon)
     var = (
         await b.db.execute(
-            select(AppUser.id).where(
+            select(AppUser.id, AppUser.ad, AppUser.email, AppUser.telefon).where(
                 or_(*kosullar),
                 AppUser.tenant_id == b.user.tenant_id,
             )
@@ -385,19 +441,54 @@ async def _uygula_kisi(
     ).first()
     if var is None and telefon:
         # Telefon GLOBAL benzersiz: baska tesiste ayni numara varsa
-        # olusturma 409 verir. Once bakip ATLAMAK, kullaniciya anlasilmaz
-        # bir butunluk hatasi gostermekten iyi.
-        var = (
+        # olusturma 409 verir. (E2E 2026-09 / TESIS-10) Eskiden sessizce
+        # "zaten var" sayiliyordu; oysa bu tesiste o kisi YOK — satir
+        # hicbir zaman yazilamaz ve yonetici bunu bilmeli: HATA.
+        baska = (
             await b.db.execute(
                 select(AppUser.id).where(AppUser.telefon == telefon)
             )
         ).first()
+        if baska is not None:
+            b.hata(satir_no, "telefon", "ice_aktarim_telefon_baska_kisi")
+            return
     if var is not None:
-        b.sonuc.atlanan += 1
+        # (E2E 2026-09 / TESIS-10) "AYNI KISI" ile "CAKISAN KISI" AYRILDI.
+        #
+        # Olculen: farkli ad + farkli daire, yalniz telefonu/e-postasi
+        # baska bir sakinle ayni satir "zaten var" sayacina dusuyordu.
+        # Idempotent yeniden yukleme (ayni ad; daire verildiyse o daireye
+        # zaten bagli) ATLANIR ve sebebiyle listelenir; geri kalani
+        # HATADIR — dosyadaki kisi yazilmadi ve yazilamaz.
+        ayni_ad = (var.ad or "").strip().casefold() == ad.strip().casefold()
+        bagli = True
+        if daire_no:
+            sorgu = (
+                select(UnitResident.id)
+                .join(Unit, Unit.id == UnitResident.unit_id)
+                .where(
+                    UnitResident.user_id == var.id,
+                    UnitResident.bitis.is_(None),
+                    Unit.no == daire_no,
+                )
+            )
+            if blok:
+                sorgu = sorgu.where(Unit.blok == blok)
+            # Kuru kosumda ayni satirin YENI dairesi henuz yok -> bagli
+            # degil; gercek kosumda da kisi o yeni daireye BAGLANMAZ. Iki
+            # kosum ayni sonucu verir (cakisma).
+            bagli = (await b.db.execute(sorgu)).first() is not None
+        if ayni_ad and bagli:
+            b.atla(satir_no, "eposta", "ice_aktarim_kisi_zaten_kayitli")
+        else:
+            cakisan = (
+                "eposta"
+                if (var.email or "").lower() == eposta_k
+                else "telefon"
+            )
+            b.hata(satir_no, cakisan, "ice_aktarim_kisi_cakisiyor")
         return
 
-    daire_no = _metin(d, "daire_no")
-    blok = _metin(d, "blok")
     unit_id: uuid.UUID | None = None
     if daire_no:
         sorgu = select(Unit.id).where(Unit.no == daire_no)
@@ -409,6 +500,14 @@ async def _uygula_kisi(
         if satir is None and daire_hazir:
             # AYNI SATIRIN DAIRESI: kuru kosumda henuz yazilmadi.
             # Gercek kosumda ZATEN yazilmis olur ve bu dal calismaz.
+            # (E2E 2026-09 / TESIS-10) Kisi gercek kosumda OLUSACAK; kuru
+            # kosum da saymali (eskiden sayilmiyordu: onizleme != sonuc).
+            anahtar = (daire_no, blok, rol)
+            if anahtar in b.dosya_daire_rol:
+                b.hata(satir_no, "daire_no", "daire_zaten_dolu")
+                return
+            b.dosya_daire_rol.add(anahtar)
+            b.sonuc.olusan += 1
             return
         if satir is None:
             # DAIRE YOKSA HATA, sessiz atlama DEGIL: kullanici sakini
@@ -429,9 +528,16 @@ async def _uygula_kisi(
         # tam olarak o durumu cozmek icin var.
         from .units import daire_rolu_dolu_mu
 
+        # (E2E 2026-09 / TESIS-10) Dosya ici ayni daire+rol: kuru kosum
+        # sakini yazmadigi icin DB kontrolu ikinciyi goremiyordu.
+        anahtar = (daire_no, blok, rol)
+        if anahtar in b.dosya_daire_rol:
+            b.hata(satir_no, "daire_no", "daire_zaten_dolu")
+            return
         if await daire_rolu_dolu_mu(b.db, unit_id, rol):
             b.hata(satir_no, "daire_no", "daire_zaten_dolu")
             return
+        b.dosya_daire_rol.add(anahtar)
 
     if b.yalniz_dogrula:
         b.sonuc.olusan += 1
@@ -578,7 +684,7 @@ async def _uygula_arac(b: _Bag, satir_no: int, d: dict) -> None:
         await b.db.execute(select(AracKayit.id).where(AracKayit.plaka == plaka))
     ).first()
     if var is not None:
-        b.sonuc.atlanan += 1
+        b.atla(satir_no, "plaka", "ice_aktarim_plaka_zaten_kayitli")
         return
 
     daire_no = _metin(d, "daire_no")

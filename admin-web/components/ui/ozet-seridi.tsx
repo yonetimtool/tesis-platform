@@ -102,8 +102,13 @@ export function OzetKarti({
           </span>
         ) : null}
         <div className="min-w-0 flex-1">
+          {/* (E2E 2026-09) KESILMEZ, SARAR. Olculen: finans ozet
+              kartlarinda "onay bekleyen hareketler" ve "odenmis
+              faturalar" etiketleri kesiliyordu; Buyuk modda yazi buyuyor,
+              kart genisligi ayni kaliyordu. Etiketin iki satira dusmesi,
+              okunmamasindan iyidir. */}
           <p
-            className="truncate"
+            className="break-words"
             style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
           >
             {etiket}

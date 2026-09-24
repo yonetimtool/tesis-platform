@@ -118,6 +118,20 @@ class _PanikSayfasiState extends ConsumerState<PanikSayfasi> {
       final alarm =
           await ref.read(panikApiProvider).tetikle(tip, kategori: _kategori);
       if (!mounted) return;
+      // (E2E 2026-09) ZATEN ACIK ALARM: sunucu tekrar basista YENI alarm
+      // uretmez, mevcudunu doner. O alarm coktan yayinlanmistir — 5 sn
+      // geri sayim gostermek (ve "iptal"e bastirip yanlis alarm uretmek)
+      // yaniltici. Kullaniciya durumu soyle, sayaci baslatma.
+      if (alarm.durum != 'beklemede') {
+        setState(() {
+          _alarm = null;
+          _kalan = 0;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.panikZatenAcik)),
+        );
+        return;
+      }
       setState(() {
         _alarm = alarm;
         _kalan = alarm.iptalPenceresiSn;

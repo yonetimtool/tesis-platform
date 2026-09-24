@@ -127,7 +127,7 @@ def test_POST_residents_epostasiz_REDDEDER(client, world):
     """
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
     r = client.post("/residents", headers=yon, json={
-        "ad": "Epostasiz Sakin", "unit_no": f"P197-{uuid.uuid4().hex[:5]}",
+        "ad": "Epostasiz Sakin", "blok": "A", "unit_no": f"P197-{uuid.uuid4().hex[:5]}",
         "telefon": _tel(),
     })
     assert r.status_code == 422, r.text
@@ -138,7 +138,7 @@ def test_PATCH_residents_epostayi_TEMIZLEYEMEZ(client, world, owner_conn):
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
     eposta = _mail()
     r = client.post("/residents", headers=yon, json={
-        "ad": "P197 Sakin", "unit_no": f"P197-{uuid.uuid4().hex[:5]}",
+        "ad": "P197 Sakin", "blok": "A", "unit_no": f"P197-{uuid.uuid4().hex[:5]}",
         "telefon": _tel(), "email": eposta,
     })
     assert r.status_code == 201, r.text
@@ -206,7 +206,7 @@ def test_ANONIMLESTIRME_epostayi_NULL_YAPMAZ(client, world, owner_conn):
 
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
     r = client.post("/residents", headers=yon, json={
-        "ad": "P197 Anonim", "unit_no": f"P197A-{uuid.uuid4().hex[:5]}",
+        "ad": "P197 Anonim", "blok": "A", "unit_no": f"P197A-{uuid.uuid4().hex[:5]}",
         "telefon": _tel(), "email": _mail(),
     })
     assert r.status_code == 201, r.text

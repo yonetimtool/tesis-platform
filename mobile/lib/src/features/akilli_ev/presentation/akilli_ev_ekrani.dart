@@ -41,7 +41,9 @@ class AkilliEvEkrani extends ConsumerWidget {
               .map((b) => b.bolum)
               .toSet();
           final gorunen = liste
-              .where((c) => acikBolumler.contains(akilliEvBolumu(c.tip)))
+              .where(
+                (c) => acikBolumler.contains(c.bolum ?? akilliEvBolumu(c.tip)),
+              )
               .toList();
           if (gorunen.isEmpty) {
             return BosDurum(
@@ -67,19 +69,21 @@ class AkilliEvEkrani extends ConsumerWidget {
   }
 }
 
-/// Cihaz TIPI -> hangi BOLUMUN altinda sayilir.
+/// Cihaz TIPI -> hangi BOLUMUN altinda sayilir — YALNIZ YEDEK.
 ///
-/// Eslesme KODDA: bolum anahtarlari yoneticinin actigi/kapattigi
-/// seylerdir, cihaz tipleri ise protokolun verisi. Ikisini veride
-/// birlestirmek, her yeni tipte veri gocu gerektirirdi.
+/// (E2E 2026-09) TESIS-13: esleme artik SUNUCUDA (`akilli_ev.TIP_BOLUM`)
+/// ve cihaz yanitinda `bolum` olarak gelir; sunucu kapali bolumu komutta
+/// da reddeder. Bu tablo yalniz `bolum` gondermeyen eski sunucu icindir
+/// ve sunucununkiyle AYNI olmalidir. Eski hali sunucunun dokuz bolumunde
+/// OLMAYAN adlar uretiyordu (`aydinlatma`, `kilit`...) — kapi kilidi
+/// hicbir bolum acilsa da gorunmuyordu.
 String akilliEvBolumu(String tip) => switch (tip) {
-      'isik' || 'priz' => 'aydinlatma',
-      'termostat' => 'iklim',
-      'kilit' => 'kilit',
-      'perde' => 'perde',
-      'sensor_su' || 'vana' => 'kacak',
-      'sensor_duman' || 'sensor_gaz' => 'yangin',
-      'sayac' => 'sayac',
+      'kilit' => 'kapi',
+      'vana' || 'sensor_su' => 'kacak',
+      'sensor_gaz' || 'sensor_duman' => 'yangin',
+      'termostat' => 'isitma',
+      'asansor' || 'sulama' => 'ortak_alan',
+      'sensor_hareket' => 'protokol',
       _ => 'enerji',
     };
 

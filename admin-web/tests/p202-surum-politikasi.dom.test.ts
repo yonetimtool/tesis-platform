@@ -132,3 +132,27 @@ it("BOSALTMA serbest — politikayi GERI ALMANIN yolu", async () => {
   await waitFor(() => expect(cagrilar.some((c) => c.metot === "PUT")).toBe(true));
   expect(cagrilar.find((c) => c.metot === "PUT")!.govde.asgari_surum).toBeNull();
 });
+
+it("(E2E 2026-09) ONERILEN < ASGARI sunucuya GONDERILMEZ ve sebep yazilir", async () => {
+  // Olculen: 2.0.0 / 1.0.0 200 ile kaydediliyordu. "Onerilen" esigi
+  // asgarinin altindaysa hic calismaz; operator iki esik girdigini sanir.
+  const cagrilar = taklit();
+  const k = userEvent.setup();
+  ciz(Sayfa);
+  await waitFor(() => kanca("surum-asgari-ios"));
+
+  await k.type(kanca("surum-asgari-ios"), "2.0.0");
+  await k.type(kanca("surum-onerilen-ios"), "1.10.0");
+  expect(
+    await screen.findByText("Önerilen sürüm, asgari sürümden düşük olamaz."),
+  ).toBeTruthy();
+  await k.click(kanca("surum-kaydet-ios"));
+  expect(cagrilar.filter((c) => c.metot === "PUT")).toHaveLength(0);
+
+  // SAYISAL karsilastirma: 2.10.0 > 2.9.0 (metin sirasi olsaydi tersi).
+  await k.clear(kanca("surum-asgari-ios"));
+  await k.type(kanca("surum-asgari-ios"), "1.9.0");
+  await waitFor(() =>
+    expect(screen.queryByText("Önerilen sürüm, asgari sürümden düşük olamaz.")).toBeNull(),
+  );
+});

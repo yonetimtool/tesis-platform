@@ -64,6 +64,24 @@ from .bakim import _OKUR as _BAKIM_OKUR, _YAZAR as _BAKIM_YAZAR
 
 router = APIRouter(prefix="/ekler", tags=["ekler"])
 
+
+def _dosya_url(user: AppUser, key: str | None) -> str | None:
+    """(E2E 2026-09) Ek dosyasini ACILABILIR kilar — imzali GET.
+
+    YALNIZ KENDI TENANT ONEKI: `dosya_key` istemciden gelir ve onek
+    denetlenmeden imzalamak, baska bir tesisin anahtarini bilen birine
+    o dosyayi okutmak olurdu. Depo yapilandirilmamissa (dev/test) sessizce
+    None — liste yine doner.
+    """
+    if not key or not key.startswith(f"{user.tenant_id}/"):
+        return None
+    try:
+        from ..storage import presign_get
+
+        return presign_get(key)
+    except Exception:
+        return None
+
 _YOK = APIError(404, "not_found", "kayit_bulunamadi")
 _YETKI = APIError(403, "forbidden", "yetkiniz_yok")
 
@@ -188,6 +206,7 @@ async def listele(
                 metin=e.metin,
                 dosya_key=e.dosya_key,
                 dosya_adi=e.dosya_adi,
+                dosya_url=_dosya_url(user, e.dosya_key),
                 olusturan_ad=ad,
                 created_at=e.created_at,
             )
@@ -229,6 +248,7 @@ async def ekle(
         metin=obj.metin,
         dosya_key=obj.dosya_key,
         dosya_adi=obj.dosya_adi,
+        dosya_url=_dosya_url(user, obj.dosya_key),
         olusturan_ad=user.ad,
         created_at=obj.created_at,
     )

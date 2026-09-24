@@ -271,7 +271,7 @@ def test_completion_foto_zorunlu(client, world):
     fotolu = client.post(
         f"/tasks/{t['id']}/completions",
         headers={**gorevli, "Idempotency-Key": uuid.uuid4().hex},
-        json={"tamamlanma_zamani": "2026-07-03T08:00:00Z", "foto_key": "k/x.jpg"},
+        json={"tamamlanma_zamani": "2026-07-03T08:00:00Z", "foto_key": f"{world['a']}/tasks/x.jpg"},
     )
     assert fotolu.status_code == 201, fotolu.text
 

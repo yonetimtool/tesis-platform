@@ -46,7 +46,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..audit import Action, audit_user
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser, VardiyaIzin
+from ..models import AppUser, Shift, VardiyaIzin, VardiyaPlani
 from ..roller import gorunur_roller
 from ..schemas import (
     PageMetaOut,
@@ -210,6 +210,7 @@ async def ekle(
     db.add(izin)
     await db.flush()
     await db.refresh(izin)
+    iptal = await _cakisan_vardiyalari_iptal(db, izin) if onayli else 0
     await audit_user(
         db, user, Action.VARDIYA_IZIN, resource_type="vardiya_izin",
         resource_id=izin.id,
@@ -217,9 +218,57 @@ async def ekle(
             "islem": "ekle", "user_id": str(body.user_id), "tur": body.tur,
             "baslangic": body.baslangic.isoformat(),
             "bitis": body.bitis.isoformat(), "durum": izin.durum,
+            "iptal_edilen_vardiya": iptal,
         },
     )
     return _cikti(izin, hedef.ad)
+
+
+async def _cakisan_vardiyalari_iptal(db: AsyncSession, izin: VardiyaIzin) -> int:
+    """(E2E 2026-09) ONAYLANAN izin, o araliktaki PLANLI vardiyalari iptal eder.
+
+    OLCULEN KUSUR: vardiya -> izin yonu korunuyordu (`_izin_denetle`: izinli
+    gune vardiya atanamaz) ama TERSI yoktu: vardiyasi olan gune izin
+    onaylaniyor, vardiya `planli` kaliyordu — kisi ayni anda hem izinli
+    hem gorevde; mesai hesabi o vardiyayi calisma sayiyor, "su an gorevde"
+    karti onu gosteriyordu.
+
+    SILMEZ, `iptal` ISARETLER (P203 kurali: denetim neyin degistigini
+    gosterebilmeli). Saatlik izinde yalniz SAATI CAKISAN satir iptal edilir.
+    """
+    from ..vardiya import plan_araligi, vardiya_araligi
+
+    satirlar = (
+        await db.execute(
+            select(VardiyaPlani, Shift)
+            .outerjoin(Shift, Shift.id == VardiyaPlani.shift_id)
+            .where(
+                VardiyaPlani.user_id == izin.user_id,
+                VardiyaPlani.durum == "planli",
+                VardiyaPlani.tarih >= izin.baslangic,
+                VardiyaPlani.tarih <= izin.bitis,
+            )
+        )
+    ).all()
+    iptal = 0
+    for plan, shift in satirlar:
+        if not izin.tum_gun:
+            try:
+                p_bas, p_son = plan_araligi(plan, shift)
+            except ValueError:
+                continue
+            i_bas, i_son = vardiya_araligi(
+                izin.baslangic, izin.baslangic_saat, izin.bitis_saat
+            )
+            if not (p_bas < i_son and i_bas < p_son):
+                continue
+        plan.durum = "iptal"
+        plan.not_metni = ((plan.not_metni or "") + " [izin]").strip()
+        plan.updated_at = func.now()
+        iptal += 1
+    if iptal:
+        await db.flush()
+    return iptal
 
 
 async def _karar(
@@ -244,9 +293,13 @@ async def _karar(
     izin.updated_at = func.now()
     await db.flush()
     await db.refresh(izin)
+    iptal = (
+        await _cakisan_vardiyalari_iptal(db, izin) if yeni_durum == "onaylandi" else 0
+    )
     await audit_user(
         db, user, Action.VARDIYA_IZIN, resource_type="vardiya_izin",
-        resource_id=izin.id, meta={"islem": yeni_durum},
+        resource_id=izin.id,
+        meta={"islem": yeni_durum, "iptal_edilen_vardiya": iptal},
     )
     return _cikti(izin, hedef.ad if hedef else None)
 

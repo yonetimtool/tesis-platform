@@ -23,6 +23,7 @@ import { aralikCoz } from "@/lib/aralik";
 import { jsonFetcher } from "@/lib/fetcher";
 import type { Block, BlockList, KatOnizleme, Unit, UnitList } from "@/lib/types";
 import { sayiCoz, tamsayiCoz } from "@/lib/sayi";
+import { daireNoOnizle } from "@/lib/daire-no";
 import { useT } from "@/lib/i18n/kullan";
 
 // Bloksuz kova (implicit tek blok) icin sentinel — gercek blok etiketi
@@ -403,7 +404,10 @@ export default function BuildingEditorPage() {
       setUnitForm((f) => ({
         ...f,
         saving: false,
-        err: /zaten kayitli|conflict|no /i.test(m) ? t("daireNoZatenKayitli") : m,
+        // (E2E 2026-09 / ANA-4) SUNUCU METNI AYNEN: eskiden "no " iceren her
+        // mesaj genel "zaten kayitli"ya cevriliyordu — blok/no uyusmazligini
+        // ve hangi numaranin cakistigini anlatan metin kayboluyordu.
+        err: m || t("daireNoZatenKayitli"),
       }));
     }
   }
@@ -836,6 +840,16 @@ export default function BuildingEditorPage() {
                 required />
   )}
 </AlanSarmal>
+            {unitForm.no.trim() !== "" &&
+              daireNoOnizle(unitForm.no, unitForm.blok) !== unitForm.no.trim() && (
+                <p
+                  className="sm:col-span-3"
+                  role="status"
+                  style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
+                >
+                  {t("binaDaireNoOnizleme", { no: daireNoOnizle(unitForm.no, unitForm.blok) })}
+                </p>
+              )}
             <AlanSarmal etiket={t("binaKat")} ipucu={t("binaZeminIpucu")}>
   {(b) => (
     <Alan {...b} inputMode="numeric"

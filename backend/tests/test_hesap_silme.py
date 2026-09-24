@@ -61,7 +61,7 @@ def _sakin_ac(client, adm, owner_conn) -> tuple[str, str, str]:
     parola = f"Sk{_sfx()}aA1!"
     r = client.post("/residents", headers=adm, json={
         "ad": "Silinecek Sakin",
-        "unit_no": f"D-{_sfx()}",
+        "blok": "A", "unit_no": f"D-{_sfx()}",
         "telefon": tel, "email": _p197_mail()})
     assert r.status_code == 201, r.text
     user_id = r.json()["user_id"]

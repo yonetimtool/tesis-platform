@@ -20,7 +20,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .. import defter, yaslandirma
-from ..akis_metinleri import _tl
+from ..finans import tarih_metni, tl_metni
 from ..audit import Action, audit_user
 from ..deps import get_tenant_db, require_role
 from ..models import AppUser, DuesAssessment, HatirlatmaAyari, Notification
@@ -108,7 +108,10 @@ async def tahsilat_gostergesi(
 
     async def _oran(d: str) -> tuple[int, int, int | None]:
         tahakkuk = await defter.tahakkuk_toplami(db, donem=d)
-        tahsilat = await defter.tahsilat_toplami(db, donem=d)
+        # (E2E 2026-09, FINANS-07) Pay = o donemin kalemlerinden KAPANAN
+        # tutar (kalem duzeyinde, FIFO). Tahsilat satirinin donem alanina
+        # bakmak donemsiz vezne tahsilatlarini dusuruyordu (%3 vs %28).
+        tahsilat = (await defter.donem_tahsil_edilen(db, donem=d)).get(d, 0)
         return tahakkuk, tahsilat, (
             round(100 * tahsilat / tahakkuk) if tahakkuk > 0 else None
         )
@@ -235,7 +238,17 @@ async def toplu_hatirlat(
     for daire in hedefler:
         if daire.borclu_user_id is None:
             continue
-        params = {"tutar": _tl(daire.kalan_kurus), "vade": str(daire.en_eski_gun)}
+        # (E2E 2026-09, BILDIRIM-14 / FINANS-13) `vade` = en eski acik borcun
+        # SON ODEME TARIHI (gun sayisi degil) ve tutar Turkce bicimde. Tutar
+        # kalem duzeyinde FIFO dagitimli kalandir (daire duzeyinde odenmis
+        # borc artik "odenmemis" sayilmiyor).
+        params = {
+            "tutar": tl_metni(daire.kalan_kurus),
+            "vade": (
+                tarih_metni(daire.en_eski_vade) if daire.en_eski_vade
+                else str(daire.en_eski_gun)
+            ),
+        }
         ozel = None
         if sablon:
             try:
@@ -288,7 +301,8 @@ async def toplu_faiz_affi(
             )
         )
     ).scalars().all()
-    odenen = await defter.tahakkuk_odenen(db, [f.id for f in faizler])
+    # DOGRUDAN faize yazilmis para (FIFO degil) — ters kayit ucuyla ayni.
+    odenen = await defter.tahakkuk_odenen(db, [f.id for f in faizler], fifo=False)
 
     affedilen = 0
     toplam = 0

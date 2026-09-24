@@ -273,6 +273,16 @@ enum HomeMenuEntry {
   /// kendi kilidi var). Ayrilan sey YETKI degil YUZEY — sunucu ikisine
   /// de izin veriyor.
   panikTakip,
+
+  /// (E2E 2026-09, MOBIL-10) DAVETLER — web `/davetler` ikizi. YALNIZ
+  /// yonetici: sakini mobilde o ekliyor, davet gitmediyse orada yeniden
+  /// gonderir (P204 "Evet — sahada gerçek ihtiyaç"). Admin panelden.
+  davetler,
+
+  /// (E2E 2026-09, MOBIL-10) GURULTU UYARILARI — web ikizi; uc hazirdi,
+  /// ekran yoktu. YALNIZ yonetici (komsu davranisi verisi, sunucu
+  /// admin+yonetici'ye acik; admin panelden).
+  gurultuUyarilari,
 }
 
 List<HomeMenuEntry> homeMenuForRole(UserRole role) {
@@ -425,6 +435,11 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.reports,
         HomeMenuEntry.personel,
         HomeMenuEntry.sakinler,
+        // (E2E 2026-09, MOBIL-10) Davet durumu sakinlerin YANINDA: sakin
+        // eklenince davet otomatik gider, sonucu burada izlenir.
+        HomeMenuEntry.davetler,
+        // (E2E 2026-09, MOBIL-10) Gurultu uyarilari — iletisim grubu.
+        HomeMenuEntry.gurultuUyarilari,
         HomeMenuEntry.integrations,
         // (P240 §2) Diyafon — dis sistem baglantisi, ayni kutuda.
         HomeMenuEntry.diyafon,
@@ -547,6 +562,8 @@ String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
       HomeMenuEntry.diyafon => l10n.diyafonBaslik,
       HomeMenuEntry.akilliEv => l10n.modulAkilliEv,
       HomeMenuEntry.bakim => l10n.modulBakim,
+      HomeMenuEntry.davetler => l10n.modulDavetler,
+      HomeMenuEntry.gurultuUyarilari => l10n.modulGurultuUyarilari,
     };
 
 // ===========================================================================
@@ -624,7 +641,10 @@ HomeMenuGrup homeMenuGrubu(HomeMenuEntry e) => switch (e) {
   HomeMenuEntry.announcements ||
   HomeMenuEntry.complaints ||
   HomeMenuEntry.anketler ||
+  HomeMenuEntry.gurultuUyarilari ||
   HomeMenuEntry.yoneticiIletisim => HomeMenuGrup.iletisim,
+  // Davet, sakin/personel kaydinin devami: tanimlar.
+  HomeMenuEntry.davetler => HomeMenuGrup.tanimlar,
   // Guvenlik grubunda: acil durum bir GUVENLIK olayidir, iletisim degil.
   HomeMenuEntry.panikTakip => HomeMenuGrup.guvenlik,
   HomeMenuEntry.personel ||

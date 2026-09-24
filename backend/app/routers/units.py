@@ -20,6 +20,7 @@ from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..toplu_tahakkuk import oturuyor_coz
+from ..tr_arama import tr_kalip, tr_katla_sql
 from ..models import (
     AppUser,
     BuildingBlock,
@@ -418,15 +419,17 @@ async def daire_ara(
     # daire ve sakin listesini veren bir dokum araci olurdu.
     if len(aranan) < 2:
         return []
-    kalip = f"%{aranan.lower()}%"
+    # (E2E 2026-09 / TESIS-09) Turkce harf katlamali: `aranan.lower()`
+    # "İ"yi "i̇" (birlesik nokta) yapiyordu, `İkinci` hicbir seyi bulmuyordu.
+    kalip = tr_kalip(aranan)
 
     # Daire NO'suna gore eslesen daireler.
-    no_eslesen = select(Unit.id).where(func.lower(Unit.no).like(kalip))
+    no_eslesen = select(Unit.id).where(tr_katla_sql(Unit.no).like(kalip))
     # SAKIN ADINA gore eslesen daireler (yalniz AKTIF baglanti).
     ad_eslesen = (
         select(UnitResident.unit_id)
         .join(AppUser, AppUser.id == UnitResident.user_id)
-        .where(func.lower(AppUser.ad).like(kalip), UnitResident.bitis.is_(None))
+        .where(tr_katla_sql(AppUser.ad).like(kalip), UnitResident.bitis.is_(None))
     )
     daireler = (
         await db.execute(
@@ -594,6 +597,54 @@ async def _blok_kaydini_gerektir(
     )
 
 
+async def daire_no_kanonik(db: AsyncSession, no: str, blok: str | None) -> str:
+    """(E2E 2026-09 / TESIS-16 + ANA-4) Tekil daire no'sunu TOPLU olusturmayla
+    ayni bicime getir.
+
+    OLCULEN: toplu olusturma "A-11" uretiyor, tekil form "11" yaziyordu.
+    Daire no TESIS GENELINDE tektir (uq_unit_tenant_no); B bloguna "1"
+    eklemek isteyen yonetici, A blogunda "1" olmasa bile toplu "A-1" ile
+    tutarsiz bir veri, varsa da "zaten kayitli" hatasi aliyordu.
+
+    Kural:
+      * no YALNIZ RAKAMSA -> "{blok}-{no}" (toplu ile ayni bicim),
+      * no BASKA bir kayitli blogun onekini tasiyorsa ("B-12", blok A) ->
+        422 `daire_no_blok_uyusmuyor`. Onek ancak tesiste GERCEKTEN bir
+        blok adiysa blok sayilir: "DV-1", "P218-x" gibi serbest numaralar
+        blok iddiasi tasimaz, reddetmek yanlis pozitif olurdu,
+      * blok yoksa (eski bloksuz daire) no'ya dokunulmaz.
+    """
+    no = no.strip()
+    blok = (blok or "").strip()
+    if not blok:
+        return no
+    if no.isascii() and no.isdigit():
+        return f"{blok}-{no}"
+    onek, ayrac, _ = no.partition("-")
+    if ayrac and onek and onek.casefold() != blok.casefold():
+        kayitli_blok = (
+            await db.execute(
+                select(BuildingBlock.id)
+                .where(func.lower(BuildingBlock.ad) == onek.lower())
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+        if kayitli_blok is None:
+            kayitli_blok = (
+                await db.execute(
+                    select(Unit.id)
+                    .where(func.lower(Unit.blok) == onek.lower())
+                    .limit(1)
+                )
+            ).scalar_one_or_none()
+        if kayitli_blok is not None:
+            raise APIError(
+                422, "validation_error", "daire_no_blok_uyusmuyor",
+                no=no, no_blok=onek, blok=blok,
+            )
+    return no
+
+
 @router.post("", response_model=UnitOut, status_code=201)
 async def create_unit(
     body: UnitCreate,
@@ -601,14 +652,16 @@ async def create_unit(
     user: AppUser = Depends(_LAYOUT_EDITOR),
 ) -> UnitOut:
     await _tanim_dogrula(db, body.unit_tip_id, body.unit_grup_id)
+    veri = body.model_dump(exclude_unset=True)
+    veri["no"] = await daire_no_kanonik(db, body.no, body.blok)
     await _blok_kaydini_gerektir(db, user, body.blok)
-    obj = Unit(tenant_id=user.tenant_id, **body.model_dump(exclude_unset=True))
+    obj = Unit(tenant_id=user.tenant_id, **veri)
     db.add(obj)
     try:
         await db.flush()
     except IntegrityError as exc:
         if is_unique_violation(exc):
-            raise APIError(409, "conflict", "daire_no_zaten_kayitli")
+            raise APIError(409, "conflict", "daire_no_zaten_kayitli", no=veri["no"])
         raise translate_integrity(exc)
     await db.refresh(obj)
     await audit_user(db, user, Action.UNIT_CREATE, resource_type="unit", resource_id=obj.id)
@@ -818,6 +871,11 @@ async def update_unit(
     # `null` GONDERILDIYSE siniflandirma KALDIRILIR; gonderilmediyse dokunulmaz
     # (`exclude_unset` ikisini ayirir). Dogrulama yalniz DOLU degerler icin.
     await _tanim_dogrula(db, veri.get("unit_tip_id"), veri.get("unit_grup_id"))
+    # (E2E 2026-09 / TESIS-16) Numara degisiyorsa olusturmayla AYNI kural.
+    if veri.get("no"):
+        veri["no"] = await daire_no_kanonik(
+            db, veri["no"], veri.get("blok") or obj.blok
+        )
     for key, value in veri.items():
         setattr(obj, key, value)
     obj.updated_at = func.now()
@@ -825,7 +883,9 @@ async def update_unit(
         await db.flush()
     except IntegrityError as exc:
         if is_unique_violation(exc):
-            raise APIError(409, "conflict", "daire_no_zaten_kayitli")
+            raise APIError(
+                409, "conflict", "daire_no_zaten_kayitli", no=veri.get("no", obj.no)
+            )
         raise translate_integrity(exc)
     await db.refresh(obj)
     return (await _adlarla(db, [obj]))[0]

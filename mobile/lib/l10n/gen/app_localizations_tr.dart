@@ -1370,6 +1370,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get panikIptalEdildi => 'İptal edildi — bildirim gitmedi.';
 
   @override
+  String get panikZatenAcik =>
+      'Zaten açık bir alarmınız var — güvenlik ve yönetim bilgilendirildi.';
+
+  @override
   String get panikYanlisAlarmGonderildi => 'Yanlış alarm bildirildi.';
 
   @override
@@ -1675,6 +1679,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get binaDaireNoZatenVar => 'Bu daire no zaten kayıtlı.';
 
   @override
+  String binaDaireNoOnizleme(String no) {
+    return 'Kaydedilecek numara: $no';
+  }
+
+  @override
   String binaDaireDuzenleBaslik(Object no) {
     return 'Daire $no — düzenle';
   }
@@ -1770,6 +1779,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get semaYogunluk => 'Yoğunluk:';
+
+  @override
+  String get semaTurSuzgeci => 'Şikayet türü';
 
   @override
   String get semaYerlesimAciklama =>
@@ -2968,6 +2980,171 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get duyuruYayinla => 'Yayınla';
+
+  @override
+  String get duyuruHedefBloklar => 'Bloklar (seçilmezse tüm bloklar)';
+
+  @override
+  String get duyuruHedefNotu =>
+      'Hedef dışındakiler duyuruyu görmez ve bildirim almaz. Blok ve malik/kiracı ayrımı yalnız sakinlere uygulanır. Hedef kaydedildikten sonra değiştirilemez.';
+
+  @override
+  String duyuruHedefOzet(Object ozet) {
+    return 'Hedef: $ozet';
+  }
+
+  @override
+  String duyuruHedefBlok(Object bloklar) {
+    return 'Blok: $bloklar';
+  }
+
+  @override
+  String get modulDavetler => 'Davetler';
+
+  @override
+  String get davetYonAciklama => 'Gönderilen davetler ve durumları.';
+
+  @override
+  String get davetYonTesisKoduIpucu =>
+      'Davet gitmediyse tesis kodunu elle iletebilirsiniz:';
+
+  @override
+  String get davetYonKodKopyala => 'Tesis kodunu kopyala';
+
+  @override
+  String get davetYonKodKopyalandi => 'Tesis kodu kopyalandı.';
+
+  @override
+  String get davetYonBos => 'Henüz davet yok.';
+
+  @override
+  String get davetYonAlinamadi => 'Davetler alınamadı.';
+
+  @override
+  String davetYonSonGonderim(Object zaman) {
+    return 'Son gönderim: $zaman';
+  }
+
+  @override
+  String get davetYonDurumKaydoldu => 'Kaydoldu';
+
+  @override
+  String get davetYonDurumGeriDondu => 'Geri döndü';
+
+  @override
+  String get davetYonDurumGitmedi => 'Gönderilemedi';
+
+  @override
+  String get davetYonDurumAyarYok => 'E-posta ayarı yok';
+
+  @override
+  String get davetYonDurumAcildi => 'Açıldı';
+
+  @override
+  String get davetYonDurumIletildi => 'İletildi';
+
+  @override
+  String get davetYonDurumGonderildi => 'Gönderildi';
+
+  @override
+  String get davetYonDurumBekliyor => 'Bekliyor';
+
+  @override
+  String get davetYonYenidenGonder => 'Yeniden gönder';
+
+  @override
+  String get davetYonYenidenGonderildi => 'Davet yeniden gönderildi.';
+
+  @override
+  String get modulGurultuUyarilari => 'Gürültü uyarıları';
+
+  @override
+  String get gurultuAciklama =>
+      'Eşiği aşan gürültü şikâyetleri ve anons durumları.';
+
+  @override
+  String get gurultuYok => 'Uyarı yok';
+
+  @override
+  String get gurultuYokAlt => 'Henüz eşik aşılmadı.';
+
+  @override
+  String get gurultuAlinamadi => 'Uyarılar alınamadı.';
+
+  @override
+  String gurultuSayac(int sayac, int esik) {
+    return 'Sayaç: $sayac/$esik';
+  }
+
+  @override
+  String get gurultuDaireYok => 'Daire bilinmiyor';
+
+  @override
+  String get gurultuDurumGonderildi => 'Gönderildi';
+
+  @override
+  String get gurultuDurumBasarisiz => 'Başarısız';
+
+  @override
+  String get gurultuDurumBekliyor => 'Anons bekliyor';
+
+  @override
+  String get gurultuDurumYapildi => 'Anons yapıldı';
+
+  @override
+  String get gurultuIsaretlendi => 'Uyarı işaretlendi.';
+
+  @override
+  String get girisKodIleEposta => 'Parola yerine e-postaya kod gönder';
+
+  @override
+  String get girisKodYalnizEposta =>
+      'Kod ile giriş e-posta adresiyle çalışır. Telefonla girmek için parolanızı kullanın.';
+
+  @override
+  String get girisParolaylaDon => 'Parolayla giriş yap';
+
+  @override
+  String get girisEpostaKodGonder => 'Kod gönder';
+
+  @override
+  String get girisEpostaKodGonderildi =>
+      'Adres kayıtlıysa kod e-postayla gönderildi. Kod 10 dakika geçerlidir.';
+
+  @override
+  String get girisKodTesisKoduAciklama =>
+      'Bu kod birden çok tesiste geçerli. Girmek istediğiniz tesisin kodunu yazın.';
+
+  @override
+  String get girisTesisKodu => 'Tesis kodu';
+
+  @override
+  String get girisSlugGecersiz =>
+      'Tesis kodu yalnızca küçük harf, rakam ve tire içerebilir.';
+
+  @override
+  String get girisSifremiUnuttum => 'Şifremi unuttum';
+
+  @override
+  String get sifreSifirlaBaslik => 'Şifremi Unuttum';
+
+  @override
+  String get sifreSifirlaAciklama =>
+      'Tesis kodunuzu ve e-postanızı girin. Kod yalnızca doğrulanmış e-postası olan hesaplara gönderilir; birkaç dakika içinde bir e-posta almazsanız e-postanız henüz doğrulanmamış olabilir. Güvenlik gereği bir hesabın bulunup bulunmadığını belirtmeyiz.';
+
+  @override
+  String get sifreSifirlaGonderildi =>
+      'Bir hesap varsa e-postanıza bir kod gönderildi. Kodu ve yeni parolanızı girin.';
+
+  @override
+  String get sifreSifirlaKur => 'Parolayı güncelle';
+
+  @override
+  String get sifreSifirlaBasarili =>
+      'Parolanız güncellendi. Yeni parolanızla giriş yapabilirsiniz.';
+
+  @override
+  String get sifreSifirlaGirise => 'Girişe dön';
 
   @override
   String get ortakIslemler => 'İşlemler';
@@ -6886,6 +7063,32 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get bakimTutar => 'Maliyet';
+
+  @override
+  String get bakimFotoEkle => 'Fotoğraf ekle';
+
+  @override
+  String get bakimFotoHazir => 'Fotoğraf kayıtla birlikte yüklenecek';
+
+  @override
+  String get bakimFotoYuklenemedi =>
+      'Bakım kaydedildi ama fotoğraf yüklenemedi.';
+
+  @override
+  String get bakimGecmis => 'Bakım geçmişi';
+
+  @override
+  String get bakimGecmisYok => 'Bu ekipman için kayıtlı bakım yok.';
+
+  @override
+  String get bakimGecmisYokAlt =>
+      'Yapılan bakımlar yönetici tarafından kaydedildikçe burada tarih, tutar ve eklerle listelenir.';
+
+  @override
+  String get bakimEkler => 'Fotoğraf ve belgeler';
+
+  @override
+  String get bakimEkYok => 'Bu kayda eklenmiş fotoğraf ya da belge yok.';
 
   @override
   String get bakimGidereYaz => 'Gidere yaz';

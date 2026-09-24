@@ -43,7 +43,9 @@ from ..storage import presign_get
 router = APIRouter(prefix="/site-rules", tags=["site-kurallari"])
 
 _MANAGER = require_role("admin", "yonetici")
-_READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi", "resident")
+_READER = require_role(
+    "admin", "yonetici", "security", "guvenlik_amiri", "tesis_gorevlisi", "resident"
+)
 
 
 def _validate_foto_key(foto_key: str | None, tenant_id: uuid.UUID) -> None:

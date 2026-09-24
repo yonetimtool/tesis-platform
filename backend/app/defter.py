@@ -292,10 +292,10 @@ async def daire_odenen(
     return {uid: int(toplam) for uid, toplam in rows}
 
 
-async def tahakkuk_odenen(
-    db: AsyncSession, assessment_ids: list[uuid.UUID] | None = None
+async def _acik_kalem_odenen(
+    db: AsyncSession, assessment_ids: list[uuid.UUID] | None
 ) -> dict[uuid.UUID, int]:
-    """Tahakkuk basina odenen tutar (kurus) — FIFO mahsubunun kaynagi."""
+    """Yalniz KALEME BAGLI (`assessment_id` tasiyan) tahsilatlarin toplami."""
     alt = tahsilat_etkisi().subquery()
     stmt = select(alt.c.assessment_id, func.sum(alt.c.etki)).where(
         alt.c.assessment_id.isnot(None)
@@ -306,6 +306,370 @@ async def tahakkuk_odenen(
         stmt = stmt.where(alt.c.assessment_id.in_(assessment_ids))
     rows = (await db.execute(stmt.group_by(alt.c.assessment_id))).all()
     return {aid: int(toplam) for aid, toplam in rows}
+
+
+def fifo_sirasi(a: DuesAssessment) -> tuple:
+    """Kalemlerin MAHSUP SIRASI: once vadesi en eski olan kapanir.
+
+    Vadesiz kalem kendi islem tarihiyle siralanir; esitlikte donem, sonra
+    kayit ani ve kimlik (kararli sira — iki kosum ayni dagilimi uretir).
+    """
+    return (
+        a.son_odeme_tarihi or a.tarih or date.max,
+        a.donem or "",
+        a.created_at.isoformat() if a.created_at else "",
+        str(a.id),
+    )
+
+
+async def tahakkuk_odenen(
+    db: AsyncSession,
+    assessment_ids: list[uuid.UUID] | None = None,
+    *,
+    fifo: bool = True,
+) -> dict[uuid.UUID, int]:
+    """Tahakkuk basina odenen tutar (kurus) — KALEM DUZEYINDEKI TEK TANIM.
+
+    (E2E 2026-09, FINANS-04) KALEMSIZ TAHSILAT DA KALEMLERE DAGITILIR.
+    Onceden kalem duzeyinde "odenen" yalniz `assessment_id` tasiyan
+    tahsilatlardan hesaplaniyordu; web vezne formu kalem GONDERMEDIGI
+    icin daire duzeyinde TAMAMEN odenmis bir borc gecikme faizi aldi,
+    yaslandirmada "61-90 gun" kovasinda durdu ve banka eslestirmesi onu
+    acik sayip malikin parasini kiracinin (odenmis) aidatina yazdi.
+
+    Dagitim HESAPLANIR, YAZILMAZ: kalemsiz tahsilat satiri oldugu gibi
+    kalir, her okumada daire icinde FIFO (`fifo_sirasi`) ile kalemlere
+    mahsup edilir. Boylece gecmis kayitlar da goc gerekmeden duzelir ve
+    daire bakiyesi (`daire_odenen`, net) ile kalem toplami AYNI parayi
+    anlatir.
+
+    Dagitim kurali (daire basina):
+      1. Kaleme bagli tahsilat once KENDI kalemini kapatir; kalem tutarini
+         asan kismi (fazla odeme) daire havuzuna duser.
+      2. Kalemsiz tahsilat ODEYEN kisiye gore gruplanir; kisinin havuzu
+         once KENDISINE ya da daireye (hedefsiz) yazilmis kalemleri, sonra
+         dairenin kalan kalemlerini kapatir. Kisisiz havuz en son, FIFO.
+      3. Havuzlarin NET toplami (iade/iptal dusulmus) asilamaz.
+
+    `fifo=False`: yalniz kaleme bagli tahsilatlar (ters kayit / faiz affi
+    gibi "bu kaleme DOGRUDAN para yazildi mi" sorusu icin).
+    """
+    if not fifo:
+        return await _acik_kalem_odenen(db, assessment_ids)
+    if assessment_ids is not None and not assessment_ids:
+        return {}
+
+    # Kapsam DAIRE: istenen kalemlerin daireleri. FIFO daire icinde
+    # calistigi icin istenmeyen komsu kalemler de hesaba girmek ZORUNDA
+    # (daha eski bir kalem parayi once o yer).
+    k_stmt = select(DuesAssessment).where(*gecerli_tahakkuk())
+    if assessment_ids is not None:
+        daireler = select(DuesAssessment.unit_id).where(
+            DuesAssessment.id.in_(assessment_ids)
+        )
+        k_stmt = k_stmt.where(DuesAssessment.unit_id.in_(daireler))
+    kalemler = list((await db.execute(k_stmt)).scalars().all())
+    if not kalemler:
+        # Gecerli olmayan (ters kayitli) kalemler icin eski tanim.
+        return await _acik_kalem_odenen(db, assessment_ids)
+
+    unit_idler = list({k.unit_id for k in kalemler})
+    acik = await _acik_kalem_odenen(db, [k.id for k in kalemler])
+
+    alt = tahsilat_etkisi().subquery()
+    havuz_rows = (
+        await db.execute(
+            select(alt.c.unit_id, alt.c.user_id, func.sum(alt.c.etki))
+            .where(alt.c.assessment_id.is_(None), alt.c.unit_id.in_(unit_idler))
+            .group_by(alt.c.unit_id, alt.c.user_id)
+        )
+    ).all()
+    havuzlar: dict[uuid.UUID, list[tuple[uuid.UUID | None, int]]] = {}
+    for uid, kisi, toplam in havuz_rows:
+        havuzlar.setdefault(uid, []).append((kisi, int(toplam)))
+
+    daire_kalemleri: dict[uuid.UUID, list[DuesAssessment]] = {}
+    for k in kalemler:
+        daire_kalemleri.setdefault(k.unit_id, []).append(k)
+
+    sonuc: dict[uuid.UUID, int] = {}
+    for uid, liste in daire_kalemleri.items():
+        liste.sort(key=fifo_sirasi)
+        kalan: dict[uuid.UUID, int] = {}
+        fazla = 0
+        for k in liste:
+            dogrudan = acik.get(k.id, 0)
+            kapanan = min(max(dogrudan, 0), k.tutar_kurus)
+            sonuc[k.id] = kapanan
+            kalan[k.id] = k.tutar_kurus - kapanan
+            fazla += max(dogrudan - k.tutar_kurus, 0)
+        gruplar = havuzlar.get(uid, [])
+        butce = fazla + sum(t for _, t in gruplar)
+        if butce <= 0:
+            continue
+        # Kisili havuzlar once (kendi kalemlerine), kisisiz ve fazla odeme
+        # en son. Sira kararli: kisi kimligine gore.
+        sirali = sorted(
+            [(kisi, t) for kisi, t in gruplar if t > 0 and kisi is not None],
+            key=lambda g: str(g[0]),
+        )
+        kisisiz = sum(t for kisi, t in gruplar if t > 0 and kisi is None) + fazla
+        if kisisiz > 0:
+            sirali.append((None, kisisiz))
+        for kisi, tutar in sirali:
+            tutar = min(tutar, butce)
+            if tutar <= 0:
+                break
+            butce -= tutar
+            oncelikli = [
+                k for k in liste
+                if kisi is not None
+                and (k.hedef_user_id == kisi or k.hedef_user_id is None)
+            ]
+            for k in oncelikli + [k for k in liste if k not in oncelikli]:
+                if tutar <= 0:
+                    break
+                pay = min(kalan[k.id], tutar)
+                if pay <= 0:
+                    continue
+                kalan[k.id] -= pay
+                sonuc[k.id] += pay
+                tutar -= pay
+
+    if assessment_ids is not None:
+        istenen = set(assessment_ids)
+        sonuc = {aid: t for aid, t in sonuc.items() if aid in istenen}
+        # Ters kayitli (gecerli olmayan) istenen kalemler eski tanimla.
+        eksik = [aid for aid in assessment_ids if aid not in sonuc]
+        if eksik:
+            sonuc.update(await _acik_kalem_odenen(db, eksik))
+    return {aid: t for aid, t in sonuc.items() if t}
+
+
+async def kalem_kalanlari(
+    db: AsyncSession, kalemler: list[DuesAssessment]
+) -> dict[uuid.UUID, int]:
+    """Kalem basina KALAN borc (kurus, >= 0) — FIFO dagitimli."""
+    if not kalemler:
+        return {}
+    odenen = await tahakkuk_odenen(db, [k.id for k in kalemler])
+    return {
+        k.id: max(k.tutar_kurus - odenen.get(k.id, 0), 0) for k in kalemler
+    }
+
+
+async def donem_tahsil_edilen(
+    db: AsyncSession, *, donem: str | None = None
+) -> dict[str, int]:
+    """Donem basina TAHSIL EDILMIS BORC (kurus) — TAHSILAT ORANININ PAYI.
+
+    (E2E 2026-09, FINANS-07) Tahsilat orani onceden
+    `tahsilat_toplami(donem=...)` ile hesaplaniyordu: yani tahsilat
+    SATIRININ `donem` alanina bakiyordu. Web vezne formu ve kalemsiz
+    `/dues/payments` donem YAZMADIGI icin Eylul'un 18 tahsilatindan 15'i
+    hicbir doneme girmedi; gosterge ve SAKINE yayinlanan seffaflik %3
+    diyordu (gercek ~%28), "odeyen daire 0".
+
+    Artik oranin payi "o donemin kalemlerinden ne kadari kapandi"dir —
+    kalem duzeyindeki TEK tanimdan (FIFO dahil). Tahsilat satirinin
+    donem alani dolu olsa da olmasa da AYNI sonucu verir ve oran %100'u
+    asamaz. Gosterge, seffaflik ve Tahsilat Performansi raporu bunu
+    cagirir.
+    """
+    where = list(gecerli_tahakkuk())
+    if donem is not None:
+        where.append(DuesAssessment.donem == donem)
+    kalemler = list(
+        (await db.execute(select(DuesAssessment).where(*where))).scalars().all()
+    )
+    if not kalemler:
+        return {}
+    odenen = await tahakkuk_odenen(db, [k.id for k in kalemler])
+    sonuc: dict[str, int] = {}
+    for k in kalemler:
+        sonuc[k.donem] = sonuc.get(k.donem, 0) + min(
+            odenen.get(k.id, 0), k.tutar_kurus
+        )
+    return sonuc
+
+
+async def acik_borc_toplami(db: AsyncSession) -> int:
+    """TESISIN ACIK BORCU (kurus) — daire bakiyelerinin toplami.
+
+    (E2E 2026-09, FINANS-06) Ayni ad ("acik borc") dort ekranda dort
+    rakamdi. Tanim: her dairenin `tahakkuk - odenen` bakiyesi, ALACAKLI
+    daire SIFIR sayilarak toplanir — bir dairenin fazla odemesi baska
+    dairenin borcunu kapatmaz. Daireye baglanmamis tahsilat (unit_id
+    NULL) hicbir dairenin borcunu kapatmadigi icin buraya da girmez.
+    """
+    tahakkuk = await daire_tahakkuk(db)
+    if not tahakkuk:
+        return 0
+    odenen = await daire_odenen(db, list(tahakkuk))
+    return sum(max(t - odenen.get(uid, 0), 0) for uid, t in tahakkuk.items())
+
+
+async def kalemsiz_tahsilat_donemi(
+    db: AsyncSession, unit_id: uuid.UUID | None, tarih: date | None
+) -> str:
+    """Kaleme baglanmamis tahsilatin MUHASEBE DONEMI.
+
+    (E2E 2026-09, FINANS-07) Donemsiz tahsilat donem bazli listelerde ve
+    `/dues/payments?donem=` suzgecinde kayboluyordu. Donem, dairenin FIFO
+    ile ilk kapanacak ACIK kaleminin donemidir; acik kalem yoksa (pesin /
+    fazla odeme) islem tarihinin ayidir.
+    """
+    if unit_id is not None:
+        kalemler = list(
+            (
+                await db.execute(
+                    select(DuesAssessment).where(
+                        DuesAssessment.unit_id == unit_id, *gecerli_tahakkuk()
+                    )
+                )
+            ).scalars().all()
+        )
+        kalan = await kalem_kalanlari(db, kalemler)
+        for k in sorted(kalemler, key=fifo_sirasi):
+            if kalan.get(k.id, 0) > 0:
+                return k.donem
+    gun = tarih or date.today()
+    return f"{gun.year}-{gun.month:02d}"
+
+
+async def tahsilat_dairesi_coz(
+    db: AsyncSession,
+    *,
+    unit_id: uuid.UUID | None,
+    user_id: uuid.UUID | None,
+    assessment_id: uuid.UUID | None = None,
+) -> uuid.UUID | None:
+    """Tahsilatin DAIRESI — verilmediyse kalemden ya da kisiden cozulur.
+
+    (E2E 2026-09, FINANS-01) Daire secilmeden alinan tahsilat (web "pesin
+    odeme" kutusu, borclu listesinden gelip daireyi bosaltmak, mobil
+    `unit_id` opsiyonel) `unit_id=NULL` yaziliyordu: para kasaya girdi ama
+    HICBIR dairenin borcu kapanmadi, sakin borcunu hala gordu.
+
+    KARAR: sessizce tahmin YOK.
+      * kalem verilmisse daire kalemin dairesidir,
+      * kisinin TEK aktif dairesi varsa o daire,
+      * kisinin birden cok aktif dairesi varsa 422 — secim zorunlu (yanlis
+        dairenin borcunu kapatmak, dogru dairenin borcunu acik birakirdi),
+      * kisi de daire de yoksa daireye bagli OLMAYAN tahsilat serbesttir
+        (ornegin kira/baz istasyonu tahsilati) ve NULL kalir.
+    """
+    from .errors import APIError
+    from .models import UnitResident
+
+    if unit_id is not None:
+        return unit_id
+    if assessment_id is not None:
+        kalem_daire = (
+            await db.execute(
+                select(DuesAssessment.unit_id).where(
+                    DuesAssessment.id == assessment_id
+                )
+            )
+        ).scalar_one_or_none()
+        if kalem_daire is not None:
+            return kalem_daire
+    if user_id is None:
+        return None
+    daireler = list(
+        dict.fromkeys(
+            (
+                await db.execute(
+                    select(UnitResident.unit_id).where(
+                        UnitResident.user_id == user_id,
+                        UnitResident.bitis.is_(None),
+                    )
+                )
+            ).scalars().all()
+        )
+    )
+    if len(daireler) == 1:
+        return daireler[0]
+    if len(daireler) > 1:
+        raise APIError(422, "validation_error", "tahsilat_daire_secilmeli")
+    return None
+
+
+# --------------------------------------------------------------------------- #
+#                 (E2E 2026-09) SAKININ GORDUGU BORC — TEK TANIM              #
+# --------------------------------------------------------------------------- #
+async def sakin_kalemleri(
+    db: AsyncSession, user_id: uuid.UUID
+) -> list[tuple[DuesAssessment, int]]:
+    """Sakinin GORDUGU borc kalemleri ve her birinin KALANI (kurus).
+
+    (E2E 2026-09, YETKI-06 / TESIS-08 / FINANS-19) Iki sakin ucu iki ayri
+    borc anlatiyordu: `/me/dues` dairenin TUM kalemlerini (malikin
+    demirbasi dahil, onceki sakinin borcu dahil) gosterirken
+    `/me/odeme-bilgileri` P218 kuralini uyguluyordu. Ayrilan sakin kendi
+    borcunu hic goremiyordu. Artik IKI UC DA bunu cagirir.
+
+    Kural:
+      * HEDEFI BEN olan kalem — daire bagim bitmis olsa bile (ayrilan
+        sakinin borcu kendisinde kalir, yeni sakine gecmez).
+      * HEDEFSIZ (daireye yazilmis) kalem — yalniz AKTIF daire bagimda:
+          - kiraci icin tanimi `malik` diyen kalem gorunmez (P218 §D),
+            tanimsiz eski kalemler gorunur.
+          - BAG BASLANGICINA GORE SUZULMEZ (bilincli): `baslangic` kaydin
+            acildigi andir, tasinma tarihi degil; ice aktarilan sakinin
+            eski hedefsiz aidatini gizlemek odenmesi gereken borcu
+            saklamak olurdu. Onceki sakinin borcu zaten HEDEFLIDIR (P28)
+            ve yukaridaki kuralla ona kalir.
+      * Baskasina hedeflenmis kalem GORUNMEZ.
+    Kalan FIFO dagitimli kalem duzeyindeki tanimdan (`tahakkuk_odenen`).
+    """
+    from .models import GelirGiderTanim, UnitResident
+
+    baglar = (
+        await db.execute(
+            select(UnitResident.unit_id, UnitResident.rol_tipi).where(
+                UnitResident.user_id == user_id, UnitResident.bitis.is_(None)
+            )
+        )
+    ).all()
+    kosul = DuesAssessment.hedef_user_id == user_id
+    if baglar:
+        malik_tanimlari = select(GelirGiderTanim.id).where(
+            GelirGiderTanim.hedef_kurali == "malik"
+        )
+        for unit_id, rol in baglar:
+            daire_kosulu = and_(
+                DuesAssessment.unit_id == unit_id,
+                DuesAssessment.hedef_user_id.is_(None),
+            )
+            if rol == "kiraci":
+                # `NULL NOT IN (...)` SQL'de NULL'dur ve satiri ELER;
+                # tanimsiz kalem ACIKCA dahil (YETKI-07).
+                daire_kosulu = and_(
+                    daire_kosulu,
+                    or_(
+                        DuesAssessment.gelir_gider_tanim_id.is_(None),
+                        DuesAssessment.gelir_gider_tanim_id.notin_(
+                            malik_tanimlari
+                        ),
+                    ),
+                )
+            kosul = or_(kosul, daire_kosulu)
+    kalemler = list(
+        (
+            await db.execute(
+                select(DuesAssessment).where(kosul, *gecerli_tahakkuk())
+            )
+        ).scalars().all()
+    )
+    kalemler.sort(key=fifo_sirasi)
+    kalan = await kalem_kalanlari(db, kalemler)
+    return [(k, kalan.get(k.id, 0)) for k in kalemler]
+
+
+async def sakin_borc_kurus(db: AsyncSession, user_id: uuid.UUID) -> int:
+    """Sakinin ACIK borcu — `sakin_kalemleri`nin kalan toplami."""
+    return sum(k for _, k in await sakin_kalemleri(db, user_id))
 
 
 async def tahsilat_toplami(
@@ -406,10 +770,11 @@ async def hareket_toplami(
             .where(*where)
         )
     ).scalar_one()
-    # GIDER/GELIR toplami MUTLAK deger olarak okunur: bir gider "eksi para"
-    # degil, "harcanan para"dir. Isaret yalnizca iptal/iadeyi DUSMEK icin
-    # kullanildi.
-    return abs(int(toplam))
+    # GIDER "harcanan para"dir ve POZITIF okunur: gider `cikis` oldugu icin
+    # isaret cevrilir. (E2E 2026-09, FINANS-11) `abs` KULLANILMAZ: yalniz
+    # onceki ayin giderinin iptalini tasiyan bir ayda net NEGATIFTIR ve
+    # `abs` onu "gider" diye POZITIF gosteriyordu (kirilimla da tutmuyordu).
+    return (-1 if tip == "gider" else 1) * int(toplam)
 
 
 #: Deftere gelir olarak yansiyan tipler. AIDAT TAHSILATI DA GELIRDIR:
@@ -461,37 +826,72 @@ async def gider_kategori_kirilimi(
     kayitlarin kategorisini kaybetmek olurdu; bu yuzden ad `coalesce` ile
     hangisi doluysa oradan okunur.
     """
+    return await kategori_kirilimi(
+        db, ("gider",), baslangic=baslangic, bitis=bitis, limit=limit
+    )
+
+
+async def kategori_kirilimi(
+    db: AsyncSession,
+    tipler: tuple[str, ...],
+    *,
+    baslangic: date | None = None,
+    bitis: date | None = None,
+    limit: int | None = None,
+) -> list[tuple[str, int]]:
+    """Gelir ya da gider toplaminin kategori kirilimi — (ad, kurus).
+
+    (E2E 2026-09, FINANS-11) KIRILIMIN TOPLAMI = `hareket_toplami`.
+    Onceden kirilim "iptal EDILMIS satiri disla" kuraliyla, toplam ise
+    "iptal satirini isaretiyle dus" kuraliyla hesaplaniyordu; Agustos'ta
+    girilip Eylul'de iptal edilen bir gider iki rakami ayirdi ve sakine
+    yayinlanan gider dagiliminin yuzdeleri %116 tuttu. Artik AYNI kural:
+    orijinal satir + ters satirlar (iade/iptal) isaretiyle, TERS SATIRIN
+    tarihinde. Ters satir kategoriyi orijinalden alir.
+    """
     from .models import BudgetCategory, GelirGiderTanim  # dairesel import yok
 
+    orj = aliased(FinansalHareket)
+    ilgili = func.coalesce(
+        FinansalHareket.iade_edilen_id, FinansalHareket.ters_kayit_id
+    )
+    kat_id = func.coalesce(
+        FinansalHareket.budget_category_id, orj.budget_category_id
+    )
+    tanim_id = func.coalesce(
+        FinansalHareket.gelir_gider_tanim_id, orj.gelir_gider_tanim_id
+    )
     ad = func.coalesce(BudgetCategory.ad, GelirGiderTanim.ad, KATEGORISIZ)
     where = [
-        FinansalHareket.tip == "gider",
         FinansalHareket.durum == GERCEKLESEN,
-        # Iptal EDILMIS gider kategori kiriliminda gorunmemeli; iptal
-        # satirinin kendisi de (tip='iptal') zaten disarida.
-        FinansalHareket.ters_kayit_id.is_(None),
+        or_(
+            FinansalHareket.tip.in_(tipler),
+            and_(FinansalHareket.tip.in_(_TERS_TIPLER), orj.tip.in_(tipler)),
+        ),
     ]
     if baslangic is not None:
         where.append(FinansalHareket.tarih >= baslangic)
     if bitis is not None:
         where.append(FinansalHareket.tarih <= bitis)
-    where.append(FinansalHareket.id.notin_(iptal_edilmis()))
+    # Gider "cikis"tir: isaret ceviriciyle POZITIF okunur. `abs` KULLANILMAZ:
+    # yalniz iptali dusen (net eksi) bir kategori, toplami dusururken
+    # kirilimi ARTIRIRDI ve kirilim toplami yine tutmazdi.
+    carpan = -1 if set(tipler) <= {"gider"} else 1
+    isaretli = carpan * isaret() * FinansalHareket.tutar_kurus
+    toplam = func.sum(isaretli)
     stmt = (
-        select(ad, func.sum(FinansalHareket.tutar_kurus))
+        select(ad, toplam)
         .select_from(FinansalHareket)
-        .outerjoin(
-            BudgetCategory,
-            BudgetCategory.id == FinansalHareket.budget_category_id,
-        )
-        .outerjoin(
-            GelirGiderTanim,
-            GelirGiderTanim.id == FinansalHareket.gelir_gider_tanim_id,
-        )
+        .outerjoin(orj, orj.id == ilgili)
+        .outerjoin(BudgetCategory, BudgetCategory.id == kat_id)
+        .outerjoin(GelirGiderTanim, GelirGiderTanim.id == tanim_id)
         .where(*where)
         .group_by(ad)
+        # Tamamen iptal edilmis kategori (toplam 0) listede durmaz.
+        .having(func.sum(isaretli) != 0)
         # (P108) Kararli kuyruk GRUPLAMA ANAHTARIDIR: esit tutarli iki
         # kategori her kosumda ayni sirada gelir.
-        .order_by(func.sum(FinansalHareket.tutar_kurus).desc(), ad)
+        .order_by(toplam.desc(), ad)
     )
     if limit is not None:
         stmt = stmt.limit(limit)

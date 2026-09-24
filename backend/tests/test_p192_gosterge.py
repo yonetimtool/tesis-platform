@@ -288,16 +288,19 @@ def test_yillik_hedef_aylik_sorguda_ONIKIYE_BOLUNUR(client, adm):
 def test_muhasebe_aktarimi_borc_alacak_AYRI_sutun(client, adm):
     kasa = client.post("/kasalar", headers=adm, json={
         "kod": f"MA{_sfx()}", "ad": "Kasa"}).json()
-    client.post("/finans/tahsilat", headers=adm, json={
-        "kasa_id": kasa["id"], "tutar_kurus": 12345, "tarih": "2040-04-10"})
+    # (E2E 2026-09) Tahsilat artik ILERI tarih kabul etmiyor (FINANS-15);
+    # izole bir GECMIS donem kullanilir.
+    r = client.post("/finans/tahsilat", headers=adm, json={
+        "kasa_id": kasa["id"], "tutar_kurus": 12345, "tarih": "2003-04-10"})
+    assert r.status_code in (200, 201), r.text
     client.post("/finans/hareketler", headers=adm, json={"satirlar": [
         {"tip": "gider", "tutar_kurus": 6789, "kasa_id": kasa["id"],
-         "tarih": "2040-04-11"}]})
+         "tarih": "2003-04-11"}]})
 
     r = client.post(
         "/raporlar/muhasebe_aktarim", headers=adm,
         params={"bicim": "tablo"},
-        json={"baslangic": "2040-04-01", "bitis": "2040-04-30"},
+        json={"baslangic": "2003-04-01", "bitis": "2003-04-30"},
     )
     assert r.status_code == 200, r.text
     govde = r.json()

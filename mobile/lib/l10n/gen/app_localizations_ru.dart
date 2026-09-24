@@ -1493,6 +1493,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get panikIptalEdildi => 'Отменено — ничего не отправлено.';
 
   @override
+  String get panikZatenAcik =>
+      'У вас уже есть открытая тревога — охрана и управление уведомлены.';
+
+  @override
   String get panikYanlisAlarmGonderildi => 'Сообщено о ложной тревоге.';
 
   @override
@@ -1824,6 +1828,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get binaDaireNoZatenVar => 'Такой номер квартиры уже существует.';
 
   @override
+  String binaDaireNoOnizleme(String no) {
+    return 'Будет сохранено как: $no';
+  }
+
+  @override
   String binaDaireDuzenleBaslik(Object no) {
     return 'Квартира $no — изменить';
   }
@@ -1919,6 +1928,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get semaYogunluk => 'Плотность:';
+
+  @override
+  String get semaTurSuzgeci => 'Тип жалобы';
 
   @override
   String get semaYerlesimAciklama =>
@@ -3172,6 +3184,171 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get duyuruYayinla => 'Опубликовать';
+
+  @override
+  String get duyuruHedefBloklar => 'Корпуса (если не выбраны — все)';
+
+  @override
+  String get duyuruHedefNotu =>
+      'Те, кто вне аудитории, не видят объявление и не получают уведомление. Фильтры по корпусу и собственнику/арендатору применяются только к жильцам. Аудиторию нельзя изменить после сохранения.';
+
+  @override
+  String duyuruHedefOzet(Object ozet) {
+    return 'Аудитория: $ozet';
+  }
+
+  @override
+  String duyuruHedefBlok(Object bloklar) {
+    return 'Корпус: $bloklar';
+  }
+
+  @override
+  String get modulDavetler => 'Приглашения';
+
+  @override
+  String get davetYonAciklama => 'Отправленные приглашения и их статус.';
+
+  @override
+  String get davetYonTesisKoduIpucu =>
+      'Если приглашение не доставлено, вы можете передать код объекта вручную:';
+
+  @override
+  String get davetYonKodKopyala => 'Скопировать код объекта';
+
+  @override
+  String get davetYonKodKopyalandi => 'Код объекта скопирован.';
+
+  @override
+  String get davetYonBos => 'Пока нет приглашений.';
+
+  @override
+  String get davetYonAlinamadi => 'Не удалось загрузить приглашения.';
+
+  @override
+  String davetYonSonGonderim(Object zaman) {
+    return 'Последняя отправка: $zaman';
+  }
+
+  @override
+  String get davetYonDurumKaydoldu => 'Зарегистрирован';
+
+  @override
+  String get davetYonDurumGeriDondu => 'Возвращено';
+
+  @override
+  String get davetYonDurumGitmedi => 'Не отправлено';
+
+  @override
+  String get davetYonDurumAyarYok => 'Почта не настроена';
+
+  @override
+  String get davetYonDurumAcildi => 'Открыто';
+
+  @override
+  String get davetYonDurumIletildi => 'Доставлено';
+
+  @override
+  String get davetYonDurumGonderildi => 'Отправлено';
+
+  @override
+  String get davetYonDurumBekliyor => 'Ожидает';
+
+  @override
+  String get davetYonYenidenGonder => 'Отправить снова';
+
+  @override
+  String get davetYonYenidenGonderildi => 'Приглашение отправлено повторно.';
+
+  @override
+  String get modulGurultuUyarilari => 'Предупреждения о шуме';
+
+  @override
+  String get gurultuAciklama =>
+      'Жалобы на шум сверх порога и статус объявления.';
+
+  @override
+  String get gurultuYok => 'Предупреждений нет';
+
+  @override
+  String get gurultuYokAlt => 'Порог ещё не достигнут.';
+
+  @override
+  String get gurultuAlinamadi => 'Не удалось загрузить предупреждения.';
+
+  @override
+  String gurultuSayac(int sayac, int esik) {
+    return 'Счётчик: $sayac/$esik';
+  }
+
+  @override
+  String get gurultuDaireYok => 'Квартира неизвестна';
+
+  @override
+  String get gurultuDurumGonderildi => 'Отправлено';
+
+  @override
+  String get gurultuDurumBasarisiz => 'Ошибка';
+
+  @override
+  String get gurultuDurumBekliyor => 'Ожидает объявления';
+
+  @override
+  String get gurultuDurumYapildi => 'Объявление сделано';
+
+  @override
+  String get gurultuIsaretlendi => 'Предупреждение отмечено.';
+
+  @override
+  String get girisKodIleEposta => 'Отправить код на почту вместо пароля';
+
+  @override
+  String get girisKodYalnizEposta =>
+      'Вход по коду работает с адресом электронной почты. Для входа по номеру телефона используйте пароль.';
+
+  @override
+  String get girisParolaylaDon => 'Войти с паролем';
+
+  @override
+  String get girisEpostaKodGonder => 'Отправить код';
+
+  @override
+  String get girisEpostaKodGonderildi =>
+      'Если адрес зарегистрирован, код отправлен. Он действует 10 минут.';
+
+  @override
+  String get girisKodTesisKoduAciklama =>
+      'Этот код подходит к нескольким объектам. Введите код объекта, в который хотите войти.';
+
+  @override
+  String get girisTesisKodu => 'Код объекта';
+
+  @override
+  String get girisSlugGecersiz =>
+      'Код объекта может содержать только строчные буквы, цифры и дефисы.';
+
+  @override
+  String get girisSifremiUnuttum => 'Забыли пароль?';
+
+  @override
+  String get sifreSifirlaBaslik => 'Забыли пароль';
+
+  @override
+  String get sifreSifirlaAciklama =>
+      'Введите код объекта и адрес электронной почты. Код отправляется только на учётные записи с подтверждённой почтой; если письмо не пришло в течение нескольких минут, ваша почта, возможно, ещё не подтверждена. В целях безопасности мы не сообщаем, существует ли учётная запись.';
+
+  @override
+  String get sifreSifirlaGonderildi =>
+      'Если учётная запись существует, код отправлен на вашу почту. Введите код и новый пароль.';
+
+  @override
+  String get sifreSifirlaKur => 'Обновить пароль';
+
+  @override
+  String get sifreSifirlaBasarili =>
+      'Ваш пароль обновлён. Вы можете войти с новым паролем.';
+
+  @override
+  String get sifreSifirlaGirise => 'Вернуться ко входу';
 
   @override
   String get ortakIslemler => 'Действия';
@@ -7155,6 +7332,33 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get bakimTutar => 'Стоимость';
+
+  @override
+  String get bakimFotoEkle => 'Добавить фото';
+
+  @override
+  String get bakimFotoHazir => 'Фото будет загружено вместе с записью';
+
+  @override
+  String get bakimFotoYuklenemedi =>
+      'Обслуживание сохранено, но фото загрузить не удалось.';
+
+  @override
+  String get bakimGecmis => 'История обслуживания';
+
+  @override
+  String get bakimGecmisYok =>
+      'Для этого оборудования нет записей обслуживания.';
+
+  @override
+  String get bakimGecmisYokAlt =>
+      'Когда управление будет записывать обслуживание, оно появится здесь с датой, стоимостью и вложениями.';
+
+  @override
+  String get bakimEkler => 'Фото и документы';
+
+  @override
+  String get bakimEkYok => 'К этой записи не прикреплены фото или документы.';
 
   @override
   String get bakimGidereYaz => 'Записать в расходы';

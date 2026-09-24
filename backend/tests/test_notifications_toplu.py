@@ -51,10 +51,13 @@ def test_toplu_sil_YUMUSAK_siler_listeden_gizler_ve_DENETIM(client, world, owner
     sonra = client.get("/notifications", headers=admin).json()["meta"]["total"]
     assert sonra == once - 1  # silinen listede yok
 
+    # (E2E 2026-09, goc 0149) Paylasilan yonetim alarminda silme KISIYE
+    # aittir: satir DURUR, silindi_at kisinin durum satirina yazilir.
     row = owner_conn.execute(
-        "SELECT silindi_at FROM notification WHERE id=%s", (ids[0],)
+        "SELECT silindi_at FROM notification_kisi_durumu WHERE notification_id=%s",
+        (ids[0],),
     ).fetchone()
-    assert row[0] is not None, "yumuşak silme silindi_at yazmadı"
+    assert row is not None and row[0] is not None, "yumuşak silme silindi_at yazmadı"
 
     denetim = owner_conn.execute(
         "SELECT count(*) FROM audit_log WHERE tenant_id=%s AND action='notification_delete'",
@@ -91,3 +94,30 @@ def test_KAPSAM_disi_tenant_ETKILENMEZ(client, world, owner_conn):
         headers=admin_a, json={"ids": ids_b, "okundu": True},
     )
     assert r.json()["etkilenen"] == 0  # RLS + kapsam: başka tenant görünmez
+
+
+def test_PAYLASILAN_alarmda_OKUNDU_ve_SILME_KISIYE_AIT(client, world, owner_conn):
+    """(E2E 2026-09) Bir guvenlik gorevlisinin okumasi/silmesi yoneticinin
+    listesini degistiriyordu (tek satir paylasiliyordu)."""
+    ids = _bildirim_ekle(owner_conn, world["a"], 2)
+    guard = _headers(client, world["slug_a"], world["guard_a"])
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+
+    r = client.patch(f"/notifications/{ids[0]}", headers=guard, json={"okundu": True})
+    assert r.status_code == 200 and r.json()["okundu"] is True, r.text
+    r = client.post("/notifications/toplu-sil", headers=guard, json={"ids": [ids[1]]})
+    assert r.json()["etkilenen"] == 1
+
+    admin_okunmamis = {
+        n["id"] for n in client.get(
+            "/notifications", headers=admin, params={"okundu": False, "limit": 200}
+        ).json()["items"]
+    }
+    assert ids[0] in admin_okunmamis, "gorevlinin okumasi yoneticiye yansidi"
+    assert ids[1] in admin_okunmamis, "gorevlinin silmesi yoneticiye yansidi"
+    guard_hepsi = {
+        n["id"] for n in client.get(
+            "/notifications", headers=guard, params={"limit": 200}
+        ).json()["items"]
+    }
+    assert ids[1] not in guard_hepsi, "silen kisi hala goruyor"

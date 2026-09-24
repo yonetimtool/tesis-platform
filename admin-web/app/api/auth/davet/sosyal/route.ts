@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { anonimVekil, loginResponse } from "@/lib/backend";
+import { anonimVekil } from "@/lib/backend";
+import { oturumAc } from "@/lib/oturum-kapisi";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,5 +15,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     refresh_token?: string;
   };
   if (!govde.access_token || !govde.refresh_token) return yanit;
-  return loginResponse(govde.access_token, govde.refresh_token);
+  // (E2E 2026-09) Rol kapisi — bkz. davet/parola.
+  return oturumAc(req, govde.access_token, govde.refresh_token);
 }

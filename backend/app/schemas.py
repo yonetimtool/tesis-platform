@@ -8,6 +8,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import (
     AfterValidator,
+    AliasChoices,
     BaseModel,
     ConfigDict,
     EmailStr,
@@ -99,7 +100,16 @@ def _hhmm(v: object) -> object:
 # Sinir int64'un cok altinda BILINCLI olarak: 10^15 kurus = 10 trilyon TL.
 # Gercek bir aidat/gider bunun yanina yaklasmaz; yaklasan bir sayi kullanici
 # hatasidir ve "anlasilir 422" ile geri donmelidir.
-KURUS_UST_SINIR = 10**15
+#
+# (E2E 2026-09, FINANS-15) 10^15 -> 10^13 (100 milyar TL). 10^15'te on
+# satirin toplami JS `Number` guvenli araligini (9x10^15) asiyor ve web
+# kurus kaydiriyordu; 10^13'te 900 satir bile guvenli aralikta kalir.
+KURUS_UST_SINIR = 10**13
+
+#: (E2E 2026-09, FINANS-15) MUHASEBE DONEMI bicimi: 'YYYY-MM', yil
+#: 2000-2099, ay 01-12. Yalniz uzunluk denetleniyordu: "2026-13", "abc",
+#: "1900-01" tahakkuk olarak yazilabiliyordu.
+DONEM_DESENI = r"^20\d{2}-(0[1-9]|1[0-2])$"
 
 class LoginRequest(BaseModel):
     """(P205 §1) TEK KIMLIK ALANI — e-posta VEYA telefon.
@@ -252,6 +262,13 @@ class RefreshRequest(BaseModel):
     refresh_token: str
 
 
+class CikisIstek(BaseModel):
+    """(E2E 2026-09) `POST /auth/logout` govdesi — ikisi de istege bagli."""
+
+    refresh_token: str | None = Field(default=None, max_length=4096)
+    her_yerden: bool = False
+
+
 class TokenPair(BaseModel):
     access_token: str
     refresh_token: str
@@ -371,6 +388,7 @@ class UserAdminOut(BaseModel):
     #: E-postasi DOGRULANMAMIS kullaniciya bildirim gonderilse de
     #: kullanici giris yapamaz; teshisin ilk sorusu budur.
     eposta_dogrulandi: bool = False
+
     bildirim_eposta: bool | None = None
     bildirim_sms: bool | None = None
     bildirim_mobil: bool | None = None
@@ -448,7 +466,10 @@ class UserCreate(BaseModel):
     # acilir ve kisi davet (Tesis ID) ile mobilden KENDI kimligini kurar
     # (SSO ya da e-posta + kendi parolasi). Yoneticinin parola bilmesi
     # guvenlik acigiydi.
-    ad: str = Field(..., min_length=1)
+    # (E2E 2026-09, ARAYUZ-6) `max_length=150`: sinirsizdi; 10.000
+    # karakterlik ad 201 ile kaydedildi ve /tasks sayfasini 90.000 px'e
+    # tasirdi. Personel adi zaten 150 ile sinirli — ayni sinir.
+    ad: str = Field(..., min_length=1, max_length=150)
     # =====================================================================
     # (P212-ek §2) TELEFON ARTIK OPSIYONEL — COKLU TESISIN ONUNDEKI ENGEL
     # =====================================================================
@@ -532,7 +553,8 @@ class UserCreatedOut(BaseModel):
 
 class UserUpdate(BaseModel):
     # (P97) telefon E.164 NORMALIZE EDILIR — asagidaki dogrulayiciya bak.
-    ad: str | None = Field(None, min_length=1)
+    # (E2E 2026-09, ARAYUZ-6) Olusturmayla ayni ust sinir.
+    ad: str | None = Field(None, min_length=1, max_length=150)
     email: EmailStr | None = None
     telefon: str | None = None
     aranabilir: bool | None = None
@@ -734,9 +756,13 @@ class BildirimTercihUpdate(BaseModel):
     acik olan kullanicida bu, digerinin degisikligini SESSIZCE geri alirdi.
     """
 
-    #: E-postasi DOGRULANMAMIS kullaniciya bildirim gonderilse de
-    #: kullanici giris yapamaz; teshisin ilk sorusu budur.
-    eposta_dogrulandi: bool = False
+    # (E2E 2026-09) `eposta_dogrulandi` BURADAN KALDIRILDI: baska bir
+    # semadan kopyalanmis bir alandi ve uc her alani `setattr` ile
+    # yazdigi icin kullanici kendi e-postasini KODSUZ "dogrulanmis"
+    # yapabiliyordu (sifre sifirlama / hesap silme kapisinin baypasi).
+    # Bilinmeyen alan artik 422 (`extra="forbid"`).
+    model_config = ConfigDict(extra="forbid")
+
     bildirim_eposta: bool | None = None
     bildirim_sms: bool | None = None
     bildirim_mobil: bool | None = None
@@ -1124,6 +1150,15 @@ class KameraTestIstek(BaseModel):
     stream_url: str
     #: Yalnız `rtsp` desteklenir (sunucu-taraflı çekimin SSRF sınırı).
     tur: CameraTur = "rtsp"
+    #: (E2E 2026-09 / GUVENLIK-15) DÜZENLEMEDE KAYITLI KİMLİK. Parola hiçbir
+    #: yanıtta dönmediği için düzenleme formu kimliksiz adres gönderiyordu
+    #: ve parolalı kamerada test "kimlik hatalı" diyordu — kamera
+    #: çalışırken. `camera_id` verilirse sunucu KAYITLI kimliği takar;
+    #: yalnız adres AYNI konağı gösteriyorsa (parola başka konağa gitmesin).
+    camera_id: uuid.UUID | None = None
+    #: Ayrı kimlik alanları — adresteki kimlikten ve `camera_id`den önceliklidir.
+    stream_kullanici: str | None = Field(default=None, max_length=200)
+    stream_parola: str | None = Field(default=None, max_length=200)
     model_config = ConfigDict(extra="forbid")
 
 
@@ -1141,6 +1176,14 @@ class KameraTestSonuc(BaseModel):
     #: Kare gelmiş olması yeterli DEĞİL: kare çekimini sunucudaki ffmpeg
     #: yapar ve H265'te de çalışır; tarayıcıda oynatma ayrı bir sorudur.
     tarayicida_oynatilir: bool | None = None
+
+
+#: (E2E 2026-09 / GUVENLIK-03) Kayit saglayicisi — `kamera_kayit.SAGLAYICILAR`
+#: ile AYNI kume (test kilitler). `str` iken `foo` 200 ile kaydediliyor, hata
+#: ancak aramada `kamera_kayit_saglayici_yok` olarak cikiyordu. CIKTI
+#: semasinda (`CameraOut`) `str` KALDI: bu kuraldan once yazilmis gecersiz
+#: bir deger kamera LISTESINI 500'e cevirmesin.
+KayitSaglayiciAd = Literal["sablon", "hikvision", "dahua"]
 
 
 class CameraCreate(BaseModel):
@@ -1172,7 +1215,7 @@ class CameraCreate(BaseModel):
     stream_parola: str | None = Field(default=None, max_length=200)
     #: (P213 §6) GECMIS KAYIT. `kayit_parola` YAZILIR-OKUNMAZ.
     kayit_aktif: bool | None = None
-    kayit_saglayici: str | None = None
+    kayit_saglayici: KayitSaglayiciAd | None = None
     kayit_adres: str | None = None
     kayit_kanal: str | None = None
     kayit_kullanici: str | None = None
@@ -1226,7 +1269,7 @@ class CameraUpdate(BaseModel):
     stream_parola: str | None = None
     #: (P213 §6) GECMIS KAYIT. `kayit_parola` YAZILIR-OKUNMAZ.
     kayit_aktif: bool | None = None
-    kayit_saglayici: str | None = None
+    kayit_saglayici: KayitSaglayiciAd | None = None
     kayit_adres: str | None = None
     kayit_kanal: str | None = None
     kayit_kullanici: str | None = None
@@ -1832,6 +1875,29 @@ class AnnouncementCreate(BaseModel):
     govde: str = Field(..., min_length=1, max_length=5000)
     # Opsiyonel gorsel: /uploads/presign ile yuklenen obje anahtari.
     foto_key: str | None = None
+    #: (E2E 2026-09, BILDIRIM-12) HEDEF KITLE — anketle ayni desen
+    #: (ANKET_HEDEF_ROLLER, malik/kiraci) + BLOK. BOS = HERKES. Sakin tipi
+    #: ve blok YALNIZ sakinlere uygulanir; personel rol suzgecine tabidir.
+    #: Hedef SONRADAN DEGISTIRILEMEZ (AnnouncementUpdate tasimaz): push
+    #: olusturmada bir kez gider; kitleyi sonradan degistirmek "kime
+    #: bildirildi" ile "kim okuyabilir" arasini acardi.
+    hedef_roller: list[str] = Field(default_factory=list, max_length=6)
+    hedef_sakin_tipi: str | None = None
+    hedef_bloklar: list[str] = Field(default_factory=list, max_length=100)
+
+    @model_validator(mode="after")
+    def _hedef_gecerli(self) -> "AnnouncementCreate":
+        for r in self.hedef_roller:
+            if r not in ANKET_HEDEF_ROLLER:
+                raise ValueError("anket_hedef_rol_bilinmiyor")
+        if self.hedef_sakin_tipi not in (None, "malik", "kiraci"):
+            raise ValueError("anket_hedef_sakin_tipi_bilinmiyor")
+        # Bos/yinelenen blok adlari atilir (form bos satir gonderebilir).
+        self.hedef_bloklar = sorted(
+            {b.strip() for b in self.hedef_bloklar if b and b.strip()}
+        )
+        self.hedef_roller = sorted(set(self.hedef_roller))
+        return self
 
 
 class AnnouncementUpdate(BaseModel):
@@ -1854,8 +1920,18 @@ class AnnouncementOut(CevrilebilirOut):
     olusturan_user_id: uuid.UUID
     # Liste ekranlarinda "kim gonderdi" icin ad (join ile doldurulur).
     olusturan_ad: str | None = None
+    #: (E2E 2026-09, BILDIRIM-12) Hedef kitle; bos = herkes.
+    hedef_roller: list[str] = Field(default_factory=list)
+    hedef_sakin_tipi: str | None = None
+    hedef_bloklar: list[str] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
+
+    @field_validator("hedef_roller", "hedef_bloklar", mode="before")
+    @classmethod
+    def _null_bos(cls, v: object) -> object:
+        # Kolon NULL (eski duyuru) -> bos liste = herkes.
+        return v or []
 
 
 class AnnouncementListResponse(BaseModel):
@@ -2212,6 +2288,10 @@ class MesaiGidereYazIstek(BaseModel):
     yil: int = Field(..., ge=2000, le=2100)
     ay: int = Field(..., ge=1, le=12)
     satirlar: list[MesaiGidereYazSatiri]
+    #: (E2E 2026-09, FINANS-08) Giderin CIKACAGI kasa. Verilmezse varsayilan
+    #: merkez kasa (`defter.kasa_coz`). Onceden kasasiz yaziliyordu:
+    #: onaylaninca HICBIR kasa bakiyesi dusmuyordu.
+    kasa_id: uuid.UUID | None = None
 
 
 # ===================== (P203 §4) VARDIYA PLANI ============================== #
@@ -2225,7 +2305,9 @@ class VardiyaKisiOut(BaseModel):
 class VardiyaSlotOut(BaseModel):
     """Bir gunun bir vardiyasi."""
 
-    shift_id: uuid.UUID
+    #: (E2E 2026-09) SABLONSUZ (serbest) vardiyada `None` — `/simdi` bu
+    #: satirlari artik goruyor (hizli ekle / kalip / Excel serbest yazar).
+    shift_id: uuid.UUID | None
     shift_ad: str
     baslangic_saat: time
     bitis_saat: time
@@ -2424,6 +2506,8 @@ class VardiyaTopluOut(BaseModel):
     #: karar vermedi. Istemci gunleri gosterip istegi
     #: `cakisanlari_atla=true` ile TEKRARLAR (ya da vazgecer).
     uygulandi: bool = True
+    #: (E2E 2026-09) Toplu ekleme `parti/{id}/geri-al` ile geri alinabilir.
+    parti_id: uuid.UUID | None = None
     eklenen: int
     cakisan: int
     gunler: list[VardiyaTopluGunOut] = []
@@ -3512,8 +3596,11 @@ class TaskOut(BaseModel):
 
 
 class TaskCreate(BaseModel):
-    ad: str = Field(..., min_length=1)
-    aciklama: str | None = None
+    # (E2E 2026-09, ARAYUZ-6) UST SINIRLAR. Sinirsizdi: 10.000 karakterlik
+    # gorev adi 201 aldi. Duyuru/talep basligi 200 ile sinirli — ayni
+    # olcu; aciklama serbest metin ama bir sayfayi asmamali.
+    ad: str = Field(..., min_length=1, max_length=200)
+    aciklama: str | None = Field(None, max_length=5000)
     atanan_user_id: uuid.UUID | None = None
     checkpoint_id: uuid.UUID | None = None
     kategori_id: uuid.UUID | None = None  # NULL = "Diger"
@@ -3535,8 +3622,9 @@ class TaskCreate(BaseModel):
 
 
 class TaskUpdate(BaseModel):
-    ad: str | None = Field(None, min_length=1)
-    aciklama: str | None = None
+    # (E2E 2026-09, ARAYUZ-6) Olusturmayla ayni ust sinirlar.
+    ad: str | None = Field(None, min_length=1, max_length=200)
+    aciklama: str | None = Field(None, max_length=5000)
     atanan_user_id: uuid.UUID | None = None
     checkpoint_id: uuid.UUID | None = None
     kategori_id: uuid.UUID | None = None
@@ -3752,17 +3840,33 @@ _ALLOWED_UPLOAD_CT = {"image/jpeg", "image/png", "image/webp", "image/heic"}
 _MAX_UPLOAD_BYTES = 8 * 1024 * 1024  # ~8 MB, client-declared (best-effort)
 
 
+#: (E2E 2026-09) BELGE turleri — YALNIZ `amac="belge"` ile (ek/belge
+#: baglami). Muayene raporu, fatura, sertifika PDF'tir; gorsel kumesine
+#: katmak foto_key bekleyen HER yere (gorev kaniti, duyuru gorseli) PDF
+#: sokmak olurdu. Ayri kume + ayri anahtar oneki (`{tenant}/belge/`).
+_ALLOWED_BELGE_CT = {"application/pdf"}
+
+
 class PresignRequest(BaseModel):
     content_type: str = Field(..., min_length=1, examples=["image/jpeg"])
     dosya_adi: str | None = None
     boyut: int | None = Field(None, ge=1, description="Client-declared byte size")
+    #: (E2E 2026-09) `gorsel` (varsayilan, eski davranis) | `belge` (ek
+    #: sistemi: gorsel + PDF).
+    amac: Literal["gorsel", "belge"] = "gorsel"
 
     @field_validator("content_type")
     @classmethod
     def _ct_allow(cls, v: str) -> str:
-        if v.lower() not in _ALLOWED_UPLOAD_CT:
+        if v.lower() not in _ALLOWED_UPLOAD_CT | _ALLOWED_BELGE_CT:
             raise ValueError("content_type gorsel olmali (jpeg/png/webp/heic)")
         return v.lower()
+
+    @model_validator(mode="after")
+    def _belge_yalniz_belge_amacinda(self) -> "PresignRequest":
+        if self.content_type in _ALLOWED_BELGE_CT and self.amac != "belge":
+            raise ValueError("content_type gorsel olmali (jpeg/png/webp/heic)")
+        return self
 
     @field_validator("boyut")
     @classmethod
@@ -4102,7 +4206,13 @@ class YoneticiCreate(BaseModel):
     """
 
     ad: str = Field(..., min_length=2, max_length=120, examples=["Ayse Yilmaz"])
-    phone: str = Field(..., min_length=1, examples=["+905321112203"])
+    #: (E2E 2026-09) `telefon` de kabul edilir: platformun diger tum uclari
+    #: (`/users`, `/residents`) `telefon` diyor; yalniz bu uc `phone`
+    #: istiyordu ve ayni aliskanlikla yazilan istek 422 aliyordu.
+    phone: str = Field(
+        ..., min_length=1, examples=["+905321112203"],
+        validation_alias=AliasChoices("phone", "telefon"),
+    )
     email: EmailStr = Field(..., examples=["ayse@ornek.com"])
     password: str | None = Field(None, min_length=8)
 
@@ -4199,6 +4309,9 @@ class TenantSilmeOzeti(BaseModel):
 
 class TenantAdminListResponse(BaseModel):
     items: list[TenantAdminListItem]
+    #: (E2E 2026-09) Suzgece uyan TUM tesis sayisi (sayfa degil) — panel
+    #: sunucu tarafli sayfalamada son sayfayi ve numarayi bundan hesaplar.
+    toplam: int = 0
 
 
 class TenantSetupRequest(BaseModel):
@@ -4657,7 +4770,8 @@ class ResidentCreate(BaseModel):
 
     unit_no: str = Field(..., min_length=1, examples=["A-12"])
     blok: str | None = None  # yalniz YENI acilan unit'e islenir
-    ad: str | None = Field(None, min_length=1)
+    # (E2E 2026-09, ARAYUZ-6) Kullanici adiyla ayni ust sinir (150).
+    ad: str | None = Field(None, min_length=1, max_length=150)
     telefon: str = Field(..., min_length=1, examples=["+905321112203"])
     #: (P197) ZORUNLU OLDU. Eski not "sakinde opsiyonel" diyordu; o kural
     #: sahiplenilemez hesap uretiyordu: davet YALNIZ e-postadan gider
@@ -4748,7 +4862,8 @@ class ResidentUpdate(BaseModel):
     Alan gonderilmezse DEGISMEZ; gonderilirse GECERLI bir adres olmali.
     """
 
-    ad: str | None = Field(None, min_length=1)
+    # (E2E 2026-09, ARAYUZ-6) Olusturmayla ayni ust sinir.
+    ad: str | None = Field(None, min_length=1, max_length=150)
     telefon: str | None = Field(None, min_length=1)
     #: `None` = "gonderilmedi" (degistirme). ACIKCA `null` gondermek de
     #: ayni anlama gelir — TEMIZLEME ARTIK YOK (bkz. docstring).
@@ -4828,7 +4943,7 @@ class DuesAssessmentOut(BaseModel):
 
 
 class DuesAssessmentCreate(BaseModel):
-    donem: str = Field(..., min_length=1)
+    donem: str = Field(..., min_length=1, pattern=DONEM_DESENI)
     tutar_kurus: int = Field(..., ge=1, le=KURUS_UST_SINIR)  # KURUS; negatif/sifir reddedilir
     unit_id: uuid.UUID | None = None     # verilirse tek daire
     unit_ids: list[uuid.UUID] | None = None  # toplu hedef; yoksa tum aktif daireler
@@ -4851,6 +4966,16 @@ class DuesAssessmentCreate(BaseModel):
     #: ucundan dogar — elle yazilabilseydi kaynak borcla bagi kurulmaz ve
     #: idempotency kirilirdi.
     kalem_tipi: Literal["aidat", "demirbas", "olaganustu", "sayac", "diger"] = "aidat"
+
+    @field_validator("tarih", "son_odeme_tarihi")
+    @classmethod
+    def _tahakkuk_yili(cls, v: date | None) -> date | None:
+        # (E2E 2026-09, ARAYUZ-5) Belge numarasiyla AYNI yil araligi
+        # (`belge_no.YIL_ALT..YIL_UST`): tahsilat 1900'u reddederken tahakkuk
+        # 1900 son odeme tarihini kabul ediyordu — iki para ucu tutarsizdi.
+        if v is not None and not 2000 <= v.year <= 2200:
+            raise ValueError("tarih 2000-2200 araliginda olmali")
+        return v
 
 
 class TahakkukAtlanan(BaseModel):
@@ -4925,8 +5050,9 @@ class DuesPaymentCreate(BaseModel):
     yontem: DuesYontem
     makbuz_no: str | None = None
     odeme_zamani: datetime | None = None
-    # 'YYYY-MM'; verilmezse assessment'tan turer, o da yoksa NULL kalir.
-    donem: str | None = Field(None, min_length=1)
+    # 'YYYY-MM'; verilmezse assessment'tan turer, o da yoksa (E2E 2026-09)
+    # dairenin ilk acik kaleminden / islem ayindan turer.
+    donem: str | None = Field(None, min_length=1, pattern=DONEM_DESENI)
     #: (P192 §1) Paranin girdigi kasa/banka hesabi. Verilmezse yontemden
     #: turetilir (havale/kart -> banka hesabi, elden -> merkez kasa) ve
     #: hicbiri yoksa acilir — NULL BIRAKILMAZ, cunku kasasiz bir tahsilat
@@ -5848,7 +5974,10 @@ class KasaCreate(BaseModel):
     kod: str = Field(..., min_length=1, max_length=20)
     ad: str = Field(..., min_length=1, max_length=100)
     acilis_tarihi: date | None = None
-    acilis_bakiye_kurus: int = 0
+    #: (E2E 2026-09, FINANS-15) SINIRSIZDI: 10^20 -> 500 (int64 tasmasi),
+    #: -100 kabul (denetim raporunda eksi acilis). Kasanin acilisi elde
+    #: olan paradir; eksi olamaz.
+    acilis_bakiye_kurus: int = Field(0, ge=0, le=KURUS_UST_SINIR)
     banka_mi: bool = False
     iban: str | None = Field(None, max_length=42)
     banka_adi: str | None = Field(None, max_length=100)
@@ -5873,7 +6002,7 @@ class KasaUpdate(BaseModel):
     kod: str | None = Field(None, min_length=1, max_length=20)
     ad: str | None = Field(None, min_length=1, max_length=100)
     acilis_tarihi: date | None = None
-    acilis_bakiye_kurus: int | None = None
+    acilis_bakiye_kurus: int | None = Field(None, ge=0, le=KURUS_UST_SINIR)
     banka_mi: bool | None = None
     iban: str | None = Field(None, max_length=42)
     banka_adi: str | None = Field(None, max_length=100)
@@ -6383,7 +6512,7 @@ class SayacBorcIstek(BaseModel):
     birakirdi.
     """
 
-    donem: str = Field(..., min_length=1, max_length=7)
+    donem: str = Field(..., min_length=1, max_length=7, pattern=DONEM_DESENI)
     gelir_gider_tanim_id: uuid.UUID
     ana_sayac_id: uuid.UUID
     #: Ana sayacin DONEM TUKETIMI (birim).
@@ -6391,7 +6520,13 @@ class SayacBorcIstek(BaseModel):
     #: Birim fiyat, KURUS (orn. 1 m3 su = 3550 kurus).
     birim_fiyat_kurus: int = Field(..., ge=1, le=KURUS_UST_SINIR)
     #: daire sayac id -> donem tuketimi.
-    bolum_tuketimleri: dict[uuid.UUID, float]
+    bolum_tuketimleri: dict[uuid.UUID, float] = Field(default_factory=dict)
+    #: (E2E 2026-09, TESIS-01) daire sayac id -> YENI OKUMA (endeks).
+    #: Verilirse tuketim SUNUCUDA hesaplanir (yeni - onceki okuma) ve
+    #: sayacin "onceki okuma"si ilerletilir. Mobil sahada ENDEKS okur;
+    #: onu tuketim diye gondermek 12 m3'luk tuketimi 1462 m3 yapiyordu.
+    #: `bolum_tuketimleri` ile BIRLIKTE verilemez.
+    bolum_okumalari: dict[uuid.UUID, float] = Field(default_factory=dict)
     son_odeme_tarihi: date | None = None
     tarih: date | None = None
     aciklama: str | None = Field(None, max_length=500)
@@ -6873,6 +7008,13 @@ class HareketOut(BaseModel):
     #: (P167 Asama 2) `odendi` / `bekliyor` / `onay_bekliyor`.
     durum: str = "odendi"
     created_at: datetime
+    #: (E2E 2026-09, FINANS-21) Bu satir TERS KAYITLA iptal edildi mi.
+    #: Listede "Odendi" + "Iptal et" dugmesiyle duruyordu; istemci bununla
+    #: "Iptal edildi" gosterir ve dugmeyi kaldirir.
+    iptal_edildi: bool = False
+    #: (E2E 2026-09, FINANS-21) Daire etiketi — tahsilat listesinde kimin
+    #: odedigi gorunmuyordu.
+    unit_no: str | None = None
 
 
 class HareketListResponse(BaseModel):
@@ -6894,7 +7036,9 @@ class TahsilatCreate(BaseModel):
     #: (P192 §1) MUHASEBE DONEMI. Verilmezse `assessment_id`den turer.
     #: Vezneden girilen tahsilatin donemi bilinmezse "bu ayin tahsilat
     #: orani" hesabina giremezdi.
-    donem: str | None = Field(None, min_length=1, max_length=7)
+    donem: str | None = Field(
+        None, min_length=1, max_length=7, pattern=DONEM_DESENI
+    )
     #: Paranin nasil alindigi. Vezne varsayilani elden.
     yontem: DuesYontem | None = None
 
@@ -6905,7 +7049,9 @@ class TopluTahsilatSatir(BaseModel):
     assessment_id: uuid.UUID | None = None
     tutar_kurus: int = Field(..., ge=1, le=KURUS_UST_SINIR)
     aciklama: str | None = None
-    donem: str | None = Field(None, min_length=1, max_length=7)
+    donem: str | None = Field(
+        None, min_length=1, max_length=7, pattern=DONEM_DESENI
+    )
 
 
 class TopluTahsilatIstek(BaseModel):
@@ -7602,6 +7748,10 @@ class EkOut(BaseModel):
     metin: str | None = None
     dosya_key: str | None = None
     dosya_adi: str | None = None
+    #: (E2E 2026-09) Kisa omurlu imzali okuma adresi. Ek listesi yalniz
+    #: dosya ADINI gosteriyordu; yuklenen muayene raporu hicbir ekrandan
+    #: ACILAMIYORDU. Anahtar tenant onekli degilse (eski/bozuk) None.
+    dosya_url: str | None = None
     #: Kim ekledi. "kim yazdi" bilinmeyen bir not, kayit defterinde ise
     #: yaramaz.
     olusturan_ad: str | None = None
@@ -8388,6 +8538,11 @@ class IceAktarimSonuc(BaseModel):
     davet_basarisiz: int = 0
     #: Daveti gitmeyen satirlar — satir numarasiyla.
     davet_hatalari: list[IceAktarimHata] = Field(default_factory=list)
+    #: (E2E 2026-09 / TESIS-10) ATLANAN SATIRLAR — satir numarasi + sebep.
+    #: Eskiden yalniz `atlanan` SAYISI donuyordu; "zaten var" sayilan
+    #: satirlarin hangileri oldugu hic bilinmiyordu. `hata` alani sebebin
+    #: istek dilindeki metnidir (hata listesiyle ayni bicim).
+    atlananlar: list[IceAktarimHata] = Field(default_factory=list)
 
 
 class IceAktarimOut(BaseModel):
@@ -9373,6 +9528,9 @@ class AkilliEvCihazOut(BaseModel):
     son_durum: dict | None = None
     son_veri_at: datetime | None = None
     aktif: bool
+    #: (E2E 2026-09) TESIS-13: cihazin sayildigi bolum anahtari — esleme
+    #: sunucuda (`akilli_ev.TIP_BOLUM`); istemci kendi tablosunu tutmaz.
+    bolum: str = "enerji"
     #: Bu cihaz tipinin ALABILECEGI eylemler — arayuz dugmeleri buradan
     #: cizer. Sensorler BOS doner: bir duman dedektorune "ac" demek
     #: anlamsizdir.
@@ -9802,3 +9960,5 @@ class VardiyaIceAktarimSonuc(BaseModel):
     basarili: int
     hatali: int
     satirlar: list[VardiyaIceAktarimSatirSonuc]
+    #: (E2E 2026-09) Ice aktarim `parti/{id}/geri-al` ile geri alinabilir.
+    parti_id: uuid.UUID | None = None

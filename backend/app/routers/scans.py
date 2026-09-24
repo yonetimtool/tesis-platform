@@ -380,13 +380,30 @@ async def create_scan(
 
     # 1) nfc_tag_uid -> checkpoint (RLS ile tenant-scoped). Capraz-tenant/bilinmeyen -> 404.
     # Eslesme normalize (strip+upper) — task completion / asset ile ayni davranis (mobil §11 #3).
+    #
+    # (E2E 2026-09) GUVENLIK-05: `scalar_one_or_none` ayni etiketin birden
+    # cok kaydinda (`04A1..` + `04:a1:..`) MultipleResultsFound -> 500
+    # veriyordu. Artik kayitlar kanonik saklaniyor; goc 0151'in cakisma
+    # nedeniyle BIRAKTIGI eski satirlar icin SQL tarafi da ayni ifadeyle
+    # (`[[:space:]:-]` at + upper) normalize edilir ve TEK kayit secilir:
+    # once kanonik saklanan, sonra en eski. Okutma asla 500 vermez.
+    aranan = norm_nfc(body.nfc_tag_uid)
     checkpoint = (
         await db.execute(
-            select(Checkpoint).where(
-                func.upper(func.btrim(Checkpoint.nfc_tag_uid)) == norm_nfc(body.nfc_tag_uid)
+            select(Checkpoint)
+            .where(
+                func.upper(
+                    func.regexp_replace(Checkpoint.nfc_tag_uid, "[[:space:]:-]", "", "g")
+                ) == aranan
             )
+            .order_by(
+                (Checkpoint.nfc_tag_uid == aranan).desc(),
+                Checkpoint.created_at,
+                Checkpoint.id,
+            )
+            .limit(1)
         )
-    ).scalar_one_or_none()
+    ).scalars().first()
     if checkpoint is None:
         raise APIError(404, "not_found", "nfc_checkpoint_eslesmedi")
     if body.checkpoint_id is not None and body.checkpoint_id != checkpoint.id:

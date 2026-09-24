@@ -578,6 +578,8 @@ class _AddResidentSheet extends ConsumerStatefulWidget {
 class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
   final _formKey = GlobalKey<FormState>();
   final _phoneCtrl = TextEditingController();
+  // (E2E 2026-09) Davet e-postadan gider; sunucu e-postayi ZORUNLU tutar.
+  final _emailCtrl = TextEditingController();
   final _unitCtrl = TextEditingController();
   // (P220 §4) BLOK AYRI ALAN — daire numarasindan TURETILMIYOR.
   //
@@ -591,6 +593,7 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
   @override
   void dispose() {
     _phoneCtrl.dispose();
+    _emailCtrl.dispose();
     _unitCtrl.dispose();
     _blokCtrl.dispose();
     super.dispose();
@@ -608,6 +611,7 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
           .read(residentsApiProvider)
           .addResident(
             telefon: telefonNormalle(_phoneCtrl.text),
+            email: _emailCtrl.text,
             unitNo: _unitCtrl.text.trim(),
             blok: _blokCtrl.text,
           );
@@ -642,6 +646,13 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
               ktrl: _phoneCtrl,
               etiket: l10n.ortakCepTelefonu,
               ipucu: l10n.ortakTelefonIpucu,
+              etkin: !_submitting,
+              zorunlu: true,
+            ),
+            const SizedBox(height: 12),
+            EpostaAlani(
+              ktrl: _emailCtrl,
+              etiket: l10n.sakinEposta,
               etkin: !_submitting,
               zorunlu: true,
             ),

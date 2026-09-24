@@ -1644,9 +1644,16 @@ düğmesi **olmaması**.
   temizlendi; düzenleri değişmedi: `/announcements` (408),
   `/site-kurallari` (390), `/etkinlik-yonetimi` (299), `/mesajlar`
   (564), `/anketler` (594), `/davetler` (199).
-* Duyuruda **hedef kitle rozeti** yapılmadı: hedefleme kuralları
-  P190 §3'te yönetim tarafında; sakin listesinde zaten yalnız kendisine
-  ulaşanlar var, rozet orada bilgi taşımazdı.
+* Duyuruda **hedef kitle rozeti** yapılmadı.
+  **(E2E 2026-09 DÜZELTME — BILDIRIM-12)** Buradaki eski gerekçe
+  ("hedefleme kuralları P190 §3'te yönetim tarafında; sakin listesinde
+  zaten yalnız kendisine ulaşanlar var") YANLIŞTI: P190 §3 yalnız duyuru
+  oluşturma formu + kural görselidir, kodda duyuru hedeflemesi HİÇ
+  yoktu — duyuru herkese gidiyor, oluşturan yönetici de kendi push'unu
+  alıyordu. Hedefleme E2E 2026-09'da eklendi (göç 0152: rol /
+  malik-kiracı / blok; push yalnız hedefe, oluşturan hariç; hedef dışı
+  kullanıcı listede görmez). Yönetim listesinde hedef artık rozetle
+  gösteriliyor (web + mobil).
 * Etkinlikte **RSVP beyanı** yapılmadı (yukarıdaki gerekçe).
 * Renk katmanı borcu: **18 sayfa** kaldı (aşama 10).
 

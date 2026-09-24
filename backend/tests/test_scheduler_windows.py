@@ -34,9 +34,21 @@ def test_berlin_dst_offset_changes():
 
 
 def test_plan_windows_horizon():
-    now = datetime(2026, 1, 15, 12, 0, tzinfo=UTC)  # Istanbul yerel 15:00 -> 15 Ocak
+    # 15 Ocak 00:00 Istanbul (+03) = 14 Ocak 21:00 UTC -> bugunun 00-06
+    # pencerelerinin hicbiri gecmis degil.
+    now = datetime(2026, 1, 14, 21, 0, tzinfo=UTC)
     assert len(plan_windows("Europe/Istanbul", now, 1, time(0, 0), time(6, 0), 60)) == 6
     assert len(plan_windows("Europe/Istanbul", now, 2, time(0, 0), time(6, 0), 60)) == 12
+
+
+def test_BUGUNUN_GECMIS_PENCERELERI_URETILMEZ():
+    """(E2E 2026-09) 18:45'te acilan 00-23 planinda bugunun 18 gecmis
+    penceresi uretiliyor ve dakikalar icinde "kacirildi" oluyordu (18 sahte
+    alarm). Yerel 15:00'te 00-06 plani bugun HIC pencere uretmez, yarin 6."""
+    now = datetime(2026, 1, 15, 12, 0, tzinfo=UTC)  # Istanbul yerel 15:00
+    assert plan_windows("Europe/Istanbul", now, 1, time(0, 0), time(6, 0), 60) == []
+    ws = plan_windows("Europe/Istanbul", now, 2, time(0, 0), time(6, 0), 60)
+    assert len(ws) == 6 and all(e > now for _s, e in ws)
 
 
 def test_overnight_shift_spillover_active_now():

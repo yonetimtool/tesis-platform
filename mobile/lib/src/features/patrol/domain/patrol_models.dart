@@ -342,7 +342,14 @@ class CheckpointStatus {
   bool get okundu => durum != CheckpointScanDurum.bekliyor;
 }
 
-String _normalizeUid(String uid) => uid.trim().toUpperCase();
+/// (E2E 2026-09) GUVENLIK-05: sunucu kontrol noktasi UID'sini KANONIK
+/// (ayracsiz, BUYUK harf) saklar; bu cihaz ise `04:A3:B2` bicimde okur.
+/// Iki yan da ayni kurala (bosluk, ':' ve '-' at + BUYUK harf) cekilmezse
+/// bekleyen okutma hicbir noktaya bindirilemezdi. Backend `norm_nfc` ile AYNI.
+String normalizeNfcUid(String uid) =>
+    uid.replaceAll(RegExp(r'[\s:\-]'), '').toUpperCase();
+
+String _normalizeUid(String uid) => normalizeNfcUid(uid);
 
 /// SUNUCU checkpoint durumunun (tek dogruluk kaynagi — `GET
 /// /me/patrol-window`) uzerine bu cihazin outbox'ta BEKLEYEN (henuz

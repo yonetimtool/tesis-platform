@@ -9,6 +9,7 @@ list_all_tenants); YALNIZ admin'e acilir (RBAC). tenant_id GIZLI kimliktir.
 from __future__ import annotations
 
 import json
+import logging
 import re
 import uuid
 from datetime import datetime, timezone
@@ -50,6 +51,8 @@ from ..security import (
     slugify_tenant,
 )
 
+_log = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/tenants", tags=["tenant"])
 
 _ADMIN = require_role("admin")
@@ -79,6 +82,40 @@ def _ascii_katla(q: str) -> str:
 
 # Yonetici tesisi adlandirana kadar gorunecek yer tutucu ad.
 _PLACEHOLDER_AD = "(Kurulum bekliyor)"
+
+
+async def _yoneticilere_davet(
+    tenant_id: uuid.UUID, user_ids: list[uuid.UUID], tesis_ad: str
+) -> None:
+    """(E2E 2026-09) Panelden acilan PAROLASIZ yoneticiye davet e-postasi.
+
+    OLCULEN KUSUR: form "Davet bu adrese gider" diyordu ama `create_tenant`
+    ve `add_yonetici` davet ACMIYORDU — log'da adres hic gecmiyordu, tek
+    iletim kanali admin'e bir kez gosterilen gecici koddu (ve o kod web
+    girisinde calismiyordu). `users.py` / `residents.py` ile AYNI yol:
+    jetonlu kayit bagi; kod da yedek olarak yanitta kalir.
+
+    Gonderen `None`: admin PLATFORM tesisinin kullanicisidir, bu tesisin
+    satirlarina (bilesik FK) yazilamaz. Gonderim hatasi tesisi KIRMAZ —
+    tesis zaten olustu; davet panelden yeniden gonderilebilir.
+    """
+    if not user_ids:
+        return
+    from ..davet import davet_olustur_ve_gonder
+
+    for uid in user_ids:
+        try:
+            async with SessionLocal() as session:
+                async with session.begin():
+                    await set_tenant(session, tenant_id)
+                    user = await session.get(AppUser, uid)
+                    if user is None or user.password_set:
+                        continue
+                    await davet_olustur_ve_gonder(
+                        session, user=user, tenant_ad=tesis_ad, gonderen_id=None
+                    )
+        except Exception:  # pragma: no cover - gonderim tesisi kirmaz
+            _log.exception("yonetici daveti gonderilemedi user=%s", uid)
 
 
 @router.post("", response_model=TenantAdminCreatedOut, status_code=201)
@@ -157,6 +194,13 @@ async def create_tenant(
     # (Yanlis esleme = yanlis kisiye gecici kod.)
     by_phone = {r.telefon: r for r in rows}
 
+    # (E2E 2026-09) PAROLASIZ ACILAN YONETICIYE DAVET GIDER.
+    await _yoneticilere_davet(
+        rows[0].tenant_id,
+        [by_phone[h["telefon"]].user_id for h in hazir if not h["password_set"]],
+        ad,
+    )
+
     return TenantAdminCreatedOut(
         tenant_id=rows[0].tenant_id,
         yoneticiler=[
@@ -169,6 +213,12 @@ async def create_tenant(
             for h in hazir
         ],
     )
+
+
+#: (E2E 2026-09) Tek sayfada donebilecek en cok tesis. Panelin en buyuk
+#: sayfa boyu 100; ust sinir bir istemcinin `limit=100000` ile sayfalamayi
+#: fiilen kapatmasini engeller (tum liste isteyen `limit` vermez).
+_LISTE_UST_SINIR = 200
 
 
 @router.get("", response_model=TenantAdminListResponse)
@@ -196,6 +246,17 @@ async def list_tenants(
             "BEKLEYEN. Bos: hepsi. Yarim kalmis kurulumlari bulmak icin."
         ),
     ),
+    limit: int | None = Query(
+        None,
+        ge=1,
+        le=_LISTE_UST_SINIR,
+        description=(
+            "(E2E 2026-09) Sayfa boyu. Verilmezse TUM liste doner (geriye "
+            "uyum: KVKK tesis secici ve eski istemciler). Panel tesis "
+            "listesi her zaman verir."
+        ),
+    ),
+    offset: int = Query(0, ge=0, description="(E2E 2026-09) Atlanacak satir."),
     _: AppUser = Depends(_ADMIN),
 ) -> TenantAdminListResponse:
     """Admin: tesisler (id + ad + kurulum durumu + tarih). Baska tenant
@@ -205,6 +266,27 @@ async def list_tenants(
     listede gormek, yoneticiye "silinmemis" dedirtirdi; arsiv ayri bir
     gorunumdur ve oraya ACIKCA bakilir.
     """
+    # (E2E 2026-09) SUNUCU TARAFLI SAYFALAMA. Olculen: 3788 tesis, 805 KB
+    # tek yanit, panelde ilk acilis 11-27 s — tablo 25 satir gosterirken
+    # her acilista listenin TAMAMI iniyordu. Suzgec ayni SQL fonksiyonunda
+    # kalir (arama/kurulum suzgeci sayfadan ONCE uygulanir, yani "yalniz bu
+    # sayfada ara" gerilemesi olmaz); LIMIT/OFFSET disarida. `toplam` AYRI
+    # sayilir: pencere fonksiyonu (count(*) OVER) son sayfanin otesinde
+    # bos satir kumesinde toplami kaybederdi.
+    #
+    # SIRA KARARLI: fonksiyon `created_at DESC` siralar; esit zamanli iki
+    # tesis sayfa sinirinda yer degistirirse biri iki sayfada gorunur,
+    # oteki hic gorunmezdi -> ikincil anahtar `id`.
+    parametreler = {
+        "arsivli": arsivli,
+        # BOS/BOSLUKLU SORGU = SUZGEC YOK: `%%` her satiri
+        # eslerdi ama niyeti gizlerdi; NULL gecmek sorguyu
+        # da basitlestirir.
+        "q": f"%{q.strip()}%" if q and q.strip() else None,
+        "qs": f"%{_ascii_katla(q)}%" if q and q.strip() else None,
+        "kurulum": kurulum,
+    }
+    kaynak = "FROM public.list_all_tenants(:arsivli, :q, :qs, :kurulum)"
     async with SessionLocal() as session:
         async with session.begin():
             rows = (
@@ -212,21 +294,23 @@ async def list_tenants(
                     text(
                         "SELECT id, ad, kayit_kodu, kurulum_tamamlandi, "
                         "created_at, arsivlendi_at, platform_admin "
-                        "FROM public.list_all_tenants("
-                        ":arsivli, :q, :qs, :kurulum)"
+                        f"{kaynak} ORDER BY created_at DESC, id "
+                        "LIMIT :limit OFFSET :offset"
                     ),
-                    {
-                        "arsivli": arsivli,
-                        # BOS/BOSLUKLU SORGU = SUZGEC YOK: `%%` her satiri
-                        # eslerdi ama niyeti gizlerdi; NULL gecmek sorguyu
-                        # da basitlestirir.
-                        "q": f"%{q.strip()}%" if q and q.strip() else None,
-                        "qs": f"%{_ascii_katla(q)}%" if q and q.strip() else None,
-                        "kurulum": kurulum,
-                    },
+                    # LIMIT NULL = sinirsiz (PostgreSQL) -> geriye uyum.
+                    {**parametreler, "limit": limit, "offset": offset},
                 )
             ).all()
+            if limit is None and offset == 0:
+                toplam = len(rows)
+            else:
+                toplam = (
+                    await session.execute(
+                        text(f"SELECT count(*) {kaynak}"), parametreler
+                    )
+                ).scalar_one()
     return TenantAdminListResponse(
+        toplam=toplam,
         items=[
             TenantAdminListItem(
                 id=r.id,
@@ -477,6 +561,16 @@ async def add_yonetici(
                 raise APIError(409, "conflict", "telefon_zaten_kayitli")
             if new_id is None:
                 raise APIError(404, "not_found", "tenant_bulunamadi")
+            # `tenant` RLS altinda: baglam kurulmadan sorgu bos
+            # `app.current_tenant_id`'yi uuid'e cevirmeye calisip patlar.
+            await set_tenant(session, tenant_id)
+            tesis_ad = (
+                await session.execute(
+                    text("SELECT ad FROM tenant WHERE id = :t"), {"t": tenant_id}
+                )
+            ).scalar_one_or_none() or ""
+    # (E2E 2026-09) Eklenen yoneticiye de davet gider (bkz. create_tenant).
+    await _yoneticilere_davet(tenant_id, [new_id], tesis_ad)
     return TenantYoneticiAddedOut(user_id=new_id, ad=body.ad, temp_code=temp_code)
 
 

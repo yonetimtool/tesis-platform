@@ -12,6 +12,7 @@ import '../../auth/domain/user_role.dart';
 import '../../unit_tanimlari/data/unit_tanim_api.dart';
 import '../../unit_tanimlari/domain/unit_tanim_models.dart';
 import '../domain/bina_duzenleme_models.dart';
+import '../domain/daire_no.dart';
 import 'daire_tipi_rengi.dart';
 import 'bina_duzenleme_controller.dart';
 import 'yapisal_arac_dialoglari.dart';
@@ -1267,9 +1268,9 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = e.statusCode == 409
-            ? _l10n.binaDaireNoZatenVar
-            : apiHataMetni(_l10n, e);
+        // (E2E 2026-09 / ANA-4) SUNUCU METNI: cakisan numarayi ve blok
+        // onekinin yolunu anlatiyor; genel "zaten kayitli" onu yutuyordu.
+        _error = apiHataMetni(_l10n, e);
       });
     } catch (_) {
       if (!mounted) return;
@@ -1325,17 +1326,29 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
-          TextField(
-            controller: _no,
-            maxLength: 50,
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9-]')),
-            ],
-            decoration: InputDecoration(
-              labelText: l10n.binaDaireNo,
-              hintText: l10n.ortakDaireNoIpucu,
-              helperText: l10n.binaDaireNoYardim,
-            ),
+          // (E2E 2026-09 / TESIS-16) Yalniz rakam yazilinca sunucunun
+          // kaydedecegi bicim ("A-11") yardim metninde gorunur.
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: _no,
+            builder: (context, deger, _) {
+              final onizleme = daireNoOnizle(deger.text, widget.blok);
+              final farkli =
+                  deger.text.trim().isNotEmpty && onizleme != deger.text.trim();
+              return TextField(
+                controller: _no,
+                maxLength: 50,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9-]')),
+                ],
+                decoration: InputDecoration(
+                  labelText: l10n.binaDaireNo,
+                  hintText: l10n.ortakDaireNoIpucu,
+                  helperText: farkli
+                      ? l10n.binaDaireNoOnizleme(onizleme)
+                      : l10n.binaDaireNoYardim,
+                ),
+              );
+            },
           ),
           Row(
             children: [

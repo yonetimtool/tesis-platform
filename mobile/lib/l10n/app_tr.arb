@@ -508,6 +508,7 @@
   "panikIptalAciklama": "Süre dolmadan iptal ederseniz hiçbir bildirim gitmez.",
   "panikIptalEt": "İptal et",
   "panikIptalEdildi": "İptal edildi — bildirim gitmedi.",
+  "panikZatenAcik": "Zaten açık bir alarmınız var — güvenlik ve yönetim bilgilendirildi.",
   "panikYanlisAlarmGonderildi": "Yanlış alarm bildirildi.",
   "panikYasalUyari": "Bu sistem 112 / 155 / 110 yerine geçmez. Hayati tehlikede önce resmi acil hatları arayın.",
   "panikYetkiYok": "Bu hesapta acil durum çağrısı yetkisi yok.",
@@ -637,6 +638,11 @@
   "binaDaireNoGerekli": "Daire no gerekli (örn. A-12, 12).",
   "binaKatSiraTamSayi": "Kat ve sıra tam sayı olmalı.",
   "binaDaireNoZatenVar": "Bu daire no zaten kayıtlı.",
+  "binaDaireNoOnizleme": "Kaydedilecek numara: {no}",
+  "@binaDaireNoOnizleme": {
+    "description": "(E2E 2026-09 / TESIS-16) Yalniz rakam yazilinca sunucunun blok onekiyle kaydedecegi no (A-11). no = SUNUCU bicimi, cevrilmez",
+    "placeholders": {"no": {"type": "String"}}
+  },
   "binaDaireDuzenleBaslik": "Daire {no} — düzenle",
   "binaYeniDaire": "Yeni daire · {blok}",
   "binaDaireNo": "Daire no",
@@ -679,6 +685,7 @@
   "binaKaydedilemedi": "Kaydedilemedi. Lütfen tekrar deneyin.",
   "semaDaireYok": "Henüz daire yok.",
   "semaYogunluk": "Yoğunluk:",
+  "semaTurSuzgeci": "Şikayet türü",
   "semaYerlesimAciklama": "Bina yerleşimi. Şikayet yoğunluğu yalnızca yönetime gösterilir.",
   "semaYerlesimGirilmemis": "Haritada yerleşimi girilmemiş",
   "semaDaireEtiket": "Daire {no}",
@@ -1241,6 +1248,80 @@
   "duyuruMetniAlan": "Duyuru metni",
   "duyuruMetniZorunlu": "Duyuru metni zorunludur",
   "duyuruYayinla": "Yayınla",
+  "duyuruHedefBloklar": "Bloklar (seçilmezse tüm bloklar)",
+  "duyuruHedefNotu": "Hedef dışındakiler duyuruyu görmez ve bildirim almaz. Blok ve malik/kiracı ayrımı yalnız sakinlere uygulanır. Hedef kaydedildikten sonra değiştirilemez.",
+  "duyuruHedefOzet": "Hedef: {ozet}",
+  "@duyuruHedefOzet": {
+    "description": "(E2E 2026-09, BILDIRIM-12) Yonetim listesinde hedefli duyurunun rozeti",
+    "placeholders": {
+      "ozet": {}
+    }
+  },
+  "duyuruHedefBlok": "Blok: {bloklar}",
+  "@duyuruHedefBlok": {
+    "description": "Hedef ozetinde blok parcasi (virgulle ayrilmis blok adlari)",
+    "placeholders": {
+      "bloklar": {}
+    }
+  },
+  "modulDavetler": "Davetler",
+  "davetYonAciklama": "Gönderilen davetler ve durumları.",
+  "davetYonTesisKoduIpucu": "Davet gitmediyse tesis kodunu elle iletebilirsiniz:",
+  "davetYonKodKopyala": "Tesis kodunu kopyala",
+  "davetYonKodKopyalandi": "Tesis kodu kopyalandı.",
+  "davetYonBos": "Henüz davet yok.",
+  "davetYonAlinamadi": "Davetler alınamadı.",
+  "davetYonSonGonderim": "Son gönderim: {zaman}",
+  "@davetYonSonGonderim": {
+    "description": "(E2E 2026-09, MOBIL-10) Davet kartinda son gonderim zamani",
+    "placeholders": {
+      "zaman": {}
+    }
+  },
+  "davetYonDurumKaydoldu": "Kaydoldu",
+  "davetYonDurumGeriDondu": "Geri döndü",
+  "davetYonDurumGitmedi": "Gönderilemedi",
+  "davetYonDurumAyarYok": "E-posta ayarı yok",
+  "davetYonDurumAcildi": "Açıldı",
+  "davetYonDurumIletildi": "İletildi",
+  "davetYonDurumGonderildi": "Gönderildi",
+  "davetYonDurumBekliyor": "Bekliyor",
+  "davetYonYenidenGonder": "Yeniden gönder",
+  "davetYonYenidenGonderildi": "Davet yeniden gönderildi.",
+  "modulGurultuUyarilari": "Gürültü uyarıları",
+  "gurultuAciklama": "Eşiği aşan gürültü şikâyetleri ve anons durumları.",
+  "gurultuYok": "Uyarı yok",
+  "gurultuYokAlt": "Henüz eşik aşılmadı.",
+  "gurultuAlinamadi": "Uyarılar alınamadı.",
+  "gurultuSayac": "Sayaç: {sayac}/{esik}",
+  "@gurultuSayac": {
+    "description": "(E2E 2026-09, MOBIL-10) Gurultu uyarisi sayac/esik",
+    "placeholders": {
+      "sayac": {"type": "int"},
+      "esik": {"type": "int"}
+    }
+  },
+  "gurultuDaireYok": "Daire bilinmiyor",
+  "gurultuDurumGonderildi": "Gönderildi",
+  "gurultuDurumBasarisiz": "Başarısız",
+  "gurultuDurumBekliyor": "Anons bekliyor",
+  "gurultuDurumYapildi": "Anons yapıldı",
+  "gurultuIsaretlendi": "Uyarı işaretlendi.",
+  "girisKodIleEposta": "Parola yerine e-postaya kod gönder",
+  "girisKodYalnizEposta": "Kod ile giriş e-posta adresiyle çalışır. Telefonla girmek için parolanızı kullanın.",
+  "girisParolaylaDon": "Parolayla giriş yap",
+  "girisEpostaKodGonder": "Kod gönder",
+  "girisEpostaKodGonderildi": "Adres kayıtlıysa kod e-postayla gönderildi. Kod 10 dakika geçerlidir.",
+  "girisKodTesisKoduAciklama": "Bu kod birden çok tesiste geçerli. Girmek istediğiniz tesisin kodunu yazın.",
+  "girisTesisKodu": "Tesis kodu",
+  "girisSlugGecersiz": "Tesis kodu yalnızca küçük harf, rakam ve tire içerebilir.",
+  "girisSifremiUnuttum": "Şifremi unuttum",
+  "sifreSifirlaBaslik": "Şifremi Unuttum",
+  "sifreSifirlaAciklama": "Tesis kodunuzu ve e-postanızı girin. Kod yalnızca doğrulanmış e-postası olan hesaplara gönderilir; birkaç dakika içinde bir e-posta almazsanız e-postanız henüz doğrulanmamış olabilir. Güvenlik gereği bir hesabın bulunup bulunmadığını belirtmeyiz.",
+  "sifreSifirlaGonderildi": "Bir hesap varsa e-postanıza bir kod gönderildi. Kodu ve yeni parolanızı girin.",
+  "sifreSifirlaKur": "Parolayı güncelle",
+  "sifreSifirlaBasarili": "Parolanız güncellendi. Yeni parolanızla giriş yapabilirsiniz.",
+  "sifreSifirlaGirise": "Girişe dön",
   "ortakIslemler": "İşlemler",
   "sakinBaslik": "Site Sakinleri",
   "sakinEkle": "Sakin ekle",
@@ -3414,6 +3495,35 @@
   "bakimTutar": "Maliyet",
   "@bakimTutar": {
     "description": "(P241 §1) Periyodik bakim"
+  },
+  "bakimFotoEkle": "Fotoğraf ekle",
+  "@bakimFotoEkle": {
+    "description": "(E2E 2026-09) Bakim kaydina fotograf (TESIS-05)"
+  },
+  "bakimFotoHazir": "Fotoğraf kayıtla birlikte yüklenecek",
+  "@bakimFotoHazir": {
+    "description": "(E2E 2026-09) Bakim kaydina fotograf (TESIS-05)"
+  },
+  "bakimFotoYuklenemedi": "Bakım kaydedildi ama fotoğraf yüklenemedi.",
+  "@bakimFotoYuklenemedi": {
+    "description": "(E2E 2026-09) Kayit geri alinmaz; yalniz fotograf eksik"
+  },
+  "bakimGecmis": "Bakım geçmişi",
+  "@bakimGecmis": {
+    "description": "(E2E 2026-09) Ekipmanin gecmis bakim kayitlari"
+  },
+  "bakimGecmisYok": "Bu ekipman için kayıtlı bakım yok.",
+  "bakimGecmisYokAlt": "Yapılan bakımlar yönetici tarafından kaydedildikçe burada tarih, tutar ve eklerle listelenir.",
+  "@bakimGecmisYok": {
+    "description": "(E2E 2026-09) Ekipmanin gecmis bakim kayitlari"
+  },
+  "bakimEkler": "Fotoğraf ve belgeler",
+  "@bakimEkler": {
+    "description": "(E2E 2026-09) Bakim kaydinin ekleri (TESIS-05)"
+  },
+  "bakimEkYok": "Bu kayda eklenmiş fotoğraf ya da belge yok.",
+  "@bakimEkYok": {
+    "description": "(E2E 2026-09) Bakim kaydinin ekleri (TESIS-05)"
   },
   "bakimGidereYaz": "Gidere yaz",
   "@bakimGidereYaz": {

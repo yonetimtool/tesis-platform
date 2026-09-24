@@ -37,8 +37,20 @@ export async function jsonFetcher<T>(url: string): Promise<T> {
     // Referans = durum kodu + YOL. Istegi tek basina belirler ve sunucu
     // gunlugunde aranabilir. Kimlik ya da govde ICERMEZ — hata metni bir
     // sizinti yuzeyi degildir.
+    //
+    // (E2E 2026-09) 500'DE SUNUCU METNI GOSTERILMEZ. Olculen: `/api/tasks`
+    // 500 `{"error":{"message":"x"}}` dondugunde tabloda ham "x" yaziyordu.
+    // 500 = BEKLENMEYEN hata; govdesindeki metin kullaniciya yazilmis bir
+    // cumle degildir (istisna metni, cevrilmemis). Yerine cevrili "islem
+    // tamamlanamadi (durum 500) + referans" gelir. YALNIZ 500: 502/503
+    // BFF'in ve uclarin BILEREK yazdigi metinleri tasir ("kamera
+    // yapilandirilmamis" gibi) ve kod (`hata.code`) her durumda korunur.
+    // KODLU 500 GOSTERILIR: backend'in kendi zarfi (`APIError`) her zaman
+    // `code` tasir ve metni istegin dilinde cevrilmistir; ham istisna
+    // metni kodsuz gelir.
     throw kodluHata(
-      hata?.message ?? govdesizMesaj(res.status, `GET ${url.split("?")[0]}`),
+      (res.status === 500 && !hata?.code ? undefined : hata?.message) ??
+        govdesizMesaj(res.status, `GET ${url.split("?")[0]}`),
       hata?.code,
       res.status,
     );

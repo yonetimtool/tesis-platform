@@ -101,9 +101,17 @@ def plan_windows(
         gun = today_local + timedelta(days=i)
         if not gun_yuruyor(gun, gunler, ek_tarihler):
             continue
+        # (E2E 2026-09) GECMIS ATLANIR — HER KOLDA, yalniz gece kolunda
+        # degil. Olculdu: 18:45'te acilan 00:00-23:00 planinda bugunun
+        # 18 gecmis penceresi `bekliyor` uretildi ve ~90 sn sonra hepsi
+        # "kacirildi" oldu: 18 sahte alarm + 18 push. Yukaridaki docstring
+        # niyeti ("plan olusmadan onceki zamana sahte 'kacirildi'
+        # yazilmasin") normal kolda uygulanmamisti.
         out.extend(
-            windows_for_local_date(
+            (w_start, w_end)
+            for w_start, w_end in windows_for_local_date(
                 tzname, gun, baslangic, bitis, periyot_dakika
             )
+            if w_end > now_utc
         )
     return out

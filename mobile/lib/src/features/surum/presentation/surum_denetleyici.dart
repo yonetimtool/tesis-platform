@@ -54,6 +54,11 @@ class SurumDenetleyici extends Notifier<SurumDurumState> {
             platform: platformKodu(),
             surum: bilgi.version,
           );
+      // (E2E 2026-09) AG HATASI SON KESIN KARARI SILMEZ: ilk acilista
+      // sunucuya ulasilamazsa kilit YOK (kritik kural korunur); ama bu
+      // oturumda sunucu ZATEN "zorunlu" dediyse ag kesintisi kapiyi
+      // acmaz.
+      if (karar.ulasilamadi && state.zorunlu) return;
       var goster = karar.durum == SurumDurumu.onerilen;
       if (goster && await _erteleme.ertelenmisMi()) goster = false;
       state = SurumDurumState(karar: karar, onerilenGosterilsin: goster);

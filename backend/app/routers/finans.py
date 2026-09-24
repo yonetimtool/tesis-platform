@@ -27,12 +27,14 @@ from .. import defter
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..finans import BankaSatiri, BorcAdayi, banka_eslestir, kasa_bakiye
+from ..makbuz import tahsilat_makbuzu
 from ..models import (
     AppUser,
     DuesAssessment,
     FinansalHareket,
     IcraDosyasi,
     Kasa,
+    Unit,
 )
 from ..schemas import (
     AcilisFisi,
@@ -122,6 +124,21 @@ async def _adlarla(
         return []
     k_idler = {k.kasa_id for k in kayitlar if k.kasa_id}
     u_idler = {k.user_id for k in kayitlar if k.user_id}
+    d_idler = {k.unit_id for k in kayitlar if k.unit_id}
+    d_ad = dict(
+        (await db.execute(select(Unit.id, Unit.no).where(Unit.id.in_(d_idler)))).all()
+    ) if d_idler else {}
+    # (E2E 2026-09, FINANS-21) Iptal edilmis satirlar isaretlenir.
+    iptalli = set(
+        (
+            await db.execute(
+                select(FinansalHareket.ters_kayit_id).where(
+                    FinansalHareket.ters_kayit_id.in_([k.id for k in kayitlar]),
+                    FinansalHareket.durum == defter.GERCEKLESEN,
+                )
+            )
+        ).scalars().all()
+    )
     k_ad = dict(
         (await db.execute(select(Kasa.id, Kasa.ad).where(Kasa.id.in_(k_idler)))).all()
     ) if k_idler else {}
@@ -133,9 +150,37 @@ async def _adlarla(
     return [
         HareketOut.model_validate(k).model_copy(update={
             "kasa_ad": k_ad.get(k.kasa_id), "user_ad": u_ad.get(k.user_id),
+            "unit_no": d_ad.get(k.unit_id), "iptal_edildi": k.id in iptalli,
         })
         for k in kayitlar
     ]
+
+
+#: (E2E 2026-09, FINANS-15) Ileri tarihli tahsilat toleransi (gun). 2099
+#: tarihli tahsilat kabul ediliyor ve kasa bakiyesine BUGUNDEN giriyordu.
+#: Birkac gunluk tolerans: hafta sonu alinan cekin pazartesi tarihiyle
+#: girilmesi gibi mesru durumlar icin.
+ILERI_TARIH_TOLERANS_GUN = 7
+
+
+def _ileri_tarih_yok(tarih: date | None) -> None:
+    if tarih is None:
+        return
+    from datetime import timedelta
+
+    if tarih > datetime.now(timezone.utc).date() + timedelta(
+        days=ILERI_TARIH_TOLERANS_GUN
+    ):
+        raise APIError(422, "validation_error", "tahsilat_tarihi_ileri")
+
+
+async def _makbuz_kes(db: AsyncSession, user: AppUser, satir: FinansalHareket) -> None:
+    """Tahsilat satiri icin makbuz + bildirim (YAN IS; hata tahsilati dusurmez)."""
+    await tahsilat_makbuzu(
+        db, tenant_id=user.tenant_id, satirlar=[satir],
+        user_id=satir.user_id, unit_id=satir.unit_id,
+        tarih=satir.tarih, aciklama=satir.aciklama,
+    )
 
 
 def _hareket(user: AppUser, **alanlar) -> FinansalHareket:
@@ -268,6 +313,7 @@ async def tahsilat(
     `assessment_id` verildiginde borc da kapanir.
     """
     await _kasa_var(db, body.kasa_id)
+    _ileri_tarih_yok(body.tarih)
     donem = body.donem
     if body.assessment_id is not None:
         tahakkuk = await get_or_404(db, DuesAssessment, body.assessment_id)
@@ -276,9 +322,18 @@ async def tahsilat(
         # ayni para panelde gorunup raporda gorunmezdi.
         if donem is None:
             donem = tahakkuk.donem
+    # (E2E 2026-09, FINANS-01) DAIRE BOS BIRAKILMAZ: kalemden ya da kisinin
+    # tek aktif dairesinden cozulur; kisi cok daireliyse secim zorunlu.
+    unit_id = await defter.tahsilat_dairesi_coz(
+        db, unit_id=body.unit_id, user_id=body.user_id,
+        assessment_id=body.assessment_id,
+    )
+    if donem is None and unit_id is not None:
+        # (E2E 2026-09, FINANS-07) Kalemsiz tahsilat da DONEMSIZ kalmaz.
+        donem = await defter.kalemsiz_tahsilat_donemi(db, unit_id, body.tarih)
     obj = _hareket(
         user, tip="tahsilat", yon="giris", tutar_kurus=body.tutar_kurus,
-        kasa_id=body.kasa_id, user_id=body.user_id, unit_id=body.unit_id,
+        kasa_id=body.kasa_id, user_id=body.user_id, unit_id=unit_id,
         assessment_id=body.assessment_id, donem=donem,
         yontem=body.yontem or "elden",
         # (P167 Asama 4) BELGE NO MERKEZDEN. Kullanici yazdiysa o korunur
@@ -300,6 +355,9 @@ async def tahsilat(
             resource_id=satirlar[0].id,
             meta={"tip": "tahsilat", "tutar": satirlar[0].tutar_kurus},
         )
+        # (E2E 2026-09, FINANS-02) Makbuz + sakine bildirim — banka
+        # eslesmesiyle AYNI yoldan. Tekrar istekte uretilmez.
+        await _makbuz_kes(db, user, satirlar[0])
     return (await _adlarla(db, satirlar))[0]
 
 
@@ -318,13 +376,30 @@ async def toplu_tahsilat(
     kaydetme riskidir.
     """
     await _kasa_var(db, body.kasa_id)
+    _ileri_tarih_yok(body.tarih)
     kayitlar = []
     for satir in body.satirlar:
+        # (E2E 2026-09, FINANS-01/07) Tekil tahsilatla AYNI kural.
+        unit_id = await defter.tahsilat_dairesi_coz(
+            db, unit_id=satir.unit_id, user_id=satir.user_id,
+            assessment_id=satir.assessment_id,
+        )
+        donem = satir.donem
+        if donem is None and satir.assessment_id is not None:
+            donem = (
+                await db.execute(
+                    select(DuesAssessment.donem).where(
+                        DuesAssessment.id == satir.assessment_id
+                    )
+                )
+            ).scalar_one_or_none()
+        if donem is None and unit_id is not None:
+            donem = await defter.kalemsiz_tahsilat_donemi(db, unit_id, body.tarih)
         obj = _hareket(
             user, tip="tahsilat", yon="giris", tutar_kurus=satir.tutar_kurus,
-            kasa_id=body.kasa_id, user_id=satir.user_id, unit_id=satir.unit_id,
+            kasa_id=body.kasa_id, user_id=satir.user_id, unit_id=unit_id,
             assessment_id=satir.assessment_id, aciklama=satir.aciklama,
-            tarih=body.tarih, donem=satir.donem, yontem="elden",
+            tarih=body.tarih, donem=donem, yontem="elden",
             # HER SATIR KENDI NUMARASINI ALIR: toplu tahsilat N ayri
             # makbuzdur, tek belge degil. Fis basina tek numara vermek,
             # sakinin kendi makbuzunu bulmasini imkansiz kilardi.
@@ -342,6 +417,10 @@ async def toplu_tahsilat(
             resource_type="finansal_hareket",
             meta={"tip": "tahsilat_toplu", "adet": len(satirlar)},
         )
+        # (E2E 2026-09, FINANS-02) Her satir kendi makbuzudur (satir basina
+        # belge no — bkz. yukarisi).
+        for satir in satirlar:
+            await _makbuz_kes(db, user, satir)
     return HareketListResponse(
         meta={"limit": len(satirlar), "offset": 0, "total": len(satirlar)},
         items=await _adlarla(db, satirlar),
@@ -486,6 +565,71 @@ async def virman(
     )
 
 
+#: (E2E 2026-09, FINANS-09) Iade edilebilen tipler — alinmis para.
+_IADE_EDILEBILIR = ("tahsilat", "gelir")
+
+
+async def _iptal_var(db: AsyncSession, hareket_id: uuid.UUID) -> bool:
+    """Bu hareketin GECERLI bir iptal (ters kayit) satiri var mi."""
+    return (
+        await db.execute(
+            select(FinansalHareket.id).where(
+                FinansalHareket.ters_kayit_id == hareket_id,
+                # Onarim gocuyle etkisizlestirilen (durum='iptal') eski
+                # hayali iptal satirlari sayilmaz.
+                FinansalHareket.durum == defter.GERCEKLESEN,
+            ).limit(1)
+        )
+    ).first() is not None
+
+
+async def _virman_iptal(
+    db: AsyncSession,
+    user: AppUser,
+    orijinal: FinansalHareket,
+    body: IptalIstek,
+    response: Response,
+    anahtar: str | None,
+) -> HareketOut:
+    """Virmanin IKI bacagini birlikte ters kayitla; ilk ters satiri doner."""
+    bacaklar = list(
+        (
+            await db.execute(
+                select(FinansalHareket)
+                .where(FinansalHareket.virman_grup_id == orijinal.virman_grup_id,
+                       FinansalHareket.tip == "virman")
+                .order_by(FinansalHareket.yon.desc(), FinansalHareket.id)
+            )
+        ).scalars().all()
+    )
+    for b in bacaklar:
+        if b.id != orijinal.id and await _iptal_var(db, b.id):
+            raise APIError(409, "conflict", "hareket_zaten_iptal")
+    grup = uuid.uuid4()
+    tersler = [
+        _hareket(
+            user, tip="iptal",
+            yon="cikis" if b.yon == "giris" else "giris",
+            tutar_kurus=b.tutar_kurus, kasa_id=b.kasa_id,
+            ters_kayit_id=b.id, virman_grup_id=grup,
+            aciklama=body.aciklama, tarih=body.tarih,
+        )
+        for b in bacaklar
+    ]
+    # Iki ters satir virmanla ayni gerekceyle belge no ALMAZ (bkz. virman).
+    satirlar, tekrar = await _idem_yaz(db, response, anahtar, tersler)
+    if not tekrar:
+        await audit_user(
+            db, user, Action.FINANS_HAREKET_CREATE,
+            resource_type="finansal_hareket",
+            resource_id=satirlar[0].id,
+            meta={"tip": "iptal", "virman_grup": str(orijinal.virman_grup_id),
+                  "iptal_edilen": [str(b.id) for b in bacaklar]},
+        )
+    ilk = next((s for s in satirlar if s.ters_kayit_id == orijinal.id), satirlar[0])
+    return (await _adlarla(db, [ilk]))[0]
+
+
 # ================================= IADE ===================================== #
 @router.post("/finans/iade", response_model=HareketOut, status_code=201)
 async def iade(
@@ -504,11 +648,25 @@ async def iade(
     orijinal = await get_or_404(db, FinansalHareket, body.hareket_id)
     if orijinal.tip == "iade":
         raise APIError(422, "validation_error", "iade_iade_edilemez")
+    # (E2E 2026-09, FINANS-09) IADE YALNIZ ALINMIS PARAYA: tahsilat ya da
+    # gelir. Virmanin tek bacagi iade edilebiliyordu (KASA -10, karsi bacak
+    # yok) ve gider "iade" edilebiliyordu (anlami belirsiz).
+    if orijinal.tip not in _IADE_EDILEBILIR:
+        raise APIError(422, "validation_error", "iade_tipi_gecersiz")
+    # Gerceklesmemis (onay bekleyen / reddedilmis) para iade edilemez.
+    if orijinal.durum != defter.GERCEKLESEN:
+        raise APIError(409, "conflict", "hareket_gerceklesmemis")
+    # IPTAL EDILMIS hareket iade EDILEMEZ: iptal tam tutari zaten geri aldi;
+    # ustune iade, ayni parayi ikinci kez kasadan cikarirdi (olculdu: 800
+    # giren, 1.600 cikan).
+    if await _iptal_var(db, orijinal.id):
+        raise APIError(409, "conflict", "hareket_zaten_iptal")
 
     onceki = (
         await db.execute(
             select(func.coalesce(func.sum(FinansalHareket.tutar_kurus), 0))
-            .where(FinansalHareket.iade_edilen_id == orijinal.id)
+            .where(FinansalHareket.iade_edilen_id == orijinal.id,
+                   FinansalHareket.durum == defter.GERCEKLESEN)
         )
     ).scalar_one()
     tutar = body.tutar_kurus or (orijinal.tutar_kurus - onceki)
@@ -571,14 +729,33 @@ async def hareket_iptal(
     if orijinal.tip == "iptal":
         raise APIError(422, "validation_error", "iptal_iptal_edilemez")
 
-    zaten = (
+    if await _iptal_var(db, orijinal.id):
+        raise APIError(409, "conflict", "hareket_zaten_iptal")
+    # (E2E 2026-09, FINANS-03) YALNIZ GERCEKLESMIS hareket iptal edilir.
+    # Onay bekleyen ya da REDDEDILMIS gideri "iptal" etmek, hic cikmamis
+    # parayi kasaya GERI SOKUYORDU (+900 / +3.500 hayali). Onay bekleyen
+    # hareketin yolu "reddet"tir; reddedilmis olan zaten hic olmamistir.
+    if orijinal.durum != defter.GERCEKLESEN:
+        raise APIError(409, "conflict", "hareket_gerceklesmemis")
+    # (E2E 2026-09, FINANS-09) IADESI OLAN hareket iptal edilemez: iptal
+    # TAM tutari geri alir, iade edilmis kismi ikinci kez geri alirdi.
+    iadeli = (
         await db.execute(
-            select(FinansalHareket.id)
-            .where(FinansalHareket.ters_kayit_id == orijinal.id)
+            select(FinansalHareket.id).where(
+                FinansalHareket.iade_edilen_id == orijinal.id,
+                FinansalHareket.durum == defter.GERCEKLESEN,
+            ).limit(1)
         )
     ).first()
-    if zaten is not None:
-        raise APIError(409, "conflict", "hareket_zaten_iptal")
+    if iadeli is not None:
+        raise APIError(409, "conflict", "hareket_iade_edilmis")
+
+    # (E2E 2026-09, FINANS-09) VIRMAN GRUP HALINDE TERSINE CEVRILIR: tek
+    # bacagi iptal etmek bir kasadan parayi "yok ederdi".
+    if orijinal.tip == "virman" and orijinal.virman_grup_id is not None:
+        return await _virman_iptal(
+            db, user, orijinal, body, response, _idem(idempotency_key)
+        )
 
     obj = _hareket(
         user, tip="iptal",
@@ -650,6 +827,18 @@ def _onaylanabilir(hareket: FinansalHareket) -> None:
         raise APIError(409, "conflict", "hareket_onay_beklemiyor")
 
 
+async def _onay_oncesi(db: AsyncSession, hareket: FinansalHareket) -> None:
+    """(E2E 2026-09, FINANS-03) Ters kaydi olan satir onaylanamaz/reddedilemez.
+
+    Eski surumde onay bekleyen gider "iptal" edilebiliyordu; o "iptal
+    edilmis" gider sonra ONAYLANABILDI (olculdu). Yeni kayitta iptal zaten
+    reddediliyor; bu kontrol gecmisten kalan satirlari da kapatir.
+    """
+    _onaylanabilir(hareket)
+    if await _iptal_var(db, hareket.id):
+        raise APIError(409, "conflict", "hareket_zaten_iptal")
+
+
 @router.post(
     "/finans/hareketler/{hareket_id}/onayla",
     response_model=HareketOut,
@@ -662,7 +851,7 @@ async def hareket_onayla(
 ) -> HareketOut:
     """Onay bekleyen hareketi ONAYLA — o an gerceklesmis sayilir."""
     obj = await get_or_404(db, FinansalHareket, hareket_id)
-    _onaylanabilir(obj)
+    await _onay_oncesi(db, obj)
     obj.durum = "odendi"
     if body.aciklama:
         obj.aciklama = body.aciklama
@@ -687,7 +876,7 @@ async def hareket_reddet(
 ) -> HareketOut:
     """Onay bekleyen hareketi REDDET — hic gerceklesmemis sayilir."""
     obj = await get_or_404(db, FinansalHareket, hareket_id)
-    _onaylanabilir(obj)
+    await _onay_oncesi(db, obj)
     obj.durum = "iptal"
     if body.aciklama:
         obj.aciklama = body.aciklama
@@ -1049,8 +1238,11 @@ async def finans_ozet(
     # (P192 §1) TEK KAYNAK: rapor, seffaflik ve mobil ana ekran da bunu
     # cagirir; iade/iptal dusulur ve yalniz gerceklesmis satirlar sayilir.
     tahsil_ay = await defter.tahsilat_toplami(db, baslangic=ay_basi)
-    toplam_borc = await defter.tahakkuk_toplami(db)
-    toplam_tahsil = await defter.tahsilat_toplami(db)
+    # (E2E 2026-09, FINANS-06) ACIK BORC TEK TANIM: daire bakiyeleri
+    # toplami (`defter.acik_borc_toplami`). Onceden tesis geneli "tahakkuk
+    # - tahsilat" idi ve daireye baglanmamis tahsilat hicbir borcu
+    # kapatmadigi halde acik borcu dusuruyordu.
+    acik_borc = await defter.acik_borc_toplami(db)
     bakiyeler = await kasa_bakiyeleri(db=db, _=None)  # type: ignore[arg-type]
     icra_acik = (
         await db.execute(
@@ -1080,7 +1272,11 @@ async def finans_ozet(
                    # girerdi ve REDDEDILMIS bir harcama "borcum var" diye
                    # sayilirdi.
                    FinansalHareket.durum.in_(("bekliyor", "onay_bekliyor")),
-                   FinansalHareket.ters_kayit_id.is_(None))
+                   FinansalHareket.ters_kayit_id.is_(None),
+                   # (E2E 2026-09) Iptal edilmis (eski surumde onay
+                   # bekleyen gider de iptal edilebiliyordu) satir borc
+                   # degildir.
+                   FinansalHareket.id.notin_(defter.iptal_edilmis()))
         )
     ).scalar_one()
     # ADET, TUTAR DEGIL: yonetici burada "ne kadar" degil "kac is
@@ -1094,20 +1290,16 @@ async def finans_ozet(
     # "ODENMIS FATURALAR (bu ay)" — tarihe gore, kayit zamanina gore
     # DEGIL: gecen ayin faturasi bu ay girilmis olabilir ve onu bu ayin
     # gideri saymak defterle celisirdi.
-    odenmis_fatura_ay = (
-        await db.execute(
-            select(func.coalesce(func.sum(FinansalHareket.tutar_kurus), 0))
-            .where(FinansalHareket.tip == "gider",
-                   FinansalHareket.durum == "odendi",
-                   FinansalHareket.ters_kayit_id.is_(None),
-                   FinansalHareket.tarih >= ay_basi)
-        )
-    ).scalar_one()
+    #
+    # (E2E 2026-09, FINANS-11) TEK KURAL: `defter.gider_toplami` — seffaflik
+    # ve raporlar da bunu cagirir. Kendi sorgusu iptal edilmis gideri
+    # dusmuyordu (ayni ay dort ekranda dort gider).
+    odenmis_fatura_ay = await defter.gider_toplami(db, baslangic=ay_basi)
 
     return FinansOzet(
         borclandirilan_ay_kurus=int(borclandirilan),
         tahsil_edilen_ay_kurus=int(tahsil_ay),
-        acik_borc_kurus=max(int(toplam_borc) - int(toplam_tahsil), 0),
+        acik_borc_kurus=int(acik_borc),
         kasa_toplam_kurus=bakiyeler.genel_toplam_kurus,
         icra_acik_dosya=int(icra_acik),
         borc_kurus=int(borc),

@@ -50,6 +50,7 @@ type IceSonuc = {
   basarili: number;
   hatali: number;
   satirlar: IceSatir[];
+  parti_id?: string | null;
 };
 
 /** `YYYY-MM-DD` -> o haftanin PAZARTESISI. */
@@ -66,12 +67,15 @@ export function AraclarCubugu({
   onDegisti,
   onSablonlaraGit,
   onKalipAc,
+  onParti,
 }: {
   baslangic: string;
   gun: number;
   onDegisti: () => void;
   onSablonlaraGit: () => void;
   onKalipAc: () => void;
+  /** (E2E 2026-09) Ice aktarimin PARTI kimligi — sayfadaki "geri al". */
+  onParti?: (partiId: string | null) => void;
 }) {
   const t = useT();
   const toast = useToast();
@@ -440,6 +444,7 @@ export function AraclarCubugu({
                       toast.success(
                         t("vardiyaIceAktarBitti", { n: r.basarili }),
                       );
+                      onParti?.(r.parti_id ?? null);
                       setIceAcik(false);
                       setIceSonuc(null);
                       onDegisti();

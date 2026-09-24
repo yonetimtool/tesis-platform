@@ -209,6 +209,63 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
+  // ============ (E2E 2026-09, YETKI-13) E-POSTA KODUYLA GIRIS ============ #
+
+  /// 1. adim: e-postaya kod iste. Basari/basarisizlik AYIRT ETTIRILMEZ
+  /// (sunucu adres varligini sizdirmaz). `true` = kod adimina gec.
+  Future<bool> epostaGirisKoduIste(String eposta) async {
+    state = state.copyWith(
+      submitting: true, errorMessage: null, hataKimligi: null);
+    try {
+      await ref.read(authApiProvider).epostaGirisKoduIste(eposta: eposta);
+      state = state.copyWith(submitting: false);
+      return true;
+    } on ApiException catch (e) {
+      state = state.copyWith(
+        submitting: false, errorMessage: e.message,
+        hataKimligi: girisAgHatasi(e));
+      return false;
+    }
+  }
+
+  /// 2. adim: kodu dogrula ve oturumu ac.
+  ///
+  /// 409 `tesis_secimi_gerekli` HATA DEGIL (parola yolundaki kararin
+  /// aynisi): kod birden cok tesiste tutuyor ve kullanicidan bir KARAR
+  /// isteniyor. Ekran [EpostaKodSonucu.tesisSecimiGerekli] alinca tesisi
+  /// sorar ve [tenantSlug] ile yeniden cagirir. Hata metni YAZILMAZ —
+  /// ekran secimi gosterir.
+  Future<EpostaKodSonucu> epostaKoduylaGir({
+    required String eposta,
+    required String kod,
+    String? tenantSlug,
+  }) async {
+    state = state.copyWith(
+      submitting: true, errorMessage: null, hataKimligi: null);
+    try {
+      final jetonlar = await ref.read(authApiProvider).epostaGirisKoduDogrula(
+            eposta: eposta, kod: kod, tenantSlug: tenantSlug);
+      await ref.read(tokenStorageProvider).save(jetonlar);
+      state = state.copyWith(
+        submitting: false, status: AuthStatus.authenticated);
+      return EpostaKodSonucu.girildi;
+    } on ApiException catch (e) {
+      if (e.statusCode == 409 && e.code == 'tesis_secimi_gerekli') {
+        state = state.copyWith(submitting: false);
+        return EpostaKodSonucu.tesisSecimiGerekli;
+      }
+      state = state.copyWith(
+        submitting: false, errorMessage: e.message,
+        hataKimligi: girisAgHatasi(e));
+      return EpostaKodSonucu.hata;
+    }
+  }
+
+  /// Giris ekraninda moddan cikinca eski hata metni kalmasin.
+  void girisHatasiniTemizle() {
+    state = state.copyWith(errorMessage: null, hataKimligi: null);
+  }
+
   // ==================== (P155 §7) DAVET TAMAMLAMA ==================== #
 
   /// Davetle gelen kullanici PAROLA belirledi → oturum acilir (SMS YOK).
@@ -324,9 +381,19 @@ class AuthController extends Notifier<AuthState> {
     state = state.copyWith(
         submitting: true, errorMessage: null, hataKimligi: null);
     try {
-      final jetonlar = await ref.read(authApiProvider).login(
+      final sonuc = await ref.read(authApiProvider).login(
             kimlik: k, password: password, tenantSlug: tenantSlug);
-      await ref.read(tokenStorageProvider).save(jetonlar);
+      // (E2E 2026-09) GECICI KODLA ILK GIRIS e-posta yolunda da: telefon
+      // yolundaki gibi parola belirleme adimina gecilir.
+      if (sonuc.passwordSetupRequired) {
+        _pendingRememberMe = rememberMe;
+        state = state.copyWith(
+          submitting: false,
+          setupToken: sonuc.setupToken,
+        );
+        return null;
+      }
+      await ref.read(tokenStorageProvider).save(sonuc.tokens!);
       state = state.copyWith(
           submitting: false, status: AuthStatus.authenticated);
       return null;
@@ -720,3 +787,14 @@ class AuthController extends Notifier<AuthState> {
 
 final authControllerProvider =
     NotifierProvider<AuthController, AuthState>(AuthController.new);
+
+/// (E2E 2026-09, YETKI-13) E-posta koduyla girisin sonucu.
+enum EpostaKodSonucu {
+  girildi,
+
+  /// Kod birden cok tesiste tuttu (409) — ekran tesisi sorar.
+  tesisSecimiGerekli,
+
+  /// Hata `state`e yazildi.
+  hata,
+}

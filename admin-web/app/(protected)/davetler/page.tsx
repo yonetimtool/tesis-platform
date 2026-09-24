@@ -51,6 +51,8 @@ const R_OLUMLU = "olumlu" as const;
 const R_KRITIK = "kritik" as const;
 const R_BILGI = "bilgi" as const;
 const R_UYARI = "uyari" as const;
+/** Resend geri donusu (bounce) hata kodu — `eposta_webhook.OLAY_ESLEME`. */
+const HATA_GERI_DONDU = "bounce";
 
 /** Davetin panel durumu — TEK yerde hesaplanir (renk + metin birlikte). */
 function durumBilgisi(d: DavetSatiri): {
@@ -58,9 +60,16 @@ function durumBilgisi(d: DavetSatiri): {
   renk: typeof R_OLUMLU | typeof R_KRITIK | typeof R_BILGI | typeof R_UYARI;
 } {
   if (d.used_at) return { anahtar: "davetDurumKullanildi", renk: R_OLUMLU };
+  // (E2E 2026-09) Saglayici geri bildirimi (Resend webhook) artik davete
+  // yaziliyor; her durum AYRI etiket. Onceden `iletildi` "Gonderildi" ile
+  // ayni, `okundu` ve `yapilandirilmadi` ise "Bekliyor" gorunuyordu.
+  if (d.son_durum === "basarisiz" && d.son_hata === HATA_GERI_DONDU)
+    return { anahtar: "davetDurumGeriDondu", renk: R_KRITIK };
   if (d.son_durum === "basarisiz") return { anahtar: "davetDurumGitmedi", renk: R_KRITIK };
-  if (d.son_durum === "gonderildi" || d.son_durum === "iletildi")
-    return { anahtar: "davetDurumGonderildi", renk: R_BILGI };
+  if (d.son_durum === "yapilandirilmadi") return { anahtar: "davetDurumAyarYok", renk: R_KRITIK };
+  if (d.son_durum === "okundu") return { anahtar: "davetDurumAcildi", renk: R_OLUMLU };
+  if (d.son_durum === "iletildi") return { anahtar: "davetDurumIletildi", renk: R_BILGI };
+  if (d.son_durum === "gonderildi") return { anahtar: "davetDurumGonderildi", renk: R_BILGI };
   return { anahtar: "davetDurumBekliyor", renk: R_UYARI };
 }
 

@@ -57,8 +57,11 @@ def _guard(conn, tid) -> uuid.UUID:
 def _plan(conn, tid, gid, *, tarih=GUN, bas=BASLANGIC) -> uuid.UUID:
     pid = uuid.uuid4()
     conn.execute(
+        # (E2E 2026-09) YAYINLANMIS satir: taslaga hatirlatma/"baslamadi"
+        # uyarisi gitmez (P241 §2.4) — bu dosya yayinlanmis plani olcer.
         "INSERT INTO vardiya_plani (id, tenant_id, shift_id, tarih, user_id, "
-        "baslangic_saat, bitis_saat) VALUES (%s,%s,NULL,%s,%s,%s,%s)",
+        "baslangic_saat, bitis_saat, yayinlandi_at) "
+        "VALUES (%s,%s,NULL,%s,%s,%s,%s, now())",
         (pid, tid, tarih, gid, bas, time(17, 0)),
     )
     return pid
@@ -343,3 +346,14 @@ def test_BES_DAKIKA_hatirlatmasi_VARDIYA_KANALINDAN_gider():
 
     assert kanal_sec("vardiya_hatirlatma", sesli=True) == KANAL_VARDIYA
     assert ses_adi("vardiya_hatirlatma", sesli=True) == f"{VARDIYA_SES_ADI}.caf"
+
+
+def test_TASLAK_SATIRA_HATIRLATMA_ve_BASLAMADI_GITMEZ(sched, push_spy):
+    """(E2E 2026-09) Yayinlanmamis satir personele gorunmez (P241 §2.4);
+    hatirlatma ve "baslamadi" uyarisi da uretilmez."""
+    pid = _plan(sched.conn, sched.tid, sched.gid)
+    sched.conn.execute(
+        "UPDATE vardiya_plani SET yayinlandi_at = NULL WHERE id = %s", (pid,))
+    assert vardiya_hatirlatmalari(now=datetime(2026, 1, 15, 5, 45, tzinfo=UTC)) == 0
+    assert vardiya_baslamadi_uyarilari(
+        now=datetime(2026, 1, 15, 6, 20, tzinfo=UTC)) == 0

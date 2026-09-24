@@ -14,5 +14,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   qs.set("offset", offset);
   const okundu = sp.get("okundu");
   if (okundu === "true" || okundu === "false") qs.set("okundu", okundu);
+  // (E2E 2026-09) ARAMA TASINMIYORDU: sayfa `q` gonderiyor, vekil onu
+  // beyaz listede tutmadigi icin backend'e hic gitmiyordu — iki sekmede de
+  // arama kutusu hicbir seyi suzmuyordu (mobil ayni ucu `q` ile kullanir).
+  const q = sp.get("q")?.trim();
+  if (q) qs.set("q", q.slice(0, 100));
   return proxyJson(`/notifications?${qs.toString()}`, "GET");
 }

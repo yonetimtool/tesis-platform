@@ -185,4 +185,24 @@ void main() {
     expect(result[1].checkpoint.checkpointId, 'cp-b');
     expect(result[1].checkpoint.nfcTagUid, isNull);
   });
+
+  // (E2E 2026-09) GUVENLIK-05: sunucu UID'yi KANONIK (ayracsiz) saklar,
+  // cihaz `04:a3:...` bicimde okur — bekleyen okutma yine bindirilmeli.
+  test('kanonik (ayracsiz) sunucu UIDsi ayracli okutmayla eslesir', () {
+    final result = mergeCheckpointStatuses(
+      serverCheckpoints: [server(id: 'cp-a', sira: 0)],
+      pencereBaslangic: baslangic,
+      pencereBitis: bitis,
+      outboxEntries: [
+        entry(uid: '04:a3:b2:c1:90:00', okutma: DateTime.utc(2026, 7, 2, 0, 5)),
+      ],
+      uidByCheckpointId: const {'cp-a': '04A3B2C19000'},
+    );
+    expect(result.single.durum, CheckpointScanDurum.gonderiliyor);
+  });
+
+  test('normalizeNfcUid backend norm_nfc ile ayni kurali uygular', () {
+    expect(normalizeNfcUid(' 04:a1-B2 c3 '), '04A1B2C3');
+    expect(normalizeNfcUid('04A1B2C3'), '04A1B2C3');
+  });
 }

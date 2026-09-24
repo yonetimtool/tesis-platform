@@ -53,16 +53,18 @@ AkilliEvCihaz _c({
       daireNo: 'A-1',
     );
 
+// (E2E 2026-09) Sunucunun GERCEK dokuz bolumu (`BOLUMLER`); eski liste
+// sunucuda olmayan adlar tasiyordu ve kusuru gizliyordu.
 List<AkilliEvBolum> _bolumler(Set<String> acik) => const [
-      'aydinlatma',
-      'iklim',
-      'kilit',
-      'perde',
+      'protokol',
+      'panik',
+      'ziyaretci',
       'kacak',
-      'yangin',
       'enerji',
-      'sayac',
-      'senaryo',
+      'ortak_alan',
+      'isitma',
+      'kapi',
+      'yangin',
     ].map((b) => AkilliEvBolum(bolum: b, acik: acik.contains(b))).toList();
 
 Widget _ekran(_SahteApi api) => ProviderScope(
@@ -81,7 +83,7 @@ void main() {
 
   testWidgets('ACIK BOLUM: cihaz gorunur ve eylem dugmeleri cizilir',
       (tester) async {
-    final api = _SahteApi([_c()], _bolumler(const {'aydinlatma'}));
+    final api = _SahteApi([_c()], _bolumler(const {'enerji'}));
     await tester.pumpWidget(_ekran(api));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('akilli-ev-cihaz-c1')), findsOneWidget);
@@ -103,7 +105,7 @@ void main() {
   });
 
   testWidgets('KOMUT uca gider ve DOGRU eylemi tasir', (tester) async {
-    final api = _SahteApi([_c()], _bolumler(const {'aydinlatma'}));
+    final api = _SahteApi([_c()], _bolumler(const {'enerji'}));
     await tester.pumpWidget(_ekran(api));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('akilli-ev-komut-c1-kapat')));
@@ -111,10 +113,36 @@ void main() {
     expect(api.komutlar, ['c1:kapat']);
   });
 
-  test('TIP -> BOLUM eslemesi KODDA (veri gocu gerektirmez)', () {
+  test('TIP -> BOLUM yedek eslemesi SUNUCUNUN TIP_BOLUM tablosuyla ayni', () {
     expect(akilliEvBolumu('vana'), 'kacak');
     expect(akilliEvBolumu('sensor_duman'), 'yangin');
-    expect(akilliEvBolumu('priz'), 'aydinlatma');
-    expect(akilliEvBolumu('sayac'), 'sayac');
+    expect(akilliEvBolumu('kilit'), 'kapi');
+    expect(akilliEvBolumu('termostat'), 'isitma');
+    expect(akilliEvBolumu('sayac'), 'enerji');
+  });
+
+  // (E2E 2026-09) TESIS-13: kapi kilidi eskiden HICBIR bolumde
+  // gorunmuyordu (istemci sunucuda olmayan `kilit` bolumunu ariyordu).
+  testWidgets('KILIT kapi bolumu acikken gorunur; sunucu bolumu esas',
+      (tester) async {
+    final api = _SahteApi(
+      [
+        _c(tip: 'kilit', eylemler: const ['kilit_ac']),
+        AkilliEvCihaz(
+          id: 'c2',
+          ad: 'Ozel',
+          tip: 'isik',
+          disKimlik: 'light.x',
+          eylemler: const ['ac'],
+          bolum: 'kapi',
+        ),
+      ],
+      _bolumler(const {'kapi'}),
+    );
+    await tester.pumpWidget(_ekran(api));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('akilli-ev-cihaz-c1')), findsOneWidget);
+    // Sunucunun `bolum` alani yerel tablonun ONUNDE gelir.
+    expect(find.byKey(const Key('akilli-ev-cihaz-c2')), findsOneWidget);
   });
 }

@@ -11,6 +11,7 @@ import {
   OzetKarti,
   OzetSeridi,
   SayfaBasligi,
+  Secim,
   Sekmeler,
 } from "@/components/ui";
 import { PlanHaritasiYukleyici } from "@/components/harita/harita-yukleyici";
@@ -27,7 +28,8 @@ import type {
   UnitComplaintList,
 } from "@/lib/types";
 
-// Renk API'den gelir (yesil/sari/kirmizi = 0-2/3-4/5+); panel ESIK HESAPLAMAZ.
+// Renk API'den gelir (P24 DORT KADEME: yesil 0 / sari 1-2 / kirmizi 3-4 /
+// mor 5+ — backend `_ESIKLER`); panel ESIK HESAPLAMAZ.
 //
 // (P160) ZEMIN RENGI BIRAKILDI, KENAR RENGI ALINDI. Eskiden hucre KOYU
 // RENKLE doluydu ve uzerinde BEYAZ metin vardi; bu duzen 4.5 kontrast
@@ -42,6 +44,9 @@ const RENK_TOKEN: Record<DensityRenk, string> = {
   yesil: "var(--yz-success-edge)",
   sari: "var(--yz-warning-edge)",
   kirmizi: "var(--yz-danger-edge)",
+  // (E2E 2026-09) TESIS-20: "mor" yoktu -> 5+ daire YESIL ciziliyordu.
+  // NFC isaretci tonu: mor aile, 1.4.11 esigiyle olculmus (tasarim-sistemi.css).
+  mor: "var(--yz-nfc-edge)",
 };
 const NOTR_TOKEN = "var(--yz-border)";
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
@@ -63,8 +68,18 @@ const KATEGORI_ANAHTAR: Record<string, SozlukAnahtari> = {
   gurultu: "kategoriGurultu",
   kapi_onu_ayakkabi: "kategoriKapiOnu",
   zarar_verme: "kategoriZararVerme",
+  // (E2E 2026-09) TESIS-20: eksikti, ham anahtar yaziliyordu.
+  goruntu_kirliligi: "kategoriGoruntuKirliligi",
   diger: "ortakDiger",
 };
+// Tur secicisinin sirasi (backend `UnitComplaintKategori` ile ayni kume).
+const KATEGORI_SIRASI = [
+  "gurultu",
+  "kapi_onu_ayakkabi",
+  "zarar_verme",
+  "goruntu_kirliligi",
+  "diger",
+] as const;
 
 const fmtDate = tarihBicimi;
 
@@ -108,6 +123,7 @@ function UnitCell({
 
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const RENK_KIRMIZI = "kirmizi" as const;
+const RENK_MOR = "mor" as const;
 
 const IKON_UYARI = "M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z";
 const IKON_BINA = "M3 21h18M5 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M9 7h2M9 11h2M9 15h2M15 21v-8h2a2 2 0 0 1 2 2v6";
@@ -141,6 +157,7 @@ function Legend() {
       {item("yesil", t("haritaYesil"))}
       {item("sari", t("haritaSari"))}
       {item("kirmizi", t("haritaKirmizi"))}
+      {item("mor", t("haritaMor"))}
     </Kart>
   );
 }
@@ -237,7 +254,13 @@ function DetailPanel({ unit }: { unit: BuildingMapUnit }) {
 
 export default function SchematicPage() {
   const t = useT();
-  const { data, error, isLoading } = useSWR<BuildingMap>("/api/building-map", jsonFetcher);
+  // (E2E 2026-09) TESIS-17: TUR SECICISI — bos = tum turler. Sayim ve
+  // renk sunucuda o ture gore hesaplanir (`?kategori=`).
+  const [kategori, setKategori] = useState<string>("");
+  const { data, error, isLoading } = useSWR<BuildingMap>(
+    kategori ? `/api/building-map?kategori=${encodeURIComponent(kategori)}` : "/api/building-map",
+    jsonFetcher,
+  );
   const [selected, setSelected] = useState<BuildingMapUnit | null>(null);
   const [gorunum, setGorunum] = useState<string>(GORUNUM_SEMA);
 
@@ -311,7 +334,8 @@ export default function SchematicPage() {
       for (const kat of blok.katlar) {
         for (const u of kat.units) {
           acikSikayet += u.complaint_count ?? 0;
-          if (u.color === RENK_KIRMIZI) yogunDaire += 1;
+          // (E2E 2026-09) TESIS-20: dort kademede "yogun" = kirmizi + mor.
+          if (u.color === RENK_KIRMIZI || u.color === RENK_MOR) yogunDaire += 1;
         }
       }
     }
@@ -334,7 +358,7 @@ export default function SchematicPage() {
           deger={String(sayaclar.yogunDaire)}
           ikon={<Ikon yol={IKON_BINA} />}
           durum="kritik"
-          altBilgi={t("haritaKirmizi")}
+          altBilgi={t("haritaYogunEsik")}
         />
         {/* HARITADAKI daire = CIZILEBILEN daire (`hucreler`), tum
             kayitli daireler degil: kat/sira girilmemis daire haritada
@@ -350,8 +374,30 @@ export default function SchematicPage() {
         />
       </OzetSeridi>
 
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <Legend />
+        <label className="flex items-center gap-2">
+          <span style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+            {t("haritaTurSuzgeci")}
+          </span>
+          <span className="inline-block w-auto">
+          <Secim
+            data-test="harita-tur-suzgeci"
+            value={kategori}
+            onChange={(e) => {
+              setKategori(e.target.value);
+              setSelected(null);
+            }}
+          >
+            <option value="">{t("ortakTumu")}</option>
+            {KATEGORI_SIRASI.map((k) => (
+              <option key={k} value={k}>
+                {t(KATEGORI_ANAHTAR[k])}
+              </option>
+            ))}
+          </Secim>
+          </span>
+        </label>
       </div>
 
       {error && <HataDurumu mesaj={error.message} />}

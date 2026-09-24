@@ -84,13 +84,19 @@ class ResidentsApi {
   /// Daire numarasindan blok TURETILMIYOR: `A-12` numarali bir daire
   /// `B` blogunda olabilir ve tahmin etmek yanlis blokta bir daire
   /// acardi.
+  ///
+  /// (E2E 2026-09) `email` ZORUNLU: P197'den beri `ResidentCreate.email`
+  /// zorunlu ve davet YALNIZ e-postadan gidiyor. Mobil govde e-postasizdi,
+  /// her ekleme 422 donuyordu (sakin mobilden HIC eklenemiyordu).
   Future<void> addResident({
     required String telefon,
+    required String email,
     required String unitNo,
     String? blok,
   }) async {
     final data = <String, dynamic>{
       'telefon': telefon,
+      'email': email.trim(),
       'unit_no': unitNo,
       if (blok != null && blok.trim().isNotEmpty) 'blok': blok.trim(),
     };

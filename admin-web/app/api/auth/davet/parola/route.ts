@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { anonimVekil, loginResponse } from "@/lib/backend";
+import { anonimVekil } from "@/lib/backend";
+import { oturumAc } from "@/lib/oturum-kapisi";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,5 +20,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     refresh_token?: string;
   };
   if (!govde.access_token || !govde.refresh_token) return yanit;
-  return loginResponse(govde.access_token, govde.refresh_token);
+  // (E2E 2026-09) NORMAL GIRISLE AYNI ROL KAPISI. Onceden jeton dogrudan
+  // cereze yaziliyordu: davetle kaydini tamamlayan mobil-yalniz rol
+  // (tesis gorevlisi, guvenlik, sakin) web yonetici paneline aliniyor ve
+  // bos menu + 403 veren kartlar goruyordu (P129 karari deliniyordu).
+  // Kayit YINE TAMAMDIR (parola sunucuda kuruldu); kapi yalniz web
+  // oturumunu acmaz ve `mobil_uygulama` koduyla magazaya yonlendirir.
+  return oturumAc(req, govde.access_token, govde.refresh_token);
 }

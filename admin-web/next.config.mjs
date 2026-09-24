@@ -12,6 +12,12 @@ const nextConfig = {
   // ~30MB platform binary'si + standalone copy karmasasi getirirdi;
   // kazanc sifira yakin oldugundan Option B secildi.
   images: { unoptimized: true },
+  // (E2E 2026-09) DOGRULAMA DERLEMESI AYRI DIZINE. `npm run dogrula`
+  // icindeki `next build` varsayilan `.next`e yaziyordu — ayni dizini
+  // kullanan CALISAN `next dev` sunucusunun istemci dosyalari (main-app.js
+  // vb.) 404 vermeye basladi ve sayfalar gunlerce hidrasyonsuz cizildi.
+  // Prod imaji (Dockerfile) degiskeni vermez: yine `.next` kullanilir.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
 };
 
 export default nextConfig;

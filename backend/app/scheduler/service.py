@@ -232,6 +232,18 @@ def materialize_windows(
                     "       gunler, ek_tarihler "
                     "FROM patrol_plan WHERE aktif = true"
                 ).fetchall()
+                # (E2E 2026-09) PASIF PLANIN GELECEK PENCERELERI SILINIR.
+                # Asagidaki silme adimi yalniz AKTIF planlari dolasiyordu;
+                # pasiflestirilen planin onceden uretilmis 'bekliyor'
+                # pencereleri kaliyor ve saati gelince pasif plan icin
+                # "tur kacirildi" alarmi gidiyordu. Yalniz GELECEK ve
+                # yalniz 'bekliyor' — gecmis pencereler kanittir.
+                conn.execute(
+                    "DELETE FROM patrol_window w USING patrol_plan p "
+                    "WHERE p.id = w.patrol_plan_id AND p.aktif = false "
+                    "AND w.durum = 'bekliyor' AND w.pencere_baslangic > %s",
+                    (now,),
+                )
                 for plan_id, baslangic, bitis, periyot, gunler, ek_tarihler in plans:
                     pencereler = plan_windows(
                         tzname, now, horizon_days, baslangic, bitis, periyot,
@@ -299,7 +311,11 @@ def detect_missed(
                     "       w.pencere_bitis, p.ad "
                     "FROM patrol_window w "
                     "JOIN patrol_plan p ON p.id = w.patrol_plan_id "
-                    "WHERE w.durum = 'bekliyor' AND w.pencere_bitis <= %s",
+                    "WHERE w.durum = 'bekliyor' AND w.pencere_bitis <= %s "
+                    # (E2E 2026-09) PASIF PLAN ALARM URETMEZ: plan
+                    # pasiflestirilmeden once baslamis pencere de "kacirildi"
+                    # sayilmaz — yonetici o turu bilerek durdurdu.
+                    "AND p.aktif = true",
                     (now,),
                 ).fetchall()
 
@@ -556,6 +572,10 @@ def vardiya_hatirlatmalari(
                     "JOIN app_user u ON u.id = vp.user_id "
                     "LEFT JOIN shift s ON s.id = vp.shift_id "
                     "WHERE vp.durum = 'planli' AND u.is_active = true "
+                    # (E2E 2026-09) TASLAK SATIR PERSONELE GORUNMEZ (P241
+                    # §2.4); ona hatirlatma ya da "baslamadi" alarmi
+                    # uretmek, yayinlanmamis bir plani sahaya sizdirmakti.
+                    "AND vp.yayinlandi_at IS NOT NULL "
                     "AND vp.tarih IN (%s, %s)",
                     (bugun, bugun + timedelta(days=1)),
                 ).fetchall()
@@ -663,6 +683,10 @@ def vardiya_baslamadi_uyarilari(
                     "JOIN app_user u ON u.id = vp.user_id "
                     "LEFT JOIN shift s ON s.id = vp.shift_id "
                     "WHERE vp.durum = 'planli' AND u.is_active = true "
+                    # (E2E 2026-09) TASLAK SATIR PERSONELE GORUNMEZ (P241
+                    # §2.4); ona hatirlatma ya da "baslamadi" alarmi
+                    # uretmek, yayinlanmamis bir plani sahaya sizdirmakti.
+                    "AND vp.yayinlandi_at IS NOT NULL "
                     "AND vp.tarih IN (%s, %s)",
                     (bugun - timedelta(days=1), bugun),
                 ).fetchall()

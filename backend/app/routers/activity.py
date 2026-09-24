@@ -53,7 +53,7 @@ from ..schemas import ActivityItemOut, ActivityResponse
 router = APIRouter(prefix="/activity", tags=["activity"])
 
 _READER = require_role(
-    "admin", "yonetici", "security", "tesis_gorevlisi", "resident"
+    "admin", "yonetici", "security", "guvenlik_amiri", "tesis_gorevlisi", "resident"
 )
 
 # --------------------------------------------------------------------------- #
@@ -269,6 +269,12 @@ _ROL_KAYNAKLARI: dict[str, tuple[str, ...]] = {
     "security": (
         _DEVRIYE, _GOREV, _ALARM, _TALEP_OWN,
         _ZIYARETCI_GIRIS, _ZIYARETCI_CIKIS, _KARGO, _KARGO_TESLIM,
+        _ARAC_GIRIS, _ARAC_CIKIS, _IHLAL,
+    ),
+    # guvenlik_amiri (P231 §3 + auth.md §4a): devriye, alarm, ziyaretci
+    # (okur), arac gecisi ve ihlal. KARGO ve FINANS YOK (sozlesmede kapali).
+    "guvenlik_amiri": (
+        _DEVRIYE, _ALARM, _ZIYARETCI_GIRIS, _ZIYARETCI_CIKIS,
         _ARAC_GIRIS, _ARAC_CIKIS, _IHLAL,
     ),
     # tesis_gorevlisi: KVKK kisiti — yalniz gorev tamamlamalari.

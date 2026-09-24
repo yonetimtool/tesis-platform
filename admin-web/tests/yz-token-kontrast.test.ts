@@ -111,14 +111,22 @@ describe("(P160) yeni token paleti — WCAG AA", () => {
         }
       });
 
-      // `--yz-text-3` en soluk kademe: YALNIZ buyuk metin ve dekoratif
-      // etiket icin. Normal metin esigi BEKLENMIYOR ve bu bilincli bir
-      // sinir — bilesenler onu govde metninde kullanmamali.
-      it("uculuncu metin buyuk-metin esigini tutar (>=3.0)", () => {
+      // (E2E 2026-09) `--yz-text-3` ESIGI 3.0'DAN 4.5'E. Kademe "yalniz
+      // buyuk metin" diye tanimlanmisti ama olculdu: altbilgi, "Ctrl K" ve
+      // hesap dugmesi 12px metinde kullaniyor (3.61-4.18). Kural kodda
+      // tutulmadigi icin esik token'a tasindi.
+      it("ucuncu metin de her yuzeyde AA (>=4.5)", () => {
         for (const [yad, y] of Object.entries(yuzeyler())) {
           const o = oran(t("yz-text-3"), y);
-          expect(o, `--yz-text-3 / ${yad} = ${o.toFixed(2)}`).toBeGreaterThanOrEqual(3.0);
+          expect(o, `--yz-text-3 / ${yad} = ${o.toFixed(2)}`).toBeGreaterThanOrEqual(4.5);
         }
+      });
+
+      // Kademe sirasi: text-3 text-2'den DAHA KOYU/KONTRASTLI olamaz
+      // (koyu temada esit — gerekcesi tasarim-sistemi.css'te).
+      it("ucuncu metin ikinciyi gecmez (hiyerarsi ters donmez)", () => {
+        const y = t("yz-bg-app");
+        expect(oran(t("yz-text-3"), y)).toBeLessThanOrEqual(oran(t("yz-text-2"), y));
       });
 
       it("durum renkleri METIN olarak AA (ink varyanti, HER yuzeyde)", () => {

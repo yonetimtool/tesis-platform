@@ -9,6 +9,7 @@ import '../../../core/network/dio_provider.dart';
 // akisindakiyle ayni sozlesme semasidir (PresignResponse).
 import '../../tasks/domain/task_models.dart' show PresignTicket;
 import '../domain/announcement_models.dart';
+import '../../building_map/data/bina_duzenleme_api.dart';
 
 /// Duyuru modulunun HTTP istemcisi:
 ///
@@ -131,6 +132,23 @@ class AnnouncementApi {
 
 final announcementApiProvider = Provider<AnnouncementApi>((ref) {
   return AnnouncementApi(ref.watch(dioProvider));
+});
+
+/// (E2E 2026-09, BILDIRIM-12) Hedef kitle formundaki BLOK secenekleri —
+/// `GET /blocks` (bina editoruyle ayni uc; kopya istemci yok). Hata ya da
+/// bloksuz site -> bos liste: blok secimi kaybolur, form yine calisir.
+final duyuruBlokAdlariProvider = FutureProvider.autoDispose<List<String>>((
+  ref,
+) async {
+  try {
+    final bloklar = await ref.read(binaDuzenlemeApiProvider).listBlocks();
+    return [
+      for (final b in bloklar)
+        if (b.ad.trim().isNotEmpty) b.ad,
+    ];
+  } on ApiException {
+    return const [];
+  }
 });
 
 /// Son duyurular (EN-YENI-USTTE garantili) — ana ekran "Duyurular" karti.

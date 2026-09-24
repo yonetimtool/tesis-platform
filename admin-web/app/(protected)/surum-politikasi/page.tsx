@@ -52,6 +52,24 @@ const UC = "/api/panel/surum-politikasi";
  *  bildirim. Sunucu yine de dogrular (istemci kilidine guvenilmez). */
 const SURUM_BICIMI = /^\d+(\.\d+){0,2}$/;
 
+/** (E2E 2026-09) "1.10" -> [1, 10, 0]. Sunucudaki `surum.ayristir`in
+ *  istemci esi (bicim `SURUM_BICIMI` ile once denetlenir). */
+function surumParcala(v: string): number[] {
+  const p = v.trim().split(".").map(Number);
+  while (p.length < 3) p.push(0);
+  return p;
+}
+
+/** a < b mi — sayisal, parca parca ("1.10.0" > "1.9.0"). */
+function surumKucuk(a: string, b: string): boolean {
+  const x = surumParcala(a);
+  const y = surumParcala(b);
+  for (let i = 0; i < 3; i++) {
+    if (x[i] !== y[i]) return x[i] < y[i];
+  }
+  return false;
+}
+
 export default function SurumPolitikasiSayfasi() {
   const t = useT();
   const toast = useToast();
@@ -101,8 +119,18 @@ function PlatformKarti({
   }, [politika]);
 
   const asgariGecersiz = asgari.trim() !== "" && !SURUM_BICIMI.test(asgari.trim());
-  const onerilenGecersiz =
+  const onerilenBicimHatali =
     onerilen.trim() !== "" && !SURUM_BICIMI.test(onerilen.trim());
+  // (E2E 2026-09) ONERILEN >= ASGARI — sunucu da 422 ile reddeder
+  // (`surum_onerilen_asgariden_dusuk`). Olculen: 2.0.0 / 1.0.0 sessizce
+  // kaydediliyordu; "onerilen" esigi asgarinin altinda hic calismaz.
+  const onerilenAsgaridenDusuk =
+    !asgariGecersiz &&
+    !onerilenBicimHatali &&
+    asgari.trim() !== "" &&
+    onerilen.trim() !== "" &&
+    surumKucuk(onerilen, asgari);
+  const onerilenGecersiz = onerilenBicimHatali || onerilenAsgaridenDusuk;
 
   async function kaydet() {
     if (asgariGecersiz || onerilenGecersiz) return;
@@ -155,7 +183,13 @@ function PlatformKarti({
         <AlanSarmal
           etiket={t("surumOnerilen")}
           ipucu={t("surumOnerilenIpucu")}
-          hata={onerilenGecersiz ? t("surumBicimGecersiz") : undefined}
+          hata={
+            onerilenBicimHatali
+              ? t("surumBicimGecersiz")
+              : onerilenAsgaridenDusuk
+                ? t("surumOnerilenAsgaridenDusuk")
+                : undefined
+          }
         >
           {(baglar) => (
             <Alan

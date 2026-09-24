@@ -40,6 +40,12 @@ const tumTipler = <String>[
   'gurultu_uyari_sakin', 'gurultu_uyarisi', 'gurultu_esik_yonetim',
   'gurultu_eskalasyon_guvenlik', 'gurultu_eskalasyon_yonetim',
   'tahsilat', 'tahsilat_toplu', 'iade', 'iptal', 'virman', 'acilis',
+  // (E2E 2026-09) Push'ta eslemesiz kalan 15 tip.
+  'panik_alarm', 'panik_yanlis_alarm', 'panik_kapandi',
+  'akilli_ev_kacak', 'akilli_ev_yangin', 'entegrasyon_koptu',
+  'bakim_yaklasti', 'bakim_bugun', 'bakim_gecikti', 'vardiya_yayinlandi',
+  'gorev_tamamlandi', 'gorev_adim_ilerleme', 'anket_acildi',
+  'aidat_onizleme', 'aylik_ozet', 'gider_onay',
   'dogrulama', 'test',
 ];
 
@@ -153,5 +159,23 @@ void main() {
   test('BILINMEYEN tip null (eski davranis korundu)', () {
     expect(pushHedefi({'tip': 'boyle_bir_tip_yok'}, UserRole.yonetici), isNull);
     expect(pushHedefi(const {}, UserRole.yonetici), isNull);
+  });
+
+  // (E2E 2026-09) Kullaniciya giden her tipin EN AZ BIR rolde hedefi var.
+  test('ESLEMESIZ TIP YOK: dogrulama/test disinda her tip bir yere gider', () {
+    const gizli = {'dogrulama', 'test'};
+    for (final tip in tumTipler.where((t) => !gizli.contains(t))) {
+      final herhangi = UserRole.values
+          .where((r) => r != UserRole.unknown)
+          .any((r) => pushHedefi({'tip': tip}, r) != null);
+      expect(herhangi, isTrue, reason: '$tip hicbir rolde hedefe gitmiyor');
+    }
+  });
+
+  test('YANGIN / KACAK push\'u sakini akilli eve goturur', () {
+    for (final tip in ['akilli_ev_kacak', 'akilli_ev_yangin']) {
+      expect(pushHedefi({'tip': tip}, UserRole.resident), AppRoutes.akilliEv,
+          reason: tip);
+    }
   });
 }

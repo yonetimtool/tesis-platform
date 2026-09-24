@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../data/dukkan_api.dart';
 import 'dukkan_hata_govdesi.dart';
-import '../data/dukkan_oturum.dart';
 
 /// (DUKKAN F4) TALEPLERIM — mobil.
 ///

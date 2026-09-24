@@ -49,7 +49,7 @@ from ..schemas import (
     SurumPolitikasiOut,
     SurumPolitikasiUpdate,
 )
-from ..surum import karar
+from ..surum import karar, karsilastir
 
 router = APIRouter(tags=["surum"])
 
@@ -194,6 +194,19 @@ async def politika_guncelle(
         ),
         "mesaj": veri.get("mesaj", (mevcut["mesaj"] if mevcut else None) or {}),
     }
+    # (E2E 2026-09) ONERILEN >= ASGARI. Olculen: `asgari=2.0.0,
+    # onerilen=1.0.0` 200 ile kaydediliyordu. Tutarsiz politikada 1.5.0
+    # kullanicisi "zorunlu" ekrani gorur, ama "onerilen" sinirin ALTINDA
+    # kaldigi icin o esik hic calismaz — operator iki esik girdigini sanir,
+    # tek esik calisir. Denetim BIRLESTIRILMIS satirda: yalniz `onerilen`
+    # gonderen kismi guncelleme de kayitli `asgari` ile karsilastirilir.
+    # Biri bossa (o seviye kapali) karsilastirilacak bir sey yok.
+    if (
+        yeni["asgari_surum"]
+        and yeni["onerilen_surum"]
+        and karsilastir(yeni["onerilen_surum"], yeni["asgari_surum"]) == -1
+    ):
+        raise APIError(422, "validation_error", "surum_onerilen_asgariden_dusuk")
     satir = (
         await db.execute(
             text(

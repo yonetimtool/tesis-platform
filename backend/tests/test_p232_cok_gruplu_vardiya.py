@@ -266,9 +266,12 @@ def test_SERIDE_TARIH_DEGISTIRILEMEZ(client, yon, kisi):
     assert r.status_code == 422, r.text
 
 
-def test_PARTISI_OLMAYAN_SATIRDA_SERI_REDDEDILIR(client, yon, kisi):
+def test_PARTISI_OLMAYAN_SATIRDA_SERI_REDDEDILIR(client, yon, kisi, owner_conn):
     """Sessizce "tek" gibi davranmak, kullaniciya yaptigini sandigi seyi
-    YAPMAMIS olmak olurdu."""
+    YAPMAMIS olmak olurdu.
+
+    (E2E 2026-09) Toplu ekleme artik PARTI tasiyor (geri alinabilsin);
+    partisiz satir eski/tekil kayittir — burada elle partisiz yapilir."""
     g = _gun(140)
     r = client.post("/vardiya-plani/toplu", headers=yon, json={
         "user_id": kisi, "baslangic_tarih": g, "bitis_tarih": g,
@@ -277,6 +280,8 @@ def test_PARTISI_OLMAYAN_SATIRDA_SERI_REDDEDILIR(client, yon, kisi):
     cizelge = client.get(
         f"/vardiya-plani/cizelge?baslangic={g}&gun=1", headers=yon).json()
     pid = [b for k in cizelge["personel"] for b in k["bloklar"]][0]["plan_id"]
+    with owner_conn.cursor() as cur:
+        cur.execute("UPDATE vardiya_plani SET parti_id = NULL WHERE id = %s", (pid,))
     d = client.patch(f"/vardiya-plani/{pid}", headers=yon,
                      json={"baslangic_saat": "09:00", "kapsam": "seri"})
     assert d.status_code == 422, d.text

@@ -43,7 +43,7 @@ import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import { tarihBicimi } from "@/lib/tarih";
 
-type Alan = { id: string; ad: string; aktif: boolean };
+type Alan = { id: string; ad: string; aktif: boolean; slot_dakika?: number };
 type Rezervasyon = {
   id: string;
   alan_ad: string | null;
@@ -110,6 +110,10 @@ export default function RezervasyonlarimPage() {
 
   const kayitlar = data?.items ?? [];
   const alanlar = (alanVeri?.items ?? []).filter((a) => a.aktif);
+  // (E2E 2026-09 / TESIS-12) Sunucu slot izgarasina hizali saat istiyor;
+  // saat secicinin adimi secili alanin slotu olsun (kural sunucuda, bu
+  // yalniz yazimi kolaylastirir — hizasiz deger sunucu metniyle reddedilir).
+  const slotSaniye = (alanlar.find((a) => a.id === alanId)?.slot_dakika ?? 60) * 60;
 
   async function gonder() {
     if (!alanId || !tarih || !baslangic || !bitis) {
@@ -302,6 +306,7 @@ export default function RezervasyonlarimPage() {
           <AlanSarmal etiket={t("rezervasyonBaslangic")}>
   {(b) => (
     <Alan {...b} type="time"
+              step={slotSaniye}
               value={baslangic}
               onChange={(e) => setBaslangic(e.target.value)} />
   )}
@@ -309,6 +314,7 @@ export default function RezervasyonlarimPage() {
           <AlanSarmal etiket={t("rezervasyonBitis")}>
   {(b) => (
     <Alan {...b} type="time"
+              step={slotSaniye}
               value={bitis}
               onChange={(e) => setBitis(e.target.value)} />
   )}

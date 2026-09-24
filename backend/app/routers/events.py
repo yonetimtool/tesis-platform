@@ -64,7 +64,11 @@ router = APIRouter(prefix="/events", tags=["etkinlik"])
 # Etkinligi site yonetimi duyurur (duyuru/announcement deseni).
 _MANAGER = require_role("admin", "yonetici")
 # Okuma + seffaf sayilar TUM roller.
-_READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi", "resident")
+# (E2E 2026-09) guvenlik_amiri de okur: etkinlik gunu kapiyi ve devriyeyi
+# o planlar; site genelindeki programi goremeyen amir sahayi hazirlayamaz.
+_READER = require_role(
+    "admin", "yonetici", "security", "guvenlik_amiri", "tesis_gorevlisi", "resident"
+)
 # RSVP yalniz sakin: etkinligin muhatabi site sakinleri (karar auth.md §4).
 _RSVP = require_role("resident")
 

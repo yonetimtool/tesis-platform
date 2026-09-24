@@ -57,7 +57,7 @@ parking_router = APIRouter(prefix="/parking", tags=["vehicle-passes"])
 # `resident` EKLENMEDI: kendi aracini "girdi" isaretleyen sakin, baskasinin
 # yerini de doldurabilirdi ve sayac dogrulanamaz hale gelirdi.
 _OPERATOR = require_role("admin", "yonetici", "security")
-_READER = require_role("admin", "yonetici", "security")
+_READER = require_role("admin", "yonetici", "security", "guvenlik_amiri")
 # Agregat doluluk: plaka/daire icermez -> tum kimlikli roller (ana ekran karti).
 _OCCUPANCY_READER = require_role(
     "admin", "yonetici", "security", "tesis_gorevlisi", "resident"

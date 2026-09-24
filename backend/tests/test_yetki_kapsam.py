@@ -89,7 +89,10 @@ def _operasyonlar(spec: dict) -> list[tuple[str, str, bool]]:
                 continue
             public = isinstance(op, dict) and op.get("security") == []
             out.append((metot, yol, public))
-    return sorted(out, key=lambda t: (t[1], t[0]))
+    # (E2E 2026-09) `/auth/logout` EN SONA: jetonu gercekten iptal eder;
+    # alfabetik sirada ortada kosunca ondan SONRAKI her uc 401 (KIMLIK)
+    # olculuyordu. Ucun kendisi olculmeye devam eder.
+    return sorted(out, key=lambda t: (t[1] == "/auth/logout", t[1], t[0]))
 
 
 def _yol_doldur(spec: dict, metot: str, yol: str) -> str:

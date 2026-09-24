@@ -277,6 +277,17 @@ ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
           icon: Icons.build_outlined,
           accent: _navy,
           route: AppRoutes.bakim);
+    // (E2E 2026-09, MOBIL-10) Web ikizi iki yonetici ekrani.
+    case HomeMenuEntry.davetler:
+      return const ModuleCardSpec(
+          icon: Icons.mark_email_unread_outlined,
+          accent: _teal,
+          route: AppRoutes.davetler);
+    case HomeMenuEntry.gurultuUyarilari:
+      return const ModuleCardSpec(
+          icon: Icons.volume_up_outlined,
+          accent: _amber,
+          route: AppRoutes.gurultuUyarilari);
     case HomeMenuEntry.akilliEv:
       return const ModuleCardSpec(
           icon: Icons.home_outlined,

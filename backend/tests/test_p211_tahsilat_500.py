@@ -27,7 +27,7 @@ import uuid
 
 from tests.test_dues import _headers, _new_unit
 
-KURUS_UST_SINIR = 10**15
+KURUS_UST_SINIR = 10**13  # (E2E 2026-09) JS-guvenli toplamlar icin 10**15 -> 10**13
 
 
 def _gonder(client, hdr, govde):

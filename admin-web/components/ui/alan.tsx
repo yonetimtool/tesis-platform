@@ -196,10 +196,13 @@ export function Secim({
   ...rest
 }: SelectHTMLAttributes<HTMLSelectElement> & { hatali?: boolean }) {
   const genislik = GENISLIK_DESENI.test(className) ? "" : "w-full";
+  // (E2E 2026-09) `max-w-full` HER ZAMAN: `w-auto` secim kutusu en uzun
+  // secenegi kadar genisler; 10.000 karakterlik bir kullanici adi /tasks
+  // sayfasini 90.000 px'e tasirdi (olculdu). Kapsayicidan tasamaz.
   return (
     <select
       {...rest}
-      className={`odak-ic h-11 ${genislik} px-3 outline-none ${className}`}
+      className={`odak-ic h-11 max-w-full ${genislik} px-3 outline-none ${className}`}
       style={{ ...kutuStili(hatali), ...style }}
     >
       {children}

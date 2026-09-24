@@ -260,7 +260,7 @@ describe("yuzey kapisi (P126.2)", () => {
   });
 
   it("APP'TE platform rotasi ACILMAZ — tesis kokune yonlendirilir", () => {
-    for (const yol of ["/tenants", "/audit", "/support", "/integrations"]) {
+    for (const yol of ["/tenants", "/audit", "/support"]) {
       const res = middleware(yuzeyIstegi(APP, yol));
       expect(res.status, yol).toBe(307);
       expect(new URL(res.headers.get("location") ?? "").pathname, yol).toBe(
@@ -273,6 +273,8 @@ describe("yuzey kapisi (P126.2)", () => {
     expect(middleware(yuzeyIstegi(PANEL, "/tenants")).status).toBe(200);
     expect(middleware(yuzeyIstegi(APP, "/dues")).status).toBe(200);
     expect(middleware(yuzeyIstegi(APP, "/finans")).status).toBe(200);
+    // (E2E 2026-09) TESIS-19: yonetici diyafon/entegrasyon sagligini app'te gorur.
+    expect(middleware(yuzeyIstegi(APP, "/integrations")).status).toBe(200);
   });
 
   it("ALT YOLLAR da kapiya tabidir", () => {

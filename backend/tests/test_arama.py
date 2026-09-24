@@ -168,6 +168,28 @@ def test_GUVENLIK_finans_ve_kisi_GOREMEZ(client, world, owner_conn):
     assert "kisi" not in gorunen, "guvenlik KISI gordu"
 
 
+def test_AMIR_yalniz_GUVENLIK_PERSONELINI_bulur(client, world, owner_conn):
+    """(E2E 2026-09) Amir aramada sakinin ad + telefonunu goruyordu.
+
+    `/users` amire yalniz guvenlik personelini acar (P231, KVKK); arama
+    ayni `gorunur_roller` suzgecini uygulamiyordu.
+    """
+    isaret = f"AM{uuid.uuid4().hex[:8]}"
+    with owner_conn.cursor() as cur:
+        cur.execute("SELECT id FROM tenant WHERE slug = %s", (world["slug_a"],))
+        tid = cur.fetchone()[0]
+        for rol in ("resident", "security"):
+            cur.execute(
+                "INSERT INTO app_user (tenant_id, ad, email, password_hash, password_set, "
+                "role, is_active) VALUES (%s,%s,%s,NULL,false,%s::user_role,true)",
+                (tid, f"{isaret} {rol}", f"{isaret}.{rol}@t.local", rol),
+            )
+    amir = _giris(client, world["slug_a"], world["amir_a"])
+    basliklar = [v["baslik"] for v in _ara(client, amir, isaret) if v["kaynak"] == "kisi"]
+    assert f"{isaret} security" in basliklar, "amir guvenligi bulamiyor — test BOSA GECIYOR"
+    assert f"{isaret} resident" not in basliklar, "amir SAKINI buldu (KVKK)"
+
+
 def test_SAKIN_BASKASININ_talebini_goremez(client, world, owner_conn):
     """Rol kumesi YETMEZ: sakin talepleri "gorebilir" ama YALNIZ kendini.
 
@@ -234,3 +256,14 @@ def test_kaynak_basina_SINIR_var(client, world, owner_conn):
     yon = _giris(client, world["slug_a"], world["yonetici_a"])
     bloklar = [v for v in _ara(client, yon, isaret) if v["kaynak"] == "blok"]
     assert len(bloklar) == _KAYNAK_SINIRI
+
+
+def test_NUL_KARAKTERI_500_DEGIL_422(client, world):
+    """(E2E 2026-09) `\\u0000` Postgres `text`e girmez; dort uc 500 veriyordu.
+    Veri hatasi (SQLSTATE 22) istemci hatasidir -> 422."""
+    h = _giris(client, world["slug_a"], world["admin_a"])
+    r = client.get("/arama", params={"q": "ab\x00cd"}, headers=h)
+    assert r.status_code in (200, 422), r.text
+    r = client.post("/complaints", headers=_giris(client, world["slug_a"], world["resident_a"]),
+                    json={"baslik": "a\x00b", "mesaj": "detayli mesaj"})
+    assert r.status_code == 422, r.text

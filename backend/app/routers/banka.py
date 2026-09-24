@@ -48,7 +48,7 @@ from ..crud_helpers import get_or_404
 from .. import defter
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..makbuz import adres_satiri, makbuz_pdf
+from ..makbuz import makbuz_yayinla
 from ..models import (
     AppUser,
     BankTransaction,
@@ -57,11 +57,7 @@ from ..models import (
     Kasa,
     PaymentMatch,
     Receipt,
-    Tenant,
-    Unit,
 )
-from ..sakin_bildirimi import sakin_bildirimi_yaz
-from ..scheduler.notify import dispatch_external
 from ..schemas import (
     BankaKosumSonuc,
     BankaHareketListesi,
@@ -206,24 +202,6 @@ async def _bildir_ve_makbuz(
     makbuz = (await db.execute(select(Receipt).where(Receipt.id == makbuz_id))).scalar_one_or_none()
     if makbuz is None:
         return
-    odeyen = (
-        await db.execute(select(AppUser).where(AppUser.id == makbuz.user_id))
-    ).scalar_one_or_none()
-    tesis = (
-        await db.execute(select(Tenant).where(Tenant.id == user.tenant_id))
-    ).scalar_one_or_none()
-    site_ad = (tesis.ad if tesis else "") or ""
-    # (P193 §4) Makbuz TESISIN belgesidir: adi kadar adresi de tasimali.
-    site_adres = (
-        adres_satiri(tesis.adres, tesis.ilce, tesis.il, tesis.posta_kodu)
-        if tesis
-        else ""
-    )
-    daire_no = None
-    if makbuz.unit_id:
-        daire_no = (
-            await db.execute(select(Unit.no).where(Unit.id == makbuz.unit_id))
-        ).scalar_one_or_none()
     kalemler: list[tuple[str, int]] = []
     for e in eslesmeler:
         if e.assessment_id:
@@ -235,61 +213,13 @@ async def _bildir_ve_makbuz(
             kalemler.append((donem or "-", int(e.tutar_kurus)))
         else:
             kalemler.append(("Alacak (fazla ödeme)", int(e.tutar_kurus)))
-    try:
-        pdf = makbuz_pdf(
-            site_ad=site_ad,
-            site_adres=site_adres,
-            belge_no=makbuz.belge_no,
-            tarih=hareket.islem_tarihi,
-            odeyen_ad=(odeyen.ad if odeyen else "") or "",
-            daire_no=daire_no,
-            tutar_kurus=int(makbuz.tutar_kurus),
-            aciklama=hareket.aciklama,
-            kalemler=kalemler,
-        )
-        key = f"{user.tenant_id}/makbuz/{makbuz.id.hex}.pdf"
-        storage.sunucudan_yukle(key, pdf, "application/pdf")
-        makbuz.pdf_key = key
-        await db.flush()
-    except Exception:  # noqa: BLE001 — makbuz YAN İŞ; tahsilatı düşürmez
-        pass
-
-    # (P192 §4.4) E-POSTA — push'un KALICI ikizi. Sakin bildirimi kacirsa
-    # ya da telefonunu degistirse bile makbuzun kopyasi posta kutusunda
-    # durur. YAN IS: gonderilemezse tahsilat DUSMEZ.
-    if odeyen is not None and odeyen.email:
-        try:
-            from ..eposta_sablonlari import makbuz_metni
-            from ..gonderim import saglayici as kanal_saglayicisi, tenant_ayari
-            from ..raporlar import kurus_metin
-
-            baglanti = (
-                storage.presign_get(makbuz.pdf_key) if makbuz.pdf_key else None
-            )
-            konu, govde = makbuz_metni(
-                site_ad=site_ad,
-                belge_no=makbuz.belge_no,
-                tutar=kurus_metin(int(makbuz.tutar_kurus)),
-                baglanti=baglanti,
-            )
-            ayar = await tenant_ayari(db, user.tenant_id)
-            kanal_saglayicisi("eposta", ayar).gonder(odeyen.email, konu, govde)
-        except Exception:  # noqa: BLE001 — e-posta YAN IS
-            logger.warning("[banka] makbuz e-postasi gonderilemedi (makbuz=%s)", makbuz.id)
-
-    if makbuz.user_id:
-        veri = {"donem": kalemler[0][0] if kalemler else "-", "tutar": ""}
-        dispatch_external(
-            "aidat_odendi",
-            tenant_id=user.tenant_id,
-            target_user_ids=(makbuz.user_id,),
-            params=veri,
-            data={"tip": "aidat_odendi", "receipt_id": str(makbuz.id)},
-        )
-        sakin_bildirimi_yaz(
-            db, tenant_id=user.tenant_id, tip="aidat_odendi",
-            user_ids=(makbuz.user_id,), veri=veri,
-        )
+    # (E2E 2026-09, FINANS-02) PDF + e-posta + bildirim ORTAK yoldan: vezne
+    # ve aidat ucu da ayni yardimciyi cagirir.
+    await makbuz_yayinla(
+        db, tenant_id=user.tenant_id, makbuz=makbuz, kalemler=kalemler,
+        tarih=hareket.islem_tarihi, aciklama=hareket.aciklama,
+        dipnot="Bu makbuz banka ekstresiyle otomatik eşleştirmeden üretilmiştir.",
+    )
 
 
 async def _uygula(

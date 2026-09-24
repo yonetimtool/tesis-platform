@@ -21,6 +21,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/izin/belirgin_aciklama.dart';
 import '../../../core/para.dart';
 import '../../../core/sayi.dart';
 import '../../tasks/presentation/task_complete_controller.dart'
@@ -79,12 +80,24 @@ class _SayacOkumaScreenState extends ConsumerState<SayacOkumaScreen> {
       _degerler.putIfAbsent(id, TextEditingController.new);
 
   Future<void> _foto(BolumSayaci b) async {
-    final secilen = await ref.read(imagePickerProvider).pickImage(
-          source: ImageSource.camera,
-          maxWidth: 1600,
-          imageQuality: 80,
-        );
-    if (secilen != null && mounted) setState(() => _fotolar[b.id] = secilen);
+    // (E2E 2026-09) MOBIL-7: kamera cagrisi korunakli (izin reddi
+    // PlatformException'i yakalanmiyordu) + once belirgin aciklama.
+    final l10n = context.l10n;
+    final onay = await belirginAciklamaGoster(context, IzinTuru.talepFotograf);
+    if (!onay || !mounted) return;
+    final XFile? secilen;
+    try {
+      secilen = await ref.read(imagePickerProvider).pickImage(
+            source: ImageSource.camera,
+            maxWidth: 1600,
+            imageQuality: 80,
+          );
+    } catch (e) {
+      if (mounted) setState(() => _hata = l10n.gorevFotoAlinamadi('$e'));
+      return;
+    }
+    final foto = secilen;
+    if (foto != null && mounted) setState(() => _fotolar[b.id] = foto);
   }
 
   Future<void> _gonder(List<BolumSayaci> bolumler) async {
@@ -106,7 +119,12 @@ class _SayacOkumaScreenState extends ConsumerState<SayacOkumaScreen> {
     // GERI SAYAN OKUMA ANINDA REDDEDILIR: yeni deger oncekinin ALTINDA
     // olamaz. Sunucuya gonderip 422 beklemek, sahada duran kisiyi bir
     // gidis-donus daha bekletirdi.
-    final tuketimler = <String, double>{};
+    // (E2E 2026-09, TESIS-01) Ekran ENDEKS okur ("Onceki: 1450" gosterir,
+    // kullanici sayactaki yeni degeri yazar). Onceden bu deger TUKETIM diye
+    // gonderiliyordu: 12 m3'luk tuketim 1462 m3 borclandirildi. Artik
+    // OKUMA gonderilir; tuketimi (yeni - onceki) sunucu hesaplar ve
+    // sayacin onceki okumasini ilerletir.
+    final okumalar = <String, double>{};
     for (final b in bolumler) {
       final metin = _ctrl(b.id).text.trim();
       if (metin.isEmpty) continue;
@@ -120,9 +138,9 @@ class _SayacOkumaScreenState extends ConsumerState<SayacOkumaScreen> {
         setState(() => _hata = l10n.sayacGeriSayiyor(b.unitNo ?? ''));
         return;
       }
-      tuketimler[b.id] = deger;
+      okumalar[b.id] = deger;
     }
-    if (tuketimler.isEmpty) {
+    if (okumalar.isEmpty) {
       setState(() => _hata = l10n.sayacDegerYok);
       return;
     }
@@ -138,7 +156,7 @@ class _SayacOkumaScreenState extends ConsumerState<SayacOkumaScreen> {
         anaSayacId: _anaId!,
         anaTuketim: anaTuketim.deger!,
         birimFiyatKurus: birim,
-        bolumTuketimleri: tuketimler,
+        bolumOkumalari: okumalar,
       );
       // FOTOGRAFLAR BORCLANDIRMADAN SONRA: yukleme basarisiz olsa bile
       // borclandirma GECERLIDIR. Once fotograf yukleyip sonra

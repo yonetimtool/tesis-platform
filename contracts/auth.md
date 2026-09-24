@@ -239,8 +239,10 @@ personeline finansi, sakin verisini ve tesis ayarlarini acardi.
   verebilmesi, devri anlamsizlastirirdi.
 
 **Amirin erisimi — EN AZ YETKI:** tur/vardiya/kontrol noktasi (moda gore
-yazma), tarama raporu, kamera, pano, bildirimler, arac gecisi ve ihlal
-okuma, `POST /scans`. **KAPALI:** sakin listesi, aidat/finans, kargo,
+yazma), tarama raporu, kamera, pano, bildirimler, arac gecisi, plaka
+olaylari ve ihlal okuma, ziyaretci okuma (P231), duyuru + site kurallari
+okuma, hava durumu ve etkinlik akisi (kargo/finans parcalari HARIC),
+`POST /scans`. **KAPALI:** sakin listesi, aidat/finans, kargo,
 ziyaretci, rezervasyon, tesis ayarlari. Gerekce KVKK'dir: dis bir sirketin
 personeline sakin kisisel verisi acmak savunulamaz.
 
@@ -356,9 +358,9 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `DELETE /devices/{fcm_token}`         |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `GET  /devices` (liste, debug)        |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `GET  /assets` (liste/detay)          |  ✅   | ✅  | ✅  | ✅  | ❌  |
-| `POST /assets`                        |  ✅   | ❌  | ❌  | ❌  | ❌  |
-| `PATCH /assets/{id}`                  |  ✅   | ❌  | ❌  | ❌  | ❌  |
-| `DELETE /assets/{id}`                 |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `POST /assets` (E2E 2026-09: +yonetici)|  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `PATCH /assets/{id}`                  |  ✅   | ✅  | ❌  | ❌  | ❌  |
+| `DELETE /assets/{id}`                 |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `POST /assets/{id}/checkout`          |  ✅   | ❌  | ✅  | ✅  | ❌  |
 | `POST /assets/{id}/checkin` (sahiplik*)|  ✅   | ❌  | ✅* | ✅* | ❌  |
 | `GET  /assets/{id}/history`           |  ✅   | ✅  | ✅  | ✅  | ❌  |
@@ -431,6 +433,21 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 > kapatabilir; baska security/tesis_gorevlisi **403** `forbidden` ("Zimmet baskasinin
 > uzerinde..."). Ayrica `GET /assets?checked_out_by=<uuid>` yalniz **admin**
 > (herkes `checked_out_by=me` kullanabilir).
+>
+> **Demirbas tanimi (E2E 2026-09, TESIS-04):** `POST/PATCH/DELETE /assets`
+> **admin + yonetici**. Onceden yalniz platform admini idi; admin hesabi tek
+> tenant'ta durdugu icin yeni tesiste demirbasi kimse olusturamiyordu ve web
+> "Yeni demirbas" dugmesini yoneticiye ciziyordu. Zimmet (checkout/checkin)
+> saha rollerinde kalir; yonetici zimmet ALMAZ.
+>
+> **Akilli ev cihaz kapsami (E2E 2026-09, TESIS-04b + TESIS-13):**
+> `GET /akilli-ev/cihazlar` ve `POST /akilli-ev/cihazlar/{id}/komut` icin
+> kapsam: **admin/yonetici** tum cihazlar; **resident** yalniz KENDI dairesinin
+> cihazlari (ortak alan HARIC); **security / tesis_gorevlisi / guvenlik_amiri**
+> YALNIZ ortak alan (`unit_id IS NULL`) — sakinin dairesindeki kapi kilidi saha
+> rolune gorunmez, komutu **403** `akilli_ev_cihaz_yetkisiz`. Yonetim DISINDAKI
+> roller icin kapali bolumun cihazi listede yoktur, komutu **409**
+> `akilli_ev_bolum_kapali` (tip -> bolum eslemesi sunucuda: `TIP_BOLUM`).
 >
 > **Aidat:** Unit/tahakkuk/odeme YAZMA yalniz **admin**. **yonetici** aidat
 > raporlarini OKUR (`GET /dues/assessments`, `GET /dues/payments`,
@@ -815,6 +832,15 @@ Notlar:
     (public dogrulanip private'a baglanma) engellenir; URL host degismez, TLS
     SNI/sertifika orijinal hostname'e gore dogrulanir. Engellenen tetik
     `{ok:false, error}` doner (istek ic aga CIKMAZ).
+  - **(E2E 2026-09) SAHA CIHAZI HEDEF KAPISI (`/diyafon/*`, `/akilli-ev/koprular/*`,
+    cihaz komutu, beat saglik izlemesi):** diyafon/HA koprusu SITE LAN'inda
+    yasar, bu yuzden RFC1918 SERBEST; ama `safe_http.saha_hedefi_engelli`
+    kesin kapatir: noktasiz adlar (`redis`, `db`, `api`, `localhost` —
+    cozulmeden), `*.localhost`/`*.internal`, loopback, link-local/meta-veri,
+    multicast/unspecified ve SUNUCUNUN KENDI bagli aglari (konteyner agi).
+    Engellenen hedef kapali portla AYNI yaniti verir (`*_ulasilamiyor`, sabit
+    ayrinti) — port tarayici olarak kullanilamaz. Loopback yalniz dev/test
+    compose'unda `SAHA_LOOPBACK_SERBEST=1` ile acik (prod'da tanimsiz).
 - **Daire sikayeti + bina semasi (`/unit-complaints` + `/building-map`, D1 →
   D-viz Rev-1 — KADEMELI GORUNURLUK, `/complaints`DEN AYRI):** sakin YONETIME
   degil, bir HEDEF DAIREYE sikayet acar (kategori: `gurultu` /

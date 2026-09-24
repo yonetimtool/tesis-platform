@@ -317,7 +317,6 @@ const OGELER: readonly MenuOgesi[] = [
 
   // --- PLATFORM: yalniz `panel.*` ---------------------------------------
   { href: "/tenants", anahtar: "kabukTesisler", icon: "building", grup: "platform" },
-  { href: "/integrations", anahtar: "kabukEntegrasyonlar", icon: "hub", grup: "platform" },
   { href: "/settings", anahtar: "kabukAyarlar", icon: "gear", grup: "platform" },
   // (P202) Zorunlu/onerilen guncelleme esikleri. PLATFORM grubunda cunku
   // magazadaki paket tektir: bir tesis yoneticisinin butun kullanicilari
@@ -432,6 +431,9 @@ const OGELER: readonly MenuOgesi[] = [
   // (P193 §5) Tesis ayarlari — YONETIM grubunda, `/settings` (platform)
   // ile karismasin diye ayri ad ve ayri ikon.
   { href: "/tesis-ayarlari", anahtar: "kabukTesisAyarlari", icon: "building", grup: "yonetim" },
+  // (E2E 2026-09) Entegrasyonlar + diyafon + baglanti sagligi — tesis
+  // kurulumu, platform isi degil (bkz. yuzey.ts). `hub` bu grupta tek.
+  { href: "/integrations", anahtar: "kabukEntegrasyonlar", icon: "hub", grup: "yonetim" },
   { href: "/transparency", anahtar: "kabukSeffaflik", icon: "eye", grup: "yonetim" },
   // (P167 §6.1) "YONETISIM" BASLIGI KALDIRILDI ve icindeki dort bolum
   // KENDI SATIRLARINA cikti. Eski hâlde tek bir satirin arkasinda karar

@@ -63,9 +63,17 @@ describe("rota siniflandirmasi", () => {
   });
 
   it("PLATFORM sayfalari dogru siniflanmis", () => {
-    for (const r of ["/tenants", "/audit", "/support", "/integrations"]) {
+    for (const r of ["/tenants", "/audit", "/support"]) {
       expect(rotaYuzeyi(r), r).toBe("platform");
     }
+  });
+
+  it("(E2E 2026-09) `/integrations` TESIS tarafinda — yonetici kendi diyafonunu gorur", () => {
+    // TESIS-19: platform kumesindeyken yonetici app.*'ta ozete yonleniyordu.
+    expect(rotaYuzeyi("/integrations")).toBe("tesis");
+    expect(rotaRoldeGorunur("/integrations", "yonetici")).toBe(true);
+    expect(rotaRoldeGorunur("/integrations", "denetci")).toBe(false);
+    expect(rotaRoldeGorunur("/integrations", "security")).toBe(false);
   });
 
   it("`users` TESIS tarafinda — bir tesisin personel listesidir", () => {

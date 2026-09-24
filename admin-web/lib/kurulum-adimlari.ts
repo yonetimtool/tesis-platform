@@ -198,7 +198,10 @@ export const KURULUM_HEDEFLERI: Record<string, KurulumHedefi> = {
     engel: "kurulumEngelRezervasyonAlani",
   },
   sayac: {
-    etiket: "kurulumSayac",
+    // (E2E 2026-09) KENDI ANAHTARI: `kurulumSayac` ADIM SAYACI metnidir
+    // ("{gecilen}/{toplam} adım") ve ad cakismasi yuzunden bu adimin
+    // basligi ekranda ham sablon olarak gorunuyordu.
+    etiket: "kurulumSayacAdimi",
     aciklama: "kurulumSayacAlt",
     rota: "/tanimlar?defter=sayaclar-ana",
     engel: "kurulumEngelSayac",

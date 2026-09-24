@@ -40,7 +40,7 @@ from ..schemas import (
 router = APIRouter(prefix="/violations", tags=["violations"])
 
 _WRITER = require_role("admin", "security")
-_READER = require_role("admin", "yonetici", "security")
+_READER = require_role("admin", "yonetici", "security", "guvenlik_amiri")
 # Kapatma YALNIZ admin (dort-goz).
 _KAPATABILEN = {"admin"}
 

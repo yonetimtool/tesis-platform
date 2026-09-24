@@ -132,6 +132,16 @@ class Settings(BaseSettings):
     # 404 verir; yabancinin alaninda calisan bir sayfadan iyidir.
     portal_base_url: str = "https://yönetiyor.com"
 
+    # (E2E 2026-09) DAVET BAGLANTISININ TABANI — ASCII, KANONIK.
+    #
+    # Davet bagi UYGULAMAYI ACMALI (Android App Links / iOS Universal
+    # Links). Manifest ve entitlements yalniz `yonetiyor.com` ve
+    # `yonetio.site`i taniyor; IDN `yönetiyor.com` (= xn--ynetiyor-n4a.com)
+    # kanonige 301 ile yonleniyor ama iOS/Android dogrulayicilari 3xx
+    # IZLEMEZ — bag her zaman tarayicida aciliyordu. `/ode` gibi insan
+    # okuyacagi baglar `portal_base_url` (Unicode) ile kalir.
+    davet_base_url: str = "https://yonetiyor.com"
+
     # (P190) API'nin PUBLIC tabani — e-postadaki List-Unsubscribe (RFC 8058)
     # tek-tik bagi buraya POST'lanir; backend ucu dogrudan cevaplamali (web
     # aracisiz). Kanonik `api.yonetiyor.com` (api.yonetio.site de yasar).
@@ -144,8 +154,13 @@ class Settings(BaseSettings):
     # sizmaz). `sourceOnDemand` gecitte: kimse izlemezken RTSP cekilmez.
     mediamtx_url: str = ""            # orn. http://mediamtx:8888  (HLS)
     mediamtx_api_url: str = ""        # orn. http://mediamtx:9997  (yol kayit API)
-    #: Ayni anda en cok kac FARKLI kamera donusturulur (CPU siniri; asimda 429).
+    #: (E2E 2026-09 / GUVENLIK-16) TESIS BASINA ayni anda en cok kac FARKLI
+    #: kamera canli izlenir (asimda 429). Eskiden bu sayi TUM PLATFORMA
+    #: uygulaniyordu: bir tesiste 3 izleyici, diger butun tesislerin canli
+    #: yayinini kilitliyordu.
     kamera_canli_sinir: int = 3
+    #: Platform geneli UST sinir (gecidin CPU/bant korumasi). 0 = sinirsiz.
+    kamera_canli_genel_sinir: int = 30
     #: (P213 §4) ANA EKRANDA en cok kac kamera karesi gosterilebilir.
     #:
     #: HER KARE AYRI BIR FFMPEG SURECIDIR (kare onbellegi 10 sn). Sinirsiz

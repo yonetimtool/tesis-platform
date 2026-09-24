@@ -360,3 +360,13 @@ def test_geri_alinan_talep_TERMINAL(client, world):
         f"/complaints/{t['id']}/resolve", headers=mgr,
         json={"cozum_notu": "olmaz"})
     assert r.status_code == 422, r.text
+
+
+def test_AMIR_kategorisiz_sikayeti_TEKIL_de_goremez(client, world):
+    """(E2E 2026-09) Liste amire kategorisiz sikayeti gizliyordu ama tekil
+    `GET /complaints/{id}` acan sakinin adiyla donduruyordu (P231 §3)."""
+    resident = _headers(client, world["slug_a"], world["resident_a"])
+    amir = _headers(client, world["slug_a"], world["amir_a"])
+    c = _new(client, resident, baslik="Su akiyor")
+    r = client.get(f"/complaints/{c['id']}", headers=amir)
+    assert r.status_code == 404, r.text

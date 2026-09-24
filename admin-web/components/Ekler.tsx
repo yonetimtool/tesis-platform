@@ -31,6 +31,8 @@ interface Ek {
   metin?: string | null;
   dosya_key?: string | null;
   dosya_adi?: string | null;
+  // (E2E 2026-09) Imzali okuma adresi — ek artik ACILABILIR.
+  dosya_url?: string | null;
   olusturan_ad?: string | null;
   created_at: string;
 }
@@ -112,6 +114,10 @@ export function Ekler({
       const bilet = await apiSend<PresignBileti>("/api/uploads/presign", "POST", {
         content_type: f.type || "application/octet-stream",
         dosya_adi: f.name,
+        // (E2E 2026-09) EK BAGLAMI: sunucu bu amacta PDF'i de kabul eder
+        // (muayene raporu, fatura). Varsayilan `gorsel` amaci PDF'i 422
+        // ile reddediyordu.
+        amac: "belge",
       });
       const put = await fetch(bilet.upload_url, {
         method: "PUT",
@@ -173,6 +179,16 @@ export function Ekler({
                 <p className="whitespace-pre-wrap break-words text-sm text-[color:var(--yz-text)]">
                   {e.metin}
                 </p>
+              ) : e.dosya_url ? (
+                <a
+                  href={e.dosya_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-test={`ek-dosya-${e.id}`}
+                  className="break-words text-sm font-medium text-[color:var(--yz-text)] underline"
+                >
+                  {e.dosya_adi ?? e.dosya_key}
+                </a>
               ) : (
                 <p className="break-words text-sm font-medium text-[color:var(--yz-text)]">
                   {e.dosya_adi ?? e.dosya_key}
@@ -237,6 +253,7 @@ export function Ekler({
             <input
               ref={dosyaRef}
               type="file"
+              accept="image/jpeg,image/png,image/webp,image/heic,application/pdf"
               onChange={(ev) => void dosyaSec(ev)}
               className="hidden"
               aria-label={t("ekDosyaEkle")}

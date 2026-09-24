@@ -22,6 +22,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, audit_user
+from ..belge_no import belge_no_ata
+from ..makbuz import tahsilat_makbuzu
 from ..config import settings
 from .. import defter
 from ..deps import get_tenant_db, require_role
@@ -30,9 +32,7 @@ from .. import odeme_kodu as kod_modulu
 from .. import storage
 from ..models import (
     AppUser,
-    DuesAssessment,
     FinansalHareket,
-    GelirGiderTanim,
     Kasa,
     Receipt,
     UnitResident,
@@ -76,69 +76,20 @@ async def _kod_ver(db: AsyncSession, user: AppUser) -> str:
 
 
 async def _borc_kurus(db: AsyncSession, user: AppUser) -> int:
-    """Sakinin acik borcu: hedeflenmis tahakkuklar + dairelerinin tahakkuklari
-    eksi tahsilatlar.
+    """Sakinin acik borcu — `defter.sakin_borc_kurus` (TEK TANIM).
 
-    HEDEFLENMEMIS (daireye yazilmis) borclar da sayilir: P28 oncesi acilmis
-    ve tursuz tahakkuklar daireye yazilidir ve sakin onlari da odemek
-    zorundadir.
+    (E2E 2026-09, YETKI-06) Bu ucun kendi sorgusu vardi (P218 kurali +
+    kisi bazli tahsilat toplami) ve `/me/dues` baska bir kume
+    gosteriyordu: kiraciya odeme ekraninda 44.400, borc ekraninda 284.700
+    ayni anda soyleniyordu. Kural artik `defter.sakin_kalemleri`nde ve
+    iki uc da onu cagirir. YETKI-07'nin `NULL NOT IN` duzeltmesi oraya
+    tasindi (tanimsiz kalem acikca dahil).
+
+    Kalan KALEM DUZEYINDE hesaplanir (FIFO dagitimli): onceden "hedefli
+    kalemler - bu kisinin TUM tahsilatlari" idi ve baska dairedeki odeme
+    bu dairenin borcundan dusuluyordu.
     """
-    # (P218) DAIRELER VE ROL BIRLIKTE OKUNUR: hedefsiz kalemlerin
-    # gorunurlugu ROLE BAGLI (asagida).
-    baglar = (
-        await db.execute(
-            select(UnitResident.unit_id, UnitResident.rol_tipi).where(
-                UnitResident.user_id == user.id, UnitResident.bitis.is_(None)
-            )
-        )
-    ).all()
-    daireler = [b[0] for b in baglar]
-    kosul = DuesAssessment.hedef_user_id == user.id
-    if daireler:
-        hedefsiz = (
-            (DuesAssessment.unit_id.in_(daireler))
-            & (DuesAssessment.hedef_user_id.is_(None))
-        )
-        # =================================================================
-        # (P218) MALIK ICIN KESILMIS HEDEFSIZ BORC KIRACIYA GORUNMEZ
-        # =================================================================
-        # OLCULEN KUSUR: `hedef_kurali = malik` olan bir tanimda dairede
-        # MALIK KAYITLI DEGILSE hedef cozulemiyor ve borc DAIREYE
-        # yaziliyor. Daireye yazilan her kalem, o dairenin TUM
-        # sakinlerine gorunuyordu — yani malik icin kesilmis bir bakim
-        # borcunu KIRACI goruyordu. Hem yanlis bilgi hem gereksiz
-        # endise; ustelik kiraci onu odemekle yukumlu de degil.
-        #
-        # Kural: hedefsiz bir kalem, tanimi `malik` diyorsa YALNIZ
-        # malige gorunur. Malik kayitli olmadigi icin pratikte kimseye
-        # gorunmez — ve bu DOGRUDUR: eksik olan veri, gosterilecek
-        # kisi degil. Yonetici uyariyi onizlemede zaten goruyor
-        # (`hedefsiz` sayaci).
-        #
-        # KIRACI OLMAYANLAR (malik, rolsuz) icin kural DEGISMEDI: eski
-        # tahakkuklar (P28 oncesi, tursuz) daireye yazilidir ve onlari
-        # gizlemek, odenmesi gereken borcu saklamak olurdu.
-        if any(rol == "kiraci" for _, rol in baglar):
-            hedefsiz = hedefsiz & (
-                ~DuesAssessment.gelir_gider_tanim_id.in_(
-                    select(GelirGiderTanim.id).where(
-                        GelirGiderTanim.hedef_kurali == "malik"
-                    )
-                )
-            )
-        kosul = kosul | hedefsiz
-    borc = (
-        await db.execute(
-            select(func.coalesce(func.sum(DuesAssessment.tutar_kurus), 0))
-            # (P192 §6.3) Ters kayit cifti borc DEGILDIR.
-            .where(kosul, *defter.gecerli_tahakkuk())
-        )
-    ).scalar_one()
-    # (P192 §1) TEK TANIM: iade/iptal dusulur, yalniz gerceklesmis
-    # satirlar sayilir. Burada ayri bir toplam yazmak, sakine panelden
-    # farkli bir borc gostermek olurdu.
-    odenen = await defter.tahsilat_toplami(db, user_id=user.id)
-    return max(int(borc) - odenen, 0)
+    return await defter.sakin_borc_kurus(db, user.id)
 
 
 async def _banka_kasasi(db: AsyncSession) -> Kasa | None:
@@ -267,11 +218,20 @@ async def kart_odemesi(
             yontem="kart", provider=saglayici.name,
             provider_ref=sonuc.provider_ref,
             aciklama=f"Kart odemesi ({saglayici.name})",
+            # (E2E 2026-09, FINANS-02/07) Kart odemesi de belge numarasi,
+            # donem ve makbuz alir — vezne ve banka yoluyla ayni.
+            donem=await defter.kalemsiz_tahsilat_donemi(db, daire, None),
+            belge_no=await belge_no_ata(db, user.tenant_id, "tahsilat", None, None),
         )
         db.add(hareket)
         await db.flush()
         await db.refresh(hareket)
         hareket_id = hareket.id
+        await tahsilat_makbuzu(
+            db, tenant_id=user.tenant_id, satirlar=[hareket],
+            user_id=user.id, unit_id=daire, tarih=hareket.tarih,
+            aciklama=hareket.aciklama,
+        )
         await audit_user(
             db, user, Action.FINANS_HAREKET_CREATE,
             resource_type="finansal_hareket", resource_id=hareket.id,

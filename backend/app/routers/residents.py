@@ -24,6 +24,7 @@ from ..davet import davet_olustur_ve_gonder
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..toplu_tahakkuk import oturuyor_coz
+from ..tr_arama import tr_kalip, tr_katla_sql
 from ..hata_metinleri import istek_dili
 from ..hesap_silme import hesabi_sil_veya_anonimlestir
 from ..models import AppUser, Unit, UnitResident
@@ -54,13 +55,35 @@ async def create_resident(
     accept_language: str | None = Header(None),
 ) -> ResidentCreatedOut:
     # 1) unit: ayni no varsa mevcut kullanilir (ayni daireye malik VE
-    #    kiraci baglanabilir — sinir 1b'de), yoksa ortulu olusturulur.
+    #    kiraci baglanabilir — sinir 1b'de).
+    #
+    # (E2E 2026-09 / TESIS-18) OLMAYAN DAIRE ARTIK SESSIZCE ACILMIYOR.
+    # OLCULEN: `unit_no="Z-99"` (blok yok) BLOKSUZ bir daire yaratiyordu —
+    # bir yazim hatasi haritada "yerlesimi girilmemis" bir hayalet daire
+    # birakiyordu; ayni satir ice aktarimda "Daire bulunamadi" aliyordu.
+    # Kural artik: daire yoksa YENI DAIRE ancak BLOK SECILEREK acilir
+    # (UnitCreate'in blok-zorunlu kurali), numara tekil daire ekleme ile
+    # AYNI kanonik bicime getirilir ("12" + A -> "A-12"). Blok yoksa 422.
+    from .units import _blok_kaydini_gerektir, daire_no_kanonik  # yerel import
+
+    unit_no = body.unit_no.strip()
+    yeni_daire = False
     unit: Unit | None = (
-        await db.execute(select(Unit).where(Unit.no == body.unit_no))
+        await db.execute(select(Unit).where(Unit.no == unit_no))
     ).scalar_one_or_none()
-    if unit is None:
-        unit = Unit(tenant_id=user.tenant_id, no=body.unit_no, blok=body.blok)
-        db.add(unit)
+    if unit is None and body.blok and body.blok.strip():
+        unit_no = await daire_no_kanonik(db, unit_no, body.blok)
+        unit = (
+            await db.execute(select(Unit).where(Unit.no == unit_no))
+        ).scalar_one_or_none()
+        if unit is None:
+            await _blok_kaydini_gerektir(db, user, body.blok.strip())
+            unit = Unit(tenant_id=user.tenant_id, no=unit_no, blok=body.blok.strip())
+            db.add(unit)
+            yeni_daire = True
+    elif unit is None:
+        raise APIError(422, "invalid_reference", "sakin_daire_bulunamadi", no=unit_no)
+    if yeni_daire:
         try:
             await db.flush()
         except IntegrityError as exc:
@@ -222,10 +245,12 @@ async def list_residents(
 
     aranan = (q or "").strip()
     if len(aranan) >= 2:
-        kalip = f"%{aranan}%"
+        # (E2E 2026-09 / TESIS-09) `ilike` ı/i ve İ/I'yi katlamiyordu:
+        # "kiraci" -> "Can Kiracı" bulunmuyordu. Iki yan AYNI tabloyla.
+        kalip = tr_kalip(aranan)
         kosullar.append(
             or_(
-                AppUser.ad.ilike(kalip),
+                tr_katla_sql(AppUser.ad).like(kalip),
                 exists(
                     select(1)
                     .select_from(UnitResident)
@@ -233,7 +258,10 @@ async def list_residents(
                     .where(
                         UnitResident.user_id == AppUser.id,
                         UnitResident.bitis.is_(None),
-                        or_(Unit.no.ilike(kalip), Unit.blok.ilike(kalip)),
+                        or_(
+                            tr_katla_sql(Unit.no).like(kalip),
+                            tr_katla_sql(Unit.blok).like(kalip),
+                        ),
                     )
                 ),
             )

@@ -14,7 +14,7 @@ import httpx
 from ..kamera_kimlik import kimligi_uygula, parola_coz
 from .dahua import DahuaSaglayici
 from .hikvision import HikvisionSaglayici
-from .sablon import SablonSaglayici
+from .sablon import SablonGecersiz, SablonSaglayici, sablon_dogrula
 from .taban import AramaDesteklenmiyor, KayitAraligi, KayitSaglayici
 
 __all__ = [
@@ -22,6 +22,8 @@ __all__ = [
     "KayitAraligi",
     "KayitSaglayici",
     "SAGLAYICILAR",
+    "SablonGecersiz",
+    "sablon_dogrula",
     "saglayici_kur",
 ]
 

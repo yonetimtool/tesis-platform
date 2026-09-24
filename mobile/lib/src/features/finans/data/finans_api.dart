@@ -168,7 +168,13 @@ class FinansApi {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
         '/uploads/presign',
-        data: {'content_type': contentType, 'dosya_adi': 'gider-fisi.jpg'},
+        data: {
+          'content_type': contentType,
+          'dosya_adi': 'gider-fisi.jpg',
+          // (E2E 2026-09, FINANS-17) Fis/fatura BELGE baglamidir: sunucu bu
+          // amacta PDF faturayi da kabul eder (e-faturalar PDF gelir).
+          'amac': 'belge',
+        },
       );
       return PresignTicket.fromJson(res.data ?? const {});
     } on DioException catch (e) {

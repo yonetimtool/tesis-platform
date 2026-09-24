@@ -2532,6 +2532,12 @@ abstract class AppLocalizations {
   /// **'İptal edildi — bildirim gitmedi.'**
   String get panikIptalEdildi;
 
+  /// No description provided for @panikZatenAcik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Zaten açık bir alarmınız var — güvenlik ve yönetim bilgilendirildi.'**
+  String get panikZatenAcik;
+
   /// No description provided for @panikYanlisAlarmGonderildi.
   ///
   /// In tr, this message translates to:
@@ -3030,6 +3036,12 @@ abstract class AppLocalizations {
   /// **'Bu daire no zaten kayıtlı.'**
   String get binaDaireNoZatenVar;
 
+  /// (E2E 2026-09 / TESIS-16) Yalniz rakam yazilinca sunucunun blok onekiyle kaydedecegi no (A-11). no = SUNUCU bicimi, cevrilmez
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaydedilecek numara: {no}'**
+  String binaDaireNoOnizleme(String no);
+
   /// No description provided for @binaDaireDuzenleBaslik.
   ///
   /// In tr, this message translates to:
@@ -3185,6 +3197,12 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Yoğunluk:'**
   String get semaYogunluk;
+
+  /// No description provided for @semaTurSuzgeci.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şikayet türü'**
+  String get semaTurSuzgeci;
 
   /// No description provided for @semaYerlesimAciklama.
   ///
@@ -5224,6 +5242,300 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Yayınla'**
   String get duyuruYayinla;
+
+  /// No description provided for @duyuruHedefBloklar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bloklar (seçilmezse tüm bloklar)'**
+  String get duyuruHedefBloklar;
+
+  /// No description provided for @duyuruHedefNotu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hedef dışındakiler duyuruyu görmez ve bildirim almaz. Blok ve malik/kiracı ayrımı yalnız sakinlere uygulanır. Hedef kaydedildikten sonra değiştirilemez.'**
+  String get duyuruHedefNotu;
+
+  /// (E2E 2026-09, BILDIRIM-12) Yonetim listesinde hedefli duyurunun rozeti
+  ///
+  /// In tr, this message translates to:
+  /// **'Hedef: {ozet}'**
+  String duyuruHedefOzet(Object ozet);
+
+  /// Hedef ozetinde blok parcasi (virgulle ayrilmis blok adlari)
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok: {bloklar}'**
+  String duyuruHedefBlok(Object bloklar);
+
+  /// No description provided for @modulDavetler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Davetler'**
+  String get modulDavetler;
+
+  /// No description provided for @davetYonAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderilen davetler ve durumları.'**
+  String get davetYonAciklama;
+
+  /// No description provided for @davetYonTesisKoduIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Davet gitmediyse tesis kodunu elle iletebilirsiniz:'**
+  String get davetYonTesisKoduIpucu;
+
+  /// No description provided for @davetYonKodKopyala.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis kodunu kopyala'**
+  String get davetYonKodKopyala;
+
+  /// No description provided for @davetYonKodKopyalandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis kodu kopyalandı.'**
+  String get davetYonKodKopyalandi;
+
+  /// No description provided for @davetYonBos.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz davet yok.'**
+  String get davetYonBos;
+
+  /// No description provided for @davetYonAlinamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Davetler alınamadı.'**
+  String get davetYonAlinamadi;
+
+  /// (E2E 2026-09, MOBIL-10) Davet kartinda son gonderim zamani
+  ///
+  /// In tr, this message translates to:
+  /// **'Son gönderim: {zaman}'**
+  String davetYonSonGonderim(Object zaman);
+
+  /// No description provided for @davetYonDurumKaydoldu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaydoldu'**
+  String get davetYonDurumKaydoldu;
+
+  /// No description provided for @davetYonDurumGeriDondu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geri döndü'**
+  String get davetYonDurumGeriDondu;
+
+  /// No description provided for @davetYonDurumGitmedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderilemedi'**
+  String get davetYonDurumGitmedi;
+
+  /// No description provided for @davetYonDurumAyarYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta ayarı yok'**
+  String get davetYonDurumAyarYok;
+
+  /// No description provided for @davetYonDurumAcildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açıldı'**
+  String get davetYonDurumAcildi;
+
+  /// No description provided for @davetYonDurumIletildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İletildi'**
+  String get davetYonDurumIletildi;
+
+  /// No description provided for @davetYonDurumGonderildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderildi'**
+  String get davetYonDurumGonderildi;
+
+  /// No description provided for @davetYonDurumBekliyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bekliyor'**
+  String get davetYonDurumBekliyor;
+
+  /// No description provided for @davetYonYenidenGonder.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeniden gönder'**
+  String get davetYonYenidenGonder;
+
+  /// No description provided for @davetYonYenidenGonderildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Davet yeniden gönderildi.'**
+  String get davetYonYenidenGonderildi;
+
+  /// No description provided for @modulGurultuUyarilari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gürültü uyarıları'**
+  String get modulGurultuUyarilari;
+
+  /// No description provided for @gurultuAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Eşiği aşan gürültü şikâyetleri ve anons durumları.'**
+  String get gurultuAciklama;
+
+  /// No description provided for @gurultuYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Uyarı yok'**
+  String get gurultuYok;
+
+  /// No description provided for @gurultuYokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz eşik aşılmadı.'**
+  String get gurultuYokAlt;
+
+  /// No description provided for @gurultuAlinamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Uyarılar alınamadı.'**
+  String get gurultuAlinamadi;
+
+  /// (E2E 2026-09, MOBIL-10) Gurultu uyarisi sayac/esik
+  ///
+  /// In tr, this message translates to:
+  /// **'Sayaç: {sayac}/{esik}'**
+  String gurultuSayac(int sayac, int esik);
+
+  /// No description provided for @gurultuDaireYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire bilinmiyor'**
+  String get gurultuDaireYok;
+
+  /// No description provided for @gurultuDurumGonderildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderildi'**
+  String get gurultuDurumGonderildi;
+
+  /// No description provided for @gurultuDurumBasarisiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başarısız'**
+  String get gurultuDurumBasarisiz;
+
+  /// No description provided for @gurultuDurumBekliyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Anons bekliyor'**
+  String get gurultuDurumBekliyor;
+
+  /// No description provided for @gurultuDurumYapildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Anons yapıldı'**
+  String get gurultuDurumYapildi;
+
+  /// No description provided for @gurultuIsaretlendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Uyarı işaretlendi.'**
+  String get gurultuIsaretlendi;
+
+  /// No description provided for @girisKodIleEposta.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parola yerine e-postaya kod gönder'**
+  String get girisKodIleEposta;
+
+  /// No description provided for @girisKodYalnizEposta.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kod ile giriş e-posta adresiyle çalışır. Telefonla girmek için parolanızı kullanın.'**
+  String get girisKodYalnizEposta;
+
+  /// No description provided for @girisParolaylaDon.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parolayla giriş yap'**
+  String get girisParolaylaDon;
+
+  /// No description provided for @girisEpostaKodGonder.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kod gönder'**
+  String get girisEpostaKodGonder;
+
+  /// No description provided for @girisEpostaKodGonderildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Adres kayıtlıysa kod e-postayla gönderildi. Kod 10 dakika geçerlidir.'**
+  String get girisEpostaKodGonderildi;
+
+  /// No description provided for @girisKodTesisKoduAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu kod birden çok tesiste geçerli. Girmek istediğiniz tesisin kodunu yazın.'**
+  String get girisKodTesisKoduAciklama;
+
+  /// No description provided for @girisTesisKodu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis kodu'**
+  String get girisTesisKodu;
+
+  /// No description provided for @girisSlugGecersiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis kodu yalnızca küçük harf, rakam ve tire içerebilir.'**
+  String get girisSlugGecersiz;
+
+  /// No description provided for @girisSifremiUnuttum.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şifremi unuttum'**
+  String get girisSifremiUnuttum;
+
+  /// No description provided for @sifreSifirlaBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şifremi Unuttum'**
+  String get sifreSifirlaBaslik;
+
+  /// No description provided for @sifreSifirlaAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis kodunuzu ve e-postanızı girin. Kod yalnızca doğrulanmış e-postası olan hesaplara gönderilir; birkaç dakika içinde bir e-posta almazsanız e-postanız henüz doğrulanmamış olabilir. Güvenlik gereği bir hesabın bulunup bulunmadığını belirtmeyiz.'**
+  String get sifreSifirlaAciklama;
+
+  /// No description provided for @sifreSifirlaGonderildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bir hesap varsa e-postanıza bir kod gönderildi. Kodu ve yeni parolanızı girin.'**
+  String get sifreSifirlaGonderildi;
+
+  /// No description provided for @sifreSifirlaKur.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parolayı güncelle'**
+  String get sifreSifirlaKur;
+
+  /// No description provided for @sifreSifirlaBasarili.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parolanız güncellendi. Yeni parolanızla giriş yapabilirsiniz.'**
+  String get sifreSifirlaBasarili;
+
+  /// No description provided for @sifreSifirlaGirise.
+  ///
+  /// In tr, this message translates to:
+  /// **'Girişe dön'**
+  String get sifreSifirlaGirise;
 
   /// No description provided for @ortakIslemler.
   ///
@@ -12250,6 +12562,54 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Maliyet'**
   String get bakimTutar;
+
+  /// (E2E 2026-09) Bakim kaydina fotograf (TESIS-05)
+  ///
+  /// In tr, this message translates to:
+  /// **'Fotoğraf ekle'**
+  String get bakimFotoEkle;
+
+  /// (E2E 2026-09) Bakim kaydina fotograf (TESIS-05)
+  ///
+  /// In tr, this message translates to:
+  /// **'Fotoğraf kayıtla birlikte yüklenecek'**
+  String get bakimFotoHazir;
+
+  /// (E2E 2026-09) Kayit geri alinmaz; yalniz fotograf eksik
+  ///
+  /// In tr, this message translates to:
+  /// **'Bakım kaydedildi ama fotoğraf yüklenemedi.'**
+  String get bakimFotoYuklenemedi;
+
+  /// (E2E 2026-09) Ekipmanin gecmis bakim kayitlari
+  ///
+  /// In tr, this message translates to:
+  /// **'Bakım geçmişi'**
+  String get bakimGecmis;
+
+  /// (E2E 2026-09) Ekipmanin gecmis bakim kayitlari
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu ekipman için kayıtlı bakım yok.'**
+  String get bakimGecmisYok;
+
+  /// No description provided for @bakimGecmisYokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yapılan bakımlar yönetici tarafından kaydedildikçe burada tarih, tutar ve eklerle listelenir.'**
+  String get bakimGecmisYokAlt;
+
+  /// (E2E 2026-09) Bakim kaydinin ekleri (TESIS-05)
+  ///
+  /// In tr, this message translates to:
+  /// **'Fotoğraf ve belgeler'**
+  String get bakimEkler;
+
+  /// (E2E 2026-09) Bakim kaydinin ekleri (TESIS-05)
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu kayda eklenmiş fotoğraf ya da belge yok.'**
+  String get bakimEkYok;
 
   /// (P241 §1) Periyodik bakim
   ///

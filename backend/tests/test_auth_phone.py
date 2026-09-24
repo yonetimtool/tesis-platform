@@ -101,7 +101,7 @@ def test_first_login_temp_code_then_set_password(client, world, owner_conn):
     r = client.post(
         "/residents",
         headers=yon,
-        json={"unit_no": "P-1", "ad": "Telefon Sakin", "telefon": world["bos_telefonlar"][0], "email": _p197_mail()},
+        json={"blok": "A", "unit_no": "P-1", "ad": "Telefon Sakin", "telefon": world["bos_telefonlar"][0], "email": _p197_mail()},
     )
     assert r.status_code == 201, r.text
     assert "temp_code" not in r.json()  # (P186) gecici kod URETILMEZ
@@ -152,7 +152,7 @@ def test_phone_globally_unique_across_tenants(client, world):
     r = client.post(
         "/residents",
         headers=yon_a,
-        json={"unit_no": "P-2", "ad": "A Sakin", "telefon": phone, "email": _p197_mail()},
+        json={"blok": "A", "unit_no": "P-2", "ad": "A Sakin", "telefon": phone, "email": _p197_mail()},
     )
     assert r.status_code == 201, r.text
 
@@ -169,7 +169,7 @@ def test_phone_globally_unique_across_tenants(client, world):
     r = client.post(
         "/residents",
         headers=yon_b,
-        json={"unit_no": "P-2", "ad": "B Sakin", "telefon": phone, "email": _p197_mail()},
+        json={"blok": "A", "unit_no": "P-2", "ad": "B Sakin", "telefon": phone, "email": _p197_mail()},
     )
     assert r.status_code == 409, r.text
     assert r.json()["error"]["code"] == "conflict"

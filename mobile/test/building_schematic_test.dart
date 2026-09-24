@@ -20,7 +20,7 @@ class _FakeMapApi extends BuildingMapApi {
   final BuildingMap _map;
 
   @override
-  Future<BuildingMap> fetchMap() async => _map;
+  Future<BuildingMap> fetchMap({String? kategori}) async => _map;
 }
 
 class _FakeComplaintApi extends UnitComplaintApi {

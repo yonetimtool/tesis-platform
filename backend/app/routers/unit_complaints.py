@@ -260,8 +260,23 @@ async def _harita_penceresi(db: AsyncSession):
 
 
 
+#: (E2E 2026-09) TESIS-17: harita/yogunluk TUR SECICISI. Onceden tum
+#: kategoriler tek sayida toplaniyordu; yonetici "gurultu mu, goruntu
+#: kirliligi mi" sorusunu ancak daireye tek tek girerek yanitlayabiliyordu.
+#: Suzgec YALNIZ GORUNUR SAYIYI (a) daraltir; esik sayaci (b) kendi
+#: kategorisine zaten bagli ve buradan gecmez.
+_KATEGORI_SUZGECI = Query(
+    None, description="(E2E 2026-09) Yalniz bu kategorideki acik sikayetleri say."
+)
+
+
+def _kategori_kosulu(kategori: str | None) -> list:
+    return [UnitComplaint.kategori == kategori] if kategori is not None else []
+
+
 @router.get("/density", response_model=UnitDensityResponse)
 async def unit_density(
+    kategori: UnitComplaintKategori | None = _KATEGORI_SUZGECI,
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_MANAGER),
 ) -> UnitDensityResponse:
@@ -286,6 +301,7 @@ async def unit_density(
                     UnitComplaint.durum == "acik",
                     # (P219 §2) HARITA PENCERESI — gorunurluk filtresi.
                     *( [pencere] if pencere is not None else [] ),
+                    *_kategori_kosulu(kategori),
                 ),
             )
             .group_by(Unit.id, Unit.no, Unit.blok)
@@ -383,6 +399,7 @@ async def my_unit_complaints(
 # ------------------------------ bina haritasi ------------------------------- #
 @router.get("/building-map", response_model=BuildingMapResponse)
 async def building_map(
+    kategori: UnitComplaintKategori | None = _KATEGORI_SUZGECI,
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_READER),
 ) -> BuildingMapResponse:
@@ -434,6 +451,7 @@ async def building_map(
                     # gerekcenin ta kendisi — o not `complaint_count`
                     # icin yazilmis, bu sutun atlanmis.
                     *([pencere] if pencere is not None else []),
+                    *_kategori_kosulu(kategori),
                 )
                 .group_by(UnitComplaint.target_unit_id)
             )
@@ -461,6 +479,7 @@ async def building_map(
                     # filtrelememek, ayni ekranda iki farkli sayi
                     # gostermek olurdu.
                     *( [pencere] if pencere is not None else [] ),
+                    *_kategori_kosulu(kategori),
                 ),
             )
             .group_by(Unit.id, Unit.no, Unit.blok, Unit.kat, Unit.sira)

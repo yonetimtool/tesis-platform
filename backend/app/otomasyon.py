@@ -48,6 +48,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from . import defter, gecikme
 from .akis_metinleri import _tl
+from .finans import tarih_metni, tl_metni
 from .belge_no import belge_no_ata
 from .config import settings
 from .crud_helpers import is_unique_violation
@@ -341,6 +342,12 @@ async def aidat_planlari_isle(
 
         tarih = tahakkuk_tarihi(donem, plan.tahakkuk_gunu)
         vade = tarih + timedelta(days=plan.vade_gun)
+        if plan.son_donem is None:
+            # (E2E 2026-09, FINANS-18) AY ORTASINDA ACILAN PLANIN ILK DONEMI
+            # vadesi GECMIS dogmaz: 23 Eylul'de acilan plan (gun 1, vade 10)
+            # Eylul'u "son odeme 11.09" ile yaziyordu — borc dogdugu anda 12
+            # gun gecikmis ve faiz aciksa ilk kosumda faize giriyordu.
+            vade = max(vade, bugun + timedelta(days=plan.vade_gun))
         satirlar = await toplu_plan(db, _plan_istegi(plan, donem, vade), tanim)
         kalemler: list[tuple[uuid.UUID, uuid.UUID | None, str, int]] = []
         atlanan = 0
@@ -468,7 +475,9 @@ async def borc_hatirlatmalari(
             )
 
     for user_id, (kalan, vade) in kisi.items():
-        params = {"tutar": _tl(kalan), "vade": vade.isoformat()}
+        # (E2E 2026-09, BILDIRIM-14) Turkce tutar ve gun.ay.yil tarih —
+        # elle gonderilen hatirlatmayla (finans_gosterge) AYNI bicim.
+        params = {"tutar": tl_metni(kalan), "vade": tarih_metni(vade)}
         # (P192 §4.2) YONETICININ METNI VARSA O GIDER. `{tutar}`/`{vade}`
         # alanlari doldurulur; bilinmeyen bir alan yazilmissa metin OLDUGU
         # GIBI gonderilir — yoneticinin cumlesini bir bicimlendirme hatasi

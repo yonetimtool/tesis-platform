@@ -241,3 +241,52 @@ def test_tenant_isolation_via_token(client, world):
     assert len(b_items) == 3  # B sadece kendi 3 checkpoint'ini gorur
     assert all(ci["nfc_tag_uid"].startswith("A-") for ci in a_items)
     assert all(ci["nfc_tag_uid"].startswith("B-") for ci in b_items)
+
+
+# ------------------------- (E2E 2026-09) cikis / kilit --------------------- #
+def test_LOGOUT_refresh_ve_erisim_jetonunu_GECERSIZ_kilar(client, world):
+    """Onceden backend'de cikis ucu yoktu: cikistan sonra eski refresh yeni
+    jeton cifti uretiyor, eski erisim jetonu calisiyordu."""
+    r = _login(client, world["slug_a"], GUARD_EMAIL, PW_GUARD_A)
+    assert r.status_code == 200, r.text
+    at, rt = r.json()["access_token"], r.json()["refresh_token"]
+    assert client.get("/me", headers=_bearer(at)).status_code == 200
+
+    r = client.post("/auth/logout", headers=_bearer(at), json={"refresh_token": rt})
+    assert r.status_code == 204, r.text
+    assert client.post("/auth/refresh", json={"refresh_token": rt}).status_code == 401
+    assert client.get("/me", headers=_bearer(at)).status_code == 401
+    # Diger cihaz (ayri giris) ETKILENMEZ.
+    r2 = _login(client, world["slug_a"], GUARD_EMAIL, PW_GUARD_A)
+    assert client.get("/me", headers=_bearer(r2.json()["access_token"])).status_code == 200
+
+
+def test_LOGOUT_gecersiz_jetonla_da_204(client):
+    r = client.post("/auth/logout", json={"refresh_token": "cop"})
+    assert r.status_code == 204
+
+
+def test_HER_YERDEN_CIKIS_tum_oturumlari_kapatir(client, world):
+    a = _login(client, world["slug_a"], GUARD_EMAIL, PW_GUARD_A).json()
+    b = _login(client, world["slug_a"], GUARD_EMAIL, PW_GUARD_A).json()
+    r = client.post("/auth/logout", headers=_bearer(a["access_token"]),
+                    json={"her_yerden": True})
+    assert r.status_code == 204
+    assert client.get("/me", headers=_bearer(b["access_token"])).status_code == 401
+    assert client.post("/auth/refresh",
+                       json={"refresh_token": b["refresh_token"]}).status_code == 401
+    # Cikistan SONRA yapilan giris gecerli.
+    c = _login(client, world["slug_a"], GUARD_EMAIL, PW_GUARD_A).json()
+    assert client.get("/me", headers=_bearer(c["access_token"])).status_code == 200
+
+
+def test_PAROLA_GIRISI_KABA_KUVVETE_KILITLENIR(client):
+    """`/auth/login` sinirsizdi (20/20 yanlis -> 401, 429 yok); ayni yuzeyin
+    `tesislerim` kapisi kilitliydi. Var olmayan kimlik de ayni sayaci yer
+    (sinir hesap varligini sizdirmaz)."""
+    kimlik = f"kaba-{uuid.uuid4().hex[:10]}@example.com"
+    for _ in range(10):
+        r = client.post("/auth/login", json={"kimlik": kimlik, "password": "yanlis-parola"})
+        assert r.status_code == 401, r.text
+    r = client.post("/auth/login", json={"kimlik": kimlik, "password": "yanlis-parola"})
+    assert r.status_code == 429, r.text

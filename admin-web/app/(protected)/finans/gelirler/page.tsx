@@ -24,6 +24,9 @@ export default function GelirlerPage() {
   return (
     <HareketSayfasi
       baslikAnahtari="kabukGelirler"
+      // (E2E 2026-09) Giderler ve tahsilatlarda aciklama satiri vardi,
+      // gelirlerde yoktu.
+      aciklamaAnahtari="finansGelirlerAlt"
       ozet={<FinansOzetSeridi tur="gelir" />}
       tip={TIP}
       raporKodu="finansal_hareketler"

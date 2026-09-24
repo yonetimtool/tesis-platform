@@ -20,7 +20,7 @@ export default defineConfig({
     include: ["tests/**/*.test.ts"],
     setupFiles: ["tests/kurulum.ts"],
     // Next derlemesi ve uretilen tipler test kapsamina girmesin.
-    exclude: ["node_modules/**", ".next/**"],
+    exclude: ["node_modules/**", ".next/**", ".next-dogrula/**"],
     // TUR 68 — KAPSAM PAYDASI.
     //
     // Eski v8 varsayilani YALNIZ testlerin IMPORT ETTIGI dosyalari sayiyordu;

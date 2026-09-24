@@ -169,6 +169,9 @@ void main() {
           HomeMenuEntry.reports,
           HomeMenuEntry.personel,
           HomeMenuEntry.sakinler,
+          // (E2E 2026-09, MOBIL-10) Web ikizi: davetler + gurultu uyarilari.
+          HomeMenuEntry.davetler,
+          HomeMenuEntry.gurultuUyarilari,
           HomeMenuEntry.integrations,
           // (P240 §2) Diyafon — dis sistem baglantisi.
           HomeMenuEntry.diyafon,

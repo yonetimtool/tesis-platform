@@ -101,6 +101,14 @@ def _cihaz(client, admin, kopru_id, **over):
     return r.json()
 
 
+def _bolum_ac(client, admin, *bolumler):
+    r = client.put(
+        "/akilli-ev/bolumler", headers=admin,
+        json={"bolumler": [{"bolum": b, "acik": True} for b in bolumler]},
+    )
+    assert r.status_code == 200, r.text
+
+
 @pytest.fixture
 def evworld(client, world, owner_conn):
     """world + IKI daire: `daire` (resident_a bagli) ve `baska` (bos).
@@ -185,6 +193,9 @@ def test_IDOR_sakin_BASKA_DAIRENIN_cihazini_GOREMEZ(client, world, evworld):
     sakin = _headers(client, world["slug_a"], world["resident_a"])
     k = _kopru(client, admin)
     daire, baska = evworld["daire"], evworld["baska"]
+    # (E2E 2026-09) TESIS-13: kapali bolumun cihazi sakine gorunmez —
+    # isik `enerji` bolumunde; olcum IDOR icin, bolum acilir.
+    _bolum_ac(client, admin, "enerji")
 
     benim = _cihaz(client, admin, k["id"], unit_id=daire)
     otekinin = _cihaz(client, admin, k["id"], unit_id=baska, ad="Komşu ışığı")
@@ -210,6 +221,7 @@ def test_IDOR_sakin_BASKA_DAIRENIN_cihazina_KOMUT_VEREMEZ(client, world, evworld
         admin = _headers(client, world["slug_a"], world["admin_a"])
         sakin = _headers(client, world["slug_a"], world["resident_a"])
         k = _kopru(client, admin, port=ha.port)
+        _bolum_ac(client, admin, "enerji")  # (E2E 2026-09) TESIS-13
         benim = _cihaz(client, admin, k["id"], unit_id=evworld["daire"])
         otekinin = _cihaz(
             client, admin, k["id"], unit_id=evworld["baska"], ad="Komsu",

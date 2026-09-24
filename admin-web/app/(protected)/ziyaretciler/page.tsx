@@ -5,7 +5,17 @@
 // KAYIT YALNIZ GÜVENLİK: sunucu `_REGISTRAR = require_role("security")` ile
 // zorlar; yönetici/admin geçmişi okur ama kayıt açmaz (kapı operasyonu).
 // Bu sayfa `app.*` tesis yüzeyindedir ve rol kapısı girişte uygulanır.
-import { useState } from "react";
+//
+// (E2E 2026-09 / GUVENLIK-14) KARAR: FORM KALDIRILMADI, MOBİLDEKİ SEÇİCİ
+// TAŞINDI. Sayfa P129 ile PARK (`lib/yuzey.ts` `"/ziyaretciler": []`) ve
+// P129'un kendi kuralı "geri açmak = rol adını satıra yazmak". Ölçülen:
+// park edilmiş form geri açılsa ÇALIŞMAZDI — gövde `{unit_no, ziyaretci_ad}`
+// idi, `target_resident_user_id` sunucuda ZORUNLU (her kayıt 422) ve
+// daire serbest metindi. Formu silmek sayfayı geri açılamaz bırakırdı ve
+// P162'nin (düzenleme paritesi) kararını geri alırdı; bu yüzden mobilin
+// `units/ara` (numara VEYA sakin adıyla) + hedef sakin seçicisi buraya
+// taşındı. Park kararı DEĞİŞMEDİ — bu tur hiçbir role sayfa açmıyor.
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 
 // (P245) UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
@@ -43,7 +53,18 @@ type Ziyaretci = {
   notlar: string | null;
   giris_zamani: string;
   cikis_zamani: string | null;
+  target_resident_user_id?: string | null;
+  target_resident_ad?: string | null;
 };
+
+/** `GET /units/ara` satiri — daire + AKTIF sakinleri (tek yanitta). */
+type SakinOzet = { user_id: string; ad: string };
+type DaireSonuc = { id: string; no: string; blok: string | null; sakinler: SakinOzet[] };
+
+/** Arama en az IKI karakterle baslar (sunucu da tek harfe bos doner). */
+const ARAMA_ALT_SINIR = 2;
+/** Her tusta istek atilmasin. */
+const ARAMA_GECIKME_MS = 250;
 
 export default function ZiyaretcilerPage() {
   const t = useT();
@@ -67,8 +88,39 @@ export default function ZiyaretcilerPage() {
   const tumKayitlar = tumu?.items ?? [];
 
   const [ad, setAd] = useState("");
-  const [daireNo, setDaireNo] = useState("");
+  // (E2E 2026-09 / GUVENLIK-14) DAIRE SERBEST METIN DEGIL: aranir, secilir.
+  const [arama, setArama] = useState("");
+  const [gecikmeliArama, setGecikmeliArama] = useState("");
+  const [daire, setDaire] = useState<DaireSonuc | null>(null);
+  const [hedef, setHedef] = useState("");
   const [notlar, setNotlar] = useState("");
+  useEffect(() => {
+    const z = setTimeout(() => setGecikmeliArama(arama.trim()), ARAMA_GECIKME_MS);
+    return () => clearTimeout(z);
+  }, [arama]);
+  const { data: aramaSonucu } = useSWR<DaireSonuc[]>(
+    !daire && gecikmeliArama.length >= ARAMA_ALT_SINIR
+      ? `/api/units/ara?q=${encodeURIComponent(gecikmeliArama)}&limit=10`
+      : null,
+    jsonFetcher,
+  );
+
+  function daireSec(d: DaireSonuc | null) {
+    setDaire(d);
+    // TEK SAKIN VARSA OTOMATIK SECILIR — kapida en sik durum; birden
+    // cok sakinde secim zorunlu (bildirim YALNIZ ona gider).
+    setHedef(d && d.sakinler.length === 1 ? d.sakinler[0].user_id : "");
+    if (!d) setArama("");
+  }
+
+  function formuSifirla() {
+    setAd("");
+    setArama("");
+    setGecikmeliArama("");
+    setDaire(null);
+    setHedef("");
+    setNotlar("");
+  }
   const [hata, setHata] = useState<string | null>(null);
   const [gonderiyor, setGonderiyor] = useState(false);
   const [modalAcik, setModalAcik] = useState(false);
@@ -86,8 +138,14 @@ export default function ZiyaretcilerPage() {
   const kayitlar = data?.items ?? [];
 
   async function kaydet() {
-    if (!ad.trim() || !daireNo.trim()) {
+    if (!ad.trim() || !daire) {
       setHata(t("ziyaretciAlanZorunlu"));
+      return;
+    }
+    // (E2E 2026-09 / GUVENLIK-14) HEDEF SAKIN ZORUNLU — sunucu da ister
+    // (422); bildirim ve gorunurluk YALNIZ ona baglidir.
+    if (!hedef) {
+      setHata(t("ziyaretciHedefZorunlu"));
       return;
     }
     setHata(null);
@@ -96,7 +154,8 @@ export default function ZiyaretcilerPage() {
       // DAIRE NO ile gonderilir: kapida görevli daire NUMARASINI bilir,
       // kaydın kimliğini değil. Sunucu numarayı çözer.
       const govde = {
-        unit_no: daireNo.trim(),
+        unit_no: daire.no,
+        target_resident_user_id: hedef,
         ziyaretci_ad: ad.trim(),
         // `null` ACIKCA gonderilir: notu TEMIZLEMEK icin tek yol bu.
         // Alani hic gondermemek "degistirme" demek olurdu.
@@ -104,9 +163,7 @@ export default function ZiyaretcilerPage() {
       };
       if (duzenlenen) await apiSend(`/api/visitors/${duzenlenen.id}`, "PATCH", govde);
       else await apiSend("/api/visitors", "POST", govde);
-      setAd("");
-      setDaireNo("");
-      setNotlar("");
+      formuSifirla();
       setDuzenlenen(null);
       setModalAcik(false);
       toast.success(t("ziyaretciKaydedildi"));
@@ -195,8 +252,21 @@ export default function ZiyaretcilerPage() {
             boy="kucuk"
             onClick={() => {
               setDuzenlenen({ id: z.id });
+              formuSifirla();
               setAd(z.ziyaretci_ad);
-              setDaireNo(z.unit_no ?? "");
+              // Kayitli daire + hedef ON-SECILI gelir: duzenleme yalniz adi
+              // duzeltmek icin acildiysa daireyi yeniden aramak gerekmesin.
+              if (z.unit_no) {
+                setDaire({
+                  id: "",
+                  no: z.unit_no,
+                  blok: null,
+                  sakinler: z.target_resident_user_id
+                    ? [{ user_id: z.target_resident_user_id, ad: z.target_resident_ad ?? "" }]
+                    : [],
+                });
+                setHedef(z.target_resident_user_id ?? "");
+              }
               setNotlar(z.notlar ?? "");
               setHata(null);
               setModalAcik(true);
@@ -230,9 +300,7 @@ export default function ZiyaretcilerPage() {
             // Temizlemeseydik "yeni" dugmesi son duzenlenen kaydin
             // uzerine yazardi.
             setDuzenlenen(null);
-            setAd("");
-            setDaireNo("");
-            setNotlar("");
+            formuSifirla();
             setHata(null);
             setModalAcik(true);
           }}
@@ -314,13 +382,67 @@ export default function ZiyaretcilerPage() {
               maxLength={120} />
   )}
 </AlanSarmal>
-          <AlanSarmal etiket={t("ziyaretciDaire")}>
-  {(b) => (
-    <Alan {...b} value={daireNo}
-              onChange={(e) => setDaireNo(e.target.value)}
-              maxLength={30} />
-  )}
-</AlanSarmal>
+          {daire ? (
+            <div className="space-y-2" data-test="ziyaretci-secili-daire">
+              <div className="flex items-center justify-between gap-2">
+                <span style={{ color: "var(--yz-text)" }}>
+                  <span style={{ color: "var(--yz-text-2)" }}>{t("ziyaretciDaire")}</span>{" "}
+                  <strong>{daire.no}</strong>
+                </span>
+                <Dugme boy="kucuk" tur="sessiz" onClick={() => daireSec(null)}>
+                  {t("ziyaretciDaireDegistir")}
+                </Dugme>
+              </div>
+              {daire.sakinler.length === 0 ? (
+                <p role="alert" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+                  {t("ziyaretciSakinYok")}
+                </p>
+              ) : (
+                <AlanSarmal etiket={t("ziyaretciHedefSakin")}>
+                  {(b) => (
+                    <Secim {...b} value={hedef} onChange={(e) => setHedef(e.target.value)}>
+                      <option value="">—</option>
+                      {daire.sakinler.map((s) => (
+                        <option key={s.user_id} value={s.user_id}>
+                          {s.ad}
+                        </option>
+                      ))}
+                    </Secim>
+                  )}
+                </AlanSarmal>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <AlanSarmal etiket={t("ziyaretciDaireAra")}>
+                {(b) => (
+                  <Alan {...b} value={arama}
+                    onChange={(e) => setArama(e.target.value)}
+                    maxLength={100} />
+                )}
+              </AlanSarmal>
+              {gecikmeliArama.length >= ARAMA_ALT_SINIR && aramaSonucu ? (
+                aramaSonucu.length === 0 ? (
+                  <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+                    {t("ziyaretciAramaSonucYok")}
+                  </p>
+                ) : (
+                  <ul className="space-y-1" data-test="ziyaretci-daire-sonuclari">
+                    {aramaSonucu.map((d) => (
+                      <li key={d.id}>
+                        <Dugme boy="kucuk" tur="sessiz" onClick={() => daireSec(d)}>
+                          {d.no}
+                          {d.sakinler.length > 0
+                            ? ` · ${d.sakinler.map((s) => s.ad).join(", ")}`
+                            : null}
+                        </Dugme>
+                      </li>
+                    ))}
+                  </ul>
+                )
+              ) : null}
+            </div>
+          )}
           <AlanSarmal etiket={t("ziyaretciNot")}>
   {(b) => (
     <Alan {...b} value={notlar}

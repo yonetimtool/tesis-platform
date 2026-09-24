@@ -42,6 +42,27 @@ export function tarihSaatUzun(iso: string, dil?: string): string {
   return bicimle(iso, dil, { dateStyle: "medium", timeStyle: "short" });
 }
 
+/**
+ * (E2E 2026-09, FINANS-21 / ARAYUZ-16) SALT TARIH ("2026-09-23") — saatsiz.
+ *
+ * `new Date("2026-09-23")` UTC GECE YARISI olarak cozulur: UTC'nin batisindaki
+ * tarayicida gun bir GERI kayar ("22.09.2026 20:00"), Turkiye'de ise
+ * uydurma bir saat ("03:00") gorunur. Sunucunun `date` alanlari (fis/tahsilat
+ * tarihi) bir GUNDUR, an degil — yerel bilesenlerle kurulur ve saatsiz
+ * yazilir. Tam zaman damgasi gelirse `tarihBicimi`ne duser.
+ */
+export function saltTarihBicimi(tarih: string, dil?: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(tarih);
+  if (!m) return tarihBicimi(tarih, dil);
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  if (Number.isNaN(d.getTime())) return tarih;
+  try {
+    return d.toLocaleDateString(dil ?? tarayiciDili());
+  } catch {
+    return tarih;
+  }
+}
+
 /** Yalniz tarih. Gecersiz girdi AYNEN doner (uydurma tarih gosterme). */
 export function tarihBicimi(iso: string, dil?: string): string {
   const d = new Date(iso);

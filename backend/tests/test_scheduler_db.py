@@ -120,7 +120,9 @@ def notify_spy(monkeypatch):
 # ------------------------------- uretim ------------------------------------ #
 def test_materialize_creates_six_and_is_idempotent(sched):
     pid = _plan(sched.conn, sched.tid, time(0, 0), time(6, 0), 60)
-    now = datetime(2026, 1, 15, 12, 0, tzinfo=UTC)
+    # (E2E 2026-09) GECMIS PENCERE URETILMEZ: "simdi" gunun BASINDA
+    # (yerel 00:00 = 21:00Z onceki gun) secildi ki alti pencere de gelecekte olsun.
+    now = datetime(2026, 1, 14, 21, 0, tzinfo=UTC)
 
     materialize_windows(now=now, horizon_days=1)
     rows = _windows_of(sched.conn, pid)

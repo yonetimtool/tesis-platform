@@ -191,6 +191,15 @@ export default function ButcePage() {
           satirId={(s) => s.kategori_id ?? s.ad}
           yukleniyor={isLoading}
           bosBaslik={t("otoKayitYok")}
+          // (E2E 2026-09) Bos tablo neden bos oldugunu soyler. Tur
+          // listesi bossa ustteki secici de bos: turler bugun WEB'DE
+          // ACILAMIYOR (`/budget/categories` POST yalniz mobilde), bunu
+          // saklamak yoneticiyi bos bir seciciyle yalniz birakirdi.
+          bosAciklama={
+            kategoriler !== undefined && kategoriler.items.length === 0
+              ? t("butBosTurYok")
+              : t("butBosIlk")
+          }
         />
       </Kart>
     </div>

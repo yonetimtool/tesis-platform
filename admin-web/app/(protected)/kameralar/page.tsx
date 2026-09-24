@@ -340,6 +340,11 @@ export default function KameralarPage() {
       const d = (await apiSend("/api/cameras/test-baglanti", "POST", {
         stream_url: form.stream_url.trim(),
         tur: form.tur,
+        // (E2E 2026-09 / GUVENLIK-15) DUZENLEMEDE KAYITLI KIMLIK. Parola
+        // hicbir yanitta donmez; form kimliksiz adres gonderiyor ve
+        // parolali kamerada test "kimlik hatali" diyordu — kamera
+        // calisirken. Sunucu kayitli parolayi YALNIZ ayni konaga takar.
+        ...(duzenlenen ? { camera_id: duzenlenen } : {}),
       })) as {
         kare_bayt?: number;
         kodek?: string | null;

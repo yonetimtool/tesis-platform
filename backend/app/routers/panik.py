@@ -139,7 +139,7 @@ async def _govde(db: AsyncSession, alarm: PanikAlarm) -> PanikAlarmOut:
             await db.execute(select(Unit).where(Unit.id == alarm.unit_id))
         ).scalar_one_or_none()
         if birim is not None:
-            out.daire_no = birim.daire_no
+            out.daire_no = birim.no
             out.blok = birim.blok
 
     if alarm.checkpoint_id:

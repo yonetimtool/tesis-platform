@@ -411,6 +411,7 @@ services:
       # Eskiden BIZE AIT OLMAYAN bir alan adi sabit koduydu; bkz.
       # backend/app/config.py -> portal_base_url.
       PORTAL_BASE_URL: ${PORTAL_BASE_URL:-https://yönetiyor.com}
+      DAVET_BASE_URL: ${DAVET_BASE_URL:-https://yonetiyor.com}
       # MinIO: presigned URL host'u PUBLIC storage adresi olmali (istemci erisir).
       MINIO_ENDPOINT: ${MINIO_PUBLIC_URL}
       # (P227 §1) "api sunucu-tarafi MinIO cagrisi YAPMAZ" YORUMU YANLISTI

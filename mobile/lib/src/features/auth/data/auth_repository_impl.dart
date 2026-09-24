@@ -165,8 +165,18 @@ class AuthRepositoryImpl implements AuthRepository {
   /// parolasini yeniden yazar. "Beni hatirla" boylece asil isini yapmaya
   /// devam eder — uygulama kapanip acildiginda ve oturum suresi
   /// dolduğunda on-doldurma calisir; kaybolan yalniz CIKIS SONRASI hali.
+  ///
+  /// (E2E 2026-09) Once SUNUCUDA kapatilir (refresh ailesi + erisim
+  /// jetonu); en fazla birkac saniye beklenir, hata cikisi engellemez.
   @override
   Future<void> logout() async {
+    final access = await storage.readAccessToken();
+    final refresh = await storage.readRefreshToken();
+    if (access != null || refresh != null) {
+      await api
+          .logout(accessToken: access, refreshToken: refresh)
+          .timeout(const Duration(seconds: 6), onTimeout: () {});
+    }
     await storage.clear();
     await storage.clearCredentials();
   }

@@ -61,7 +61,7 @@ def _world_a_data(client, world):
     t_kon = _new_task(client, admin, "Kontrol", cat_kon["id"], atanan_user_id=gorevli_id)
     t_pey = _new_task(client, admin, "Sulama", atanan_user_id=guard_id)  # kategorisiz -> "Diğer"
 
-    c1 = _complete(client, gorevli, t_tem["id"], T1, foto_key="a/x.jpg", nfc_tag_uid="04AABB")
+    c1 = _complete(client, gorevli, t_tem["id"], T1, foto_key=f"{world['a']}/tasks/x.jpg", nfc_tag_uid="04AABB")
     c2 = _complete(client, gorevli, t_kon["id"], T2)
     c3 = _complete(client, guard, t_pey["id"], T3)
     return {

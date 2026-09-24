@@ -281,6 +281,41 @@ def test_AMIR_TESIS_GOREVLISININ_VARDIYASINA_DOKUNAMAZ(client, yon, amir):
     assert r.status_code == 403, r.text
 
 
+def test_AMIR_TESIS_GOREVLISININ_VARDIYASINI_SILEMEZ_YAYINLAYAMAZ(
+    client, yon, amir, owner_conn
+):
+    """(E2E 2026-09) Kapsam yalniz EKLEYEN uclardaydi: amir tesis
+    gorevlisinin satirini silebiliyor, duzenleyebiliyor, yayinlayip ona
+    bildirim gonderebiliyor ve kopyalamayla temizleyebiliyordu."""
+    tid = _kisi(client, yon, "tesis_gorevlisi")
+    if not tid:
+        pytest.skip("tesis gorevlisi yok")
+    from datetime import date, timedelta
+    gun = date.today() + timedelta(days=320)
+    g = gun.isoformat()
+    r = client.post("/vardiya-plani/toplu", headers=yon, json={
+        "user_id": tid, "baslangic_tarih": g, "bitis_tarih": g,
+        "baslangic_saat": "08:00", "bitis_saat": "16:00"})
+    assert r.status_code == 200, r.text
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "SELECT id FROM vardiya_plani WHERE user_id = %s AND tarih = %s "
+            "AND durum = 'planli'", (tid, gun))
+        plan_id = cur.fetchone()[0]
+
+    assert client.delete(f"/vardiya-plani/{plan_id}", headers=amir).status_code == 404
+    assert client.patch(f"/vardiya-plani/{plan_id}", headers=amir,
+                        json={"not_metni": "amir"}).status_code == 404
+    r = client.post(f"/vardiya-plani/yayinla?baslangic={g}&gun=1", headers=amir)
+    assert r.status_code == 200, r.text
+    with owner_conn.cursor() as cur:
+        cur.execute("SELECT durum, yayinlandi_at, not_metni FROM vardiya_plani WHERE id = %s",
+                    (plan_id,))
+        durum, yayin, notu = cur.fetchone()
+    assert durum == "planli" and yayin is None and notu != "amir"
+    client.delete(f"/vardiya-plani/{plan_id}", headers=yon)
+
+
 def test_AMIR_CIZELGEDE_YALNIZ_GUVENLIGI_GORUR(client, amir):
     """BOS SATIRLAR DA SUZULUR: yalniz bloklari suzup personel listesini
     acik birakmak, amire tesis gorevlisinin ADINI yine gosterirdi."""

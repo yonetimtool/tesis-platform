@@ -61,6 +61,8 @@ from ..models import (
     Task,
     Unit,
 )
+from ..roller import gorunur_roller
+from .announcements import duyuru_okuma_kosulu
 from ..schemas import AramaSonucu, AramaVurusu
 
 # Rol kumeleri ILGILI ROUTERDAN import edilir — kopyalanmaz.
@@ -135,19 +137,26 @@ def _katla(sutun):
 
 def _es(sutun, desen: str):
     """`sutun ILIKE desen` — ama iki taraf da Turkce-katlanmis."""
-    return _katla(sutun).like(_katla_desen(desen))
+    return _katla(sutun).like(_katla_desen(desen), escape="\\")
 
 
 def _katla_desen(desen: str) -> str:
     return desen.translate(str.maketrans(_TR_KAYNAK, _TR_HEDEF)).lower()
 
 
-def _kisi(q: str, _u: AppUser) -> Select:
-    return (
+def _kisi(q: str, u: AppUser) -> Select:
+    sorgu = (
         select(AppUser.id, AppUser.ad, AppUser.telefon)
         .where(or_(_es(AppUser.ad, q), _es(AppUser.email, q), _es(AppUser.telefon, q)))
         .order_by(AppUser.ad, AppUser.id)
     )
+    # (E2E 2026-09) `/users` ile AYNI gorunurluk: guvenlik amiri personel
+    # listesinde yalniz guvenlik personelini gorur (P231, KVKK). Arama bu
+    # suzgeci uygulamadigi icin amire sakinlerin ad + telefonunu aciyordu.
+    gorunur = gorunur_roller(u.role)
+    if gorunur is not None:
+        sorgu = sorgu.where(AppUser.role.in_(gorunur))
+    return sorgu
 
 
 def _daire(q: str, _u: AppUser) -> Select:
@@ -182,12 +191,16 @@ def _gorev(q: str, _u: AppUser) -> Select:
     )
 
 
-def _duyuru(q: str, _u: AppUser) -> Select:
-    return (
+def _duyuru(q: str, user: AppUser) -> Select:
+    s = (
         select(Announcement.id, Announcement.baslik, Announcement.govde)
         .where(or_(_es(Announcement.baslik, q), _es(Announcement.govde, q)))
         .order_by(Announcement.created_at.desc(), Announcement.id)
     )
+    # (E2E 2026-09, BILDIRIM-12) SATIR KAPSAMI — duyuru listesiyle AYNI
+    # hedef kitle kurali; olmasa hedef disi duyuru aramadan okunurdu.
+    kosul = duyuru_okuma_kosulu(user)
+    return s.where(kosul) if kosul is not None else s
 
 
 def _talep(q: str, user: AppUser) -> Select:
@@ -370,11 +383,14 @@ async def arama(
     duyuru aramasini da kapatirdi. Suzgec KAYNAK duzeyinde.
     """
     aranan = q.strip()
-    desen = f"%{aranan}%"
+    # (E2E 2026-09) LIKE jokerleri KACIRILIR: "%" ya da "_" yazan kullanici
+    # her seyi eslestiriyordu ("_" tek karakter joker).
+    kacik = aranan.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    desen = f"%{kacik}%"
     # PLAKA AYRI DESEN ISTER: `arac_kayit.plaka` normalize saklaniyor
     # (bosluksuz + BUYUK). Kullanici "34 abc 12" yazdiginda ham desen
     # HICBIR SEY bulmazdi — sessizce bos sonuc, en kotu arama hatasi.
-    plaka_desen = f"%{aranan.replace(' ', '').upper()}%"
+    plaka_desen = f"%{kacik.replace(' ', '').upper()}%"
     vuruslar: list[AramaVurusu] = []
 
     for kaynak in KAYNAKLAR:

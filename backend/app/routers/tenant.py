@@ -76,6 +76,10 @@ _YONETICI_YAZABILIR = {
     # yoneticidir; platform operatorune birakmak, her tabela degisikligini
     # destek talebine cevirirdi.
     "adres", "ilce", "il", "posta_kodu",
+    # (E2E 2026-09) VARDIYA HATIRLATMA KADEMELERI — P207 saha ayari. Web
+    # formu bu iki alani yoneticiye gosteriyordu ama kaydetmek 403
+    # donuyordu; plandaki "5 dk once" kademesi hic acilamiyordu.
+    "vardiya_hatirlatma_dk", "vardiya_baslamadi_dk",
 }
 
 

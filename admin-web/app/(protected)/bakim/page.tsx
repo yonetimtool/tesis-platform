@@ -43,7 +43,10 @@ import {
   Tr,
   useOnay,
   FiltreCubugu,
+  IskeletMetin,
 } from "@/components/ui";
+import { Ekler } from "@/components/Ekler";
+import { bakimOzetCsv } from "@/lib/bakim-ozet-csv";
 import { TelefonAlani } from "@/components/TelefonAlani";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -200,11 +203,34 @@ export default function BakimPage() {
   const [uyariGun, setUyariGun] = useState("");
 
   const [kayitFormu, setKayitFormu] = useState<Ekipman | null>(null);
+  // (E2E 2026-09) Bakim kaydinin belge/fotograf ekleri (TESIS-05).
+  const [ekKayit, setEkKayit] = useState<Kayit | null>(null);
   const [kTarih, setKTarih] = useState("");
   const [kYapan, setKYapan] = useState("");
   const [kIslem, setKIslem] = useState("");
   const [kTutar, setKTutar] = useState("");
   const [kGidere, setKGidere] = useState(true);
+
+  function ozetIndir(o: Ozet) {
+    const csv = bakimOzetCsv(
+      o,
+      [
+        t("ortakAd"),
+        t("bakimYasal"),
+        t("bakimOzetSayi"),
+        t("bakimOzetToplam"),
+        t("bakimSonBakim"),
+        t("bakimSonrakiBakim"),
+      ],
+      t("bakimYasal"),
+    );
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `bakim-ozet-${o.yil}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   function hata(e: unknown) {
     toast.error(e instanceof Error ? e.message : t("ortakHataOlustu"));
@@ -430,6 +456,7 @@ export default function BakimPage() {
             <Th>{t("bakimYapan")}</Th>
             <Th>{t("bakimIslem")}</Th>
             <Th>{t("bakimTutar")}</Th>
+            <Th>{t("ekBaslik")}</Th>
           </TabloBasligi>
           <tbody>
             {(kayitlar.data?.items ?? []).map((k) => (
@@ -446,6 +473,21 @@ export default function BakimPage() {
                 </Td>
                 <Td>
                   <span>{kurusMetin(k.tutar_kurus)}</span>
+                </Td>
+                <Td>
+                  {/* (E2E 2026-09) FOTOGRAF + BELGE: var olan ek
+                      mekanizmasi (P241 karari). Sunucu `bakim_kaydi`
+                      ekini kabul ediyordu ama hicbir ekran onu
+                      cizmiyordu. */}
+                  <Dugme
+                    type="button"
+                    boy={KUCUK}
+                    tur={IKINCIL}
+                    data-test={`bakim-kayit-ekler-${k.id}`}
+                    onClick={() => setEkKayit(k)}
+                  >
+                    {t("ekBaslik")}
+                  </Dugme>
                 </Td>
               </Tr>
             ))}
@@ -472,13 +514,38 @@ export default function BakimPage() {
       </div>
       {/* YASAL EKSIKLER EN USTTE ve AYRI: denetimin ilk sorusu budur ve
           toplamlarin arasinda kaybolmamali. */}
+      {/* (E2E 2026-09) YUKLENIRKEN / HATADA "HEPSI YAPILMIS" DENMEZ.
+          Olculen (TESIS-14): veri gelmeden `yasal_eksik ?? []` bos dizi
+          sayiliyor ve denetime "zorunlu bakimlarin hepsi yapilmis"
+          yaziliyordu — yuklenmemis bir rapor "eksik yok" demek degildir. */}
       <div className="mb-3" data-test="bakim-yasal-eksik">
-        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-          {(ozet.data?.yasal_eksik ?? []).length === 0
-            ? t("bakimYasalEksikYok")
-            : `${t("bakimYasalEksik")}: ${(ozet.data?.yasal_eksik ?? []).join(", ")}`}
-        </p>
+        {ozet.error ? (
+          <HataDurumu onTekrar={() => void ozet.mutate()} />
+        ) : !ozet.data ? (
+          <div data-test="bakim-ozet-yukleniyor">
+            <IskeletMetin satir={2} />
+          </div>
+        ) : (
+          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+            {ozet.data.yasal_eksik.length === 0
+              ? t("bakimYasalEksikYok")
+              : `${t("bakimYasalEksik")}: ${ozet.data.yasal_eksik.join(", ")}`}
+          </p>
+        )}
       </div>
+      {ozet.data && (
+        <div className="mb-3">
+          <Dugme
+            type="button"
+            boy={KUCUK}
+            tur={IKINCIL}
+            data-test="bakim-ozet-csv"
+            onClick={() => ozetIndir(ozet.data as Ozet)}
+          >
+            {t("bakimOzetIndir")}
+          </Dugme>
+        </div>
+      )}
       <Tablo>
         <TabloBasligi>
           <Th>{t("ortakAd")}</Th>
@@ -548,6 +615,18 @@ export default function BakimPage() {
           { id: "ozet", baslik: t("bakimOzetBaslik"), icerik: ozetIcerik },
         ]}
       />
+
+      <Modal
+        acik={ekKayit !== null}
+        baslik={
+          ekKayit
+            ? `${ekKayit.ekipman_ad ?? ""}${AYRAC}${ekKayit.tarih}`
+            : t("ekBaslik")
+        }
+        onKapat={() => setEkKayit(null)}
+      >
+        {ekKayit && <Ekler varlikTipi="bakim_kaydi" varlikId={ekKayit.id} />}
+      </Modal>
 
       <Modal
         acik={form}

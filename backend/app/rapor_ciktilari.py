@@ -86,7 +86,52 @@ def _grafik_verisi(sonuc: RaporSonuc, grafik) -> tuple[list[str], list[tuple[str
 
 
 def _damga() -> str:
-    return datetime.now(timezone.utc).strftime("%d.%m.%Y %H:%M UTC")
+    # (E2E 2026-09, FINANS-16) TURKIYE SAATI. UTC damgasi muhasebeciye 3
+    # saat geri bir olusturma zamani gosteriyordu. tzdata yoksa UTC'ye
+    # dusulur ve bunu ETIKETIYLE soyler (sessiz yanlis saat yok).
+    try:
+        from zoneinfo import ZoneInfo
+
+        return datetime.now(ZoneInfo("Europe/Istanbul")).strftime("%d.%m.%Y %H:%M")
+    except Exception:  # noqa: BLE001
+        return datetime.now(timezone.utc).strftime("%d.%m.%Y %H:%M UTC")
+
+
+#: (E2E 2026-09, FINANS-16) Satirsiz raporun govdesi. Yalniz "TOPLAM 0,00"
+#: satiri, "rapor bozuk mu, veri mi yok" sorusunu cevapsiz birakiyordu.
+VERI_YOK = "Bu dönemde kayıt yok."
+
+
+def _gorunur(metin: str, font_adi: str) -> str:
+    """(E2E 2026-09, ARAYUZ-8) Fontta GLIFI OLMAYAN karakter -> "?".
+
+    Imajda yalniz DejaVu var; emoji ve CJK glifi yok. reportlab o harfleri
+    SESSIZCE bos ciziyordu ("Ayşe 🌸 O'Brien 中文" -> "Ayşe   O'Brien   "):
+    okuyan kisi eksik oldugunu bile anlamiyordu. Gorunur yer tutucu en
+    azindan "burada bir karakter vardi" der; Excel ciktisi tam metni tasir.
+    """
+    try:
+        from reportlab.pdfbase import pdfmetrics
+
+        harita = pdfmetrics.getFont(font_adi).face.charToGlyph
+    except Exception:  # noqa: BLE001 — Type1 (Helvetica) yuzu: dokunma
+        return metin
+    if not isinstance(harita, dict):
+        return metin
+    return "".join(
+        ch if ch in "\n\t" or ord(ch) in harita else "?" for ch in str(metin)
+    )
+
+
+def _glif_korumali(c) -> None:
+    """Canvas'in metin cizen yontemlerini `_gorunur` suzgecinden gecir."""
+    for ad in ("drawString", "drawRightString", "drawCentredString"):
+        orj = getattr(c, ad)
+
+        def _sarili(x, y, metin, *a, _orj=orj, **k):
+            return _orj(x, y, _gorunur(metin, c._fontname), *a, **k)
+
+        setattr(c, ad, _sarili)
 
 
 def _aralik_metni(baslangic: date | None, bitis: date | None) -> str:
@@ -114,21 +159,27 @@ def _excel_grafik(ws, sonuc: RaporSonuc, grafik, veri) -> None:
 
     etiketler, seriler, ornek = veri
     x_baslik = next((s.baslik for s in sonuc.sutunlar if s.anahtar == grafik.x), grafik.x)
-    blok_sut = len(sonuc.sutunlar) + 2  # tablodan iki sütun boşluk sağda
-    hdr = 5  # kaynak bloğu başlık satırı
-    ws.cell(row=hdr, column=blok_sut, value=x_baslik + (" (örneklendi)" if ornek else ""))
+    # (E2E 2026-09, FINANS-16) GRAFIK VERISI GIZLI YARDIMCI SAYFADA. Tablonun
+    # sagina yazildiginda kullanici ayni tabloyu iki kez goruyordu (baslik
+    # satiri "Dönem, Borçlandırılan, …, Dönem, Borçlandırılan, …"). Grafik
+    # hucre referansli (duzenlenebilir) kalir; kaynak gorunmez.
+    kaynak = ws.parent.create_sheet("grafik_verisi")
+    kaynak.sheet_state = "hidden"
+    blok_sut = 1
+    hdr = 1
+    kaynak.cell(row=hdr, column=blok_sut, value=x_baslik + (" (örneklendi)" if ornek else ""))
     for j, (ad, _) in enumerate(seriler, start=1):
-        ws.cell(row=hdr, column=blok_sut + j, value=ad)
+        kaynak.cell(row=hdr, column=blok_sut + j, value=ad)
     for i, et in enumerate(etiketler):
-        ws.cell(row=hdr + 1 + i, column=blok_sut, value=et)
+        kaynak.cell(row=hdr + 1 + i, column=blok_sut, value=et)
         for j, (_, vals) in enumerate(seriler, start=1):
-            ws.cell(row=hdr + 1 + i, column=blok_sut + j, value=vals[i])
+            kaynak.cell(row=hdr + 1 + i, column=blok_sut + j, value=vals[i])
     son = hdr + len(etiketler)
-    kats = Reference(ws, min_col=blok_sut, min_row=hdr + 1, max_row=son)
+    kats = Reference(kaynak, min_col=blok_sut, min_row=hdr + 1, max_row=son)
 
     if grafik.tip == "pasta":
         ch = PieChart()
-        data = Reference(ws, min_col=blok_sut + 1, min_row=hdr, max_row=son)
+        data = Reference(kaynak, min_col=blok_sut + 1, min_row=hdr, max_row=son)
         ch.add_data(data, titles_from_data=True)
         ch.set_categories(kats)
         ch.dataLabels = DataLabelList()
@@ -139,7 +190,7 @@ def _excel_grafik(ws, sonuc: RaporSonuc, grafik, veri) -> None:
         if grafik.tip == "sutun":
             ch.type = "col"
             ch.grouping = "clustered"
-        data = Reference(ws, min_col=blok_sut + 1, max_col=blok_sut + len(seriler),
+        data = Reference(kaynak, min_col=blok_sut + 1, max_col=blok_sut + len(seriler),
                          min_row=hdr, max_row=son)
         ch.add_data(data, titles_from_data=True)
         ch.set_categories(kats)
@@ -155,7 +206,9 @@ def _excel_grafik(ws, sonuc: RaporSonuc, grafik, veri) -> None:
     ch.title = sonuc.baslik
     ch.height = 8
     ch.width = 16
-    ws.add_chart(ch, f"{get_column_letter(blok_sut)}{son + 3}")
+    # Grafik ANA sayfada, tablonun ALTINDA (sagda degil: sag, tabloya
+    # eklenmis bir sutun gibi okunuyordu).
+    ws.add_chart(ch, f"{get_column_letter(1)}{ws.max_row + 3}")
 
 
 # ================================= EXCEL ==================================== #
@@ -189,6 +242,8 @@ def excel_uret(
 
     for satir in sonuc.satirlar:
         ws.append([_excel_deger(s, satir.get(s.anahtar)) for s in sonuc.sutunlar])
+    if not sonuc.satirlar:
+        ws.append([VERI_YOK])
 
     if sonuc.toplamlar:
         ws.append([])
@@ -331,6 +386,7 @@ def _ciz(sonuc, site_ad, baslangic, bitis, sayfa, logo_png, tampon, toplam=None,
     F, FB = _turkce_font()
     hedef = tampon or io.BytesIO()
     c = pdf_canvas.Canvas(hedef, pagesize=sayfa)
+    _glif_korumali(c)
     genislik, yukseklik = sayfa
     kenar = 15 * mm
     satir_yuksekligi = 6 * mm
@@ -345,7 +401,7 @@ def _ciz(sonuc, site_ad, baslangic, bitis, sayfa, logo_png, tampon, toplam=None,
 
     sayfa_no = 0
 
-    def _baslik() -> float:
+    def _baslik(tablo_basligi: bool = True) -> float:
         nonlocal sayfa_no
         sayfa_no += 1
         y = yukseklik - kenar
@@ -380,6 +436,11 @@ def _ciz(sonuc, site_ad, baslangic, bitis, sayfa, logo_png, tampon, toplam=None,
             c.setFillColor(colors.grey)
             c.drawString(kenar, y + 4 * mm, site_adres[:150])
             c.setFillColor(colors.black)
+        if not tablo_basligi:
+            # (E2E 2026-09, FINANS-16) Grafik sayfasinda VERISIZ tablo
+            # basligi basilmaz — altinda satir olmayan bir baslik satiri
+            # "tablo bos mu kaldi" diye okunuyordu.
+            return y
         c.setFont(FB, 8)
         for s, sx in zip(sutunlar, xler):
             c.drawString(sx, y, s.baslik[:28])
@@ -413,6 +474,10 @@ def _ciz(sonuc, site_ad, baslangic, bitis, sayfa, logo_png, tampon, toplam=None,
             else:
                 c.drawString(sx, y, metin[:40])
         y -= satir_yuksekligi
+    if not sonuc.satirlar:
+        c.setFont(F, 9)
+        c.drawString(kenar, y, VERI_YOK)
+        y -= satir_yuksekligi
 
     if sonuc.toplamlar:
         y -= 2 * mm
@@ -444,7 +509,7 @@ def _ciz(sonuc, site_ad, baslangic, bitis, sayfa, logo_png, tampon, toplam=None,
     if veri is not None:
         _altbilgi()
         c.showPage()
-        yb = _baslik()
+        yb = _baslik(tablo_basligi=False)
         try:
             _pdf_grafik(c, kenar, kenar + 12 * mm, genislik - 2 * kenar,
                         yb - (kenar + 14 * mm), sonuc, grafik, veri)

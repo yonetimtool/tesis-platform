@@ -23,6 +23,7 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..config import settings
 from ..audit import Action, audit_user, record_audit
 from ..davet import (
     davet_gonder,
@@ -160,6 +161,22 @@ async def davet_coz(body: DavetCozRequest) -> DavetCozResponse:
             )
 
 
+def _eposta_kanitlandi(user: AppUser) -> None:
+    """(E2E 2026-09) Davet jetonu yalniz E-POSTAYLA gittiyse adres KANITLANDI.
+
+    OLCULEN KUSUR: davetle aktiflesen HER hesap `eposta_dogrulandi=false`
+    kaliyordu. Sonuc: "sifremi unuttum" 200 donup HIC kod gondermiyor
+    (dogrulanmamis adrese kod gitmez), cok tesisli yoneticinin tesis
+    degistirmesi 403 veriyor, kodla hesap silme 422 `no_email`.
+
+    Jeton kullaniciya YALNIZ e-postayla ulastiysa, onu kullanmak posta
+    kutusuna erisimin kanitidir — OTP girisiyle ayni guvence. SMS de
+    aciksa jeton telefona da gitmistir; o durumda kanit sayilmaz.
+    """
+    if user.email and not settings.sms_aktif:
+        user.eposta_dogrulandi = True
+
+
 @router.post("/parola", response_model=TokenPair)
 async def davet_parola(
     body: DavetParolaRequest,
@@ -192,6 +209,7 @@ async def davet_parola(
                 )
             ).scalar_one()
             davet.used_at = datetime.now(timezone.utc)
+            _eposta_kanitlandi(user)
 
             await record_audit(
                 session, action=Action.PASSWORD_SET, tenant_id=row.tenant_id,
@@ -242,6 +260,7 @@ async def davet_sosyal(
                 )
             ).scalar_one()
             davet.used_at = datetime.now(timezone.utc)
+            _eposta_kanitlandi(user)
 
             await record_audit(
                 session, action=Action.LOGIN_OK, tenant_id=row.tenant_id,

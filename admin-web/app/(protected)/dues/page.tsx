@@ -156,7 +156,18 @@ export default function DuesPage() {
       });
       setBRes({ created: res.created.length, atlanan: res.atlanan });
       mutateA();
-      toast.success(t("aidatTopluOlusturuldu"));
+      // (E2E 2026-09, FINANS-10) SONUC NE OLURSA OLSUN "olusturuldu"
+      // deniyordu — ayni ay ikinci kez borclandirildiginda bile. Hic
+      // olusmadiysa hata, kismen olustuysa sayilarla bilgi verilir.
+      if (res.created.length === 0) {
+        toast.error(t("aidatTopluSonuc", { olusan: 0, atlanan: res.atlanan }));
+      } else if (res.atlanan > 0) {
+        toast.info(t("aidatTopluSonuc", {
+          olusan: res.created.length, atlanan: res.atlanan,
+        }));
+      } else {
+        toast.success(t("aidatTopluOlusturuldu"));
+      }
     } catch (err) {
       setBErr(err instanceof Error ? err.message : t("aidatTopluOlusturulamadi"));
     } finally {

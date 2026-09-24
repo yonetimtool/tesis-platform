@@ -86,9 +86,18 @@ describe("(P226) /api/tenants sorgu gecisi", () => {
   it("BILINMEYEN parametre GECMEZ (beyaz liste)", async () => {
     // Ham yeniden yayin, ileride eklenen bir uc parametresini de
     // farkinda olmadan acmak olurdu (P213 §3 dersi).
-    await GET(istek("q=oltu&limit=9999&tenant_id=baskasi"));
+    // (E2E 2026-09) `limit` artik IZINLI (sunucu sayfalamasi); ornek
+    // bilinmeyen parametre `sirala` ile degistirildi.
+    await GET(istek("q=oltu&sirala=ad&tenant_id=baskasi"));
     expect(cagrilar[0]).toContain("q=oltu");
-    expect(cagrilar[0]).not.toContain("limit");
+    expect(cagrilar[0]).not.toContain("sirala");
     expect(cagrilar[0]).not.toContain("tenant_id");
+  });
+
+  it("(E2E 2026-09) `limit` ve `offset` BACKEND'E ULASIR", async () => {
+    // Tasinmasalardi panel yine TUM listeyi (3788 tesis, 805 KB) cekerdi.
+    await GET(istek("limit=25&offset=50"));
+    expect(cagrilar[0]).toContain("limit=25");
+    expect(cagrilar[0]).toContain("offset=50");
   });
 });

@@ -1,5 +1,6 @@
 /node_modules
 /.next
+/.next-dogrula
 /out
 /build
 .env*.local

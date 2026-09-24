@@ -36,6 +36,7 @@ import useSWR from "swr";
 import { useToast } from "@/components/Toast";
 import {
   Dugme,
+  DugmeBaglantisi,
   SayfaBasligi,
   VeriTablosu,
   useOnay,
@@ -47,6 +48,7 @@ import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import { kurusToTL } from "@/lib/money";
+import { saltTarihBicimi } from "@/lib/tarih";
 
 export interface Hareket {
   id: string;
@@ -61,6 +63,10 @@ export interface Hareket {
   durum: string;
   ters_kayit_id: string | null;
   virman_grup_id: string | null;
+  /** (E2E 2026-09, FINANS-21) Ters kayitla iptal edildi mi (sunucu isaretler). */
+  iptal_edildi?: boolean;
+  /** (E2E 2026-09, FINANS-21) Daire etiketi — kimin odedigi gorunsun. */
+  unit_no?: string | null;
 }
 
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
@@ -155,6 +161,11 @@ export function DisaAktar({ kod }: { kod: string }) {
   );
 }
 
+/** (E2E 2026-09) Kasa listesi — `useKasalar` ile AYNI anahtar (tek istek). */
+const KASA_UC = "/api/panel/kasalar?limit=200";
+/** Kasalarin tanimlandigi defter — kurulum sihirbazinin `kasa` adimiyla ayni. */
+const KASA_TANIM_ROTASI = "/tanimlar?defter=kasalar";
+
 /** Bir finans hareketi listesi + arac cubugu. */
 export function HareketSayfasi({
   baslikAnahtari,
@@ -234,6 +245,19 @@ export function HareketSayfasi({
     items: Hareket[];
   }>(anahtar, jsonFetcher);
 
+  // (E2E 2026-09) BOS DURUM "ONCE NE YAPILACAGINI" SOYLER. Yeni tesiste
+  // tahsilat/gider/gelir listeleri yalniz "Bu listede kayıt yok." diyordu;
+  // kasa yokken "+ Yeni"nin formu kasasiz kalir ve kayit YAZILAMAZ
+  // (sihirbaz bunu biliyordu: `kurulumEngelKasa`). Anahtar `useKasalar`
+  // ile AYNI — SWR tek istek atar. Yuklenene kadar kasasiz SAYILMAZ:
+  // kasasi olan tesiste bir kare "kasa tanimlayin" gostermek yanlis olurdu.
+  const { data: kasaVeri } = useSWR<{ items: unknown[] }>(
+    KASA_UC,
+    jsonFetcher,
+    { revalidateOnFocus: false },
+  );
+  const kasasiz = kasaVeri !== undefined && kasaVeri.items.length === 0;
+
   // (P193 §3 / rehber eksik 7) ONAY BEKLEYEN GIDERI ONAYLA / REDDET.
   //
   // Uc P192'den beri VAR (`/onayla`, `/reddet`) ve calisiyor — olculdu.
@@ -296,7 +320,8 @@ export function HareketSayfasi({
     {
       id: "tarih",
       baslik: t("finansSutunTarih"),
-      hucre: (h) => h.tarih,
+      // (E2E 2026-09, FINANS-21) Saatsiz gun, yerel bicimde.
+      hucre: (h) => saltTarihBicimi(h.tarih),
       deger: (h) => h.tarih,
     },
     {
@@ -322,10 +347,13 @@ export function HareketSayfasi({
       // gun yeni bir durum eklerse onu "odendi" diye gostermek, defterde
       // olmayan bir gercegi iddia etmek olurdu.
       hucre: (h) => {
+        // (E2E 2026-09, FINANS-21) Ters kayitla iptal edilmis satir
+        // "Odendi" diye durmaz.
+        if (h.iptal_edildi) return t("finansDurumIptalEdildi");
         const a = DURUM_ANAHTARI[h.durum];
         return a ? t(a) : h.durum;
       },
-      deger: (h) => h.durum,
+      deger: (h) => (h.iptal_edildi ? DURUM_IPTAL_EDILDI : h.durum),
     },
     {
       id: "aciklama",
@@ -340,7 +368,10 @@ export function HareketSayfasi({
         // iptal edilmis bir kayit da ikinci kez iptal edilemez (409).
         // Dugmeyi cizip sunucuya reddettirmek, kullaniciya
         // yapamayacagi bir eylem gostermek olurdu.
-        if (h.tip === TIP_IPTAL) {
+        // (E2E 2026-09, FINANS-03/21) Iptal edilmis ya da REDDEDILMIS
+        // (`durum=iptal`, hic gerceklesmedi) satirda da "Iptal et" yok:
+        // reddedilmis gideri iptal etmek kasaya hayali para sokuyordu.
+        if (h.tip === TIP_IPTAL || h.iptal_edildi || h.durum === DURUM_REDDEDILDI) {
           return <span style={{ color: "var(--yz-text-3)" }}>{YOK_ISARETI}</span>;
         }
         // (P193 §3) ONAY BEKLEYENDE IPTAL DEGIL, ONAY/RET cizilir:
@@ -398,6 +429,14 @@ export function HareketSayfasi({
         durum={durum}
         onDurumDegisti={setDurum}
         bosBaslik={t("finansKayitYok")}
+        bosAciklama={kasasiz ? t("finansBosKasaYok") : t("finansBosIlkKayit")}
+        bosEylem={
+          kasasiz ? (
+            <DugmeBaglantisi href={KASA_TANIM_ROTASI} tur="birincil" boy="kucuk">
+              {t("finansKasaTanimla")}
+            </DugmeBaglantisi>
+          ) : undefined
+        }
         // HATA TABLONUN ICINDE: disarida `HataDurumu` cizip tabloyu
         // altinda birakmak, ayni ekranda hem "cekilemedi" hem "kayit
         // yok" gostermek olurdu — ikincisi bir IDDIADIR ve yanlis
@@ -414,10 +453,16 @@ export function HareketSayfasi({
 // UCLUDE DIZE YAZILMAZ.
 const TIP_IPTAL = "iptal";
 const DURUM_ONAY_BEKLIYOR = "onay_bekliyor";
+/** Reddedilen hareketin durumu (sunucu `iptal` yazar — "hic olmadi"). */
+const DURUM_REDDEDILDI = "iptal";
+/** Suzgec/siralama degeri: ters kayitla iptal edilmis. */
+const DURUM_IPTAL_EDILDI = "iptal_edildi";
 
 /** Hareket durumu -> sozluk anahtari. */
 const DURUM_ANAHTARI: Record<string, SozlukAnahtari> = {
   odendi: "finansDurumOdendi",
   bekliyor: "finansDurumBekliyor",
   onay_bekliyor: "finansDurumOnayBekliyor",
+  // (E2E 2026-09, FINANS-21) Ham "iptal" yaziliyordu.
+  iptal: "finansDurumReddedildi",
 };

@@ -168,3 +168,51 @@ def test_ARSIVLI_TESIS_ARAMADA_DA_GORUNMEZ(client, admin, turkce_tesis):
     r = client.get("/tenants", headers=admin,
                    params={"arsivli": True, "q": f"arikoy sitesi {ek}"})
     assert tid in {x["id"] for x in r.json()["items"]}
+
+
+# ==================================================================== #
+# 5. (E2E 2026-09) SUNUCU TARAFLI SAYFALAMA
+# ==================================================================== #
+# Olculen: 3788 tesis, `GET /tenants` 805 KB tek yanit; panel ilk acilista
+# 11-27 s bekliyordu (tablo 25 satir gosterirken tum liste iniyordu).
+
+def test_SAYFALAMA_limit_offset_ve_toplam(client, admin, turkce_tesis):
+    hepsi = client.get("/tenants", headers=admin).json()
+    # GERIYE UYUM: `limit` verilmezse TUM liste + dogru toplam.
+    assert hepsi["toplam"] == len(hepsi["items"])
+    kimlikler = [x["id"] for x in hepsi["items"]]
+
+    s1 = client.get("/tenants", headers=admin, params={"limit": 1}).json()
+    assert len(s1["items"]) == 1
+    # TOPLAM sayfa degil, suzgece uyan TUM satir.
+    assert s1["toplam"] == len(kimlikler)
+
+    s2 = client.get("/tenants", headers=admin,
+                    params={"limit": 1, "offset": 1}).json()
+    assert len(s2["items"]) == 1
+    # Sayfalar ORTUSMEZ ve siralama tam listeyle AYNI (kararli sira).
+    assert s1["items"][0]["id"] != s2["items"][0]["id"]
+    assert [s1["items"][0]["id"], s2["items"][0]["id"]] == kimlikler[:2]
+
+    # Son sayfanin OTESI: bos ama toplam KAYBOLMAZ.
+    ote = client.get("/tenants", headers=admin,
+                     params={"limit": 5, "offset": len(kimlikler) + 10}).json()
+    assert ote["items"] == []
+    assert ote["toplam"] == len(kimlikler)
+
+
+def test_SAYFALAMA_SUZGECTEN_SONRA(client, admin, turkce_tesis):
+    """Arama sayfadan ONCE uygulanir: "yalniz bu sayfada ara" gerilemesi
+    olmaz. Aranan tesis ilk sayfada tek basina gelir, toplam 1."""
+    tid, ad, ek = turkce_tesis
+    r = client.get("/tenants", headers=admin,
+                   params={"q": f"arikoy sitesi {ek}", "limit": 25}).json()
+    assert [x["id"] for x in r["items"]] == [tid]
+    assert r["toplam"] == 1
+
+
+@pytest.mark.parametrize("params", [{"limit": 0}, {"limit": 201}, {"offset": -1}])
+def test_SAYFALAMA_SINIRLARI_422(client, admin, params):
+    """Ust sinir sayfalamayi `limit=100000` ile fiilen kapatmayi engeller."""
+    r = client.get("/tenants", headers=admin, params=params)
+    assert r.status_code == 422, r.text

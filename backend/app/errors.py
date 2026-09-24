@@ -17,6 +17,7 @@ from collections.abc import Mapping
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import DBAPIError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.hata_metinleri import hata_metni, istek_dili
@@ -63,6 +64,19 @@ def _dil(request: Request) -> str:
     return istek_dili(request.headers.get("accept-language"))
 
 
+def _sqlstate(exc: DBAPIError) -> str | None:
+    """asyncpg / psycopg hatasindan SQLSTATE (zincir boyunca aranir)."""
+    hedef: BaseException | None = getattr(exc, "orig", None)
+    for _ in range(4):
+        if hedef is None:
+            return None
+        kod = getattr(hedef, "sqlstate", None) or getattr(hedef, "pgcode", None)
+        if isinstance(kod, str):
+            return kod
+        hedef = hedef.__cause__ or getattr(hedef, "__context__", None)
+    return None
+
+
 def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(APIError)
     async def _api_error(request: Request, exc: APIError) -> JSONResponse:
@@ -91,6 +105,32 @@ def install_error_handlers(app: FastAPI) -> None:
                 }
             },
         )
+
+    @app.exception_handler(DBAPIError)
+    async def _db_error(request: Request, exc: DBAPIError) -> JSONResponse:
+        """(E2E 2026-09) VERI HATASI (SQLSTATE sinif 22) -> 422, 500 DEGIL.
+
+        OLCULEN KUSUR: metinde NUL karakteri (\\u0000) dort ucta 500
+        veriyordu (duyuru, gorev, talep, arama): Pydantic `str` NUL'u
+        geciriyor, Postgres `text` reddediyor (22021). Ayni sinif sayi
+        tasmasini (22003) ve gecersiz tarihi (22008) de kapsar: hepsi
+        istemcinin gonderdigi DEGERIN hatasidir, sunucu arizasi degil.
+        Diger veritabani hatalari 500 kalir.
+        """
+        kod = _sqlstate(exc)
+        if kod and kod.startswith("22"):
+            return JSONResponse(
+                status_code=422,
+                content={
+                    "error": {
+                        "code": "validation_error",
+                        "message": hata_metni("istek_govdesi_gecersiz", _dil(request)),
+                    }
+                },
+            )
+        # Diger veritabani hatalari ONCEKI gibi sunucu hatasi (500) olarak
+        # ust katmana birakilir.
+        raise exc
 
     @app.exception_handler(StarletteHTTPException)
     async def _http_error(

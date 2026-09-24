@@ -27,6 +27,24 @@ def kasa_bakiye(acilis_kurus: int, hareketler: list[tuple[str, int]]) -> int:
     return acilis_kurus + sum(ISARET[yon] * tutar for yon, tutar in hareketler)
 
 
+def tl_metni(kurus: int) -> str:
+    """Kurus -> "1.500,00 ₺" (Turkce gruplama).
+
+    (E2E 2026-09, BILDIRIM-14 / FINANS-13) Borc hatirlatma metni
+    `akis_metinleri._tl` ile "₺1500.00" yaziyordu (eski istemci bicimi,
+    binlik ayrac yok, ondalik nokta). Sakine giden cumle Turkce bicimde
+    olmali. `_tl` eski istemci icin YERINDE birakildi.
+    """
+    negatif = int(kurus) < 0
+    tam, kalan = divmod(abs(int(kurus)), 100)
+    return f"{'-' if negatif else ''}{tam:,}".replace(",", ".") + f",{kalan:02d} ₺"
+
+
+def tarih_metni(gun) -> str:
+    """date -> "01.09.2026" (sakine giden metinlerde tarih bicimi)."""
+    return gun.strftime("%d.%m.%Y")
+
+
 def _sadelestir(metin: str) -> str:
     """Ad eslestirmesi icin kanonik bicim: aksansiz, buyuk, tek bosluk.
 

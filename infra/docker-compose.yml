@@ -265,6 +265,11 @@ services:
       MEDIAMTX_API_URL: ${MEDIAMTX_API_URL:-}
       KAMERA_CANLI_SINIR: ${KAMERA_CANLI_SINIR:-3}
       YENI_KAYIT_AKISI: ${YENI_KAYIT_AKISI:-false}
+      # (E2E 2026-09) YALNIZ DEV/TEST: diyafon/kopru hedef kapisi loopback'i
+      # serbest birakir (test takimi sahte SIP/HA'yi 127.0.0.1'de acar).
+      # PROD DOSYASINDA YOK -> kapali. Servis adlari/konteyner agi bu
+      # bayraktan bagimsiz olarak kapali (bkz. app/safe_http.py).
+      SAHA_LOOPBACK_SERBEST: ${SAHA_LOOPBACK_SERBEST:-1}
       SMS_AKTIF: ${SMS_AKTIF:-false}
       TICARI_ILETI_AKTIF: ${TICARI_ILETI_AKTIF:-false}
       SMS_SAGLAYICI: ${SMS_SAGLAYICI:-}
@@ -451,6 +456,11 @@ services:
       # birakilan bir bayrak, ortamda "yok" gibi gorunur ve operator onu
       # aramaya kalkinca hicbir yerde bulamaz.
       YENI_KAYIT_AKISI: ${YENI_KAYIT_AKISI:-false}
+      # (E2E 2026-09) YALNIZ DEV/TEST: diyafon/kopru hedef kapisi loopback'i
+      # serbest birakir (test takimi sahte SIP/HA'yi 127.0.0.1'de acar).
+      # PROD DOSYASINDA YOK -> kapali. Servis adlari/konteyner agi bu
+      # bayraktan bagimsiz olarak kapali (bkz. app/safe_http.py).
+      SAHA_LOOPBACK_SERBEST: ${SAHA_LOOPBACK_SERBEST:-1}
       SMS_AKTIF: ${SMS_AKTIF:-false}
       TICARI_ILETI_AKTIF: ${TICARI_ILETI_AKTIF:-false}
       SMS_SAGLAYICI: ${SMS_SAGLAYICI:-}

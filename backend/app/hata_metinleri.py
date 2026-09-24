@@ -322,6 +322,88 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Cette écriture a déjà été annulée.",
         "es": "Este asiento ya se ha anulado.",
     },
+    # ---- (E2E 2026-09) finans duzeltmeleri ---------------------------------
+    "hareket_gerceklesmemis": {
+        "tr": "Bu hareket henüz gerçekleşmedi (onay bekliyor ya da reddedildi); iptal ya da iade edilemez. Onay bekleyen hareketi reddedin.",
+        "en": "This entry has not been realised (pending approval or rejected); it cannot be reversed or refunded. Reject the pending entry instead.",
+        "ar": "هذه الحركة لم تتحقق بعد (بانتظار الموافقة أو مرفوضة)؛ لا يمكن إلغاؤها أو استردادها. ارفض الحركة المعلقة بدلاً من ذلك.",
+        "ru": "Эта проводка ещё не исполнена (ожидает утверждения или отклонена); её нельзя сторнировать или вернуть. Отклоните ожидающую проводку.",
+        "de": "Diese Buchung ist noch nicht ausgeführt (wartet auf Freigabe oder abgelehnt); sie kann nicht storniert oder erstattet werden. Lehnen Sie die ausstehende Buchung ab.",
+        "fr": "Cette écriture n'est pas réalisée (en attente d'approbation ou rejetée) ; elle ne peut être ni annulée ni remboursée. Rejetez plutôt l'écriture en attente.",
+        "es": "Este asiento aún no se ha realizado (pendiente de aprobación o rechazado); no se puede anular ni reembolsar. Rechace el asiento pendiente.",
+    },
+    "hareket_iade_edilmis": {
+        "tr": "Bu hareketin iadesi var; iptal edilemez. Kalan tutarı iade edin.",
+        "en": "This entry has refunds; it cannot be reversed. Refund the remaining amount instead.",
+        "ar": "لهذه الحركة مبالغ مستردة؛ لا يمكن إلغاؤها. استرد المبلغ المتبقي بدلاً من ذلك.",
+        "ru": "По этой проводке есть возвраты; её нельзя сторнировать. Верните оставшуюся сумму.",
+        "de": "Für diese Buchung gibt es Erstattungen; sie kann nicht storniert werden. Erstatten Sie den Restbetrag.",
+        "fr": "Cette écriture a des remboursements ; elle ne peut pas être annulée. Remboursez plutôt le montant restant.",
+        "es": "Este asiento tiene reembolsos; no se puede anular. Reembolse el importe restante.",
+    },
+    "iade_tipi_gecersiz": {
+        "tr": "Yalnız tahsilat ve gelir iade edilebilir.",
+        "en": "Only collections and income can be refunded.",
+        "ar": "يمكن استرداد التحصيلات والإيرادات فقط.",
+        "ru": "Вернуть можно только поступления и доходы.",
+        "de": "Nur Einzahlungen und Einnahmen können erstattet werden.",
+        "fr": "Seuls les encaissements et les recettes peuvent être remboursés.",
+        "es": "Solo se pueden reembolsar cobros e ingresos.",
+    },
+    "tahsilat_daire_secilmeli": {
+        "tr": "Bu kişinin birden çok dairesi var; tahsilatın hangi daireye ait olduğunu seçin.",
+        "en": "This person has more than one unit; select which unit the payment belongs to.",
+        "ar": "لهذا الشخص أكثر من وحدة؛ اختر الوحدة التي تخصها الدفعة.",
+        "ru": "У этого человека несколько квартир; выберите, к какой относится платёж.",
+        "de": "Diese Person hat mehrere Einheiten; wählen Sie, zu welcher die Zahlung gehört.",
+        "fr": "Cette personne a plusieurs lots ; choisissez le lot auquel appartient le paiement.",
+        "es": "Esta persona tiene más de una unidad; seleccione a qué unidad corresponde el pago.",
+    },
+    "tahsilat_tarihi_ileri": {
+        "tr": "Tahsilat tarihi 7 günden daha ileri bir tarih olamaz.",
+        "en": "The payment date cannot be more than 7 days in the future.",
+        "ar": "لا يمكن أن يتجاوز تاريخ الدفعة 7 أيام في المستقبل.",
+        "ru": "Дата платежа не может быть более чем на 7 дней в будущем.",
+        "de": "Das Zahlungsdatum darf nicht mehr als 7 Tage in der Zukunft liegen.",
+        "fr": "La date du paiement ne peut pas dépasser 7 jours dans le futur.",
+        "es": "La fecha del pago no puede ser más de 7 días en el futuro.",
+    },
+    "mesai_zaten_gidere_yazildi": {
+        "tr": "Bu personelin bu ayki fazla mesaisi zaten gidere yazıldı.",
+        "en": "This staff member's overtime for this month has already been recorded as an expense.",
+        "ar": "تم تسجيل العمل الإضافي لهذا الموظف لهذا الشهر كمصروف بالفعل.",
+        "ru": "Сверхурочные этого сотрудника за этот месяц уже записаны в расходы.",
+        "de": "Die Überstunden dieses Mitarbeiters für diesen Monat wurden bereits als Ausgabe erfasst.",
+        "fr": "Les heures supplémentaires de ce membre du personnel pour ce mois ont déjà été enregistrées en dépense.",
+        "es": "Las horas extra de este empleado para este mes ya se registraron como gasto.",
+    },
+    "sayac_girdi_bicimi_tek": {
+        "tr": "Sayaç değerlerini ya tüketim ya da okuma (endeks) olarak gönderin; ikisi birden ya da hiçbiri olmaz.",
+        "en": "Send meter values either as consumption or as readings (index), not both or neither.",
+        "ar": "أرسل قيم العداد إما كاستهلاك أو كقراءات (مؤشر)، وليس كليهما أو لا شيء.",
+        "ru": "Передайте значения счётчиков либо как потребление, либо как показания (индекс) — не оба и не пусто.",
+        "de": "Senden Sie Zählerwerte entweder als Verbrauch oder als Ablesung (Zählerstand), nicht beides oder keines.",
+        "fr": "Envoyez les valeurs des compteurs soit en consommation, soit en relevés (index), pas les deux ni aucun.",
+        "es": "Envíe los valores de los contadores como consumo o como lecturas (índice), no ambos ni ninguno.",
+    },
+    "sayac_onceki_okuma_yok": {
+        "tr": "Bu sayacın önceki okuması kayıtlı değil; tüketim hesaplanamaz. Önce sayacın ilk okumasını girin.",
+        "en": "This meter has no previous reading; consumption cannot be calculated. Enter the meter's initial reading first.",
+        "ar": "لا توجد قراءة سابقة لهذا العداد؛ لا يمكن حساب الاستهلاك. أدخل القراءة الأولى للعداد أولاً.",
+        "ru": "У этого счётчика нет предыдущих показаний; потребление не рассчитать. Сначала введите начальные показания.",
+        "de": "Für diesen Zähler gibt es keinen vorherigen Stand; der Verbrauch kann nicht berechnet werden. Erfassen Sie zuerst den Anfangsstand.",
+        "fr": "Ce compteur n'a pas de relevé précédent ; la consommation ne peut pas être calculée. Saisissez d'abord le relevé initial.",
+        "es": "Este contador no tiene lectura anterior; no se puede calcular el consumo. Introduzca primero la lectura inicial.",
+    },
+    "sayac_okuma_geri": {
+        "tr": "Yeni okuma önceki okumadan küçük olamaz.",
+        "en": "The new reading cannot be lower than the previous reading.",
+        "ar": "لا يمكن أن تكون القراءة الجديدة أقل من القراءة السابقة.",
+        "ru": "Новые показания не могут быть меньше предыдущих.",
+        "de": "Der neue Zählerstand darf nicht niedriger als der vorherige sein.",
+        "fr": "Le nouveau relevé ne peut pas être inférieur au précédent.",
+        "es": "La nueva lectura no puede ser inferior a la anterior.",
+    },
     "tutar_bicimi": {
         "tr": "Tutar biçimi geçersiz.",
         "en": "Invalid amount format.",
@@ -339,6 +421,62 @@ METINLER: dict[str, dict[str, str]] = {
         "de": "Diesen Importtyp gibt es nicht.",
         "fr": "Ce type d'import n'existe pas.",
         "es": "No existe ese tipo de importación.",
+    },
+    # (E2E 2026-09 / TESIS-10) ATLANAN/HATALI SATIR SEBEPLERI — satir
+    # numarasiyla raporlanir (eskiden yalniz "zaten var" sayaci vardi).
+    "ice_aktarim_daire_zaten_kayitli": {
+        "tr": "Daire zaten kayıtlı; satırda yeni bilgi yok, atlandı.",
+        "en": "Unit already registered; the row carries no new data and was skipped.",
+        "ar": "الوحدة مسجّلة بالفعل؛ لا يحمل السطر بيانات جديدة وتم تخطيه.",
+        "ru": "Квартира уже зарегистрирована; в строке нет новых данных, пропущено.",
+        "de": "Wohneinheit bereits registriert; die Zeile enthält keine neuen Daten und wurde übersprungen.",
+        "fr": "Logement déjà enregistré ; la ligne n'apporte aucune donnée nouvelle et a été ignorée.",
+        "es": "La vivienda ya está registrada; la fila no aporta datos nuevos y se omitió.",
+    },
+    "ice_aktarim_kisi_zaten_kayitli": {
+        "tr": "Bu kişi zaten kayıtlı (aynı ad ve daire); atlandı.",
+        "en": "This person is already registered (same name and unit); skipped.",
+        "ar": "هذا الشخص مسجّل بالفعل (نفس الاسم والوحدة)؛ تم التخطي.",
+        "ru": "Этот человек уже зарегистрирован (то же имя и квартира); пропущено.",
+        "de": "Diese Person ist bereits registriert (gleicher Name und gleiche Einheit); übersprungen.",
+        "fr": "Cette personne est déjà enregistrée (même nom et même logement) ; ignorée.",
+        "es": "Esta persona ya está registrada (mismo nombre y vivienda); se omitió.",
+    },
+    "ice_aktarim_kisi_cakisiyor": {
+        "tr": "Bu telefon/e-posta tesiste başka bir kişiye (farklı ad ya da daire) kayıtlı.",
+        "en": "This phone/email is registered to another person in the facility (different name or unit).",
+        "ar": "هذا الهاتف/البريد مسجّل لشخص آخر في المنشأة (اسم أو وحدة مختلفة).",
+        "ru": "Этот телефон/e-mail зарегистрирован на другого человека в объекте (другое имя или квартира).",
+        "de": "Diese Telefonnummer/E-Mail ist in der Anlage einer anderen Person zugeordnet (anderer Name oder andere Einheit).",
+        "fr": "Ce téléphone/e-mail est enregistré pour une autre personne de l'établissement (nom ou logement différent).",
+        "es": "Este teléfono/correo está registrado a otra persona de la instalación (nombre o vivienda distintos).",
+    },
+    "ice_aktarim_telefon_baska_kisi": {
+        "tr": "Bu telefon numarası başka bir hesapta kayıtlı; kişi eklenemez.",
+        "en": "This phone number is registered to another account; the person cannot be added.",
+        "ar": "رقم الهاتف هذا مسجّل في حساب آخر؛ لا يمكن إضافة الشخص.",
+        "ru": "Этот номер телефона зарегистрирован в другом аккаунте; добавить человека нельзя.",
+        "de": "Diese Telefonnummer ist einem anderen Konto zugeordnet; die Person kann nicht hinzugefügt werden.",
+        "fr": "Ce numéro de téléphone est enregistré sur un autre compte ; la personne ne peut pas être ajoutée.",
+        "es": "Este número de teléfono está registrado en otra cuenta; no se puede añadir a la persona.",
+    },
+    "ice_aktarim_dosyada_yineleniyor": {
+        "tr": "Aynı değer dosyada {satir}. satırda zaten var.",
+        "en": "The same value already appears in row {satir} of the file.",
+        "ar": "القيمة نفسها موجودة بالفعل في السطر {satir} من الملف.",
+        "ru": "То же значение уже есть в строке {satir} файла.",
+        "de": "Derselbe Wert kommt bereits in Zeile {satir} der Datei vor.",
+        "fr": "La même valeur figure déjà à la ligne {satir} du fichier.",
+        "es": "El mismo valor ya aparece en la fila {satir} del archivo.",
+    },
+    "ice_aktarim_plaka_zaten_kayitli": {
+        "tr": "Plaka zaten kayıtlı; atlandı.",
+        "en": "Plate already registered; skipped.",
+        "ar": "اللوحة مسجّلة بالفعل؛ تم التخطي.",
+        "ru": "Номер уже зарегистрирован; пропущено.",
+        "de": "Kennzeichen bereits registriert; übersprungen.",
+        "fr": "Plaque déjà enregistrée ; ignorée.",
+        "es": "Matrícula ya registrada; se omitió.",
     },
     "ice_aktarim_zaten_geri_alindi": {
         "tr": "Bu aktarım zaten geri alınmış.",
@@ -600,6 +738,16 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Plateforme invalide. Seuls iOS et Android sont pris en charge.",
         "es": "Plataforma no válida. Solo se admiten iOS y Android.",
     },
+    # (E2E 2026-09) Surum politikasi: onerilen esik asgari esigin altinda.
+    "surum_onerilen_asgariden_dusuk": {
+        "tr": "Önerilen sürüm, asgari sürümden düşük olamaz.",
+        "en": "The recommended version cannot be lower than the minimum version.",
+        "ar": "لا يمكن أن يكون الإصدار الموصى به أقل من الحد الأدنى للإصدار.",
+        "ru": "Рекомендуемая версия не может быть ниже минимальной.",
+        "de": "Die empfohlene Version darf nicht niedriger als die Mindestversion sein.",
+        "fr": "La version recommandée ne peut pas être inférieure à la version minimale.",
+        "es": "La versión recomendada no puede ser inferior a la versión mínima.",
+    },
     "varlik_tipi_gecersiz": {
         "tr": "Bu kayıt türüne ek eklenemez.",
         "en": "Attachments are not supported for this record type.",
@@ -734,6 +882,15 @@ METINLER: dict[str, dict[str, str]] = {
         "de": "Das Sitzungstoken enthält keine Anlagen-ID.",
         "fr": "Le jeton de session ne contient pas d'identifiant d'établissement.",
         "es": "El token de sesión no contiene el identificador de la instalación.",
+    },
+    "oturum_sonlandirildi": {
+        "tr": "Oturumunuz sonlandırıldı. Lütfen yeniden giriş yapın.",
+        "en": "Your session has ended. Please sign in again.",
+        "ar": "انتهت جلستك. يرجى تسجيل الدخول مرة أخرى.",
+        "ru": "Ваш сеанс завершён. Пожалуйста, войдите снова.",
+        "de": "Ihre Sitzung wurde beendet. Bitte melden Sie sich erneut an.",
+        "fr": "Votre session a pris fin. Veuillez vous reconnecter.",
+        "es": "Su sesión ha finalizado. Inicie sesión de nuevo.",
     },
     "kullanici_bulunamadi_veya_pasif": {
         "tr": "Kullanıcı bulunamadı veya pasif.",
@@ -1431,14 +1588,38 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Logement introuvable : {eksik}",
         "es": "Vivienda no encontrada: {eksik}",
     },
+    # (E2E 2026-09 / ANA-4) Daire no TESIS GENELINDE tektir; blok ayri bir
+    # sutundur. Metin, hangi numaranin cakistigini ve blok onekinin yolunu
+    # soyler — "B blokta 1 neden kayitli?" sorusu cevapsiz kalmasin.
     "daire_no_zaten_kayitli": {
-        "tr": "Daire no bu tesiste zaten kayıtlı.",
-        "en": "This unit number is already registered in this facility.",
-        "ar": "رقم الوحدة مسجّل بالفعل في هذه المنشأة.",
-        "ru": "Номер квартиры уже зарегистрирован в этом объекте.",
-        "de": "Diese Wohnungsnummer ist in dieser Anlage bereits vergeben.",
-        "fr": "Ce numéro de logement est déjà enregistré dans cet établissement.",
-        "es": "El número de vivienda ya está registrado en esta instalación.",
+        "tr": "Daire no {no} bu tesiste zaten kayıtlı. Daire numarası tesis genelinde tektir; farklı blokta aynı numarayı blok önekiyle yazın (ör. B-1).",
+        "en": "Unit number {no} is already registered in this facility. Unit numbers are unique across the facility; for the same number in another block, use the block prefix (e.g. B-1).",
+        "ar": "رقم الوحدة {no} مسجّل بالفعل في هذه المنشأة. رقم الوحدة فريد على مستوى المنشأة؛ للرقم نفسه في مبنى آخر استخدم بادئة المبنى (مثل B-1).",
+        "ru": "Номер квартиры {no} уже зарегистрирован в этом объекте. Номер уникален в пределах объекта; для того же номера в другом корпусе укажите префикс корпуса (напр. B-1).",
+        "de": "Die Wohnungsnummer {no} ist in dieser Anlage bereits vergeben. Nummern sind anlagenweit eindeutig; für dieselbe Nummer in einem anderen Block das Blockpräfix verwenden (z. B. B-1).",
+        "fr": "Le numéro de logement {no} est déjà enregistré dans cet établissement. Les numéros sont uniques dans l'établissement ; pour le même numéro dans un autre bloc, utilisez le préfixe du bloc (ex. B-1).",
+        "es": "El número de vivienda {no} ya está registrado en esta instalación. Los números son únicos en toda la instalación; para el mismo número en otro bloque, use el prefijo del bloque (p. ej. B-1).",
+    },
+    # (E2E 2026-09 / TESIS-18) Sakin eklemede olmayan daire artik sessizce
+    # (bloksuz) acilmiyor; yeni daire ancak blok secilerek acilir.
+    "sakin_daire_bulunamadi": {
+        "tr": "Daire {no} bu tesiste bulunamadı. Mevcut bir daire numarası girin ya da yeni daire açmak için blok seçin.",
+        "en": "Unit {no} was not found in this facility. Enter an existing unit number or select a block to create a new unit.",
+        "ar": "لم يتم العثور على الوحدة {no} في هذه المنشأة. أدخل رقم وحدة موجودة أو اختر مبنى لإنشاء وحدة جديدة.",
+        "ru": "Квартира {no} не найдена в этом объекте. Введите существующий номер или выберите корпус, чтобы создать новую квартиру.",
+        "de": "Die Wohneinheit {no} wurde in dieser Anlage nicht gefunden. Geben Sie eine vorhandene Nummer ein oder wählen Sie einen Block, um eine neue Einheit anzulegen.",
+        "fr": "Le logement {no} est introuvable dans cet établissement. Saisissez un numéro existant ou choisissez un bloc pour créer un nouveau logement.",
+        "es": "No se encontró la vivienda {no} en esta instalación. Introduzca un número existente o seleccione un bloque para crear una vivienda nueva.",
+    },
+    # (E2E 2026-09 / TESIS-16) "B-12" A bloguna yaziliyordu.
+    "daire_no_blok_uyusmuyor": {
+        "tr": "Daire no {no}, {no_blok} bloğunun önekini taşıyor ama seçilen blok {blok}.",
+        "en": "Unit number {no} carries the prefix of block {no_blok}, but the selected block is {blok}.",
+        "ar": "رقم الوحدة {no} يحمل بادئة المبنى {no_blok}، لكن المبنى المحدد هو {blok}.",
+        "ru": "Номер квартиры {no} содержит префикс корпуса {no_blok}, но выбран корпус {blok}.",
+        "de": "Die Wohnungsnummer {no} trägt das Präfix von Block {no_blok}, gewählt ist aber Block {blok}.",
+        "fr": "Le numéro de logement {no} porte le préfixe du bloc {no_blok}, mais le bloc sélectionné est {blok}.",
+        "es": "El número de vivienda {no} lleva el prefijo del bloque {no_blok}, pero el bloque seleccionado es {blok}.",
     },
     "daire_no_cakismasi": {
         "tr": "Daire no çakışması (eş zamanlı ekleme).",
@@ -1847,14 +2028,13 @@ METINLER: dict[str, dict[str, str]] = {
         "es": "Solo el administrador principal puede nombrar la instalación.",
     },
     "yonetici_sinirli_alan_degistirir": {
-        "tr": "Yönetici yalnız tesis adını ve hava konumunu değiştirebilir.",
-        "en": "A manager can only change the facility name and the weather location.",
-        "ar": "يمكن للمدير تغيير اسم المنشأة وموقع الطقس فقط.",
-        "ru": "Управляющий может изменить только название объекта и место для погоды.",
-        "de": "Ein Verwalter kann nur den Anlagennamen und den Wetterort ändern.",
-        "fr": "Un gestionnaire ne peut modifier que le nom de l'établissement et le lieu météo.",
-        "es": "Un administrador solo puede cambiar el nombre de la "
-            "instalación y la ubicación del tiempo.",
+        "tr": "Bu ayarı yalnız platform yöneticisi değiştirebilir.",
+        "en": "Only the platform administrator can change this setting.",
+        "ar": "لا يمكن تغيير هذا الإعداد إلا من قبل مسؤول المنصة.",
+        "ru": "Этот параметр может изменить только администратор платформы.",
+        "de": "Diese Einstellung kann nur der Plattformadministrator ändern.",
+        "fr": "Seul l'administrateur de la plateforme peut modifier ce paramètre.",
+        "es": "Solo el administrador de la plataforma puede cambiar este ajuste.",
     },
     "atanan_user_bulunamadi": {
         "tr": "Atanacak kullanıcı bu tesiste bulunamadı.",
@@ -1864,6 +2044,15 @@ METINLER: dict[str, dict[str, str]] = {
         "de": "Der zuzuweisende Benutzer wurde in dieser Anlage nicht gefunden.",
         "fr": "L'utilisateur à affecter est introuvable dans cet établissement.",
         "es": "No se encontró en esta instalación al usuario que se va a asignar.",
+    },
+    "gorev_atama_yalniz_ekip": {
+        "tr": "Yalnız kendi ekibinizdeki güvenlik personeline görev atayabilirsiniz.",
+        "en": "You can only assign tasks to security staff on your own team.",
+        "ar": "يمكنك تعيين المهام لموظفي الأمن في فريقك فقط.",
+        "ru": "Вы можете назначать задачи только сотрудникам охраны своей команды.",
+        "de": "Sie können Aufgaben nur dem Sicherheitspersonal Ihres eigenen Teams zuweisen.",
+        "fr": "Vous ne pouvez attribuer des tâches qu’au personnel de sécurité de votre équipe.",
+        "es": "Solo puede asignar tareas al personal de seguridad de su propio equipo.",
     },
     "gorev_atama_rol_kisiti": {
         "tr": "Yönetici görevi yalnız güvenlik/tesis görevlisi kullanıcılara atayabilir.",
@@ -1894,6 +2083,16 @@ METINLER: dict[str, dict[str, str]] = {
         "de": "Dieses Gerät gehört nicht zu Ihrer Wohnung.",
         "fr": "Cet appareil n’appartient pas à votre logement.",
         "es": "Este dispositivo no pertenece a su vivienda.",
+    },
+    # (E2E 2026-09) TESIS-13: kapali bolumun cihazi sunucuda komut aliyordu.
+    "akilli_ev_bolum_kapali": {
+        "tr": "Bu cihazın bölümü tesiste kapalı.",
+        "en": "This device's section is turned off for the facility.",
+        "ar": "قسم هذا الجهاز مغلق في المنشأة.",
+        "ru": "Раздел этого устройства отключён на объекте.",
+        "de": "Der Bereich dieses Geräts ist in der Anlage deaktiviert.",
+        "fr": "La section de cet appareil est désactivée pour l’établissement.",
+        "es": "La sección de este dispositivo está desactivada en la instalación.",
     },
     # (P241 §2) VARDIYA — izin kapisi ve Excel ice aktarim.
     "vardiya_izinli_gun": {
@@ -1986,6 +2185,17 @@ METINLER: dict[str, dict[str, str]] = {
         "de": "Eine Tagesangabe gilt nur für einen freien Zeitraum.",
         "fr": "Le nombre de jours ne s’applique qu’à une période libre.",
         "es": "El número de días solo aplica a un período libre.",
+    },
+    # (E2E 2026-09) Gelecek tarihli bakim kaydi — yazim hatasi yasal
+    # muayeneyi yillarca gizliyordu.
+    "bakim_tarihi_gelecekte": {
+        "tr": "Bakım tarihi ileri bir tarih olamaz; yapılmış bakımı girin.",
+        "en": "The maintenance date cannot be in the future; record completed work.",
+        "ar": "لا يمكن أن يكون تاريخ الصيانة في المستقبل؛ سجّل الصيانة المنجزة.",
+        "ru": "Дата обслуживания не может быть в будущем; укажите выполненную работу.",
+        "de": "Das Wartungsdatum darf nicht in der Zukunft liegen.",
+        "fr": "La date de maintenance ne peut pas être dans le futur.",
+        "es": "La fecha de mantenimiento no puede ser futura.",
     },
     "akilli_ev_eylem_desteklenmiyor": {
         "tr": "Bu cihaz bu işlemi yapamaz.",
@@ -2329,6 +2539,28 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Le tag scanné ne correspond pas au point de contrôle de la tâche.",
         "es": "La etiqueta escaneada no coincide con el punto de control de la tarea.",
     },
+    # (E2E 2026-09) TESIS-07: kontrol noktasina bagli gorev saha rolunce
+    # NFC okutmadan kapatilabiliyordu — nokta baglamak anlamsizlasiyordu.
+    "gorev_nfc_zorunlu": {
+        "tr": "Bu görev bir kontrol noktasına bağlı; tamamlamak için etiketi okutun.",
+        "en": "This task is linked to a checkpoint; scan the tag to complete it.",
+        "ar": "هذه المهمة مرتبطة بنقطة تفتيش؛ امسح البطاقة لإكمالها.",
+        "ru": "Задача привязана к контрольной точке; отсканируйте метку, чтобы завершить её.",
+        "de": "Diese Aufgabe ist an einen Kontrollpunkt gebunden; scannen Sie das Tag, um sie abzuschließen.",
+        "fr": "Cette tâche est liée à un point de contrôle ; scannez le tag pour la terminer.",
+        "es": "Esta tarea está vinculada a un punto de control; escanee la etiqueta para completarla.",
+    },
+    # (E2E 2026-09) TESIS-03: acik adim varken gorev kapaniyordu (2/3 adimla
+    # "tamamlandi").
+    "gorev_adimlari_tamamlanmadi": {
+        "tr": "Görevin tamamlanmamış adımları var. Önce tüm adımları tamamlayın.",
+        "en": "The task has unfinished steps. Complete all steps first.",
+        "ar": "للمهمة خطوات غير مكتملة. أكمل جميع الخطوات أولاً.",
+        "ru": "У задачи есть незавершённые шаги. Сначала завершите все шаги.",
+        "de": "Die Aufgabe hat offene Schritte. Schließen Sie zuerst alle Schritte ab.",
+        "fr": "La tâche comporte des étapes inachevées. Terminez d'abord toutes les étapes.",
+        "es": "La tarea tiene pasos sin completar. Complete primero todos los pasos.",
+    },
     "kategori_adi_zaten_kayitli": {
         "tr": "Bu adla kategori zaten kayıtlı.",
         "en": "A category with this name already exists.",
@@ -2391,6 +2623,17 @@ METINLER: dict[str, dict[str, str]] = {
         "de": "Kontrollpunkt in dieser Anlage nicht gefunden: {eksik}",
         "fr": "Point de contrôle introuvable dans cet établissement : {eksik}",
         "es": "Punto de control no encontrado en esta instalación: {eksik}",
+    },
+    # (E2E 2026-09 / GUVENLIK-17) Gecmise dusen ek gun artik kayit aninda
+    # reddediliyor (hic yurumeyecek bir gun).
+    "devriye_ek_tarih_gecmis": {
+        "tr": "Ek gün geçmiş bir tarih olamaz: {tarih}",
+        "en": "An extra day cannot be in the past: {tarih}",
+        "ar": "لا يمكن أن يكون اليوم الإضافي تاريخًا ماضيًا: {tarih}",
+        "ru": "Дополнительный день не может быть в прошлом: {tarih}",
+        "de": "Ein Zusatztag darf nicht in der Vergangenheit liegen: {tarih}",
+        "fr": "Un jour supplémentaire ne peut pas être dans le passé : {tarih}",
+        "es": "Un día adicional no puede estar en el pasado: {tarih}",
     },
     "shift_bulunamadi": {
         "tr": "Vardiya bu tesiste bulunamadı.",
@@ -2490,6 +2733,17 @@ METINLER: dict[str, dict[str, str]] = {
         "de": "Dieses Tag ist in dieser Anlage bereits registriert.",
         "fr": "Ce tag est déjà enregistré dans cet établissement.",
         "es": "Esta etiqueta ya está registrada en esta instalación.",
+    },
+    # (E2E 2026-09) GUVENLIK-05: ayraclar atildiktan sonra bos kalan UID
+    # (ör. ":::") kanonik bicimde saklanamaz.
+    "nfc_uid_gecersiz": {
+        "tr": "Etiket kimliği (UID) geçersiz.",
+        "en": "The tag ID (UID) is invalid.",
+        "ar": "معرّف البطاقة (UID) غير صالح.",
+        "ru": "Идентификатор метки (UID) недействителен.",
+        "de": "Die Tag-ID (UID) ist ungültig.",
+        "fr": "L'identifiant du tag (UID) est invalide.",
+        "es": "El identificador de la etiqueta (UID) no es válido.",
     },
     "checked_out_by_bicimi": {
         "tr": "checked_out_by, 'me' veya UUID olmalı.",
@@ -2766,6 +3020,25 @@ METINLER: dict[str, dict[str, str]] = {
         "de": "Der Bereich wurde nicht gefunden oder ist inaktiv.",
         "fr": "L'espace est introuvable ou inactif.",
         "es": "El espacio no se encontró o no está activo.",
+    },
+    # (E2E 2026-09 / TESIS-12) Izgara hizasi + azami sure.
+    "rezervasyon_izgara_disi": {
+        "tr": "Rezervasyon saatleri {acilis} başlangıçlı {slot} dakikalık slotlara denk gelmeli.",
+        "en": "Booking times must align with {slot}-minute slots starting at {acilis}.",
+        "ar": "يجب أن تتوافق أوقات الحجز مع فترات مدتها {slot} دقيقة تبدأ من {acilis}.",
+        "ru": "Время брони должно совпадать со слотами по {slot} мин, начиная с {acilis}.",
+        "de": "Buchungszeiten müssen auf {slot}-Minuten-Slots ab {acilis} fallen.",
+        "fr": "Les horaires doivent correspondre à des créneaux de {slot} minutes à partir de {acilis}.",
+        "es": "Los horarios deben coincidir con franjas de {slot} minutos a partir de las {acilis}.",
+    },
+    "rezervasyon_azami_sure": {
+        "tr": "Tek rezervasyon en fazla {azami} dakika olabilir.",
+        "en": "A single booking can be at most {azami} minutes.",
+        "ar": "لا يمكن أن يتجاوز الحجز الواحد {azami} دقيقة.",
+        "ru": "Одна бронь может длиться не более {azami} мин.",
+        "de": "Eine einzelne Buchung darf höchstens {azami} Minuten dauern.",
+        "fr": "Une réservation ne peut pas dépasser {azami} minutes.",
+        "es": "Una reserva puede durar como máximo {azami} minutos.",
     },
     "aralik_musaitlik_disinda": {
         "tr": "Seçilen aralık alanın müsaitlik saatleri (açılış-kapanış) dışında.",
@@ -3332,6 +3605,29 @@ METINLER: dict[str, dict[str, str]] = {
         "de": "Der Rekorder hat unerwartet geantwortet. Details stehen in den Serverprotokollen.",
         "fr": "L'enregistreur a renvoyé une réponse inattendue. Les détails sont dans les journaux du serveur.",
         "es": "El grabador devolvió una respuesta inesperada. Los detalles están en los registros del servidor.",
+    },
+    # (E2E 2026-09 / GUVENLIK-03) Bozuk sablon artik KAYIT ANINDA reddedilir
+    # (eskiden oynatmada 500). `{yer_tutucu}` sorunlu parcayi gosterir.
+    "kamera_kayit_sablon_gecersiz": {
+        "tr": "Kayıt adresi şablonu geçersiz ({yer_tutucu}). Yalnız bas, bit, bas_tarih, bit_tarih, bas_saat, bit_saat, bas_unix, bit_unix ve kanal yer tutucuları süslü parantez içinde kullanılabilir.",
+        "en": "The recording address template is invalid ({yer_tutucu}). Only the placeholders bas, bit, bas_tarih, bit_tarih, bas_saat, bit_saat, bas_unix, bit_unix and kanal may be used, in curly braces.",
+        "ar": "قالب عنوان التسجيل غير صالح ({yer_tutucu}). يمكن استخدام العناصر النائبة bas وbit وbas_tarih وbit_tarih وbas_saat وbit_saat وbas_unix وbit_unix وkanal فقط، بين أقواس معقوفة.",
+        "ru": "Шаблон адреса записи недействителен ({yer_tutucu}). Допустимы только подстановки bas, bit, bas_tarih, bit_tarih, bas_saat, bit_saat, bas_unix, bit_unix и kanal в фигурных скобках.",
+        "de": "Die Vorlage der Aufzeichnungsadresse ist ungültig ({yer_tutucu}). Nur die Platzhalter bas, bit, bas_tarih, bit_tarih, bas_saat, bit_saat, bas_unix, bit_unix und kanal in geschweiften Klammern sind erlaubt.",
+        "fr": "Le modèle d'adresse d'enregistrement est invalide ({yer_tutucu}). Seuls les espaces réservés bas, bit, bas_tarih, bit_tarih, bas_saat, bit_saat, bas_unix, bit_unix et kanal, entre accolades, sont autorisés.",
+        "es": "La plantilla de dirección de grabación no es válida ({yer_tutucu}). Solo se admiten los marcadores bas, bit, bas_tarih, bit_tarih, bas_saat, bit_saat, bas_unix, bit_unix y kanal, entre llaves.",
+    },
+    # (E2E 2026-09 / GUVENLIK-04) Kayit oynatma hatasi CANLI metniyle
+    # ("birkac saniye sonra tekrar deneyin") anlatilmaz: sebep genelde
+    # secilen aralikta kaydin olmamasi ya da adresin yanlis olmasidir.
+    "kamera_kayit_oynatilamadi": {
+        "tr": "Kayıt cihazından bu aralık için görüntü alınamadı. Seçilen saatlerde kayıt olmayabilir ya da kayıt adresi/şablonu hatalı olabilir.",
+        "en": "No video could be retrieved from the recorder for this range. There may be no recording at the selected times, or the recording address/template may be wrong.",
+        "ar": "تعذّر جلب الفيديو من جهاز التسجيل لهذه الفترة. قد لا يوجد تسجيل في الأوقات المحددة، أو قد يكون عنوان/قالب التسجيل خاطئًا.",
+        "ru": "Не удалось получить видео с регистратора за этот период. Возможно, в выбранное время записи нет или адрес/шаблон записи неверен.",
+        "de": "Für diesen Zeitraum konnte kein Video vom Rekorder abgerufen werden. Zu den gewählten Zeiten gibt es evtl. keine Aufzeichnung, oder Adresse/Vorlage der Aufzeichnung ist falsch.",
+        "fr": "Aucune vidéo n'a pu être récupérée de l'enregistreur pour cette plage. Il n'y a peut-être pas d'enregistrement aux heures choisies, ou l'adresse/le modèle d'enregistrement est erroné.",
+        "es": "No se pudo obtener vídeo del grabador para este intervalo. Puede que no haya grabación en las horas elegidas o que la dirección/plantilla de grabación sea incorrecta.",
     },
     "kamera_gecit_yapilandirma": {
         "tr": "Canlı yayın geçidi kamera yolunu kaydedemedi. Sunucu günlüklerinde ayrıntı var.",

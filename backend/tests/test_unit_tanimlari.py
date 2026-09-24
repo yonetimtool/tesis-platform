@@ -222,7 +222,7 @@ def test_tenant_izolasyonu(client, world):
     assert tip["id"] not in [t["id"] for t in b_liste]
     # ...ve ona daire BAGLAYAMAZ (bilesik FK'dan once 422 ile durur).
     r = client.post("/units", headers=b, json={
-        "no": f"B-{uuid.uuid4().hex[:6]}", "blok": "A",
+        "no": f"UT-{uuid.uuid4().hex[:6]}", "blok": "A",
         "unit_tip_id": tip["id"],
     })
     assert r.status_code == 422

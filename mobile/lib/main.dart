@@ -64,27 +64,10 @@ class TesisGuvenlikApp extends ConsumerWidget {
     // MaterialApp yeniden cizilir; UYGULAMA YENIDEN BASLAMAZ.
     final locale = ref.watch(aktifLocaleProvider);
 
-    // On planda gelen push → SnackBar; hedefi olan bildirimde "Ac" aksiyonu
-    // ilgili ekrana goturur (on plan mesaji tepsiye dusmez — tiklama bu).
-    ref.listen(pushRegistrarProvider.select((s) => s.sonBildirim),
-        (prev, next) {
-      if (next == null || identical(prev, next)) return;
-    // (P217) HEDEF ROLE GORE. Ayni bildirim (or. uzak okutma alarmi) HEM
-    // gorevliye HEM yonetime gidiyor; "Turlarim" yoneticinin menusunde
-    // YOK ve acilinca "yetkiniz yok" cikiyordu. `pushHedefi` rolu de
-    // hesaba katar ve erisilemeyen hedefte null doner (yonlendirme yok).
-    final rol = ref.read(currentUserRoleProvider).asData?.value;
-      final route = pushHedefi(next.data, rol);
-      rootScaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(
-          content: Text(next.displayText),
-          duration: const Duration(seconds: 5),
-          action: route == null
-              ? null
-              : SnackBarAction(label: 'Ac', onPressed: () => router.push(route)),
-        ),
-      );
-    });
+    // (E2E 2026-09) ON PLAN push'u artik YALNIZ `HomeShell` gosterir
+    // (tek SnackBar, hedefe gotururen eylem). Burada ikinci bir dinleyici
+    // vardi: iki SnackBar ayni kok mesajciya dusuyor, ikincisi birincisini
+    // hemen gizliyordu.
 
     // Tepsideki bildirime tiklama (arka plan/kapali) → ilgili ekran.
     // Bilinmeyen tip'te yonlendirme yapilmaz (uygulama oldugu yerde kalir;

@@ -841,3 +841,55 @@ def test_YAYINLANACAK_SEY_YOKSA_BILDIRIM_YOK(client, world, personel):
     )
     assert r.json() == {"yayinlanan": 0, "bildirilen_kisi": 0}
     assert len(_bildirimler(client, guard, "vardiya_yayinlandi")) == onceki
+
+
+# ======================= (E2E 2026-09) duzeltmeler ======================== #
+def test_ONAYLANAN_IZIN_CAKISAN_VARDIYAYI_IPTAL_EDER(client, world, personel, owner_conn):
+    """Vardiyasi olan gune izin onaylaniyor, vardiya `planli` kaliyordu —
+    kisi ayni anda hem izinli hem gorevde."""
+    admin = _h(client, world["slug_a"], world["admin_a"])
+    s = _sablon(client, admin)
+    gun = _pazartesi(17)
+    r = client.post(
+        "/vardiya-plani", headers=admin,
+        json={"shift_id": s["id"], "tarih": str(gun), "user_id": personel["id"]},
+    )
+    assert r.status_code == 201, r.text
+    plan_id = r.json()["id"]
+    r = client.post(
+        "/vardiya-izin", headers=admin,
+        json={"user_id": personel["id"], "tur": "yillik",
+              "baslangic": str(gun), "bitis": str(gun)},
+    )
+    assert r.status_code == 201 and r.json()["durum"] == "onaylandi", r.text
+    with owner_conn.cursor() as cur:
+        cur.execute("SELECT durum FROM vardiya_plani WHERE id = %s", (plan_id,))
+        assert cur.fetchone()[0] == "iptal"
+
+
+def test_DISA_AKTARIM_PERSONELE_TASLAK_ve_EPOSTA_VERMEZ(client, world, personel):
+    """Guvenlik/tesis gorevlisi Excel ile yayinlanmamis plani ve tum
+    personelin e-postasini goruyordu."""
+    import io
+
+    from openpyxl import load_workbook
+
+    admin = _h(client, world["slug_a"], world["admin_a"])
+    guard = _h(client, world["slug_a"], world["guard_a"])
+    s = _sablon(client, admin)
+    gun = _pazartesi(18)
+    r = client.post(
+        "/vardiya-plani", headers=admin,
+        json={"shift_id": s["id"], "tarih": str(gun), "user_id": personel["id"]},
+    )
+    assert r.status_code == 201 and r.json()["yayinlandi_at"] is None
+
+    def _hucreler(h):
+        r = client.get("/vardiya-plani/disa-aktar", headers=h,
+                       params={"baslangic": str(gun), "gun": 1})
+        assert r.status_code == 200, r.text
+        wb = load_workbook(io.BytesIO(r.content))
+        return [str(c.value) for ws in wb for row in ws.iter_rows() for c in row if c.value]
+
+    assert any(world["guard_a"]["email"] in h for h in _hucreler(admin))
+    assert not any(world["guard_a"]["email"] in h for h in _hucreler(guard))

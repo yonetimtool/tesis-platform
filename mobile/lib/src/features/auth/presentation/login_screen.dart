@@ -12,6 +12,7 @@ import '../../../core/ui/merkez_diyalog.dart';
 import '../../tesis/domain/tesis_uyeligi.dart';
 import '../domain/user_role.dart';
 import 'rol_adi.dart';
+import 'sifremi_unuttum.dart';
 import '../../../routing/app_router.dart';
 
 /// GIRIS EKRANI.
@@ -38,6 +39,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _obscure = true;
   bool _rememberMe = false;
 
+  // (E2E 2026-09, YETKI-13) E-POSTA KODUYLA GIRIS — web'deki "Parola yerine
+  // e-postaya kod gonder" akisinin ikizi. Mod ekranin ICINDE: ayri bir rota
+  // acmak, geri tusuyla yarim kalmis bir duruma dusmek demekti.
+  final _kodCtrl = TextEditingController();
+  bool _kodModu = false;
+  bool _kodGonderildi = false;
+
+  /// Istemcide uretilen hata (sunucuya gitmeden once) — or. telefonla kod
+  /// istemek. Sunucu hatalari `AuthState`te durur.
+  String? _yerelHata;
+
   @override
   void initState() {
     super.initState();
@@ -63,12 +75,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void dispose() {
     _kimlikCtrl.dispose();
     _passwordCtrl.dispose();
+    _kodCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
+    if (_kodModu) {
+      await (_kodGonderildi ? _kodlaGir() : _kodIste());
+      return;
+    }
     final secim = await ref.read(authControllerProvider.notifier).girisYap(
           kimlik: _kimlikCtrl.text,
           password: _passwordCtrl.text,
@@ -78,6 +95,67 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // Rastgele birini secmek, onu bilmedigi bir tesise sokmak olurdu.
     if (secim != null && secim.length > 1 && mounted) {
       await _tesisSec(secim);
+    }
+  }
+
+  /// (E2E 2026-09, YETKI-13) Kod iste. KOD YOLU E-POSTAYA BAGLI (web P212
+  /// §1 ile ayni): telefon yazilmissa istekten ONCE ve ACIKCA soylenir.
+  Future<void> _kodIste() async {
+    final eposta = _kimlikCtrl.text.trim();
+    if (!eposta.contains('@')) {
+      setState(() => _yerelHata = context.l10n.girisKodYalnizEposta);
+      return;
+    }
+    setState(() => _yerelHata = null);
+    final ok = await ref
+        .read(authControllerProvider.notifier)
+        .epostaGirisKoduIste(eposta);
+    if (ok && mounted) setState(() => _kodGonderildi = true);
+  }
+
+  Future<void> _kodlaGir({String? tenantSlug}) async {
+    final ctrl = ref.read(authControllerProvider.notifier);
+    final sonuc = await ctrl.epostaKoduylaGir(
+      eposta: _kimlikCtrl.text.trim(),
+      kod: _kodCtrl.text.trim(),
+      tenantSlug: tenantSlug,
+    );
+    if (sonuc != EpostaKodSonucu.tesisSecimiGerekli || !mounted) return;
+    // BIRDEN COK TESIS: kodun tuttugu tesis listesini veren bir uc YOK
+    // (`/auth/tesislerim` PAROLA ister). Kullanicidan tesis kodunu alip
+    // AYNI kodla o tesise gireriz — web sifre sifirlamadaki alanin aynisi.
+    final slug = await merkezSayfaAc<String>(
+      context,
+      builder: (_) => const TesisKoduSorusu(),
+    );
+    if (slug == null || !mounted) return;
+    await _kodlaGir(tenantSlug: slug);
+  }
+
+  void _kodModunuDegistir() {
+    ref.read(authControllerProvider.notifier).girisHatasiniTemizle();
+    setState(() {
+      _kodModu = !_kodModu;
+      _kodGonderildi = false;
+      _kodCtrl.clear();
+      _yerelHata = null;
+    });
+  }
+
+  Future<void> _sifremiUnuttum() async {
+    // Parola sifirlama E-POSTAYLA calisir; telefon yazilmissa on-doldurma
+    // YAPILMAZ (web ile ayni gerekce).
+    final k = _kimlikCtrl.text.trim();
+    final eposta = await merkezSayfaAc<String>(
+      context,
+      builder: (_) => SifremiUnuttumFormu(eposta: k.contains('@') ? k : null),
+    );
+    // Sifirlama tamamlandi: yeni parolayla giris icin adres on-dolar.
+    if (eposta != null && mounted) {
+      setState(() {
+        _kimlikCtrl.text = eposta;
+        _passwordCtrl.clear();
+      });
     }
   }
 
@@ -138,7 +216,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final auth = ref.watch(authControllerProvider);
     final submitting = auth.submitting;
     final l10n = context.l10n;
-    final hata = girisHatasiCoz(l10n, auth.hataKimligi, auth.errorMessage);
+    final hata =
+        _yerelHata ?? girisHatasiCoz(l10n, auth.hataKimligi, auth.errorMessage);
 
     return Scaffold(
       body: SafeArea(
@@ -297,6 +376,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           : null,
                     ),
                     const SizedBox(height: 16),
+                    // (E2E 2026-09, YETKI-13) KOD MODU: parola alani yerine
+                    // (kod gonderildiyse) kod alani.
+                    if (_kodModu) ...[
+                      if (_kodGonderildi) ...[
+                        Text(
+                          l10n.girisEpostaKodGonderildi,
+                          key: const Key('giris-kod-gonderildi'),
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          key: const Key('giris-eposta-kod'),
+                          controller: _kodCtrl,
+                          enabled: !submitting,
+                          keyboardType: TextInputType.number,
+                          autofillHints: const [AutofillHints.oneTimeCode],
+                          textInputAction: TextInputAction.done,
+                          onFieldSubmitted: (_) => _submit(),
+                          decoration: InputDecoration(
+                            labelText: l10n.girisKodAlani,
+                            prefixIcon: const Icon(Icons.pin_outlined),
+                            border: const OutlineInputBorder(),
+                          ),
+                          validator: (v) => (v == null || v.trim().length < 4)
+                              ? l10n.girisKodAlani
+                              : null,
+                        ),
+                      ],
+                    ] else ...[
                     TextFormField(
                       controller: _passwordCtrl,
                       enabled: !submitting,
@@ -342,6 +450,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       contentPadding: EdgeInsets.zero,
                       dense: true,
                     ),
+                    ],
                     if (hata != null) ...[
                       const SizedBox(height: 16),
                       _ErrorBanner(message: hata),
@@ -358,13 +467,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               width: 22,
                               child: CircularProgressIndicator(strokeWidth: 2.5),
                             )
-                          : Text(l10n.girisYap),
+                          : Text(
+                              _kodModu && !_kodGonderildi
+                                  ? l10n.girisEpostaKodGonder
+                                  : l10n.girisYap,
+                            ),
                     ),
-                    // (P184) PAROLASIZ (SMS) GIRIS KALDIRILDI: SMS kapali
-                    // ve mobil kullanici tenant_slug bilmez (e-posta kodu
-                    // giris tenant_slug ister). Parolasiz sakinler ARTIK SSO
-                    // ile girer; parola belirleyenler parola ile. Boylece
-                    // giris ekraninda SMS vaadi KALMAZ (kabul 1).
+                    // (E2E 2026-09, YETKI-13) Web'deki iki yol: "Parola
+                    // yerine e-postaya kod gonder" ve "Sifremi unuttum".
+                    TextButton(
+                      key: const Key('giris-kod-modu'),
+                      onPressed: submitting ? null : _kodModunuDegistir,
+                      child: Text(
+                        _kodModu ? l10n.girisParolaylaDon : l10n.girisKodIleEposta,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    if (!_kodModu)
+                      TextButton(
+                        key: const Key('giris-sifremi-unuttum'),
+                        onPressed: submitting ? null : _sifremiUnuttum,
+                        child: Text(l10n.girisSifremiUnuttum),
+                      ),
+                    // (P184) PAROLASIZ (SMS) GIRIS KALDIRILDI: SMS kapali.
+                    // (E2E 2026-09) E-posta kodu artik tesis kodu ISTEMIYOR
+                    // (P205 §1) ve yukaridaki "kod gonder" yolu onu kullanir;
+                    // giris ekraninda SMS vaadi yine YOK (kabul 1).
                     //
                     // (P211-ek3) SIRA DEGISTI: SSO dugmeleri PAROLANIN
                     // HEMEN ALTINDA, kayit baglantisi EN ALTTA. Eskiden

@@ -448,7 +448,8 @@ export default function AssetsPage() {
         onTekrar={() => void mutate()}
         yukleniyor={isLoading && !data}
         bosBaslik={t("demirbasYok")}
-        bosAciklama={t("demirbasYokAlt")}
+        // (E2E 2026-09) "Filtreyi degistirin" YALNIZ suzgec aciksa.
+        bosAciklama={kategori || durum ? t("demirbasYokAlt") : t("demirbasYokIlk")}
         sunucuTarafli
         toplam={data?.meta?.total ?? 0}
         durum={tabloDurumu}

@@ -35,5 +35,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // YALNIZ dogrulama adimi token uretir; isteme adimi bilgisiz bir
     // yanit doner ve cerez kurmaz.
     adim === "dogrula",
+    req,
   );
 }

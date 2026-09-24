@@ -220,7 +220,7 @@ def test_KULLANICI_baglantili_silme_500_VERMEZ(client, yon):
     hangisi olursa olsun 405/500 DEGIL)."""
     created = client.post("/residents", headers=yon, json={
         "telefon": f"+9053{uuid.uuid4().int % 10**8:08d}",
-        "unit_no": f"SIL-{uuid.uuid4().hex[:4]}",
+        "blok": "A", "unit_no": f"SIL-{uuid.uuid4().hex[:4]}",
         "email": f"sil2-{uuid.uuid4().hex[:8]}@acme.com",
     }).json()
     uid = created["user_id"]

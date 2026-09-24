@@ -9,7 +9,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "next lint",
-    "dogrula": "tsc --noEmit && next lint && vitest run && next build"
+    "dogrula": "tsc --noEmit && next lint && vitest run && NEXT_DIST_DIR=.next-dogrula next build"
   },
   "dependencies": {
     "@react-three/drei": "^9.122.0",

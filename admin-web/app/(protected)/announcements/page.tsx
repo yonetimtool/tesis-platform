@@ -4,20 +4,64 @@ import { useRef, useState } from "react";
 import useSWR from "swr";
 
 import { Foto } from "@/components/Foto";
-import { Alan, AlanSarmal, BosDurum, CokSatir, Dugme, HataDurumu, IskeletMetin, Kart, Modal, Pager, useOnay } from "@/components/ui";
+import { Alan, AlanSarmal, BosDurum, CokSatir, Dugme, HataDurumu, IskeletMetin, Kart, Modal, Pager, Rozet, Secim, useOnay } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
-import type { Announcement, AnnouncementList, PresignTicket } from "@/lib/types";
+import type { Announcement, AnnouncementList, BlockList, PresignTicket } from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
+import { rolAdi } from "@/lib/roles";
 
 const LIMIT = 20;
+
+/**
+ * (E2E 2026-09, BILDIRIM-12) HEDEF KITLE — anketteki desen + BLOK.
+ * Roller arka uctaki `ANKET_HEDEF_ROLLER` ile ayni. Bos secim = HERKES.
+ * Sakin tipi ve blok YALNIZ sakinlere uygulanir; roller secilmis ve
+ * `resident` aralarinda degilse ikisi de gizlenir VE temizlenir (gizli
+ * bir suzgec govdede kalmasin — anketteki P237 §4 olcumu).
+ */
+const HEDEF_ROLLER = [
+  "resident",
+  "security",
+  "guvenlik_amiri",
+  "tesis_gorevlisi",
+  "yonetici",
+  "admin",
+] as const;
+const TIP_MALIK = "malik" as const;
+const TIP_KIRACI = "kiraci" as const;
+
+function sakinSuzgeciAnlamli(roller: string[]): boolean {
+  return roller.length === 0 || roller.includes("resident");
+}
+
+/** Hedef kitlenin tek satirlik ozeti; hedefsiz duyuruda `null` (rozet yok). */
+function hedefOzeti(t: ReturnType<typeof useT>, a: Announcement): string | null {
+  const parcalar: string[] = [];
+  const roller = a.hedef_roller ?? [];
+  const bloklar = a.hedef_bloklar ?? [];
+  if (roller.length > 0) parcalar.push(roller.map((r) => rolAdi(t, r)).join(", "));
+  if (bloklar.length > 0) parcalar.push(t("duyuruHedefBlok", { bloklar: bloklar.join(", ") }));
+  if (a.hedef_sakin_tipi === TIP_MALIK) parcalar.push(t("anketMalik"));
+  if (a.hedef_sakin_tipi === TIP_KIRACI) parcalar.push(t("anketKiraci"));
+  return parcalar.length > 0 ? parcalar.join(" · ") : null;
+}
 
 interface FormState {
   baslik: string;
   govde: string;
+  hedefRoller: string[];
+  hedefSakinTipi: string;
+  hedefBloklar: string[];
 }
-const EMPTY: FormState = { baslik: "", govde: "" };
+const EMPTY: FormState = {
+  baslik: "",
+  govde: "",
+  hedefRoller: [],
+  hedefSakinTipi: "",
+  hedefBloklar: [],
+};
 
 /**
  * Opsiyonel gorselin form icindeki yasam dongusu (mobil akisla ayni desen):
@@ -42,10 +86,12 @@ const PHOTO_EMPTY: PhotoState = {
   removed: false,
 };
 
-// Duyuru olusturmada backend, tenant'in TUM aktif cihazlarina push dener
-// (auth.md §4) — panelden gonderilen duyuru mobil kullanicilara da duser.
+// Duyuru olusturmada backend HEDEF KITLENIN aktif cihazlarina push dener
+// (olusturan haric, BILDIRIM-12) — panelden gonderilen duyuru mobil
+// kullanicilara da duser.
 export default function AnnouncementsPage() {
   const t = useT();
+  const { data: bloklar } = useSWR<BlockList>("/api/blocks", jsonFetcher);
   // (P161) Yikici onaylar yerel `confirm()` degil, tema/dil taniyan diyalog.
   const { onayla, diyalog } = useOnay();
   const toast = useToast();
@@ -79,7 +125,8 @@ export default function AnnouncementsPage() {
   function openEdit(a: Announcement) {
     setEditingId(a.id);
     setEditing(a);
-    setForm({ baslik: a.baslik, govde: a.govde });
+    // Hedef DUZENLENEMEZ (sunucu PATCH'te tasimaz); formda da gosterilmez.
+    setForm({ ...EMPTY, baslik: a.baslik, govde: a.govde });
     setFormErr(null);
     resetPhoto();
     setOpen(true);
@@ -144,7 +191,13 @@ export default function AnnouncementsPage() {
     setFormErr(null);
     // foto_key yalniz degistiginde govdeye girer: yeni yukleme -> anahtar;
     // "kaldir" -> null; dokunulmadi -> alan yok (backend mevcut gorseli korur).
-    const body: Record<string, unknown> = { ...form };
+    const body: Record<string, unknown> = { baslik: form.baslik, govde: form.govde };
+    if (!editingId) {
+      const sakinli = sakinSuzgeciAnlamli(form.hedefRoller);
+      body.hedef_roller = form.hedefRoller;
+      body.hedef_sakin_tipi = sakinli ? form.hedefSakinTipi || null : null;
+      body.hedef_bloklar = sakinli ? form.hedefBloklar : [];
+    }
     if (photo.fotoKey) body.foto_key = photo.fotoKey;
     else if (photo.removed) body.foto_key = null;
     try {
@@ -232,6 +285,90 @@ export default function AnnouncementsPage() {
               />
             )}
           </AlanSarmal>
+          {/* (E2E 2026-09, BILDIRIM-12) HEDEF KITLE — yalniz olusturmada.
+              "Herkes" diye ayri kutu yok (anketteki gerekce: digerleriyle
+              celisirdi); bos secim herkestir. */}
+          {!editingId && (
+            <fieldset className="space-y-2" data-test="duyuru-hedef">
+              <legend style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>
+                {t("anketHedefKitle")}
+              </legend>
+              <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                {t("anketHedefHerkes")} · {t("duyuruHedefNotu")}
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {HEDEF_ROLLER.map((r) => (
+                  <label key={r} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      data-test={`duyuru-hedef-${r}`}
+                      checked={form.hedefRoller.includes(r)}
+                      onChange={(e) =>
+                        setForm((f) => {
+                          const hedefRoller = e.target.checked
+                            ? [...f.hedefRoller, r]
+                            : f.hedefRoller.filter((x) => x !== r);
+                          const sakinli = sakinSuzgeciAnlamli(hedefRoller);
+                          return {
+                            ...f,
+                            hedefRoller,
+                            hedefSakinTipi: sakinli ? f.hedefSakinTipi : "",
+                            hedefBloklar: sakinli ? f.hedefBloklar : [],
+                          };
+                        })
+                      }
+                    />
+                    {rolAdi(t, r)}
+                  </label>
+                ))}
+              </div>
+              {sakinSuzgeciAnlamli(form.hedefRoller) && (
+                <>
+                  <AlanSarmal etiket={t("anketHedefSakinTipi")}>
+                    {(b) => (
+                      <Secim
+                        {...b}
+                        data-test="duyuru-sakin-tipi"
+                        value={form.hedefSakinTipi}
+                        onChange={(e) => setForm({ ...form, hedefSakinTipi: e.target.value })}
+                      >
+                        <option value="">{t("ortakSecimYok")}</option>
+                        <option value={TIP_MALIK}>{t("anketMalik")}</option>
+                        <option value={TIP_KIRACI}>{t("anketKiraci")}</option>
+                      </Secim>
+                    )}
+                  </AlanSarmal>
+                  {(bloklar?.items ?? []).length > 0 && (
+                    <div className="space-y-1">
+                      <span style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+                        {t("duyuruHedefBloklar")}
+                      </span>
+                      <div className="flex flex-wrap gap-3">
+                        {(bloklar?.items ?? []).map((bl) => (
+                          <label key={bl.id} className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              data-test={`duyuru-blok-${bl.ad}`}
+                              checked={form.hedefBloklar.includes(bl.ad)}
+                              onChange={(e) =>
+                                setForm((f) => ({
+                                  ...f,
+                                  hedefBloklar: e.target.checked
+                                    ? [...f.hedefBloklar, bl.ad]
+                                    : f.hedefBloklar.filter((x) => x !== bl.ad),
+                                }))
+                              }
+                            />
+                            {bl.ad}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </fieldset>
+          )}
           {/* GORSEL ALANI bir `AlanSarmal` DEGIL: icinde tek bir denetim
               yok (onizleme + dosya secici + kaldir dugmesi). Dosya
               secicinin kendi etiketi var. */}
@@ -373,6 +510,15 @@ export default function AnnouncementsPage() {
                   {t("duyuranRol")} · {formatDateTime(a.created_at)}
                   {a.updated_at !== a.created_at && ` ${t("duyuruDuzenlendiEki")}`}
                 </p>
+                {/* (E2E 2026-09, BILDIRIM-12) Hedefli duyuruda KIME gittigi
+                    yonetim listesinde gorunur; hedefsizde rozet yok. */}
+                {hedefOzeti(t, a) && (
+                  <div className="mt-2" data-test="duyuru-hedef-rozet">
+                    <Rozet durum="bilgi">
+                      {t("duyuruHedefEtiket")}: {hedefOzeti(t, a)}
+                    </Rozet>
+                  </div>
+                )}
               </div>
               <div className="flex flex-wrap gap-2">
                 <Dugme boy="kucuk" onClick={() => openEdit(a)}>
@@ -388,7 +534,18 @@ export default function AnnouncementsPage() {
         ))}
         {data && data.items.length === 0 && !error && (
           <Kart>
-            <BosDurum baslik={t("duyuruYok")} aciklama={t("duyuruYokAlt")} />
+            {/* (E2E 2026-09) Eski metin "yalniz mobilden olusturulur"
+                diyordu; P190'dan beri web'de de olusturuluyor ve ustteki
+                dugme bunu yapiyor. Bos durum da ayni cikisi verir. */}
+            <BosDurum
+              baslik={t("duyuruYok")}
+              aciklama={t("duyuruYokWeb")}
+              eylem={
+                <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
+                  {t("duyuruYeni")}
+                </Dugme>
+              }
+            />
           </Kart>
         )}
       </ul>

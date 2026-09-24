@@ -100,11 +100,26 @@ def _hslot(hours_ahead, dur_h=1):
     return start.date().isoformat(), start.strftime("%H:%M"), end.strftime("%H:%M")
 
 
-def _mslot(minutes_ahead, dur_min=20):
-    """Dakika-hassas slot (son-dakika istisnasi testi icin)."""
-    start = _now() + timedelta(minutes=minutes_ahead)
+def _mslot(minutes_ahead, dur_min=5):
+    """Dakika-hassas slot (son-dakika istisnasi testi icin).
+
+    (E2E 2026-09 / TESIS-12) Sunucu artik IZGARA HIZASI istiyor: baslangic
+    `minutes_ahead` sonrasindan GERIYE 5 dakikalik sinira yuvarlanir (en az
+    1 dk ileride kalir) ve sure tek slot. Bu yardimciyi kullanan testler
+    `slot_dakika=5` alanla (`_dk_alan`) calisir.
+    """
+    hedef = (_now() + timedelta(minutes=minutes_ahead)).replace(second=0, microsecond=0)
+    start = hedef - timedelta(minutes=hedef.minute % 5)
+    if start <= _now() + timedelta(minutes=1):
+        start += timedelta(minutes=5)
     end = start + timedelta(minutes=dur_min)
     return start.date().isoformat(), start.strftime("%H:%M"), end.strftime("%H:%M")
+
+
+def _dk_alan(client, rworld):
+    """5 dakikalik izgarali alan (son-dakika testleri)."""
+    yon = _headers(client, rworld["slug_a"], rworld["yonetici_a"])
+    return _mk_area(client, yon, ad=f"Dk-{uuid.uuid4().hex[:6]}", slot_dakika=5)["id"]
 
 
 def _iki_bitisik_slot_ayni_gun():
@@ -432,7 +447,7 @@ def test_son_dakika_istisnasi(client, rworld):
     # kota dolu + slot 4s sonra (>10dk) -> 409 gunluk
     _post(client, resident, rworld["alan1"], _hslot(4), expect=409)
     # kota dolu AMA bos slot <10dk kala (simdi+5dk) -> baypas -> 201
-    _post(client, resident, rworld["alan1"], _mslot(5), expect=201)
+    _post(client, resident, _dk_alan(client, rworld), _mslot(5), expect=201)
 
 
 # ------------------------------ CAKISMA ENGELI ------------------------------ #
@@ -507,7 +522,7 @@ def test_iptal_10_dakika_kurali(client, rworld):
     """Slot baslangicina <10 dk kala (son-dakika rezervasyonu) iptal edilemez."""
     resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
     # simdi+5 dk bos slot (son-dakika; kota bos oldugundan zaten rezerve edilir)
-    r = _post(client, resident, rworld["alan1"], _mslot(5))
+    r = _post(client, resident, _dk_alan(client, rworld), _mslot(5))
     resp = client.post(f"/reservations/{r['id']}/cancel", headers=resident)
     assert resp.status_code == 422, resp.text
     assert resp.json()["error"]["message"] == METINLER["rezervasyon_iptal_icin_gec"]["tr"]
@@ -971,3 +986,32 @@ def test_saklama_ayarini_SAKIN_DEGISTIREMEZ(client, rworld):
         "/tenant/settings", headers=resident, json={"rezervasyon_gecmis_ay": 3}
     )
     assert r.status_code == 403, r.text
+
+
+# ================= (E2E 2026-09 / TESIS-12) IZGARA + AZAMI SURE ============= #
+#
+# OLCULEN: 60 dk slotlu 08:00-23:00 alanda tek rezervasyon 08:00-23:00 (15
+# saat) ve 21:07-21:13 (izgara disi) ikisi de 201'di — "gunde bir" kotasi
+# kaydi sayiyor, sureyi degil; alan tek kayitla butun gun kapaniyordu.
+
+def test_E2E_izgara_disi_baslangic_ve_sure_422(client, rworld):
+    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    tarih, bas, _ = _hslot(2)
+    hh = bas[:2]
+    # 6 dakikalik izgara disi aralik
+    r = _post(client, resident, rworld["alan1"], (tarih, f"{hh}:07", f"{hh}:13"),
+              expect=422)
+    assert r["error"]["message"] == METINLER["rezervasyon_izgara_disi"]["tr"].format(
+        slot=60, acilis="00:00")
+    # hizali baslangic, izgara disi sure (90 dk)
+    _post(client, resident, rworld["alan1"], (tarih, f"{hh}:00", f"{int(hh) + 1:02d}:30"),
+          expect=422)
+
+
+def test_E2E_azami_sure_asilamaz(client, rworld):
+    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    r = _post(client, resident, rworld["alan1"], _hslot(2, dur_h=4), expect=422)
+    assert r["error"]["message"] == METINLER["rezervasyon_azami_sure"]["tr"].format(
+        azami=180)
+    # sinirda (3 slot) kabul
+    _post(client, resident, rworld["alan1"], _hslot(2, dur_h=3), expect=201)

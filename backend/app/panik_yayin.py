@@ -102,7 +102,12 @@ async def _veri(db: AsyncSession, alarm: PanikAlarm) -> dict[str, str]:
             await db.execute(select(Unit).where(Unit.id == alarm.unit_id))
         ).scalar_one_or_none()
         if birim is not None:
-            yer = f"{birim.blok or ''} {birim.daire_no}".strip()
+            # Daire no cogu zaman blok onekini ZATEN tasir ("A-1"); onek
+            # yoksa blok eklenir. (E2E: `daire_no` diye bir kolon YOK —
+            # sakin alarmi 500 verip hic olusmuyordu.)
+            no = birim.no or ""
+            blok = birim.blok or ""
+            yer = no if (not blok or no.startswith(blok)) else f"{blok} {no}"
     if not yer and alarm.gps_lat is not None:
         yer = f"{alarm.gps_lat}, {alarm.gps_lng}"
     return {"ad": ad, "yer": yer or "-"}

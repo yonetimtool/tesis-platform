@@ -69,7 +69,14 @@ _ANKET_OKUR = require_role(
     "admin", "yonetici", "security", "tesis_gorevlisi", "resident",
     "guvenlik_amiri",
 )
-_OY_VEREN = require_role("resident")
+#: (E2E 2026-09) Hedef kitlesine PERSONEL secilebilen anket (ANKET_HEDEF_
+#: ROLLER), o personele bildirim de gidiyordu ama oy 403'tu ve katilim
+#: paydasina sayiliyordu. Kural artik: sakin HER ZAMAN oy verebilir (hedef
+#: kurallarina tabi); diger roller YALNIZ acikca hedeflendiklerinde.
+_OY_VEREN = require_role(
+    "admin", "yonetici", "security", "tesis_gorevlisi", "resident",
+    "guvenlik_amiri",
+)
 
 
 def _acik_mi(anket: Anket, simdi: datetime) -> bool:
@@ -346,6 +353,8 @@ async def oy_ver(
     # Gorunurluk kapisi degil OY kapisi — sakin bir anketi listede
     # gorebilir (site genelinde ne konusuldugu bilgi degeridir) ama
     # hedefte degilse oyu sayilmaz.
+    if user.role != "resident" and user.role not in (anket.hedef_roller or []):
+        raise APIError(403, "forbidden", "anket_hedef_disinda")
     if not _hedefte_mi(anket, user, await _sakin_tipi(db, user)):
         raise APIError(403, "forbidden", "anket_hedef_disinda")
     secenek = (
@@ -363,20 +372,49 @@ async def oy_ver(
 
     # KATILIM DEFTERI ONCE: tek-oy kuralini zorlayan yapi budur ve her
     # iki anket turunde de AYNI sekilde calisir.
-    db.add(AnketKatilim(
+    katilim = AnketKatilim(
         tenant_id=user.tenant_id, anket_id=anket_id, user_id=user.id,
         gun=datetime.now(tz=timezone.utc).date(),
-    ))
-    db.add(AnketOy(
+    )
+    oy = AnketOy(
         tenant_id=user.tenant_id, anket_id=anket_id,
         secenek_id=secenek.id,
         user_id=None if anket.anonim else user.id,
         anonim=anket.anonim,
-    ))
-    try:
+    )
+    if anket.anonim:
+        # (E2E 2026-09) ANONIMDE IKI SATIR AYNI ISLEMDE YAZILMAZ.
+        #
+        # OLCULEN KUSUR: katilim (KIM) ve oy (NE) tek islemde yaziliyordu;
+        # iki satir AYNI `xmin`i tasiyordu ve
+        # `anket_oy JOIN anket_katilim ON xmin` her oyu sahibine
+        # bagliyordu (2/2 dogru eslesme). Mikro-saniyelik `created_at`
+        # ikinci bir eslesme anahtariydi.
+        #
+        # Katilim AYRI bir islemde ONCE commit edilir (tek-oy kapisi
+        # orada zorlanir); oy bu istegin isleminde, gun hassasiyetine
+        # yuvarlanmis damgayla yazilir. Bedel: oy yazimi katilimdan sonra
+        # patlarsa kisi o ankette oy veremez (cift oy yerine kayip oy —
+        # bilincli tercih).
+        from ..db import SessionLocal, set_tenant
+
+        try:
+            async with SessionLocal() as ayri:
+                async with ayri.begin():
+                    await set_tenant(ayri, user.tenant_id)
+                    ayri.add(katilim)
+        except IntegrityError as exc:
+            raise APIError(409, "conflict", "anket_zaten_oy_verdiniz") from exc
+        oy.created_at = func.date_trunc("day", func.now())
+        db.add(oy)
         await db.flush()
-    except IntegrityError as exc:
-        raise APIError(409, "conflict", "anket_zaten_oy_verdiniz") from exc
+    else:
+        db.add(katilim)
+        db.add(oy)
+        try:
+            await db.flush()
+        except IntegrityError as exc:
+            raise APIError(409, "conflict", "anket_zaten_oy_verdiniz") from exc
     # Oy verdikten SONRA bile acik anketin sonucu GIZLIDIR: kendi oyunu
     # gormek baskasinin oyunu gormek degildir.
     return (await _anket_ciktilari(

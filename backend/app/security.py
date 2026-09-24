@@ -82,6 +82,28 @@ def verify_password(plain: str, password_hash: str | None) -> bool:
         return False
 
 
+#: (E2E 2026-09) ESLESME YOKKEN DE AYNI IS. Olculdu: var olan hesapta yanlis
+#: parola ~450 ms (bcrypt), olmayan hesapta ~37 ms (bcrypt HIC kosmuyordu);
+#: yanit govdesi ayni olsa da SURE hesabin varligini sizdiriyordu.
+_SAHTE_HASH = bcrypt.hashpw(b"yonetiyor-sahte-parola", bcrypt.gensalt()).decode()
+
+
+async def verify_password_async(plain: str, password_hash: str | None) -> bool:
+    """`verify_password`in olay dongusunu KILITLEMEYEN bicimi.
+
+    bcrypt ~0.3-0.5 sn CPU'dur; async uc govdesinde dogrudan cagrilinca tek
+    worker'da TUM API bekler (olculdu: 10 paralel yanlis giriste `/health`
+    30 ms -> 2.8 sn). Hash yoksa sahte hash'e karsi kosar: sure, hesabin
+    var olup olmamasindan bagimsiz kalir.
+    """
+    from starlette.concurrency import run_in_threadpool
+
+    if not password_hash:
+        await run_in_threadpool(verify_password, plain, _SAHTE_HASH)
+        return False
+    return await run_in_threadpool(verify_password, plain, password_hash)
+
+
 # Okunakli tek seferlik kod: karisan karakterler yok (I/L/O/0/1).
 _TEMP_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 
@@ -115,6 +137,10 @@ def create_access_token(*, user_id: uuid.UUID | str, tenant_id: uuid.UUID | str,
         "role": role,
         "type": "access",
         "iat": int(now.timestamp()),
+        # (E2E 2026-09) ms hassasiyetli verilis ani — oturum iptal damgasi
+        # (`oturum_iptal.py`) saniye hassasiyetinde ayni saniyedeki yeni
+        # girisi de eski sayardi.
+        "ims": int(now.timestamp() * 1000),
         "exp": int((now + timedelta(minutes=settings.access_token_expire_minutes)).timestamp()),
         "jti": str(uuid.uuid4()),
     }
@@ -140,6 +166,7 @@ def create_refresh_token(
         "tenant_id": str(tenant_id),
         "type": "refresh",
         "iat": int(now.timestamp()),
+        "ims": int(now.timestamp() * 1000),
         "exp": int((now + timedelta(days=settings.refresh_token_expire_days)).timestamp()),
         "jti": jti,
         "fam": fam,

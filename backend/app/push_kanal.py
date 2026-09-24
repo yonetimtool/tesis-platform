@@ -198,6 +198,18 @@ OZEL_KANALLI_TIPLER: dict[str, tuple[str, str]] = {
 DUKKAN_ONEK = "dukkan_"
 
 
+#: (E2E 2026-09) KATEGORILI PANIK de panik alarmidir. P243 §5c push
+#: kimligini `panik_kategori_<k>` yapti (metin kategoriye gore degissin
+#: diye) ve bu kimlik `KRITIK_TIPLER`de olmadigi icin yangin/deprem/gaz
+#: alarmlari GENEL kanaldan, sistem sesiyle gidiyordu. Kategori METNI
+#: degistirir, KANALI degil.
+PANIK_KATEGORI_ONEK = "panik_kategori_"
+
+
+def _kritik_mi(tip: str | None) -> bool:
+    return bool(tip) and (tip in KRITIK_TIPLER or tip.startswith(PANIK_KATEGORI_ONEK))
+
+
 def kanal_sec(tip: str | None, *, sesli: bool) -> str:
     """Bildirim tipine ve KULLANICI TERCIHINE gore kanal.
 
@@ -215,7 +227,7 @@ def kanal_sec(tip: str | None, *, sesli: bool) -> str:
         return KANAL_DUKKAN
     if tip and tip in OZEL_KANALLI_TIPLER:
         return OZEL_KANALLI_TIPLER[tip][0]
-    if tip and tip in KRITIK_TIPLER:
+    if _kritik_mi(tip):
         return KANAL_KRITIK
     return KANAL_GENEL
 
@@ -231,6 +243,6 @@ def ses_adi(tip: str | None, *, sesli: bool) -> str | None:
     if SES_HAZIR and tip and tip in OZEL_KANALLI_TIPLER:
         # iOS ses dosyasi uzantisiyla birlikte gonderilir.
         return f"{OZEL_KANALLI_TIPLER[tip][1]}.caf"
-    if SES_HAZIR and tip and tip in KRITIK_TIPLER:
+    if SES_HAZIR and _kritik_mi(tip):
         return f"{OZEL_SES_ADI}.caf"
     return "default"

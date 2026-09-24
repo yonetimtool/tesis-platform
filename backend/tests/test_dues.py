@@ -44,7 +44,10 @@ def test_unit_no_alfanumerik_kabul_gecersiz_red(client, world):
     for no in (f"A-{ek}12", f"B{ek}3", f"9{ek}"):
         r = client.post("/units", headers=admin, json={"no": no, "blok": "A"})
         assert r.status_code == 201, f"{no}: {r.text}"
-        assert r.json()["no"] == no
+        # (E2E 2026-09 / TESIS-16) YALNIZ RAKAMDAN olusan no toplu
+        # olusturmayla ayni bicime ("A-912") getirilir.
+        beklenen = f"A-{no}" if no.isdigit() else no
+        assert r.json()["no"] == beklenen
         client.delete(f"/units/{r.json()['id']}", headers=admin)
 
     # gecersiz formatlar -> 422 (bosluk, ozel karakter, bos); blok gecerli => 422 no'dan
@@ -329,12 +332,14 @@ def test_payment_donem_three_paths_and_filter(client, world):
     p2 = pay(assessment_id=a["id"])
     assert p2["donem"] == "2027-03"
 
-    # 3) ikisi de yok -> null kalir (serbest odeme)
+    # 3) ikisi de yok -> (E2E 2026-09 / FINANS-07) dairenin ILK ACIK
+    # kaleminin donemine atanir: donemsiz tahsilat tahsilat oranini
+    # %3'e dusuruyordu (oran donem uzerinden hesaplaniyor).
     p3 = pay()
-    assert p3["donem"] is None
+    assert p3["donem"] == "2027-03"
 
     # filtre: yalniz o donemin odemeleri
     lst = client.get("/dues/payments", headers=admin, params={"donem": "2027-03", "limit": 200}).json()
     ids = [it["id"] for it in lst["items"]]
-    assert p2["id"] in ids and p1["id"] not in ids and p3["id"] not in ids
+    assert p2["id"] in ids and p1["id"] not in ids
     assert all(it["donem"] == "2027-03" for it in lst["items"])

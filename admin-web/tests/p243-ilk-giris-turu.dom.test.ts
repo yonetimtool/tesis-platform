@@ -133,7 +133,9 @@ describe("(P243 §6e) baglam ici yardim", () => {
   });
 
   it("ALT SAYFA ust kaydi devralir, EN UZUN onek kazanir", async () => {
-    yol = "/finans/butce";
+    // (E2E 2026-09) `/finans/butce` artik KENDI metnini aliyor (KURULUM-11);
+    // devralmayi kaydi olmayan bir alt sayfa olcer.
+    yol = "/finans/virman";
     ciz(EkranYardimi);
     await userEvent.click(bulZorunlu("ekran-yardimi"));
     expect(screen.getByText(/Tek defter/)).toBeInTheDocument();

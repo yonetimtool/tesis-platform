@@ -78,6 +78,7 @@ def makbuz_pdf(
     tutar_kurus: int,
     aciklama: str | None,
     kalemler: list[tuple[str, int]],
+    dipnot: str = "Bu makbuz banka ekstresiyle otomatik eşleştirmeden üretilmiştir.",
 ) -> bytes:
     """Tek sayfalık tahsilat makbuzu.
 
@@ -150,11 +151,205 @@ def makbuz_pdf(
     c.drawRightString(genislik - kenar, y, _tl(tutar_kurus))
 
     c.setFont(normal, 8)
-    c.drawString(
-        kenar,
-        kenar,
-        "Bu makbuz banka ekstresiyle otomatik eşleştirmeden üretilmiştir.",
-    )
+    c.drawString(kenar, kenar, dipnot)
     c.showPage()
     c.save()
     return tampon.getvalue()
+
+
+# --------------------------------------------------------------------------- #
+#          (E2E 2026-09, FINANS-02) TAHSILAT MAKBUZU + BILDIRIM — TEK YOL      #
+# --------------------------------------------------------------------------- #
+#
+# OLCULEN KUSUR: makbuz ve "odemeniz alindi" bildirimi YALNIZ banka
+# eslesmesinde uretiliyordu. Vezne (`/finans/tahsilat`) ve aidat ucu
+# (`/dues/payments`) makbuz URETMIYOR, sakine bildirim GITMIYORDU; mobil
+# ekran ise "makbuz numarasi ve sakine giden bildirim sunucuda uretilir"
+# diyordu. Sakinin `/me/makbuzlar` arsivi vezneden odediginde bostu.
+#
+# Artik uc tahsilat yolu da (vezne, aidat ucu, banka) bu iki yardimciyi
+# cagirir. Makbuz YAN ISTIR: PDF/depo/e-posta/bildirim aksakligi
+# tahsilati DUSURMEZ — para hareketi zaten yazildi.
+VEZNE_DIPNOT = "Bu makbuz tahsilat kaydından otomatik üretilmiştir."
+
+
+async def tahsilat_makbuzu(
+    db,
+    *,
+    tenant_id,
+    satirlar: list,
+    user_id,
+    unit_id,
+    tarih: date,
+    aciklama: str | None,
+    dipnot: str = VEZNE_DIPNOT,
+):
+    """Tahsilat satirlari icin makbuz yaz + PDF + e-posta + bildirim.
+
+    Makbuz belge numarasi ILK defter satirininkidir (makbuz o kaydi
+    belgeler). Belge numarasi yoksa (virman gibi) makbuz yazilmaz.
+    Doner: `Receipt` ya da None.
+    """
+    from sqlalchemy import select
+
+    from .models import DuesAssessment, Receipt
+
+    from .models import UnitResident
+
+    gercek = [s for s in satirlar if getattr(s, "durum", "odendi") == "odendi"]
+    if not gercek or not gercek[0].belge_no:
+        return None
+    if user_id is None and unit_id is not None:
+        # Odeyen belirtilmediyse dairenin TEK aktif sakini odeyendir; birden
+        # cok sakin varsa TAHMIN EDILMEZ (makbuz yine yazilir, bildirim
+        # gitmez) — yanlis kisiye "odemeniz alindi" demek, dogru kisiyi
+        # habersiz birakmaktan kotudur.
+        sakinler = list(
+            dict.fromkeys(
+                (
+                    await db.execute(
+                        select(UnitResident.user_id).where(
+                            UnitResident.unit_id == unit_id,
+                            UnitResident.bitis.is_(None),
+                        )
+                    )
+                ).scalars().all()
+            )
+        )
+        if len(sakinler) == 1:
+            user_id = sakinler[0]
+    makbuz = Receipt(
+        tenant_id=tenant_id,
+        user_id=user_id,
+        unit_id=unit_id,
+        belge_no=gercek[0].belge_no,
+        tutar_kurus=sum(int(s.tutar_kurus) for s in gercek),
+    )
+    try:
+        async with db.begin_nested():
+            db.add(makbuz)
+            await db.flush()
+    except Exception:  # noqa: BLE001 — makbuz YAN IS; tahsilat DUSMEZ
+        return None
+    kalemler: list[tuple[str, int]] = []
+    for s in gercek:
+        etiket = s.donem or "-"
+        if s.assessment_id is not None:
+            donem = (
+                await db.execute(
+                    select(DuesAssessment.donem).where(
+                        DuesAssessment.id == s.assessment_id
+                    )
+                )
+            ).scalar_one_or_none()
+            etiket = donem or etiket
+        kalemler.append((etiket, int(s.tutar_kurus)))
+    await makbuz_yayinla(
+        db, tenant_id=tenant_id, makbuz=makbuz, kalemler=kalemler,
+        tarih=tarih, aciklama=aciklama, dipnot=dipnot,
+    )
+    return makbuz
+
+
+async def makbuz_yayinla(
+    db,
+    *,
+    tenant_id,
+    makbuz,
+    kalemler: list[tuple[str, int]],
+    tarih: date,
+    aciklama: str | None,
+    dipnot: str,
+) -> None:
+    """Makbuz PDF'i uret + e-posta + sakine bildirim. HEPSI YAN IS."""
+    import logging
+
+    from sqlalchemy import select
+
+    from . import storage
+    from .models import AppUser, Tenant, Unit
+    from .sakin_bildirimi import sakin_bildirimi_yaz
+    from .scheduler.notify import dispatch_external
+
+    logger = logging.getLogger(__name__)
+    odeyen = None
+    if makbuz.user_id is not None:
+        odeyen = (
+            await db.execute(select(AppUser).where(AppUser.id == makbuz.user_id))
+        ).scalar_one_or_none()
+    tesis = (
+        await db.execute(select(Tenant).where(Tenant.id == tenant_id))
+    ).scalar_one_or_none()
+    site_ad = (tesis.ad if tesis else "") or ""
+    # (P193 §4) Makbuz TESISIN belgesidir: adi kadar adresi de tasimali.
+    site_adres = (
+        adres_satiri(tesis.adres, tesis.ilce, tesis.il, tesis.posta_kodu)
+        if tesis
+        else ""
+    )
+    daire_no = None
+    if makbuz.unit_id:
+        daire_no = (
+            await db.execute(select(Unit.no).where(Unit.id == makbuz.unit_id))
+        ).scalar_one_or_none()
+    try:
+        pdf = makbuz_pdf(
+            site_ad=site_ad,
+            site_adres=site_adres,
+            belge_no=makbuz.belge_no,
+            tarih=tarih,
+            odeyen_ad=(odeyen.ad if odeyen else "") or "",
+            daire_no=daire_no,
+            tutar_kurus=int(makbuz.tutar_kurus),
+            aciklama=aciklama,
+            kalemler=kalemler,
+            dipnot=dipnot,
+        )
+        key = f"{tenant_id}/makbuz/{makbuz.id.hex}.pdf"
+        storage.sunucudan_yukle(key, pdf, "application/pdf")
+        makbuz.pdf_key = key
+        await db.flush()
+    except Exception:  # noqa: BLE001 — makbuz YAN IS; tahsilati dusurmez
+        logger.warning("[makbuz] PDF uretilemedi (makbuz=%s)", makbuz.id)
+
+    # (P192 §4.4) E-POSTA — push'un KALICI ikizi. YAN IS.
+    if odeyen is not None and odeyen.email:
+        try:
+            from .eposta_sablonlari import makbuz_metni
+            from .gonderim import saglayici as kanal_saglayicisi, tenant_ayari
+            from .raporlar import kurus_metin
+
+            baglanti = (
+                storage.presign_get(makbuz.pdf_key) if makbuz.pdf_key else None
+            )
+            konu, govde = makbuz_metni(
+                site_ad=site_ad,
+                belge_no=makbuz.belge_no,
+                tutar=kurus_metin(int(makbuz.tutar_kurus)),
+                baglanti=baglanti,
+            )
+            ayar = await tenant_ayari(db, tenant_id)
+            kanal_saglayicisi("eposta", ayar).gonder(odeyen.email, konu, govde)
+        except Exception:  # noqa: BLE001 — e-posta YAN IS
+            logger.warning("[makbuz] e-posta gonderilemedi (makbuz=%s)", makbuz.id)
+
+    if makbuz.user_id:
+        veri = {
+            "donem": kalemler[0][0] if kalemler else "-",
+            # (E2E 2026-09, BILDIRIM-14 ile ayni kural) Turkce para bicimi.
+            "tutar": _tl(int(makbuz.tutar_kurus)),
+        }
+        try:
+            dispatch_external(
+                "aidat_odendi",
+                tenant_id=tenant_id,
+                target_user_ids=(makbuz.user_id,),
+                params=veri,
+                data={"tip": "aidat_odendi", "receipt_id": str(makbuz.id)},
+            )
+        except Exception:  # noqa: BLE001 — push YAN IS
+            logger.warning("[makbuz] push kuyruga alinamadi (makbuz=%s)", makbuz.id)
+        sakin_bildirimi_yaz(
+            db, tenant_id=tenant_id, tip="aidat_odendi",
+            user_ids=(makbuz.user_id,), veri=veri,
+        )

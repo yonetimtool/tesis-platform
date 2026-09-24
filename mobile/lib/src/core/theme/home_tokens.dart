@@ -77,11 +77,16 @@ class HomeTokens {
   /// 600-tonu vurgular koyu zeminde WCAG AA'yi tutmaz (tur 32 olcumu —
   /// #2563EB / #0F131A = 3.60:1, esik 4.5). Ayni RENK AILESININ acik tonu
   /// anlami korur ve kontrasti tutar (400-tonlari).
+  ///
+  /// (E2E 2026-09) MAVI ve MOR BIR KADEME ACILDI. P166 §7.2 koyu karti
+  /// #3B4650'ye yukseltti; #7CA9FF o kartta 4.12, tint zeminde 3.91 kaldi
+  /// (8 koyu tema testi kirmiziydi). Yeni degerler kart / %12 tint:
+  /// mavi 5.20 / 4.92, mor 5.22 / 4.76 — hepsi AA.
   static const _koyuMetin = <int, Color>{
-    0xFF2563EB: Color(0xFF7CA9FF), // blue-600  → acik mavi
+    0xFF2563EB: Color(0xFF9DBFFF), // blue-600  → acik mavi
     0xFF16A34A: Color(0xFF4ADE80), // green-600 → green-400
     0xFFF59E0B: Color(0xFFFBBF24), // amber-500 → amber-400
-    0xFF8B5CF6: Color(0xFFB69CFB), // violet-500→ acik mor
+    0xFF8B5CF6: Color(0xFFC4B5FD), // violet-500→ violet-300
     0xFFEF4444: Color(0xFFFCA5A5), // red-500   → red-300
   };
 }
@@ -195,8 +200,11 @@ class HomeSurface {
     // yeniden olculdu: hepsi AA'yi tutuyor (baslik 12.4, govde 9.3,
     // ikincil 5.4 — kart uzerinde).
     background: Color(0xFF313A44),
-    // Olculdu: dolgu/zemin 5.20, metin/dolgu 5.20 — ikisi de AA.
-    badge: Color(0xFFF26565),
+    // (E2E 2026-09) Zemin P166'da #313A44'e yukselince #F26565 dolgu/zemin
+    // 3.75'e dustu (kontrast denetcisi rozet rakamini dolgu-zemin cifti
+    // olarak olcuyor; push kabugu testleri kirmiziydi). Yeni olcum:
+    // dolgu/zemin 5.06, metin/dolgu 7.02 — ikisi de AA.
+    badge: Color(0xFFFC8B8B),
     badgeOn: Color(0xFF1B222C),
     card: Color(0xFF3B4650),
     cardBorder: Color(0xFF55616D),

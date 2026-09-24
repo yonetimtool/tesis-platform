@@ -31,7 +31,7 @@ class SurumApi {
       // hâlde bir kesinti, kullanicilarin telefonunda "uygulama
       // acilmiyor" olarak gorunurdu — yani kendi altyapimizin arizasi
       // musterinin arizasina donusurdu.
-      return const SurumKarari(durum: SurumDurumu.guncel);
+      return const SurumKarari(durum: SurumDurumu.guncel, ulasilamadi: true);
     }
   }
 }

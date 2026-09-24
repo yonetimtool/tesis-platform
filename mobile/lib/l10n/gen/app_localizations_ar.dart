@@ -1504,6 +1504,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get panikIptalEdildi => 'أُلغي — لم يُرسل شيء.';
 
   @override
+  String get panikZatenAcik =>
+      'لديك بالفعل إنذار مفتوح — تم إبلاغ الأمن والإدارة.';
+
+  @override
   String get panikYanlisAlarmGonderildi => 'تم الإبلاغ عن إنذار خاطئ.';
 
   @override
@@ -1837,6 +1841,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get binaDaireNoZatenVar => 'رقم الوحدة هذا مسجّل بالفعل.';
 
   @override
+  String binaDaireNoOnizleme(String no) {
+    return 'سيُحفظ الرقم باسم: $no';
+  }
+
+  @override
   String binaDaireDuzenleBaslik(Object no) {
     return 'الوحدة $no — تعديل';
   }
@@ -1932,6 +1941,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get semaYogunluk => 'الكثافة:';
+
+  @override
+  String get semaTurSuzgeci => 'نوع الشكوى';
 
   @override
   String get semaYerlesimAciklama =>
@@ -3185,6 +3197,170 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get duyuruYayinla => 'نشر';
+
+  @override
+  String get duyuruHedefBloklar => 'الكتل (جميع الكتل إذا لم يُحدَّد شيء)';
+
+  @override
+  String get duyuruHedefNotu =>
+      'من هم خارج الفئة المستهدفة لا يرون الإعلان ولا يتلقون إشعارًا. ينطبق تصنيف الكتلة والمالك/المستأجر على السكان فقط. لا يمكن تغيير الفئة المستهدفة بعد الحفظ.';
+
+  @override
+  String duyuruHedefOzet(Object ozet) {
+    return 'الفئة المستهدفة: $ozet';
+  }
+
+  @override
+  String duyuruHedefBlok(Object bloklar) {
+    return 'الكتلة: $bloklar';
+  }
+
+  @override
+  String get modulDavetler => 'الدعوات';
+
+  @override
+  String get davetYonAciklama => 'الدعوات المُرسلة وحالتها.';
+
+  @override
+  String get davetYonTesisKoduIpucu =>
+      'إذا فشلت دعوة، يمكنك مشاركة رمز المجمّع يدويًا:';
+
+  @override
+  String get davetYonKodKopyala => 'نسخ رمز المجمّع';
+
+  @override
+  String get davetYonKodKopyalandi => 'تم نسخ رمز المجمّع.';
+
+  @override
+  String get davetYonBos => 'لا توجد دعوات بعد.';
+
+  @override
+  String get davetYonAlinamadi => 'تعذّر تحميل الدعوات.';
+
+  @override
+  String davetYonSonGonderim(Object zaman) {
+    return 'آخر إرسال: $zaman';
+  }
+
+  @override
+  String get davetYonDurumKaydoldu => 'مُسجّل';
+
+  @override
+  String get davetYonDurumGeriDondu => 'مرتد';
+
+  @override
+  String get davetYonDurumGitmedi => 'لم تُرسل';
+
+  @override
+  String get davetYonDurumAyarYok => 'البريد غير مهيأ';
+
+  @override
+  String get davetYonDurumAcildi => 'تم الفتح';
+
+  @override
+  String get davetYonDurumIletildi => 'تم التسليم';
+
+  @override
+  String get davetYonDurumGonderildi => 'أُرسلت';
+
+  @override
+  String get davetYonDurumBekliyor => 'قيد الانتظار';
+
+  @override
+  String get davetYonYenidenGonder => 'إعادة الإرسال';
+
+  @override
+  String get davetYonYenidenGonderildi => 'أُعيد إرسال الدعوة.';
+
+  @override
+  String get modulGurultuUyarilari => 'تحذيرات الضوضاء';
+
+  @override
+  String get gurultuAciklama => 'شكاوى الضوضاء التي تجاوزت الحد وحالة الإعلان.';
+
+  @override
+  String get gurultuYok => 'لا توجد تحذيرات';
+
+  @override
+  String get gurultuYokAlt => 'لم يتم بلوغ الحد بعد.';
+
+  @override
+  String get gurultuAlinamadi => 'تعذّر تحميل التحذيرات.';
+
+  @override
+  String gurultuSayac(int sayac, int esik) {
+    return 'العداد: $sayac/$esik';
+  }
+
+  @override
+  String get gurultuDaireYok => 'الوحدة غير معروفة';
+
+  @override
+  String get gurultuDurumGonderildi => 'أُرسل';
+
+  @override
+  String get gurultuDurumBasarisiz => 'فشل';
+
+  @override
+  String get gurultuDurumBekliyor => 'بانتظار الإعلان';
+
+  @override
+  String get gurultuDurumYapildi => 'تم الإعلان';
+
+  @override
+  String get gurultuIsaretlendi => 'تم وضع علامة على التحذير.';
+
+  @override
+  String get girisKodIleEposta => 'أرسل لي رمزًا بالبريد بدلاً من كلمة المرور';
+
+  @override
+  String get girisKodYalnizEposta =>
+      'الدخول بالرمز يعمل مع البريد الإلكتروني. استخدم كلمة المرور للدخول برقم الهاتف.';
+
+  @override
+  String get girisParolaylaDon => 'تسجيل الدخول بكلمة المرور';
+
+  @override
+  String get girisEpostaKodGonder => 'إرسال الرمز';
+
+  @override
+  String get girisEpostaKodGonderildi =>
+      'إذا كان العنوان مسجلاً فقد أُرسل رمز. صالح لمدة 10 دقائق.';
+
+  @override
+  String get girisKodTesisKoduAciklama =>
+      'هذا الرمز صالح في أكثر من منشأة. اكتب رمز المنشأة التي تريد الدخول إليها.';
+
+  @override
+  String get girisTesisKodu => 'رمز المنشأة';
+
+  @override
+  String get girisSlugGecersiz =>
+      'يمكن أن يحتوي رمز المنشأة على أحرف صغيرة وأرقام وشرطات فقط.';
+
+  @override
+  String get girisSifremiUnuttum => 'هل نسيت كلمة المرور؟';
+
+  @override
+  String get sifreSifirlaBaslik => 'نسيت كلمة المرور';
+
+  @override
+  String get sifreSifirlaAciklama =>
+      'أدخل رمز المنشأة وبريدك الإلكتروني. يُرسَل الرمز فقط إلى الحسابات ذات البريد المُوثّق؛ إذا لم تتلقَّ بريدًا خلال دقائق قليلة فقد لا يكون بريدك مُوثّقًا بعد. لأسباب أمنية لا نكشف ما إذا كان الحساب موجودًا.';
+
+  @override
+  String get sifreSifirlaGonderildi =>
+      'إذا كان هناك حساب، فقد أُرسل رمز إلى بريدك. أدخل الرمز وكلمة المرور الجديدة.';
+
+  @override
+  String get sifreSifirlaKur => 'تحديث كلمة المرور';
+
+  @override
+  String get sifreSifirlaBasarili =>
+      'تم تحديث كلمة المرور. يمكنك تسجيل الدخول بكلمة المرور الجديدة.';
+
+  @override
+  String get sifreSifirlaGirise => 'العودة إلى تسجيل الدخول';
 
   @override
   String get ortakIslemler => 'الإجراءات';
@@ -7138,6 +7314,31 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get bakimTutar => 'التكلفة';
+
+  @override
+  String get bakimFotoEkle => 'إضافة صورة';
+
+  @override
+  String get bakimFotoHazir => 'سيتم رفع الصورة مع السجل';
+
+  @override
+  String get bakimFotoYuklenemedi => 'تم حفظ الصيانة لكن تعذّر رفع الصورة.';
+
+  @override
+  String get bakimGecmis => 'سجل الصيانة';
+
+  @override
+  String get bakimGecmisYok => 'لا توجد صيانة مسجلة لهذا الجهاز.';
+
+  @override
+  String get bakimGecmisYokAlt =>
+      'عندما تسجّل الإدارة أعمال الصيانة، ستظهر هنا مع التاريخ والتكلفة والمرفقات.';
+
+  @override
+  String get bakimEkler => 'الصور والمستندات';
+
+  @override
+  String get bakimEkYok => 'لا توجد صور أو مستندات مرفقة بهذا السجل.';
 
   @override
   String get bakimGidereYaz => 'تسجيلها كمصروف';

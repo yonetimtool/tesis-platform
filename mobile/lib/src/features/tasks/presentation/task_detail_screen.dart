@@ -20,6 +20,7 @@ import 'task_tip_style.dart';
 import 'tasks_controller.dart';
 import '../../nfc/presentation/nfc_hata_metni.dart';
 import '../../../core/error/akis_hatasi.dart';
+import '../../../core/izin/belirgin_aciklama.dart';
 import 'durum_rozeti.dart';
 
 /// Gorev detayi + tamamlama akisi: NFC (gorevde etiket tanimliysa) → foto
@@ -749,8 +750,14 @@ class _AdimlarKartiState extends ConsumerState<_AdimlarKarti> {
     super.dispose();
   }
 
-  Future<void> _tazele() async =>
-      ref.invalidate(gorevAdimlariProvider(widget.task.id));
+  // (E2E 2026-09) TESIS-03: SON adim gorevi sunucuda KAPATIR (tamamlama
+  // kaydi uretilir). Yalniz adimlari tazelemek, ekranda gecmisi "henuz
+  // tamamlanmadi" ve listede rozeti "atandi" birakiyordu.
+  Future<void> _tazele() async {
+    ref.invalidate(gorevAdimlariProvider(widget.task.id));
+    ref.invalidate(gorevTamamlamalariProvider(widget.task.id));
+    await ref.read(tasksControllerProvider.notifier).refresh(silent: true);
+  }
 
   Future<void> _sar(Future<void> Function() is_, {String? adimId}) async {
     setState(() {
@@ -772,12 +779,26 @@ class _AdimlarKartiState extends ConsumerState<_AdimlarKarti> {
   Future<void> _fotoylaTamamla(TaskStep adim) async {
     final api = ref.read(taskApiProvider);
     final secici = ref.read(imagePickerProvider);
-    final dosya = await secici.pickImage(
-      source: ImageSource.camera,
-      maxWidth: 1600,
-      imageQuality: 80,
-    );
-    if (dosya == null) return;
+    // (E2E 2026-09) MOBIL-7: kamera cagrisi try/catch'SIZDI — iOS'ta izin
+    // reddinde `camera_access_denied` PlatformException yakalanmiyor, dugme
+    // tepkisiz kaliyordu. Diger foto akislariyla AYNI desen: once belirgin
+    // aciklama (P141.5), sonra korunakli cagri + gorunur hata metni.
+    final l10n = context.l10n;
+    final onay = await belirginAciklamaGoster(context, IzinTuru.talepFotograf);
+    if (!onay || !mounted) return;
+    final XFile? secilen;
+    try {
+      secilen = await secici.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 1600,
+        imageQuality: 80,
+      );
+    } catch (e) {
+      if (mounted) setState(() => _hata = l10n.gorevFotoAlinamadi('$e'));
+      return;
+    }
+    if (secilen == null) return;
+    final XFile dosya = secilen;
     await _sar(
       adimId: adim.id,
       () async {

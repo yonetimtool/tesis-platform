@@ -102,6 +102,12 @@ NOTIFICATION_TIP = ENUM(
     #   * `aylik_ozet`       — ay basi ozeti (yoneticiye).
     #   * `gider_onay`       — vadesi gelen duzenli gider (yoneticiye).
     "aidat_hatirlatma", "aidat_onizleme", "aylik_ozet", "gider_onay",
+    # (E2E 2026-09) DB enum'unda VARDI, burada YOKTU. Beat bu iki tipi ham
+    # SQL ile yaziyor (yazma hata vermiyor); ORM OKUMASI patliyordu:
+    # ilk vardiya hatirlatmasindan sonra yonetim + guvenlik icin
+    # `GET /notifications` 500. Kilit: `test_enum_aynasi.py` (pg_enum ile
+    # birebir karsilastirir).
+    "vardiya_hatirlatma", "vardiya_baslamadi",
     # (P208 §1, göç 0103) Gürültü eşiği: sakine uyarı + yönetime bilgi.
     # NOT (P212): bu iki değer göç 0103'te eklenmiş ama bu listeye
     # YAZILMAMIŞTI. Dosyanın kendi kuralı "göçün birebir aynası olmak";
@@ -1258,6 +1264,29 @@ class Notification(Base):
     created_at = _created_at()
 
 
+class NotificationKisiDurumu(Base):
+    """(E2E 2026-09, goc 0149) PAYLASILAN yonetim alarminin KISIYE ait durumu.
+
+    `notification.user_id IS NULL` satirlari yonetim gozundeki herkese
+    gorunur; okundu/silindi ise KISININDIR. Bir gorevlinin okumasi ya da
+    silmesi yoneticinin listesini degistirmemeli (bkz. goc 0149).
+    """
+
+    __tablename__ = "notification_kisi_durumu"
+
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    notification_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("notification.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    okundu_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    silindi_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+
+
 # --------------------------------------------------------------------------- #
 class TaskCategory(Base):
     """Yonetici-tanimli gorev kategorisi (A6) — tenant'a ozel, soft-delete."""
@@ -1728,7 +1757,9 @@ class DuesAssessment(Base):
     )
     unit_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     donem: Mapped[str] = mapped_column(Text, nullable=False)
-    tutar_kurus: Mapped[int] = mapped_column(Integer, nullable=False)
+    #: (E2E 2026-09, ARAYUZ-4, goc 0150) BIGINT: `integer` 21,4 milyon TL'de
+    #: tasiyordu ve sema sinirindan kucuk bir tutar 500 veriyordu.
+    tutar_kurus: Mapped[int] = mapped_column(BigInteger, nullable=False)
     son_odeme_tarihi = mapped_column(Date, nullable=True)
     aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
     # --- P28 BORCLANDIRMA ALANLARI (paralel tablo DEGIL, ayni kayit) ------- #
@@ -1959,6 +1990,12 @@ class Announcement(Base):
         Text, nullable=False, server_default=text("'tr'")
     )
     olusturan_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    #: (E2E 2026-09, BILDIRIM-12, goc 0152) HEDEF KITLE — anketle ayni
+    #: desen. NULL/bos = herkes. Sakin tipi ve blok YALNIZ sakinlere
+    #: uygulanir (personelin dairesi yok).
+    hedef_roller: Mapped[list[str] | None] = mapped_column(ARRAY(Text), nullable=True)
+    hedef_sakin_tipi: Mapped[str | None] = mapped_column(Text, nullable=True)
+    hedef_bloklar: Mapped[list[str] | None] = mapped_column(ARRAY(Text), nullable=True)
     created_at = _created_at()
     updated_at = _created_at()
 
@@ -4954,7 +4991,9 @@ class VardiyaIzin(Base):
         ForeignKeyConstraint(
             ["user_id", "tenant_id"],
             ["app_user.id", "app_user.tenant_id"],
-            ondelete="CASCADE",
+            # (E2E 2026-09, goc 0149) CASCADE degil: izin gecmisi hesap
+            # silmede kaybolmaz; hesap anonimlestirilir.
+            ondelete="NO ACTION",
             name="fk_izin_user",
         ),
     )

@@ -13,7 +13,9 @@ import secrets
 
 import jwt
 import redis.asyncio as aioredis
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
+from fastapi.responses import JSONResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import func, or_, select, text
 
 from ..audit import Action, record_audit
@@ -22,8 +24,21 @@ from ..db import SessionLocal, set_tenant
 from ..deps import get_redis, gorev_penceresi_disinda
 from ..errors import APIError
 from ..telefon_kodu import GECERSIZ as TK_GECERSIZ
-from ..hiz_siniri import DENEME_ASILDI, DENEME_SINIRI, kod_istegi_say
+from ..hiz_siniri import (
+    DENEME_ASILDI,
+    DENEME_SINIRI,
+    giris_basarili,
+    giris_basarisiz,
+    giris_kilidi_denetle,
+    kod_istegi_geri_al,
+    kod_istegi_say,
+)
 from ..kimlik import kimligi_coz
+from ..oturum_iptal import (
+    erisim_jetonunu_kapat,
+    iptal_edilmis_mi,
+    tum_oturumlari_kapat,
+)
 from ..telefon_kodu import (
     eposta_kodu_uret_ve_gonder,
     eposta_kodunu_dogrula,
@@ -38,6 +53,7 @@ from ..models import (
 )
 from ..gonderim import tenant_ayari
 from ..schemas import (
+    CikisIstek,
     TesisDegistirIstek,
     TesisUyeligi,
     TesislerimIstek,
@@ -68,10 +84,13 @@ from ..security import (
     decode_token,
     hash_password,
     normalize_phone,
-    verify_password,
+    verify_password_async,
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+#: Cikis ucunda Bearer ISTEGE BAGLI (suresi dolmus oturumla da cikilabilmeli).
+_bearer_istege_bagli = HTTPBearer(auto_error=False)
 
 # (P205 §1) TEK ALAN icin TURSUZ metin: "e-posta hatali" demek,
 # saldirgana girdisinin hangi dala girdigini soylerdi. Eski
@@ -187,8 +206,7 @@ async def tesislerim(
         TesisUyeligi(
             tenant_id=r["tenant_id"], slug=r["slug"], ad=r["tenant_ad"], rol=r["rol"]
         )
-        for r in satirlar
-        if r["is_active"] and verify_password(body.password, r["password_hash"])
+        for r in await _parolasi_tutanlar(satirlar, body.password)
     ]
     return TesislerimYanit(tesisler=tesisler)
 
@@ -208,6 +226,58 @@ async def _issue_token_pair(redis: aioredis.Redis, user: AppUser) -> TokenPair:
         token_type="Bearer",
         expires_in=access_token_ttl_seconds(),
     )
+
+
+async def _gecici_kod_eslesmesi(
+    satirlar: list[dict], kod: str, slug: str | None
+) -> str | None:
+    """Parolasi HENUZ KURULMAMIS tek uyelikte gecici kod tutuyorsa setup_token.
+
+    Birden fazla aday varsa (ayni kimlik iki tesiste parolasiz) kod her
+    birinde denenir; tutan ILK uyelik alinir — kod kullaniciya ozel
+    rastgele bir degerdir, iki tesiste ayni cikmasi pratikte olmaz.
+    """
+    for r in satirlar:
+        if not r["is_active"] or r["password_hash"] is not None:
+            continue
+        if slug and r["slug"] != slug:
+            continue
+        async with SessionLocal() as session:
+            async with session.begin():
+                await set_tenant(session, r["tenant_id"])
+                user = (
+                    await session.execute(
+                        select(AppUser).where(AppUser.id == r["user_id"])
+                    )
+                ).scalar_one_or_none()
+                if (
+                    user is None or user.password_set or not user.temp_code_hash
+                    or gorev_penceresi_disinda(user)
+                ):
+                    continue
+                if not await verify_password_async(kod, user.temp_code_hash):
+                    continue
+                await record_audit(
+                    session, action=Action.LOGIN_OK, tenant_id=r["tenant_id"],
+                    actor_user_id=user.id, actor_rol=user.role,
+                    resource_type="app_user", resource_id=user.id,
+                    meta={"method": "kimlik", "setup_required": True},
+                )
+                return create_setup_token(user_id=user.id, tenant_id=user.tenant_id)
+    return None
+
+
+async def _parolasi_tutanlar(satirlar: list[dict], parola: str) -> list[dict]:
+    """Parolanin tuttugu AKTIF uyelikler — bcrypt olay dongusu DISINDA.
+
+    Eslesme adayi hic yoksa bile bir kez (sahte hash'e karsi) bcrypt kosar:
+    sure hesabin varligindan bagimsiz kalir (E2E 2026-09 olcumu).
+    """
+    adaylar = [r for r in satirlar if r["is_active"]]
+    if not adaylar:
+        await verify_password_async(parola, None)
+        return []
+    return [r for r in adaylar if await verify_password_async(parola, r["password_hash"])]
 
 
 @router.post("/login", response_model=TokenPair)
@@ -233,20 +303,35 @@ async def login(
     """
     kimlik = kimligi_coz(body.kimlik)
     if kimlik is None:
+        await verify_password_async(body.password, None)
         raise _INVALID_CREDS
+    # (E2E 2026-09) KABA KUVVET SINIRI — parola DENENMEDEN once.
+    await giris_kilidi_denetle(redis, kimlik.deger)
 
     async with SessionLocal() as session:
         satirlar = await _uyelikler(session, kimlik.deger)
 
     # PAROLASI TUTAN uyelikler. Parola tutmayan bir tesisi "var ama
     # giremezsin" diye ayirmak, hesabin varligini sizdirmakti.
-    uygun = [
-        r for r in satirlar
-        if r["is_active"] and verify_password(body.password, r["password_hash"])
-    ]
+    uygun = await _parolasi_tutanlar(satirlar, body.password)
     if body.tenant_slug:
         uygun = [r for r in uygun if r["slug"] == body.tenant_slug]
     if not uygun:
+        # (E2E 2026-09) GECICI KOD — ILK GIRIS. Panel yoneticiye tek
+        # seferlik kod veriyor ve "telefon + kod ile girin" diyor; ama bu
+        # uc yalniz `password_hash`e bakiyordu: kod web'de (tek alan)
+        # e-postayla da telefonla da 401 aliyordu. Kod tutarsa OTURUM
+        # ACILMAZ; `login-phone` ile AYNI sozlesme doner (setup_token ->
+        # /auth/set-password).
+        kurulum = await _gecici_kod_eslesmesi(satirlar, body.password, body.tenant_slug)
+        if kurulum is not None:
+            await giris_basarili(redis, kimlik.deger)
+            return JSONResponse(
+                PhoneLoginResponse(
+                    password_setup_required=True, setup_token=kurulum
+                ).model_dump()
+            )
+        await giris_basarisiz(redis, kimlik.deger)
         # BASARISIZ GIRIS DENETIME YAZILIR.
         #
         # OLCULEN KUSUR (P205 §1, `test_audit` yakaladi): yeni akista
@@ -289,6 +374,7 @@ async def login(
             )
             hedef_user = user
 
+    await giris_basarili(redis, kimlik.deger)
     # JETON URETIMI TEK YERDE (`_issue_token_pair`): ikinci bir kopya
     # yazmak, refresh kaydini bir gun birinde unutmak demekti.
     return await _issue_token_pair(redis, hedef_user)
@@ -316,7 +402,19 @@ async def login_phone(
         phone = normalize_phone(body.phone)
     except ValueError:
         raise _INVALID_PHONE_CREDS
+    # (E2E 2026-09) `/auth/login` ile AYNI sayac: iki kapi tek kilit.
+    await giris_kilidi_denetle(redis, phone)
+    try:
+        return await _login_phone_govde(body, phone, redis)
+    except APIError as e:
+        if e.status_code == 401:
+            await giris_basarisiz(redis, phone)
+        raise
 
+
+async def _login_phone_govde(
+    body: PhoneLoginRequest, phone: str, redis: aioredis.Redis
+) -> PhoneLoginResponse:
     async with SessionLocal() as session:
         async with session.begin():
             tenant_id = (
@@ -325,6 +423,7 @@ async def login_phone(
                 )
             ).scalar_one_or_none()
             if tenant_id is None:
+                await verify_password_async(body.password, None)
                 raise _INVALID_PHONE_CREDS
 
             await set_tenant(session, tenant_id)
@@ -334,6 +433,7 @@ async def login_phone(
                 )
             ).scalar_one_or_none()
             if user is None or not user.is_active:
+                await verify_password_async(body.password, None)
                 await _audit_login_fail(tenant_id, method="phone", user=user)
                 raise _INVALID_PHONE_CREDS
             # (P128) Gorev penceresi — e-posta girisiyle AYNI kural.
@@ -342,7 +442,7 @@ async def login_phone(
                 raise _GOREV_SURESI_DISINDA
 
             if user.password_set:
-                if not verify_password(body.password, user.password_hash):
+                if not await verify_password_async(body.password, user.password_hash):
                     await _audit_login_fail(tenant_id, method="phone", user=user)
                     raise _INVALID_PHONE_CREDS
                 await record_audit(
@@ -353,7 +453,7 @@ async def login_phone(
                 )
                 # Token'lar transaction disinda uretilir (asagida).
             else:
-                if not verify_password(body.password, user.temp_code_hash):
+                if not await verify_password_async(body.password, user.temp_code_hash):
                     await _audit_login_fail(tenant_id, method="phone", user=user)
                     raise _INVALID_PHONE_CREDS
                 # Gecici kod dogru -> parola kurulumu zorunlu; oturum token'i
@@ -371,6 +471,7 @@ async def login_phone(
                     ),
                 )
 
+    await giris_basarili(redis, phone)
     tokens = await _issue_token_pair(redis, user)
     return PhoneLoginResponse(
         password_setup_required=False, **tokens.model_dump()
@@ -424,6 +525,48 @@ async def set_password(
     return await _issue_token_pair(redis, user)
 
 
+@router.post("/logout", status_code=204, response_model=None)
+async def logout(
+    body: CikisIstek,
+    redis: aioredis.Redis = Depends(get_redis),
+    creds: HTTPAuthorizationCredentials | None = Depends(_bearer_istege_bagli),
+) -> Response:
+    """(E2E 2026-09) CIKIS — bu cihazin oturumunu SUNUCUDA kapatir.
+
+    OLCULEN KUSUR: backend'de cikis ucu yoktu; web yalniz cerezi, mobil
+    yalniz yerel depoyu siliyordu ve eski refresh 30 gun gecerli kaliyordu.
+
+    * `refresh_token` verilirse AILESI silinir (yenilenemez).
+    * Bearer erisim jetonu varsa kalan omru boyunca kara listeye alinir.
+    * `her_yerden=true` kullanicinin TUM jetonlarini gecersiz kilar
+      (baska cihazlar dahil) — gecerli bir erisim jetonu ister.
+
+    HER ZAMAN 204: gecersiz/eski jetonla cikis denemesi hata vermez —
+    istemci her durumda yerel oturumu siler; "zaten kapaliydi" bilgisi
+    kimsenin isine yaramaz.
+    """
+    if body.refresh_token:
+        try:
+            rc = decode_token(body.refresh_token, expected_type="refresh")
+            await _revoke_family(redis, rc.get("fam", ""), rc.get("jti"))
+        except jwt.PyJWTError:
+            pass
+    if creds is not None and creds.credentials:
+        try:
+            ac = decode_token(creds.credentials, expected_type="access")
+        except jwt.PyJWTError:
+            ac = None
+        if ac is not None:
+            # "Her yerden" yalniz HALA GECERLI bir jetonla (iptal denetimi
+            # kara listeden ONCE yapilir, yoksa kendi jetonunu iptal edilmis
+            # sayardi).
+            gecerli = not await iptal_edilmis_mi(redis, ac)
+            await erisim_jetonunu_kapat(redis, ac)
+            if body.her_yerden and gecerli:
+                await tum_oturumlari_kapat(redis, ac.get("sub"))
+    return Response(status_code=204)
+
+
 @router.post("/refresh", response_model=TokenPair)
 async def refresh(
     body: RefreshRequest,
@@ -439,6 +582,12 @@ async def refresh(
     fam = claims.get("fam", "")
     sub = claims.get("sub")
     tenant_id = claims.get("tenant_id")
+
+    # (E2E 2026-09) Parola sifirlama / "her yerden cik" sonrasi eski aile
+    # yenilenemez (bkz. `oturum_iptal.py`).
+    if await iptal_edilmis_mi(redis, claims):
+        await _revoke_family(redis, fam, jti)
+        raise APIError(401, "invalid_token", "oturum_sonlandirildi")
 
     # 2) rotation/reuse kontrolu.
     current = await redis.get(f"refresh:fam:{fam}")
@@ -710,7 +859,10 @@ async def rol_kayit_dogrula(
 
 
 @router.post("/giris/kod-iste", response_model=KayitDurumResponse)
-async def giris_kodu_iste(body: TelefonIstek) -> KayitDurumResponse:
+async def giris_kodu_iste(
+    body: TelefonIstek,
+    redis: aioredis.Redis = Depends(get_redis),
+) -> KayitDurumResponse:
     """Kayitli ve AKTIF numaraya giris kodu gonderir.
 
     NUMARA VARLIGINI SIZDIRMAZ: numara kayitli olmasa da yanit AYNIDIR.
@@ -720,6 +872,10 @@ async def giris_kodu_iste(body: TelefonIstek) -> KayitDurumResponse:
         phone = normalize_phone(body.telefon)
     except ValueError:
         return KayitDurumResponse(durum="onay_bekliyor")
+    # (E2E 2026-09) HIZ SINIRI YOKTU: ayni numaraya 7/7 istek 200 aldi ve
+    # her biri bir SMS denemesi uretti — modul basliginin (hiz_siniri.py)
+    # tam olarak bu uc icin tanimladigi para + taciz riski.
+    await kod_istegi_say(redis, phone, kapsam="giris")
 
     async with SessionLocal() as session:
         async with session.begin():
@@ -738,10 +894,18 @@ async def giris_kodu_iste(body: TelefonIstek) -> KayitDurumResponse:
             ).scalar_one_or_none()
             if user is None or not user.is_active:
                 return KayitDurumResponse(durum="onay_bekliyor")
-            await kod_uret_ve_gonder(
+            sonuc = await kod_uret_ve_gonder(
                 session, tenant_id=tenant_id, telefon=phone, amac="giris"
             )
+    if _gonderilemedi(sonuc):
+        await kod_istegi_geri_al(redis, phone, kapsam="giris")
     return KayitDurumResponse(durum="onay_bekliyor")
+
+
+def _gonderilemedi(sonuc) -> bool:
+    """Saglayici kodu TESLIM EDEMEDI mi? (basarisiz gonderim kota yemez)."""
+    durum = getattr(sonuc, "durum", None)
+    return durum is not None and durum not in ("gonderildi", "iletildi", "kuyrukta")
 
 
 @router.post("/giris/eposta-kod-iste", response_model=KayitDurumResponse)
@@ -790,15 +954,20 @@ async def eposta_giris_kodu_iste(
     # kutusuna TEK bir e-posta dusuyor, kullanicidan "hangi tesisin
     # kodu" ayrimi yapmasi istenemez.
     kod = f"{secrets.randbelow(1_000_000):06d}" if hedefler else None
+    sonuclar = []
     for r in hedefler:
         async with SessionLocal() as session:
             async with session.begin():
                 await set_tenant(session, r["tenant_id"])
                 ayar = await tenant_ayari(session, r["tenant_id"])
-                await eposta_kodu_uret_ve_gonder(
+                sonuclar.append(await eposta_kodu_uret_ve_gonder(
                     session, tenant_id=r["tenant_id"], eposta=eposta,
                     amac="giris", ayar=ayar, sabit_kod=kod,
-                )
+                ))
+    # (E2E 2026-09 / P207) BASARISIZ GONDERIM KOTA YEMEZ: kodu hic almayan
+    # kullanicinin "tekrar gonder" hakki yanmamali.
+    if sonuclar and all(_gonderilemedi(x) for x in sonuclar):
+        await kod_istegi_geri_al(redis, eposta, kapsam="giris_eposta")
     return KayitDurumResponse(durum="onay_bekliyor")
 
 
@@ -939,16 +1108,19 @@ async def sifre_sifirlama_kodu_iste(
             if user is None or not user.is_active or not user.eposta_dogrulandi:
                 return KayitDurumResponse(durum="onay_bekliyor")
             ayar = await tenant_ayari(session, tenant_id)
-            await eposta_kodu_uret_ve_gonder(
+            sonuc = await eposta_kodu_uret_ve_gonder(
                 session, tenant_id=tenant_id, eposta=eposta,
                 amac="sifre_sifirla", ayar=ayar,
             )
+    if _gonderilemedi(sonuc):
+        await kod_istegi_geri_al(redis, kimlik, kapsam="sifre_sifirla")
     return KayitDurumResponse(durum="onay_bekliyor")
 
 
 @router.post("/sifre/dogrula-ve-ayarla", response_model=KayitDurumResponse)
 async def sifre_sifirla(
     body: SifreSifirlaIstek,
+    redis: aioredis.Redis = Depends(get_redis),
 ) -> KayitDurumResponse:
     """(P181 Bölüm 2) Kod doğru ise YENİ PAROLAYI kurar.
 
@@ -986,11 +1158,15 @@ async def sifre_sifirla(
             user.password_hash = hash_password(body.yeni_parola)
             user.password_set = True
             user.updated_at = func.now()
+            sifirlanan_id = user.id
             await record_audit(
                 session, action=Action.PASSWORD_RESET, tenant_id=tenant_id,
                 actor_user_id=user.id, actor_rol=user.role,
                 resource_type="app_user", resource_id=user.id,
             )
+    # (E2E 2026-09) Sifirlama HESAP KURTARMA yoludur: acik oturumlar (ele
+    # gecirilmis olabilir) kapanir. Olculdu: eski refresh 200 donuyordu.
+    await tum_oturumlari_kapat(redis, sifirlanan_id)
     return KayitDurumResponse(durum="onay_bekliyor")
 
 

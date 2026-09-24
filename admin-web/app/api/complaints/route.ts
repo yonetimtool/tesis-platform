@@ -10,8 +10,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const qs = new URLSearchParams();
   qs.set("limit", sp.get("limit") ?? "20");
   qs.set("offset", sp.get("offset") ?? "0");
-  const durum = sp.get("durum");
-  if (durum) qs.set("durum", durum);
+  // (E2E 2026-09) BEYAZ LISTE `oncelik` ve `unit_id` ile GENISLEDI.
+  // Olculen: ozet sayfasi `durum=acik&oncelik=yuksek` soruyordu, vekil
+  // `oncelik`i DUSURUYOR ve tum acik talepleri sayiyordu — kart "8 yüksek
+  // öncelikli" diyordu, gercekte 0. Uc (`complaints.py list_complaints`)
+  // ikisini de destekliyor. (P245 §7 visitors suzgeci ile ayni sinif.)
+  for (const ad of ["durum", "oncelik", "unit_id"] as const) {
+    const deger = sp.get(ad);
+    if (deger) qs.set(ad, deger);
+  }
   return proxyJson(`/complaints?${qs.toString()}`, "GET");
 }
 

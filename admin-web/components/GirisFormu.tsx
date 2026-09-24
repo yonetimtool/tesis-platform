@@ -130,6 +130,11 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
   // adimi: kullanici e-posta ve parolayi zaten girdi, ikinci bir sayfa
   // onlari yeniden sormak ya da adres cubugunda tasimak olurdu.
   const [secim, setSecim] = useState<TesisUyeligi[] | null>(null);
+  // (E2E 2026-09) GECICI KODLA ILK GIRIS: sunucu `setup_token` doner;
+  // form parola belirleme adimina gecer (oturum HENUZ acilmadi).
+  const [kurulumJetonu, setKurulumJetonu] = useState<string | null>(null);
+  const [yeniParola, setYeniParola] = useState("");
+  const [yeniParola2, setYeniParola2] = useState("");
   const [kodAdimi, setKodAdimi] = useState<"kapali" | "kod">("kapali");
   const [kod, setKod] = useState("");
   const [kodGonderildi, setKodGonderildi] = useState(false);
@@ -304,6 +309,10 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
       await kodlaGir();
       return;
     }
+    if (kurulumJetonu) {
+      await parolaKur();
+      return;
+    }
     setError(null);
     setMagazaGoster(false);
     // (P205 §1) ISTEMCI TARAFI BICIM DENETIMI KALKTI.
@@ -334,6 +343,38 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
    * kopya yazmak, P129'da olculen kusurun aynisi olurdu: iki giris
    * yolundan birindeki dal bozuldugunda hicbir test dusmemisti.
    */
+  /** (E2E 2026-09) Gecici kodla girisin ikinci adimi: kalici parola. */
+  async function parolaKur() {
+    setError(null);
+    if (yeniParola !== yeniParola2) {
+      setError(t("kayitParolaUyusmuyor"));
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/set-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ setup_token: kurulumJetonu, new_password: yeniParola }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as ApiError | null;
+        setError(data?.error?.message ?? t("girisBasarisiz"));
+        setMagazaGoster(data?.error?.code === "mobil_uygulama");
+        return;
+      }
+      setBasarili(true);
+      await new Promise((c) => setTimeout(c, 520));
+      if (await yonlendirVarsaGit(res)) return;
+      router.replace("/");
+      router.refresh();
+    } catch {
+      setError(t("ortakSunucuyaUlasilamadi"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function girisIste(slug: string) {
     {
       // (P205 §1) TEK UC, TEK GOVDE: `kimlik` e-posta da olabilir
@@ -372,6 +413,15 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
         // lib/config.ts) — uygulama yayinda degilken 404'e giden bir
         // baglanti vermektense hic vermemek dogru.
         setMagazaGoster(data?.error?.code === "mobil_uygulama");
+        return;
+      }
+      // (E2E 2026-09) GECICI KOD: oturum yok, parola belirleme adimi.
+      const kurulum = (await res.clone().json().catch(() => null)) as
+        | { password_setup_required?: boolean; setup_token?: string }
+        | null;
+      if (kurulum?.password_setup_required && kurulum.setup_token) {
+        setKurulumJetonu(kurulum.setup_token);
+        setPassword("");
         return;
       }
       // Başarılı giriş: işaretliyse bilgileri sakla, değilse temizle.
@@ -559,7 +609,45 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
                 Alanlar cizilmeye devam etseydi kullanici, karari
                 verdikten sonra bile duzenleyebilecegi bir e-posta alani
                 gorurdu ve hangi adimda oldugu belirsiz kalirdi. */}
-            {secim ? (
+            {kurulumJetonu ? (
+              <div className="space-y-4" data-test="giris-parola-belirle">
+                <p className="text-sm" style={{ color: METIN_IKINCIL }}>
+                  {t("girisIlkParolaAciklama")}
+                </p>
+                <div>
+                  <label htmlFor="yz-yeni-parola" className={etiketSinifi} style={etiketStili}>
+                    {t("kayitParola")}
+                  </label>
+                  <input
+                    id="yz-yeni-parola"
+                    type="password"
+                    autoComplete="new-password"
+                    minLength={8}
+                    required
+                    value={yeniParola}
+                    onChange={(e) => setYeniParola(e.target.value)}
+                    className={alanSinifi}
+                    style={alanStili}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="yz-yeni-parola2" className={etiketSinifi} style={etiketStili}>
+                    {t("kayitParolaTekrar")}
+                  </label>
+                  <input
+                    id="yz-yeni-parola2"
+                    type="password"
+                    autoComplete="new-password"
+                    minLength={8}
+                    required
+                    value={yeniParola2}
+                    onChange={(e) => setYeniParola2(e.target.value)}
+                    className={alanSinifi}
+                    style={alanStili}
+                  />
+                </div>
+              </div>
+            ) : secim ? (
               <div className="space-y-3" data-test="giris-tesis-secimi">
                 <div>
                   <p className="text-sm font-medium" style={{ color: METIN }}>

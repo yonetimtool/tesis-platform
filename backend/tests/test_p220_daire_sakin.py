@@ -57,7 +57,7 @@ def _daire(client, yon, blok=None) -> str:
 def _sakin(client, yon) -> str:
     """Sakin hesabi acar. Doner: user_id."""
     r = client.post("/residents", headers=yon, json={
-        "unit_no": f"GECICI-{uuid.uuid4().hex[:6]}",
+        "blok": "A", "unit_no": f"GECICI-{uuid.uuid4().hex[:6]}",
         "ad": f"Sakin {uuid.uuid4().hex[:5]}",
         "email": f"{uuid.uuid4().hex[:10]}@ornek.com",
         "telefon": _tel(), "rol_tipi": "malik"})

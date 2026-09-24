@@ -11,6 +11,7 @@ import '../../../profile/data/avatar_api.dart';
 import '../../../push/domain/push_models.dart';
 import '../../../push/presentation/push_registrar.dart';
 import '../../../../routing/app_router.dart';
+import '../../../../routing/push_yonlendirme.dart';
 import '../../domain/home_tabs.dart';
 import 'home_drawer.dart';
 import 'home_marka.dart';
@@ -93,9 +94,21 @@ class HomeShell extends ConsumerWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
+              // (E2E 2026-09) TEK DINLEYICI: hedefi olan bildirim DOGRUDAN
+              // ilgili ekrana, olmayan bildirim sekmesine gider. Onceden
+              // main.dart'taki ikinci dinleyici "Ac" SnackBar'i aciyor,
+              // bu dinleyici onu hemen gizliyordu (etiket de sabit
+              // Turkce 'Ac' idi).
               action: SnackBarAction(
                 label: l10n.ortakGoster,
-                onPressed: () => onDestinationSelected(1),
+                onPressed: () {
+                  final hedef = pushHedefi(yeni.data, role);
+                  if (hedef != null) {
+                    context.push(hedef);
+                  } else {
+                    onDestinationSelected(1);
+                  }
+                },
               ),
             ),
           );
