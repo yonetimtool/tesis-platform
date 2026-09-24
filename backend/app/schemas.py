@@ -7897,6 +7897,9 @@ class EkCreate(BaseModel):
     metin: str | None = Field(None, max_length=4000)
     dosya_key: str | None = Field(None, max_length=500)
     dosya_adi: str | None = Field(None, max_length=255)
+    #: (P247-bekleyen 1.2) Yalniz DAIRE ekinde: "Guvenlik ve tesis
+    #: gorevlileri bu notu gorebilir". Varsayilan KAPALI; yalniz yonetim.
+    saha_gorebilir: bool = False
 
     @model_validator(mode="after")
     def _icerik_zorunlu(self) -> "EkCreate":
@@ -7924,7 +7927,17 @@ class EkOut(BaseModel):
     #: Kim ekledi. "kim yazdi" bilinmeyen bir not, kayit defterinde ise
     #: yaramaz.
     olusturan_ad: str | None = None
+    #: (P247-bekleyen 1.2) Daire ekinin saha personeline acik olup olmadigi.
+    saha_gorebilir: bool = False
     created_at: datetime
+
+
+class EkGorunurlukGuncelle(BaseModel):
+    """(P247-bekleyen 1.2) Daire ekinin saha gorunurlugunu ac/kapat."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    saha_gorebilir: bool
 
 
 class EkListResponse(BaseModel):

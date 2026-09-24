@@ -7701,4 +7701,36 @@ class AppLocalizationsDe extends AppLocalizations {
   String turSayac(int sira, int toplam) {
     return '$sira/$toplam';
   }
+
+  @override
+  String get daireNotlariBaslik => 'Wohnungsnotizen';
+
+  @override
+  String get daireNotuYok => 'Keine Notizen zu dieser Wohnung.';
+
+  @override
+  String get daireNotuYer => 'Notiz schreiben';
+
+  @override
+  String get daireNotuEkle => 'Notiz hinzufügen';
+
+  @override
+  String get ekSahaGorebilir =>
+      'Sicherheits- und Hauspersonal kann diese Notiz sehen';
+
+  @override
+  String get ekSahaAciklama =>
+      'Ohne Häkchen sieht nur die Verwaltung die Notiz. Notizen zu Schulden, Streitigkeiten oder persönlichen Daten nicht markieren.';
+
+  @override
+  String get ekSahaAcik => 'Für Personal sichtbar';
+
+  @override
+  String get ekSahaKapali => 'Nur Verwaltung';
+
+  @override
+  String get ekSahaAc => 'Für Personal freigeben';
+
+  @override
+  String get ekSahaKapat => 'Vor Personal verbergen';
 }

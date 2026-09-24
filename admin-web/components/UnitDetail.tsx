@@ -17,6 +17,7 @@ import {
   Secim,
   useOnay,
 } from "@/components/ui";
+import { Ekler } from "@/components/Ekler";
 import { useToast } from "@/components/Toast";
 import { ODEME_DURUM, ODEME_YONTEM, enumAdi } from "@/lib/enum-adlari";
 import { apiSend, genIdempotencyKey } from "@/lib/client";
@@ -565,6 +566,10 @@ export function UnitDetail({ unit }: { unit: Unit }) {
       </Modal>
         <HataDurumu mesaj={rErr} />
       </div>
+      {/* (P247-bekleyen 1.2) DAIRE NOTLARI — saha gorunurlugu isaretiyle.
+          Notlar varsayilan olarak YALNIZ yonetime acik; isaret sunucuda
+          uygulanir (bkz. `Ekler`). */}
+      <Ekler varlikTipi="unit" varlikId={unit.id} />
       {diyalog}
     </div>
   );

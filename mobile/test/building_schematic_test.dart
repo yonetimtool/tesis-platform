@@ -13,6 +13,7 @@ import 'package:mobile/src/features/unit_complaints/data/unit_complaint_api.dart
 import 'package:mobile/src/features/unit_complaints/domain/unit_complaint_models.dart';
 
 import 'helpers/l10n_test_app.dart';
+import 'package:mobile/src/features/building_map/data/daire_notu_api.dart';
 
 /// Sahte building-map istemcisi — sabit sema doner (rol-farkinda: showsDensity).
 class _FakeMapApi extends BuildingMapApi {
@@ -106,6 +107,7 @@ Widget _app(
       buildingMapApiProvider.overrideWithValue(_FakeMapApi(map)),
       unitComplaintApiProvider
           .overrideWithValue(complaintApi ?? _FakeComplaintApi(complaints)),
+      daireNotuApiProvider.overrideWithValue(_BosDaireNotuApi()),
       currentUserRoleProvider.overrideWith((ref) async => role),
     ],
     child: l10nApp(const BuildingSchematicScreen()),
@@ -287,4 +289,14 @@ void main() {
       expect(find.text('Bu daireyi şikayet et'), findsOneWidget);
     });
   });
+}
+
+
+/// (P247-bekleyen 1.2) Daire detayi artik notlari da okuyor; bu testler
+/// sema/sikayet davranisini olcer, not listesi bos doner.
+class _BosDaireNotuApi extends DaireNotuApi {
+  _BosDaireNotuApi() : super(Dio());
+
+  @override
+  Future<List<DaireNotu>> listele(String unitId) async => const [];
 }

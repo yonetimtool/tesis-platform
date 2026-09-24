@@ -41,6 +41,7 @@ import 'package:mobile/src/core/error/api_exception.dart';
 
 import 'helpers/ekran_surus.dart';
 import 'helpers/l10n_test_app.dart';
+import 'package:mobile/src/features/building_map/data/daire_notu_api.dart';
 
 // --------------------------------------------------------------------------
 // Sahteler (ag YOK)
@@ -153,7 +154,8 @@ Widget _talepEkrani(
         askida: askida,
       ),
     ),
-    currentUserRoleProvider.overrideWith((ref) async => role),
+    daireNotuApiProvider.overrideWithValue(_BosDaireNotuApi()),
+      currentUserRoleProvider.overrideWith((ref) async => role),
   ],
   child: l10nApp(const ComplaintsScreen(), locale: locale),
 );
@@ -191,7 +193,8 @@ Widget _semaEkrani(Locale locale, {UserRole role = UserRole.yonetici}) =>
           _FakeMapApi(_yonetimHaritasi()),
         ),
         unitComplaintApiProvider.overrideWithValue(_FakeSikayetApi()),
-        currentUserRoleProvider.overrideWith((ref) async => role),
+        daireNotuApiProvider.overrideWithValue(_BosDaireNotuApi()),
+      currentUserRoleProvider.overrideWith((ref) async => role),
       ],
       child: l10nApp(const BuildingSchematicScreen(), locale: locale),
     );
@@ -200,7 +203,8 @@ Widget _duzenlemeEkrani(Locale locale, {UserRole role = UserRole.yonetici}) =>
     ProviderScope(
       overrides: [
         binaDuzenlemeApiProvider.overrideWithValue(_FakeBinaApi()),
-        currentUserRoleProvider.overrideWith((ref) async => role),
+        daireNotuApiProvider.overrideWithValue(_BosDaireNotuApi()),
+      currentUserRoleProvider.overrideWith((ref) async => role),
       ],
       child: l10nApp(const BinaDuzenlemeScreen(), locale: locale),
     );
@@ -317,7 +321,8 @@ void main() {
         overrides: [
           buildingMapApiProvider.overrideWithValue(_PatlayanMapApi()),
           unitComplaintApiProvider.overrideWithValue(_FakeSikayetApi()),
-          currentUserRoleProvider.overrideWith(
+          daireNotuApiProvider.overrideWithValue(_BosDaireNotuApi()),
+      currentUserRoleProvider.overrideWith(
             (ref) async => UserRole.yonetici,
           ),
         ],
@@ -820,4 +825,14 @@ class _PatlayanMapApi extends BuildingMapApi {
   @override
   Future<BuildingMap> fetchMap({String? kategori}) async =>
       throw StateError('bozuk');
+}
+
+
+/// (P247-bekleyen 1.2) Daire detayi artik notlari da okuyor; bu testler
+/// sema/sikayet davranisini olcer, not listesi bos doner.
+class _BosDaireNotuApi extends DaireNotuApi {
+  _BosDaireNotuApi() : super(Dio());
+
+  @override
+  Future<List<DaireNotu>> listele(String unitId) async => const [];
 }

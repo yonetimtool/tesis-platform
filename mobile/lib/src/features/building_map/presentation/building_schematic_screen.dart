@@ -15,6 +15,7 @@ import '../../../routing/app_router.dart';
 import '../domain/building_map_models.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 import 'building_map_controller.dart';
+import 'daire_notlari.dart';
 
 /// "Şikayet Haritası" (D-viz Rev-1) — 2D bina semasi (kat plani), ROL-FARKINDA.
 /// GET /building-map verisini cizer: blok -> kat (ust kat yukarida) -> daire
@@ -567,8 +568,17 @@ class _UnitDetailSheetState extends ConsumerState<_UnitDetailSheet> {
   Widget build(BuildContext context) {
     final u = widget.unit;
     final color = densityColor(u.color);
+    // (P247-bekleyen 1.2) DAIRE NOTLARI — daireyi okuyabilen roller
+    // (sunucudaki `_LAYOUT_READER`). Saha yalniz isaretli notlari ALIR
+    // (suzme sunucuda); yonetim yazar ve isareti yonetir.
+    final rol = ref.watch(currentUserRoleProvider).value;
+    final notlarGorunur = rol == UserRole.admin ||
+        rol == UserRole.yonetici ||
+        rol == UserRole.security ||
+        rol == UserRole.tesisGorevlisi;
+    final notYonetimi = rol == UserRole.admin || rol == UserRole.yonetici;
     return SafeArea(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -640,6 +650,10 @@ class _UnitDetailSheetState extends ConsumerState<_UnitDetailSheet> {
                   onPressed: () => _openFileForm(context),
                 ),
               ),
+            ],
+            if (notlarGorunur) ...[
+              const Divider(),
+              DaireNotlari(unitId: u.unitId, yonetim: notYonetimi),
             ],
           ],
         ),

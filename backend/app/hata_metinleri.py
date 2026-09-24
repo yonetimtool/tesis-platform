@@ -833,6 +833,16 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "La version recommandée ne peut pas être inférieure à la version minimale.",
         "es": "La versión recomendada no puede ser inferior a la versión mínima.",
     },
+    # (P247-bekleyen 1.2) Saha gorunurlugu isareti yalniz daire ekinde.
+    "saha_isareti_yalniz_daire": {
+        "tr": "Saha personeline görünürlük yalnızca daire notlarında ayarlanabilir.",
+        "en": "Visibility for field staff can only be set on unit notes.",
+        "ar": "لا يمكن ضبط الظهور لموظفي الميدان إلا في ملاحظات الوحدات.",
+        "ru": "Видимость для персонала можно задать только для заметок по квартирам.",
+        "de": "Die Sichtbarkeit für das Außenpersonal kann nur bei Wohnungsnotizen festgelegt werden.",
+        "fr": "La visibilité pour le personnel de terrain ne peut être définie que sur les notes de logement.",
+        "es": "La visibilidad para el personal de campo solo puede definirse en notas de vivienda.",
+    },
     "varlik_tipi_gecersiz": {
         "tr": "Bu kayıt türüne ek eklenemez.",
         "en": "Attachments are not supported for this record type.",

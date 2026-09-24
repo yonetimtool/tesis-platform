@@ -7698,4 +7698,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String turSayac(int sira, int toplam) {
     return '$sira/$toplam';
   }
+
+  @override
+  String get daireNotlariBaslik => 'Unit notes';
+
+  @override
+  String get daireNotuYok => 'No notes for this unit.';
+
+  @override
+  String get daireNotuYer => 'Write a note';
+
+  @override
+  String get daireNotuEkle => 'Add note';
+
+  @override
+  String get ekSahaGorebilir => 'Security and facility staff can see this note';
+
+  @override
+  String get ekSahaAciklama =>
+      'If unchecked, only management can see the note. Do not check it for notes about debts, disputes or personal information.';
+
+  @override
+  String get ekSahaAcik => 'Visible to staff';
+
+  @override
+  String get ekSahaKapali => 'Management only';
+
+  @override
+  String get ekSahaAc => 'Show to staff';
+
+  @override
+  String get ekSahaKapat => 'Hide from staff';
 }

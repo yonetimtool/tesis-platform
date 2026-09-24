@@ -96,14 +96,44 @@ async def izinli_mi(
     return satir is not None
 
 
-def _cikti(izin: VardiyaIzin, ad: str | None = None) -> VardiyaIzinOut:
-    return VardiyaIzinOut(
+def notu_gorur(izleyen: AppUser, izin: VardiyaIzin, hedef_rol: str | None) -> bool:
+    """(P247-bekleyen 1.1) Izin NOTUNU kim gorur.
+
+    Not "doktor raporu", "ameliyat" gibi SAGLIK bilgisi tasiyabilir (KVKK
+    ozel nitelikli veri). Tarih ve tur ekipte gorunur (P232: vardiya
+    planlanabilsin); NOT yalniz izni alan kisiye, amirine ve yonetime.
+
+    Amir = `guvenlik_amiri`, yalniz KENDI EKIBI (`gorunur_roller`). Tesis
+    gorevlisinin amiri yonetimdir. Suzme SUNUCUDA: alan yanitta hic
+    donmez (istemcide gizlemek, alani agda tasimak olurdu).
+    """
+    if izleyen.id == izin.user_id or izleyen.role in YONETIM:
+        return True
+    if izleyen.role == "guvenlik_amiri":
+        ekip = gorunur_roller(izleyen.role)
+        return ekip is None or (hedef_rol is not None and hedef_rol in ekip)
+    return False
+
+
+def _cikti(
+    izin: VardiyaIzin,
+    ad: str | None = None,
+    *,
+    izleyen: AppUser,
+    hedef_rol: str | None,
+) -> VardiyaIzinOut:
+    alanlar = dict(
         id=izin.id, user_id=izin.user_id, kisi_ad=ad, tur=izin.tur,
         baslangic=izin.baslangic, bitis=izin.bitis, tum_gun=izin.tum_gun,
         baslangic_saat=izin.baslangic_saat, bitis_saat=izin.bitis_saat,
-        durum=izin.durum, not_metni=izin.not_metni,
+        durum=izin.durum,
         onaylayan_user_id=izin.onaylayan_user_id, onay_at=izin.onay_at,
     )
+    # Gormeyen icin alan HIC KURULMAZ; uclar `response_model_exclude_unset`
+    # ile yazar, yani anahtar yanitta yer almaz (null bile degil).
+    if notu_gorur(izleyen, izin, hedef_rol):
+        alanlar["not_metni"] = izin.not_metni
+    return VardiyaIzinOut(**alanlar)
 
 
 def _hedef_gorunur(user: AppUser, hedef_rol: str | None) -> None:
@@ -112,7 +142,7 @@ def _hedef_gorunur(user: AppUser, hedef_rol: str | None) -> None:
         raise APIError(403, "forbidden", "vardiya_yalniz_kendi_ekibin")
 
 
-@router.get("", response_model=VardiyaIzinListResponse)
+@router.get("", response_model=VardiyaIzinListResponse, response_model_exclude_unset=True)
 async def liste(
     baslangic: dt.date | None = Query(None),
     bitis: dt.date | None = Query(None),
@@ -147,7 +177,7 @@ async def liste(
             or_(AppUser.role.in_(tuple(gorunur)), VardiyaIzin.user_id == user.id)
         )
 
-    temel = select(VardiyaIzin, AppUser.ad).join(
+    temel = select(VardiyaIzin, AppUser.ad, AppUser.role).join(
         AppUser, AppUser.id == VardiyaIzin.user_id
     ).where(*kosullar)
     toplam = int(
@@ -166,11 +196,14 @@ async def liste(
     ).all()
     return VardiyaIzinListResponse(
         meta=PageMetaOut(limit=limit, offset=offset, total=toplam),
-        items=[_cikti(i, ad) for i, ad in satirlar],
+        items=[
+            _cikti(i, ad, izleyen=user, hedef_rol=rol)
+            for i, ad, rol in satirlar
+        ],
     )
 
 
-@router.post("", response_model=VardiyaIzinOut, status_code=201)
+@router.post("", response_model=VardiyaIzinOut, status_code=201, response_model_exclude_unset=True)
 async def ekle(
     body: VardiyaIzinCreate,
     db: AsyncSession = Depends(get_tenant_db),
@@ -221,7 +254,7 @@ async def ekle(
             "iptal_edilen_vardiya": iptal,
         },
     )
-    return _cikti(izin, hedef.ad)
+    return _cikti(izin, hedef.ad, izleyen=user, hedef_rol=hedef.role)
 
 
 async def _cakisan_vardiyalari_iptal(db: AsyncSession, izin: VardiyaIzin) -> int:
@@ -301,10 +334,13 @@ async def _karar(
         resource_id=izin.id,
         meta={"islem": yeni_durum, "iptal_edilen_vardiya": iptal},
     )
-    return _cikti(izin, hedef.ad if hedef else None)
+    return _cikti(
+        izin, hedef.ad if hedef else None,
+        izleyen=user, hedef_rol=hedef.role if hedef else None,
+    )
 
 
-@router.post("/{izin_id}/onayla", response_model=VardiyaIzinOut)
+@router.post("/{izin_id}/onayla", response_model=VardiyaIzinOut, response_model_exclude_unset=True)
 async def onayla(
     izin_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
@@ -313,7 +349,7 @@ async def onayla(
     return await _karar(izin_id, db, user, "onaylandi")
 
 
-@router.post("/{izin_id}/reddet", response_model=VardiyaIzinOut)
+@router.post("/{izin_id}/reddet", response_model=VardiyaIzinOut, response_model_exclude_unset=True)
 async def reddet(
     izin_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),

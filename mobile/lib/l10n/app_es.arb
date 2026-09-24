@@ -2626,5 +2626,15 @@
         "type": "int"
       }
     }
-  }
+  },
+  "daireNotlariBaslik": "Notas de la vivienda",
+  "daireNotuYok": "No hay notas para esta vivienda.",
+  "daireNotuYer": "Escribir una nota",
+  "daireNotuEkle": "Añadir nota",
+  "ekSahaGorebilir": "El personal de seguridad y mantenimiento puede ver esta nota",
+  "ekSahaAciklama": "Si no se marca, solo la administración ve la nota. No la marque en notas sobre deudas, disputas o información personal.",
+  "ekSahaAcik": "Visible para el personal",
+  "ekSahaKapali": "Solo administración",
+  "ekSahaAc": "Mostrar al personal",
+  "ekSahaKapat": "Ocultar al personal"
 }

@@ -7748,4 +7748,35 @@ class AppLocalizationsAr extends AppLocalizations {
   String turSayac(int sira, int toplam) {
     return '$sira/$toplam';
   }
+
+  @override
+  String get daireNotlariBaslik => 'ملاحظات الوحدة';
+
+  @override
+  String get daireNotuYok => 'لا توجد ملاحظات لهذه الوحدة.';
+
+  @override
+  String get daireNotuYer => 'اكتب ملاحظة';
+
+  @override
+  String get daireNotuEkle => 'إضافة ملاحظة';
+
+  @override
+  String get ekSahaGorebilir => 'يمكن لموظفي الأمن والمرافق رؤية هذه الملاحظة';
+
+  @override
+  String get ekSahaAciklama =>
+      'إذا لم تحدد هذا الخيار، فلن يرى الملاحظة سوى الإدارة. لا تحدده للملاحظات المتعلقة بالديون أو النزاعات أو المعلومات الشخصية.';
+
+  @override
+  String get ekSahaAcik => 'مرئية للموظفين';
+
+  @override
+  String get ekSahaKapali => 'الإدارة فقط';
+
+  @override
+  String get ekSahaAc => 'إظهار للموظفين';
+
+  @override
+  String get ekSahaKapat => 'إخفاء عن الموظفين';
 }

@@ -249,6 +249,7 @@ PATCH  /duzenli-giderler/{gider_id}                         IZIN   IZIN   RED   
 GET    /ekler                                               IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 POST   /ekler                                               IZIN   IZIN   RED    RED    RED    IZIN   RED   
 DELETE /ekler/{ek_id}                                       IZIN   IZIN   RED    RED    RED    IZIN   RED   
+PATCH  /ekler/{ek_id}                                       IZIN   IZIN   RED    RED    RED    RED    RED   
 GET    /events                                              IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   RED   
 POST   /events                                              IZIN   IZIN   RED    RED    RED    RED    RED   
 DELETE /events/{id}                                         IZIN   IZIN   RED    RED    RED    RED    RED   

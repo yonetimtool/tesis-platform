@@ -3,7 +3,47 @@
 Bu dosya P247 sonunda açık kalan konuları toplar. Bölümlerin kararları
 `docs/P247-kararlar.md` dosyasındadır.
 
-## 1. Kararını bekleyen iki bulgu
+## 0. Kararlar ve uygulanışı (2026-09-24)
+
+Üç konuya da karar verildi ve kararlar uygulandı.
+
+**1.1 İzin notu: öneri onaylandı.** İzin tarihi ve türü ekipte görünmeye
+devam ediyor. Not metni yalnızca izni alan kişiye, onun amirine
+(güvenlik amiri, yalnız kendi ekibi) ve yönetime dönüyor. Süzme sunucuda
+yapılıyor: yetkisi olmayan kişinin yanıtında `not_metni` anahtarı hiç
+bulunmuyor, boş değer olarak bile gönderilmiyor. Bu kural izin listesi,
+izin ekleme, onaylama ve reddetme yanıtlarının hepsinde geçerli. Testte
+ham yanıt metninde not içeriğinin geçmediği de ölçülüyor.
+
+**1.2 Daire notları: "saha personeli görebilir" işareti eklendi.**
+İşaret varsayılan olarak kapalı. Göç 0155 mevcut tüm daire eklerini
+kapalı yazıyor; göç anında hiçbir eski not sahaya açılmadı (geliştirme
+veritabanındaki 16 ekin hepsi kapalı). İşareti yalnızca yönetim koyup
+kaldırabiliyor: not yazılırken kutuyla, sonradan yeni `PATCH /ekler/{id}`
+ucuyla. Her değişiklik denetime `ek_saha_gorunurlugu` olarak yazılıyor.
+Süzme sunucuda, sorgunun içinde yapılıyor: işaretsiz not güvenlik
+görevlisine ve tesis görevlisine hiç dönmüyor, sayısı bile belli olmuyor.
+İşaret yalnızca daire eklerinde anlamlı; başka türde bir ekte işaret
+gönderilirse sunucu 422 döndürüyor. Kural daireye eklenen dosyalar için
+de geçerli, çünkü daireye eklenmiş bir belge de not kadar hassas
+olabilir.
+
+Arayüzde not yazılırken kutunun yanında "Güvenlik ve tesis görevlileri
+bu notu görebilir" yazıyor. Altında da şu açıklama var: "İşaretlemezseniz
+not yalnızca yönetim tarafından görülür. Borç, anlaşmazlık veya kişisel
+bilgi içeren notları işaretlemeyin." Listede her notun yanında "Saha
+görebilir" ya da "Yalnız yönetim" yazıyor ve tek dokunuşla
+değiştirilebiliyor.
+
+Web'de daire notları için bir ekran yoktu; daire detay çekmecesine
+eklendi. Mobilde de yoktu; bina şemasındaki daire detayına eklendi. Mobilde
+güvenlik görevlisi ve tesis görevlisi burada yalnızca işaretli notları
+okuyor, yönetim ise not yazıp işareti yönetiyor. Uç, uç güvenlik
+tablosuna (`uc-guvenlik.tsv`) ve rol matrisine eklendi.
+
+**1.3 Sakin modunda panik uyarısı: olduğu gibi kaldı.**
+
+## 1. Karar bekleyen bulgular (karar öncesi metin, kayıt için)
 
 Bu iki bulgu §6 güvenlik taramasında ortaya çıktı. İkisini de düzeltmedim,
 çünkü teknik bir hata değil, kimin neyi görmesi gerektiğiyle ilgili ürün

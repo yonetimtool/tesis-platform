@@ -7697,4 +7697,36 @@ class AppLocalizationsFr extends AppLocalizations {
   String turSayac(int sira, int toplam) {
     return '$sira/$toplam';
   }
+
+  @override
+  String get daireNotlariBaslik => 'Notes du logement';
+
+  @override
+  String get daireNotuYok => 'Aucune note pour ce logement.';
+
+  @override
+  String get daireNotuYer => 'Écrire une note';
+
+  @override
+  String get daireNotuEkle => 'Ajouter une note';
+
+  @override
+  String get ekSahaGorebilir =>
+      'Les agents de sécurité et le personnel technique peuvent voir cette note';
+
+  @override
+  String get ekSahaAciklama =>
+      'Si la case n’est pas cochée, seule la gestion voit la note. Ne la cochez pas pour des notes sur des dettes, des litiges ou des informations personnelles.';
+
+  @override
+  String get ekSahaAcik => 'Visible par le personnel';
+
+  @override
+  String get ekSahaKapali => 'Gestion uniquement';
+
+  @override
+  String get ekSahaAc => 'Montrer au personnel';
+
+  @override
+  String get ekSahaKapat => 'Masquer au personnel';
 }

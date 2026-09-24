@@ -34,8 +34,17 @@ interface Ek {
   // (E2E 2026-09) Imzali okuma adresi — ek artik ACILABILIR.
   dosya_url?: string | null;
   olusturan_ad?: string | null;
+  // (P247-bekleyen 1.2) Daire ekinin saha personeline acik olup olmadigi.
+  saha_gorebilir?: boolean;
   created_at: string;
 }
+
+/**
+ * (P247-bekleyen 1.2) SAHA GORUNURLUGU OLAN varlik tipleri — sunucudaki
+ * `SAHA_ISARETLI_TIPLER` ile AYNI (yalniz daire). Kume burada KARAR
+ * vermez: suzme sunucuda. Yalniz isaretin NEREDE sorulacagini belirler.
+ */
+export const SAHA_ISARETLI_TIPLER: ReadonlySet<string> = new Set(["unit"]);
 
 interface PresignBileti {
   upload_url: string;
@@ -56,6 +65,9 @@ export function Ekler({
   const { onayla, diyalog } = useOnay();
   const [ekler, setEkler] = useState<Ek[]>([]);
   const [not, setNot] = useState("");
+  // (P247-bekleyen 1.2) VARSAYILAN KAPALI — kullanici acikca isaretler.
+  const [sahaGorebilir, setSahaGorebilir] = useState(false);
+  const sahaIsareti = SAHA_ISARETLI_TIPLER.has(varlikTipi);
   const [mesgul, setMesgul] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
   // Yazma yetkisi SUNUCUDAN ogrenilir: ilk 403'ten sonra form gizlenir.
@@ -98,8 +110,13 @@ export function Ekler({
 
   async function notEkle() {
     if (!not.trim()) return;
-    await gonder({ tur: "not", metin: not.trim() });
+    await gonder({
+      tur: "not",
+      metin: not.trim(),
+      ...(sahaIsareti ? { saha_gorebilir: sahaGorebilir } : {}),
+    });
     setNot("");
+    setSahaGorebilir(false);
   }
 
   // DOSYA: once presign, sonra DOGRUDAN depoya PUT, en son anahtar
@@ -125,7 +142,12 @@ export function Ekler({
         body: f,
       });
       if (!put.ok) throw new Error(t("yuklemeBasarisiz", { kod: put.status }));
-      await gonder({ tur: "dosya", dosya_key: bilet.foto_key, dosya_adi: f.name });
+      await gonder({
+        tur: "dosya",
+        dosya_key: bilet.foto_key,
+        dosya_adi: f.name,
+        ...(sahaIsareti ? { saha_gorebilir: sahaGorebilir } : {}),
+      });
     } catch (err) {
       setHata(err instanceof Error ? err.message : t("ortakHataOlustu"));
     } finally {
@@ -133,6 +155,16 @@ export function Ekler({
       // Ayni dosya tekrar secilebilsin: `input` degeri temizlenmezse
       // `change` olayi ikinci kez tetiklenmez.
       if (dosyaRef.current) dosyaRef.current.value = "";
+    }
+  }
+
+  async function sahaDegistir(e: Ek) {
+    setHata(null);
+    try {
+      await apiSend(`${UC}/${e.id}`, "PATCH", { saha_gorebilir: !e.saha_gorebilir });
+      await yukle();
+    } catch (err) {
+      setHata(err instanceof Error ? err.message : t("ortakHataOlustu"));
     }
   }
 
@@ -197,8 +229,25 @@ export function Ekler({
               <p className="mt-0.5 text-xs text-[color:var(--yz-text-2)]">
 {/* (P162 §7.3) Duyuran adi yerine ROL — bkz. announcements. */}
                 {t("duyuranRol")} · {formatDateTime(e.created_at)}
+                {sahaIsareti && (
+                  <span data-test={`ek-saha-${e.id}`}>
+                    {" · "}
+                    {e.saha_gorebilir ? t("ekSahaAcik") : t("ekSahaKapali")}
+                  </span>
+                )}
               </p>
             </div>
+            {sahaIsareti && yazabilir && (
+              <button
+                type="button"
+                onClick={() => void sahaDegistir(e)}
+                aria-pressed={Boolean(e.saha_gorebilir)}
+                data-test={`ek-saha-degistir-${e.id}`}
+                className={`${btnGhost} min-h-11 shrink-0`}
+              >
+                {e.saha_gorebilir ? t("ekSahaKapat") : t("ekSahaAc")}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => void sil(e.id)}
@@ -229,6 +278,23 @@ export function Ekler({
             placeholder={t("ekNotYer")}
             className={inputCls}
           />
+          {sahaIsareti && (
+            <div className="flex flex-col gap-0.5">
+              <label className="flex min-h-11 items-center gap-2 text-sm text-[color:var(--yz-text)]">
+                <input
+                  type="checkbox"
+                  checked={sahaGorebilir}
+                  onChange={(ev) => setSahaGorebilir(ev.target.checked)}
+                  data-test="ek-saha-gorebilir"
+                  aria-describedby="ek-saha-aciklama"
+                />
+                {t("ekSahaGorebilir")}
+              </label>
+              <p id="ek-saha-aciklama" className="text-xs text-[color:var(--yz-text-2)]">
+                {t("ekSahaAciklama")}
+              </p>
+            </div>
+          )}
           <div className="flex flex-wrap gap-2">
             <button
               type="button"

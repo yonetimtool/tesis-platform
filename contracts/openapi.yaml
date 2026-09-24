@@ -8321,6 +8321,10 @@ paths:
 
         Not ve dosya AYNI listede doner (`tur` ayrimiyla): kullanici
         ikisini tek zaman cizgisinde gormek ister.
+
+        (P247-bekleyen 1.2) DAIRE eklerinde saha personeli (guvenlik,
+        tesis gorevlisi) YALNIZ `saha_gorebilir=true` ekleri alir;
+        isaretsiz ekler sorguda suzulur, yanitta hic yer almaz.
       parameters:
         - name: varlik_tipi
           in: query
@@ -8373,6 +8377,34 @@ paths:
         "422": { $ref: "#/components/responses/ValidationError" }
 
   /ekler/{ek_id}:
+    patch:
+      tags: [ekler]
+      summary: "(P247-bekleyen 1.2) Daire ekini saha personeline ac/kapat"
+      description: |
+        YALNIZ yonetim (daire yazari) ve YALNIZ daire eki. Ekin sahibi
+        olmak yetmez: isaret, notun kimlerin eline gececegine dair bir
+        yonetim karari. Baska tipte ek ya da bulunamayan kayit 404.
+        Degisiklik denetime yazilir (`ek_saha_gorunurlugu`, onceki/yeni).
+      parameters:
+        - name: ek_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EkGorunurlukGuncelle" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ek" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
     delete:
       tags: [ekler]
       summary: Eki siler
@@ -14513,6 +14545,12 @@ paths:
         haftasini soran izgarada GORUNMELI. Yalniz baslangica bakmak
         onu kacirirdi.
 
+        (P247-bekleyen 1.1) IZIN NOTU (`not_metni`) saglik bilgisi
+        tasiyabilir: yalniz izni alan kisiye, amirine (guvenlik_amiri,
+        kendi ekibi) ve yonetime doner. Digerlerinde tarih ve tur gorunur,
+        `not_metni` ANAHTARI yanitta HIC YER ALMAZ (null bile degil). Ayni
+        kural ekle/onayla/reddet yanitlarinda da gecerli.
+
         (P231 §2) Guvenlik amiri YALNIZ guvenlik personelinin iznini
         gorur — vardiya planiyla AYNI kural ve ayni kaynak
         (`gorunur_roller`). Kendi iznini her zaman gorur.
@@ -18240,6 +18278,13 @@ components:
         metin:       { type: string, maxLength: 4000, nullable: true }
         dosya_key:   { type: string, maxLength: 500, nullable: true }
         dosya_adi:   { type: string, maxLength: 255, nullable: true }
+        saha_gorebilir:
+          type: boolean
+          default: false
+          description: >-
+            (P247-bekleyen 1.2) Yalniz daire (`unit`) ekinde: "Guvenlik ve
+            tesis gorevlileri bu notu gorebilir". Varsayilan KAPALI; baska
+            tipte true -> 422 `saha_isareti_yalniz_daire`.
     Ek:
       type: object
       required: [id, tur, created_at]
@@ -18259,7 +18304,17 @@ components:
           nullable: true
           description: Kim ekledi. "kim yazdi" bilinmeyen bir not, kayit
             defterinde ise yaramaz.
+        saha_gorebilir:
+          type: boolean
+          description: (P247-bekleyen 1.2) Daire ekinin saha personeline acik
+            olup olmadigi.
         created_at: { type: string, format: date-time }
+    EkGorunurlukGuncelle:
+      type: object
+      additionalProperties: false
+      required: [saha_gorebilir]
+      properties:
+        saha_gorebilir: { type: boolean }
     EkListesi:
       type: object
       required: [items]

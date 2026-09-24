@@ -126,6 +126,8 @@ class Action:
     TESIS_DEGISTIR = "tesis_degistir"
     #: (P247 §2) Ayni tesiste yonetici <-> sakin modu gecisi.
     ROL_GECISI = "rol_gecisi"
+    #: (P247-bekleyen 1.2) Daire ekinin saha personeline acilmasi/kapatilmasi.
+    EK_SAHA_GORUNURLUGU = "ek_saha_gorunurlugu"
     #: (P203 §4.3) Vardiya plani degisikligi. Gun ici degisiklikler
     #: (hastalik/izin/acil) denetime YAZILMALI: kimin yerine kimin
     #: konuldugu, bir olay sonrasi sorulacak ILK sorudur.

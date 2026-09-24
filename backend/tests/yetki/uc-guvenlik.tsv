@@ -248,9 +248,10 @@ GET	/duzenli-giderler	zorunlu	tesis	-	-	-	-	-
 POST	/duzenli-giderler	zorunlu	tesis	-	-	ozel	-	-	
 DELETE	/duzenli-giderler/{gider_id}	zorunlu	tesis	rol	-	ozel	-	-	
 PATCH	/duzenli-giderler/{gider_id}	zorunlu	tesis	rol	-	ozel	-	-	
-GET	/ekler	zorunlu	tesis	-	-	-	-	-	
+GET	/ekler	zorunlu	tesis	-	-	-	-	-	daire ekinde saha rolu yalniz saha_gorebilir=true gorur (sorguda suzulur)
 POST	/ekler	zorunlu	tesis	-	-	genel	-	-	
 DELETE	/ekler/{ek_id}	zorunlu	tesis	kendi	-	genel	-	-	
+PATCH	/ekler/{ek_id}	zorunlu	tesis	rol	-	ozel	-	-	yalniz yonetim + yalniz daire eki; saha gorunurlugu isareti, denetime yazilir
 GET	/events	zorunlu	tesis	-	-	-	-	-	
 POST	/events	zorunlu	tesis	-	-	genel	-	foto_key	
 DELETE	/events/{event_id}	zorunlu	tesis	rol	-	genel	-	-	
@@ -568,7 +569,7 @@ PATCH	/users/{user_id}/avatar	zorunlu	tesis	rol	-	ozel	bildirim_eposta,email,tel
 PATCH	/users/{user_id}/contact	zorunlu	tesis	rol	-	ozel	bildirim_eposta,email,telefon	-	
 DELETE	/users/{user_id}/panik-aski	zorunlu	tesis	rol	-	ozel	-	-	
 PATCH	/users/{user_id}/panik-aski	zorunlu	tesis	rol	-	ozel	-	-	
-GET	/vardiya-izin	zorunlu	tesis	-	-	-	-	-	
+GET	/vardiya-izin	zorunlu	tesis	-	-	-	-	-	not_metni yalniz sahibi+amiri+yonetim; digerine anahtar hic donmez
 POST	/vardiya-izin	zorunlu	tesis	-	-	ozel	-	-	
 DELETE	/vardiya-izin/{izin_id}	zorunlu	tesis	kendi	-	ozel	-	-	
 POST	/vardiya-izin/{izin_id}/onayla	zorunlu	tesis	rol	-	ozel	-	-	

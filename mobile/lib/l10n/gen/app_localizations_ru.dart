@@ -7771,4 +7771,36 @@ class AppLocalizationsRu extends AppLocalizations {
   String turSayac(int sira, int toplam) {
     return '$sira/$toplam';
   }
+
+  @override
+  String get daireNotlariBaslik => 'Заметки по квартире';
+
+  @override
+  String get daireNotuYok => 'Заметок по этой квартире нет.';
+
+  @override
+  String get daireNotuYer => 'Написать заметку';
+
+  @override
+  String get daireNotuEkle => 'Добавить заметку';
+
+  @override
+  String get ekSahaGorebilir =>
+      'Охрана и технический персонал могут видеть эту заметку';
+
+  @override
+  String get ekSahaAciklama =>
+      'Если флажок не установлен, заметку видит только управление. Не отмечайте заметки о долгах, спорах или личных данных.';
+
+  @override
+  String get ekSahaAcik => 'Видна персоналу';
+
+  @override
+  String get ekSahaKapali => 'Только управление';
+
+  @override
+  String get ekSahaAc => 'Показать персоналу';
+
+  @override
+  String get ekSahaKapat => 'Скрыть от персонала';
 }

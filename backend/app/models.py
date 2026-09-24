@@ -4202,6 +4202,12 @@ class VarlikEki(Base):
     olusturan_user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), nullable=False
     )
+    #: (P247-bekleyen 1.2) DAIRE eki saha personeline (guvenlik, tesis
+    #: gorevlisi) acik mi. VARSAYILAN KAPALI; goc 0155 mevcut tum satirlari
+    #: kapali yazar. Yalniz `unit` eklerinde anlamlidir; yalniz yonetim koyar.
+    saha_gorebilir: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
     created_at = _created_at()
 
 

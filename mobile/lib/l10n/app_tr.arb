@@ -3877,5 +3877,15 @@
         "type": "int"
       }
     }
-  }
+  },
+  "daireNotlariBaslik": "Daire notları",
+  "daireNotuYok": "Bu daire için not yok.",
+  "daireNotuYer": "Not yaz",
+  "daireNotuEkle": "Not ekle",
+  "ekSahaGorebilir": "Güvenlik ve tesis görevlileri bu notu görebilir",
+  "ekSahaAciklama": "İşaretlemezseniz not yalnızca yönetim tarafından görülür. Borç, anlaşmazlık veya kişisel bilgi içeren notları işaretlemeyin.",
+  "ekSahaAcik": "Saha görebilir",
+  "ekSahaKapali": "Yalnız yönetim",
+  "ekSahaAc": "Sahaya aç",
+  "ekSahaKapat": "Sahadan gizle"
 }

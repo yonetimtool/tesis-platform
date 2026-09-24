@@ -7500,4 +7500,36 @@ class AppLocalizationsTr extends AppLocalizations {
   String turSayac(int sira, int toplam) {
     return '$sira/$toplam';
   }
+
+  @override
+  String get daireNotlariBaslik => 'Daire notları';
+
+  @override
+  String get daireNotuYok => 'Bu daire için not yok.';
+
+  @override
+  String get daireNotuYer => 'Not yaz';
+
+  @override
+  String get daireNotuEkle => 'Not ekle';
+
+  @override
+  String get ekSahaGorebilir =>
+      'Güvenlik ve tesis görevlileri bu notu görebilir';
+
+  @override
+  String get ekSahaAciklama =>
+      'İşaretlemezseniz not yalnızca yönetim tarafından görülür. Borç, anlaşmazlık veya kişisel bilgi içeren notları işaretlemeyin.';
+
+  @override
+  String get ekSahaAcik => 'Saha görebilir';
+
+  @override
+  String get ekSahaKapali => 'Yalnız yönetim';
+
+  @override
+  String get ekSahaAc => 'Sahaya aç';
+
+  @override
+  String get ekSahaKapat => 'Sahadan gizle';
 }

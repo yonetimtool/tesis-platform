@@ -31,6 +31,7 @@ from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..audit import Action, audit_user
 from ..deps import get_current_user, get_tenant_db, require_role
 from ..errors import APIError
 from ..roller import gorunur_roller
@@ -48,7 +49,7 @@ from ..models import (
     Unit,
     VarlikEki,
 )
-from ..schemas import EkCreate, EkListResponse, EkOut
+from ..schemas import EkCreate, EkGorunurlukGuncelle, EkListResponse, EkOut
 
 # Rol kumeleri ILGILI ROUTERDAN okunur — kopyalanmaz (bkz. modul basligi).
 from .blocks import _MANAGER as _BLOK_YAZAR, _READER as _BLOK_OKUR
@@ -181,6 +182,32 @@ def _kayit_kapsami(stmt, varlik_tipi: str, user: AppUser):
     return stmt
 
 
+#: (P247-bekleyen 1.2) SAHA GORUNURLUGU OLAN varlik tipi. Yalniz daire:
+#: yoneticinin daireye yazdigi not borc, anlasmazlik ya da sakin hakkinda
+#: kisisel degerlendirme olabilir. Daireyi OKUYAN ama YAZAMAYAN roller
+#: (guvenlik, tesis gorevlisi) yalniz yonetimin ACIKCA isaretledigi ekleri
+#: gorur. Kume ayri yazilmadi: "yazamayan okur" = VARLIKLAR'dan turer.
+SAHA_ISARETLI_TIPLER: frozenset[str] = frozenset({"unit"})
+
+
+def _yalniz_isaretli_gorur(varlik_tipi: str, user: AppUser) -> bool:
+    return varlik_tipi in SAHA_ISARETLI_TIPLER and user.role not in VARLIKLAR[varlik_tipi].yazar
+
+
+def _cikti(e: VarlikEki, user: AppUser, ad: str | None) -> EkOut:
+    return EkOut(
+        id=e.id,
+        tur=e.tur,
+        metin=e.metin,
+        dosya_key=e.dosya_key,
+        dosya_adi=e.dosya_adi,
+        dosya_url=_dosya_url(user, e.dosya_key),
+        olusturan_ad=ad,
+        saha_gorebilir=e.saha_gorebilir,
+        created_at=e.created_at,
+    )
+
+
 async def _ust_kaydi_dogrula(
     db: AsyncSession, varlik_tipi: str, varlik_id: uuid.UUID, user: AppUser, yazma: bool
 ) -> None:
@@ -214,32 +241,23 @@ async def listele(
 ) -> EkListResponse:
     """Bir varligin notlari + dosyalari — TEK zaman cizgisi, eskiden yeniye."""
     await _ust_kaydi_dogrula(db, varlik_tipi, varlik_id, user, yazma=False)
+    kosullar = [
+        VarlikEki.varlik_tipi == varlik_tipi,
+        VarlikEki.varlik_id == varlik_id,
+    ]
+    # (P247-bekleyen 1.2) SUZME SORGUDA: isaretsiz ek saha rolune HIC
+    # donmez (sayisi bile). Istemcide gizlemek, metni agda tasimak olurdu.
+    if _yalniz_isaretli_gorur(varlik_tipi, user):
+        kosullar.append(VarlikEki.saha_gorebilir.is_(True))
     satirlar = (
         await db.execute(
             select(VarlikEki, AppUser.ad)
             .join(AppUser, AppUser.id == VarlikEki.olusturan_user_id, isouter=True)
-            .where(
-                VarlikEki.varlik_tipi == varlik_tipi,
-                VarlikEki.varlik_id == varlik_id,
-            )
+            .where(*kosullar)
             .order_by(VarlikEki.created_at.asc(), VarlikEki.id)
         )
     ).all()
-    return EkListResponse(
-        items=[
-            EkOut(
-                id=e.id,
-                tur=e.tur,
-                metin=e.metin,
-                dosya_key=e.dosya_key,
-                dosya_adi=e.dosya_adi,
-                dosya_url=_dosya_url(user, e.dosya_key),
-                olusturan_ad=ad,
-                created_at=e.created_at,
-            )
-            for e, ad in satirlar
-        ]
-    )
+    return EkListResponse(items=[_cikti(e, user, ad) for e, ad in satirlar])
 
 
 @router.post("", response_model=EkOut, status_code=201)
@@ -256,6 +274,8 @@ async def ekle(
     dogrulamasini iki yerde tutmak olurdu.
     """
     await _ust_kaydi_dogrula(db, body.varlik_tipi, body.varlik_id, user, yazma=True)
+    if body.saha_gorebilir and body.varlik_tipi not in SAHA_ISARETLI_TIPLER:
+        raise APIError(422, "validation_error", "saha_isareti_yalniz_daire")
     obj = VarlikEki(
         tenant_id=user.tenant_id,
         varlik_tipi=body.varlik_tipi,
@@ -265,20 +285,47 @@ async def ekle(
         dosya_key=body.dosya_key,
         dosya_adi=body.dosya_adi,
         olusturan_user_id=user.id,
+        saha_gorebilir=body.saha_gorebilir,
     )
     db.add(obj)
     await db.flush()
     await db.refresh(obj)
-    return EkOut(
-        id=obj.id,
-        tur=obj.tur,
-        metin=obj.metin,
-        dosya_key=obj.dosya_key,
-        dosya_adi=obj.dosya_adi,
-        dosya_url=_dosya_url(user, obj.dosya_key),
-        olusturan_ad=user.ad,
-        created_at=obj.created_at,
+    return _cikti(obj, user, user.ad)
+
+
+@router.patch("/{ek_id}", response_model=EkOut)
+async def gorunurluk(
+    ek_id: uuid.UUID,
+    body: EkGorunurlukGuncelle,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_DAIRE_YAZAR),
+) -> EkOut:
+    """(P247-bekleyen 1.2) Daire ekini saha personeline ac / kapat.
+
+    YALNIZ YONETIM (daire yazari) ve YALNIZ daire eki. Ekin SAHIBI olmak
+    yetmez: isaret, notun kimlerin eline gececegine dair bir YONETIM
+    karari. Kayit bulunamazsa ya da daire eki degilse 404 — baska tipteki
+    bir ekin varligi bu uctan okunamasin.
+    """
+    obj = (
+        await db.execute(select(VarlikEki).where(VarlikEki.id == ek_id))
+    ).scalar_one_or_none()
+    if obj is None or obj.varlik_tipi not in SAHA_ISARETLI_TIPLER:
+        raise _YOK
+    await _ust_kaydi_dogrula(db, obj.varlik_tipi, obj.varlik_id, user, yazma=True)
+    onceki = obj.saha_gorebilir
+    obj.saha_gorebilir = body.saha_gorebilir
+    await audit_user(
+        db, user, Action.EK_SAHA_GORUNURLUGU, resource_type="varlik_eki",
+        resource_id=obj.id,
+        meta={"onceki": onceki, "yeni": body.saha_gorebilir,
+              "varlik_id": str(obj.varlik_id)},
     )
+    await db.flush()
+    ad = (
+        await db.execute(select(AppUser.ad).where(AppUser.id == obj.olusturan_user_id))
+    ).scalar_one_or_none()
+    return _cikti(obj, user, ad)
 
 
 @router.delete("/{ek_id}", status_code=204)

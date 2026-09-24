@@ -2626,5 +2626,15 @@
         "type": "int"
       }
     }
-  }
+  },
+  "daireNotlariBaslik": "Unit notes",
+  "daireNotuYok": "No notes for this unit.",
+  "daireNotuYer": "Write a note",
+  "daireNotuEkle": "Add note",
+  "ekSahaGorebilir": "Security and facility staff can see this note",
+  "ekSahaAciklama": "If unchecked, only management can see the note. Do not check it for notes about debts, disputes or personal information.",
+  "ekSahaAcik": "Visible to staff",
+  "ekSahaKapali": "Management only",
+  "ekSahaAc": "Show to staff",
+  "ekSahaKapat": "Hide from staff"
 }

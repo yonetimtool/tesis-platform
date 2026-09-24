@@ -13312,6 +13312,66 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'{sira}/{toplam}'**
   String turSayac(int sira, int toplam);
+
+  /// No description provided for @daireNotlariBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire notları'**
+  String get daireNotlariBaslik;
+
+  /// No description provided for @daireNotuYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu daire için not yok.'**
+  String get daireNotuYok;
+
+  /// No description provided for @daireNotuYer.
+  ///
+  /// In tr, this message translates to:
+  /// **'Not yaz'**
+  String get daireNotuYer;
+
+  /// No description provided for @daireNotuEkle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Not ekle'**
+  String get daireNotuEkle;
+
+  /// No description provided for @ekSahaGorebilir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Güvenlik ve tesis görevlileri bu notu görebilir'**
+  String get ekSahaGorebilir;
+
+  /// No description provided for @ekSahaAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşaretlemezseniz not yalnızca yönetim tarafından görülür. Borç, anlaşmazlık veya kişisel bilgi içeren notları işaretlemeyin.'**
+  String get ekSahaAciklama;
+
+  /// No description provided for @ekSahaAcik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Saha görebilir'**
+  String get ekSahaAcik;
+
+  /// No description provided for @ekSahaKapali.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yalnız yönetim'**
+  String get ekSahaKapali;
+
+  /// No description provided for @ekSahaAc.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sahaya aç'**
+  String get ekSahaAc;
+
+  /// No description provided for @ekSahaKapat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sahadan gizle'**
+  String get ekSahaKapat;
 }
 
 class _AppLocalizationsDelegate
