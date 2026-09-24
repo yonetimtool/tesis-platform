@@ -20,6 +20,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/auth/data/token_storage.dart' show secureStorageProvider;
+import '../gorunum/gorunum_modu.dart';
 import '../i18n/locale_controller.dart';
 
 /// Acilistan once okunmus tercihler. Alanlarin `null` olmasi "KULLANICI SECIMI
@@ -32,10 +33,17 @@ class AcilisTercihleri {
     this.dil,
     this.temaModu,
     this.rolSecimiGosterildi = true,
+    this.gorunum,
   });
 
   final AppDil? dil;
   final ThemeMode? temaModu;
+
+  /// (P247 §7) Gorunum modu (standart/buyuk) — ILK KARE dogru izgarayla
+  /// cizilsin: once 8 karo cizip bir an sonra 4'e dusmek, tam da bu ayara
+  /// ihtiyac duyan kullaniciyi bir kare boyunca kucuk yaziyla birakirdi.
+  /// `null` = kullanici secimi yok.
+  final GorunumModu? gorunum;
 
   /// (P154 / Asama 2) Rol listesi bu cihazda DAHA ONCE gosterildi mi?
   ///
@@ -108,10 +116,12 @@ Future<AcilisTercihleri> acilisTercihleriniOku([
     final dil = AppDil.fromKod(await depo.read(key: _dilKey));
     final tema = temaModuCoz(await depo.read(key: _temaKey));
     final rol = await depo.read(key: rolSecimiKey);
+    final gorunum = await depo.read(key: GorunumModuController.anahtar);
     return AcilisTercihleri(
       dil: dil,
       temaModu: tema,
       rolSecimiGosterildi: rol == '1',
+      gorunum: gorunum == null ? null : gorunumModuCoz(gorunum),
     );
   } catch (_) {
     return const AcilisTercihleri();

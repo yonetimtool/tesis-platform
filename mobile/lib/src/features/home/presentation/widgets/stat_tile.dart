@@ -2,6 +2,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/i18n/l10n.dart';
+import '../../../../core/ui/kelime_bolunmez.dart';
 import '../../../../core/theme/home_tokens.dart';
 import '../../domain/home_view_models.dart';
 import 'home_card.dart';
@@ -76,24 +77,21 @@ class StatTile extends StatelessWidget {
               style: HomeText.statValue.copyWith(color: s.heading),
             ),
           const SizedBox(height: 2),
-          AutoSizeText(
+          // (P247 §7) ORTAK ETIKET BILESENI: duz `AutoSizeText` iki satirda
+          // kelimeyi ICINDEN boluyordu ("Gesamteinnahme / n", 2 sutunlu
+          // dar izgarada). `KartEtiketi` once kucultur, sonra keser.
+          KartEtiketi(
             kutu.etiket(l10n),
-            group: etiketGrubu,
+            grup: etiketGrubu,
             maxLines: dar ? 1 : 2,
-            minFontSize: 8,
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
-            style: HomeText.statLabel.copyWith(color: s.body),
+            stil: HomeText.statLabel.copyWith(color: s.body),
           ),
           const SizedBox(height: 1),
-          AutoSizeText(
+          KartEtiketi(
             kutu.altEtiket(l10n),
-            group: etiketGrubu,
+            grup: etiketGrubu,
             maxLines: 1,
-            minFontSize: 8,
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
-            style: HomeText.rowSub.copyWith(color: s.muted),
+            stil: HomeText.rowSub.copyWith(color: s.muted),
           ),
         ],
       ),

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../features/auth/domain/jwt_claims.dart';
 import '../../features/auth/data/token_storage.dart';
+import '../startup/acilis_tercihleri.dart';
+import 'gorunum_esitleme.dart';
 
 /// (P230 §2) GORUNUM MODU — yasli kullanicilar icin TEK ayar.
 ///
@@ -69,12 +72,44 @@ GorunumModu gorunumModuCoz(String? raw) => switch (raw) {
 
 /// Tema denetleyicisiyle AYNI desen: UI aninda tepki verir, yazma arka
 /// planda.
+///
+/// (P247 §7) HESAPLA ESITLENIR — IKI KAYNAK TEK DOGRUYA BAGLANDI.
+///
+/// OLCULEN KUSUR: P230 bu ayari CIHAZ-YEREL yapti; P243 §4 web'e ayni
+/// ayari "mobildeki ayarin AYNI kavrami" diye HESAPTA (`app_user.ui_gorunum`,
+/// goc 0147) ekledi — ama mobil o alani HIC okumuyor, HIC yazmiyordu
+/// (`ui_gorunum` / `/me/gorunum` mobilde sifir eslesme). Web'de "Buyuk"
+/// secen kullanici telefonda sekizli izgarayi gormeye devam ediyordu;
+/// uygulamayi silip yeniden kuran (Android depoyu siler) kullanicinin
+/// secimi de kayboluyordu.
+///
+/// KURAL (kim kazanir):
+///  * Yerel depo ILK KARENIN onbellegidir (acilista `runApp` oncesi okunur,
+///    8 -> 4 sicramasi olmaz).
+///  * Oturum acilinca HESAP kazanir — web'de ya da baska cihazda yapilan
+///    secim buraya gelir.
+///  * ISTISNA: bu cihazda yapilip sunucuya HENUZ ULASMAMIS bir secim
+///    (cevrimdisi, ya da P247 oncesi surumde yapilmis ve hic gonderilmemis
+///    secim) EZILMEZ; once sunucuya gonderilir. Aksi halde 1.6.0'da
+///    "Buyuk" secmis her kullanici ilk esitlemede sunucunun varsayilani
+///    "standart" ile geri kuculurdu — duzeltme bir gerileme uretirdi.
 class GorunumModuController extends Notifier<GorunumModu> {
   static const anahtar = 'ui.gorunum_modu';
 
+  /// Yerel secimin HESAPLA durumu: `esit` = sunucuyla ayni;
+  /// `bekliyor:<kullanici>` = o kullanicinin bu cihazda yaptigi secim
+  /// sunucuya henuz ulasmadi. Anahtar YOK + yerel deger VAR = P247
+  /// oncesi surumden kalma, hic gonderilmemis secim (bekliyor sayilir).
+  static const esitlikAnahtari = 'ui.gorunum_modu_esitlik';
+
+  Future<void>? _yukleme;
+
   @override
   GorunumModu build() {
-    _yukle();
+    // ILK KARE: tema/dil gibi `runApp` oncesi okunmus deger (varsa).
+    final onOkuma = ref.read(acilisTercihleriProvider);
+    if (onOkuma != null) return onOkuma.gorunum ?? GorunumModu.standart;
+    _yukleme = _yukle();
     return GorunumModu.standart;
   }
 
@@ -90,9 +125,64 @@ class GorunumModuController extends Notifier<GorunumModu> {
 
   Future<void> ayarla(GorunumModu mod) async {
     state = mod;
-    await ref
-        .read(secureStorageProvider)
-        .write(key: anahtar, value: mod.kod);
+    final depo = ref.read(secureStorageProvider);
+    final kim = await _oturumdakiKullanici();
+    try {
+      await depo.write(key: anahtar, value: mod.kod);
+      await depo.write(key: esitlikAnahtari, value: 'bekliyor:${kim ?? ''}');
+    } catch (_) {}
+    if (kim != null) await _gonder(mod);
+  }
+
+  /// Oturum acildiginda (giris ya da kayitli oturumla soguk acilis)
+  /// cagrilir — bkz. [gorunumEsitlemeProvider].
+  Future<void> sunucuylaEsitle() async {
+    await _yukleme;
+    final kim = await _oturumdakiKullanici();
+    if (kim == null) return;
+    final depo = ref.read(secureStorageProvider);
+    String? esitlik;
+    String? yerel;
+    try {
+      esitlik = await depo.read(key: esitlikAnahtari);
+      yerel = await depo.read(key: anahtar);
+    } catch (_) {}
+    final bekleyen = esitlik == null
+        ? yerel != null // P247 oncesi secim: hic gonderilmedi
+        : esitlik == 'bekliyor:$kim';
+    if (bekleyen) {
+      await _gonder(state);
+      return;
+    }
+    final sunucu = await ref.read(gorunumSunucuProvider).oku();
+    if (sunucu == null) return; // ag hatasi: yerel deger kalir
+    state = sunucu;
+    try {
+      await depo.write(key: anahtar, value: sunucu.kod);
+      await depo.write(key: esitlikAnahtari, value: 'esit');
+    } catch (_) {}
+  }
+
+  Future<void> _gonder(GorunumModu mod) async {
+    final tamam = await ref.read(gorunumSunucuProvider).yaz(mod);
+    // Basarisizsa `bekliyor` KALIR: bir sonraki oturum acilisinda
+    // yeniden gonderilir, sunucunun eski degeri onu EZMEZ.
+    if (!tamam) return;
+    try {
+      await ref
+          .read(secureStorageProvider)
+          .write(key: esitlikAnahtari, value: 'esit');
+    } catch (_) {}
+  }
+
+  Future<String?> _oturumdakiKullanici() async {
+    try {
+      final jeton = await ref.read(tokenStorageProvider).readAccessToken();
+      if (jeton == null) return null;
+      return decodeJwtClaims(jeton)?['sub'] as String? ?? '';
+    } catch (_) {
+      return null;
+    }
   }
 }
 

@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
 /// (P239 §1) KELIME ORTASINDAN BOLUNMEYI ONLEYEN PUNTO SECIMI.
@@ -55,9 +56,15 @@ List<String> bolunmezParcalar(String metin) {
   return parcalar;
 }
 
-double _genislik(String s, double punto, TextScaler olcek) {
+/// (P247 §7) OLCUM PAYI (mantiksal piksel). Olcum ve cizim ayni motorla
+/// yapilir ama izgara hucresi kesirli genislikte olabilir ve alt piksel
+/// yuvarlamasi kelimeyi tam sinirda tasirabilir. Bir piksellik pay,
+/// tam sinirdaki kelimeyi yarim punto asagi iter.
+const double _olcumPayi = 1.0;
+
+double _genislik(String s, double punto, TextScaler olcek, TextStyle stil) {
   final tp = TextPainter(
-    text: TextSpan(text: s, style: TextStyle(fontSize: punto)),
+    text: TextSpan(text: s, style: stil.copyWith(fontSize: punto)),
     textDirection: TextDirection.ltr,
     textScaler: olcek,
   )..layout();
@@ -68,6 +75,14 @@ double _genislik(String s, double punto, TextScaler olcek) {
 
 /// En uzun BOLUNMEZ parcanin [enGenislik]e sigdigi en buyuk punto.
 ///
+/// (P247 §7) [stil] CIZILECEK stilin TAMAMIDIR (aile + agirlik + harf
+/// araligi) — cagiran `DefaultTextStyle` ile birlestirip verir. Eskiden
+/// olcum `TextStyle(fontSize: p)` ile yapiliyordu: iOS'ta bu SF Pro
+/// REGULAR, harf araliksiz demekti; kart ise SEMIBOLD (w600) ve temadan
+/// miras `letterSpacing: 0.25` ile ciziliyordu. "Rezervasyon" olcumde
+/// sigip cizimde tasiyor, son "n" alt satira dusuyordu. Olculen ile
+/// cizilen AYNI stil olmadikca bu fonksiyonun verdigi soz tutmaz.
+///
 /// Hicbiri sigmiyorsa `null` — cagiran TEK SATIR + ellipsis cizmeli.
 /// Yarim punto adimlariyla inilir: tam punto adimi 320dp'de gorunur bir
 /// sicrama uretiyordu (olculdu), daha ince adim gereksiz hesap.
@@ -77,13 +92,14 @@ double? kartBaslikPuntosu(
   double taban = kKartBaslikTaban,
   double enKucuk = kKartBaslikEnKucuk,
   TextScaler olcek = TextScaler.noScaling,
+  TextStyle stil = const TextStyle(),
 }) {
   final parcalar = bolunmezParcalar(metin);
   if (parcalar.isEmpty) return taban;
   for (var p = taban; p >= enKucuk; p -= 0.5) {
     var hepsiSigdi = true;
     for (final parca in parcalar) {
-      if (_genislik(parca, p, olcek) > enGenislik) {
+      if (_genislik(parca, p, olcek, stil) > enGenislik - _olcumPayi) {
         hepsiSigdi = false;
         break;
       }
@@ -91,4 +107,79 @@ double? kartBaslikPuntosu(
     if (hepsiSigdi) return p;
   }
   return null;
+}
+
+/// (P247 §7) KART ETIKETI — ana ekran kartlarinin TEK etiket bileseni.
+///
+/// KURAL: tek kelime ASLA bolunmez. Sira:
+///  1. en uzun kelime satira sigana kadar KUCULT ([kartBaslikPuntosu]),
+///  2. [enKucukPunto]da bile sigmiyorsa TEK SATIR + sondan kes (ellipsis),
+///  3. tam metin ipucunda ve ekran okuyucuda.
+///
+/// NEDEN TEK BILESEN: P239 kurali yalniz hizli erisim kartinin icine
+/// yazilmisti; "Hizli Ozet" kutusu (`StatTile`) duz `AutoSizeText`
+/// kullaniyordu ve Almancada "Gesamteinnahme / n" diye bolunuyordu
+/// (P247 §7 kilidi yakaladi). Kural bir bilesende durunca yeni bir kart
+/// onu "unutamaz".
+///
+/// OLCUM CIZILEN STILLE: `DefaultTextStyle` (tema ailesi, `letterSpacing`)
+/// + [stil] (agirlik) birlestirilip olculur — iOS kusurunun kok nedeni
+/// olcum ile cizimin farkli stil kullanmasiydi.
+///
+/// IKINCI EMNIYET: `AutoSizeText.wrapWords: false` — paket, her kelimenin
+/// satira sigdigi puntoya kadar kendisi de iner. Gruplu (ortak punto)
+/// kartlarda grup yalniz DAHA KUCUGE indirebilir; kucukte de kelime
+/// bolunmez.
+class KartEtiketi extends StatelessWidget {
+  const KartEtiketi(
+    this.metin, {
+    super.key,
+    required this.stil,
+    this.maxLines = 2,
+    this.grup,
+    this.enKucukPunto = kKartBaslikEnKucuk,
+  });
+
+  final String metin;
+  final TextStyle stil;
+  final int maxLines;
+  final AutoSizeGroup? grup;
+  final double enKucukPunto;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, kisit) {
+        final etkin = DefaultTextStyle.of(context).style.merge(stil);
+        final taban = etkin.fontSize ?? kKartBaslikTaban;
+        // Tek satirlik etikette sarma yoktur: AutoSizeText kucultur, yine
+        // sigmazsa sondan keser. Punto hesabi yalniz cok satirda gerekir.
+        final punto = maxLines > 1
+            ? kartBaslikPuntosu(
+                metin,
+                kisit.maxWidth,
+                taban: taban,
+                enKucuk: enKucukPunto,
+                olcek: MediaQuery.textScalerOf(context),
+                stil: etkin,
+              )
+            : taban;
+        final sigdi = punto != null;
+        return Tooltip(
+          message: metin,
+          child: AutoSizeText(
+            metin,
+            group: grup,
+            maxLines: sigdi ? maxLines : 1,
+            minFontSize: enKucukPunto,
+            wrapWords: false,
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
+            semanticsLabel: metin,
+            style: stil.copyWith(fontSize: punto ?? enKucukPunto),
+          ),
+        );
+      },
+    );
+  }
 }

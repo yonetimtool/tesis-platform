@@ -86,36 +86,15 @@ class HizliErisimKarti extends StatelessWidget {
             // inebilir, kucukte de kelime bolunmez. Grup (`baslikGrubu`)
             // KORUNUR — kartlarin ortak puntosu ve titremesizlik
             // (home_kart_titremesi_test) bozulmaz.
-            child: LayoutBuilder(
-              builder: (context, bc) {
-                final baslik = kart.baslik(l10n);
-                final punto = kartBaslikPuntosu(
-                  baslik,
-                  bc.maxWidth,
-                  olcek: MediaQuery.textScalerOf(context),
-                );
-                // (c) EN KUCUK PUNTODA BILE SIGMIYOR: iki satira BOLMEK
-                // yerine TEK satirda sondan kes. Uc nokta kelimeyi kirpar
-                // ama SATIR SONU kelime ortasina DUSMEZ.
-                final sigdi = punto != null;
-                return Tooltip(
-                  // (d) TAM METIN uzun basmada ve ekran okuyucuda.
-                  message: baslik,
-                  child: AutoSizeText(
-                    baslik,
-                    group: baslikGrubu,
-                    maxLines: sigdi ? 2 : 1,
-                    minFontSize: kKartBaslikEnKucuk,
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
-                    semanticsLabel: baslik,
-                    style: HomeText.cardTitle.copyWith(
-                      color: s.heading,
-                      fontSize: punto ?? kKartBaslikEnKucuk,
-                    ),
-                  ),
-                );
-              },
+            //
+            // (P247 §7) KURAL ARTIK TEK BILESENDE (`KartEtiketi`): olcum
+            // CIZILEN stille yapilir (iOS'ta "Rezervasyo / n" kusuru olcum
+            // ile cizimin farkli stil kullanmasiydi) ve ayni kural "Hizli
+            // Ozet" kutularina da uygulanir.
+            child: KartEtiketi(
+              kart.baslik(l10n),
+              grup: baslikGrubu,
+              stil: HomeText.cardTitle.copyWith(color: s.heading),
             ),
           ),
           const SizedBox(height: 3),
