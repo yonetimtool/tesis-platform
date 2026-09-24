@@ -70,9 +70,20 @@ class PushRegistrar extends Notifier<PushState> {
     return true;
   }
 
+  /// (P247 §2) SUREC DUZEYI BAYRAK: rol gecisi oturum kabini (ve bu
+  /// denetleyiciyi) YENIDEN KURAR. Soguk acilis mesaji yeni kapta tekrar
+  /// okunsaydi, kullanici gecisten sonra ESKI bildirimin hedefine bir kez
+  /// daha atilirdi. Acilis mesaji surec basina bir kez islenir.
+  static bool _acilisMesajiIslendi = false;
+
   Future<void> _consumeInitialMessage() async {
+    if (_acilisMesajiIslendi) return;
     try {
       final initial = await _messaging.getInitialMessage();
+      // Bayrak YALNIZ bir mesaj islendiyse kalkar: `null` yanit bir sey
+      // tuketmez (ve bayragi erken kaldirmak, ilk okumasi kap kurulmadan
+      // once `null` donen bir acilisi sessizce yutardi).
+      if (initial != null) _acilisMesajiIslendi = true;
       if (initial != null && ref.mounted) {
         state = state.copyWith(sonTiklanan: initial);
       }

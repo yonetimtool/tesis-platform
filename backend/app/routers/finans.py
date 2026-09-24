@@ -353,12 +353,38 @@ async def tahsilat(
             db, user, Action.FINANS_HAREKET_CREATE,
             resource_type="finansal_hareket",
             resource_id=satirlar[0].id,
-            meta={"tip": "tahsilat", "tutar": satirlar[0].tutar_kurus},
+            meta={
+                "tip": "tahsilat", "tutar": satirlar[0].tutar_kurus,
+                # (P247 §2) Yonetici KENDI aidatini tahsil ettiyse denetimde
+                # AYRICA gorunur (cikar catismasi izi). Seffaflikta olagan
+                # bir tahsilat gibi durur — hareketin kendisi degismez.
+                **({"kendi_tahsilati": True}
+                   if await _kendi_tahsilati_mi(db, user, satirlar[0]) else {}),
+            },
         )
         # (E2E 2026-09, FINANS-02) Makbuz + sakine bildirim — banka
         # eslesmesiyle AYNI yoldan. Tekrar istekte uretilmez.
         await _makbuz_kes(db, user, satirlar[0])
     return (await _adlarla(db, satirlar))[0]
+
+
+async def _kendi_tahsilati_mi(db: AsyncSession, user: AppUser, hareket) -> bool:
+    """(P247 §2) Tahsil eden kisi, tahsilatin sahibi ya da o dairenin sakini mi?"""
+    if hareket.user_id is not None and hareket.user_id == user.id:
+        return True
+    if hareket.unit_id is None:
+        return False
+    from ..models import UnitResident
+
+    return (
+        await db.execute(
+            select(UnitResident.unit_id).where(
+                UnitResident.user_id == user.id,
+                UnitResident.unit_id == hareket.unit_id,
+                UnitResident.bitis.is_(None),
+            ).limit(1)
+        )
+    ).scalar_one_or_none() is not None
 
 
 @router.post("/finans/tahsilat/toplu", response_model=HareketListResponse, status_code=201)
@@ -415,7 +441,13 @@ async def toplu_tahsilat(
         await audit_user(
             db, user, Action.FINANS_HAREKET_CREATE,
             resource_type="finansal_hareket",
-            meta={"tip": "tahsilat_toplu", "adet": len(satirlar)},
+            meta={
+                "tip": "tahsilat_toplu", "adet": len(satirlar),
+                # (P247 §2) bkz. tekil tahsilat.
+                "kendi_tahsilati": sum(
+                    [await _kendi_tahsilati_mi(db, user, x) for x in satirlar]
+                ),
+            },
         )
         # (E2E 2026-09, FINANS-02) Her satir kendi makbuzudur (satir basina
         # belge no — bkz. yukarisi).

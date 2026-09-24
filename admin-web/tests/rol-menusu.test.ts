@@ -21,7 +21,7 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { ROTA_ROLLERI, TESIS_ROTALARI, rotaRoldeGorunur } from "@/lib/yuzey";
+import { ROTA_ROLLERI, SAKIN_MODU, TESIS_ROTALARI, rotaRoldeGorunur } from "@/lib/yuzey";
 
 const KOK = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const KILIT = resolve(KOK, "backend/tests/yetki/rol-matrisi.txt");
@@ -210,7 +210,11 @@ describe("MENUDEKI HER ROTA O ROLUN ACABILDIGI ROTADIR", () => {
     for (const [rota, roller] of Object.entries(ROTA_ROLLERI)) {
       const izinli = erisenRoller(BIRINCIL_UC[rota]);
       for (const rol of roller) {
-        if (!izinli.includes(rol)) {
+        // (P247 §2) Yoneticinin SAKIN MODUNDA sunucu SAKIN kapisini uygular
+        // (`deps.get_current_user`); menudeki her rota matriste `resident`
+        // sutunuyla olculur.
+        const matrisRolu = rol === SAKIN_MODU ? "resident" : rol;
+        if (!izinli.includes(matrisRolu)) {
           ihlal.push(`${rota} -> ${rol} (uc: ${BIRINCIL_UC[rota]}, 403)`);
         }
       }
@@ -241,16 +245,42 @@ describe("MENUDEKI HER ROTA O ROLUN ACABILDIGI ROTADIR", () => {
   it("(P129) PARK EDILEN sayfalar HICBIR role gorunmez", () => {
     // Sayfalar duruyor ama `app.*` yalniz yonetici + denetci yuzeyi.
     // Bos liste, "sayfa yok" ile karistirilmasin diye SILINMEDI.
-    const park = [
-      "/aidatim", "/taleplerim", "/kurallar", "/etkinlikler",
-      "/rezervasyonlarim", "/ziyaretciler", "/kargolar", "/gorevlerim",
-      "/duyurular", "/yonetim-iletisim",
-    ];
+    const park = ["/ziyaretciler", "/kargolar", "/gorevlerim"];
     for (const rota of park) {
       expect(ROTA_ROLLERI[rota], rota).toEqual([]);
+    }
+    // (P247 §2) SAKIN SAYFALARI YALNIZ YONETICININ SAKIN MODUNA acildi;
+    // GERCEK rollerin hicbiri (saf sakin dahil) onlari gormez.
+    const sakin = [
+      "/aidatim", "/taleplerim", "/kurallar", "/etkinlikler",
+      "/rezervasyonlarim", "/duyurular", "/yonetim-iletisim",
+    ];
+    for (const rota of sakin) {
+      expect(ROTA_ROLLERI[rota], rota).toEqual([SAKIN_MODU]);
+    }
+    for (const rota of [...park, ...sakin]) {
       for (const rol of ["resident", "security", "tesis_gorevlisi", "yonetici", "denetci", "admin"]) {
         expect(rotaRoldeGorunur(rota, rol), `${rota}/${rol}`).toBe(false);
       }
+    }
+  });
+
+  it("(P247 §2) SAKIN MODU yalniz sakin sayfalarini gorur — tek yonetim sayfasi YOK", () => {
+    const gorunen = TESIS_ROTALARI.filter((r) => rotaRoldeGorunur(r, SAKIN_MODU));
+    expect([...gorunen].sort()).toEqual(
+      [
+        "/aidatim", "/duyurular", "/etkinlikler", "/kurallar", "/kvkk",
+        "/notifications", "/profil", "/rezervasyonlarim", "/taleplerim",
+        "/yonetim-iletisim",
+      ].sort(),
+    );
+    // Yonetim ekranlarinin HICBIRI: yoneticinin gordugu kumeden sakin
+    // modunun gordugu cikarilinca geriye kalan her sey sakin modunda kapali.
+    const yonetim = TESIS_ROTALARI.filter(
+      (r) => rotaRoldeGorunur(r, "yonetici") && !["/profil", "/kvkk", "/notifications"].includes(r),
+    );
+    for (const r of yonetim) {
+      expect(rotaRoldeGorunur(r, SAKIN_MODU), r).toBe(false);
     }
   });
 

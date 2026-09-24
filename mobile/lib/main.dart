@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
+import 'package:go_router/go_router.dart';
 // Dile bagli tarih/saat bicimleyicileri icin locale verisi (intl).
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -17,8 +21,11 @@ import 'src/features/scan/data/scan_outbox.dart';
 import 'src/features/surum/presentation/surum_denetleyici.dart';
 import 'src/features/surum/presentation/surum_kapisi.dart';
 import 'src/features/auth/data/current_user_provider.dart';
+import 'src/features/auth/data/rol_gecisi.dart';
+import 'src/features/auth/presentation/auth_controller.dart';
 import 'src/routing/app_router.dart';
 import 'src/routing/push_yonlendirme.dart';
+import 'src/core/gorunum/gorunum_esitleme.dart';
 import 'src/core/gorunum/gorunum_modu.dart';
 
 Future<void> main() async {
@@ -36,10 +43,84 @@ Future<void> main() async {
   // Beklenmez: `await` etmek ilk kareyi bir platform cagrisi kadar
   // geciktirirdi ve teshis, acilis hizindan onemli degildir.
   teshisBlogunuYazdir().ignore();
-  runApp(ProviderScope(
-    overrides: [acilisTercihleriProvider.overrideWithValue(tercihler)],
-    child: const TesisGuvenlikApp(),
-  ));
+  runApp(OturumKoku(tercihler: tercihler));
+}
+
+/// (P247 §2) OTURUM KABI — rol gecisinde (yonetici <-> sakin) YENIDEN KURULUR.
+///
+/// `ProviderScope` bir nesil anahtariyla cizilir; gecis anahtari degistirir
+/// ve butun Riverpod onbellegi (autoDispose OLMAYAN onlarca denetleyici
+/// dahil) atilir, yonlendirici acilistan baslar. Yalniz rol saglayicisini
+/// tazelemek, eski modun listelerini yeni modda gostermek olurdu — "iki
+/// ayri hesaba gecmek gibi" sartinin tek guvenli karsiligi bu. Oturum
+/// kaybolmaz: jetonlar guvenli depoda. Dil/tema tercihleri yeniden okunur
+/// (oturum icinde degismis olabilir; ilk okumanin kopyasi bayat kalirdi).
+class OturumKoku extends StatefulWidget {
+  const OturumKoku({
+    super.key,
+    required this.tercihler,
+    this.tercihOku = acilisTercihleriniOku,
+    this.ekOverrides = const [],
+  });
+
+  final AcilisTercihleri tercihler;
+
+  /// Yeniden kurmadan once tercihleri okuyan islev (testte bellek depo).
+  final Future<AcilisTercihleri> Function() tercihOku;
+
+  /// Testin taklitleri (tel, depo...) — her nesilde AYNEN uygulanir.
+  @visibleForTesting
+  final List<Override> ekOverrides;
+
+  @override
+  State<OturumKoku> createState() => _OturumKokuState();
+}
+
+class _OturumKokuState extends State<OturumKoku> {
+  late AcilisTercihleri _tercihler = widget.tercihler;
+  int _nesil = 0;
+  BekleyenGecis? _bekleyen;
+
+  Future<void> _yenidenKur(BekleyenGecis bekleyen) async {
+    final tercihler = await widget.tercihOku();
+    if (!mounted) return;
+    setState(() {
+      _tercihler = tercihler;
+      _bekleyen = bekleyen;
+      _nesil++;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bekleyen = _bekleyen;
+    return ProviderScope(
+      key: ValueKey(_nesil),
+      overrides: [
+        ...widget.ekOverrides,
+        acilisTercihleriProvider.overrideWithValue(_tercihler),
+        // Ilk nesil = soguk acilis (login); sonrakiler = rol gecisi, oturum
+        // SURER (bkz. `oturumDevamProvider`).
+        oturumDevamProvider.overrideWithValue(_nesil > 0),
+        oturumYenidenKurProvider.overrideWithValue(_yenidenKur),
+        bekleyenGecisProvider
+            .overrideWith(() => BekleyenGecisNotifier(bekleyen)),
+      ],
+      child: const TesisGuvenlikApp(),
+    );
+  }
+}
+
+/// (P183 §3) HEDEF ACILAMAZSA COKME YOK → ana ekrana dus. Bilinen
+/// AppRoutes uretilir, ama bozuk/eksik id ile push nadiren firlatabilir;
+/// kullanici bildirime dokundu, en azindan ana ekran acilsin.
+void _pushGit(GoRouter router, String route) {
+  try {
+    router.push(route);
+  } catch (e) {
+    debugPrint('Push derin baglanti acilamadi ($route), ana ekrana dus: $e');
+    router.go(AppRoutes.home);
+  }
 }
 
 /// On plan push bildirimini SnackBar ile gostermek icin kok messenger.
@@ -57,6 +138,9 @@ class TesisGuvenlikApp extends ConsumerWidget {
     ref.watch(outboxAutoSyncProvider);
     // Push: login sonrasi FCM token kaydi (Firebase yoksa sessizce devre disi).
     ref.watch(pushSetupProvider);
+    // (P247 §7) Gorunum modu oturum acilinca HESAPLA esitlenir (web'de
+    // secilen "Buyuk" telefona da gelir; telefondaki secim web'e gider).
+    ref.watch(gorunumEsitlemeProvider);
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
     // Dil: kullanici secimi (kalici) — null ise cihaz dili, o da
@@ -81,17 +165,26 @@ class TesisGuvenlikApp extends ConsumerWidget {
     // YOK ve acilinca "yetkiniz yok" cikiyordu. `pushHedefi` rolu de
     // hesaba katar ve erisilemeyen hedefte null doner (yonlendirme yok).
     final rol = ref.read(currentUserRoleProvider).asData?.value;
-      final route = pushHedefi(next.data, rol);
-      if (route == null) return;
-      // (P183 §3) HEDEF ACILAMAZSA COKME YOK → ana ekrana dus. routeForPushData
-      // bilinen AppRoutes uretir, ama bozuk/eksik id ile push nadiren
-      // firlatabilir; kullanici bildirime dokundu, en azindan ana ekran acilsin.
-      try {
-        router.push(route);
-      } catch (e) {
-        debugPrint('Push derin baglanti acilamadi ($route), ana ekrana dus: $e');
-        router.go(AppRoutes.home);
-      }
+      // (P247 §2) YONETICI + SAKIN: hedef aktif modda yoksa ama kisinin
+      // diger rolunde varsa mod OTOMATIK degisir ve hedef yeni kapta
+      // acilir ("Sakin moduna gecildi" bildirimiyle). Roller yalniz
+      // dogrudan hedef yoksa sorulur.
+      final kap = ProviderScope.containerOf(context, listen: false);
+      unawaited(() async {
+        final karar = await rolGecisliKarar(
+          kap,
+          (roller) => rolGecisliHedef(next.data, rol, roller),
+          rollerSart: modDisiHedef(pushHedefRolu(next.data), rol),
+        );
+        if (karar == null) return;
+        final gecis = karar.gecis;
+        final gezgin = router.routerDelegate.navigatorKey.currentContext;
+        if (gecis != null && gezgin != null && gezgin.mounted) {
+          await rolGecisiBaslat(gezgin, gecis, rota: karar.rota);
+          return;
+        }
+        _pushGit(router, karar.rota);
+      }());
     });
     return MaterialApp.router(
       title: 'Yönetiyor',

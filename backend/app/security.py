@@ -129,7 +129,10 @@ def _encode(claims: dict[str, Any]) -> str:
     return jwt.encode(claims, settings.jwt_secret, algorithm=settings.jwt_algorithm)
 
 
-def create_access_token(*, user_id: uuid.UUID | str, tenant_id: uuid.UUID | str, role: str) -> str:
+def create_access_token(
+    *, user_id: uuid.UUID | str, tenant_id: uuid.UUID | str, role: str,
+    asil_rol: str | None = None,
+) -> str:
     now = _now()
     claims = {
         "sub": str(user_id),
@@ -144,6 +147,12 @@ def create_access_token(*, user_id: uuid.UUID | str, tenant_id: uuid.UUID | str,
         "exp": int((now + timedelta(minutes=settings.access_token_expire_minutes)).timestamp()),
         "jti": str(uuid.uuid4()),
     }
+    # (P247 §2) IKINCIL modda (yonetici -> sakin) ASIL rol de tasinir: web
+    # ara katmani yuzey kararini jetondan verir; "sakin" tek basina P129
+    # geregi mobil-yalniz sayilirdi. YETKI VERMEZ — sunucu her istekte DB
+    # rolunu ve daire bagini yeniden olcer (deps.get_current_user).
+    if asil_rol and asil_rol != role:
+        claims["asil_rol"] = asil_rol
     return _encode(claims)
 
 
@@ -152,6 +161,7 @@ def create_refresh_token(
     user_id: uuid.UUID | str,
     tenant_id: uuid.UUID | str,
     family_id: str | None = None,
+    arol: str | None = None,
 ) -> tuple[str, str, str]:
     """Refresh token uret. Donus: (token, jti, family_id).
 
@@ -171,6 +181,9 @@ def create_refresh_token(
         "jti": jti,
         "fam": fam,
     }
+    # (P247 §2) Aktif IKINCIL rol (sakin modu) yenilemede korunur.
+    if arol:
+        claims["arol"] = arol
     return _encode(claims), jti, fam
 
 

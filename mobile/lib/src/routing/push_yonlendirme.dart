@@ -168,6 +168,8 @@ String? _hamHedef(Map<String, String> data, UserRole? role) {
           ? AppRoutes.visitors
           : '${AppRoutes.visitors}?visitor_id=$id';
     case 'kargo':
+    // (P247 §3) Guvenlik teslim etti — ayni kargo kaydina gider.
+    case 'kargo_teslim':
       final id = data['kargo_id'];
       return id == null || id.isEmpty
           ? AppRoutes.kargo
@@ -275,4 +277,69 @@ String? _hamHedef(Map<String, String> data, UserRole? role) {
     default:
       return null;
   }
+}
+
+/// (P247 §2) ROL GECISLI HEDEF — yonetici + sakin olan kisi icin.
+///
+/// Iki rolun bildirimleri de ayni cihaza gelir. Karar sirasi:
+///   1. `hedef_rol` (P247 §5, sunucu her push'a koyar): bildirim HANGI
+///      MODUN isiyse o. Aktif moddan farkliysa ve kisi o role gecebiliyorsa
+///      once gecilir (ayni `kargo` tipi yoneticiye "kapida paket var"
+///      gorunumu, sakine "paketiniz geldi" demektir — tip tek basina
+///      ayirt etmez).
+///   2. `hedef_rol` yoksa (eski push): hedef AKTIF rolde erisilebiliyorsa
+///      dogrudan oraya (`gecis == null`); erisilemiyor ama DIGER rolde
+///      erisilebiliyorsa mod otomatik degisir.
+/// Roller bilinmiyorsa (bos/tek) eski davranis: yalniz aktif rol.
+({String rota, UserRole? gecis})? rolGecisliHedef(
+  Map<String, String> data,
+  UserRole? aktif,
+  List<UserRole> roller,
+) =>
+    rolGecisliCoz(
+      aktif,
+      roller,
+      (rol) => pushHedefi(data, rol),
+      tercih: pushHedefRolu(data),
+    );
+
+/// Bildirim aktif moddan BASKA gecilebilir bir moda mi ait? (Yalniz
+/// yonetici/sakin modunda anlamli; saha rolleri icin roller sorulmaz.)
+bool modDisiHedef(UserRole? hedefRol, UserRole? aktif) =>
+    hedefRol != null &&
+    aktif != null &&
+    hedefRol != aktif &&
+    (aktif == UserRole.yonetici || aktif == UserRole.resident);
+
+/// Push `data`sindaki `hedef_rol` — yalniz gecilebilir iki mod taninir.
+UserRole? pushHedefRolu(Map<String, String> data) {
+  final r = UserRole.fromClaim(data['hedef_rol']);
+  return r == UserRole.yonetici || r == UserRole.resident ? r : null;
+}
+
+/// [rolGecisliHedef]in ortak cekirdegi — uygulama ici bildirim listesi de
+/// ayni karari kendi hedef cozucusuyle verir (`bildirim_rotasi.dart`).
+/// [tercih]: bildirimin ait oldugu mod (biliniyorsa).
+({String rota, UserRole? gecis})? rolGecisliCoz(
+  UserRole? aktif,
+  List<UserRole> roller,
+  String? Function(UserRole? rol) coz, {
+  UserRole? tercih,
+}) {
+  final gecebilir = aktif != null &&
+      roller.length >= 2 &&
+      roller.contains(aktif);
+  if (gecebilir && tercih != null && tercih != aktif && roller.contains(tercih)) {
+    final hedef = coz(tercih);
+    if (hedef != null) return (rota: hedef, gecis: tercih);
+  }
+  final dogrudan = coz(aktif);
+  if (dogrudan != null) return (rota: dogrudan, gecis: null);
+  if (!gecebilir) return null;
+  for (final diger in roller) {
+    if (diger == aktif) continue;
+    final hedef = coz(diger);
+    if (hedef != null) return (rota: hedef, gecis: diger);
+  }
+  return null;
 }

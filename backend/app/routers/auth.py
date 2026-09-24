@@ -213,11 +213,17 @@ async def tesislerim(
 
 async def _issue_token_pair(redis: aioredis.Redis, user: AppUser) -> TokenPair:
     """Dogrulanmis kullanici icin access+refresh cifti uret ve refresh'i kaydet."""
+    # (P247 §2) Kullanici IKINCIL modda ise (sakin) refresh bu modu tasir.
+    from ..rol_gecisi import asil_rol, ikincil_modda_mi
+
     access = create_access_token(
-        user_id=user.id, tenant_id=user.tenant_id, role=user.role
+        user_id=user.id, tenant_id=user.tenant_id, role=user.role,
+        asil_rol=asil_rol(user),
     )
+
     refresh_token, jti, fam = create_refresh_token(
-        user_id=user.id, tenant_id=user.tenant_id
+        user_id=user.id, tenant_id=user.tenant_id,
+        arol=user.role if ikincil_modda_mi(user) else None,
     )
     await _store_refresh(redis, jti, fam)
     return TokenPair(
@@ -624,11 +630,29 @@ async def refresh(
                 await _revoke_family(redis, fam, jti)
                 raise APIError(401, "invalid_token", "tesis_arsivde")
 
+            # (P247 §2) SAKIN MODU yenilemede korunur — HALA uygunsa
+            # (daire bagi kopmussa asil role doner).
+            arol = claims.get("arol")
+            if arol:
+                from ..rol_gecisi import (
+                    IKINCIL_ROL, aktif_rolu_uygula, rol_secenekleri,
+                )
+
+                if IKINCIL_ROL.get(user.role) == arol and arol in await rol_secenekleri(
+                    session, user
+                ):
+                    aktif_rolu_uygula(user, arol)
+                else:
+                    arol = None
+            from ..rol_gecisi import asil_rol as _asil
+
             access = create_access_token(
-                user_id=user.id, tenant_id=user.tenant_id, role=user.role
+                user_id=user.id, tenant_id=user.tenant_id, role=user.role,
+                asil_rol=_asil(user),
             )
             new_refresh, new_jti, _ = create_refresh_token(
-                user_id=user.id, tenant_id=user.tenant_id, family_id=fam
+                user_id=user.id, tenant_id=user.tenant_id, family_id=fam,
+                arol=arol,
             )
 
     # 4) rotation: eski jti'yi sil, yeni jti'yi aile guncel'i yap.

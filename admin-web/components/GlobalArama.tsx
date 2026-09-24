@@ -7,7 +7,7 @@ import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import { ogeBaglantisi, sayfaAra, type SayfaVurusu } from "@/lib/menu";
 import { useRol } from "@/lib/rol-kullan";
-import type { Yuzey } from "@/lib/yuzey";
+import { SAKIN_MODU, rotaRoldeGorunur, type Yuzey } from "@/lib/yuzey";
 
 /**
  * (P154 / Asama 6.3) GLOBAL ARAMA — ust barda, TEK yer.
@@ -43,6 +43,28 @@ const HEDEF: Record<string, { etiket: SozlukAnahtari; rota: string }> = {
   finans: { etiket: "kabukFinans", rota: "/finans" },
 };
 
+/**
+ * (P247 §2) SAKIN MODUNDA kayit -> SAKININ kendi ekrani.
+ *
+ * Sunucu sakin modunda zaten sakin kapsamiyla arar (duyuru, KENDI
+ * talepleri). Ama yukaridaki harita YONETIM ekranlarina gider ve
+ * middleware onlari sakin modunda Aidatim'a geri atar — tiklanan sonuc
+ * baska bir yere varirdi. Burada yoksa sonuc sakin modunda CIZILMEZ.
+ */
+const SAKIN_HEDEF: Record<string, { etiket: SozlukAnahtari; rota: string }> = {
+  duyuru: { etiket: "kabukDuyurularim", rota: "/duyurular" },
+  talep: { etiket: "kabukTaleplerim", rota: "/taleplerim" },
+};
+
+function kayitHedefi(
+  kaynak: string,
+  rol: string | null,
+): { etiket: SozlukAnahtari; rota: string } | null {
+  if (rol !== SAKIN_MODU) return HEDEF[kaynak] ?? null;
+  const h = SAKIN_HEDEF[kaynak];
+  return h && rotaRoldeGorunur(h.rota, rol) ? h : null;
+}
+
 const UC = "/api/panel/arama";
 // Bilinmeyen kaynak icin yedek etiket. Modul duzeyinde adlandirildi:
 // `t(... ?? "aramaEtiket")` yazmak, `sabit-metin` taramasinda ucludaki
@@ -65,6 +87,11 @@ export function GlobalArama({
   const rol = useRol(rolBaslangic);
   const [q, setQ] = useState("");
   const [vuruslar, setVuruslar] = useState<Vurus[]>([]);
+  // (P247 §2) Sakin modunda gidecegi ekrani olmayan kayit cizilmez.
+  const gorunenVuruslar =
+    rol === SAKIN_MODU
+      ? vuruslar.filter((v) => kayitHedefi(v.kaynak, rol) !== null)
+      : vuruslar;
   const [acik, setAcik] = useState(false);
   const [yukleniyor, setYukleniyor] = useState(false);
   const kutuRef = useRef<HTMLDivElement>(null);
@@ -134,7 +161,7 @@ export function GlobalArama({
   function git(v: Vurus) {
     setAcik(false);
     setQ("");
-    router.push(HEDEF[v.kaynak]?.rota ?? "/");
+    router.push(kayitHedefi(v.kaynak, rol)?.rota ?? "/");
   }
 
   function sayfayaGit(s: SayfaVurusu) {
@@ -154,7 +181,7 @@ export function GlobalArama({
         type="search"
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        onFocus={() => (vuruslar.length > 0 || sayfalar.length > 0) && setAcik(true)}
+        onFocus={() => (gorunenVuruslar.length > 0 || sayfalar.length > 0) && setAcik(true)}
         onKeyDown={(e) => e.key === "Escape" && setAcik(false)}
         placeholder={t("aramaIpucu")}
         aria-label={t("aramaEtiket")}
@@ -194,7 +221,7 @@ export function GlobalArama({
           aria-label={t("aramaSonuclari")}
           className="border-[color:var(--yz-border)] absolute end-0 top-full z-40 mt-1 max-h-80 w-full overflow-y-auto rounded-kart border bg-[color:var(--yz-surface-1)] shadow-yuzen"
         >
-          {vuruslar.length === 0 && sayfalar.length === 0 && !yukleniyor && (
+          {gorunenVuruslar.length === 0 && sayfalar.length === 0 && !yukleniyor && (
             <p className="px-3 py-4 text-sm text-[color:var(--yz-text-2)]">{t("aramaSonucYok")}</p>
           )}
 
@@ -226,7 +253,7 @@ export function GlobalArama({
             </div>
           )}
 
-          {vuruslar.length > 0 && sayfalar.length > 0 && (
+          {gorunenVuruslar.length > 0 && sayfalar.length > 0 && (
             <p
               className="px-3 pb-1 pt-2 text-xs uppercase tracking-wide text-[color:var(--yz-text-2)]"
               aria-hidden="true"
@@ -234,7 +261,7 @@ export function GlobalArama({
               {t("aramaKayitlar")}
             </p>
           )}
-          {vuruslar.map((v) => (
+          {gorunenVuruslar.map((v) => (
             <button
               key={`${v.kaynak}-${v.id}`}
               type="button"
@@ -245,7 +272,7 @@ export function GlobalArama({
             >
               <span className="text-sm font-medium">{v.baslik}</span>
               <span className="text-xs text-[color:var(--yz-text-2)]">
-                {t(HEDEF[v.kaynak]?.etiket ?? _YEDEK_ETIKET)}
+                {t(kayitHedefi(v.kaynak, rol)?.etiket ?? _YEDEK_ETIKET)}
                 {v.ayrinti ? ` · ${v.ayrinti}` : ""}
               </span>
             </button>

@@ -16,7 +16,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import EtkinlikYonetimPage from "@/app/(protected)/etkinlik-yonetimi/page";
 import SiteKurallariYonetimPage from "@/app/(protected)/site-kurallari/page";
-import { ROTA_ROLLERI } from "@/lib/yuzey";
+import { ROTA_ROLLERI, SAKIN_MODU } from "@/lib/yuzey";
 
 import { ciz } from "./yardimci";
 
@@ -74,8 +74,12 @@ describe("(P162) ROL KAPISI — sunucudaki `_MANAGER` ile ayni", () => {
     // Bos dizi = "sayfa var ama rol kisiti yok" (tesis rollerinin
     // tamamina acik). Bu satirlarin KAYBOLMASI, sakin sayfalarinin
     // yonetim sayfasina karistirildigi anlamina gelirdi.
-    expect(ROTA_ROLLERI["/kurallar"]).toEqual([]);
-    expect(ROTA_ROLLERI["/etkinlikler"]).toEqual([]);
+    // (P247 §2) Sakin gorunumleri YALNIZ yoneticinin sakin moduna acik;
+    // yonetim sayfalariyla karismadiklarini ayri kume kanitlar.
+    expect(ROTA_ROLLERI["/kurallar"]).toEqual([SAKIN_MODU]);
+    expect(ROTA_ROLLERI["/etkinlikler"]).toEqual([SAKIN_MODU]);
+    expect(ROTA_ROLLERI["/site-kurallari"]).not.toContain(SAKIN_MODU);
+    expect(ROTA_ROLLERI["/etkinlik-yonetimi"]).not.toContain(SAKIN_MODU);
   });
 });
 

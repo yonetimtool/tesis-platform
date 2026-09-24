@@ -24,6 +24,7 @@ import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 
 import { Avatar } from "@/components/Avatar";
+import { RolSecimi } from "@/components/RolGecisi";
 import { jsonFetcher } from "@/lib/fetcher";
 import { kimligiUnut } from "@/lib/kimlik-deposu";
 import { useT } from "@/lib/i18n/kullan";
@@ -196,6 +197,12 @@ export function KullaniciMenusu() {
               </span>
             </span>
           </div>
+
+          {/* (P247 §2) ROL GECISI — "Yonetici" / "Sakin". Yalniz iki rolu
+              olan kisi gorur; aktif olan isaretli. Kimlik basliginin hemen
+              altinda: kullanici "kim olarak buradayim" sorusunu adin
+              yaninda okur. */}
+          <RolSecimi />
 
           {/* (P244 §2) TESIS SECICI BURADAN KALDIRILDI — kenar cubugunun
               dibindeki SITE KARTINA tasindi (`TesisKarti`).

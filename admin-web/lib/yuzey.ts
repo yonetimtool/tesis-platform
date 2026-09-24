@@ -13,6 +13,26 @@
 // SINIFLANDIRMANIN GEREKCESI belgede: `docs/platform-tesis-ayrimi.md`.
 // Orada 317 uçluk rol matrisinden okunarak yapildi, tahminle degil.
 
+/**
+ * (P247 §2) YONETICININ SAKIN MODU — web'in gorunurluk karari icin AYRI
+ * bir rol adi.
+ *
+ * Backend'de ayri bir rol YOKTUR: yonetici bir daireye bagliysa profilden
+ * "Sakin"e gecer; erisim jetonu `role:"resident"` + `asil_rol:"yonetici"`
+ * tasir ve sunucu her istekte sakin rolunu zorlar (bkz.
+ * backend/app/rol_gecisi.py). Web'de bu jeton `resident` olarak
+ * okunsaydi P129 kurali (saf sakin `app.*`a GIREMEZ, mobil-yalniz) onu
+ * disari atardi; `yonetici` okunsaydi yonetim menusu cizilirdi. Iki
+ * yanlisin ortasi bu ayri addir: YALNIZ sakin sayfalarini gorur ve
+ * `app.*`a girebilir. Saf sakin (asil_rol'suz `resident`) HALA mobil-
+ * yalnizdir — P129 kilidi (`rol-menusu`) degismedi.
+ *
+ * Deger `lib/rol-token.ts`te jetondan TURETILIR; hicbir yerde elle
+ * yazilmaz. `rol-menusu` testi bu adi matriste `resident` sutunuyla
+ * olcer (sakin modunda sunucu sakin kapisini uygular).
+ */
+export const SAKIN_MODU = "sakin_modu";
+
 /** Bir rotanin/konagin ait oldugu yuzey.
  *
  * (P127) UCUNCU YUZEY: `tanitim`. Kok alan adi (ve www)
@@ -300,6 +320,8 @@ const PLATFORM_ROLLERI = new Set(["admin"]);
  */
 const TESIS_ROLLERI = new Set([
   "yonetici",
+  // (P247 §2) YONETICININ SAKIN MODU — ayri bir WEB rolu. Bkz. SAKIN_MODU.
+  SAKIN_MODU,
   "admin",
   // (P128/P129) Salt-okuma mali denetim — masabasi rolu.
   "denetci",
@@ -474,7 +496,9 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   // Saha rolleri sunucuda listeyi OKUR ama `app.*`ta sayfa gormez
   // (P129); onlarin yuzeyi MOBIL.
   "/bakim": ["admin", "yonetici", "denetci"],
-  "/notifications": ["admin", "yonetici"],
+  // (P247 §2) Bildirim listesi KISIYE aittir (sunucu `user_id` ile
+  // suzer); sakin modunda da kendi bildirimlerini okur.
+  "/notifications": ["admin", "yonetici", SAKIN_MODU],
   // (P167 §6.1) "/yonetisim" DORDE BOLUNDU; roller aynen tasindi.
   "/karar-defteri": ["admin", "yonetici"],
   "/dokumanlar": ["admin", "yonetici"],
@@ -529,16 +553,22 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   // hicbir role acik degil" ile "boyle bir sayfa yok" ayri seylerdir ve
   // ikincisi, siniflandirilmamis rota olarak middleware kapisindan da
   // muaf tutulurdu (P126.2).
-  "/aidatim": [],
-  "/taleplerim": [],
-  "/kurallar": [],
-  "/etkinlikler": [],
-  "/rezervasyonlarim": [],
+  //
+  // (P247 §2) SAKIN MODU ACTI — ama YALNIZ yoneticinin sakin modu icin.
+  // Saf `resident` hâlâ HICBIR sayfa gormez (P129); bu sayfalar cift
+  // rollu kisinin (yonetici + daire sakini) SAKIN calisma alanidir ve
+  // hicbiri yonetim kontrolu cizmez (kendi borcu, kendi talepleri,
+  // duyuru okuma, kendi rezervasyonlari).
+  "/aidatim": [SAKIN_MODU],
+  "/taleplerim": [SAKIN_MODU],
+  "/kurallar": [SAKIN_MODU],
+  "/etkinlikler": [SAKIN_MODU],
+  "/rezervasyonlarim": [SAKIN_MODU],
   "/ziyaretciler": [],
   "/kargolar": [],
   "/gorevlerim": [],
-  "/duyurular": [],
-  "/yonetim-iletisim": [],
+  "/duyurular": [SAKIN_MODU],
+  "/yonetim-iletisim": [SAKIN_MODU],
   // `yonetici` BU SAYFAYI GOREMEZ ve bu bir tercih degil OLCUM:
   // `GET /vehicle-passes` yoneticiye 403 doner (matris kilidi). Geriye
   // yalniz `admin` kaldi (dogrulama icin bakabilmeli).
@@ -548,8 +578,8 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   "/arac-gecisleri": ["admin", "yonetici"],
 
   // --- HERKESIN / PAYLASILAN --------------------------------------------
-  "/profil": ["admin", "yonetici", "denetci", "guvenlik_amiri"],
-  "/kvkk": ["admin", "yonetici", "denetci"],
+  "/profil": ["admin", "yonetici", "denetci", "guvenlik_amiri", SAKIN_MODU],
+  "/kvkk": ["admin", "yonetici", "denetci", SAKIN_MODU],
   // Guvenilir esnaf: sunucu "herkes gorur/arayabilir" diyor (routers/
   // external_services.py). Yonetici icin ayni sayfa YAZMA formunu da acar.
   "/dis-hizmetler": ["admin", "yonetici"],

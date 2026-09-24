@@ -124,6 +124,8 @@ class Action:
     #: e-postadir); bu yuzden "kim, ne zaman, nereden nereye" sorusunun
     #: yanitlanabilir olmasi SART.
     TESIS_DEGISTIR = "tesis_degistir"
+    #: (P247 §2) Ayni tesiste yonetici <-> sakin modu gecisi.
+    ROL_GECISI = "rol_gecisi"
     #: (P203 §4.3) Vardiya plani degisikligi. Gun ici degisiklikler
     #: (hastalik/izin/acil) denetime YAZILMALI: kimin yerine kimin
     #: konuldugu, bir olay sonrasi sorulacak ILK sorudur.

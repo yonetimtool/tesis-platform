@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/i18n/l10n.dart';
 import '../../../../core/theme/home_tokens.dart';
 import '../../../../core/widgets/bas_harf_avatar.dart';
+import '../../../auth/data/rol_gecisi.dart';
 import '../../../auth/domain/user_role.dart';
 import '../../../notifications/data/notifications_controller.dart';
 import '../../../profile/data/avatar_api.dart';
@@ -14,6 +15,7 @@ import '../../../../routing/app_router.dart';
 import '../../../../routing/push_yonlendirme.dart';
 import '../../domain/home_tabs.dart';
 import 'home_drawer.dart';
+import 'rol_gecis_secenekleri.dart';
 import 'home_marka.dart';
 import '../../../../core/ui/merkez_diyalog.dart';
 
@@ -101,13 +103,25 @@ class HomeShell extends ConsumerWidget {
               // Turkce 'Ac' idi).
               action: SnackBarAction(
                 label: l10n.ortakGoster,
-                onPressed: () {
-                  final hedef = pushHedefi(yeni.data, role);
-                  if (hedef != null) {
-                    context.push(hedef);
-                  } else {
+                // (P247 §2) Hedef aktif modda yoksa ama kisinin diger
+                // rolunde varsa (yonetici + sakin) mod otomatik degisir.
+                onPressed: () async {
+                  final karar = await rolGecisliKarar(
+                    ProviderScope.containerOf(context, listen: false),
+                    (roller) => rolGecisliHedef(yeni.data, role, roller),
+                    rollerSart: modDisiHedef(pushHedefRolu(yeni.data), role),
+                  );
+                  if (!context.mounted) return;
+                  if (karar == null) {
                     onDestinationSelected(1);
+                    return;
                   }
+                  final gecis = karar.gecis;
+                  if (gecis != null) {
+                    rolGecisiBaslat(context, gecis, rota: karar.rota);
+                    return;
+                  }
+                  context.push(karar.rota);
                 },
               ),
             ),
@@ -116,6 +130,26 @@ class HomeShell extends ConsumerWidget {
         ref.invalidate(unreadNotificationCountProvider);
       },
     );
+
+    // (P247 §2) ROL GECISINDEN SONRA — yeni kapta ana ekran ilk kez
+    // cizildiginde: "Sakin moduna gecildi" + (push'tan geldiyse) hedef.
+    // Bir kez tuketilir; ana ekran yeniden cizilince tekrarlanmaz.
+    if (ref.watch(bekleyenGecisProvider) != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted) return;
+        final b = ref.read(bekleyenGecisProvider.notifier).tuket();
+        if (b == null) return;
+        if (b.bildir) {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(content: Text(rolGecildiMetni(context.l10n, b.hedef))),
+            );
+        }
+        final rota = b.rota;
+        if (rota != null) context.push(rota);
+      });
+    }
 
     return Scaffold(
       backgroundColor: s.background,
@@ -197,6 +231,9 @@ class HomeShell extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // (P247 §2) YONETICI <-> SAKIN — yalniz iki rolu olan kisi
+            // gorur (`/me.roller` iki eleman); tek rolde hic cizilmez.
+            const RolGecisSecenekleri(),
             ListTile(
               leading: const Icon(Icons.person_outline),
               title: Text(context.l10n.kabukProfil),

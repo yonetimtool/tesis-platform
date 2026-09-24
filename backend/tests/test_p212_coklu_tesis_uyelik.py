@@ -18,6 +18,11 @@ OPSIYONELDIR. Benzersizligi KORUNUR (verilirse global benzersiz).
 ===========================================================================
 KURAL: BIR KISI AYNI TESISTE TEK ROLDE
 ===========================================================================
+(P247 §2) TEK ISTISNA: YONETICI + SAKIN. Yonetici ayni tesiste bir daireye
+SAKIN olarak baglanabilir (ikinci hesap ACILMAZ — ayni satir, daire bagi)
+ve profil menusunden modlar arasinda gecer. Diger TUM birlesimler yasak
+kalir; bkz. `test_YONETICI_SAKIN_OLABILIR_DIGER_BIRLESIMLER_YASAK` ve
+`tests/test_p247_rol_gecisi.py`.
 Bu kural `uq_app_user_tenant_email` ile SEMADA duruyor: ayni tesiste ayni
 e-posta ikinci kez ACILAMAZ. Testi buraya yaziyoruz cunku kuralin
 kendisi bir URUN kararidir, kisitin varligi tesadufi degildir.
@@ -217,3 +222,28 @@ def test_UYE_OLMADIGI_tesise_GECEMEZ(client, world, owner_conn):
                     headers={"Authorization": f"Bearer {tok}"},
                     json={"tenant_id": str(world["b"])})
     assert r.status_code == 403, r.text
+
+
+def test_YONETICI_SAKIN_OLABILIR_DIGER_BIRLESIMLER_YASAK(client, world):
+    """(P247 §2) Tek istisna: yoneticinin e-postasiyla sakin eklemek yeni
+    hesap ACMAZ, yoneticiyi daireye baglar. Ayni islem guvenlik gorevlisi
+    ya da mevcut bir sakin icin 409."""
+    import uuid as _uuid
+
+    a = _h(client, world["slug_a"], world["yonetici_a"])
+    blok = f"T{_uuid.uuid4().hex[:4].upper()}"
+    client.post("/blocks", headers=a, json={"ad": blok})
+    r = client.post("/residents", headers=a, json={
+        "unit_no": "1", "blok": blok, "email": world["yonetici_a"]["email"],
+        "telefon": world["yonetici_a"]["phone"], "rol_tipi": "malik"})
+    assert r.status_code == 201, r.text
+    me = client.get("/me", headers=a).json()
+    assert r.json()["user_id"] == me["id"], "yeni hesap acilmamaliydi"
+    try:
+        for kim in ("guard_a", "gorevli_a"):
+            r2 = client.post("/residents", headers=a, json={
+                "unit_no": "2", "blok": blok, "email": world[kim]["email"],
+                "telefon": world[kim]["phone"], "rol_tipi": "kiraci"})
+            assert r2.status_code == 409, (kim, r2.text)
+    finally:
+        client.delete(f"/units/{r.json()['unit_id']}/residents/{me['id']}", headers=a)

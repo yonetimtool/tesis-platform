@@ -11,7 +11,7 @@
 // döner ve ekran her daireyi ayrı kart olarak gösterir.
 import useSWR from "swr";
 
-import { BosDurum, BosSatir, HataDurumu, IskeletMetin, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/ui";
+import { BosDurum, BosSatir, HataDurumu, IskeletMetin, Kart, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/ui";
 import { jsonFetcher } from "@/lib/fetcher";
 import { tarihBicimi } from "@/lib/tarih";
 import { useT } from "@/lib/i18n/kullan";
@@ -111,6 +111,68 @@ function Makbuzlar() {
   );
 }
 
+/** (P247 §2) `GET /me/odeme-bilgileri` — mobilin "Ode" ekraniyla ayni uc. */
+type OdemeBilgileri = {
+  iban: string | null;
+  banka_adi: string | null;
+  odeme_kodu: string;
+  borc_kurus: number;
+  kart_aktif: boolean;
+};
+
+/**
+ * (P247 §2) ODEME BILGILERI — "nereye, ne kadar, hangi kodla".
+ *
+ * Borcunu goren sakinin bir sonraki sorusu "nasil oderim"dir; mobilde
+ * bu ekran vardi, web sakin alaninda yoktu. IBAN tanimli degilse havale
+ * satiri CIZILMEZ (yanlis IBAN gostermektense hic gostermemek — sunucu
+ * semasinin kurali). Kartla odeme web'de sunulmaz: saglayici akisi
+ * mobilde; burada yalniz bilgi.
+ */
+function OdemeBilgileriKarti() {
+  const t = useT();
+  const { data, error } = useSWR<OdemeBilgileri>("/api/me/odeme-bilgileri", jsonFetcher);
+  return (
+    <section className="space-y-3" data-test="odeme-bilgileri">
+      <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+        {t("aidatimOdemeBaslik")}
+      </h2>
+      {error ? <HataDurumu mesaj={t("aidatimOdemeHata")} /> : null}
+      {data ? (
+        <Kart>
+          <dl className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <dt style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                {t("aidatimOdemeIban")}
+              </dt>
+              <dd className="font-mono text-sm">
+                {data.iban
+                  ? `${data.iban}${data.banka_adi ? ` · ${data.banka_adi}` : ""}`
+                  : t("aidatimOdemeIbanYok")}
+              </dd>
+            </div>
+            <div>
+              <dt style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                {t("aidatimOdemeBorc")}
+              </dt>
+              <dd className="tabular-nums">{kurusToTL(data.borc_kurus)}</dd>
+            </div>
+            <div className="sm:col-span-2">
+              <dt style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                {t("aidatimOdemeKodu")}
+              </dt>
+              <dd className="font-mono text-base font-semibold">{data.odeme_kodu}</dd>
+              <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}>
+                {t("aidatimOdemeKoduAlt")}
+              </p>
+            </div>
+          </dl>
+        </Kart>
+      ) : null}
+    </section>
+  );
+}
+
 const RENK_BORC = "text-[color:var(--yz-danger-ink)]";
 const RENK_ALACAK = "text-[color:var(--yz-success-ink)]";
 
@@ -196,6 +258,8 @@ export default function AidatimPage() {
           ) : null}
         </section>
       ))}
+
+      <OdemeBilgileriKarti />
 
       <Makbuzlar />
     </div>

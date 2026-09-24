@@ -11,7 +11,7 @@
 // BOLUMLERE ayirmak.
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
-import { rotaRoldeGorunur, rotaYuzeyi, type Yuzey } from "./yuzey";
+import { SAKIN_MODU, rotaRoldeGorunur, rotaYuzeyi, type Yuzey } from "./yuzey";
 
 export type IconName =
   | "grid" | "building" | "clock" | "scan" | "route" | "check"
@@ -62,7 +62,10 @@ export type GrupId =
   | "iletisim"
   | "tanimlar"
   | "yonetim"
-  | "platform";
+  | "platform"
+  // (P247 §2) YONETICININ SAKIN MODU — tek, basliksiz bolum. Bkz.
+  // `menuGruplari`.
+  | "sakin";
 
 export interface MenuOgesi {
   /** ROTA — sorgu YOK. Yuzey ve rol aramalari BUNUNLA yapilir. */
@@ -152,6 +155,7 @@ export const GRUP_ANAHTARI: Record<GrupId, SozlukAnahtari> = {
   tanimlar: "kabukGrupTanimlar",
   yonetim: "kabukGrupYonetim",
   platform: "kabukGrupPlatform",
+  sakin: "kabukGrupSakin",
 };
 
 /**
@@ -171,6 +175,7 @@ export const GRUP_IKONU: Record<GrupId, IconName> = {
   tanimlar: "box",
   yonetim: "gear",
   platform: "hub",
+  sakin: "home",
 };
 
 /**
@@ -180,7 +185,7 @@ export const GRUP_IKONU: Record<GrupId, IconName> = {
  * satir koymak, kullaniciyi her acilista bir tiklamaya zorlardi. Bu kumedeki
  * bolumler basliksiz cizilir ve ogeleri IKONLU olur (§1.1'in son cumlesi).
  */
-const BAGIMSIZ_GRUPLAR: ReadonlySet<GrupId> = new Set<GrupId>(["ozet"]);
+const BAGIMSIZ_GRUPLAR: ReadonlySet<GrupId> = new Set<GrupId>(["ozet", "sakin"]);
 
 // (P166 §1) SIRA ARTIK ANLAMA GORE, "hangisi katlanir"a gore DEGIL.
 //
@@ -511,12 +516,49 @@ export function menuGruplari(yuzey: Yuzey, rol: string | null): MenuGrubu[] {
   const gorunen = OGELER.filter(
     (o) => rotaYuzeyi(o.href) === yuzey && rotaRoldeGorunur(o.href, rol),
   );
+  if (rol === SAKIN_MODU) return sakinMenusu(gorunen);
   return GRUP_SIRASI.map((id) => ({
     id,
     anahtar: GRUP_ANAHTARI[id],
     ogeler: gorunen.filter((o) => o.grup === id),
     bagimsiz: BAGIMSIZ_GRUPLAR.has(id),
   })).filter((g) => g.ogeler.length > 0);
+}
+
+/**
+ * (P247 §2) SAKIN MODUNUN MENUSU — TEK, BASLIKSIZ, IKONLU LISTE.
+ *
+ * Sakin sayfalari yonetim menusunun bolumlerine dagilmis durumda
+ * (Aidatim finansin, Duyurularim iletisimin altinda). Sakin modunda o
+ * basliklari ("Finansal Islemler", "Guvenlik") gostermek, kisiye yonetim
+ * panelinin bir alt kumesinde oldugunu soylerdi — istek ise "iki ayri
+ * hesaba gecmek gibi" hissettirmesini istiyor. Bu yuzden gorunen kume
+ * (yine `ROTA_ROLLERI`den gelir, burada genisletilmez) tek bolumde,
+ * sakinin gunluk sirasiyla dizilir.
+ *
+ * IKON SAKIN MODUNDA YENIDEN SECILIR: bagimsiz bolumde her satir ikonla
+ * cizilir ve ayni bolumde iki satir ayni ikonu paylasamaz (P184-ek §10);
+ * yonetim menusunde `taleplerim` ile `rezervasyonlarim` ikisi de `ticket`.
+ */
+const SAKIN_SIRASI: readonly { href: string; icon: IconName }[] = [
+  { href: "/aidatim", icon: "wallet" },
+  { href: "/duyurular", icon: "megaphone" },
+  { href: "/taleplerim", icon: "inbox" },
+  { href: "/rezervasyonlarim", icon: "ticket" },
+  { href: "/etkinlikler", icon: "calendar" },
+  { href: "/kurallar", icon: "gavel" },
+  { href: "/notifications", icon: "bell" },
+  { href: "/yonetim-iletisim", icon: "handshake" },
+];
+
+function sakinMenusu(gorunen: readonly MenuOgesi[]): MenuGrubu[] {
+  const ogeler = SAKIN_SIRASI.flatMap(({ href, icon }) => {
+    const o = gorunen.find((g) => g.href === href && !g.sorgu);
+    return o ? [{ ...o, icon, grup: "sakin" as GrupId }] : [];
+  });
+  return ogeler.length
+    ? [{ id: "sakin", anahtar: GRUP_ANAHTARI.sakin, ogeler, bagimsiz: true }]
+    : [];
 }
 
 /** Bir menu ogesi bu yuzey + rolde gorunuyor mu? */

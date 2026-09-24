@@ -7,9 +7,11 @@ import 'package:go_router/go_router.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 import '../../auth/data/current_user_provider.dart';
+import '../../auth/data/rol_gecisi.dart';
 import '../../home/presentation/widgets/activity_row.dart';
 import '../data/notifications_controller.dart';
 import '../domain/notification_models.dart';
+import '../../../routing/push_yonlendirme.dart';
 import 'bildirim_rotasi.dart';
 
 const _red = Color(0xFFDC2626);
@@ -455,7 +457,7 @@ class _NotificationRow extends ConsumerWidget {
             // `klavye_kaynak_denetimi_test.dart` ilk yazimda tam bunu
             // yakaladi.
             onLongPress: secimModu ? null : onUzunBas,
-            onTap: () {
+            onTap: () async {
               if (secimModu) {
                 onSecimDegis?.call();
                 return;
@@ -468,11 +470,25 @@ class _NotificationRow extends ConsumerWidget {
               }
               // Hedefi olan bildirim ilgili ekrani acar; hedefi yoksa
               // dokunma yalnizca okundu isaretlemis olur.
-              final rota = bildirimRotasi(
-                bildirim,
-                role: ref.read(currentUserRoleProvider).value,
+              //
+              // (P247 §2) Hedef AKTIF modda yoksa ama kisinin diger
+              // rolunde varsa (yonetici + sakin) mod otomatik degisir ve
+              // hedef yeni kapta acilir (push dokunmasiyla ayni karar).
+              final aktif = ref.read(currentUserRoleProvider).value;
+              final karar = await rolGecisliKarar(
+                ProviderScope.containerOf(context, listen: false),
+                (roller) => bildirimHedefiRolGecisli(bildirim, aktif, roller),
+                rollerSart:
+                    modDisiHedef(bildirimHedefRolu(bildirim), aktif),
               );
-              if (rota != null) context.push(rota);
+              if (!context.mounted) return;
+              if (karar == null) return;
+              final gecis = karar.gecis;
+              if (gecis != null) {
+                rolGecisiBaslat(context, gecis, rota: karar.rota);
+                return;
+              }
+              context.push(karar.rota);
             },
           ),
         ),

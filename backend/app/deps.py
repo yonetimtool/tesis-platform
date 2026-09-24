@@ -111,6 +111,15 @@ async def get_current_user(
         raise APIError(401, "invalid_token", "kullanici_bulunamadi_veya_pasif")
     if satir[1] is not None:
         raise APIError(401, "invalid_token", "tesis_arsivde")
+    # (P247 §2) AKTIF ROL: jeton ikincil rolu (sakin) iddia ediyorsa ve
+    # kisi gercekten o role gecebiliyorsa bellekte uygulanir. Iddia yalniz
+    # yetkiyi DUSURUR; uygun degilse yok sayilir (DB rolu gecerli).
+    iddia = claims.get("role")
+    if iddia and iddia != user.role:
+        from .rol_gecisi import IKINCIL_ROL, aktif_rolu_uygula, rol_secenekleri
+
+        if IKINCIL_ROL.get(user.role) == iddia and iddia in await rol_secenekleri(db, user):
+            aktif_rolu_uygula(user, iddia)
     # (P128) GOREV PENCERESI HER ISTEKTE OLCULUR, yalniz giriste degil:
     # access token 15 dakika yasar ve gorevi biten bir denetcinin ACIK
     # oturumu, yalniz giriste olcseydik o sure boyunca gecerli kalirdi.

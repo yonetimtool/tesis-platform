@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/data/current_user_provider.dart';
+import '../../auth/data/rol_gecisi.dart';
 import '../../auth/domain/user_role.dart';
 import '../../kvkk/data/kvkk_api.dart';
 import '../../kvkk/presentation/kvkk_onay_screen.dart';
@@ -76,6 +77,13 @@ class HomeGate extends ConsumerWidget {
     }
     // Kalan tek durum `unknown`: rol cozulmeden gecen saniye-alti an.
     if (role != UserRole.yonetici) {
+      return const SplashScreen();
+    }
+
+    // (P247 §2) SON MOD SAKINSE (soguk acilis -> login yonetici jetonu
+    // verdi) sessizce sakin moduna gecilir; gecis surerken yonetici paneli
+    // CIZILMEZ — kap yeniden kurulunca sakin ana ekrani gelir.
+    if (ref.watch(sonModGeriYukleProvider).value ?? false) {
       return const SplashScreen();
     }
 

@@ -72,6 +72,8 @@ String? bildirimRotasi(AppNotification b, {UserRole? role}) {
     // "Kargonuz geldi" -> kargo sayfasi, "sikayetiniz sonuclandirildi" ->
     // sikayetlerim. Hedefi olmayan tipe uydurma bir ekran verilmez.
     'kargo' => AppRoutes.kargo,
+    // (P247 §3) "Kargonuz guvenlik tarafindan teslim edildi".
+    'kargo_teslim' => AppRoutes.kargo,
     'ziyaretci' => AppRoutes.visitors,
     'rezervasyon' => AppRoutes.rezervasyon,
     'sikayet_cozuldu' => AppRoutes.sikayetlerim,
@@ -109,3 +111,37 @@ String? _referanstan(AppNotification b) {
   }
   return null;
 }
+
+/// (P247 §5) SAKIN KIMLIKLI bildirim tipleri — iki rollu kisiye KISI
+/// olarak giden sakin bildirimleri.
+///
+/// KAYNAK: `backend/app/push_gorunum.py` `SAKIN_KIMLIKLERI` (AYNI kume,
+/// elle esitlenir). Push'ta sunucu `hedef_rol`u kendisi koyar; kalici
+/// bildirim satirinda bu alan YOK, bu yuzden liste ayni karari tipten
+/// verir.
+const sakinKimlikleri = <String>{
+  'kargo', 'kargo_teslim', 'ziyaretci', 'rezervasyon',
+  'sikayet_cozuldu', 'talep_is_emri', 'talep_cozuldu', 'talep_reddedildi',
+  'erisim_onaylandi', 'erisim_reddedildi',
+  'aidat_borc', 'aidat_odendi', 'aidat_hatirlatma',
+  'gurultu_uyari_sakin', 'akilli_ev_kacak', 'akilli_ev_yangin',
+};
+
+/// Satirin ait oldugu mod: sakin kimlikli tip -> sakin, digeri -> yonetici.
+UserRole bildirimHedefRolu(AppNotification b) =>
+    sakinKimlikleri.contains(b.tip) ? UserRole.resident : UserRole.yonetici;
+
+/// (P247 §2) Uygulama ici listede dokunma — push ile AYNI karar
+/// ([rolGecisliCoz]): once satirin modu ([bildirimHedefRolu]), sonra
+/// "aktifte yoksa diger rolde dene" yedegi.
+({String rota, UserRole? gecis})? bildirimHedefiRolGecisli(
+  AppNotification b,
+  UserRole? aktif,
+  List<UserRole> roller,
+) =>
+    rolGecisliCoz(
+      aktif,
+      roller,
+      (rol) => bildirimRotasi(b, role: rol),
+      tercih: bildirimHedefRolu(b),
+    );

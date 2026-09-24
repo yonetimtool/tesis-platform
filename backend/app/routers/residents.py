@@ -104,6 +104,50 @@ async def create_resident(
     if await daire_rolu_dolu_mu(db, unit.id, body.rol_tipi):
         raise APIError(409, "conflict", "daire_zaten_dolu")
 
+    # 1c) (P247 §2) AYNI KISI ZATEN BU TESISTE MI?
+    #
+    # KURAL: bir kisi ayni tesiste TEK ROL — tek istisna YONETICI + SAKIN.
+    # Telefon/e-posta bu tesiste bir YONETICIYE aitse yeni hesap ACILMAZ:
+    # yonetici daireye baglanir ve profil menusunden sakin moduna gecebilir.
+    # Baska bir role (guvenlik, gorevli, sakin, denetci...) aitse acik bir
+    # "tek rol" hatasi — onceden genel "zaten kayitli" metni donuyordu.
+    mevcut = (
+        await db.execute(
+            select(AppUser).where(
+                or_(
+                    func.lower(AppUser.email) == str(body.email).lower(),
+                    AppUser.telefon == body.telefon,
+                )
+            )
+        )
+    ).scalars().first()
+    if mevcut is not None:
+        if mevcut.role != "yonetici":
+            raise APIError(409, "conflict", "kisi_bu_tesiste_baska_rolde")
+        db.add(
+            UnitResident(
+                tenant_id=user.tenant_id, unit_id=unit.id, user_id=mevcut.id,
+                rol_tipi=body.rol_tipi,
+                oturuyor=oturuyor_coz(body.rol_tipi, body.oturuyor),
+            )
+        )
+        try:
+            await db.flush()
+        except IntegrityError as exc:
+            if is_unique_violation(exc):
+                raise APIError(409, "conflict", "kullanici_daireye_zaten_bagli")
+            raise translate_integrity(exc)
+        await audit_user(
+            db, user, Action.RESIDENT_ASSIGN, resource_type="app_user",
+            resource_id=mevcut.id,
+            meta={"unit_id": str(unit.id), "yonetici_sakin": True},
+        )
+        return ResidentCreatedOut(
+            user_id=mevcut.id, unit_id=unit.id, unit_no=unit.no,
+            ad=mevcut.ad, email=mevcut.email,
+            davet=DavetGonderimSonucu(gonderildi=False, kanal="eposta"),
+        )
+
     # 2) sakin hesabi. (P186-ek2) YONETICI PAROLA ATAMAZ, GECICI KOD URETILMEZ:
     #    hesap DAIMA parolasiz acilir ve DAVET (Tesis ID) ile kisi kendi
     #    kimligini kurar. Yoneticinin parola/kod bilmesi hesap-ele-gecirmeydi.

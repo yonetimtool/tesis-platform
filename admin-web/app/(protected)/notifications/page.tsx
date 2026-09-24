@@ -21,7 +21,8 @@ import { useRol } from "@/lib/rol-kullan";
 import { BILDIRIM_TIP, enumAdi } from "@/lib/enum-adlari";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import type { AppNotification, NotificationList } from "@/lib/types";
-import { bildirimRotasi } from "@/lib/bildirim-rotasi";
+import { RolGecisPerdesi, useRolDurumu, useRolGecisi } from "@/components/RolGecisi";
+import { bildirimHedefi, webRolu } from "@/lib/rol-gecisi";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
@@ -65,6 +66,10 @@ export default function NotificationsPage() {
   // sayilari ve baskalarinin gonderim sonuclari ne isine yarar ne de
   // gormeli; uc zaten 403 doner, kabuk da onu ISTEMEZ.
   const rol = useRol(null);
+  // (P247 §2) Cift rollu kiside bildirim hedefi DIGER modda olabilir.
+  const { data: rolDurumu } = useRolDurumu();
+  const { gec: rolGec, gecilen } = useRolGecisi();
+  const aktifWebRol = rolDurumu?.role ? webRolu(rolDurumu) : rol;
 
   // (P220 §3) ARAMA SUNUCUDA. Istemcide filtrelemek yalniz ACIK SAYFAYI
   // suzerdi: "kargo" arayan kullanici 3. sayfadaki kaydi bulamaz ve
@@ -177,6 +182,7 @@ export default function NotificationsPage() {
       {/* (P191 §2) "Bildirim gelmiyor" sorusunun cevabi listenin USTUNDE:
           kullanici zaten bu sayfaya "bildirimlerim nerede?" diye gelir. */}
       {rol === ROL_ADMIN || rol === ROL_YONETICI ? <PushTeshis /> : null}
+      {gecilen ? <RolGecisPerdesi rol={gecilen} /> : null}
 
       {/* SARILABILIR: uc filtre dugmesi 360 dp + buyuk kok yazi boyunda tek
           satira sigmiyordu (tur 28 surusu: tr +9 px, ru +79 px). Sekme
@@ -371,17 +377,42 @@ export default function NotificationsPage() {
                       sekmede ac imkani verir — bir dugme bunu
                       veremezdi. Okundu isaretlemesi tiklamada yan
                       etki olarak gider. */}
-                  {bildirimRotasi(n.tip) && (
-                    <Link
-                      href={bildirimRotasi(n.tip)!}
-                      data-test={`bildirim-git-${n.id}`}
-                      className="odak-ic rounded-btn px-2 py-1 text-satiralt underline"
-                      style={{ color: "var(--yz-accent-ink)" }}
-                      onClick={() => void markRead(n.id)}
-                    >
-                      {t("bildirimGit")}
-                    </Link>
-                  )}
+                  {/* (P247 §2) OTOMATIK MOD GECISI: hedef aktif modda
+                      yoksa ve kisinin DIGER modunda varsa, "Git" once o
+                      moda gecer (perde + tam yukleme), sonra hedefe
+                      varir. Iki modda da yoksa dugme cizilmez. */}
+                  {(() => {
+                    const hedef = bildirimHedefi(n.tip, aktifWebRol, rolDurumu);
+                    if (!hedef) return null;
+                    if (hedef.gecis) {
+                      const gecis = hedef.gecis;
+                      return (
+                        <button
+                          type="button"
+                          data-test={`bildirim-git-${n.id}`}
+                          className="odak-ic rounded-btn px-2 py-1 text-satiralt underline"
+                          style={{ color: "var(--yz-accent-ink)" }}
+                          onClick={() => {
+                            void markRead(n.id);
+                            void rolGec(gecis, hedef.rota);
+                          }}
+                        >
+                          {t("bildirimGit")}
+                        </button>
+                      );
+                    }
+                    return (
+                      <Link
+                        href={hedef.rota}
+                        data-test={`bildirim-git-${n.id}`}
+                        className="odak-ic rounded-btn px-2 py-1 text-satiralt underline"
+                        style={{ color: "var(--yz-accent-ink)" }}
+                        onClick={() => void markRead(n.id)}
+                      >
+                        {t("bildirimGit")}
+                      </Link>
+                    );
+                  })()}
                   {!n.okundu && (
                     <Dugme boy="kucuk" onClick={() => void markRead(n.id)}>
                       {t("bildirimOkunduIsaretle")}

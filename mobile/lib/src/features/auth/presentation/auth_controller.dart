@@ -153,9 +153,21 @@ class AuthState {
   static const Object _sentinel = Object();
 }
 
+/// (P247 §2) OTURUM KABI YENIDEN KURULDU (rol gecisi) — oturum SURUYOR.
+///
+/// Rol gecisi `ProviderScope`u yeniden kurar ([OturumKoku], main.dart) ve
+/// bu denetleyici yeniden `build` edilir. Soguk acilis kurali (asagida:
+/// her zaman login) orada UYGULANMAZ: kullanici uygulamayi kapatmadi,
+/// yalniz mod degistirdi; jetonlar depoda ve gecerli. Kok, yeniden
+/// kurdugu nesillerde bunu `true` ile override eder.
+final oturumDevamProvider = Provider<bool>((ref) => false);
+
 class AuthController extends Notifier<AuthState> {
   @override
   AuthState build() {
+    if (ref.read(oturumDevamProvider)) {
+      return const AuthState(status: AuthStatus.authenticated);
+    }
     // WP2.3 — SOGUK ACILIS her zaman LOGIN'e duser: sessiz auto-login
     // (restoreSession + refresh) BILEREK kaldirildi. "Beni hatirla"
     // isaretliyse login ekrani alanlari on-doldurur (telefon+parola+kutu)

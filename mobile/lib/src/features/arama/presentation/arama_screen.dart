@@ -7,6 +7,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/i18n/l10n.dart';
 import '../../../routing/app_router.dart';
+import '../../../routing/push_yonlendirme.dart';
+import '../../auth/data/current_user_provider.dart';
+import '../../auth/domain/user_role.dart';
 import '../data/arama_api.dart';
 import '../../../core/ui/bos_durum.dart';
 
@@ -40,6 +43,19 @@ const _hedef = <String, String>{
   'plan': AppRoutes.patrolPlans,
   'vardiya': AppRoutes.vardiyaPlani,
 };
+
+/// (P247 §2) Sonucun hedefi AKTIF ROLE gore suzulur. Sunucu sonuclari rol
+/// kapisindan gecirir (sakin modunda yalniz sakin kaynaklari) ama hedef
+/// tablosu yonetim ekranlarini gosteriyordu: sakinin KENDI talebi
+/// `complaints`e (onun menusunde yok) goturuluyordu — P217'nin push icin
+/// duzelttigi kusurun aynisi. Erisilemeyen hedefte dokunma kapanir.
+String? aramaHedefi(String kaynak, UserRole? rol) {
+  final ham = kaynak == 'talep' && rol == UserRole.resident
+      ? AppRoutes.sikayetlerim
+      : _hedef[kaynak];
+  if (ham == null || rol == null) return ham;
+  return rotaErisilebilir(ham, rol) ? ham : null;
+}
 
 /// TUSLAMA BASINA ISTEK ATILMAZ: her harf bir tam metin taramasi demekti
 /// (17 kaynak x LIKE). Web'deki gecikmeyle AYNI deger.
@@ -169,7 +185,10 @@ class _AramaScreenState extends ConsumerState<AramaScreen> {
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, i) {
         final v = sonuc[i];
-        final rota = _hedef[v.kaynak];
+        final rota = aramaHedefi(
+          v.kaynak,
+          ref.read(currentUserRoleProvider).value,
+        );
         return ListTile(
           key: Key('arama-sonuc-${v.id}'),
           title: Text(v.baslik),

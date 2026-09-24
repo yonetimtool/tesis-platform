@@ -4,6 +4,7 @@ import { AppShell } from "@/components/AppShell";
 import { DonusCubugu } from "@/components/DonusCubugu";
 import { IlkGirisTuru } from "@/components/IlkGirisTuru";
 import { PanikAlarmi } from "@/components/panik/panik-alarmi";
+import { RolGecisBildirimi } from "@/components/RolGecisi";
 import { SunucuDurumu } from "@/components/SunucuDurumu";
 import { ToastProvider } from "@/components/Toast";
 import { ACCESS_COOKIE } from "@/lib/cookies";
@@ -70,6 +71,10 @@ export default async function ProtectedLayout({
             dogrudan `/dashboard`a duser, `/kurulum`a degil) ve rol
             kapisini kendi icinde uygular. */}
         <IlkGirisTuru />
+        {/* (P247 §2) Rol gecisinden sonraki ilk yuklemede "Sakin moduna
+            gecildi" bilgisi. Gecis tam sayfa yuklemesiyle bittigi icin
+            mesaj oturum deposunda bekler; burada bir kez gosterilir. */}
+        <RolGecisBildirimi />
       </AppShell>
     </ToastProvider>
   );

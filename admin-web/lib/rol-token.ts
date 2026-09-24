@@ -10,7 +10,17 @@
 // Yani token'i kurcalayan biri menude fazladan bir baglanti gorebilir —
 // tiklayinca 403 alir. Gorunurluk yetkilendirme degildir.
 
-/** JWT govdesindeki `role` iddiasi; cozulemezse `null`. */
+import { SAKIN_MODU } from "./yuzey";
+
+/**
+ * JWT govdesindeki `role` iddiasi; cozulemezse `null`.
+ *
+ * (P247 §2) YONETICININ SAKIN MODU: jeton `role:"resident"` +
+ * `asil_rol:"yonetici"` tasiyorsa web rolu `SAKIN_MODU`dur (gerekce
+ * `lib/yuzey.ts`te). Yalniz `asil_rol` iddiasina bakmak YETKI VERMEZ:
+ * gorunurluk karari yine sakin sayfalariyla sinirlidir ve sunucu her
+ * istekte sakin rolunu uygular.
+ */
 export function tokenRolu(access: string | undefined | null): string | null {
   if (!access) return null;
   try {
@@ -25,7 +35,9 @@ export function tokenRolu(access: string | undefined | null): string | null {
     // JSON.parse'a girecek).
     const bayt = Uint8Array.from(atob(dolgulu), (c) => c.charCodeAt(0));
     const json = new TextDecoder().decode(bayt);
-    const rol = (JSON.parse(json) as { role?: unknown }).role;
+    const iddia = JSON.parse(json) as { role?: unknown; asil_rol?: unknown };
+    const rol = iddia.role;
+    if (rol === "resident" && iddia.asil_rol === "yonetici") return SAKIN_MODU;
     return typeof rol === "string" && rol ? rol : null;
   } catch {
     return null;
