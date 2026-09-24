@@ -27,6 +27,15 @@
 // kart dili her kayda bir baslik seviyesi verip ekrana dort kayit
 // sigdiriyordu. Kapidaki gorevlinin sordugu soru ise "hangi daireninki
 // bekliyor" — bu bir TARAMA sorusudur ve sutun ister.
+//
+// ===========================================================================
+// (P247 §3) KARGO "BEKLIYOR"DA KALIYORDU
+// ===========================================================================
+// Teslim yalniz SAKINE aciktu; paketi kapida fiilen VEREN guvenlik
+// isaretleyemiyordu (sunucu 403). Sakin isaretlemezse kayit sonsuza dek
+// bekliyordu. Artik guvenlik "Teslim et" der ve paketi kime verdigini
+// dairenin AKTIF sakinlerinden secer (ya da belirtmez). 3 gundur bekleyen
+// paket "Gecikmis" rozeti tasir; durum DEGISMEZ (paket hala kapida).
 import { useState } from "react";
 import useSWR from "swr";
 
@@ -59,7 +68,14 @@ type Kargo = {
   notlar: string | null;
   durum: string;
   created_at: string;
+  // (P247 §3)
+  teslim_alan_ad?: string | null;
+  teslim_eden_ad?: string | null;
+  gecikmis?: boolean;
 };
+/** `GET /units/ara` satiri — daire + AKTIF sakinleri (teslim secicisi). */
+type SakinOzet = { user_id: string; ad: string };
+type DaireSonuc = { id: string; no: string; sakinler: SakinOzet[] };
 type KargoSayfa = { items: Kargo[]; meta?: { total?: number } };
 
 // METIN DEGIL KIMLIK (modul duzeyi — tur 18 dersi).
@@ -77,6 +93,11 @@ function durumAnahtari(durum: string): SozlukAnahtari {
 
 // UCLUDE/GOVDEDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const ROL_SAKIN = "resident" as const;
+const ROL_GUVENLIK = "security" as const;
+// Suzgecte "gecikmis" bir DURUM degil, bekleyenin alt kumesidir: sunucuya
+// `?gecikmis=true` olarak gider (durum parametresine degil).
+const SUZGEC_GECIKMIS = "gecikmis" as const;
+const DOGRU = "true" as const;
 const KARGO_BEKLIYOR = "bekliyor" as const;
 const KARGO_TESLIM = "teslim_alindi" as const;
 const HEPSI = "" as const;
@@ -104,7 +125,8 @@ export default function KargolarPage() {
   // suzmek YALNIZ GORUNEN sayfayi suzerdi — kullanici "bekleyen yok" der,
   // oysa bekleyen kayit ikinci sayfadadir.
   const sorgu = new URLSearchParams({ limit: "50", offset: "0" });
-  if (durumSuzgec) sorgu.set("durum", durumSuzgec);
+  if (durumSuzgec === SUZGEC_GECIKMIS) sorgu.set(SUZGEC_GECIKMIS, DOGRU);
+  else if (durumSuzgec) sorgu.set("durum", durumSuzgec);
   const { data, error, isLoading, mutate } = useSWR<KargoSayfa>(
     `/api/kargo?${sorgu.toString()}`,
     jsonFetcher,
@@ -130,6 +152,39 @@ export default function KargolarPage() {
   // Rol: teslim düğmesinin GÖRÜNÜRLÜĞÜ için (yetki sunucuda).
   const { data: ben } = useSWR<{ role?: string }>("/api/me", jsonFetcher);
   const sakinMi = ben?.role === ROL_SAKIN;
+  const guvenlikMi = ben?.role === ROL_GUVENLIK;
+
+  // (P247 §3) GUVENLIK TESLIMI: secici acik oldugu surece daire aranir;
+  // yanit dairenin AKTIF sakinlerini tasir. Tam eslesen daire secilir.
+  const [teslimHedef, setTeslimHedef] = useState<Kargo | null>(null);
+  const [teslimSakin, setTeslimSakin] = useState<string>(HEPSI);
+  const { data: teslimDaire } = useSWR<DaireSonuc[]>(
+    teslimHedef?.unit_no
+      ? `/api/units/ara?q=${encodeURIComponent(teslimHedef.unit_no)}&limit=10`
+      : null,
+    jsonFetcher,
+  );
+  const teslimSakinleri =
+    teslimDaire?.find((d) => d.no === teslimHedef?.unit_no)?.sakinler ?? [];
+
+  async function teslimEt() {
+    if (!teslimHedef) return;
+    try {
+      // Sakin secilmediyse alan GOVDEYE HIC yazilmaz (sunucu teslim alani
+      // bos birakir; teslim EDEN damgalanir).
+      await apiSend(`/api/kargo/${teslimHedef.id}`, "PATCH", {
+        durum: KARGO_TESLIM,
+        ...(teslimSakin ? { teslim_alan_user_id: teslimSakin } : {}),
+      });
+      toast.success(t("kargoTeslimEdildiBildirim"));
+      setTeslimHedef(null);
+      void mutate();
+    } catch (e) {
+      toast.error(alanliHataMetni(e, t("ortakHataOlustu")));
+      setTeslimHedef(null);
+      void mutate();
+    }
+  }
 
   async function teslimAl(id: string) {
     try {
@@ -151,6 +206,11 @@ export default function KargolarPage() {
       setHata(t("kargoDaireZorunlu"));
       return;
     }
+    // (P247 §3) Firma sunucuda ZORUNLU (min 1): bos gonderim 422 donuyordu.
+    if (!firma.trim()) {
+      setHata(t("kargoFirmaZorunlu"));
+      return;
+    }
     setHata(null);
     setGonderiyor(true);
     try {
@@ -158,7 +218,7 @@ export default function KargolarPage() {
       // ekraniyla ayni gerekce). Sunucu numarayi cozer.
       await apiSend("/api/kargo", "POST", {
         unit_no: daireNo.trim(),
-        firma: firma.trim() || null,
+        firma: firma.trim(),
         notlar: notlar.trim() || null,
       });
       setDaireNo("");
@@ -208,9 +268,17 @@ export default function KargolarPage() {
       // DURUM RENKLE DEGIL METINLE: kelime rozetin icinde yaziyor, renk
       // yalnizca ikinci ipucu.
       hucre: (k) => (
-        <Rozet durum={k.durum === KARGO_BEKLIYOR ? "uyari" : "olumlu"}>
-          {t(durumAnahtari(k.durum))}
-        </Rozet>
+        <span className="inline-flex flex-wrap items-center gap-1">
+          <Rozet durum={k.durum === KARGO_BEKLIYOR ? "uyari" : "olumlu"}>
+            {t(durumAnahtari(k.durum))}
+          </Rozet>
+          {k.gecikmis ? <Rozet durum="kritik">{t("kargoGecikmis")}</Rozet> : null}
+          {k.teslim_eden_ad ? (
+            <span className="text-xs" style={{ color: "var(--yz-text-2)" }}>
+              {t("kargoTeslimEden", { ad: k.teslim_eden_ad })}
+            </span>
+          ) : null}
+        </span>
       ),
       kartRolu: "rozet",
     },
@@ -226,6 +294,18 @@ export default function KargolarPage() {
         sakinMi && k.durum === KARGO_BEKLIYOR ? (
           <Dugme boy="kucuk" tur="birincil" onClick={() => void teslimAl(k.id)}>
             {t("kargoTeslimAldim")}
+          </Dugme>
+        ) : guvenlikMi && k.durum === KARGO_BEKLIYOR ? (
+          // (P247 §3) Guvenlik paketi sakine VERIR — secici modalda.
+          <Dugme
+            boy="kucuk"
+            tur="birincil"
+            onClick={() => {
+              setTeslimSakin(HEPSI);
+              setTeslimHedef(k);
+            }}
+          >
+            {t("kargoTeslimEt")}
           </Dugme>
         ) : null,
       gizlenebilir: false,
@@ -292,8 +372,38 @@ export default function KargolarPage() {
           <option value={HEPSI}>{t("kargoDurumHepsi")}</option>
           <option value={KARGO_BEKLIYOR}>{t("kargoBekliyor")}</option>
           <option value={KARGO_TESLIM}>{t("kargoTeslimAlindi")}</option>
+          <option value={SUZGEC_GECIKMIS}>{t("kargoGecikmis")}</option>
         </Secim>
       </FiltreCubugu>
+
+      <Modal
+        acik={teslimHedef !== null}
+        onKapat={() => setTeslimHedef(null)}
+        baslik={t("kargoTeslimKime")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setTeslimHedef(null)}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme tur="birincil" onClick={() => void teslimEt()}>
+              {t("kargoTeslimEt")}
+            </Dugme>
+          </>
+        }
+      >
+        <Secim
+          aria-label={t("kargoTeslimKime")}
+          value={teslimSakin}
+          onChange={(e) => setTeslimSakin(e.target.value)}
+        >
+          <option value={HEPSI}>{t("kargoSakinBelirtme")}</option>
+          {teslimSakinleri.map((s) => (
+            <option key={s.user_id} value={s.user_id}>
+              {s.ad}
+            </option>
+          ))}
+        </Secim>
+      </Modal>
 
       <Modal
         acik={modalAcik}

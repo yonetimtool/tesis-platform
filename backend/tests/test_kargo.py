@@ -302,10 +302,11 @@ def test_baska_dairenin_sakini_teslim_alamaz_404(client, kworld):
 
 
 def test_teslim_rbac_personel_isaretleyemez(client, kworld):
-    """Teslim yetkisi daire sakininde: guvenlik/gorevli/yonetici/admin PATCH 403."""
+    """Teslim yetkisi daire sakininde + GUVENLIKTE (P247 §3 — paketi kapida
+    veren o); gorevli/yonetici/admin PATCH 403."""
     guard = _headers(client, kworld["slug_a"], kworld["guard_a"])
     k = _register_kargo(client, guard, unit_no=kworld["unit1_no"])
-    for role in ("guard_a", "gorevli_a", "yonetici_a", "admin_a"):
+    for role in ("gorevli_a", "yonetici_a", "admin_a"):
         h = _headers(client, kworld["slug_a"], kworld[role])
         assert client.patch(
             f"/kargo/{k['id']}", headers=h, json={"durum": "teslim_alindi"}
@@ -449,3 +450,97 @@ def test_pasif_sakin_baglantisi_teslim_alamaz(client, kworld, owner_conn):
         "/kargo", headers=es, params={"limit": 200}
     ).json()["items"]]
     assert k["id"] not in ids
+
+
+# --------------------- (P247 §3) guvenlik teslim eder ----------------------- #
+# OLCULEN KUSUR: `PATCH /kargo/{id}` YALNIZ sakine acikti. Paketi kapida
+# fiilen VEREN guvenlik 403 aliyordu; sakin uygulamada "teslim aldim"a
+# basmazsa kayit sonsuza dek `bekliyor` kaliyordu.
+def test_p247_guvenlik_teslim_eder_eden_damgalanir_sakinlere_bildirim(
+    client, kworld, owner_conn
+):
+    guard = _headers(client, kworld["slug_a"], kworld["guard_a"])
+    k = _register_kargo(client, guard, unit_no=kworld["unit1_no"])
+    p = client.patch(
+        f"/kargo/{k['id']}", headers=guard,
+        json={"durum": "teslim_alindi", "teslim_alan_user_id": kworld["es_id"]},
+    )
+    assert p.status_code == 200, p.text
+    b = p.json()
+    assert b["durum"] == "teslim_alindi"
+    assert b["teslim_alan_user_id"] == kworld["es_id"]
+    assert b["teslim_eden_user_id"] is not None and b["teslim_eden_ad"]
+    assert b["teslim_zamani"] is not None
+    # Dairenin IKI aktif sakinine de kalici "kargo_teslim" bildirimi.
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "SELECT user_id::text FROM notification WHERE tenant_id=%s "
+            "AND tip='kargo_teslim' AND mesaj_veri->>'daire'=%s",
+            (kworld["a"], kworld["unit1_no"]),
+        )
+        alicilar = {r[0] for r in cur.fetchall()}
+    assert alicilar == {kworld["resident_a_id"], kworld["es_id"]}
+    # Sakin ikinci kez isaretleyemez — teslim alan DEGISMEZ.
+    resident = _headers(client, kworld["slug_a"], kworld["resident_a"])
+    assert client.patch(
+        f"/kargo/{k['id']}", headers=resident, json={"durum": "teslim_alindi"}
+    ).status_code == 409
+    d = client.get(f"/kargo/{k['id']}", headers=resident).json()
+    assert d["teslim_alan_user_id"] == kworld["es_id"]
+
+
+def test_p247_guvenlik_sakin_belirtmeden_teslim_eder(client, kworld):
+    guard = _headers(client, kworld["slug_a"], kworld["guard_a"])
+    k = _register_kargo(client, guard, unit_no=kworld["unit1_no"])
+    p = client.patch(f"/kargo/{k['id']}", headers=guard, json={"durum": "teslim_alindi"})
+    assert p.status_code == 200, p.text
+    assert p.json()["teslim_alan_user_id"] is None
+    assert p.json()["teslim_eden_ad"]
+
+
+def test_p247_teslim_alan_daire_disi_422(client, kworld):
+    """Guvenlik BASKA dairenin sakinini teslim alan gosteremez; sakin de
+    baskasi adina imza atamaz."""
+    guard = _headers(client, kworld["slug_a"], kworld["guard_a"])
+    k = _register_kargo(client, guard, unit_no=kworld["unit1_no"])
+    # diger: unit2'nin sakini -> unit1 kargosu icin 422
+    me = client.get("/me", headers=_headers(client, kworld["slug_a"], kworld["diger"]))
+    diger_id = me.json()["id"]
+    assert client.patch(
+        f"/kargo/{k['id']}", headers=guard,
+        json={"durum": "teslim_alindi", "teslim_alan_user_id": diger_id},
+    ).status_code == 422
+    resident = _headers(client, kworld["slug_a"], kworld["resident_a"])
+    assert client.patch(
+        f"/kargo/{k['id']}", headers=resident,
+        json={"durum": "teslim_alindi", "teslim_alan_user_id": kworld["es_id"]},
+    ).status_code == 422
+    assert client.get(f"/kargo/{k['id']}", headers=guard).json()["durum"] == "bekliyor"
+
+
+def test_p247_gecikmis_isaret_ve_suzgec(client, kworld, owner_conn):
+    """3 gunden eski `bekliyor` kargo listede gecikmis=true; durum DEGISMEZ.
+    Teslim alinmis eski kargo gecikmis DEGILDIR."""
+    guard = _headers(client, kworld["slug_a"], kworld["guard_a"])
+    eski = _register_kargo(client, guard, unit_no=kworld["unit1_no"])
+    yeni = _register_kargo(client, guard, unit_no=kworld["unit1_no"])
+    eski_teslim = _register_kargo(client, guard, unit_no=kworld["unit1_no"])
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "UPDATE kargo SET created_at = now() - interval '4 days' WHERE id = ANY(%s)",
+            ([uuid.UUID(eski["id"]), uuid.UUID(eski_teslim["id"])],),
+        )
+    assert client.patch(
+        f"/kargo/{eski_teslim['id']}", headers=guard, json={"durum": "teslim_alindi"}
+    ).status_code == 200
+    r = client.get(
+        f"/kargo?unit_id={kworld['unit1']}&limit=200", headers=guard
+    ).json()["items"]
+    by = {i["id"]: i for i in r}
+    assert by[eski["id"]]["gecikmis"] is True and by[eski["id"]]["durum"] == "bekliyor"
+    assert by[yeni["id"]]["gecikmis"] is False
+    assert by[eski_teslim["id"]]["gecikmis"] is False
+    g = client.get(
+        f"/kargo?unit_id={kworld['unit1']}&gecikmis=true&limit=200", headers=guard
+    ).json()["items"]
+    assert [i["id"] for i in g] == [eski["id"]]

@@ -182,8 +182,10 @@ SELECT v.id, 'ziyaretci_cikis', 'ziyaretci_cikis',
        v.cikis_zamani, 'notr'
 FROM visitor v
 JOIN unit u ON u.id = v.unit_id
-WHERE v.cikis_zamani IS NOT NULL
+WHERE v.cikis_zamani IS NOT NULL AND NOT v.cikis_otomatik
 """
+# (P247 §3) Beat isinin kapattigi kayit ("cikis kaydedilmedi") akista
+# "ziyaretci cikti" olarak GORUNMEZ — kimse cikisini gormedi.
 # resident: TEK HEDEF modeli — yalniz KENDINE hedeflenen kayitlar (ayni
 # dairedeki esinkini bile gormez; /visitors ile ayni kural).
 _ZIYARETCI_GIRIS_OWN = _ZIYARETCI_GIRIS + " WHERE v.target_resident_user_id = :uid"

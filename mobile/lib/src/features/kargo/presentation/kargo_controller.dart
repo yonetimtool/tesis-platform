@@ -15,6 +15,7 @@ class KargoState {
     this.items = const [],
     this.canRegister = false,
     this.canReceive = false,
+    this.canDeliver = false,
     this.refreshedAt,
   });
 
@@ -38,6 +39,11 @@ class KargoState {
   /// sakini olma kosulunu sunucu ayrica zorlar).
   final bool canReceive;
 
+  /// (P247 §3) Rol security mi — bekleyen kartta "Teslim et" butonu. Paketi
+  /// kapida sakine fiilen VEREN guvenliktir; bu dugme yokken sakin
+  /// uygulamada isaretlemedikce kayit sonsuza dek "bekliyor" kaliyordu.
+  final bool canDeliver;
+
   final DateTime? refreshedAt;
 
   KargoState copyWith({
@@ -47,6 +53,7 @@ class KargoState {
     List<Kargo>? items,
     bool? canRegister,
     bool? canReceive,
+    bool? canDeliver,
     DateTime? refreshedAt,
   }) {
     return KargoState(
@@ -60,6 +67,7 @@ class KargoState {
       items: items ?? this.items,
       canRegister: canRegister ?? this.canRegister,
       canReceive: canReceive ?? this.canReceive,
+      canDeliver: canDeliver ?? this.canDeliver,
       refreshedAt: refreshedAt ?? this.refreshedAt,
     );
   }
@@ -98,6 +106,7 @@ class KargoController extends Notifier<KargoState> {
         items: items,
         canRegister: role.canRegisterKargo,
         canReceive: role.canReceiveKargo,
+        canDeliver: role.canDeliverKargo,
         refreshedAt: DateTime.now(),
       );
     } on ApiException catch (e) {
@@ -124,9 +133,11 @@ class KargoController extends Notifier<KargoState> {
     await refresh();
   }
 
-  Future<void> markReceived(String id) async {
+  Future<void> markReceived(String id, {String? teslimAlanUserId}) async {
     try {
-      await ref.read(kargoApiProvider).markReceived(id);
+      await ref
+          .read(kargoApiProvider)
+          .markReceived(id, teslimAlanUserId: teslimAlanUserId);
     } finally {
       // 409 (es zaten teslim aldi) durumunda da guncel durumu cek —
       // kartta dogru sonuc gorunsun; hata yine cagirana firlar.

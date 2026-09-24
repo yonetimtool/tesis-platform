@@ -2820,6 +2820,53 @@ class AppLocalizationsTr extends AppLocalizations {
   String get karTeslimAldim => 'Teslim aldım';
 
   @override
+  String get karTeslimEt => 'Teslim et';
+
+  @override
+  String get karTeslimKime => 'Kargoyu kime teslim ettiniz?';
+
+  @override
+  String get karSakinBelirtme => 'Sakin belirtmeden';
+
+  @override
+  String get karTeslimEdildiBildirim =>
+      'Kargo teslim edildi olarak işaretlendi';
+
+  @override
+  String get karGecikmis => 'Gecikmiş';
+
+  @override
+  String karTeslimEdenEki(Object ad) {
+    return ' · teslim eden: $ad';
+  }
+
+  @override
+  String get ziyaretIceride => 'İçeride';
+
+  @override
+  String get ziyaretCikti => 'Çıktı';
+
+  @override
+  String get ziyaretCikisKaydedilmedi => 'Çıkış kaydedilmedi';
+
+  @override
+  String ziyaretCikisZamani(Object zaman) {
+    return 'Çıkış: $zaman';
+  }
+
+  @override
+  String get ziyaretCikisYapti => 'Çıkış yaptı';
+
+  @override
+  String get ziyaretCikisOnayBaslik => 'Ziyaretçi çıkışı kaydedilsin mi?';
+
+  @override
+  String get ziyaretCikisKaydedildi => 'Çıkış kaydedildi';
+
+  @override
+  String get ziyaretCikisZatenKayitli => 'Bu ziyaretçinin çıkışı zaten kayıtlı';
+
+  @override
   String get karGonderilemedi => 'Kayıt gönderilemedi. Tekrar deneyin.';
 
   @override
@@ -3339,7 +3386,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get profilParolaGuncelle => 'Parolayı güncelle';
 
   @override
-  String get profilParolaGuncellendi => 'Parola güncellendi ✓';
+  String get profilParolaGuncellendi =>
+      'Parola güncellendi ✓ Diğer cihazlardaki oturumlar kapatıldı.';
 
   @override
   String get profilTelefon => 'Telefon';
@@ -5700,6 +5748,30 @@ class AppLocalizationsTr extends AppLocalizations {
   String get tesisDegistirSecili => 'Buradasınız';
 
   @override
+  String get rolGecisBaslik => 'Görünüm';
+
+  @override
+  String get rolGecisYonetici => 'Yönetici';
+
+  @override
+  String get rolGecisSakin => 'Sakin';
+
+  @override
+  String get rolGecisSuruyorSakin => 'Sakin moduna geçiliyor…';
+
+  @override
+  String get rolGecisSuruyorYonetici => 'Yönetici moduna geçiliyor…';
+
+  @override
+  String get rolGecildiSakin => 'Sakin moduna geçildi';
+
+  @override
+  String get rolGecildiYonetici => 'Yönetici moduna geçildi';
+
+  @override
+  String get rolGecisHata => 'Mod değiştirilemedi. Lütfen tekrar deneyin.';
+
+  @override
   String get ziyaretDaireAra => 'Daire';
 
   @override
@@ -5725,6 +5797,97 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get vardiyaYeni => 'Yeni vardiya';
+
+  @override
+  String get donguAc => 'Döngü / rotasyon';
+
+  @override
+  String get donguBaslik => 'Vardiya döngüsü (rotasyon)';
+
+  @override
+  String get donguKalip => 'Döngü';
+
+  @override
+  String get donguHazir222 => '2 gece · 2 gündüz · 2 tatil';
+
+  @override
+  String get donguHazir1236 => '2 hafta gece 12/36 · 2 hafta gündüz 12/36';
+
+  @override
+  String get donguGunduz => 'Gündüz';
+
+  @override
+  String get donguGece => 'Gece';
+
+  @override
+  String get donguKisiler => 'Kişiler (seçim sırası kaydırmayı belirler)';
+
+  @override
+  String donguOfset(Object n) {
+    return '+$n gün';
+  }
+
+  @override
+  String get donguBaslangic => 'Başlangıç tarihi';
+
+  @override
+  String get donguKaydirma => 'Kişiler arası kaydırma (gün)';
+
+  @override
+  String get donguKaydirmaIpucu =>
+      'Örn. 3 kişi, 2 gün: ikinci kişi döngüye 2, üçüncüsü 4 gün kaydırılarak girer.';
+
+  @override
+  String get donguOnizle => 'Önizle';
+
+  @override
+  String get donguUygula => 'Kaydet ve üret';
+
+  @override
+  String get donguCakisanHaric => 'Çakışanlar hariç';
+
+  @override
+  String donguOzet(
+    Object eklenecek,
+    Object cakisan,
+    Object izinli,
+    Object bos,
+  ) {
+    return '$eklenecek vardiya · $cakisan çakışma · $izinli izinli gün · $bos gün boşluklu';
+  }
+
+  @override
+  String donguUfuk(Object bitis) {
+    return '$bitis tarihine kadar taslak üretilir; sonrası her gece otomatik eklenir.';
+  }
+
+  @override
+  String get donguIzinli => 'İzin';
+
+  @override
+  String get donguCakisma => 'Çakışma';
+
+  @override
+  String get donguBosluk => 'Boşluk';
+
+  @override
+  String donguUygulandi(Object n) {
+    return '$n vardiya taslak olarak üretildi.';
+  }
+
+  @override
+  String donguGeriAlindi(Object n) {
+    return '$n vardiya geri alındı.';
+  }
+
+  @override
+  String get donguEtkinler => 'Etkin döngüler';
+
+  @override
+  String get donguEtkinYok => 'Etkin döngü yok.';
+
+  @override
+  String get donguGeriAl => 'Geri al';
 
   @override
   String get vardiyaKayitYok => 'Bu hafta planlanmış vardiya yok.';

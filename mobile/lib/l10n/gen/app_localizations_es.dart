@@ -2909,6 +2909,53 @@ class AppLocalizationsEs extends AppLocalizations {
   String get karTeslimAldim => 'Lo he recogido';
 
   @override
+  String get karTeslimEt => 'Entregar';
+
+  @override
+  String get karTeslimKime => '¿A quién entregó el paquete?';
+
+  @override
+  String get karSakinBelirtme => 'Sin indicar residente';
+
+  @override
+  String get karTeslimEdildiBildirim => 'Paquete marcado como entregado';
+
+  @override
+  String get karGecikmis => 'Retrasado';
+
+  @override
+  String karTeslimEdenEki(Object ad) {
+    return ' · entregado por: $ad';
+  }
+
+  @override
+  String get ziyaretIceride => 'Dentro';
+
+  @override
+  String get ziyaretCikti => 'Salió';
+
+  @override
+  String get ziyaretCikisKaydedilmedi => 'Salida no registrada';
+
+  @override
+  String ziyaretCikisZamani(Object zaman) {
+    return 'Salida: $zaman';
+  }
+
+  @override
+  String get ziyaretCikisYapti => 'Registrar salida';
+
+  @override
+  String get ziyaretCikisOnayBaslik => '¿Registrar la salida del visitante?';
+
+  @override
+  String get ziyaretCikisKaydedildi => 'Salida registrada';
+
+  @override
+  String get ziyaretCikisZatenKayitli =>
+      'La salida de este visitante ya está registrada';
+
+  @override
   String get karGonderilemedi =>
       'No se pudo enviar el registro. Inténtelo de nuevo.';
 
@@ -3434,7 +3481,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get profilParolaGuncelle => 'Actualizar contraseña';
 
   @override
-  String get profilParolaGuncellendi => 'Contraseña actualizada ✓';
+  String get profilParolaGuncellendi =>
+      'Contraseña actualizada ✓ Sesión cerrada en los demás dispositivos.';
 
   @override
   String get profilTelefon => 'Teléfono';
@@ -5859,6 +5907,30 @@ class AppLocalizationsEs extends AppLocalizations {
   String get tesisDegistirSecili => 'Está aquí';
 
   @override
+  String get rolGecisBaslik => 'Vista';
+
+  @override
+  String get rolGecisYonetici => 'Administrador';
+
+  @override
+  String get rolGecisSakin => 'Residente';
+
+  @override
+  String get rolGecisSuruyorSakin => 'Cambiando al modo residente…';
+
+  @override
+  String get rolGecisSuruyorYonetici => 'Cambiando al modo administrador…';
+
+  @override
+  String get rolGecildiSakin => 'Modo residente activado';
+
+  @override
+  String get rolGecildiYonetici => 'Modo administrador activado';
+
+  @override
+  String get rolGecisHata => 'No se pudo cambiar de modo. Inténtelo de nuevo.';
+
+  @override
   String get ziyaretDaireAra => 'Vivienda';
 
   @override
@@ -5885,6 +5957,97 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get vardiyaYeni => 'Nuevo turno';
+
+  @override
+  String get donguAc => 'Rotación';
+
+  @override
+  String get donguBaslik => 'Rotación de turnos';
+
+  @override
+  String get donguKalip => 'Rotación';
+
+  @override
+  String get donguHazir222 => '2 noches · 2 días · 2 libres';
+
+  @override
+  String get donguHazir1236 => '2 semanas noche 12/36 · 2 semanas día 12/36';
+
+  @override
+  String get donguGunduz => 'Día';
+
+  @override
+  String get donguGece => 'Noche';
+
+  @override
+  String get donguKisiler => 'Personas (el orden de selección fija el desfase)';
+
+  @override
+  String donguOfset(Object n) {
+    return '+$n días';
+  }
+
+  @override
+  String get donguBaslangic => 'Fecha de inicio';
+
+  @override
+  String get donguKaydirma => 'Desfase entre personas (días)';
+
+  @override
+  String get donguKaydirmaIpucu =>
+      'P. ej. 3 personas, 2 días: la segunda entra con 2 días de desfase, la tercera con 4.';
+
+  @override
+  String get donguOnizle => 'Vista previa';
+
+  @override
+  String get donguUygula => 'Guardar y generar';
+
+  @override
+  String get donguCakisanHaric => 'Sin los conflictos';
+
+  @override
+  String donguOzet(
+    Object eklenecek,
+    Object cakisan,
+    Object izinli,
+    Object bos,
+  ) {
+    return '$eklenecek turnos · $cakisan conflictos · $izinli días de permiso · $bos días con huecos';
+  }
+
+  @override
+  String donguUfuk(Object bitis) {
+    return 'Se genera como borrador hasta el $bitis; los días siguientes se añaden automáticamente cada noche.';
+  }
+
+  @override
+  String get donguIzinli => 'Permiso';
+
+  @override
+  String get donguCakisma => 'Conflicto';
+
+  @override
+  String get donguBosluk => 'Hueco';
+
+  @override
+  String donguUygulandi(Object n) {
+    return '$n turnos generados como borrador.';
+  }
+
+  @override
+  String donguGeriAlindi(Object n) {
+    return '$n turnos deshechos.';
+  }
+
+  @override
+  String get donguEtkinler => 'Rotaciones activas';
+
+  @override
+  String get donguEtkinYok => 'No hay rotaciones activas.';
+
+  @override
+  String get donguGeriAl => 'Deshacer';
 
   @override
   String get vardiyaKayitYok => 'No hay turnos planificados esta semana.';

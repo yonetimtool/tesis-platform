@@ -14,6 +14,7 @@ class VisitorsState {
     this.hataKimligi,
     this.items = const [],
     this.canRegister = false,
+    this.canCheckout = false,
     this.refreshedAt,
   });
 
@@ -32,6 +33,9 @@ class VisitorsState {
   /// yetki backend RBAC'ta.
   final bool canRegister;
 
+  /// (P247 §3) Rol security mi — iceride olan kartta "Cikis yapti" dugmesi.
+  final bool canCheckout;
+
   final DateTime? refreshedAt;
 
   VisitorsState copyWith({
@@ -40,6 +44,7 @@ class VisitorsState {
     Object? hataKimligi = _sentinel,
     List<Visitor>? items,
     bool? canRegister,
+    bool? canCheckout,
     DateTime? refreshedAt,
   }) {
     return VisitorsState(
@@ -52,6 +57,7 @@ class VisitorsState {
           : hataKimligi as AkisHatasi?,
       items: items ?? this.items,
       canRegister: canRegister ?? this.canRegister,
+      canCheckout: canCheckout ?? this.canCheckout,
       refreshedAt: refreshedAt ?? this.refreshedAt,
     );
   }
@@ -88,6 +94,7 @@ class VisitorsController extends Notifier<VisitorsState> {
         hataKimligi: null,
         items: items,
         canRegister: role.canRegisterVisitor,
+        canCheckout: role.canCheckoutVisitor,
         refreshedAt: DateTime.now(),
       );
     } on ApiException catch (e) {
@@ -106,6 +113,16 @@ class VisitorsController extends Notifier<VisitorsState> {
       );
     } finally {
       _refreshing = false;
+    }
+  }
+
+  /// (P247 §3) Guvenlik ziyaretci CIKISINI damgalar. 409'da (baska cihazdan
+  /// ya da sunucu zaten kapatti) da liste tazelenir; hata cagirana firlar.
+  Future<void> checkout(String id) async {
+    try {
+      await ref.read(visitorApiProvider).checkout(id);
+    } finally {
+      await refresh();
     }
   }
 

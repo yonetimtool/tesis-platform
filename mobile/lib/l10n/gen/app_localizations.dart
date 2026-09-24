@@ -4943,6 +4943,90 @@ abstract class AppLocalizations {
   /// **'Teslim aldım'**
   String get karTeslimAldim;
 
+  /// (P247 §3) Guvenligin bekleyen kargo kartindaki teslim dugmesi
+  ///
+  /// In tr, this message translates to:
+  /// **'Teslim et'**
+  String get karTeslimEt;
+
+  /// (P247 §3) Teslim edilen sakin secici basligi
+  ///
+  /// In tr, this message translates to:
+  /// **'Kargoyu kime teslim ettiniz?'**
+  String get karTeslimKime;
+
+  /// (P247 §3) Secicide teslim alani bos birakma secenegi
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakin belirtmeden'**
+  String get karSakinBelirtme;
+
+  /// (P247 §3) Guvenlik teslimi sonrasi bildirim cubugu
+  ///
+  /// In tr, this message translates to:
+  /// **'Kargo teslim edildi olarak işaretlendi'**
+  String get karTeslimEdildiBildirim;
+
+  /// (P247 §3) Uc gundur teslim alinmamis kargo rozeti
+  ///
+  /// In tr, this message translates to:
+  /// **'Gecikmiş'**
+  String get karGecikmis;
+
+  /// (P247 §3) Kargo satirinda teslim eden guvenlik eki
+  ///
+  /// In tr, this message translates to:
+  /// **' · teslim eden: {ad}'**
+  String karTeslimEdenEki(Object ad);
+
+  /// (P247 §3) Ziyaretci durum rozeti: cikisi damgalanmamis
+  ///
+  /// In tr, this message translates to:
+  /// **'İçeride'**
+  String get ziyaretIceride;
+
+  /// (P247 §3) Ziyaretci durum rozeti: guvenlik cikisi damgaladi
+  ///
+  /// In tr, this message translates to:
+  /// **'Çıktı'**
+  String get ziyaretCikti;
+
+  /// (P247 §3) 24 saat sonra sunucunun kapattigi kayit
+  ///
+  /// In tr, this message translates to:
+  /// **'Çıkış kaydedilmedi'**
+  String get ziyaretCikisKaydedilmedi;
+
+  /// (P247 §3) Ziyaretci cikis zamani satiri
+  ///
+  /// In tr, this message translates to:
+  /// **'Çıkış: {zaman}'**
+  String ziyaretCikisZamani(Object zaman);
+
+  /// (P247 §3) Guvenligin ziyaretci cikis dugmesi
+  ///
+  /// In tr, this message translates to:
+  /// **'Çıkış yaptı'**
+  String get ziyaretCikisYapti;
+
+  /// (P247 §3) Cikis onay penceresi basligi
+  ///
+  /// In tr, this message translates to:
+  /// **'Ziyaretçi çıkışı kaydedilsin mi?'**
+  String get ziyaretCikisOnayBaslik;
+
+  /// (P247 §3) Cikis sonrasi bildirim cubugu
+  ///
+  /// In tr, this message translates to:
+  /// **'Çıkış kaydedildi'**
+  String get ziyaretCikisKaydedildi;
+
+  /// (P247 §3) 409: cikis baska cihazdan ya da sunucuca kapatilmis
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu ziyaretçinin çıkışı zaten kayıtlı'**
+  String get ziyaretCikisZatenKayitli;
+
   /// No description provided for @karGonderilemedi.
   ///
   /// In tr, this message translates to:
@@ -5900,7 +5984,7 @@ abstract class AppLocalizations {
   /// No description provided for @profilParolaGuncellendi.
   ///
   /// In tr, this message translates to:
-  /// **'Parola güncellendi ✓'**
+  /// **'Parola güncellendi ✓ Diğer cihazlardaki oturumlar kapatıldı.'**
   String get profilParolaGuncellendi;
 
   /// No description provided for @profilTelefon.
@@ -10085,6 +10169,54 @@ abstract class AppLocalizations {
   /// **'Buradasınız'**
   String get tesisDegistirSecili;
 
+  /// (P247 §2) Hesap menusunde yonetici/sakin mod seciminin basligi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görünüm'**
+  String get rolGecisBaslik;
+
+  /// (P247 §2) Mod secenegi: yonetici paneli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetici'**
+  String get rolGecisYonetici;
+
+  /// (P247 §2) Mod secenegi: sakin deneyimi (kendi dairesi).
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakin'**
+  String get rolGecisSakin;
+
+  /// (P247 §2) Gecis perdesi metni (sakin moduna).
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakin moduna geçiliyor…'**
+  String get rolGecisSuruyorSakin;
+
+  /// (P247 §2) Gecis perdesi metni (yonetici moduna).
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetici moduna geçiliyor…'**
+  String get rolGecisSuruyorYonetici;
+
+  /// (P247 §2) Gecis sonrasi kisa bildirim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakin moduna geçildi'**
+  String get rolGecildiSakin;
+
+  /// (P247 §2) Gecis sonrasi kisa bildirim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetici moduna geçildi'**
+  String get rolGecildiYonetici;
+
+  /// (P247 §2) Gecis istegi basarisiz oldu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Mod değiştirilemedi. Lütfen tekrar deneyin.'**
+  String get rolGecisHata;
+
   /// (P203 §3) Ziyaretci formunda daire ARAMA alani (eski: serbest metin daire no).
   ///
   /// In tr, this message translates to:
@@ -10138,6 +10270,156 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Yeni vardiya'**
   String get vardiyaYeni;
+
+  /// (P247 §1) Vardiya döngüsü
+  ///
+  /// In tr, this message translates to:
+  /// **'Döngü / rotasyon'**
+  String get donguAc;
+
+  /// No description provided for @donguBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vardiya döngüsü (rotasyon)'**
+  String get donguBaslik;
+
+  /// No description provided for @donguKalip.
+  ///
+  /// In tr, this message translates to:
+  /// **'Döngü'**
+  String get donguKalip;
+
+  /// No description provided for @donguHazir222.
+  ///
+  /// In tr, this message translates to:
+  /// **'2 gece · 2 gündüz · 2 tatil'**
+  String get donguHazir222;
+
+  /// No description provided for @donguHazir1236.
+  ///
+  /// In tr, this message translates to:
+  /// **'2 hafta gece 12/36 · 2 hafta gündüz 12/36'**
+  String get donguHazir1236;
+
+  /// No description provided for @donguGunduz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gündüz'**
+  String get donguGunduz;
+
+  /// No description provided for @donguGece.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gece'**
+  String get donguGece;
+
+  /// No description provided for @donguKisiler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kişiler (seçim sırası kaydırmayı belirler)'**
+  String get donguKisiler;
+
+  /// No description provided for @donguOfset.
+  ///
+  /// In tr, this message translates to:
+  /// **'+{n} gün'**
+  String donguOfset(Object n);
+
+  /// No description provided for @donguBaslangic.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlangıç tarihi'**
+  String get donguBaslangic;
+
+  /// No description provided for @donguKaydirma.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kişiler arası kaydırma (gün)'**
+  String get donguKaydirma;
+
+  /// No description provided for @donguKaydirmaIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Örn. 3 kişi, 2 gün: ikinci kişi döngüye 2, üçüncüsü 4 gün kaydırılarak girer.'**
+  String get donguKaydirmaIpucu;
+
+  /// No description provided for @donguOnizle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Önizle'**
+  String get donguOnizle;
+
+  /// No description provided for @donguUygula.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaydet ve üret'**
+  String get donguUygula;
+
+  /// No description provided for @donguCakisanHaric.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çakışanlar hariç'**
+  String get donguCakisanHaric;
+
+  /// No description provided for @donguOzet.
+  ///
+  /// In tr, this message translates to:
+  /// **'{eklenecek} vardiya · {cakisan} çakışma · {izinli} izinli gün · {bos} gün boşluklu'**
+  String donguOzet(Object eklenecek, Object cakisan, Object izinli, Object bos);
+
+  /// No description provided for @donguUfuk.
+  ///
+  /// In tr, this message translates to:
+  /// **'{bitis} tarihine kadar taslak üretilir; sonrası her gece otomatik eklenir.'**
+  String donguUfuk(Object bitis);
+
+  /// No description provided for @donguIzinli.
+  ///
+  /// In tr, this message translates to:
+  /// **'İzin'**
+  String get donguIzinli;
+
+  /// No description provided for @donguCakisma.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çakışma'**
+  String get donguCakisma;
+
+  /// No description provided for @donguBosluk.
+  ///
+  /// In tr, this message translates to:
+  /// **'Boşluk'**
+  String get donguBosluk;
+
+  /// No description provided for @donguUygulandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} vardiya taslak olarak üretildi.'**
+  String donguUygulandi(Object n);
+
+  /// No description provided for @donguGeriAlindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} vardiya geri alındı.'**
+  String donguGeriAlindi(Object n);
+
+  /// No description provided for @donguEtkinler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Etkin döngüler'**
+  String get donguEtkinler;
+
+  /// No description provided for @donguEtkinYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Etkin döngü yok.'**
+  String get donguEtkinYok;
+
+  /// No description provided for @donguGeriAl.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geri al'**
+  String get donguGeriAl;
 
   /// No description provided for @vardiyaKayitYok.
   ///

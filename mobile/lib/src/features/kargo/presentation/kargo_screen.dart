@@ -11,6 +11,8 @@ import '../../../core/i18n/l10n.dart';
 // foto akisiyla ayni saglayici (testlerde tek noktadan override edilir).
 import '../../tasks/presentation/task_complete_controller.dart'
     show imagePickerProvider;
+import '../../visitors/data/visitor_api.dart';
+import '../../visitors/domain/visitor_models.dart' show UnitResidentBrief;
 import '../data/kargo_api.dart';
 import '../domain/kargo_models.dart';
 import 'kargo_controller.dart';
@@ -23,6 +25,9 @@ import '../../../core/ui/merkez_diyalog.dart';
 ///     foto mevcut Kamera/Galeri presign akisiyla) + tenant'in tum kayitlari.
 ///   * resident: KENDI dairesinin paketleri; BEKLEYEN paket belirgin kart —
 ///     "Teslim aldim" butonu (ilk isaret gecerli; 409'da guncel durum cekilir).
+///   * (P247 §3) security: bekleyen kartta "Teslim et" — paketi kime verdigini
+///     dairenin aktif sakinlerinden secer (ya da belirtmez). Uc gun teslim
+///     alinmamis paket "Gecikmis" rozetiyle isaretlenir.
 ///   * admin/yonetici: salt izleme (gecmis gorunumu).
 ///
 /// [initialKargoId] push tiklamasindan gelir (?kargo_id=...): liste
@@ -54,7 +59,14 @@ class _KargoScreenState extends ConsumerState<KargoScreen> {
     if (hedef == null) return; // listede yok — sessizce listede kal
     final k = hedef;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _showDetail(context, k, canReceive: state.canReceive);
+      if (mounted) {
+        _showDetail(
+          context,
+          k,
+          canReceive: state.canReceive,
+          canDeliver: state.canDeliver,
+        );
+      }
     });
   }
 
@@ -184,7 +196,11 @@ class _Body extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
       itemCount: items.length,
       itemBuilder: (context, i) =>
-          _KargoCard(kargo: items[i], canReceive: state.canReceive),
+          _KargoCard(
+            kargo: items[i],
+            canReceive: state.canReceive,
+            canDeliver: state.canDeliver,
+          ),
     );
   }
 }
@@ -222,10 +238,15 @@ class _DurumChip extends StatelessWidget {
 }
 
 class _KargoCard extends ConsumerWidget {
-  const _KargoCard({required this.kargo, required this.canReceive});
+  const _KargoCard({
+    required this.kargo,
+    required this.canReceive,
+    required this.canDeliver,
+  });
 
   final Kargo kargo;
   final bool canReceive;
+  final bool canDeliver;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -244,7 +265,12 @@ class _KargoCard extends ConsumerWidget {
           : null,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => _showDetail(context, k, canReceive: canReceive),
+        onTap: () => _showDetail(
+          context,
+          k,
+          canReceive: canReceive,
+          canDeliver: canDeliver,
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -278,6 +304,10 @@ class _KargoCard extends ConsumerWidget {
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),
+                  if (k.gecikmis) ...[
+                    const _GecikmisChip(),
+                    const SizedBox(width: 6),
+                  ],
                   _DurumChip(durum: k.durum),
                 ],
               ),
@@ -315,6 +345,10 @@ class _KargoCard extends ConsumerWidget {
               if (vurgulu) ...[
                 const SizedBox(height: 12),
                 _ReceiveButton(kargoId: k.id),
+              ],
+              if (k.bekliyor && canDeliver) ...[
+                const SizedBox(height: 12),
+                _DeliverButton(kargo: k),
               ],
             ],
           ),
@@ -382,7 +416,12 @@ class _ReceiveButtonState extends ConsumerState<_ReceiveButton> {
 
 /// Detay alt sayfasi — push tiklamasi ve kart dokunusuyla acilir. Sakin +
 /// bekleyen pakette "Teslim aldim" burada da sunulur; foto buyuk gorunur.
-void _showDetail(BuildContext context, Kargo k, {required bool canReceive}) {
+void _showDetail(
+  BuildContext context,
+  Kargo k, {
+  required bool canReceive,
+  bool canDeliver = false,
+}) {
   merkezSayfaAc<void>(
     context,
     builder: (sheetContext) {
@@ -473,6 +512,13 @@ void _showDetail(BuildContext context, Kargo k, {required bool canReceive}) {
                     onReceived: () => Navigator.of(sheetContext).pop(),
                   ),
                 ],
+                if (k.bekliyor && canDeliver) ...[
+                  const SizedBox(height: 20),
+                  _DeliverButton(
+                    kargo: k,
+                    onDelivered: () => Navigator.of(sheetContext).pop(),
+                  ),
+                ],
               ],
             ),
           ),
@@ -482,11 +528,125 @@ void _showDetail(BuildContext context, Kargo k, {required bool canReceive}) {
   );
 }
 
-/// Teslim satiri: "Teslim alindi — {ad} · {zaman}" (ad/zaman opsiyonel).
+/// Teslim satiri: "Teslim alindi — {ad} · {zaman} · teslim eden: {guvenlik}"
+/// (ad/zaman/teslim eden opsiyonel; teslim eden P247 §3).
 String _teslimSatiri(AppLocalizations l10n, String dil, Kargo k) =>
     '${l10n.kargoDurumTeslimAlindi}'
     '${k.teslimAlanAd != null ? l10n.karAdEki(k.teslimAlanAd!) : ''}'
-    '${k.teslimZamani != null ? l10n.karZamanEki(tarihSaatBicimi(k.teslimZamani!, dil)) : ''}';
+    '${k.teslimZamani != null ? l10n.karZamanEki(tarihSaatBicimi(k.teslimZamani!, dil)) : ''}'
+    '${k.teslimEdenAd != null ? l10n.karTeslimEdenEki(k.teslimEdenAd!) : ''}';
+
+/// (P247 §3) "Gecikmis" rozeti — paket esikten (3 gun) uzun suredir kapida.
+/// Durum DEGISMEZ (hala bekliyor); guvenlik sakini arasin diye isaret.
+class _GecikmisChip extends StatelessWidget {
+  const _GecikmisChip();
+
+  @override
+  Widget build(BuildContext context) {
+    final renk = Colors.red.shade700;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: renk.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        context.l10n.karGecikmis,
+        style: TextStyle(color: renk, fontSize: 12, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+}
+
+/// (P247 §3) "Teslim et" — guvenligin bekleyen kartinda ve detayda.
+///
+/// Paketi kime verdigini dairenin AKTIF sakinlerinden secer; secmezse
+/// ("Sakin belirtmeden") teslim alan bos kalir, teslim eden damgalanir.
+/// Sakin listesi alinamazsa yalniz "belirtmeden" secenegi kalir — liste
+/// hatasi teslimi ENGELLEMEZ (paket zaten elden cikti).
+class _DeliverButton extends ConsumerStatefulWidget {
+  const _DeliverButton({required this.kargo, this.onDelivered});
+
+  final Kargo kargo;
+  final VoidCallback? onDelivered;
+
+  @override
+  ConsumerState<_DeliverButton> createState() => _DeliverButtonState();
+}
+
+/// Secicinin donusu: `null` = vazgecti; [_Secim.sakin] null = belirtmeden.
+class _Secim {
+  const _Secim(this.sakin);
+  final String? sakin;
+}
+
+class _DeliverButtonState extends ConsumerState<_DeliverButton> {
+  bool _busy = false;
+
+  Future<void> _deliver() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
+    try {
+      var sakinler = const <UnitResidentBrief>[];
+      final no = widget.kargo.unitNo;
+      if (no != null && no.isNotEmpty) {
+        try {
+          sakinler = await ref.read(visitorApiProvider).fetchUnitResidents(no);
+        } catch (_) {
+          // Liste alinamadi: yalniz "belirtmeden" secenegi kalir.
+        }
+      }
+      if (!mounted) return;
+      final secim = await showDialog<_Secim>(
+        context: context,
+        builder: (ctx) => SimpleDialog(
+          title: Text(l10n.karTeslimKime),
+          children: [
+            for (final s in sakinler)
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(ctx, _Secim(s.userId)),
+                child: Text(s.ad),
+              ),
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(ctx, const _Secim(null)),
+              child: Text(l10n.karSakinBelirtme),
+            ),
+          ],
+        ),
+      );
+      if (secim == null) return;
+      await ref
+          .read(kargoControllerProvider.notifier)
+          .markReceived(widget.kargo.id, teslimAlanUserId: secim.sakin);
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.karTeslimEdildiBildirim)),
+      );
+      widget.onDelivered?.call();
+    } on ApiException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
+      widget.onDelivered?.call();
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.karIsaretlenemedi)));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton.icon(
+        style: FilledButton.styleFrom(backgroundColor: Colors.green),
+        icon: const Icon(Icons.handshake_outlined),
+        label: Text(context.l10n.karTeslimEt),
+        onPressed: _busy ? null : _deliver,
+      ),
+    );
+  }
+}
 
 /// Yeni kargo formu (yalniz guvenlik): daire no + firma + opsiyonel foto/not.
 /// Foto akisi complaints/gorev formuyla AYNI: cek/sec → presign → PUT →

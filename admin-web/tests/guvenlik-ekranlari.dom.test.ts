@@ -87,10 +87,12 @@ describe("Kargolar", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Yeni kargo teslim al" }));
     const kutu = await screen.findByRole("dialog");
     await userEvent.type(within(kutu).getByLabelText(/Daire no/i), "B-3");
+    // (P247 §3) Firma sunucuda ZORUNLU; bos gonderim artik istemcide durur.
+    await userEvent.type(within(kutu).getByLabelText("Kargo firması"), "Aras");
     await userEvent.click(within(kutu).getByRole("button", { name: /Teslim al/i }));
     await waitFor(() => {
       const post = c.find((x) => x.method === "POST");
-      expect(post?.body).toMatchObject({ unit_no: "B-3" });
+      expect(post?.body).toMatchObject({ unit_no: "B-3", firma: "Aras" });
     });
   });
 });

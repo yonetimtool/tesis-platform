@@ -3035,6 +3035,52 @@ class AppLocalizationsAr extends AppLocalizations {
   String get karTeslimAldim => 'لقد استلمتها';
 
   @override
+  String get karTeslimEt => 'تسليم';
+
+  @override
+  String get karTeslimKime => 'لمن سلّمت الطرد؟';
+
+  @override
+  String get karSakinBelirtme => 'دون تحديد ساكن';
+
+  @override
+  String get karTeslimEdildiBildirim => 'تم تعليم الطرد كمُسلَّم';
+
+  @override
+  String get karGecikmis => 'متأخر';
+
+  @override
+  String karTeslimEdenEki(Object ad) {
+    return ' · سلّمه: $ad';
+  }
+
+  @override
+  String get ziyaretIceride => 'في الداخل';
+
+  @override
+  String get ziyaretCikti => 'غادر';
+
+  @override
+  String get ziyaretCikisKaydedilmedi => 'لم يُسجَّل الخروج';
+
+  @override
+  String ziyaretCikisZamani(Object zaman) {
+    return 'الخروج: $zaman';
+  }
+
+  @override
+  String get ziyaretCikisYapti => 'تسجيل الخروج';
+
+  @override
+  String get ziyaretCikisOnayBaslik => 'هل تريد تسجيل خروج الزائر؟';
+
+  @override
+  String get ziyaretCikisKaydedildi => 'تم تسجيل الخروج';
+
+  @override
+  String get ziyaretCikisZatenKayitli => 'خروج هذا الزائر مسجّل بالفعل';
+
+  @override
   String get karGonderilemedi => 'تعذّر إرسال السجل. حاول مرة أخرى.';
 
   @override
@@ -3556,7 +3602,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get profilParolaGuncelle => 'تحديث كلمة المرور';
 
   @override
-  String get profilParolaGuncellendi => 'تم تحديث كلمة المرور ✓';
+  String get profilParolaGuncellendi =>
+      'تم تحديث كلمة المرور ✓ تم تسجيل الخروج من الأجهزة الأخرى.';
 
   @override
   String get profilTelefon => 'الهاتف';
@@ -5955,6 +6002,30 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tesisDegistirSecili => 'أنت هنا';
 
   @override
+  String get rolGecisBaslik => 'العرض';
+
+  @override
+  String get rolGecisYonetici => 'المدير';
+
+  @override
+  String get rolGecisSakin => 'الساكن';
+
+  @override
+  String get rolGecisSuruyorSakin => 'جارٍ التبديل إلى وضع الساكن…';
+
+  @override
+  String get rolGecisSuruyorYonetici => 'جارٍ التبديل إلى وضع المدير…';
+
+  @override
+  String get rolGecildiSakin => 'تم التبديل إلى وضع الساكن';
+
+  @override
+  String get rolGecildiYonetici => 'تم التبديل إلى وضع المدير';
+
+  @override
+  String get rolGecisHata => 'تعذّر تغيير الوضع. يرجى المحاولة مرة أخرى.';
+
+  @override
   String get ziyaretDaireAra => 'الشقة';
 
   @override
@@ -5980,6 +6051,97 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get vardiyaYeni => 'وردية جديدة';
+
+  @override
+  String get donguAc => 'التناوب';
+
+  @override
+  String get donguBaslik => 'تناوب الورديات';
+
+  @override
+  String get donguKalip => 'التناوب';
+
+  @override
+  String get donguHazir222 => 'ليلتان · نهاران · يوما راحة';
+
+  @override
+  String get donguHazir1236 => 'أسبوعان ليلي 12/36 · أسبوعان نهاري 12/36';
+
+  @override
+  String get donguGunduz => 'نهاري';
+
+  @override
+  String get donguGece => 'ليلي';
+
+  @override
+  String get donguKisiler => 'الأشخاص (ترتيب الاختيار يحدد الإزاحة)';
+
+  @override
+  String donguOfset(Object n) {
+    return '+$n يوم';
+  }
+
+  @override
+  String get donguBaslangic => 'تاريخ البدء';
+
+  @override
+  String get donguKaydirma => 'الإزاحة بين الأشخاص (أيام)';
+
+  @override
+  String get donguKaydirmaIpucu =>
+      'مثال: 3 أشخاص، يومان: يدخل الثاني الدورة بإزاحة يومين والثالث بأربعة.';
+
+  @override
+  String get donguOnizle => 'معاينة';
+
+  @override
+  String get donguUygula => 'حفظ وإنشاء';
+
+  @override
+  String get donguCakisanHaric => 'دون المتعارضة';
+
+  @override
+  String donguOzet(
+    Object eklenecek,
+    Object cakisan,
+    Object izinli,
+    Object bos,
+  ) {
+    return '$eklenecek وردية · $cakisan تعارض · $izinli يوم إجازة · $bos يوم به فجوات';
+  }
+
+  @override
+  String donguUfuk(Object bitis) {
+    return 'تُنشأ كمسودات حتى $bitis؛ وتضاف الأيام اللاحقة تلقائيًا كل ليلة.';
+  }
+
+  @override
+  String get donguIzinli => 'إجازة';
+
+  @override
+  String get donguCakisma => 'تعارض';
+
+  @override
+  String get donguBosluk => 'فجوة';
+
+  @override
+  String donguUygulandi(Object n) {
+    return 'تم إنشاء $n وردية كمسودة.';
+  }
+
+  @override
+  String donguGeriAlindi(Object n) {
+    return 'تم التراجع عن $n وردية.';
+  }
+
+  @override
+  String get donguEtkinler => 'التناوبات النشطة';
+
+  @override
+  String get donguEtkinYok => 'لا يوجد تناوب نشط.';
+
+  @override
+  String get donguGeriAl => 'تراجع';
 
   @override
   String get vardiyaKayitYok => 'لا توجد ورديات مخططة هذا الأسبوع.';

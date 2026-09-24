@@ -545,6 +545,28 @@ METINLER: dict[str, PushMetni] = {
         },
         params=('firma', 'daire'),
     ),
+    # (P247 §3) Guvenlik kargoyu sakine TESLIM ETTI — dairenin sakinlerine.
+    "kargo_teslim": PushMetni(
+        baslik={
+            "tr": "Kargo teslim edildi",
+            "en": "Parcel handed over",
+            "ar": "تم تسليم الطرد",
+            "ru": "Посылка выдана",
+            "de": "Paket übergeben",
+            "fr": "Colis remis",
+            "es": "Paquete entregado",
+        },
+        govde={
+            "tr": "Kargonuz güvenlik tarafından teslim edildi — {firma} ({daire})",
+            "en": "Your parcel was handed over by security — {firma} ({daire})",
+            "ar": "سلّم الأمن طردك — {firma} ({daire})",
+            "ru": "Охрана выдала вашу посылку — {firma} ({daire})",
+            "de": "Ihr Paket wurde vom Sicherheitsdienst übergeben — {firma} ({daire})",
+            "fr": "Votre colis a été remis par la sécurité — {firma} ({daire})",
+            "es": "Seguridad entregó su paquete — {firma} ({daire})",
+        },
+        params=('firma', 'daire'),
+    ),
     "ziyaretci": PushMetni(
         baslik={
             "tr": "Ziyaretçi",

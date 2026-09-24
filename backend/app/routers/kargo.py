@@ -4,23 +4,25 @@ Akis (urun sahibi sabit):
   1. Guvenlik gelen paketi kaydeder (daire + firma + opsiyonel foto/not)
      -> durum=bekliyor. Foto MEVCUT presign akisiyla yuklenir (yeni upload yok).
   2. Dairenin TUM aktif sakinlerine push denenir ("Kargonuz geldi — <firma>").
-  3. Sakin "teslim aldim" isaretler: bekliyor -> teslim_alindi (atomik; zaten
-     teslim alinmis kayda ikinci isaret 409 — kimin aldigi degismez).
+  3. Sakin "teslim aldim" isaretler YA DA guvenlik "teslim ettim" isaretler
+     (P247 §3): bekliyor -> teslim_alindi (atomik; zaten teslim alinmis kayda
+     ikinci isaret 409 — kimin aldigi/verdigi degismez).
   4. Tam gecmis: daire, firma, foto, durum, kaydeden, teslim alan, zamanlar.
 
 RBAC (auth.md §4, visitor ile ayni desen): KAYIT yalniz security (kapi
-operasyonu). TESLIM yalniz O dairenin AKTIF sakini; baska dairenin sakinine
-404 (varlik sizdirilmaz). OKUMA admin/yonetici/security tenant'in tum gecmisi;
+operasyonu). TESLIM: O dairenin AKTIF sakini (baska dairenin sakinine 404 —
+varlik sizdirilmaz) VEYA security (P247 §3 — paketi kapida fiilen veren o). OKUMA admin/yonetici/security tenant'in tum gecmisi;
 resident YALNIZ kendi dairelerinin paketleri; tesis_gorevlisi ERISMEZ (403).
 
-Push YALNIZ kayitta (urun karari: teslimde geri-push yok); EK gonderimdir —
+Push kayitta; teslimde YALNIZ guvenlik teslim ettiginde (P247 §3 —
+sakin kendi isaretlediginde geri-push yok, zaten biliyor). EK gonderimdir —
 hatasi kargo kaydini KIRMAZ. Foto okumada kisa omurlu presigned GET foto_url
 doner; foto_key tenant-namespace dogrulanir (IDOR korumasi, complaints deseni).
 """
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select, update
@@ -30,6 +32,7 @@ from sqlalchemy.orm import aliased
 
 from ..sakin_bildirimi import sakin_bildirimi_yaz
 from ..audit import Action, audit_user
+from ..config import settings
 from ..crud_helpers import translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
@@ -57,11 +60,25 @@ _REGISTRAR = require_role("security")
 _READER = require_role("admin", "yonetici", "security", "resident")
 # Varsayilan kapali roller (izinle acilir): admin + yonetici.
 _IZIN_GEREKEN = {"admin", "yonetici"}
-# TESLIM yalniz sakin (o dairenin aktif sakini oldugu ayrica dogrulanir).
-_RESIDENT = require_role("resident")
+# (P247 §3) TESLIM: sakin (o dairenin aktif sakini oldugu ayrica dogrulanir)
+# VEYA guvenlik. Once yalniz sakindi ve olculen kusur buydu: paketi kapida
+# fiilen sakine VEREN guvenlik isaretleyemiyordu (403); sakin uygulamada
+# "teslim aldim"a basmazsa (ya da uygulamasi yoksa) kayit sonsuza dek
+# `bekliyor` kaliyordu. Amir/yonetim teslim ISARETLEMEZ: paketi elinde
+# tutan kapidaki gorevlidir.
+_TESLIM = require_role("resident", "security")
 
 _KAYDEDEN = aliased(AppUser)
 _TESLIM_ALAN = aliased(AppUser)
+_TESLIM_EDEN = aliased(AppUser)
+
+
+def _gecikme_esigi() -> datetime:
+    """(P247 §3) Bu andan ONCE kaydedilmis ve hala `bekliyor` olan kargo
+    "gecikmis"tir. Durum DEGISTIRILMEZ — paket fiziksel olarak kapida
+    duruyor; otomatik "teslim edildi" yazmak yalan olurdu. Yalniz listede
+    isaretlenir ki guvenlik sakini arasin."""
+    return datetime.now(timezone.utc) - timedelta(days=settings.kargo_gecikme_gun)
 
 
 def _validate_foto_key(foto_key: str | None, tenant_id: uuid.UUID) -> None:
@@ -73,11 +90,13 @@ def _validate_foto_key(foto_key: str | None, tenant_id: uuid.UUID) -> None:
 
 
 def _out(row) -> KargoOut:
-    obj, unit_no, kaydeden_ad, teslim_alan_ad = row
+    obj, unit_no, kaydeden_ad, teslim_alan_ad, teslim_eden_ad = row
     out = KargoOut.model_validate(obj)
     out.unit_no = unit_no
     out.kaydeden_ad = kaydeden_ad
     out.teslim_alan_ad = teslim_alan_ad
+    out.teslim_eden_ad = teslim_eden_ad
+    out.gecikmis = obj.durum == "bekliyor" and obj.created_at < _gecikme_esigi()
     if obj.foto_key:
         try:
             out.foto_url = presign_get(obj.foto_key)
@@ -90,10 +109,11 @@ def _out(row) -> KargoOut:
 def _base_stmt():
     """Liste/detay ortak SELECT'i: daire no + kaydeden/teslim alan adlari join'li."""
     return (
-        select(Kargo, Unit.no, _KAYDEDEN.ad, _TESLIM_ALAN.ad)
+        select(Kargo, Unit.no, _KAYDEDEN.ad, _TESLIM_ALAN.ad, _TESLIM_EDEN.ad)
         .join(Unit, Unit.id == Kargo.unit_id)
         .join(_KAYDEDEN, _KAYDEDEN.id == Kargo.kaydeden_user_id)
         .outerjoin(_TESLIM_ALAN, _TESLIM_ALAN.id == Kargo.teslim_alan_user_id)
+        .outerjoin(_TESLIM_EDEN, _TESLIM_EDEN.id == Kargo.teslim_eden_user_id)
     )
 
 
@@ -185,13 +205,17 @@ async def create_kargo(
         db, user, Action.KARGO_CREATE, resource_type="kargo",
         resource_id=obj.id, meta={"unit_id": str(obj.unit_id), "has_photo": bool(obj.foto_key)},
     )
-    return _out((obj, unit.no, user.ad, None))
+    return _out((obj, unit.no, user.ad, None, None))
 
 
 # ------------------------------- okuma -------------------------------------- #
 @router.get("", response_model=KargoListResponse)
 async def list_kargo(
     durum: KargoDurum | None = Query(None),
+    gecikmis: bool | None = Query(
+        None,
+        description="(P247 §3) true: bekliyor ve KARGO_GECIKME_GUN'den eski",
+    ),
     unit_id: uuid.UUID | None = Query(None),
     baslangic: datetime | None = Query(None, description="created_at >= (tarih filtresi)"),
     bitis: datetime | None = Query(None, description="created_at < (tarih filtresi)"),
@@ -211,6 +235,10 @@ async def list_kargo(
     stmt = _base_stmt()
     if durum is not None:
         stmt = stmt.where(Kargo.durum == durum)
+    if gecikmis is True:
+        stmt = stmt.where(
+            Kargo.durum == "bekliyor", Kargo.created_at < _gecikme_esigi()
+        )
     if unit_id is not None:
         stmt = stmt.where(Kargo.unit_id == unit_id)
     if baslangic is not None:
@@ -275,7 +303,7 @@ async def receive_kargo(
     kargo_id: uuid.UUID,
     body: KargoUpdate,
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_RESIDENT),
+    user: AppUser = Depends(_TESLIM),
 ) -> KargoOut:
     row = (
         await db.execute(
@@ -288,20 +316,47 @@ async def receive_kargo(
         raise APIError(404, "not_found", "kayit_bulunamadi")
     obj, unit_no = row
 
-    # Yalniz O dairenin AKTIF sakini teslim alir; digerine 404 (varlik
-    # sizdirilmaz — sunucu tarafinda zorlanir, bypass yolu yok).
-    if obj.unit_id not in await _aktif_daire_ids(db, user):
-        raise APIError(404, "not_found", "kayit_bulunamadi")
+    guvenlik = user.role == "security"
+    if guvenlik:
+        # (P247 §3) Guvenlik "teslim ettim": paketi KIME verdigini
+        # istege bagli belirtir; belirtirse o kisi dairenin AKTIF sakini
+        # olmali (baska daireye/role imza atilmaz — ziyaretci hedefiyle ayni
+        # kural). Belirtmezse teslim alan bos kalir; teslim EDEN damgalanir.
+        teslim_alan = body.teslim_alan_user_id
+        if teslim_alan is not None:
+            ok = (
+                await db.execute(
+                    select(UnitResident.user_id).where(
+                        UnitResident.unit_id == obj.unit_id,
+                        UnitResident.user_id == teslim_alan,
+                        UnitResident.bitis.is_(None),
+                    )
+                )
+            ).first()
+            if ok is None:
+                raise APIError(422, "invalid_reference", "hedef_sakin_daire_disi")
+        teslim_eden = user.id
+    else:
+        # Yalniz O dairenin AKTIF sakini teslim alir; digerine 404 (varlik
+        # sizdirilmaz — sunucu tarafinda zorlanir, bypass yolu yok).
+        if obj.unit_id not in await _aktif_daire_ids(db, user):
+            raise APIError(404, "not_found", "kayit_bulunamadi")
+        # Sakin baskasi adina imza atamaz: alan verilir ve kendisi degilse 422.
+        if body.teslim_alan_user_id not in (None, user.id):
+            raise APIError(422, "invalid_reference", "hedef_sakin_daire_disi")
+        teslim_alan = user.id
+        teslim_eden = None
 
     # Atomik teslim: durum='bekliyor' kosullu UPDATE — es zamanli ikinci
-    # isaret (esler ayni anda bassa bile) satiri bulamaz ve 409 alir;
-    # KIMIN teslim aldigi degismez.
+    # isaret (esler ayni anda bassa, ya da guvenlik ile sakin ayni anda
+    # bassa bile) satiri bulamaz ve 409 alir; KIMIN teslim aldigi degismez.
     res = await db.execute(
         update(Kargo)
         .where(Kargo.id == kargo_id, Kargo.durum == "bekliyor")
         .values(
             durum=body.durum,
-            teslim_alan_user_id=user.id,
+            teslim_alan_user_id=teslim_alan,
+            teslim_eden_user_id=teslim_eden,
             teslim_zamani=func.now(),
         )
     )
@@ -309,13 +364,36 @@ async def receive_kargo(
         raise APIError(409, "conflict", "kargo_zaten_teslim_alinmis")
     await db.refresh(obj)
 
-    # Urun karari: teslimde geri-push YOK (kayit-push'u yeterli); guvenlik
-    # ve yonetim guncel durumu listeden gorur.
-    kaydeden_ad = (
-        await db.execute(select(AppUser.ad).where(AppUser.id == obj.kaydeden_user_id))
-    ).scalar_one_or_none()
+    if guvenlik:
+        # (P247 §3) Guvenlik teslim ettiyse dairenin TUM aktif sakinleri
+        # bilgilenir: paketi kimin aldigini (es mi, komsu mu) ve "benim
+        # paketim neden teslim edildi gorunuyor" sorusunu sakin kendisi
+        # gorebilsin. Sakin KENDISI isaretlediginde push yok (zaten biliyor).
+        sakinler = (
+            await db.execute(
+                select(UnitResident.user_id).where(
+                    UnitResident.unit_id == obj.unit_id, UnitResident.bitis.is_(None)
+                )
+            )
+        ).scalars().all()
+        if sakinler:
+            veri = {"firma": obj.firma, "daire": unit_no}
+            dispatch_external(
+                "kargo_teslim",
+                tenant_id=user.tenant_id,
+                target_user_ids=tuple(dict.fromkeys(sakinler)),
+                params=veri,
+                data={"tip": "kargo_teslim", "kargo_id": str(obj.id)},
+            )
+            sakin_bildirimi_yaz(
+                db, tenant_id=user.tenant_id, tip="kargo_teslim",
+                user_ids=sakinler, veri=veri,
+            )
+
+    row = (await db.execute(_base_stmt().where(Kargo.id == kargo_id))).first()
     await audit_user(
         db, user, Action.KARGO_RECEIVE, resource_type="kargo",
-        resource_id=obj.id, meta={"unit_id": str(obj.unit_id)},
+        resource_id=obj.id,
+        meta={"unit_id": str(obj.unit_id), "guvenlik_teslim": guvenlik},
     )
-    return _out((obj, unit_no, kaydeden_ad, user.ad))
+    return _out(row)

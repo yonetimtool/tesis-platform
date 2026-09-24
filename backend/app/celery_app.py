@@ -71,6 +71,17 @@ celery_app.conf.beat_schedule = {
         "task": "scheduler.vardiya_hatirlatma",
         "schedule": 60.0,
     },
+    # (P247 §1) VARDIYA DONGUSU — KAYAN UFUK, her gece 00:30 Istanbul
+    # (21:30 UTC; TR yil boyu UTC+3).
+    #
+    # GUNDE BIR: ufuk GUN cozunurluklu (bugun + 62 gun); tesisin gunu
+    # degistikten hemen sonra bir kez ilerletmek yeter. Retention (01:00
+    # UTC) ve finans (03:00 UTC) pencerelerinden AYRI.
+    # DAGITIM: BEAT + WORKER imajlari birlikte yenilenmeli (P187/P192).
+    "vardiya-dongu-uret": {
+        "task": "scheduler.vardiya_dongu_uret",
+        "schedule": crontab(hour=21, minute=30),
+    },
     # (P240 §4) ENTEGRASYON SAGLIK KONTROLU — 15 dakikada bir.
     #
     # SIKLIK GEREKCESI: kopan bir diyafon/akilli-ev baglantisi en gec 15
@@ -94,6 +105,16 @@ celery_app.conf.beat_schedule = {
     "bakim-hatirlatma": {
         "task": "bakim.hatirlatma",
         "schedule": 86400.0,
+    },
+    # (P247 §3) ZIYARETCI OTOMATIK KAPANISI — saatte bir.
+    #
+    # 24 saatten eski, cikisi damgalanmamis kayit "cikis kaydedilmedi"
+    # olarak kapanir; guvenligin "N iceride" sayaci sonsuza dek sismez.
+    # Esik saat cozunurluklu; gunde bir kosmak kaydi 48 saate kadar acik
+    # birakirdi (gerekce: `ziyaretci_kapanis_isi` basligi).
+    "ziyaretci-otomatik-kapanis": {
+        "task": "scheduler.ziyaretci_otomatik_kapanis",
+        "schedule": 3600.0,
     },
     # (P37) Caydirici webhook yeniden deneme kuyrugu — geri cekilme
     # dakikalar mertebesinde oldugu icin dakikada bir bakmak yeterli.

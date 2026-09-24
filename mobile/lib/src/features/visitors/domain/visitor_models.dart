@@ -20,6 +20,8 @@ class Visitor {
     this.notlar,
     this.kaydedenAd,
     this.targetResidentAd,
+    this.cikisZamani,
+    this.cikisOtomatik = false,
   });
 
   final String id;
@@ -39,7 +41,18 @@ class Visitor {
   final String targetResidentUserId;
   final String? targetResidentAd;
 
+  /// (P247 §3) Cikis damgasi — null ise ziyaretci HALA ICERIDE. Model bu
+  /// alani hic okumuyordu; mobilde cikis dugmesi de yoktu ve guvenligin
+  /// "N iceride" sayaci yalnizca artiyordu.
+  final DateTime? cikisZamani;
+
+  /// (P247 §3) Cikisi guvenlik DEGIL sunucu (24 saat sonra) kapatti:
+  /// "cikis kaydedilmedi". [cikisZamani] bu durumda kapanis anidir.
+  final bool cikisOtomatik;
+
   final DateTime createdAt;
+
+  bool get iceride => cikisZamani == null;
 
   factory Visitor.fromJson(Map<String, dynamic> json) => Visitor(
         id: json['id'] as String? ?? '',
@@ -51,6 +64,10 @@ class Visitor {
         kaydedenAd: json['kaydeden_ad'] as String?,
         targetResidentUserId: json['target_resident_user_id'] as String? ?? '',
         targetResidentAd: json['target_resident_ad'] as String?,
+        cikisZamani: json['cikis_zamani'] == null
+            ? null
+            : DateTime.tryParse(json['cikis_zamani'] as String? ?? ''),
+        cikisOtomatik: json['cikis_otomatik'] as bool? ?? false,
         createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
             DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
       );

@@ -182,6 +182,15 @@ enum UserRole {
   /// aktif sakini olma kosulunu sunucu ayrica zorlar).
   bool get canReceiveKargo => this == resident;
 
+  /// (P247 §3) Kargoyu sakine TESLIM ETME (`PATCH /kargo/{id}`, istege bagli
+  /// `teslim_alan_user_id`) — YALNIZ security: paketi kapida fiilen veren.
+  bool get canDeliverKargo => this == security;
+
+  /// (P247 §3) Ziyaretci CIKISI damgalama (`POST /visitors/{id}/checkout`) —
+  /// YALNIZ security (kayit gibi cikis da kapi operasyonu). Mobilde dugmesi
+  /// yoktu; guvenligin "N iceride" sayaci yalnizca artiyordu.
+  bool get canCheckoutVisitor => this == security;
+
   /// Ortak alan yonetimi (`POST/PATCH /common-areas`) — admin + yonetici.
   bool get canManageCommonAreas => this == admin || this == yonetici;
 

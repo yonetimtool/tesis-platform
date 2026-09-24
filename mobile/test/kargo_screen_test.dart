@@ -22,7 +22,7 @@ class _FakeKargoApi extends KargoApi {
   Future<List<Kargo>> fetchAll({String? unitId}) async => _items;
 
   @override
-  Future<Kargo> markReceived(String id) async {
+  Future<Kargo> markReceived(String id, {String? teslimAlanUserId}) async {
     received.add(id);
     return _items.first;
   }

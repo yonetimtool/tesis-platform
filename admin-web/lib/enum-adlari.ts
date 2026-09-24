@@ -33,6 +33,8 @@ export const BILDIRIM_TIP: EnumHarita = {
   // eklendiginde BURASI unutulmustu ve `enum-bag` kilidi yakaladi —
   // aynanin varlik sebebi tam olarak bu.
   kargo: "bildirimTipKargo",
+  // (P247 §3) Guvenlik kargoyu sakine teslim etti.
+  kargo_teslim: "bildirimTipKargoTeslim",
   ziyaretci: "bildirimTipZiyaretci",
   rezervasyon: "bildirimTipRezervasyon",
   sikayet_cozuldu: "bildirimTipSikayetCozuldu",

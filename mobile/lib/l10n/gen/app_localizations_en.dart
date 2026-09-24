@@ -2965,6 +2965,53 @@ class AppLocalizationsEn extends AppLocalizations {
   String get karTeslimAldim => 'I collected it';
 
   @override
+  String get karTeslimEt => 'Hand over';
+
+  @override
+  String get karTeslimKime => 'Who did you hand the parcel to?';
+
+  @override
+  String get karSakinBelirtme => 'Without naming a resident';
+
+  @override
+  String get karTeslimEdildiBildirim => 'Parcel marked as handed over';
+
+  @override
+  String get karGecikmis => 'Overdue';
+
+  @override
+  String karTeslimEdenEki(Object ad) {
+    return ' · handed over by: $ad';
+  }
+
+  @override
+  String get ziyaretIceride => 'Inside';
+
+  @override
+  String get ziyaretCikti => 'Left';
+
+  @override
+  String get ziyaretCikisKaydedilmedi => 'Exit not recorded';
+
+  @override
+  String ziyaretCikisZamani(Object zaman) {
+    return 'Exit: $zaman';
+  }
+
+  @override
+  String get ziyaretCikisYapti => 'Mark exit';
+
+  @override
+  String get ziyaretCikisOnayBaslik => 'Record the visitor\'s exit?';
+
+  @override
+  String get ziyaretCikisKaydedildi => 'Exit recorded';
+
+  @override
+  String get ziyaretCikisZatenKayitli =>
+      'This visitor\'s exit is already recorded';
+
+  @override
   String get karGonderilemedi => 'Could not submit the record. Try again.';
 
   @override
@@ -3486,7 +3533,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profilParolaGuncelle => 'Update password';
 
   @override
-  String get profilParolaGuncellendi => 'Password updated ✓';
+  String get profilParolaGuncellendi =>
+      'Password updated ✓ Signed out on other devices.';
 
   @override
   String get profilTelefon => 'Phone';
@@ -5890,6 +5938,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tesisDegistirSecili => 'You are here';
 
   @override
+  String get rolGecisBaslik => 'View as';
+
+  @override
+  String get rolGecisYonetici => 'Manager';
+
+  @override
+  String get rolGecisSakin => 'Resident';
+
+  @override
+  String get rolGecisSuruyorSakin => 'Switching to resident mode…';
+
+  @override
+  String get rolGecisSuruyorYonetici => 'Switching to manager mode…';
+
+  @override
+  String get rolGecildiSakin => 'Switched to resident mode';
+
+  @override
+  String get rolGecildiYonetici => 'Switched to manager mode';
+
+  @override
+  String get rolGecisHata => 'Could not switch mode. Please try again.';
+
+  @override
   String get ziyaretDaireAra => 'Unit';
 
   @override
@@ -5915,6 +5987,97 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get vardiyaYeni => 'New shift';
+
+  @override
+  String get donguAc => 'Rotation';
+
+  @override
+  String get donguBaslik => 'Shift rotation';
+
+  @override
+  String get donguKalip => 'Rotation';
+
+  @override
+  String get donguHazir222 => '2 nights · 2 days · 2 off';
+
+  @override
+  String get donguHazir1236 => '2 weeks night 12/36 · 2 weeks day 12/36';
+
+  @override
+  String get donguGunduz => 'Day';
+
+  @override
+  String get donguGece => 'Night';
+
+  @override
+  String get donguKisiler => 'People (selection order sets the offset)';
+
+  @override
+  String donguOfset(Object n) {
+    return '+$n days';
+  }
+
+  @override
+  String get donguBaslangic => 'Start date';
+
+  @override
+  String get donguKaydirma => 'Offset between people (days)';
+
+  @override
+  String get donguKaydirmaIpucu =>
+      'E.g. 3 people, 2 days: the second joins the cycle 2 days shifted, the third 4.';
+
+  @override
+  String get donguOnizle => 'Preview';
+
+  @override
+  String get donguUygula => 'Save and generate';
+
+  @override
+  String get donguCakisanHaric => 'Without conflicts';
+
+  @override
+  String donguOzet(
+    Object eklenecek,
+    Object cakisan,
+    Object izinli,
+    Object bos,
+  ) {
+    return '$eklenecek shifts · $cakisan conflicts · $izinli leave days · $bos days with gaps';
+  }
+
+  @override
+  String donguUfuk(Object bitis) {
+    return 'Generated as drafts until $bitis; later days are added automatically every night.';
+  }
+
+  @override
+  String get donguIzinli => 'Leave';
+
+  @override
+  String get donguCakisma => 'Conflict';
+
+  @override
+  String get donguBosluk => 'Gap';
+
+  @override
+  String donguUygulandi(Object n) {
+    return '$n shifts generated as drafts.';
+  }
+
+  @override
+  String donguGeriAlindi(Object n) {
+    return '$n shifts undone.';
+  }
+
+  @override
+  String get donguEtkinler => 'Active rotations';
+
+  @override
+  String get donguEtkinYok => 'No active rotation.';
+
+  @override
+  String get donguGeriAl => 'Undo';
 
   @override
   String get vardiyaKayitYok => 'No shifts are planned this week.';

@@ -127,6 +127,19 @@ class VisitorApi {
       throw ApiException.fromDio(e);
     }
   }
+
+  /// (P247 §3) `POST /visitors/{id}/checkout` — guvenlik cikisi damgalar
+  /// (govde YOK). Zaten cikmis/otomatik kapanmis kayit 409.
+  Future<Visitor> checkout(String id) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/visitors/$id/checkout',
+      );
+      return Visitor.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
 }
 
 final visitorApiProvider = Provider<VisitorApi>((ref) {

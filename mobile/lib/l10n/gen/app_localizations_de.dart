@@ -2920,6 +2920,53 @@ class AppLocalizationsDe extends AppLocalizations {
   String get karTeslimAldim => 'Ich habe es abgeholt';
 
   @override
+  String get karTeslimEt => 'Übergeben';
+
+  @override
+  String get karTeslimKime => 'Wem haben Sie das Paket übergeben?';
+
+  @override
+  String get karSakinBelirtme => 'Ohne Bewohnerangabe';
+
+  @override
+  String get karTeslimEdildiBildirim => 'Paket als übergeben markiert';
+
+  @override
+  String get karGecikmis => 'Überfällig';
+
+  @override
+  String karTeslimEdenEki(Object ad) {
+    return ' · übergeben von: $ad';
+  }
+
+  @override
+  String get ziyaretIceride => 'Drinnen';
+
+  @override
+  String get ziyaretCikti => 'Gegangen';
+
+  @override
+  String get ziyaretCikisKaydedilmedi => 'Ausgang nicht erfasst';
+
+  @override
+  String ziyaretCikisZamani(Object zaman) {
+    return 'Ausgang: $zaman';
+  }
+
+  @override
+  String get ziyaretCikisYapti => 'Ausgang erfassen';
+
+  @override
+  String get ziyaretCikisOnayBaslik => 'Ausgang des Besuchers erfassen?';
+
+  @override
+  String get ziyaretCikisKaydedildi => 'Ausgang erfasst';
+
+  @override
+  String get ziyaretCikisZatenKayitli =>
+      'Der Ausgang dieses Besuchers ist bereits erfasst';
+
+  @override
   String get karGonderilemedi =>
       'Eintrag konnte nicht gesendet werden. Erneut versuchen.';
 
@@ -3446,7 +3493,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get profilParolaGuncelle => 'Passwort aktualisieren';
 
   @override
-  String get profilParolaGuncellendi => 'Passwort aktualisiert ✓';
+  String get profilParolaGuncellendi =>
+      'Passwort aktualisiert ✓ Auf anderen Geräten abgemeldet.';
 
   @override
   String get profilTelefon => 'Telefon';
@@ -5877,6 +5925,31 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tesisDegistirSecili => 'Sie sind hier';
 
   @override
+  String get rolGecisBaslik => 'Ansicht';
+
+  @override
+  String get rolGecisYonetici => 'Verwalter';
+
+  @override
+  String get rolGecisSakin => 'Bewohner';
+
+  @override
+  String get rolGecisSuruyorSakin => 'Wechsel in den Bewohnermodus…';
+
+  @override
+  String get rolGecisSuruyorYonetici => 'Wechsel in den Verwaltermodus…';
+
+  @override
+  String get rolGecildiSakin => 'In den Bewohnermodus gewechselt';
+
+  @override
+  String get rolGecildiYonetici => 'In den Verwaltermodus gewechselt';
+
+  @override
+  String get rolGecisHata =>
+      'Modus konnte nicht gewechselt werden. Bitte erneut versuchen.';
+
+  @override
   String get ziyaretDaireAra => 'Wohnung';
 
   @override
@@ -5903,6 +5976,98 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get vardiyaYeni => 'Neue Schicht';
+
+  @override
+  String get donguAc => 'Rotation';
+
+  @override
+  String get donguBaslik => 'Schichtrotation';
+
+  @override
+  String get donguKalip => 'Rotation';
+
+  @override
+  String get donguHazir222 => '2 Nächte · 2 Tage · 2 frei';
+
+  @override
+  String get donguHazir1236 => '2 Wochen Nacht 12/36 · 2 Wochen Tag 12/36';
+
+  @override
+  String get donguGunduz => 'Tag';
+
+  @override
+  String get donguGece => 'Nacht';
+
+  @override
+  String get donguKisiler =>
+      'Personen (Auswahlreihenfolge bestimmt den Versatz)';
+
+  @override
+  String donguOfset(Object n) {
+    return '+$n Tage';
+  }
+
+  @override
+  String get donguBaslangic => 'Startdatum';
+
+  @override
+  String get donguKaydirma => 'Versatz zwischen Personen (Tage)';
+
+  @override
+  String get donguKaydirmaIpucu =>
+      'Z. B. 3 Personen, 2 Tage: die zweite steigt um 2, die dritte um 4 Tage versetzt ein.';
+
+  @override
+  String get donguOnizle => 'Vorschau';
+
+  @override
+  String get donguUygula => 'Speichern und erzeugen';
+
+  @override
+  String get donguCakisanHaric => 'Ohne Konflikte';
+
+  @override
+  String donguOzet(
+    Object eklenecek,
+    Object cakisan,
+    Object izinli,
+    Object bos,
+  ) {
+    return '$eklenecek Schichten · $cakisan Konflikte · $izinli Urlaubstage · $bos Tage mit Lücken';
+  }
+
+  @override
+  String donguUfuk(Object bitis) {
+    return 'Bis $bitis als Entwurf erzeugt; spätere Tage werden jede Nacht automatisch ergänzt.';
+  }
+
+  @override
+  String get donguIzinli => 'Urlaub';
+
+  @override
+  String get donguCakisma => 'Konflikt';
+
+  @override
+  String get donguBosluk => 'Lücke';
+
+  @override
+  String donguUygulandi(Object n) {
+    return '$n Schichten als Entwurf erzeugt.';
+  }
+
+  @override
+  String donguGeriAlindi(Object n) {
+    return '$n Schichten widerrufen.';
+  }
+
+  @override
+  String get donguEtkinler => 'Aktive Rotationen';
+
+  @override
+  String get donguEtkinYok => 'Keine aktive Rotation.';
+
+  @override
+  String get donguGeriAl => 'Widerrufen';
 
   @override
   String get vardiyaKayitYok => 'Diese Woche sind keine Schichten geplant.';

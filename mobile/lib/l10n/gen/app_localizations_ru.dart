@@ -3021,6 +3021,53 @@ class AppLocalizationsRu extends AppLocalizations {
   String get karTeslimAldim => 'Я получил';
 
   @override
+  String get karTeslimEt => 'Выдать';
+
+  @override
+  String get karTeslimKime => 'Кому вы выдали посылку?';
+
+  @override
+  String get karSakinBelirtme => 'Без указания жителя';
+
+  @override
+  String get karTeslimEdildiBildirim => 'Посылка отмечена как выданная';
+
+  @override
+  String get karGecikmis => 'Просрочено';
+
+  @override
+  String karTeslimEdenEki(Object ad) {
+    return ' · выдал: $ad';
+  }
+
+  @override
+  String get ziyaretIceride => 'Внутри';
+
+  @override
+  String get ziyaretCikti => 'Вышел';
+
+  @override
+  String get ziyaretCikisKaydedilmedi => 'Выход не зафиксирован';
+
+  @override
+  String ziyaretCikisZamani(Object zaman) {
+    return 'Выход: $zaman';
+  }
+
+  @override
+  String get ziyaretCikisYapti => 'Отметить выход';
+
+  @override
+  String get ziyaretCikisOnayBaslik => 'Зафиксировать выход посетителя?';
+
+  @override
+  String get ziyaretCikisKaydedildi => 'Выход зафиксирован';
+
+  @override
+  String get ziyaretCikisZatenKayitli =>
+      'Выход этого посетителя уже зафиксирован';
+
+  @override
   String get karGonderilemedi =>
       'Не удалось отправить запись. Попробуйте снова.';
 
@@ -3544,7 +3591,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get profilParolaGuncelle => 'Обновить пароль';
 
   @override
-  String get profilParolaGuncellendi => 'Пароль обновлён ✓';
+  String get profilParolaGuncellendi =>
+      'Пароль обновлён ✓ Сеансы на других устройствах завершены.';
 
   @override
   String get profilTelefon => 'Телефон';
@@ -5966,6 +6014,30 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tesisDegistirSecili => 'Вы здесь';
 
   @override
+  String get rolGecisBaslik => 'Режим';
+
+  @override
+  String get rolGecisYonetici => 'Управляющий';
+
+  @override
+  String get rolGecisSakin => 'Жилец';
+
+  @override
+  String get rolGecisSuruyorSakin => 'Переход в режим жильца…';
+
+  @override
+  String get rolGecisSuruyorYonetici => 'Переход в режим управляющего…';
+
+  @override
+  String get rolGecildiSakin => 'Включён режим жильца';
+
+  @override
+  String get rolGecildiYonetici => 'Включён режим управляющего';
+
+  @override
+  String get rolGecisHata => 'Не удалось сменить режим. Повторите попытку.';
+
+  @override
   String get ziyaretDaireAra => 'Квартира';
 
   @override
@@ -5991,6 +6063,97 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get vardiyaYeni => 'Новая смена';
+
+  @override
+  String get donguAc => 'Ротация';
+
+  @override
+  String get donguBaslik => 'Ротация смен';
+
+  @override
+  String get donguKalip => 'Ротация';
+
+  @override
+  String get donguHazir222 => '2 ночи · 2 дня · 2 выходных';
+
+  @override
+  String get donguHazir1236 => '2 недели ночь 12/36 · 2 недели день 12/36';
+
+  @override
+  String get donguGunduz => 'День';
+
+  @override
+  String get donguGece => 'Ночь';
+
+  @override
+  String get donguKisiler => 'Сотрудники (порядок выбора задаёт сдвиг)';
+
+  @override
+  String donguOfset(Object n) {
+    return '+$n дн.';
+  }
+
+  @override
+  String get donguBaslangic => 'Дата начала';
+
+  @override
+  String get donguKaydirma => 'Сдвиг между сотрудниками (дней)';
+
+  @override
+  String get donguKaydirmaIpucu =>
+      'Напр. 3 человека, 2 дня: второй входит в цикл со сдвигом 2 дня, третий — 4.';
+
+  @override
+  String get donguOnizle => 'Предпросмотр';
+
+  @override
+  String get donguUygula => 'Сохранить и создать';
+
+  @override
+  String get donguCakisanHaric => 'Без конфликтных';
+
+  @override
+  String donguOzet(
+    Object eklenecek,
+    Object cakisan,
+    Object izinli,
+    Object bos,
+  ) {
+    return 'Смен: $eklenecek · конфликтов: $cakisan · дней отпуска: $izinli · дней с пробелами: $bos';
+  }
+
+  @override
+  String donguUfuk(Object bitis) {
+    return 'Создаётся черновиками до $bitis; следующие дни добавляются автоматически каждую ночь.';
+  }
+
+  @override
+  String get donguIzinli => 'Отпуск';
+
+  @override
+  String get donguCakisma => 'Конфликт';
+
+  @override
+  String get donguBosluk => 'Пробел';
+
+  @override
+  String donguUygulandi(Object n) {
+    return 'Создано смен (черновики): $n.';
+  }
+
+  @override
+  String donguGeriAlindi(Object n) {
+    return 'Отменено смен: $n.';
+  }
+
+  @override
+  String get donguEtkinler => 'Активные ротации';
+
+  @override
+  String get donguEtkinYok => 'Активных ротаций нет.';
+
+  @override
+  String get donguGeriAl => 'Отменить';
 
   @override
   String get vardiyaKayitYok => 'На этой неделе смен не запланировано.';

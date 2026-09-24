@@ -51,8 +51,13 @@ type Ziyaretci = {
   unit_no: string | null;
   ziyaretci_ad: string;
   notlar: string | null;
-  giris_zamani: string;
+  // (P247 §3) SOZLESMEDE `giris_zamani` YOK — giris ani `created_at`tir.
+  // Tip `giris_zamani` diyordu ve "Giris" sutunu bos/gecersiz tarih
+  // ciziyordu (sayfa parkta oldugu icin kimse gormedi).
+  created_at: string;
   cikis_zamani: string | null;
+  // (P247 §3) 24 saat cikisi damgalanmayan kaydi sunucu kapatti.
+  cikis_otomatik?: boolean;
   target_resident_user_id?: string | null;
   target_resident_ad?: string | null;
 };
@@ -218,15 +223,18 @@ export default function ZiyaretcilerPage() {
     {
       id: "giris",
       baslik: t("ziyaretciKolonGiris"),
-      hucre: (z: Ziyaretci) => tarihSaatUzun(z.giris_zamani),
-      deger: (z: Ziyaretci) => z.giris_zamani,
+      hucre: (z: Ziyaretci) => tarihSaatUzun(z.created_at),
+      deger: (z: Ziyaretci) => z.created_at,
     },
     {
       id: "durum",
       baslik: t("ortakDurum"),
       // ROZET METIN TASIR: renk tek tasiyici degil.
       hucre: (z: Ziyaretci) =>
-        z.cikis_zamani ? (
+        z.cikis_otomatik ? (
+          // (P247 §3) Kapanis ani bir CIKIS ani degil: saat yazilmaz.
+          <Rozet durum="notr">{t("ziyaretciCikisKaydedilmedi")}</Rozet>
+        ) : z.cikis_zamani ? (
           <span style={{ color: "var(--yz-text-2)" }}>
             {t("aracCikti", { saat: tarihSaatUzun(z.cikis_zamani) })}
           </span>

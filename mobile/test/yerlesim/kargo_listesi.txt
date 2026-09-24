@@ -6,5 +6,7 @@
  142,  74  170x20  Aras Kargo
  144, 252  98x17  Bekliyor
  174,  32  326x32  Daire: A-12 · GG.AA.YYYY · SS:DD
+ 232, 141  127x20  Teslim et
+ 233, 115  18x18  󰚤
  788, 181  24x24  U+F18E
  790, 213  141x20  Yeni kargo

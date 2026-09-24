@@ -548,3 +548,57 @@ def test_cikis_tenant_izolasyonu(client, vworld):
     )
     guard_b = _headers(client, vworld["slug_b"], vworld["guard_b"])
     assert client.post(f"/visitors/{v['id']}/checkout", headers=guard_b).status_code == 404
+
+
+# ------------------ (P247 §3) otomatik kapanis (beat isi) ------------------- #
+# OLCULEN KUSUR: cikis dugmesi mobilde yoktu ve unutulan cikislar hic
+# kapanmiyordu -> guvenlik ana ekranindaki "N iceride" sayaci sonsuza dek
+# siser. Beat isi 24 saatten eski acik kaydi "cikis kaydedilmedi" kapatir.
+def test_p247_otomatik_kapanis_24_saat(client, vworld, owner_conn):
+    from app.celery_app import celery_app
+    from app.ziyaretci_kapanis_isi import tum_tenantlar_icin
+
+    guard = _headers(client, vworld["slug_a"], vworld["guard_a"])
+    eski = _register_visitor(client, guard, vworld["resident_a_id"], unit_no=vworld["unit1_no"])
+    yeni = _register_visitor(client, guard, vworld["resident_a_id"], unit_no=vworld["unit1_no"])
+    cikmis = _register_visitor(client, guard, vworld["resident_a_id"], unit_no=vworld["unit1_no"])
+    assert client.post(f"/visitors/{cikmis['id']}/checkout", headers=guard).status_code == 200
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "UPDATE visitor SET created_at = now() - interval '25 hours' "
+            "WHERE id = ANY(%s)",
+            ([uuid.UUID(eski["id"]), uuid.UUID(cikmis["id"])],),
+        )
+        cur.execute("SELECT cikis_zamani FROM visitor WHERE id=%s", (cikmis["id"],))
+        cikmis_zaman = cur.fetchone()[0]
+
+    ozet = tum_tenantlar_icin(tenant_ids=[vworld["a"]])
+    assert ozet["kapatilan"] >= 1
+    # Ikinci kosum idempotent: ayni kaydi yeniden kapatmaz.
+    assert tum_tenantlar_icin(tenant_ids=[vworld["a"]])["kapatilan"] == 0
+
+    by = {
+        i["id"]: i
+        for i in client.get(
+            f"/visitors?unit_id={vworld['unit1']}&limit=200", headers=guard
+        ).json()["items"]
+    }
+    assert by[eski["id"]]["cikis_zamani"] is not None
+    assert by[eski["id"]]["cikis_otomatik"] is True
+    assert by[yeni["id"]]["cikis_zamani"] is None  # 24 saat dolmadi: iceride
+    assert by[cikmis["id"]]["cikis_otomatik"] is False  # guvenligin cikisi korunur
+    with owner_conn.cursor() as cur:
+        cur.execute("SELECT cikis_zamani FROM visitor WHERE id=%s", (cikmis["id"],))
+        assert cur.fetchone()[0] == cikmis_zaman
+
+    # Otomatik kapanan kayda sonradan cikis: 409 (ilk kapanis degismez).
+    assert client.post(f"/visitors/{eski['id']}/checkout", headers=guard).status_code == 409
+
+    # Akista "ziyaretci cikti" olarak GORUNMEZ (kimse cikisini gormedi).
+    akis = client.get("/activity?limit=100", headers=guard).json()["items"]
+    cikis_idleri = {a.get("kaynak_id") for a in akis if a.get("tur") == "ziyaretci_cikis"}
+    assert eski["id"] not in cikis_idleri
+
+    # Beat'te zamanlanmis (saatte bir).
+    g = celery_app.conf.beat_schedule["ziyaretci-otomatik-kapanis"]
+    assert g["task"] == "scheduler.ziyaretci_otomatik_kapanis" and g["schedule"] == 3600.0

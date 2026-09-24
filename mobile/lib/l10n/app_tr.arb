@@ -1140,6 +1140,62 @@
   "karTeslimAlindiBildirim": "Kargo teslim alındı ✓",
   "karIsaretlenemedi": "İşaretlenemedi. Tekrar deneyin.",
   "karTeslimAldim": "Teslim aldım",
+  "karTeslimEt": "Teslim et",
+  "@karTeslimEt": {
+    "description": "(P247 §3) Guvenligin bekleyen kargo kartindaki teslim dugmesi"
+  },
+  "karTeslimKime": "Kargoyu kime teslim ettiniz?",
+  "@karTeslimKime": {
+    "description": "(P247 §3) Teslim edilen sakin secici basligi"
+  },
+  "karSakinBelirtme": "Sakin belirtmeden",
+  "@karSakinBelirtme": {
+    "description": "(P247 §3) Secicide teslim alani bos birakma secenegi"
+  },
+  "karTeslimEdildiBildirim": "Kargo teslim edildi olarak işaretlendi",
+  "@karTeslimEdildiBildirim": {
+    "description": "(P247 §3) Guvenlik teslimi sonrasi bildirim cubugu"
+  },
+  "karGecikmis": "Gecikmiş",
+  "@karGecikmis": {
+    "description": "(P247 §3) Uc gundur teslim alinmamis kargo rozeti"
+  },
+  "karTeslimEdenEki": " · teslim eden: {ad}",
+  "@karTeslimEdenEki": {
+    "description": "(P247 §3) Kargo satirinda teslim eden guvenlik eki"
+  },
+  "ziyaretIceride": "İçeride",
+  "@ziyaretIceride": {
+    "description": "(P247 §3) Ziyaretci durum rozeti: cikisi damgalanmamis"
+  },
+  "ziyaretCikti": "Çıktı",
+  "@ziyaretCikti": {
+    "description": "(P247 §3) Ziyaretci durum rozeti: guvenlik cikisi damgaladi"
+  },
+  "ziyaretCikisKaydedilmedi": "Çıkış kaydedilmedi",
+  "@ziyaretCikisKaydedilmedi": {
+    "description": "(P247 §3) 24 saat sonra sunucunun kapattigi kayit"
+  },
+  "ziyaretCikisZamani": "Çıkış: {zaman}",
+  "@ziyaretCikisZamani": {
+    "description": "(P247 §3) Ziyaretci cikis zamani satiri"
+  },
+  "ziyaretCikisYapti": "Çıkış yaptı",
+  "@ziyaretCikisYapti": {
+    "description": "(P247 §3) Guvenligin ziyaretci cikis dugmesi"
+  },
+  "ziyaretCikisOnayBaslik": "Ziyaretçi çıkışı kaydedilsin mi?",
+  "@ziyaretCikisOnayBaslik": {
+    "description": "(P247 §3) Cikis onay penceresi basligi"
+  },
+  "ziyaretCikisKaydedildi": "Çıkış kaydedildi",
+  "@ziyaretCikisKaydedildi": {
+    "description": "(P247 §3) Cikis sonrasi bildirim cubugu"
+  },
+  "ziyaretCikisZatenKayitli": "Bu ziyaretçinin çıkışı zaten kayıtlı",
+  "@ziyaretCikisZatenKayitli": {
+    "description": "(P247 §3) 409: cikis baska cihazdan ya da sunucuca kapatilmis"
+  },
   "karGonderilemedi": "Kayıt gönderilemedi. Tekrar deneyin.",
   "karDaireNo": "Daire no * (örn. A-12)",
   "karDaireNoGerekli": "Daire no gerekli",
@@ -1388,7 +1444,7 @@
   "profilMevcutParola": "Mevcut parola",
   "profilMevcutParolaZorunlu": "Mevcut parola zorunludur",
   "profilParolaGuncelle": "Parolayı güncelle",
-  "profilParolaGuncellendi": "Parola güncellendi ✓",
+  "profilParolaGuncellendi": "Parola güncellendi ✓ Diğer cihazlardaki oturumlar kapatıldı.",
   "profilTelefon": "Telefon",
   "profilTelefonIpucu": "örn. +905551112233",
   "profilAranabilir": "Aranabilir",
@@ -2649,6 +2705,38 @@
   "@tesisDegistirSecili": {
     "description": "(P203 §2) Kullanicinin SU AN bulundugu tesisin isareti."
   },
+  "rolGecisBaslik": "Görünüm",
+  "@rolGecisBaslik": {
+    "description": "(P247 §2) Hesap menusunde yonetici/sakin mod seciminin basligi."
+  },
+  "rolGecisYonetici": "Yönetici",
+  "@rolGecisYonetici": {
+    "description": "(P247 §2) Mod secenegi: yonetici paneli."
+  },
+  "rolGecisSakin": "Sakin",
+  "@rolGecisSakin": {
+    "description": "(P247 §2) Mod secenegi: sakin deneyimi (kendi dairesi)."
+  },
+  "rolGecisSuruyorSakin": "Sakin moduna geçiliyor…",
+  "@rolGecisSuruyorSakin": {
+    "description": "(P247 §2) Gecis perdesi metni (sakin moduna)."
+  },
+  "rolGecisSuruyorYonetici": "Yönetici moduna geçiliyor…",
+  "@rolGecisSuruyorYonetici": {
+    "description": "(P247 §2) Gecis perdesi metni (yonetici moduna)."
+  },
+  "rolGecildiSakin": "Sakin moduna geçildi",
+  "@rolGecildiSakin": {
+    "description": "(P247 §2) Gecis sonrasi kisa bildirim."
+  },
+  "rolGecildiYonetici": "Yönetici moduna geçildi",
+  "@rolGecildiYonetici": {
+    "description": "(P247 §2) Gecis sonrasi kisa bildirim."
+  },
+  "rolGecisHata": "Mod değiştirilemedi. Lütfen tekrar deneyin.",
+  "@rolGecisHata": {
+    "description": "(P247 §2) Gecis istegi basarisiz oldu."
+  },
   "ziyaretDaireAra": "Daire",
   "@ziyaretDaireAra": {
     "description": "(P203 §3) Ziyaretci formunda daire ARAMA alani (eski: serbest metin daire no)."
@@ -2682,6 +2770,37 @@
     "description": "(P203 §4) Vardiya plani ekrani — vardiyaBos."
   },
   "vardiyaYeni": "Yeni vardiya",
+  "donguAc": "Döngü / rotasyon",
+  "@donguAc": {"description": "(P247 §1) Vardiya döngüsü"},
+  "donguBaslik": "Vardiya döngüsü (rotasyon)",
+  "donguKalip": "Döngü",
+  "donguHazir222": "2 gece · 2 gündüz · 2 tatil",
+  "donguHazir1236": "2 hafta gece 12/36 · 2 hafta gündüz 12/36",
+  "donguGunduz": "Gündüz",
+  "donguGece": "Gece",
+  "donguKisiler": "Kişiler (seçim sırası kaydırmayı belirler)",
+  "donguOfset": "+{n} gün",
+  "@donguOfset": {"placeholders": {"n": {"type": "Object"}}},
+  "donguBaslangic": "Başlangıç tarihi",
+  "donguKaydirma": "Kişiler arası kaydırma (gün)",
+  "donguKaydirmaIpucu": "Örn. 3 kişi, 2 gün: ikinci kişi döngüye 2, üçüncüsü 4 gün kaydırılarak girer.",
+  "donguOnizle": "Önizle",
+  "donguUygula": "Kaydet ve üret",
+  "donguCakisanHaric": "Çakışanlar hariç",
+  "donguOzet": "{eklenecek} vardiya · {cakisan} çakışma · {izinli} izinli gün · {bos} gün boşluklu",
+  "@donguOzet": {"placeholders": {"eklenecek": {"type": "Object"}, "cakisan": {"type": "Object"}, "izinli": {"type": "Object"}, "bos": {"type": "Object"}}},
+  "donguUfuk": "{bitis} tarihine kadar taslak üretilir; sonrası her gece otomatik eklenir.",
+  "@donguUfuk": {"placeholders": {"bitis": {"type": "Object"}}},
+  "donguIzinli": "İzin",
+  "donguCakisma": "Çakışma",
+  "donguBosluk": "Boşluk",
+  "donguUygulandi": "{n} vardiya taslak olarak üretildi.",
+  "@donguUygulandi": {"placeholders": {"n": {"type": "Object"}}},
+  "donguGeriAlindi": "{n} vardiya geri alındı.",
+  "@donguGeriAlindi": {"placeholders": {"n": {"type": "Object"}}},
+  "donguEtkinler": "Etkin döngüler",
+  "donguEtkinYok": "Etkin döngü yok.",
+  "donguGeriAl": "Geri al",
   "vardiyaKayitYok": "Bu hafta planlanmış vardiya yok.",
   "vardiyaPersonel": "Personel",
   "vardiyaBaslangicTarihi": "Başlangıç tarihi",

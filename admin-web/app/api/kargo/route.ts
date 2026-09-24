@@ -18,7 +18,8 @@ export const dynamic = "force-dynamic";
  * Beyaz liste, `?` ile gelen her seyi gecirmemek icin: uce yalnizca
  * SOZLESMEDE tarif edilen alanlar gider.
  */
-const SUZGECLER = ["durum", "unit_id", "baslangic", "bitis"] as const;
+// (P247 §3) `gecikmis` — 3 gunden eski bekleyen kargolar (sunucu hesaplar).
+const SUZGECLER = ["durum", "gecikmis", "unit_id", "baslangic", "bitis"] as const;
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const sp = req.nextUrl.searchParams;

@@ -376,6 +376,12 @@ class Settings(BaseSettings):
     # (uzatilmasi onerilmez). Gerekce contracts/auth.md §7'de belgelenmistir.
     retention_visitors_months: int = 24        # ziyaretci LOG kaydi
     retention_kargo_months: int = 24           # kargo/paket kaydi (+foto)
+    # (P247 §3) Kargo bu kadar GUN `bekliyor` kalirsa listede "gecikmis"
+    # isaretlenir (durum degismez — paket fiziksel olarak hala kapida).
+    kargo_gecikme_gun: int = 3
+    # (P247 §3) Cikisi damgalanmamis ziyaretci kaydi bu kadar SAAT sonra
+    # beat isince "cikis kaydedilmedi" olarak kapatilir.
+    ziyaretci_otomatik_kapanis_saat: int = 24
     retention_reservations_months: int = 24    # TAMAMLANMIS/IPTAL rezervasyon
     retention_tickets_months: int = 36         # COZULMUS/REDDEDILMIS talep/sikayet
     retention_audit_months: int = 24           # audit_log purge

@@ -21,6 +21,8 @@ AppNotification _b(String tip) => AppNotification.fromJson({
 void main() {
   test('sakinin olaylari ILGILI ekrana gider', () {
     expect(bildirimRotasi(_b('kargo')), AppRoutes.kargo);
+    // (P247 §3) Guvenlik teslim etti bildirimi de kargo sayfasina.
+    expect(bildirimRotasi(_b('kargo_teslim')), AppRoutes.kargo);
     expect(bildirimRotasi(_b('ziyaretci')), AppRoutes.visitors);
     expect(bildirimRotasi(_b('rezervasyon')), AppRoutes.rezervasyon);
     expect(bildirimRotasi(_b('sikayet_cozuldu')), AppRoutes.sikayetlerim);

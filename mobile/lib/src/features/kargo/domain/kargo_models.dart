@@ -3,9 +3,10 @@
 ///
 /// Akis (urun sahibi sabit): guvenlik gelen paketi kaydeder (daire + firma +
 /// opsiyonel foto/not) -> dairenin TUM aktif sakinlerine push -> sakin
-/// "Teslim aldim" isaretler (ikinci isaret 409 — teslim alan degismez).
-/// RBAC (auth.md §4, visitor deseni): KAYIT yalniz security; TESLIM yalniz
-/// o dairenin aktif sakini; OKUMA yonetim+guvenlik tum gecmis, sakin kendi
+/// "Teslim aldim" isaretler YA DA guvenlik "Teslim et" der (P247 §3; ikinci
+/// isaret 409 — teslim alan degismez).
+/// RBAC (auth.md §4, visitor deseni): KAYIT yalniz security; TESLIM o
+/// dairenin aktif sakini VEYA security; OKUMA yonetim+guvenlik tum gecmis, sakin kendi
 /// dairesi; tesis_gorevlisi erisemez.
 library;
 
@@ -46,6 +47,9 @@ class Kargo {
     this.teslimAlanUserId,
     this.teslimAlanAd,
     this.teslimZamani,
+    this.teslimEdenUserId,
+    this.teslimEdenAd,
+    this.gecikmis = false,
   });
 
   final String id;
@@ -75,6 +79,15 @@ class Kargo {
   final String? teslimAlanAd;
   final DateTime? teslimZamani;
 
+  /// (P247 §3) Teslimi guvenlik isaretlediyse o kisi (sakin kendisi
+  /// isaretlediyse null).
+  final String? teslimEdenUserId;
+  final String? teslimEdenAd;
+
+  /// (P247 §3) Sunucu hesaplar: `bekliyor` ve kayit esikten (3 gun) eski.
+  /// Durum degismez; yalniz listede isaretlenir.
+  final bool gecikmis;
+
   final DateTime createdAt;
 
   bool get bekliyor => durum == KargoDurum.bekliyor;
@@ -95,6 +108,9 @@ class Kargo {
     teslimZamani: json['teslim_zamani'] == null
         ? null
         : DateTime.tryParse(json['teslim_zamani'] as String? ?? ''),
+    teslimEdenUserId: json['teslim_eden_user_id'] as String?,
+    teslimEdenAd: json['teslim_eden_ad'] as String?,
+    gecikmis: json['gecikmis'] as bool? ?? false,
     createdAt:
         DateTime.tryParse(json['created_at'] as String? ?? '') ??
         DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),

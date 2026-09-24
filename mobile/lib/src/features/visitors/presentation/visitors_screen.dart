@@ -18,6 +18,10 @@ import 'visitors_controller.dart';
 ///   * resident: KENDINE hedeflenen ziyaretci kayitlari — BILGILENDIRME
 ///     (kaydedildi bilgisi). Onay/red YOKTUR.
 ///   * admin/yonetici: tek-seferlik izinle daire kayitlari (salt izleme).
+///   * (P247 §3) Her kartta DURUM: "Iceride" / "Cikti · saat" / "Cikis
+///     kaydedilmedi" (24 saat sonra sunucu kapatti). security iceride olan
+///     kartta "Cikis yapti" ile cikisi damgalar — bu dugme yokken kayitlar
+///     hic kapanmiyordu.
 ///
 /// [initialVisitorId] push tiklamasindan gelir (?visitor_id=...): liste
 /// yuklendiginde ilgili kaydin detayi BIR KEZ otomatik acilir; kayit listede
@@ -49,7 +53,12 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen> {
     final v = hedef;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        _showDetail(context, v, canRegister: state.canRegister);
+        _showDetail(
+          context,
+          v,
+          canRegister: state.canRegister,
+          canCheckout: state.canCheckout,
+        );
       }
     });
   }
@@ -155,16 +164,22 @@ class _Body extends ConsumerWidget {
       itemBuilder: (context, i) => _VisitorCard(
         visitor: state.items[i],
         canRegister: state.canRegister,
+        canCheckout: state.canCheckout,
       ),
     );
   }
 }
 
 class _VisitorCard extends ConsumerWidget {
-  const _VisitorCard({required this.visitor, required this.canRegister});
+  const _VisitorCard({
+    required this.visitor,
+    required this.canRegister,
+    required this.canCheckout,
+  });
 
   final Visitor visitor;
   final bool canRegister;
+  final bool canCheckout;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -175,7 +190,12 @@ class _VisitorCard extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => _showDetail(context, v, canRegister: canRegister),
+        onTap: () => _showDetail(
+          context,
+          v,
+          canRegister: canRegister,
+          canCheckout: canCheckout,
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -191,6 +211,7 @@ class _VisitorCard extends ConsumerWidget {
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),
+                  _ZiyaretDurumChip(visitor: v),
                 ],
               ),
               const SizedBox(height: 4),
@@ -212,10 +233,133 @@ class _VisitorCard extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(v.notlar!, maxLines: 2, overflow: TextOverflow.ellipsis),
               ],
+              if (v.cikisZamani != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  _cikisSatiri(l10n, dil, v),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+              if (canCheckout && v.iceride) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: _CikisButton(visitor: v),
+                ),
+              ],
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// (P247 §3) Cikis satiri: gercek cikis -> "Cikis: {zaman}"; sunucunun
+/// kapattigi kayit -> "Cikis kaydedilmedi" (zaman YAZILMAZ — o an bir cikis
+/// ani degil, kapanis anidir).
+String _cikisSatiri(AppLocalizations l10n, String dil, Visitor v) =>
+    v.cikisOtomatik
+        ? l10n.ziyaretCikisKaydedilmedi
+        : l10n.ziyaretCikisZamani(tarihSaatBicimi(v.cikisZamani!, dil));
+
+/// (P247 §3) Durum rozeti: Iceride (turuncu) / Cikti (yesil) / Cikis
+/// kaydedilmedi (gri). Renk ikinci ipucu; durum METINLE yazili.
+class _ZiyaretDurumChip extends StatelessWidget {
+  const _ZiyaretDurumChip({required this.visitor});
+
+  final Visitor visitor;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final (Color renk, String metin) = visitor.iceride
+        ? (Colors.orange, l10n.ziyaretIceride)
+        : visitor.cikisOtomatik
+            ? (Colors.grey, l10n.ziyaretCikisKaydedilmedi)
+            : (Colors.green, l10n.ziyaretCikti);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: renk.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        metin,
+        style: TextStyle(color: renk, fontSize: 12, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+}
+
+/// (P247 §3) "Cikis yapti" — onay penceresiyle; 409 (baska cihaz ya da
+/// sunucu zaten kapatti) OLAN sey olarak soylenir, liste tazelenir.
+class _CikisButton extends ConsumerStatefulWidget {
+  const _CikisButton({required this.visitor, this.onDone});
+
+  final Visitor visitor;
+  final VoidCallback? onDone;
+
+  @override
+  ConsumerState<_CikisButton> createState() => _CikisButtonState();
+}
+
+class _CikisButtonState extends ConsumerState<_CikisButton> {
+  bool _busy = false;
+
+  Future<void> _cikis() async {
+    if (_busy) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
+    final onay = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.ziyaretCikisOnayBaslik),
+        content: Text(widget.visitor.ziyaretciAd),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.ortakIptal),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.ziyaretCikisYapti),
+          ),
+        ],
+      ),
+    );
+    if (onay != true || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(visitorsControllerProvider.notifier)
+          .checkout(widget.visitor.id);
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.ziyaretCikisKaydedildi)),
+      );
+      widget.onDone?.call();
+    } on ApiException catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            e.statusCode == 409
+                ? l10n.ziyaretCikisZatenKayitli
+                : apiHataMetni(l10n, e),
+          ),
+        ),
+      );
+      widget.onDone?.call();
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      icon: const Icon(Icons.logout, size: 18),
+      label: Text(context.l10n.ziyaretCikisYapti),
+      onPressed: _busy ? null : _cikis,
     );
   }
 }
@@ -226,6 +370,7 @@ void _showDetail(
   BuildContext context,
   Visitor v, {
   required bool canRegister,
+  bool canCheckout = false,
 }) {
   merkezSayfaAc<void>(
     context,
@@ -262,6 +407,22 @@ void _showDetail(
             if (v.notlar != null && v.notlar!.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(l10n.karNot(v.notlar!)),
+            ],
+            const SizedBox(height: 4),
+            Text(
+              v.iceride
+                  ? l10n.ziyaretIceride
+                  : _cikisSatiri(l10n, dil, v),
+            ),
+            if (canCheckout && v.iceride) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: _CikisButton(
+                  visitor: v,
+                  onDone: () => Navigator.of(sheetContext).pop(),
+                ),
+              ),
             ],
             // Rol-bazli arama (C1a): güvenlik → HEDEF sakini arar; sakin →
             // kaydı açan GÜVENLİĞİ arar. Buton yalnız aranabilir (rıza) ise

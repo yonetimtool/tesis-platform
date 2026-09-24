@@ -37,6 +37,8 @@ export const BILDIRIM_ROTALARI: Record<string, string> = {
   // kayitlari kendi ekranindan izliyor; hedefi olmayan bir satir
   // birakmak, ayni tipe iki yuzeyde iki farkli davranis vermekti.
   kargo: "/kargolar",
+  // (P247 §3) "Kargonuz guvenlik tarafindan teslim edildi".
+  kargo_teslim: "/kargolar",
   ziyaretci: "/ziyaretciler",
   rezervasyon: "/rezervasyon-yonetimi",
   sikayet_cozuldu: "/complaints",

@@ -73,12 +73,19 @@ class KargoApi {
     }
   }
 
-  /// Sakin teslim isareti: bekliyor -> teslim_alindi.
-  Future<Kargo> markReceived(String id) async {
+  /// Teslim isareti: bekliyor -> teslim_alindi.
+  ///
+  /// Sakin cagirir ("teslim aldim") ya da (P247 §3) guvenlik cagirir
+  /// ("teslim ettim"); guvenlik paketi alan sakini [teslimAlanUserId] ile
+  /// belirtebilir (verilmezse alan JSON'a HIC yazilmaz).
+  Future<Kargo> markReceived(String id, {String? teslimAlanUserId}) async {
     try {
       final res = await _dio.patch<Map<String, dynamic>>(
         '/kargo/$id',
-        data: {'durum': 'teslim_alindi'},
+        data: {
+          'durum': 'teslim_alindi',
+          'teslim_alan_user_id': ?teslimAlanUserId,
+        },
       );
       return Kargo.fromJson(res.data ?? const {});
     } on DioException catch (e) {

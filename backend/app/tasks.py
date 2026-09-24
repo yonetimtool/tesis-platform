@@ -132,6 +132,18 @@ def gurultu_kuyrugu() -> dict:
     return {"islenen": _async_calistir(tum_tenantlar_icin)}
 
 
+@celery_app.task(name="scheduler.vardiya_dongu_uret")
+def vardiya_dongu_uret() -> dict:
+    """(P247 §1) Beat (gunluk): dongu atamalarinin kayan ufkunu doldur.
+
+    IDEMPOTENT: her atama kendi filigranina (`uretildi_kadar`) bakar;
+    gunde birden cok kossa da ayni gunu ikinci kez uretmez.
+    """
+    from .vardiya_dongu_isi import tum_tenantlar_icin
+
+    return _async_calistir(tum_tenantlar_icin)
+
+
 @celery_app.task(name="ceviri.translate_entity", bind=True, max_retries=3)
 def translate_entity(self, tip_ad: str, entity_id: str, tenant_id: str) -> dict:
     """Yayin iceriginin (duyuru/kural/etkinlik) eksik cevirilerini uretir.
@@ -272,5 +284,17 @@ def bakim_hatirlatma() -> dict:
     SENKRON (`psycopg`) — entegrasyon saglik gorevi ile ayni desen.
     """
     from .bakim_hatirlatma_isi import tum_tenantlar_icin
+
+    return tum_tenantlar_icin()
+
+
+@celery_app.task(name="scheduler.ziyaretci_otomatik_kapanis")
+def ziyaretci_otomatik_kapanis() -> dict:
+    """(P247 §3) Beat: 24 saatten eski, cikisi damgalanmamis ziyaretci
+    kayitlarini "cikis kaydedilmedi" olarak kapatir (saatte bir).
+
+    SENKRON (`psycopg`) — bakim hatirlatma gorevi ile ayni desen.
+    """
+    from .ziyaretci_kapanis_isi import tum_tenantlar_icin
 
     return tum_tenantlar_icin()

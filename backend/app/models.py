@@ -143,6 +143,9 @@ NOTIFICATION_TIP = ENUM(
     "bakim_yaklasti", "bakim_bugun", "bakim_gecikti",
     # (P241 §2, göç 0145) Vardiya planı YAYINLANDI — personele duyuru.
     "vardiya_yayinlandi",
+    # (P247 §3, göç 0154) Güvenlik kargoyu sakine TESLİM ETTİ — dairenin
+    # sakinlerine kalıcı bilgi (paketi kimin verdiği izlenebilir kalsın).
+    "kargo_teslim",
     name="notification_tip", create_type=False,
 )
 ASSET_KATEGORI = ENUM(
@@ -2141,6 +2144,11 @@ class Visitor(Base):
     )
     # Cikis damgasi (G3). NULL = ziyaretci HALA ICERIDE.
     cikis_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    # (P247 §3, goc 0154) Cikisi guvenlik DEGIL beat isi kapatti: kayit
+    # "iceride" sayilmaz ama cikis GORULMEDI ("cikis kaydedilmedi").
+    cikis_otomatik: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
     created_at = _created_at()
 
 
@@ -2174,6 +2182,13 @@ class Kargo(Base):
             ondelete="SET NULL",
             name="fk_kargo_teslim_alan",
         ),
+        # (P247 §3, goc 0154) Paketi sakine VEREN guvenlik; kolon-ozel SET NULL.
+        ForeignKeyConstraint(
+            ["teslim_eden_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_kargo_teslim_eden",
+        ),
     )
 
     id: Mapped[uuid.UUID] = _pk()
@@ -2192,6 +2207,11 @@ class Kargo(Base):
         UUID(as_uuid=True), nullable=True
     )
     teslim_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    # (P247 §3, goc 0154) Teslimi GUVENLIK isaretlediyse o kisi; sakin
+    # kendisi isaretlediyse NULL.
+    teslim_eden_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
     created_at = _created_at()
 
 
@@ -4963,6 +4983,11 @@ class VardiyaPlani(Base):
     #: NULL = TASLAK. Doluysa yayinlanmis; `updated_at > yayinlandi_at`
     #: ise yayinlanmamis DEGISIKLIK var (goc 0145).
     yayinlandi_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    #: (P247 §1, goc 0156) Satiri ureten DONGU ATAMASI. NULL = elle/toplu.
+    #: Atama sonlandirilinca YALNIZ onun gelecek satirlari iptal edilir.
+    dongu_atama_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
     created_at = _created_at()
     updated_at = _created_at()
 
@@ -5050,6 +5075,54 @@ class VardiyaKalibi(Base):
     aktif: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")
     )
+    #: (P247 §1, goc 0156) DONGU — gun uzunlugunda adim dizisi; her adim o
+    #: gunun DILIM SIRA NUMARALARI, bos dizi = tatil. NULL = klasik kalip.
+    #: `none_as_null`: Python None -> SQL NULL. Olmadan JSON `null` yazilir,
+    #: CHECK (jsonb_typeof = 'array') onu reddeder ve KLASIK kalip 500 olurdu
+    #: (test_p247_rotasyon ilk kosumunda olculdu).
+    adimlar: Mapped[list | None] = mapped_column(
+        JSONB(none_as_null=True), nullable=True
+    )
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class VardiyaDonguAtama(Base):
+    """(P247 §1, goc 0156) KISI x DONGU x BASLANGIC — suresiz uretim.
+
+    Adim(gun) = (gun - referans) mod len(adimlar). Takvime bagli oldugu
+    icin izin, iptal ya da elle degisiklik donguyu KAYDIRAMAZ.
+    `uretildi_kadar` filigrani: o gune kadar satir uretildi; uretici ONU
+    GERI DONUP yazmaz (elle degistirilen/iptal edilen satir ezilmez).
+    """
+
+    __tablename__ = "vardiya_dongu_atama"
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    kalip_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    referans = mapped_column(Date, nullable=False)
+    baslangic = mapped_column(Date, nullable=False)
+    bitis = mapped_column(Date, nullable=True)
+    uretildi_kadar = mapped_column(Date, nullable=True)
+    parti_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    molalar: Mapped[list] = mapped_column(
+        JSONB, nullable=False, server_default=text("'[]'::jsonb")
+    )
+    not_metni: Mapped[str | None] = mapped_column(Text, nullable=True)
+    atlanan: Mapped[list] = mapped_column(
+        JSONB, nullable=False, server_default=text("'[]'::jsonb")
+    )
+    olusturan_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    iptal_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     created_at = _created_at()
     updated_at = _created_at()
 
