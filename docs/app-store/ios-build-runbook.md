@@ -61,8 +61,13 @@ de gerçeği ölçmeye devam eder.
 cd mobile
 flutter build ios --release \
   --dart-define=API_BASE_URL=https://api.yonetio.site \
-  --dart-define=WEB_BASE_URL=https://yonetio.site
+  --dart-define=WEB_BASE_URL=https://yonetiyor.com
 ```
+
+(1.7.0) `WEB_BASE_URL` Android yayın betiğiyle (`mobile/yayin-yap.sh`) ve
+adres politikasıyla aynı: kanonik web adresi `https://yonetiyor.com`.
+Bu satır eskiden `https://yonetio.site` diyordu; iki platform farklı
+adresle derlenirdi.
 
 **`--dart-define`ler ZORUNLU.** Verilmezse `AppConfig` varsayılanları
 devreye girer: API `http://10.0.2.2:8000` (Android emülatörü adresi) ve

@@ -128,9 +128,14 @@ eksikler += grup("JETON SAKLAMA (token_storage) — Dart tarafi", [
     ("eski parola (silinmek icin)", "auth.saved_password"),
     ("guvenli depo kanali", "plugins.it_nomads.com/flutter_secure_storage"),
 ])
+# SINIF ADIYLA ARANMAZ: yayin yapiminda R8 eklenti sinifinin tanimlayicisini
+# yeniden adlandiriyor (ilk olcum "YOK" dedi, eklenti oradaydi). Kucultmeden
+# SAG CIKAN dizgiler: eklentinin paket-onekli is adi, yapilandirma sinifinin
+# toString'i ve Keystore saglayici adi.
 eksikler += grup("JETON SAKLAMA — Android yerel eklenti (classes.dex)", [
-    ("eklenti sinifi", "com/it_nomads/fluttersecurestorage/FlutterSecureStoragePlugin"),
-    ("Keystore", "AndroidKeyStore"),
+    ("eklenti paketi", "com.it_nomads.fluttersecurestorage"),
+    ("eklenti yapilandirmasi", "FlutterSecureStorageConfig{"),
+    ("Keystore saglayici", "AndroidKeyStore"),
 ], veri=DEX)
 # Jeton anahtarlari SharedPreferences eklentisi uzerinden YAZILMAMALI:
 # SharedPreferences dizgi onekinin jeton anahtariyla YAN YANA gecmesi
