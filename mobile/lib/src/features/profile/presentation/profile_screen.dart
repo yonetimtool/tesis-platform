@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../core/validators/password_rule.dart';
+import '../../auth/data/token_storage.dart';
 import '../../auth/domain/user_role.dart';
 import '../../auth/presentation/rol_adi.dart';
 import '../../tasks/presentation/task_complete_controller.dart'
@@ -335,10 +336,13 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
     final l10n = context.l10n;
     setState(() => _submitting = true);
     try {
-      await ref.read(profileApiProvider).changePassword(
+      final jetonlar = await ref.read(profileApiProvider).changePassword(
             currentPassword: _currentCtrl.text,
             newPassword: _newCtrl.text,
           );
+      // (P247 §4) Eski jetonlar sunucuda iptal edildi; bu cihaz yenisiyle
+      // devam eder, oteki cihazlar duser.
+      await ref.read(tokenStorageProvider).save(jetonlar);
       if (!mounted) return;
       _currentCtrl.clear();
       _newCtrl.clear();

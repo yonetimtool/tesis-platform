@@ -13,9 +13,13 @@ class TokenStorage {
   static const _kAccess = 'auth.access_token';
   static const _kRefresh = 'auth.refresh_token';
   static const _kRemember = 'auth.remember_me';
-  // "Beni hatirla" ON-DOLDURMA icin saklanan giris bilgileri. Parola YALNIZ
-  // burada (Keystore destekli secure storage) tutulur; asla loglanmaz/gonderilmez
-  // (normal giris cagrisi disinda). Login ekrani acilista bunlarla alanlari doldurur.
+  // "Beni hatirla" ON-DOLDURMA icin saklanan KIMLIK (telefon/e-posta).
+  //
+  // (P247 §4) PAROLA ARTIK SAKLANMAZ. Oturum 30 gun (kayan) yasadigindan
+  // "beni hatirla"nin isi jetonu saklamaktir; parolayi cihazda tutmak,
+  // cihazi ele geciren birine hesabin KALICI anahtarini vermekti (jeton
+  // sunucudan iptal edilebilir, parola edilemez). Eski surumlerin yazdigi
+  // parola ilk okumada/yazmada SILINIR (`_kSavedPassword` yalniz bunun icin).
   static const _kSavedPhone = 'auth.saved_phone';
   static const _kSavedPassword = 'auth.saved_password';
 
@@ -29,16 +33,18 @@ class TokenStorage {
   Future<String?> readRefreshToken() => _storage.read(key: _kRefresh);
 
   /// "Beni hatirla" bayragi: true ise acilista oturum geri yuklenmeye calisilir.
-  Future<void> saveRememberMe(bool value) async {
-    if (value) {
-      await _storage.write(key: _kRemember, value: 'true');
-    } else {
-      await _storage.delete(key: _kRemember);
-    }
-  }
+  ///
+  /// (P247 §4) VARSAYILAN HATIRLA. Once bayrak yalniz parolali giriste
+  /// yaziliyordu; SSO, davet, kodla giris ve tesis olusturma yollari onu
+  /// HIC yazmiyordu ve bu kullanicilar uygulamayi her yeniden acista
+  /// OTURUMSUZ kaliyordu — "30 gun oturum" yalniz kutuyu isaretleyen
+  /// parolali kullanici icin dogruydu. Artik yalniz ACIKCA "hatirlama"
+  /// denirse `'false'` yazilir; kayit yoksa hatirlanir.
+  Future<void> saveRememberMe(bool value) =>
+      _storage.write(key: _kRemember, value: value ? 'true' : 'false');
 
   Future<bool> readRememberMe() async =>
-      await _storage.read(key: _kRemember) == 'true';
+      await _storage.read(key: _kRemember) != 'false';
 
   /// (P170 §1) SAKLANAN KIMLIK BILGISI BU CIHAZI TERK ETMEZ.
   ///
@@ -56,7 +62,8 @@ class TokenStorage {
   );
 
   /// "Beni hatirla" isaretliyken cagrilir: sonraki girislerde ON-DOLDURMA icin
-  /// telefon + parolayi saklar (ikisi de Keystore/Keychain destekli depoda).
+  /// YALNIZ kimligi saklar. [password] (P247 §4) YOK SAYILIR — imza, cagiran
+  /// yerleri ve test sahtelerini kirmamak icin korunur.
   Future<void> saveCredentials({
     required String phone,
     required String password,
@@ -64,20 +71,20 @@ class TokenStorage {
     await _storage.write(
       key: _kSavedPhone, value: phone, iOptions: _kimlikSecenekleri,
     );
-    await _storage.write(
-      key: _kSavedPassword, value: password, iOptions: _kimlikSecenekleri,
-    );
+    await _eskiParolayiSil();
   }
 
-  /// Saklanan giris bilgileri (telefon + parola) ya da yoksa null.
+  /// Saklanan kimlik (parola HER ZAMAN bos) ya da yoksa null.
   Future<({String phone, String password})?> readCredentials() async {
+    await _eskiParolayiSil();
     final phone = await _storage.read(key: _kSavedPhone);
-    final password = await _storage.read(key: _kSavedPassword);
-    if (phone == null || phone.isEmpty || password == null || password.isEmpty) {
-      return null;
-    }
-    return (phone: phone, password: password);
+    if (phone == null || phone.isEmpty) return null;
+    return (phone: phone, password: '');
   }
+
+  /// (P247 §4) 1.6.x ve oncesinin sakladigi parolayi temizler.
+  Future<void> _eskiParolayiSil() =>
+      _storage.delete(key: _kSavedPassword, iOptions: _kimlikSecenekleri);
 
   /// ON-DOLDURMA bilgilerini siler ("beni hatirla" kaldirilinca / isaretsiz giriste).
   Future<void> clearCredentials() async {

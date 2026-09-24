@@ -338,7 +338,7 @@ def test_parolasiz_EPOSTA_koduyla_PAROLA_kurar(client, adm, owner_conn, konsol_e
     r = client.patch(
         "/me/password", headers=h, json={"kod": "424242", "new_password": yeni}
     )
-    assert r.status_code == 204, r.text
+    assert r.status_code == 200, r.text
     # Artik parola ile giris yapilabilir.
     assert (
         client.post("/auth/login-phone", json={"phone": tel, "password": yeni})

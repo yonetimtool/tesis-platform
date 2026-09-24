@@ -35,8 +35,9 @@ abstract interface class AuthRepository {
     String? phone,
   });
 
-  /// "Beni hatirla" isaretliyken saklanan giris bilgileri (telefon + parola);
-  /// login ekrani acilista alanlari bununla ON-DOLDURUR. Yoksa null.
+  /// "Beni hatirla" isaretliyken saklanan KIMLIK; login ekrani acilista
+  /// kimlik alanini bununla ON-DOLDURUR. Yoksa null. (P247 §4) `password`
+  /// her zaman bostur — parola cihazda saklanmaz.
   Future<({String phone, String password})?> readSavedCredentials();
 
   /// (P155 §7) Davetle gelen kullanici PAROLA belirler (SMS YOK) ve oturum

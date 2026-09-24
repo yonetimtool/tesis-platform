@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
+import '../../auth/domain/token_pair.dart';
 import '../domain/profile.dart';
 
 /// Self-servis profil uclarinin ince HTTP istemcisi (kimlikli [dioProvider]).
@@ -34,19 +35,24 @@ class ProfileApi {
     }
   }
 
-  /// `PATCH /me/password` — mevcut parola dogrulanir; 204 doner.
-  Future<void> changePassword({
+  /// `PATCH /me/password` — mevcut parola dogrulanir.
+  ///
+  /// (P247 §4) Sunucu TUM oturumlari (bu cihazinki dahil) iptal eder ve
+  /// yalniz bu istege taze bir cift doner; cagiran onu SAKLAMALI, yoksa
+  /// bir sonraki yenilemede bu cihaz da duser.
+  Future<TokenPair> changePassword({
     required String currentPassword,
     required String newPassword,
   }) async {
     try {
-      await _dio.patch<void>(
+      final res = await _dio.patch<Map<String, dynamic>>(
         '/me/password',
         data: {
           'current_password': currentPassword,
           'new_password': newPassword,
         },
       );
+      return TokenPair.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

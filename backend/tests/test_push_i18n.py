@@ -134,7 +134,7 @@ class _SahteSaglayici:
     # `dispatch_external` TypeError'i YUTAR (savunma try/except) ve
     # test "hic gonderim olmadi" diye duser — ilk kosumda tam olarak
     # bu oldu.
-    def send(self, tokens, *, title, body, data=None, kanal=None, ses=None):
+    def send(self, tokens, *, title, body, data=None, kanal=None, ses=None, gorunum=None):
         self.cagrilar.append((tuple(tokens), title, body))
         return None
 

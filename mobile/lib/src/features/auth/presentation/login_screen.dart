@@ -37,7 +37,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _kimlikCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _obscure = true;
-  bool _rememberMe = false;
+  // (P247 §4) Varsayilan ISARETLI: telefon kisisel cihazdir ve oturum 30
+  // gun surer. Ortak cihazda kullanici kutuyu kaldirir.
+  bool _rememberMe = true;
 
   // (E2E 2026-09, YETKI-13) E-POSTA KODUYLA GIRIS — web'deki "Parola yerine
   // e-postaya kod gonder" akisinin ikizi. Mod ekranin ICINDE: ayri bir rota
@@ -66,7 +68,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (saved == null || !mounted) return;
     setState(() {
       _kimlikCtrl.text = saved.phone;
-      _passwordCtrl.text = saved.password;
       _rememberMe = true;
     });
   }

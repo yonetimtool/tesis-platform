@@ -182,7 +182,7 @@ class _SahteSaglayici:
     def __init__(self):
         self.cagrilar: list[dict] = []
 
-    def send(self, tokens, *, title, body, data=None, kanal=None, ses=None):
+    def send(self, tokens, *, title, body, data=None, kanal=None, ses=None, gorunum=None):
         from app.push import PushResult
 
         self.cagrilar.append({"tokens": list(tokens), "kanal": kanal,

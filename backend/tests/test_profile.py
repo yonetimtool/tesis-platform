@@ -44,7 +44,7 @@ def test_change_password_happy_path(client, world):
         headers=h,
         json={"current_password": cred["password"], "new_password": new_pw},
     )
-    assert r.status_code == 204, r.text
+    assert r.status_code == 200, r.text
 
     # Yeni parola ile login olur; eski parola artik gecmez.
     assert _login_status(client, slug, cred, new_pw) == 200
@@ -81,7 +81,7 @@ def test_resident_can_change_own_password(client, world):
         headers=h,
         json={"current_password": cred["password"], "new_password": new_pw},
     )
-    assert r.status_code == 204, r.text
+    assert r.status_code == 200, r.text
     assert _login_status(client, slug, cred, new_pw) == 200
 
 

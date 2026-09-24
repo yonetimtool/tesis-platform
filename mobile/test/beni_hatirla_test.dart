@@ -9,7 +9,8 @@ import 'package:mobile/src/features/auth/domain/token_pair.dart';
 /// =========================================================================
 /// BU TEST NE OLCER
 /// =========================================================================
-/// 1. Isaretliyse telefon + parola saklanir ve ON-DOLDURMA icin geri okunur.
+/// 1. Isaretliyse YALNIZ kimlik saklanir (P247 §4: parola artik saklanmaz;
+///    eski surumun sakladigi parola ilk okumada silinir).
 /// 2. Isaretsizse HICBIR SEY saklanmaz — ve onceden saklanan da SILINIR.
 /// 3. Cikis saklanan kimlik bilgisini TEMIZLER (P170'te degisen davranis;
 ///    once bilerek birakiliyordu).
@@ -73,14 +74,27 @@ void main() {
 
   TokenStorage depo() => TokenStorage(const FlutterSecureStorage());
 
-  test('isaretli: telefon + parola saklanir ve geri okunur', () async {
+  test('(P247 §4) isaretli: YALNIZ kimlik saklanir, PAROLA SAKLANMAZ', () async {
     final d = depo();
     await d.saveCredentials(phone: '05551112233', password: 'Parola1234');
 
     final okunan = await d.readCredentials();
     expect(okunan, isNotNull);
     expect(okunan!.phone, '05551112233');
-    expect(okunan.password, 'Parola1234');
+    expect(okunan.password, isEmpty);
+    // Depoda parolayi andiran HICBIR deger yok.
+    expect(store.values, isNot(contains('Parola1234')));
+  });
+
+  test('(P247 §4) eski surumun sakladigi parola ilk okumada SILINIR', () async {
+    // 1.6.x "beni hatirla" parolayi bu anahtara yaziyordu.
+    store['auth.saved_phone'] = '05551112233';
+    store['auth.saved_password'] = 'EskiParola1';
+
+    final okunan = await depo().readCredentials();
+    expect(okunan!.phone, '05551112233');
+    expect(okunan.password, isEmpty);
+    expect(store.containsKey('auth.saved_password'), isFalse);
   });
 
   test('parola YALNIZ guvenli depo kanalina yazilir', () async {
@@ -117,18 +131,14 @@ void main() {
 
     expect(await d.readCredentials(), isNull);
     expect(await d.readAccessToken(), isNull);
-    expect(await d.readRememberMe(), isFalse);
+    expect(await d.readRefreshToken(), isNull);
     // Depoda parolayi andiran HICBIR deger kalmamali.
     expect(store.values, isNot(contains('Parola1234')));
   });
 
-  test('eksik alan tam sayilmaz: yalniz telefon varsa on-doldurma YOK',
-      () async {
+  test('bos kimlik on-doldurma yapmaz', () async {
     final d = depo();
-    await d.saveCredentials(phone: '05551112233', password: '');
-
-    // Yarim bir kayit, parola alanini bos birakip kullaniciyi
-    // "kaydedilmis ama calismiyor" durumunda birakirdi.
+    await d.saveCredentials(phone: '', password: '');
     expect(await d.readCredentials(), isNull);
   });
 }

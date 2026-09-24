@@ -136,8 +136,7 @@ void main() {
     await tester.enterText(
         find.widgetWithText(TextFormField, 'Parola veya geçici kod'),
         'K7MR-2QWX');
-    await tester.tap(find.byKey(const Key('remember_me_checkbox')));
-    await tester.pump();
+    // (P247 §4) Kutu varsayilan ISARETLI — dokunmadan gonderilir.
 
     await tester.tap(find.text('Giriş yap'));
     await tester.pumpAndSettle();

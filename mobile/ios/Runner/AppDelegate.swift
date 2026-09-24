@@ -1,5 +1,6 @@
 import Flutter
 import UIKit
+import UserNotifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
@@ -13,6 +14,33 @@ import UIKit
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     kurTeshisKanali(engineBridge.pluginRegistry)
+    kurRozetKanali(engineBridge.pluginRegistry)
+  }
+
+  /// (P247 §5) UYGULAMA SIMGESI ROZETI — okunmamis bildirim sayisi.
+  ///
+  /// Sunucu push'ta `aps.badge` gonderir (bildirim geldiginde dogru sayi);
+  /// uygulama acilip bildirimler okundukca sayi burada GERCEK degere
+  /// cekilir — yoksa rozet bir sonraki push'a kadar eski sayida kalirdi.
+  /// Yeni cerceve/pod YOK: yalniz UIKit + UserNotifications.
+  private func kurRozetKanali(_ registry: FlutterPluginRegistry) {
+    guard let registrar = registry.registrar(forPlugin: "YonetioRozet") else { return }
+    let kanal = FlutterMethodChannel(
+      name: "site.yonetio.app/rozet",
+      binaryMessenger: registrar.messenger()
+    )
+    kanal.setMethodCallHandler { cagri, sonuc in
+      guard cagri.method == "ayarla", let sayi = cagri.arguments as? Int else {
+        sonuc(FlutterMethodNotImplemented)
+        return
+      }
+      if #available(iOS 16.0, *) {
+        UNUserNotificationCenter.current().setBadgeCount(max(0, sayi)) { _ in }
+      } else {
+        UIApplication.shared.applicationIconBadgeNumber = max(0, sayi)
+      }
+      sonuc(nil)
+    }
   }
 
   /// (P119) TESHIS KANALI — "kaynakta ne yaziyor" degil, PAKETTE ne var.

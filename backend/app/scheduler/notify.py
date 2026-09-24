@@ -24,6 +24,7 @@ import psycopg
 from .. import push
 from ..config import settings
 from ..gunlukleme import guvenli_alanlar
+from ..push_gorunum import gorunum_kur, hedef_rol
 from ..push_kanal import kanal_sec, ses_adi
 from ..push_metinleri import dil_normalize, push_basligi, push_govdesi
 from ..ceviri import VARSAYILAN_DIL
@@ -113,6 +114,10 @@ class Cihaz:
     #: degistiremez — "sesi kapat" ancak sunucunun BASKA BIR KANALA
     #: gondermesiyle olur.
     sesli: bool = True
+    #: (P247 §5) Sahibinin ASIL rolu ve bu cihaza KISI olarak mi (rol
+    #: yayini degil) ulasildigi — `data.hedef_rol` bunlardan cikar.
+    rol: str = ""
+    kisi_hedefli: bool = False
 
 
 #: Saglayici TOPLAM durumu -> teshis durumu (token bazinda sonuc yoksa yedek).
@@ -169,14 +174,24 @@ def _push_to_devices(
               "tercih_kapali" if kapali else "cihaz_yok")],
         )
         return
+    # (P247 §5) GORUNUM: kaynak (tesis adi) + kisi basina rozet. Hata
+    # YUTULUR — gorunum eksik bir bildirim, hic gitmeyen bildirimden iyidir.
+    kaynak, okunmamis = _gorunum_bilgisi(
+        tenant_id, list({c.user_id for c in cihazlar.values()})
+    )
     # DILE GORE GRUPLA: tek bir metinle gondermek, cihazin dilini yok saymak
     # olurdu. Gruplama gonderim SAYISINI degil, metin SAYISINI artirir.
-    gruplar: dict[str, list[str]] = {}
+    # (P247 §2) HEDEF ROL de gruplama anahtari: `data` gonderim basina tek.
+    gruplar: dict[tuple[str, str], list[str]] = {}
     for token, c in cihazlar.items():
-        gruplar.setdefault(dil_normalize(c.dil), []).append(token)
+        anahtar = (
+            dil_normalize(c.dil),
+            hedef_rol(kimlik, c.rol, kisi_hedefli=c.kisi_hedefli),
+        )
+        gruplar.setdefault(anahtar, []).append(token)
     gecersiz: list[str] = []
     satirlar: list[tuple] = []
-    for dil, tokenlar in gruplar.items():
+    for (dil, rol_), tokenlar in gruplar.items():
         # (P207 §2) KANAL VE SES KISI BAZINDA: ayni gonderimde bir
         # kullanici sesli, oteki sessiz olabilir. Gruplama DILE gore
         # yapildigi icin ses kirilimi burada IKINCI bir gruplamayla
@@ -186,13 +201,24 @@ def _push_to_devices(
             alt = [t for t in tokenlar if cihazlar[t].sesli is sesli]
             if not alt:
                 continue
+            veri = dict(data or {})
+            if rol_:
+                veri["hedef_rol"] = rol_
             sonuc = provider.send(
                 alt,
                 title=push_basligi(kimlik, dil),
                 body=govde or push_govdesi(kimlik, dil, params),
-                data=dict(data or {}),
+                data=veri,
                 kanal=kanal_sec(kimlik, sesli=sesli),
                 ses=ses_adi(kimlik, sesli=sesli),
+                gorunum=gorunum_kur(
+                    kimlik, tenant_id=tenant_id, data=veri, kaynak=kaynak,
+                    # +1: gonderilen bildirimin satiri henuz YAZILMAMIS ya
+                    # da commit edilmemis olur (cagiranlar push'u satirdan
+                    # once/ayni islemde atar). Uygulama acilinca gercek
+                    # sayiyla duzeltir.
+                    rozet={t: okunmamis.get(cihazlar[t].user_id, 0) + 1 for t in alt},
+                ),
             )
             # FCM'in KALICI gecersiz dedigi token'lar -> budanacak.
             # `getattr` savunmasi: noop/eski saglayici None ya da alansiz
@@ -245,13 +271,16 @@ def _fetch_device_tokens(
             )
             cur.execute(
                 "SELECT d.fcm_token, d.dil, d.user_id, d.platform, "
-                "u.bildirim_sesi FROM user_device d "
+                "u.bildirim_sesi, u.role::text FROM user_device d "
                 "JOIN app_user u ON u.id = d.user_id "
                 "WHERE d.aktif = true AND u.is_active = true AND u.role::text = ANY(%s)"
                 + _KANAL_KOSULU,
                 (list(roles),),
             )
-            return [Cihaz(r[0], r[1], r[2], r[3], bool(r[4])) for r in cur.fetchall()]
+            return [
+                Cihaz(r[0], r[1], r[2], r[3], bool(r[4]), rol=r[5], kisi_hedefli=False)
+                for r in cur.fetchall()
+            ]
 
 
 def _fetch_device_tokens_for_users(
@@ -270,13 +299,77 @@ def _fetch_device_tokens_for_users(
             )
             cur.execute(
                 "SELECT d.fcm_token, d.dil, d.user_id, d.platform, "
-                "u.bildirim_sesi FROM user_device d "
+                "u.bildirim_sesi, u.role::text FROM user_device d "
                 "JOIN app_user u ON u.id = d.user_id "
                 "WHERE d.aktif = true AND u.is_active = true "
                 "AND u.id = ANY(%s::uuid[])" + _KANAL_KOSULU,
                 ([str(u) for u in user_ids],),
             )
-            return [Cihaz(r[0], r[1], r[2], r[3], bool(r[4])) for r in cur.fetchall()]
+            return [
+                Cihaz(r[0], r[1], r[2], r[3], bool(r[4]), rol=r[5], kisi_hedefli=True)
+                for r in cur.fetchall()
+            ]
+
+
+def okunmamis_sayilari(
+    cur: psycopg.Cursor, user_ids: Sequence[uuid.UUID]
+) -> dict[uuid.UUID, int]:
+    """(P247 §5) ROZET — kisi basina okunmamis bildirim sayisi.
+
+    `GET /notifications?okundu=false` toplaminin SQL ikizi: ayni kapsam
+    (`routers/notifications._kapsam`), ayni kisiye-ait okundu/silindi
+    (`notification_kisi_durumu`). Ayrisirsa rozet ile uygulamadaki sayi
+    farkli gorunur — `test_p247_bildirim_gorunumu` ikisini karsilastirir.
+    Tenant baglami CAGIRAN tarafindan kurulmus olmali (RLS).
+    """
+    from ..routers.notifications import (
+        _GUVENLIK_DISI_TIPLER, _GUVENLIK_GOZU, _YONETIM_GOZU,
+    )
+
+    if not user_ids:
+        return {}
+    cur.execute(
+        "SELECT u.id, count(n.id) FROM app_user u "
+        "JOIN notification n ON ("
+        "  n.user_id = u.id OR (n.user_id IS NULL "
+        "    AND u.role::text = ANY(%(yonetim)s) "
+        "    AND NOT (u.role::text = ANY(%(guvenlik)s) "
+        "             AND n.tip::text = ANY(%(guvenlik_disi)s)))) "
+        "LEFT JOIN notification_kisi_durumu d "
+        "  ON d.notification_id = n.id AND d.user_id = u.id "
+        "WHERE u.id = ANY(%(ids)s::uuid[]) "
+        "  AND n.silindi_at IS NULL "
+        "  AND (n.user_id IS NOT NULL OR d.silindi_at IS NULL) "
+        "  AND CASE WHEN n.user_id IS NULL THEN d.okundu_at IS NULL "
+        "           ELSE NOT n.okundu END "
+        "GROUP BY u.id",
+        {
+            "yonetim": list(_YONETIM_GOZU),
+            "guvenlik": list(_GUVENLIK_GOZU),
+            "guvenlik_disi": list(_GUVENLIK_DISI_TIPLER),
+            "ids": [str(u) for u in user_ids],
+        },
+    )
+    return {r[0]: int(r[1]) for r in cur.fetchall()}
+
+
+def _gorunum_bilgisi(
+    tenant_id: uuid.UUID, user_ids: Sequence[uuid.UUID]
+) -> tuple[str | None, dict[uuid.UUID, int]]:
+    """(P247 §5) Tesis adi (bildirimin KAYNAGI) + rozet sayilari."""
+    try:
+        with psycopg.connect(settings.app_dsn, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT set_config('app.current_tenant_id', %s, true)",
+                    (str(tenant_id),),
+                )
+                cur.execute("SELECT ad FROM tenant WHERE id = %s", (str(tenant_id),))
+                satir = cur.fetchone()
+                return (satir[0] if satir else None), okunmamis_sayilari(cur, user_ids)
+    except Exception:
+        logger.exception("push gorunum bilgisi okunamadi (gonderim devam eder)")
+        return None, {}
 
 
 def _teshis_yaz(tenant_id: uuid.UUID, satirlar: Sequence[tuple]) -> None:

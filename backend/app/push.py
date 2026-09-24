@@ -18,6 +18,11 @@ expiry'ye 60 sn kala yenilenir (_token_cache).
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover
+    from .push_gorunum import PushGorunum
+
 import json
 import logging
 import time
@@ -194,6 +199,8 @@ class PushProvider(ABC):
         # kanal + sistem sesi kullanilir.
         kanal: str | None = None,
         ses: str | None = None,
+        # (P247 §5) Gruplama/kaynak/aciliyet/rozet. `None`: eski govde.
+        gorunum: "PushGorunum | None" = None,
     ) -> PushResult: ...
 
     def dogrula(self, tokens: Sequence[str]) -> DogrulamaSonucu:
@@ -209,12 +216,59 @@ class PushProvider(ABC):
         )
 
 
+def gorunumu_uygula(
+    msg: dict, g: "PushGorunum", token: str, *, title: str
+) -> None:
+    """(P247 §5) FCM v1 govdesine gorunum alanlarini yazar (yerinde).
+
+    Ayrintili gerekce: `push_gorunum.py` modul basligi.
+    """
+    rozet = g.rozet.get(token)
+    android = msg.setdefault("android", {})
+    an = android.setdefault("notification", {})
+    if g.acil:
+        # SES KAPALI OLSA BILE `high`: sessiz kanal sesi keser, teslimi
+        # GECIKTIRMEMELI — panik Doze'da bekleyemez.
+        android["priority"] = "high"
+        an["notification_priority"] = "PRIORITY_MAX"
+        an["visibility"] = "PUBLIC"
+    else:
+        an["visibility"] = "PRIVATE"
+    if g.etiket:
+        an["tag"] = g.etiket
+    if g.kaynak:
+        an["title"] = f"{title} · {g.kaynak}"
+    if rozet:
+        an["notification_count"] = rozet
+
+    apns = msg.setdefault("apns", {})
+    aps = apns.setdefault("payload", {}).setdefault("aps", {})
+    alert: dict = {"title": title, "body": msg["notification"]["body"]}
+    if g.kaynak:
+        alert["subtitle"] = g.kaynak
+    aps["alert"] = alert
+    if g.thread:
+        aps["thread-id"] = g.thread
+    if rozet:
+        aps["badge"] = rozet
+    aps["interruption-level"] = "time-sensitive" if g.acil else "active"
+    # Bildirim Hizmeti Uzantisi (NSE) eklendiginde avatar/iletisim
+    # bildirimi icin govdeyi DEGISTIREBILSIN; uzanti yokken etkisizdir.
+    aps["mutable-content"] = 1
+    apns["headers"] = {
+        "apns-priority": "10",
+        "apns-push-type": "alert",
+        **({"apns-collapse-id": g.etiket[:64]} if g.etiket else {}),
+    }
+
+
 # ------------------------------- noop -------------------------------------- #
 class NoopPushProvider(PushProvider):
     name = "noop"
 
     def send(
-        self, tokens, *, title, body, data=None, kanal=None, ses=None
+        self, tokens, *, title, body, data=None, kanal=None, ses=None,
+        gorunum=None,
     ) -> PushResult:
         tokenlar = list(tokens)
         # (P191 §2) TESHIS: "noop" bir HATA DEGIL, bir YAPILANDIRMADIR — ama
@@ -239,7 +293,8 @@ class FcmProvider(PushProvider):
     name = "fcm"
 
     def send(
-        self, tokens, *, title, body, data=None, kanal=None, ses=None
+        self, tokens, *, title, body, data=None, kanal=None, ses=None,
+        gorunum=None,
     ) -> PushResult:
         sa = _load_service_account()
         # project_id oncelik: env override > service account dosyasindaki deger.
@@ -296,6 +351,8 @@ class FcmProvider(PushProvider):
                 }
             if ses:
                 govde_msg["apns"] = {"payload": {"aps": {"sound": ses}}}
+            if gorunum is not None:
+                gorunumu_uygula(govde_msg, gorunum, token, title=title)
             message = {"message": govde_msg}
             try:
                 resp = _http_post_json(url, headers, message)

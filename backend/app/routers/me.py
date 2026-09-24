@@ -8,9 +8,11 @@ from __future__ import annotations
 
 import logging
 import uuid
+
+import redis.asyncio as aioredis
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,6 +28,7 @@ from ..deps import (
 )
 from ..errors import APIError
 from ..gunlukleme import maskele_kimlik
+from ..oturum_iptal import tum_oturumlari_kapat
 from ..hiz_siniri import kod_istegi_say
 from ..telefon_kodu import (
     eposta_kodu_uret_ve_gonder,
@@ -35,6 +38,7 @@ from ..telefon_kodu import (
 from ..hesap_silme import hesabi_sil_veya_anonimlestir, son_admin_mi
 from ..models import AppUser, AuditLog, Checkpoint, UserDevice
 from ..schemas import (
+    RolGecisIstek,
     TesisDegistirIstek,
     TesisUyeligi,
     TesislerimYanit,
@@ -114,9 +118,68 @@ def _profile_out(user: AppUser) -> MeProfileOut:
 
 
 @router.get("/me", response_model=UserOut)
-async def me(user: AppUser = Depends(get_current_user)) -> UserOut:
-    """Access token'daki kullaniciyi doner (tenant context token'dan)."""
-    return _user_out(user)
+async def me(
+    user: AppUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_tenant_db),
+) -> UserOut:
+    """Access token'daki kullaniciyi doner (tenant context token'dan).
+
+    (P247 §2) `role` AKTIF roldur (sakin modunda `resident`); `roller`
+    gecilebilecek rolleri listeler — tek elemanliysa gecis menusu yoktur.
+    """
+    from ..rol_gecisi import rol_secenekleri
+
+    out = _user_out(user)
+    out.roller = await rol_secenekleri(db, user)
+    return out
+
+
+@router.post("/me/rol-gecis", response_model=TokenPair)
+async def rol_gecis(
+    body: RolGecisIstek,
+    request: Request,
+    user: AppUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_tenant_db),
+    redis: aioredis.Redis = Depends(get_redis),
+) -> TokenPair:
+    """(P247 §2) Yonetici <-> sakin modu — YENI yetki baglami.
+
+    Yeni jeton cifti uretilir; eski erisim jetonu kara listeye alinir ve
+    verilirse eski refresh ailesi kapatilir: iki mod AYNI ANDA acik
+    kalmaz. Gecis denetime yazilir. Uygun olmayan kullanici (tek rollu ya
+    da yonetici olup daire bagi olmayan) 403 alir — menu zaten cizilmez.
+    """
+    from ..oturum_iptal import erisim_jetonunu_kapat
+    from ..rol_gecisi import aktif_rolu_uygula, asil_rol, rol_secenekleri
+    from ..security import decode_token
+
+    secenekler = await rol_secenekleri(db, user)
+    if body.rol not in secenekler or len(secenekler) < 2:
+        raise APIError(403, "forbidden", "rol_gecisi_yok")
+    onceki = user.role
+    aktif_rolu_uygula(user, body.rol)
+    await record_audit(
+        db, action=Action.ROL_GECISI, tenant_id=user.tenant_id,
+        actor_user_id=user.id, actor_rol=asil_rol(user),
+        resource_type="app_user", resource_id=user.id,
+        meta={"onceki": onceki, "yeni": body.rol},
+    )
+    yetki = request.headers.get("authorization", "")
+    if yetki[:7].lower() == "bearer ":
+        try:
+            await erisim_jetonunu_kapat(
+                redis, decode_token(yetki[7:], expected_type="access")
+            )
+        except Exception:  # pragma: no cover - suresi dolmus jeton
+            pass
+    if body.refresh_token:
+        try:
+            rc = decode_token(body.refresh_token, expected_type="refresh")
+            if str(rc.get("sub")) == str(user.id):
+                await _revoke_family(redis, rc.get("fam", ""), rc.get("jti"))
+        except Exception:  # pragma: no cover
+            pass
+    return await _issue_token_pair(redis, user)
 
 
 @router.patch("/me/tema", response_model=UserOut)
@@ -214,17 +277,25 @@ async def my_profile(user: AppUser = Depends(get_current_user)) -> MeProfileOut:
     return _profile_out(user)
 
 
-@router.patch("/me/password", status_code=204)
+@router.patch("/me/password", response_model=TokenPair)
 async def change_my_password(
     body: PasswordChangeRequest,
     user: AppUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_tenant_db),
-) -> Response:
+    redis: aioredis.Redis = Depends(get_redis),
+) -> TokenPair:
     """Self-servis parola degisimi — mevcut parola dogrulanir (auth.md).
 
     Mevcut parola hatali → 400 invalid_credentials (hangi alanin patladigi net;
     login'deki gizlilik ilkesi burada gerekmez — kullanici zaten kimlikli).
-    Basarida yeni bcrypt hash yazilir; oturum (refresh) devam eder.
+
+    (P247 §4) PAROLA DEGISINCE TUM CIHAZLAR DUSER. Oturum 30 gun (kayan)
+    oldugundan, parolayi calinmis diye degistiren kisinin eski cihazlari bir
+    ay acik kalirdi. Basarida iptal damgasi basilir (`tum_oturumlari_kapat`:
+    bu ana kadar verilmis TUM erisim+yenileme jetonlari — bu cihazinki dahil —
+    gecersiz) ve YALNIZ bu istegi yapan cihaza taze bir cift dondurulur.
+    Eski istemci (204 bekleyen) govdeyi yok sayar; bir sonraki yenilemede
+    dusup yeniden girer — guvenli yone kirilir.
     """
     # (P149) PAROLASIZ KULLANICI DA PAROLA BELIRLEYEBILMELI.
     #
@@ -257,10 +328,11 @@ async def change_my_password(
     user.updated_at = func.now()
     await audit_user(
         db, user, Action.PASSWORD_CHANGE, resource_type="app_user",
-        resource_id=user.id,
+        resource_id=user.id, meta={"tum_cihazlar_dusuruldu": True},
     )
+    await tum_oturumlari_kapat(redis, user.id)
     # get_tenant_db transaction'i cikista commit eder (user ayni oturuma bagli).
-    return Response(status_code=204)
+    return await _issue_token_pair(redis, user)
 
 
 # =========================================================================== #
@@ -841,7 +913,7 @@ async def admin_overview(
     return {"status": "ok", "role": user.role}
 
 
-from .auth import _store_refresh, _uyelikler  # noqa: E402
+from .auth import _issue_token_pair, _revoke_family, _store_refresh, _uyelikler  # noqa: E402
 
 
 # ===================== (P203 §2) COKLU TESIS ================================ #

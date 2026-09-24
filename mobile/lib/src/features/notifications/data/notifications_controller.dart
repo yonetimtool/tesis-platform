@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/dio_provider.dart';
 import '../domain/notification_models.dart';
+import '../../../core/platform/uygulama_rozeti.dart';
 
 /// GET /notifications + PATCH /notifications/{id} istemcisi.
 /// RBAC: admin + yonetici + security (sakin/tesis gorevlisi ERISEMEZ —
@@ -87,6 +90,8 @@ final unreadNotificationCountProvider =
   final page = await ref
       .watch(notificationsApiProvider)
       .fetch(okundu: false, limit: 1);
+  // (P247 §5) Simge rozeti uygulamadaki sayiyla AYNI kalsin.
+  unawaited(uygulamaRozetiniAyarla(page.total));
   return page.total;
 });
 

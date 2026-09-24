@@ -94,8 +94,10 @@ void main() {
   TokenStorage newStorage() => TokenStorage(const FlutterSecureStorage());
 
   group('TokenStorage — beni hatirla bayragi', () {
-    test('varsayilan: bayrak yok → false', () async {
-      expect(await newStorage().readRememberMe(), isFalse);
+    // (P247 §4) VARSAYILAN HATIRLA: SSO/davet/kod yollari bayragi hic
+    // yazmiyordu ve bu kullanicilar her acilista oturumsuz kaliyordu.
+    test('varsayilan: bayrak yok → TRUE (hatirla)', () async {
+      expect(await newStorage().readRememberMe(), isTrue);
     });
 
     test('saveRememberMe(true) → true; saveRememberMe(false) → false',
@@ -107,11 +109,13 @@ void main() {
       expect(await storage.readRememberMe(), isFalse);
     });
 
-    test('clear() bayragi da temizler', () async {
+    test('clear() bayragi varsayilana dondurur, jetonlari siler', () async {
       final storage = newStorage();
-      await storage.saveRememberMe(true);
+      await storage.save(_tokens);
+      await storage.saveRememberMe(false);
       await storage.clear();
-      expect(await storage.readRememberMe(), isFalse);
+      expect(await storage.readRememberMe(), isTrue);
+      expect(await storage.readRefreshToken(), isNull);
     });
   });
 
@@ -130,7 +134,7 @@ void main() {
       expect(await storage.readRefreshToken(), 'login-refresh');
     });
 
-    test('rememberMe: false → bayrak saklanmaz (mevcut davranis)', () async {
+    test('rememberMe: false → ACIKCA "hatirlama" saklanir', () async {
       final storage = newStorage();
       final repo = AuthRepositoryImpl(api: _FakeAuthApi(), storage: storage);
 
@@ -147,10 +151,11 @@ void main() {
   });
 
   group('AuthRepositoryImpl.restoreSession — acilis akisi', () {
-    test('bayrak yok → false; onceki oturumdan kalan token temizlenir',
+    test('bayrak ACIKCA false → false; onceki oturumdan kalan token temizlenir',
         () async {
       final storage = newStorage();
       await storage.save(_tokens); // "hatirlama"siz onceki oturumun kalintisi
+      await storage.saveRememberMe(false);
       final api = _FakeAuthApi();
       final repo = AuthRepositoryImpl(api: api, storage: storage);
 
@@ -158,6 +163,17 @@ void main() {
       expect(api.refreshedWith, isEmpty); // refresh hic denenmez
       expect(await storage.readRefreshToken(), isNull);
       expect(await storage.readAccessToken(), isNull);
+    });
+
+    test('(P247 §4) bayrak HIC yazilmamis (SSO/davet) + refresh → true',
+        () async {
+      final storage = newStorage();
+      await storage.save(_tokens);
+      final api = _FakeAuthApi();
+      final repo = AuthRepositoryImpl(api: api, storage: storage);
+
+      expect(await repo.restoreSession(), isTrue);
+      expect(api.refreshedWith, ['ref']);
     });
 
     test('bayrak var + refresh token yok → false', () async {
@@ -198,7 +214,7 @@ void main() {
 
       expect(await repo.restoreSession(), isFalse);
       expect(await storage.readRefreshToken(), isNull);
-      expect(await storage.readRememberMe(), isFalse);
+      expect(await storage.readAccessToken(), isNull);
     });
 
     test('gecici ag hatasi → false ama oturum korunur (sonraki acilis dener)',
@@ -232,7 +248,9 @@ void main() {
   });
 
   group('AuthRepositoryImpl.logout', () {
-    test('token\'lar VE hatirla bayragi temizlenir', () async {
+    // (P247 §4) Bayrak varsayilana doner (hatirla); oturumu tasiyan
+    // JETONLARDIR ve onlar silinir — geri yuklenecek bir sey kalmaz.
+    test('token\'lar temizlenir, acilista geri yuklenecek oturum kalmaz', () async {
       final storage = newStorage();
       final repo = AuthRepositoryImpl(api: _FakeAuthApi(), storage: storage);
       await repo.loginPhone(
@@ -245,7 +263,7 @@ void main() {
 
       expect(await storage.readAccessToken(), isNull);
       expect(await storage.readRefreshToken(), isNull);
-      expect(await storage.readRememberMe(), isFalse);
+      expect(await repo.restoreSession(), isFalse);
     });
   });
 }

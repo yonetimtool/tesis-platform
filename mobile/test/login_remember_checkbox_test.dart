@@ -109,7 +109,8 @@ void main() {
         'sifre-123');
   }
 
-  testWidgets('"Beni hatirla" kutusu vardir ve varsayilan ISARETSIZDIR',
+  // (P247 §4) VARSAYILAN ISARETLI: oturum 30 gun; ortak cihazda kaldirilir.
+  testWidgets('"Beni hatirla" kutusu vardir ve varsayilan ISARETLIDIR',
       (tester) async {
     await pumpLogin(tester);
 
@@ -117,7 +118,7 @@ void main() {
     expect(checkbox, findsOneWidget);
     expect(
       tester.widget<CheckboxListTile>(checkbox).value,
-      isFalse,
+      isTrue,
     );
   });
 
@@ -125,6 +126,8 @@ void main() {
     await pumpLogin(tester);
     await fillForm(tester);
 
+    await tester.tap(find.byKey(const Key('remember_me_checkbox')));
+    await tester.pump();
     await tester.tap(find.text('Giriş yap'));
     await tester.pumpAndSettle();
 
@@ -135,8 +138,6 @@ void main() {
     await pumpLogin(tester);
     await fillForm(tester);
 
-    await tester.tap(find.byKey(const Key('remember_me_checkbox')));
-    await tester.pump();
     await tester.tap(find.text('Giriş yap'));
     await tester.pumpAndSettle();
 
@@ -146,13 +147,15 @@ void main() {
   testWidgets(
       'saklanan bilgi varsa alanlar ON-DOLU gelir ve kutu ISARETLI olur',
       (tester) async {
+    // (P247 §4) Depo artik parola DONDURMEZ; dondurse bile ekran onu
+    // alana YAZMAZ — ikinci savunma hatti.
     repo.saved = (phone: '05321112203', password: 'sifre-123');
     await pumpLogin(tester);
     await tester.pumpAndSettle(); // async prefill tamamlansin
 
-    // Telefon + parola alanlari saklanan degerlerle dolu.
+    // Yalniz kimlik alani dolu; parola alani BOS.
     expect(find.widgetWithText(TextFormField, '05321112203'), findsOneWidget);
-    expect(find.widgetWithText(TextFormField, 'sifre-123'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'sifre-123'), findsNothing);
     // "Beni hatirla" kutusu otomatik isaretli.
     expect(
       tester
@@ -162,7 +165,7 @@ void main() {
     );
   });
 
-  testWidgets('saklanan bilgi yoksa alanlar BOS ve kutu ISARETSIZ kalir',
+  testWidgets('saklanan bilgi yoksa alanlar BOS, kutu VARSAYILAN (isaretli)',
       (tester) async {
     // repo.saved = null (varsayilan)
     await pumpLogin(tester);
@@ -172,7 +175,7 @@ void main() {
       tester
           .widget<CheckboxListTile>(find.byKey(const Key('remember_me_checkbox')))
           .value,
-      isFalse,
+      isTrue,
     );
   });
 }
