@@ -645,6 +645,84 @@ class AppLocalizationsTr extends AppLocalizations {
   String get kameraSeritBaslik => 'Canlı Kamera';
 
   @override
+  String get modulKameraKayitlari => 'Kamera Kayıtları';
+
+  @override
+  String get kamKayitAlt =>
+      'Bir kamera ve zaman aralığı seçip geçmiş kaydı izleyin.';
+
+  @override
+  String get kamKayitKamera => 'Kamera';
+
+  @override
+  String get kamKayitBaslangic => 'Başlangıç';
+
+  @override
+  String get kamKayitBitis => 'Bitiş';
+
+  @override
+  String get kamKayitAra => 'Kayıtları ara';
+
+  @override
+  String get kamKayitTumunuIzle => 'Tüm aralığı izle';
+
+  @override
+  String get kamKayitAramaYok =>
+      'Bu kayıt cihazında saat listesi alınamıyor. Başlangıç ve bitiş saatini kendiniz seçin.';
+
+  @override
+  String get kamKayitBulunamadi => 'Seçilen aralıkta kayıt bulunamadı.';
+
+  @override
+  String get kamKayitKameraYok => 'Geçmiş kayıt açık kamera yok.';
+
+  @override
+  String get kamKayitKameraYokAlt =>
+      'Yönetim, kamera ayarlarından geçmiş kayıt izlemeyi açabilir.';
+
+  @override
+  String get kamKayitKvkkNot => 'Her arama ve izleme denetim kaydına yazılır.';
+
+  @override
+  String get kamKayitHataTers => 'Bitiş zamanı başlangıçtan sonra olmalı.';
+
+  @override
+  String get kamKayitHataGenis =>
+      'Tek seferde en çok 24 saatlik kayıt sorgulanabilir.';
+
+  @override
+  String get kamKayitHataGelecek => 'Başlangıç zamanı gelecekte olamaz.';
+
+  @override
+  String get kamKayitBosluk => 'Kayıt yok';
+
+  @override
+  String get kamKayitDolu => 'Kayıt var';
+
+  @override
+  String kamKayitAralik(String bas, String bit) {
+    return '$bas – $bit';
+  }
+
+  @override
+  String get kamKayitHazirlaniyor => 'Kayıt hazırlanıyor…';
+
+  @override
+  String get kamKayitGeri => '1 dk geri';
+
+  @override
+  String get kamKayitIleri => '1 dk ileri';
+
+  @override
+  String get kamKayitOynat => 'Oynat';
+
+  @override
+  String get kamKayitDuraklat => 'Duraklat';
+
+  @override
+  String get kamKayitAlinamadi => 'Kayıtlar alınamadı';
+
+  @override
   String anaKarsilama(String ad) {
     return 'Merhaba, $ad';
   }
@@ -7532,4 +7610,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get ekSahaKapat => 'Sahadan gizle';
+
+  @override
+  String get kamKayitAramaYokAciklama =>
+      'Seçtiğiniz aralığı “Tüm aralığı izle” ile doğrudan oynatabilirsiniz.';
+
+  @override
+  String get kamKayitBulunamadiAciklama =>
+      'Farklı bir zaman aralığı seçip yeniden arayın.';
 }

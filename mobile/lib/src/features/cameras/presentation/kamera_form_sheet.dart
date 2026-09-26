@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
@@ -226,6 +227,7 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _urlCtrl,
+                inputFormatters: GirdiSiniri.sinir(GirdiSiniri.url), // sunucu: cameras router URL_UST_SINIR
                 enabled: !_kaydediyor,
                 keyboardType: TextInputType.url,
                 autocorrect: false,
@@ -288,6 +290,7 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
                 TextFormField(
                   key: const Key('kamera-alt-akis'),
                   controller: _altAkisCtrl,
+                  inputFormatters: GirdiSiniri.sinir(GirdiSiniri.url), // sunucu: cameras router URL_UST_SINIR
                   enabled: !_kaydediyor,
                   keyboardType: TextInputType.url,
                   autocorrect: false,
@@ -302,6 +305,7 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _restreamCtrl,
+                  inputFormatters: GirdiSiniri.sinir(GirdiSiniri.url), // sunucu: cameras router URL_UST_SINIR
                   enabled: !_kaydediyor,
                   keyboardType: TextInputType.url,
                   autocorrect: false,
@@ -333,6 +337,7 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _snapshotCtrl,
+                inputFormatters: GirdiSiniri.sinir(GirdiSiniri.url), // sunucu: cameras router URL_UST_SINIR
                 enabled: !_kaydediyor,
                 keyboardType: TextInputType.url,
                 autocorrect: false,

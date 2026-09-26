@@ -14,6 +14,7 @@ import '../features/auth/data/token_storage.dart';
 import '../features/cameras/domain/camera_models.dart';
 import '../features/cameras/presentation/camera_player_screen.dart';
 import '../features/cameras/presentation/kameralar_screen.dart';
+import '../features/cameras/presentation/kamera_kayitlari_screen.dart';
 import '../features/finans/presentation/borclular_screen.dart';
 import '../features/finans/presentation/gider_screen.dart';
 import '../features/finans/presentation/sayac_okuma_screen.dart';
@@ -225,6 +226,8 @@ class AppRoutes {
   /// (E2E 2026-09, MOBIL-10) Web ikizi yonetici ekranlari.
   static const davetler = '/davetler';
   static const gurultuUyarilari = '/gurultu-uyarilari';
+  /// (P248 §1-kamera) Gecmis kamera kaydi (NVR) — amir/yonetici/admin.
+  static const kameraKayitlari = '/kamera-kayitlari';
 }
 
 /// (P217) `routeForPushData` KALDIRILDI — yerine `push_yonlendirme.dart`.
@@ -643,6 +646,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.gurultuUyarilari,
         builder: (context, state) => const GurultuUyarilariScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.kameraKayitlari,
+        builder: (context, state) => const KameraKayitlariScreen(),
       ),
       GoRoute(
         path: AppRoutes.kvkkMetin,

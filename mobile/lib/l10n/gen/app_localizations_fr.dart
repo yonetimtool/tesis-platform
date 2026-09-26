@@ -649,6 +649,89 @@ class AppLocalizationsFr extends AppLocalizations {
   String get kameraSeritBaslik => 'Caméra en direct';
 
   @override
+  String get modulKameraKayitlari => 'Enregistrements caméra';
+
+  @override
+  String get kamKayitAlt =>
+      'Choisissez une caméra et une plage horaire pour revoir les images.';
+
+  @override
+  String get kamKayitKamera => 'Caméra';
+
+  @override
+  String get kamKayitBaslangic => 'Début';
+
+  @override
+  String get kamKayitBitis => 'Fin';
+
+  @override
+  String get kamKayitAra => 'Rechercher des enregistrements';
+
+  @override
+  String get kamKayitTumunuIzle => 'Regarder toute la plage';
+
+  @override
+  String get kamKayitAramaYok =>
+      'Cet enregistreur ne peut pas lister les heures disponibles. Choisissez vous-même l\'heure de début et de fin.';
+
+  @override
+  String get kamKayitBulunamadi =>
+      'Aucun enregistrement dans la plage sélectionnée.';
+
+  @override
+  String get kamKayitKameraYok =>
+      'Aucune caméra n\'a la lecture des enregistrements activée.';
+
+  @override
+  String get kamKayitKameraYokAlt =>
+      'La gestion peut activer la lecture des enregistrements dans les réglages de la caméra.';
+
+  @override
+  String get kamKayitKvkkNot =>
+      'Chaque recherche et chaque lecture est inscrite au journal d\'audit.';
+
+  @override
+  String get kamKayitHataTers =>
+      'L\'heure de fin doit être postérieure à l\'heure de début.';
+
+  @override
+  String get kamKayitHataGenis =>
+      'Au plus 24 heures d\'enregistrements peuvent être recherchées à la fois.';
+
+  @override
+  String get kamKayitHataGelecek =>
+      'L\'heure de début ne peut pas être dans le futur.';
+
+  @override
+  String get kamKayitBosluk => 'Aucun enregistrement';
+
+  @override
+  String get kamKayitDolu => 'Enregistré';
+
+  @override
+  String kamKayitAralik(String bas, String bit) {
+    return '$bas – $bit';
+  }
+
+  @override
+  String get kamKayitHazirlaniyor => 'Préparation de l\'enregistrement…';
+
+  @override
+  String get kamKayitGeri => 'Reculer d\'1 min';
+
+  @override
+  String get kamKayitIleri => 'Avancer d\'1 min';
+
+  @override
+  String get kamKayitOynat => 'Lire';
+
+  @override
+  String get kamKayitDuraklat => 'Pause';
+
+  @override
+  String get kamKayitAlinamadi => 'Impossible de charger les enregistrements';
+
+  @override
   String anaKarsilama(String ad) {
     return 'Bonjour, $ad';
   }
@@ -7729,4 +7812,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get ekSahaKapat => 'Masquer au personnel';
+
+  @override
+  String get kamKayitAramaYokAciklama =>
+      'Vous pouvez lire directement la plage choisie avec « Regarder toute la plage ».';
+
+  @override
+  String get kamKayitBulunamadiAciklama =>
+      'Choisissez une autre plage horaire et relancez la recherche.';
 }

@@ -1272,6 +1272,150 @@ abstract class AppLocalizations {
   /// **'Canlı Kamera'**
   String get kameraSeritBaslik;
 
+  /// No description provided for @modulKameraKayitlari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kamera Kayıtları'**
+  String get modulKameraKayitlari;
+
+  /// No description provided for @kamKayitAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bir kamera ve zaman aralığı seçip geçmiş kaydı izleyin.'**
+  String get kamKayitAlt;
+
+  /// No description provided for @kamKayitKamera.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kamera'**
+  String get kamKayitKamera;
+
+  /// No description provided for @kamKayitBaslangic.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlangıç'**
+  String get kamKayitBaslangic;
+
+  /// No description provided for @kamKayitBitis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bitiş'**
+  String get kamKayitBitis;
+
+  /// No description provided for @kamKayitAra.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıtları ara'**
+  String get kamKayitAra;
+
+  /// No description provided for @kamKayitTumunuIzle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tüm aralığı izle'**
+  String get kamKayitTumunuIzle;
+
+  /// No description provided for @kamKayitAramaYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu kayıt cihazında saat listesi alınamıyor. Başlangıç ve bitiş saatini kendiniz seçin.'**
+  String get kamKayitAramaYok;
+
+  /// No description provided for @kamKayitBulunamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçilen aralıkta kayıt bulunamadı.'**
+  String get kamKayitBulunamadi;
+
+  /// No description provided for @kamKayitKameraYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geçmiş kayıt açık kamera yok.'**
+  String get kamKayitKameraYok;
+
+  /// No description provided for @kamKayitKameraYokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetim, kamera ayarlarından geçmiş kayıt izlemeyi açabilir.'**
+  String get kamKayitKameraYokAlt;
+
+  /// No description provided for @kamKayitKvkkNot.
+  ///
+  /// In tr, this message translates to:
+  /// **'Her arama ve izleme denetim kaydına yazılır.'**
+  String get kamKayitKvkkNot;
+
+  /// No description provided for @kamKayitHataTers.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bitiş zamanı başlangıçtan sonra olmalı.'**
+  String get kamKayitHataTers;
+
+  /// No description provided for @kamKayitHataGenis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tek seferde en çok 24 saatlik kayıt sorgulanabilir.'**
+  String get kamKayitHataGenis;
+
+  /// No description provided for @kamKayitHataGelecek.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlangıç zamanı gelecekte olamaz.'**
+  String get kamKayitHataGelecek;
+
+  /// No description provided for @kamKayitBosluk.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıt yok'**
+  String get kamKayitBosluk;
+
+  /// No description provided for @kamKayitDolu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıt var'**
+  String get kamKayitDolu;
+
+  /// Kayit araligi: baslangic ve bitis zamani (bicimlenmis)
+  ///
+  /// In tr, this message translates to:
+  /// **'{bas} – {bit}'**
+  String kamKayitAralik(String bas, String bit);
+
+  /// No description provided for @kamKayitHazirlaniyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıt hazırlanıyor…'**
+  String get kamKayitHazirlaniyor;
+
+  /// No description provided for @kamKayitGeri.
+  ///
+  /// In tr, this message translates to:
+  /// **'1 dk geri'**
+  String get kamKayitGeri;
+
+  /// No description provided for @kamKayitIleri.
+  ///
+  /// In tr, this message translates to:
+  /// **'1 dk ileri'**
+  String get kamKayitIleri;
+
+  /// No description provided for @kamKayitOynat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Oynat'**
+  String get kamKayitOynat;
+
+  /// No description provided for @kamKayitDuraklat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Duraklat'**
+  String get kamKayitDuraklat;
+
+  /// No description provided for @kamKayitAlinamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıtlar alınamadı'**
+  String get kamKayitAlinamadi;
+
   /// Ana ekran karsilama basligi (ad = kullanicinin adi)
   ///
   /// In tr, this message translates to:
@@ -13372,6 +13516,18 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Sahadan gizle'**
   String get ekSahaKapat;
+
+  /// No description provided for @kamKayitAramaYokAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçtiğiniz aralığı “Tüm aralığı izle” ile doğrudan oynatabilirsiniz.'**
+  String get kamKayitAramaYokAciklama;
+
+  /// No description provided for @kamKayitBulunamadiAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Farklı bir zaman aralığı seçip yeniden arayın.'**
+  String get kamKayitBulunamadiAciklama;
 }
 
 class _AppLocalizationsDelegate

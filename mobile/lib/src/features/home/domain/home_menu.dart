@@ -283,6 +283,13 @@ enum HomeMenuEntry {
   /// ekran yoktu. YALNIZ yonetici (komsu davranisi verisi, sunucu
   /// admin+yonetici'ye acik; admin panelden).
   gurultuUyarilari,
+
+  /// (P248 §1-kamera) GECMIS KAMERA KAYDI (NVR) izleme — admin + yonetici +
+  /// guvenlik amiri (sunucu `_KAYIT_IZLEYICI` kumesinin AYNISI). P213'te
+  /// yalniz web'deydi; P248'de amir web'e giremez, bu yuzden mobile geldi.
+  /// `security` (amir OLMAYAN gorevli) BILEREK YOK: gecmis kayit geriye
+  /// donuk gozetimdir, kapidaki gorevlinin isi degildir (sunucu 403).
+  kameraKayitlari,
 }
 
 List<HomeMenuEntry> homeMenuForRole(UserRole role) {
@@ -309,6 +316,8 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.ihlaller,
         // (P240 §1) Acil durum cagrilari — TAKIP.
         HomeMenuEntry.panikTakip,
+        // (P248 §1-kamera) Gecmis kamera kaydi.
+        HomeMenuEntry.kameraKayitlari,
         HomeMenuEntry.vardiyalar,
         // (P166 §10 / §8.2) Gorev kategorileri ve kurulum sihirbazi —
         // ikisi de yonetim isidir ve admin yonetici duzenini gorur.
@@ -348,6 +357,9 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.panikTakip,
         HomeMenuEntry.aracGecis,
         HomeMenuEntry.plakaOlaylari,
+        // (P248 §1-kamera) Amir web'e GIREMEZ (mobil-yalniz); gecmis
+        // kaydi izleyebildigi TEK yuzey burasi.
+        HomeMenuEntry.kameraKayitlari,
         HomeMenuEntry.outbox,
       ];
     case UserRole.security:
@@ -455,6 +467,8 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.ihlaller,
         // (P240 §1) Acil durum cagrilari — TAKIP.
         HomeMenuEntry.panikTakip,
+        // (P248 §1-kamera) Gecmis kamera kaydi (web ikizi kamera-kayitlari).
+        HomeMenuEntry.kameraKayitlari,
         HomeMenuEntry.vardiyalar,
       ];
     case UserRole.resident:
@@ -564,6 +578,7 @@ String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
       HomeMenuEntry.bakim => l10n.modulBakim,
       HomeMenuEntry.davetler => l10n.modulDavetler,
       HomeMenuEntry.gurultuUyarilari => l10n.modulGurultuUyarilari,
+      HomeMenuEntry.kameraKayitlari => l10n.modulKameraKayitlari,
     };
 
 // ===========================================================================
@@ -647,6 +662,9 @@ HomeMenuGrup homeMenuGrubu(HomeMenuEntry e) => switch (e) {
   HomeMenuEntry.davetler => HomeMenuGrup.tanimlar,
   // Guvenlik grubunda: acil durum bir GUVENLIK olayidir, iletisim degil.
   HomeMenuEntry.panikTakip => HomeMenuGrup.guvenlik,
+  // (P248 §1-kamera) Gecmis kayit bir GUVENLIK isidir (web menude de
+  // kamera-kayitlari guvenlik bolumunde).
+  HomeMenuEntry.kameraKayitlari => HomeMenuGrup.guvenlik,
   HomeMenuEntry.personel ||
   HomeMenuEntry.sakinler ||
   HomeMenuEntry.binaDuzenleme ||

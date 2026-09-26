@@ -222,6 +222,37 @@
   "kameraTurEtiket": "Tür: {tur}",
   "kameraRtspBilgi": "RTSP yayınlar şu an uygulama içinde oynatılamıyor. Kayıt sistemde tutuluyor; oynatma desteği ileride eklenecek.",
   "kameraSeritBaslik": "Canlı Kamera",
+  "modulKameraKayitlari": "Kamera Kayıtları",
+  "kamKayitAlt": "Bir kamera ve zaman aralığı seçip geçmiş kaydı izleyin.",
+  "kamKayitKamera": "Kamera",
+  "kamKayitBaslangic": "Başlangıç",
+  "kamKayitBitis": "Bitiş",
+  "kamKayitAra": "Kayıtları ara",
+  "kamKayitTumunuIzle": "Tüm aralığı izle",
+  "kamKayitAramaYok": "Bu kayıt cihazında saat listesi alınamıyor. Başlangıç ve bitiş saatini kendiniz seçin.",
+  "kamKayitBulunamadi": "Seçilen aralıkta kayıt bulunamadı.",
+  "kamKayitKameraYok": "Geçmiş kayıt açık kamera yok.",
+  "kamKayitKameraYokAlt": "Yönetim, kamera ayarlarından geçmiş kayıt izlemeyi açabilir.",
+  "kamKayitKvkkNot": "Her arama ve izleme denetim kaydına yazılır.",
+  "kamKayitHataTers": "Bitiş zamanı başlangıçtan sonra olmalı.",
+  "kamKayitHataGenis": "Tek seferde en çok 24 saatlik kayıt sorgulanabilir.",
+  "kamKayitHataGelecek": "Başlangıç zamanı gelecekte olamaz.",
+  "kamKayitBosluk": "Kayıt yok",
+  "kamKayitDolu": "Kayıt var",
+  "kamKayitAralik": "{bas} – {bit}",
+  "@kamKayitAralik": {
+    "description": "Kayit araligi: baslangic ve bitis zamani (bicimlenmis)",
+    "placeholders": {
+      "bas": {"type": "String"},
+      "bit": {"type": "String"}
+    }
+  },
+  "kamKayitHazirlaniyor": "Kayıt hazırlanıyor…",
+  "kamKayitGeri": "1 dk geri",
+  "kamKayitIleri": "1 dk ileri",
+  "kamKayitOynat": "Oynat",
+  "kamKayitDuraklat": "Duraklat",
+  "kamKayitAlinamadi": "Kayıtlar alınamadı",
   "anaKarsilama": "Merhaba, {ad}",
   "@anaKarsilama": {
     "description": "Ana ekran karsilama basligi (ad = kullanicinin adi)",
@@ -3887,5 +3918,7 @@
   "ekSahaAcik": "Saha görebilir",
   "ekSahaKapali": "Yalnız yönetim",
   "ekSahaAc": "Sahaya aç",
-  "ekSahaKapat": "Sahadan gizle"
+  "ekSahaKapat": "Sahadan gizle",
+  "kamKayitAramaYokAciklama": "Seçtiğiniz aralığı “Tüm aralığı izle” ile doğrudan oynatabilirsiniz.",
+  "kamKayitBulunamadiAciklama": "Farklı bir zaman aralığı seçip yeniden arayın."
 }

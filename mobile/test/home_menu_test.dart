@@ -44,6 +44,8 @@ void main() {
         HomeMenuEntry.ihlaller,
         // (P240 §1) Acil durum cagrilari — TAKIP.
         HomeMenuEntry.panikTakip,
+        // (P248 §1-kamera) Gecmis kamera kaydi.
+        HomeMenuEntry.kameraKayitlari,
         HomeMenuEntry.vardiyalar,
         // (P166 §10) Gorev kategorileri: ekran VARDI, girisi yalniz
         // "Gorev yonetimi"nin sag ustundeki etiketsiz ikondu.
@@ -193,6 +195,8 @@ void main() {
           HomeMenuEntry.ihlaller,
           // (P240 §1) Acil durum cagrilari — TAKIP.
           HomeMenuEntry.panikTakip,
+          // (P248 §1-kamera) Gecmis kamera kaydi.
+          HomeMenuEntry.kameraKayitlari,
           HomeMenuEntry.vardiyalar,
         ],
       );

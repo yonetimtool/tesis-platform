@@ -288,6 +288,13 @@ ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
           icon: Icons.volume_up_outlined,
           accent: _amber,
           route: AppRoutes.gurultuUyarilari);
+    // (P248 §1-kamera) Gecmis kamera kaydi — canli kameradan AYRI ikon
+    // (`video_library`: arsiv), karistirilmasin.
+    case HomeMenuEntry.kameraKayitlari:
+      return const ModuleCardSpec(
+          icon: Icons.video_library_outlined,
+          accent: _navy,
+          route: AppRoutes.kameraKayitlari);
     case HomeMenuEntry.akilliEv:
       return const ModuleCardSpec(
           icon: Icons.home_outlined,

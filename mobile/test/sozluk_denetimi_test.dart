@@ -76,6 +76,9 @@ const _tumKopyaIstisnalari = {
   // Almanca'yi "Unternehmen"e cevirmek dogru olmazdi: "Firma" Almanca'da
   // da kullanilan bir sozcuk ve kisa etiket icin dogal olan o.
   'aramaKaynakPlan', 'aramaKaynakFirma', 'aramaKaynakKamera',
+  // (P248 §1-kamera) Ayni KOGNAT: kamera kayitlari ekranindaki secici
+  // etiketi (de. "Kamera"; web `kamKayitKamera` ile ayni).
+  'kamKayitKamera',
 };
 
 Map<String, dynamic> _arb(String dil) => jsonDecode(

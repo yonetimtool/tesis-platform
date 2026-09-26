@@ -775,6 +775,83 @@ class AppLocalizationsAr extends AppLocalizations {
   String get kameraSeritBaslik => 'كاميرا مباشرة';
 
   @override
+  String get modulKameraKayitlari => 'تسجيلات الكاميرا';
+
+  @override
+  String get kamKayitAlt => 'اختر كاميرا ونطاقًا زمنيًا لمراجعة التسجيل.';
+
+  @override
+  String get kamKayitKamera => 'الكاميرا';
+
+  @override
+  String get kamKayitBaslangic => 'البداية';
+
+  @override
+  String get kamKayitBitis => 'النهاية';
+
+  @override
+  String get kamKayitAra => 'البحث في التسجيلات';
+
+  @override
+  String get kamKayitTumunuIzle => 'مشاهدة النطاق كاملًا';
+
+  @override
+  String get kamKayitAramaYok =>
+      'لا يمكن لهذا الجهاز عرض قائمة الساعات المتاحة. اختر وقت البداية والنهاية بنفسك.';
+
+  @override
+  String get kamKayitBulunamadi => 'لا توجد تسجيلات في النطاق المحدّد.';
+
+  @override
+  String get kamKayitKameraYok => 'لا توجد كاميرا مفعّل عليها تشغيل التسجيلات.';
+
+  @override
+  String get kamKayitKameraYokAlt =>
+      'يمكن للإدارة تفعيل تشغيل التسجيلات من إعدادات الكاميرا.';
+
+  @override
+  String get kamKayitKvkkNot => 'يُسجَّل كل بحث ومشاهدة في سجل التدقيق.';
+
+  @override
+  String get kamKayitHataTers => 'يجب أن يكون وقت النهاية بعد وقت البداية.';
+
+  @override
+  String get kamKayitHataGenis =>
+      'يمكن البحث في 24 ساعة من التسجيلات كحد أقصى في المرة الواحدة.';
+
+  @override
+  String get kamKayitHataGelecek => 'لا يمكن أن يكون وقت البداية في المستقبل.';
+
+  @override
+  String get kamKayitBosluk => 'لا يوجد تسجيل';
+
+  @override
+  String get kamKayitDolu => 'يوجد تسجيل';
+
+  @override
+  String kamKayitAralik(String bas, String bit) {
+    return '$bas – $bit';
+  }
+
+  @override
+  String get kamKayitHazirlaniyor => 'جارٍ تجهيز التسجيل…';
+
+  @override
+  String get kamKayitGeri => 'رجوع دقيقة';
+
+  @override
+  String get kamKayitIleri => 'تقديم دقيقة';
+
+  @override
+  String get kamKayitOynat => 'تشغيل';
+
+  @override
+  String get kamKayitDuraklat => 'إيقاف مؤقت';
+
+  @override
+  String get kamKayitAlinamadi => 'تعذّر تحميل التسجيلات';
+
+  @override
   String anaKarsilama(String ad) {
     return 'مرحبًا، $ad';
   }
@@ -7779,4 +7856,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get ekSahaKapat => 'إخفاء عن الموظفين';
+
+  @override
+  String get kamKayitAramaYokAciklama =>
+      'يمكنك تشغيل الفترة المحددة مباشرةً عبر «مشاهدة النطاق كاملًا».';
+
+  @override
+  String get kamKayitBulunamadiAciklama =>
+      'اختر فترة زمنية أخرى وابحث مرة أخرى.';
 }

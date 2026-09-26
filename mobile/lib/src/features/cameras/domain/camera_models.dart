@@ -119,6 +119,7 @@ class Camera {
     this.restreamUrl,
     this.snapshotUrl,
     this.canliYol,
+    this.kayitAktif = false,
     bool? oynatilabilir,
   }) : _oynatilabilir = oynatilabilir; // ignore: prefer_initializing_formals
 
@@ -156,6 +157,12 @@ class Camera {
   /// gibi kamera-basina elle girilen bir gecit DEGIL, sunucunun kendi
   /// yayin ucudur.
   final String? canliYol;
+
+  /// (P248 §1-kamera) GECMIS KAYIT (NVR) acik mi — kamera kayitlari
+  /// ekrani YALNIZ bunlari listeler. Kapali olani secenek olarak sunmak,
+  /// secilince sunucunun 422 `kamera_kayit_kapali` verecegi bir secim
+  /// sunmak olurdu (web `kamera-kayitlari` ile ayni suzgec).
+  final bool kayitAktif;
 
   /// Karo periyodik kare cekebilir mi?
   ///
@@ -211,6 +218,7 @@ class Camera {
     restreamUrl: json['restream_url'] as String?,
     snapshotUrl: json['snapshot_url'] as String?,
     canliYol: json['canli_yol'] as String?,
+    kayitAktif: json['kayit_aktif'] as bool? ?? false,
     oynatilabilir: json['oynatilabilir'] as bool?,
   );
 }

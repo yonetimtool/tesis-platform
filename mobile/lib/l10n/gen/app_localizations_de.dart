@@ -647,6 +647,88 @@ class AppLocalizationsDe extends AppLocalizations {
   String get kameraSeritBaslik => 'Live-Kamera';
 
   @override
+  String get modulKameraKayitlari => 'Kameraaufzeichnungen';
+
+  @override
+  String get kamKayitAlt =>
+      'Kamera und Zeitraum wählen, um Aufzeichnungen anzusehen.';
+
+  @override
+  String get kamKayitKamera => 'Kamera';
+
+  @override
+  String get kamKayitBaslangic => 'Beginn';
+
+  @override
+  String get kamKayitBitis => 'Ende';
+
+  @override
+  String get kamKayitAra => 'Aufzeichnungen suchen';
+
+  @override
+  String get kamKayitTumunuIzle => 'Ganzen Zeitraum ansehen';
+
+  @override
+  String get kamKayitAramaYok =>
+      'Dieser Rekorder kann keine Stundenliste liefern. Wählen Sie Beginn und Ende selbst.';
+
+  @override
+  String get kamKayitBulunamadi =>
+      'Im gewählten Zeitraum wurden keine Aufzeichnungen gefunden.';
+
+  @override
+  String get kamKayitKameraYok =>
+      'Für keine Kamera ist die Aufzeichnungswiedergabe aktiviert.';
+
+  @override
+  String get kamKayitKameraYokAlt =>
+      'Die Verwaltung kann die Aufzeichnungswiedergabe in den Kameraeinstellungen aktivieren.';
+
+  @override
+  String get kamKayitKvkkNot =>
+      'Jede Suche und jede Wiedergabe wird im Prüfprotokoll erfasst.';
+
+  @override
+  String get kamKayitHataTers => 'Das Ende muss nach dem Beginn liegen.';
+
+  @override
+  String get kamKayitHataGenis =>
+      'Es können höchstens 24 Stunden Aufzeichnung auf einmal durchsucht werden.';
+
+  @override
+  String get kamKayitHataGelecek =>
+      'Der Beginn darf nicht in der Zukunft liegen.';
+
+  @override
+  String get kamKayitBosluk => 'Keine Aufzeichnung';
+
+  @override
+  String get kamKayitDolu => 'Aufgezeichnet';
+
+  @override
+  String kamKayitAralik(String bas, String bit) {
+    return '$bas – $bit';
+  }
+
+  @override
+  String get kamKayitHazirlaniyor => 'Aufzeichnung wird vorbereitet…';
+
+  @override
+  String get kamKayitGeri => '1 Min. zurück';
+
+  @override
+  String get kamKayitIleri => '1 Min. vor';
+
+  @override
+  String get kamKayitOynat => 'Abspielen';
+
+  @override
+  String get kamKayitDuraklat => 'Pause';
+
+  @override
+  String get kamKayitAlinamadi => 'Aufzeichnungen konnten nicht geladen werden';
+
+  @override
   String anaKarsilama(String ad) {
     return 'Hallo, $ad';
   }
@@ -7733,4 +7815,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get ekSahaKapat => 'Vor Personal verbergen';
+
+  @override
+  String get kamKayitAramaYokAciklama =>
+      'Den gewählten Zeitraum können Sie direkt mit „Ganzen Zeitraum ansehen“ abspielen.';
+
+  @override
+  String get kamKayitBulunamadiAciklama =>
+      'Wählen Sie einen anderen Zeitraum und suchen Sie erneut.';
 }

@@ -752,6 +752,87 @@ class AppLocalizationsRu extends AppLocalizations {
   String get kameraSeritBaslik => 'Камера в реальном времени';
 
   @override
+  String get modulKameraKayitlari => 'Записи камер';
+
+  @override
+  String get kamKayitAlt =>
+      'Выберите камеру и интервал, чтобы просмотреть запись.';
+
+  @override
+  String get kamKayitKamera => 'Камера';
+
+  @override
+  String get kamKayitBaslangic => 'Начало';
+
+  @override
+  String get kamKayitBitis => 'Конец';
+
+  @override
+  String get kamKayitAra => 'Искать записи';
+
+  @override
+  String get kamKayitTumunuIzle => 'Смотреть весь интервал';
+
+  @override
+  String get kamKayitAramaYok =>
+      'Этот регистратор не может показать список доступных часов. Выберите время начала и конца сами.';
+
+  @override
+  String get kamKayitBulunamadi => 'В выбранном диапазоне записей нет.';
+
+  @override
+  String get kamKayitKameraYok =>
+      'Ни на одной камере не включён просмотр записей.';
+
+  @override
+  String get kamKayitKameraYokAlt =>
+      'Управление может включить просмотр записей в настройках камеры.';
+
+  @override
+  String get kamKayitKvkkNot =>
+      'Каждый поиск и просмотр записывается в журнал аудита.';
+
+  @override
+  String get kamKayitHataTers =>
+      'Время окончания должно быть позже времени начала.';
+
+  @override
+  String get kamKayitHataGenis =>
+      'За один раз можно искать не более 24 часов записей.';
+
+  @override
+  String get kamKayitHataGelecek => 'Время начала не может быть в будущем.';
+
+  @override
+  String get kamKayitBosluk => 'Нет записи';
+
+  @override
+  String get kamKayitDolu => 'Есть запись';
+
+  @override
+  String kamKayitAralik(String bas, String bit) {
+    return '$bas – $bit';
+  }
+
+  @override
+  String get kamKayitHazirlaniyor => 'Запись подготавливается…';
+
+  @override
+  String get kamKayitGeri => 'Назад на 1 мин';
+
+  @override
+  String get kamKayitIleri => 'Вперёд на 1 мин';
+
+  @override
+  String get kamKayitOynat => 'Воспроизвести';
+
+  @override
+  String get kamKayitDuraklat => 'Пауза';
+
+  @override
+  String get kamKayitAlinamadi => 'Не удалось загрузить записи';
+
+  @override
   String anaKarsilama(String ad) {
     return 'Здравствуйте, $ad';
   }
@@ -7803,4 +7884,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get ekSahaKapat => 'Скрыть от персонала';
+
+  @override
+  String get kamKayitAramaYokAciklama =>
+      'Выбранный интервал можно сразу воспроизвести кнопкой «Смотреть весь интервал».';
+
+  @override
+  String get kamKayitBulunamadiAciklama =>
+      'Выберите другой интервал времени и повторите поиск.';
 }

@@ -725,6 +725,85 @@ class AppLocalizationsEn extends AppLocalizations {
   String get kameraSeritBaslik => 'Live camera';
 
   @override
+  String get modulKameraKayitlari => 'Camera Recordings';
+
+  @override
+  String get kamKayitAlt =>
+      'Pick a camera and a time range to review past footage.';
+
+  @override
+  String get kamKayitKamera => 'Camera';
+
+  @override
+  String get kamKayitBaslangic => 'Start';
+
+  @override
+  String get kamKayitBitis => 'End';
+
+  @override
+  String get kamKayitAra => 'Search recordings';
+
+  @override
+  String get kamKayitTumunuIzle => 'Watch whole range';
+
+  @override
+  String get kamKayitAramaYok =>
+      'This recorder cannot list available hours. Choose the start and end time yourself.';
+
+  @override
+  String get kamKayitBulunamadi => 'No recordings found in the selected range.';
+
+  @override
+  String get kamKayitKameraYok => 'No camera has recorded playback enabled.';
+
+  @override
+  String get kamKayitKameraYokAlt =>
+      'Management can enable recorded playback in the camera settings.';
+
+  @override
+  String get kamKayitKvkkNot =>
+      'Every search and playback is written to the audit log.';
+
+  @override
+  String get kamKayitHataTers => 'The end time must be after the start time.';
+
+  @override
+  String get kamKayitHataGenis =>
+      'At most 24 hours of recordings can be searched at once.';
+
+  @override
+  String get kamKayitHataGelecek => 'The start time cannot be in the future.';
+
+  @override
+  String get kamKayitBosluk => 'No recording';
+
+  @override
+  String get kamKayitDolu => 'Recorded';
+
+  @override
+  String kamKayitAralik(String bas, String bit) {
+    return '$bas – $bit';
+  }
+
+  @override
+  String get kamKayitHazirlaniyor => 'Preparing the recording…';
+
+  @override
+  String get kamKayitGeri => 'Back 1 min';
+
+  @override
+  String get kamKayitIleri => 'Forward 1 min';
+
+  @override
+  String get kamKayitOynat => 'Play';
+
+  @override
+  String get kamKayitDuraklat => 'Pause';
+
+  @override
+  String get kamKayitAlinamadi => 'Recordings could not be loaded';
+
+  @override
   String anaKarsilama(String ad) {
     return 'Hello, $ad';
   }
@@ -7729,4 +7808,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ekSahaKapat => 'Hide from staff';
+
+  @override
+  String get kamKayitAramaYokAciklama =>
+      'You can play the selected range directly with “Watch whole range”.';
+
+  @override
+  String get kamKayitBulunamadiAciklama =>
+      'Choose a different time range and search again.';
 }
