@@ -132,6 +132,8 @@ def _encode(claims: dict[str, Any]) -> str:
 def create_access_token(
     *, user_id: uuid.UUID | str, tenant_id: uuid.UUID | str, role: str,
     asil_rol: str | None = None,
+    yz: str | None = None,
+    fam: str | None = None,
 ) -> str:
     now = _now()
     claims = {
@@ -153,6 +155,12 @@ def create_access_token(
     # rolunu ve daire bagini yeniden olcer (deps.get_current_user).
     if asil_rol and asil_rol != role:
         claims["asil_rol"] = asil_rol
+    # (P248 §4) Web/platform oturumu: yuzey + aile, her istekte hareketsizlik
+    # anahtarini tazelemek icin (`oturum_yuzeyi.py`).
+    if yz:
+        claims["yz"] = yz
+        if fam:
+            claims["fam"] = fam
     return _encode(claims)
 
 
@@ -162,6 +170,7 @@ def create_refresh_token(
     tenant_id: uuid.UUID | str,
     family_id: str | None = None,
     arol: str | None = None,
+    yz: str | None = None,
 ) -> tuple[str, str, str]:
     """Refresh token uret. Donus: (token, jti, family_id).
 
@@ -184,6 +193,9 @@ def create_refresh_token(
     # (P247 §2) Aktif IKINCIL rol (sakin modu) yenilemede korunur.
     if arol:
         claims["arol"] = arol
+    # (P248 §4) Yuzey aileye aittir: yenilemede AYNEN tasinir.
+    if yz:
+        claims["yz"] = yz
     return _encode(claims), jti, fam
 
 

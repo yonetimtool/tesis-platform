@@ -3,7 +3,7 @@
 // refresh: backend refresh rotation yaptigi icin es zamanli yenilemeler tek cagrida
 // birlestirilir (reuse-revoke onlenir).
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { API_KAPALI_KODU } from "./backend-kodlari";
@@ -13,20 +13,48 @@ import { SOZLUKLER } from "./i18n/sozluk";
 import {
   ACCESS_COOKIE,
   ACCESS_MAX_AGE,
+  PANEL_HAREKETSIZLIK_SN,
   REFRESH_COOKIE,
-  REFRESH_MAX_AGE,
+  WEB_HAREKETSIZLIK_SN,
   cookieDomain,
   cookieOptions,
 } from "./cookies";
+import { istekKonagi } from "./konak-adres";
+import { konakYuzeyi } from "./yuzey";
 
 interface TokenPair {
   access: string;
   refresh: string;
 }
 
+/**
+ * (P248 §4) Bu istegin OTURUM YUZEYI: `panel.*` -> platform, digeri web.
+ * Sunucu jetonu verirken bunu `X-Oturum-Yuzeyi` basligindan okur ve jetona
+ * yazar (hareketsizlik siniri: web 2 sa, platform 30 dk). Istek baglami
+ * disinda (test/derleme) `headers()` atarsa web sayilir.
+ */
+function oturumYuzeyi(): "web" | "platform" {
+  let konak: string | null = null;
+  try {
+    konak = istekKonagi(headers());
+  } catch {
+    konak = null;
+  }
+  return konakYuzeyi(konak) === "platform" ? "platform" : "web";
+}
+
+function yenilemeOmru(): number {
+  return oturumYuzeyi() === "platform" ? PANEL_HAREKETSIZLIK_SN : WEB_HAREKETSIZLIK_SN;
+}
+
 function setAuthCookies(res: NextResponse, access: string, refresh: string): void {
   res.cookies.set(ACCESS_COOKIE, access, cookieOptions(ACCESS_MAX_AGE));
-  res.cookies.set(REFRESH_COOKIE, refresh, cookieOptions(REFRESH_MAX_AGE));
+  res.cookies.set(REFRESH_COOKIE, refresh, cookieOptions(yenilemeOmru()));
+}
+
+/** (P248 §4) Etkinlik: yenileme cerezinin omrunu KAYDIR (deger ayni). */
+function oturumuKaydir(res: NextResponse, refresh: string | undefined): void {
+  if (refresh) res.cookies.set(REFRESH_COOKIE, refresh, cookieOptions(yenilemeOmru()));
 }
 
 function clearAuthCookies(res: NextResponse): void {
@@ -70,6 +98,8 @@ async function callBackend(
   const dil = await panelDili();
   const headers: Record<string, string> = {
     "Accept-Language": dil === "tr" ? "tr" : `${dil}, tr;q=0.8`,
+    // (P248 §4) Jeton verilirken sunucu bunu jetona yazar; yalniz KISALTIR.
+    "X-Oturum-Yuzeyi": oturumYuzeyi(),
     ...(extraHeaders ?? {}),
   };
   if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
@@ -426,7 +456,10 @@ export async function proxyJson(
     return out;
   }
 
-  return passthrough(res);
+  const out = await passthrough(res);
+  // (P248 §4) Kimlikli basarili istek = etkinlik: yenileme cerezi kayar.
+  if (res.status !== 401) oturumuKaydir(out, refresh);
+  return out;
 }
 
 
@@ -483,7 +516,7 @@ export async function proxyBinary(
   }
 
   const buf = await res.arrayBuffer();
-  const out = new NextResponse(buf, {
+  const out: NextResponse = new NextResponse(buf, {
     status: res.status,
     headers: {
       "Content-Type": res.headers.get("content-type") ?? "application/octet-stream",
@@ -492,5 +525,6 @@ export async function proxyBinary(
     },
   });
   if (yeniPair) setAuthCookies(out, yeniPair.access, yeniPair.refresh);
+  else oturumuKaydir(out, refresh);
   return out;
 }

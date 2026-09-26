@@ -189,8 +189,11 @@ app.add_middleware(GovdeSiniri)
 
 # (P247 §6) Genel yazma denetimi — bkz. `genel_denetim.py`.
 from .genel_denetim import GenelDenetim  # noqa: E402
+from .oturum_yuzeyi import OturumYuzeyi  # noqa: E402
 
 app.add_middleware(GenelDenetim)
+# (P248 §4) Oturum yuzeyi (web/platform) — jeton verilirken okunur.
+app.add_middleware(OturumYuzeyi)
 
 # CORS — YALNIZ prod'da (CORS_ORIGINS set edilince) eklenir. Dev'de liste bos =>
 # middleware yok => mevcut davranis (ve testler) degismez.

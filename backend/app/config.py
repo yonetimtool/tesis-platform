@@ -109,6 +109,10 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 30
+    # (P248 §4) Web hareketsizlik siniri; platform paneli daha kisa.
+    # Mobil jetonlar yuzey tasimaz -> yalniz 30 gunluk kayan kural.
+    web_hareketsizlik_dk: int = 120
+    panel_hareketsizlik_dk: int = 30
 
     # SQLAlchemy engine echo (debug).
     sql_echo: bool = False

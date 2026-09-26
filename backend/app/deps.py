@@ -92,6 +92,12 @@ async def get_current_user(
 
     if await iptal_edilmis_mi(getattr(request.app.state, "redis", None), claims):
         raise APIError(401, "invalid_token", "oturum_sonlandirildi")
+    # (P248 §4) Web/platform oturumunda her kimlikli istek ETKINLIKTIR.
+    from .oturum_yuzeyi import etkinlik_isle
+
+    await etkinlik_isle(
+        getattr(request.app.state, "redis", None), claims.get("yz"), claims.get("fam")
+    )
     user_id = claims.get("sub")
     # RLS aktif: yalnizca token'daki tenant'a ait satir gorunur.
     # (E2E 2026-09) Tesisin ARSIV damgasi AYNI sorguda okunur: arsivlenen

@@ -16,14 +16,15 @@ import { API_BASE } from "@/lib/config";
 import {
   ACCESS_COOKIE,
   ACCESS_MAX_AGE,
+  PANEL_HAREKETSIZLIK_SN,
   REFRESH_COOKIE,
-  REFRESH_MAX_AGE,
+  WEB_HAREKETSIZLIK_SN,
 } from "@/lib/cookies";
 
 // Istek cookie kavanozu — test basina doldurulur (vi.mock hoist edildigi icin
 // vi.hoisted ile paylasilir).
 const { kavanoz } = vi.hoisted(() => ({
-  kavanoz: { degerler: {} as Record<string, string> },
+  kavanoz: { degerler: {} as Record<string, string>, konak: "app.localhost:3000" },
 }));
 
 vi.mock("next/headers", () => ({
@@ -33,6 +34,8 @@ vi.mock("next/headers", () => ({
         ? undefined
         : { name: ad, value: kavanoz.degerler[ad] },
   }),
+  // (P248 §4) Yuzey konaktan: app.* -> web (2 sa), panel.* -> platform (30 dk).
+  headers: () => new Headers({ host: kavanoz.konak }),
 }));
 
 const { backendLogin, loginResponse, logoutResponse, proxyJson } = await import(
@@ -149,7 +152,19 @@ describe("loginResponse / logoutResponse", () => {
 
     expect(rt?.value).toBe("rt-1");
     expect(rt?.httpOnly).toBe(true);
-    expect(rt?.maxAge).toBe(REFRESH_MAX_AGE);
+    // (P248 §4) Yenileme cerezi HAREKETSIZLIK siniriyla yazilir (web 2 sa);
+    // 30 gun yalniz mobilin kurali.
+    expect(rt?.maxAge).toBe(WEB_HAREKETSIZLIK_SN);
+  });
+
+  it("(P248 §4) platform panelinde yenileme cerezi 30 dk", () => {
+    kavanoz.konak = "panel.yonetiyor.com";
+    try {
+      const rt = cookieOf(loginResponse("at-1", "rt-1"), REFRESH_COOKIE);
+      expect(rt?.maxAge).toBe(PANEL_HAREKETSIZLIK_SN);
+    } finally {
+      kavanoz.konak = "app.localhost:3000";
+    }
   });
 
   it("logout: iki cookie de BOSALTILIR ve gecmise tarihlenir", () => {
@@ -276,7 +291,7 @@ describe("proxyJson — 401 sonrasi refresh + cookie rotasyonu", () => {
     expect(cookieOf(res, ACCESS_COOKIE)?.value).toBe("yeni-at");
     expect(cookieOf(res, REFRESH_COOKIE)?.value).toBe("yeni-rt");
     expect(cookieOf(res, ACCESS_COOKIE)?.maxAge).toBe(ACCESS_MAX_AGE);
-    expect(cookieOf(res, REFRESH_COOKIE)?.maxAge).toBe(REFRESH_MAX_AGE);
+    expect(cookieOf(res, REFRESH_COOKIE)?.maxAge).toBe(WEB_HAREKETSIZLIK_SN);
   });
 
   it("refresh BASARISIZ: 401 zarfi + cookie'ler TEMIZLENIR (istemci login'e doner)",
@@ -561,4 +576,44 @@ describe("proxyJson — TEK-UCUS (single-flight) refresh", () => {
         vi.useRealTimers();
       }
     });
+});
+
+// ============ (P248 §4) WEB HAREKETSIZLIK — YUZEY + KAYAN CEREZ ============ //
+describe("(P248 §4) oturum yuzeyi ve kayan yenileme cerezi", () => {
+  it("backend'e YUZEY basligi gider: app.* -> web, panel.* -> platform", async () => {
+    kavanoz.degerler[ACCESS_COOKIE] = "at-1";
+    const c1 = stubFetch(() => ({ status: 200, body: {} }));
+    await proxyJson("/units", "GET");
+    expect((c1[0][1].headers as Record<string, string>)["X-Oturum-Yuzeyi"]).toBe("web");
+    kavanoz.konak = "panel.yonetiyor.com";
+    try {
+      const c2 = stubFetch(() => ({ status: 200, body: {} }));
+      await proxyJson("/tenants", "GET");
+      expect((c2[0][1].headers as Record<string, string>)["X-Oturum-Yuzeyi"]).toBe("platform");
+    } finally {
+      kavanoz.konak = "app.localhost:3000";
+    }
+  });
+
+  it("basarili istek yenileme cerezini AYNI degerle yeniden yazar (kayar)", async () => {
+    kavanoz.degerler[ACCESS_COOKIE] = "at-1";
+    kavanoz.degerler[REFRESH_COOKIE] = "rt-ayni";
+    stubFetch(() => ({ status: 200, body: {} }));
+    const res = await proxyJson("/units", "GET");
+    const rt = cookieOf(res, REFRESH_COOKIE);
+    expect(rt?.value).toBe("rt-ayni");
+    expect(rt?.maxAge).toBe(WEB_HAREKETSIZLIK_SN);
+    // Erisim cerezine dokunulmaz (rotasyon yok).
+    expect(cookieOf(res, ACCESS_COOKIE)).toBeUndefined();
+  });
+
+  it("yenileme reddedilirse (hareketsizlik) cerezler SILINIR, kaydirilmaz", async () => {
+    kavanoz.degerler[REFRESH_COOKIE] = "rt-hareketsiz";
+    stubFetch((url) => (url.endsWith("/auth/refresh")
+      ? { status: 401, body: { error: { code: "invalid_token" } } }
+      : { status: 401, body: {} }));
+    const res = await proxyJson("/units", "GET");
+    expect(res.status).toBe(401);
+    expect(cookieOf(res, REFRESH_COOKIE)?.value).toBe("");
+  });
 });

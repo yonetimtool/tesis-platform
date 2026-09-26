@@ -8,6 +8,20 @@ export const REFRESH_COOKIE = "tesis_rt";
 export const ACCESS_MAX_AGE = 15 * 60;
 export const REFRESH_MAX_AGE = 30 * 24 * 60 * 60;
 
+/**
+ * (P248 §4) WEB HAREKETSIZLIK SINIRI — sunucudakiyle AYNI
+ * (`backend/app/config.py web_hareketsizlik_dk / panel_hareketsizlik_dk`).
+ *
+ * KARAR SUNUCUDADIR: jeton `yz` iddiasi tasir ve yenileme ucu etkinlik
+ * anahtari dusmusse aileyi kapatir. Buradaki cerez omru ikinci katman:
+ * yenileme cerezi her basarili BFF yanitinda bu sureyle YENIDEN yazilir
+ * (kayar), hareketsizlikte tarayici onu siler ve middleware sayfa
+ * cizilmeden `/login`e yollar — once bos bir kabuk gosterip ilk istekte
+ * 401 ile atmak yerine. Mobil etkilenmez (cerez yalniz web'in).
+ */
+export const WEB_HAREKETSIZLIK_SN = 2 * 60 * 60;
+export const PANEL_HAREKETSIZLIK_SN = 30 * 60;
+
 export interface CookieOptions {
   httpOnly: true;
   sameSite: "lax";
