@@ -83,6 +83,7 @@ from ..gunlukleme import maskele_kimlik
 from ..gonderim import saglayici as kanal_saglayicisi, tenant_ayari
 from ..hiz_siniri import kod_istegi_say
 from ..models import AppUser, KayitOnayKuyrugu, OauthKimlik, Tenant, TesisUyelik
+from ..roller import kayit_beyani_eslesir
 from ..schemas import (
     RolEpostaBaslaRequest,
     RolEpostaBaslaResponse,
@@ -383,7 +384,13 @@ _KURULUM_GECERSIZ = APIError(401, "invalid_token", "kurulum_jetonu_gecersiz")
 #: kaydolmaya calistiginda `"tesis_gorevlisi" != "gorevli"` -> HER ZAMAN
 #: `rol_uyusmuyor` -> onay kuyruguna duserdi (latent; testlerde yalniz
 #: resident/security kullanilmis). Hicbir istemci kisa bicimi gondermiyor.
-_ROLLER = ("resident", "security", "tesis_gorevlisi", "yonetici")
+#:
+#: (P248 §1) `guvenlik_amiri` EKLENDI. Yonetici amiri DOGRUDAN ekleyebiliyor
+#: (P213 §6, `roller.YONETILEBILIR_ROLLER`) ama amir kendi rolunde
+#: kaydolamiyordu: beyan 422 (`_BASVURU_GECERSIZ`), "Guvenlik" beyani
+#: `rol_uyusmuyor` -> onay kuyrugu. Davet edilmemis bir amir beyani yine
+#: `liste_disi` ile kuyruga duser — liste kurali DEGISMEDI.
+_ROLLER = ("resident", "security", "tesis_gorevlisi", "yonetici", "guvenlik_amiri")
 
 
 def _kapi() -> None:
@@ -851,9 +858,12 @@ def _liste_kontrolu(user: AppUser | None, rol: str) -> tuple[bool, str]:
     """
     if user is None or not user.is_active:
         return False, "liste_disi"
-    if user.role != rol:
+    if not kayit_beyani_eslesir(rol, user.role):
         # Kisi listede AMA baska rolde. Yoneticinin gormesi gereken tam
         # olarak bu: rolu duzeltmesi yeter.
+        #
+        # (P248 §1) AILE ICI beyan (guvenlik <-> amir) eslesmis sayilir;
+        # rol yine HESAPTAN gelir (gerekce `roller.KAYIT_ROL_AILELERI`).
         return False, "rol_uyusmuyor"
     if user.password_set:
         # Hesap ZATEN sahiplenilmis. Kaydolmaya calisan kisi ya hesabini

@@ -13,10 +13,12 @@ from pydantic import (
     ConfigDict,
     EmailStr,
     Field,
+    StringConstraints,
     field_validator,
     model_validator,
 )
 
+from . import girdi_siniri as _G  # (P248 §3a) alan siniri sabitleri
 from .security import normalize_phone
 from .temizleme import zengin_temizle
 
@@ -33,6 +35,17 @@ METIN_TAVANI = 200_000
 
 class BaseModel(_PydanticBaseModel):
     model_config = ConfigDict(str_max_length=METIN_TAVANI)
+
+
+#: (P248 §3a) Sozluk anahtari/degeri ve birlesim (`str | int`) icindeki
+#: metinler `Field(max_length=)` alamaz — sinir TIPE konur.
+KisaKod = Annotated[str, StringConstraints(max_length=_G.KOD)]
+HucreMetni = Annotated[str, StringConstraints(max_length=_G.HUCRE)]
+BaslikMetni = Annotated[str, StringConstraints(max_length=_G.BASLIK)]
+NotMetni = Annotated[str, StringConstraints(max_length=_G.NOT)]
+JetonMetni = Annotated[str, StringConstraints(max_length=_G.JETON)]
+BlokAdi = Annotated[str, StringConstraints(max_length=_G.BLOK)]
+DosyaAnahtari = Annotated[str, StringConstraints(max_length=_G.DOSYA_ANAHTARI)]
 
 #: (P171) ZENGIN METIN GOVDESI — YAZMA ANINDA TEMIZLENIR.
 #
@@ -138,12 +151,15 @@ class LoginRequest(BaseModel):
     ezberletmekti — P203 §2'de web'de duzeltilen sikayetin ta kendisi.
     """
 
-    tenant_slug: str | None = Field(None, examples=["acme-plaza"])
+    tenant_slug: str | None = Field(None, max_length=_G.SLUG, examples=["acme-plaza"])
     #: E-posta ya da telefon. Eski istemciler `email` gonderiyordu;
     #: dogrulayici ikisini de kabul eder (bkz. `_kimlik_birlestir`).
     kimlik: str | None = Field(None, min_length=1, max_length=254)
     email: EmailStr | None = None
-    password: str = Field(..., min_length=1)
+    #: (P248 §3a) GIRIS parolasi GIZLI (500) — yeni parola sinirindan
+    #: (PAROLA=128) GENIS: onceden sinirsiz kurulmus uzun bir parola
+    #: sahibini disarida birakmamak icin.
+    password: str = Field(..., min_length=1, max_length=_G.GIZLI)
 
     @model_validator(mode="after")
     def _kimlik_birlestir(self) -> "LoginRequest":
@@ -186,7 +202,7 @@ class TesislerimIstek(BaseModel):
     #: ekranindaki tesis SECIMINI onlarda kirardi. `LoginRequest` ile
     #: AYNI uzlasma.
     email: EmailStr | None = None
-    password: str = Field(..., min_length=1)
+    password: str = Field(..., min_length=1, max_length=_G.GIZLI)
 
     @model_validator(mode="after")
     def _kimlik_birlestir(self) -> "TesislerimIstek":
@@ -218,8 +234,9 @@ class PhoneLoginRequest(BaseModel):
     """Telefonla giris: cep telefonu (global benzersiz) + (gecici kod VEYA
     kalici parola). Tenant, telefondan otomatik cozulur (tenant_slug YOK)."""
 
-    phone: str = Field(..., min_length=1, examples=["+905321112203"])
-    password: str = Field(..., min_length=1)
+    phone: str = Field(..., min_length=1, max_length=_G.TELEFON_HAM,
+                       examples=["+905321112203"])
+    password: str = Field(..., min_length=1, max_length=_G.GIZLI)
 
 
 class PhoneLoginResponse(BaseModel):
@@ -239,8 +256,8 @@ class PhoneLoginResponse(BaseModel):
 
 
 class SetPasswordRequest(BaseModel):
-    setup_token: str
-    new_password: str = Field(..., min_length=8)
+    setup_token: str = Field(..., max_length=_G.JETON)
+    new_password: str = Field(..., min_length=8, max_length=_G.PAROLA)
 
     @field_validator("new_password")
     @classmethod
@@ -263,8 +280,8 @@ class PasswordChangeRequest(BaseModel):
 
     current_password: str | None = Field(None, min_length=1, max_length=200)
     #: (P184) Parolasiz kullanici icin sahiplik kaniti kodu. Parolasi olanda bos.
-    kod: str | None = None
-    new_password: str = Field(..., min_length=8)
+    kod: str | None = Field(None, max_length=_G.KOD)
+    new_password: str = Field(..., min_length=8, max_length=_G.PAROLA)
 
     @field_validator("new_password")
     @classmethod
@@ -273,7 +290,7 @@ class PasswordChangeRequest(BaseModel):
 
 
 class RefreshRequest(BaseModel):
-    refresh_token: str
+    refresh_token: str = Field(..., max_length=_G.JETON)
 
 
 class CikisIstek(BaseModel):
@@ -364,7 +381,7 @@ class MeEpostaDogrulaRequest(BaseModel):
 class AvatarUpdate(BaseModel):
     """PATCH /me/avatar — null gonderimi fotografi KALDIRIR (alan zorunlu)."""
 
-    avatar_key: str | None
+    avatar_key: str | None = Field(..., max_length=_G.DOSYA_ANAHTARI)
 
 
 UserRoleLiteral = Literal[
@@ -512,7 +529,8 @@ class UserCreate(BaseModel):
     # Zorunlulugu kaldirmak, kimlik (e-posta) ile UYELIK (tesis+rol)
     # ayrimini tamamlar. Benzersizlik KORUNUR: verilirse hala global
     # benzersizdir (iki kisi ayni numarayi tasiyamaz).
-    telefon: str | None = Field(None, min_length=1, examples=["+905321112203"])
+    telefon: str | None = Field(None, min_length=1, max_length=_G.TELEFON_HAM,
+                                examples=["+905321112203"])
     email: EmailStr
     aranabilir: bool = False
     role: UserRoleLiteral
@@ -581,7 +599,7 @@ class UserUpdate(BaseModel):
     # (E2E 2026-09, ARAYUZ-6) Olusturmayla ayni ust sinir.
     ad: str | None = Field(None, min_length=1, max_length=150)
     email: EmailStr | None = None
-    telefon: str | None = None
+    telefon: str | None = Field(None, max_length=_G.TELEFON_HAM)
     aranabilir: bool | None = None
     role: UserRoleLiteral | None = None
     is_active: bool | None = None
@@ -647,7 +665,7 @@ class HesapSilmeIstek(BaseModel):
     current_password: str | None = Field(None, min_length=1, max_length=200)
     #: (P149) Parolasiz kullanici icin telefon kodu. Parolasi olan
     #: kullanicida bos birakilir — hangisinin isteneceğini SUNUCU secer.
-    kod: str | None = None
+    kod: str | None = Field(None, max_length=_G.KOD)
 
 
 class HesapSilmeSonuc(BaseModel):
@@ -902,7 +920,7 @@ class ShiftOut(BaseModel):
 
 
 class ShiftCreate(BaseModel):
-    ad: str = Field(..., min_length=1)
+    ad: str = Field(..., min_length=1, max_length=_G.AD)
     # "HH:MM" / "HH:MM:SS" kabul edilir. baslangic > bitis (gece sarkmasi) gecerli.
     baslangic_saat: time
     bitis_saat: time
@@ -910,7 +928,7 @@ class ShiftCreate(BaseModel):
 
 
 class ShiftUpdate(BaseModel):
-    ad: str | None = Field(None, min_length=1)
+    ad: str | None = Field(None, min_length=1, max_length=_G.AD)
     baslangic_saat: time | None = None
     bitis_saat: time | None = None
     gun_tipi: GunTipi | None = None
@@ -1053,27 +1071,28 @@ class BankaEkstreSatiri(BaseModel):
     """
 
     #: `YYYY-MM-DD`, `DD.MM.YYYY`, `DD/MM/YYYY` kabul edilir.
-    tarih: str
+    tarih: str = Field(..., max_length=_G.KOD)
     #: Kuruş (tam sayı) ya da metin (`1.234,56` / `1,234.56`).
-    tutar: str | int
-    aciklama: str = ""
+    tutar: KisaKod | int
+    aciklama: str = Field("", max_length=_G.NOT)
     #: Verilmezse tutarın İŞARETİNDEN türetilir.
-    yon: str | None = None
+    yon: str | None = Field(None, max_length=_G.KOD)
     #: Bankanın referans numarası. YOKSA kararlı bir kimlik türetilir.
-    referans: str | None = None
-    karsi_ad: str | None = None
-    karsi_iban: str | None = None
-    para_birimi: str | None = None
+    referans: str | None = Field(None, max_length=_G.BASLIK)
+    karsi_ad: str | None = Field(None, max_length=_G.BASLIK)
+    karsi_iban: str | None = Field(None, max_length=_G.KOD)
+    para_birimi: str | None = Field(None, max_length=_G.KOD)
     model_config = ConfigDict(extra="forbid")
 
 
 class BankaIceAktarIstek(BaseModel):
     """Ekstre içe aktarma. `satirlar` VEYA `mt940` — ikisi birden değil."""
 
-    kaynak: str = Field(default="ekstre", examples=["ekstre"])
+    kaynak: str = Field(default="ekstre", max_length=_G.KOD, examples=["ekstre"])
     satirlar: list[BankaEkstreSatiri] | None = None
     #: MT940 düz metni (sunucuda ayrıştırılır — zip/XML değil, güvenli).
-    mt940: str | None = None
+    #: (P248 §3a) Dosya METNI: sinir `_G.MT940` (gerekceli istisna).
+    mt940: str | None = Field(None, max_length=_G.MT940)
     #: (P192 §2.1) Ekstrenin ait olduğu BANKA HESABI. Verilmezse varsayılan
     #: banka hesabı kullanılır. Bir tesisin iki hesabı varsa ikisinin
     #: ekstresini aynı kasaya yazmak, bakiyeleri karıştırmak olurdu.
@@ -1148,7 +1167,7 @@ class BankaManuelEslestirIstek(BaseModel):
 
 
 class BankaIsaretIstek(BaseModel):
-    durum: str | None = Field(default=None, examples=["ilgisiz_gelir"])
+    durum: str | None = Field(default=None, max_length=_G.KOD, examples=["ilgisiz_gelir"])
     not_metni: str | None = Field(default=None, max_length=500)
     model_config = ConfigDict(extra="forbid")
 
@@ -1241,10 +1260,10 @@ class CameraCreate(BaseModel):
     #: (P213 §6) GECMIS KAYIT. `kayit_parola` YAZILIR-OKUNMAZ.
     kayit_aktif: bool | None = None
     kayit_saglayici: KayitSaglayiciAd | None = None
-    kayit_adres: str | None = None
-    kayit_kanal: str | None = None
-    kayit_kullanici: str | None = None
-    kayit_parola: str | None = None
+    kayit_adres: str | None = Field(None, max_length=_G.URL)
+    kayit_kanal: str | None = Field(None, max_length=_G.KOD)
+    kayit_kullanici: str | None = Field(None, max_length=_G.GIZLI)
+    kayit_parola: str | None = Field(None, max_length=_G.GIZLI)
     #: (P213 §4) Ana ekranda (web: Ozet, mobil: ana ekran) karesi
     #: gosterilsin mi. `sakin_gorebilir`DEN AYRI: o YETKI, bu YERLESIM.
     ana_ekranda: bool = False
@@ -1290,15 +1309,15 @@ class CameraUpdate(BaseModel):
     #: (P213 §6b) ADRESTEN AYRI KIMLIK. Adres `kul:par@konak` biciminde de
     #: verilebilir (sunucu ayirir); ama bu alanlar verilirse ONCELIKLIDIR.
     #: `stream_parola` YAZILIR-OKUNMAZ: hicbir GET yanitinda donmez.
-    stream_kullanici: str | None = None
-    stream_parola: str | None = None
+    stream_kullanici: str | None = Field(None, max_length=200)
+    stream_parola: str | None = Field(None, max_length=200)
     #: (P213 §6) GECMIS KAYIT. `kayit_parola` YAZILIR-OKUNMAZ.
     kayit_aktif: bool | None = None
     kayit_saglayici: KayitSaglayiciAd | None = None
-    kayit_adres: str | None = None
-    kayit_kanal: str | None = None
-    kayit_kullanici: str | None = None
-    kayit_parola: str | None = None
+    kayit_adres: str | None = Field(None, max_length=_G.URL)
+    kayit_kanal: str | None = Field(None, max_length=_G.KOD)
+    kayit_kullanici: str | None = Field(None, max_length=_G.GIZLI)
+    kayit_parola: str | None = Field(None, max_length=_G.GIZLI)
     # RESTREAM (0012 / P17): RTSP kamerayi oynatilabilir yapan HLS gecidi
     # (Frigate/go2rtc). Dolu ise istemci BUNU oynatir. Yalniz http(s) —
     # istemci HLS oynatir, rtsp gecit adresi anlamsizdir.
@@ -1418,7 +1437,7 @@ class CheckpointOut(BaseModel):
 class SdmKeyUpdate(BaseModel):
     """PUT /checkpoints/{id}/sdm-key govdesi — key: 32 hex (AES-128) | null (kapat)."""
 
-    key: str | None
+    key: str | None = Field(..., max_length=_G.KOD)
 
     @field_validator("key")
     @classmethod
@@ -1436,16 +1455,16 @@ class SdmKeyUpdate(BaseModel):
 
 
 class CheckpointCreate(BaseModel):
-    ad: str = Field(..., min_length=1)
-    nfc_tag_uid: str = Field(..., min_length=1)
+    ad: str = Field(..., min_length=1, max_length=_G.AD)
+    nfc_tag_uid: str = Field(..., min_length=1, max_length=_G.NFC_UID)
     gps_lat: Enlem | None = None
     gps_lng: Boylam | None = None
     aktif: bool = True
 
 
 class CheckpointUpdate(BaseModel):
-    ad: str | None = Field(None, min_length=1)
-    nfc_tag_uid: str | None = Field(None, min_length=1)
+    ad: str | None = Field(None, min_length=1, max_length=_G.AD)
+    nfc_tag_uid: str | None = Field(None, min_length=1, max_length=_G.NFC_UID)
     gps_lat: Enlem | None = None
     gps_lng: Boylam | None = None
     aktif: bool | None = None
@@ -1530,7 +1549,7 @@ class PatrolPlanDetailOut(PatrolPlanOut):
 
 
 class PatrolPlanCreate(BaseModel):
-    ad: str = Field(..., min_length=1)
+    ad: str = Field(..., min_length=1, max_length=_G.AD)
     shift_id: uuid.UUID | None = None
     baslangic_saat: time
     bitis_saat: time
@@ -1546,7 +1565,7 @@ class PatrolPlanCreate(BaseModel):
 
 
 class PatrolPlanUpdate(BaseModel):
-    ad: str | None = Field(None, min_length=1)
+    ad: str | None = Field(None, min_length=1, max_length=_G.AD)
     shift_id: uuid.UUID | None = None
     baslangic_saat: time | None = None
     bitis_saat: time | None = None
@@ -1612,7 +1631,7 @@ class SimuleScanCreate(BaseModel):
 
 
 class ScanCreate(BaseModel):
-    nfc_tag_uid: str = Field(..., min_length=1)
+    nfc_tag_uid: str = Field(..., min_length=1, max_length=_G.NFC_UID)
     # istemci biliyorsa verir; yoksa nfc_tag_uid ile cozulur (nfc kaynak-dogru).
     checkpoint_id: uuid.UUID | None = None
     patrol_window_id: uuid.UUID | None = None
@@ -1630,7 +1649,7 @@ class ScanCreate(BaseModel):
     #: ilk surumunden kalmadir ve dogrulanmaz — yeni istemciler `foto_key`
     #: gonderir; ikisi de ayni kolona yazilir.
     foto_key: str | None = Field(None, max_length=500)
-    foto_url: str | None = None
+    foto_url: str | None = Field(None, max_length=_G.DOSYA_ANAHTARI)
     # DEPRECATED + YOK SAYILIR: deger artik SUNUCUDA SDM dogrulamasiyla belirlenir.
     # Eski mobil surumler kirilmasin diye govdede kabul edilir ama etkisizdir.
     imza_dogrulandi: bool = False
@@ -1899,16 +1918,16 @@ class AnnouncementCreate(BaseModel):
     baslik: str = Field(..., min_length=1, max_length=200)
     govde: str = Field(..., min_length=1, max_length=5000)
     # Opsiyonel gorsel: /uploads/presign ile yuklenen obje anahtari.
-    foto_key: str | None = None
+    foto_key: str | None = Field(None, max_length=_G.DOSYA_ANAHTARI)
     #: (E2E 2026-09, BILDIRIM-12) HEDEF KITLE — anketle ayni desen
     #: (ANKET_HEDEF_ROLLER, malik/kiraci) + BLOK. BOS = HERKES. Sakin tipi
     #: ve blok YALNIZ sakinlere uygulanir; personel rol suzgecine tabidir.
     #: Hedef SONRADAN DEGISTIRILEMEZ (AnnouncementUpdate tasimaz): push
     #: olusturmada bir kez gider; kitleyi sonradan degistirmek "kime
     #: bildirildi" ile "kim okuyabilir" arasini acardi.
-    hedef_roller: list[str] = Field(default_factory=list, max_length=6)
-    hedef_sakin_tipi: str | None = None
-    hedef_bloklar: list[str] = Field(default_factory=list, max_length=100)
+    hedef_roller: list[KisaKod] = Field(default_factory=list, max_length=6)
+    hedef_sakin_tipi: str | None = Field(None, max_length=_G.KOD)
+    hedef_bloklar: list[BlokAdi] = Field(default_factory=list, max_length=100)
 
     @model_validator(mode="after")
     def _hedef_gecerli(self) -> "AnnouncementCreate":
@@ -1929,7 +1948,7 @@ class AnnouncementUpdate(BaseModel):
     baslik: str | None = Field(None, min_length=1, max_length=200)
     govde: str | None = Field(None, min_length=1, max_length=5000)
     # Acikca null gonderilirse gorsel kaldirilir; alan hic yoksa dokunulmaz.
-    foto_key: str | None = None
+    foto_key: str | None = Field(None, max_length=_G.DOSYA_ANAHTARI)
 
 
 class AnnouncementOut(CevrilebilirOut):
@@ -2014,7 +2033,7 @@ class SifreSifirlaIstek(BaseModel):
     tenant_slug: str = Field(min_length=1, max_length=100)
     eposta: EmailStr
     kod: str = Field(min_length=4, max_length=12)
-    yeni_parola: str = Field(..., min_length=8)
+    yeni_parola: str = Field(..., min_length=8, max_length=_G.PAROLA)
 
     @field_validator("yeni_parola")
     @classmethod
@@ -2040,11 +2059,13 @@ class KayitDurumResponse(BaseModel):
 #: (P154) ROL SECIMLI KAYIT — kaydolabilen roller.
 #:
 #: `admin` YOK: platform sahibidir, tesis kaydiyla acilmaz.
-#: `guvenlik_amiri` YOK: brief'in mobil (yonetici/sakin/guvenlik/tesis
-#: gorevlisi) ve web (yonetici/denetci) listelerinde GECMIYOR. Enum'da
-#: duruyor ve demo hesabi var; kaydolabilir yapmak bir URUN karari
-#: oldugu icin tek tarafli alinmadi.
-KayitRolu = Literal["yonetici", "resident", "security", "tesis_gorevlisi", "denetci"]
+#: `guvenlik_amiri` P154'te YOKTU (urun karari bekliyordu); P248 §1'de
+#: alindi — asagiya bakiniz.
+#: (P248 §1) `guvenlik_amiri` EKLENDI — urun karari alindi: yonetici amiri
+#: dogrudan ekler, amir mobilden kaydolur (e-posta yolu `kayit._ROLLER`).
+KayitRolu = Literal[
+    "yonetici", "resident", "security", "tesis_gorevlisi", "denetci", "guvenlik_amiri",
+]
 
 
 # ==================== (P155r2 / §3) YONETICI SELF-SIGNUP =================== #
@@ -2073,7 +2094,7 @@ class TesisOlusturRequest(BaseModel):
     #: Elle kayit yolu. Sosyal yolda BOS birakilir.
     parola: str | None = Field(default=None, min_length=8, max_length=128)
     #: Sosyal yol: `POST /auth/oauth/sonuc`tan gelen kisa omurlu jeton.
-    baglama_jetonu: str | None = None
+    baglama_jetonu: str | None = Field(None, max_length=_G.JETON)
 
     @model_validator(mode="after")
     def _yontem_kurali(self) -> "TesisOlusturRequest":
@@ -2188,7 +2209,7 @@ class ComplaintCreate(BaseModel):
     # talebi kendi dairesine yapistirmak, is emrini yanlis yere yonlendirirdi.
     unit_id: uuid.UUID | None = None
     # En fazla 3 gorsel; her biri /uploads/presign obje anahtari.
-    foto_keys: list[str] = Field(default_factory=list, max_length=3)
+    foto_keys: list[DosyaAnahtari] = Field(default_factory=list, max_length=3)
 
 
 class ComplaintOut(BaseModel):
@@ -2972,7 +2993,7 @@ class KargoCreate(BaseModel):
     unit_no: str | None = Field(None, min_length=1, max_length=50)
     firma: str = Field(..., min_length=1, max_length=200)
     # Opsiyonel paket fotografi: /uploads/presign ile yuklenen obje anahtari.
-    foto_key: str | None = None
+    foto_key: str | None = Field(None, max_length=_G.DOSYA_ANAHTARI)
     # "not" SQL/Python anahtar sozcugu — alan adi codebase deseniyle 'notlar'.
     notlar: str | None = Field(None, min_length=1, max_length=1000)
 
@@ -3310,7 +3331,7 @@ class EtkinlikCreate(BaseModel):
     konum: str | None = Field(None, min_length=1, max_length=500)
     # Opsiyonel gorsel: /uploads/presign ile yuklenen obje anahtari
     # (duyuru/site kurali ile AYNI akis).
-    foto_key: str | None = None
+    foto_key: str | None = Field(None, max_length=_G.DOSYA_ANAHTARI)
 
     @field_validator("tarih", "bitis_zamani")
     @classmethod
@@ -3332,7 +3353,7 @@ class EtkinlikUpdate(BaseModel):
     bitis_zamani: datetime | None = None
     konum: str | None = Field(None, max_length=500)
     # Acikca null gonderilirse gorsel kaldirilir; alan yoksa dokunulmaz.
-    foto_key: str | None = None
+    foto_key: str | None = Field(None, max_length=_G.DOSYA_ANAHTARI)
 
     @field_validator("tarih", "bitis_zamani")
     @classmethod
@@ -3397,7 +3418,7 @@ class SiteKuraliCreate(BaseModel):
     baslik: str = Field(..., min_length=1, max_length=200)
     icerik: str = Field(..., min_length=1, max_length=10000)
     # Opsiyonel gorsel: /uploads/presign ile yuklenen obje anahtari.
-    foto_key: str | None = None
+    foto_key: str | None = Field(None, max_length=_G.DOSYA_ANAHTARI)
     # Liste sirasi (kucuk once); verilmezse sona (0 varsayilanla en basa
     # dusmemesi icin istemci genelde mevcut-en-buyuk+1 gonderir).
     sira: int = Field(0, ge=0)
@@ -3407,7 +3428,7 @@ class SiteKuraliUpdate(BaseModel):
     baslik: str | None = Field(None, min_length=1, max_length=200)
     icerik: str | None = Field(None, min_length=1, max_length=10000)
     # Acikca null gonderilirse gorsel kaldirilir; alan yoksa dokunulmaz.
-    foto_key: str | None = None
+    foto_key: str | None = Field(None, max_length=_G.DOSYA_ANAHTARI)
     sira: int | None = Field(None, ge=0)
 
     @model_validator(mode="after")
@@ -3698,7 +3719,7 @@ class TaskStepUpdate(BaseModel):
 
 
 class TaskStepTamamla(BaseModel):
-    foto_key: str | None = None
+    foto_key: str | None = Field(None, max_length=_G.DOSYA_ANAHTARI)
     notlar: str | None = Field(None, max_length=2000)
 
 
@@ -3819,11 +3840,11 @@ class TaskListResponse(BaseModel):
 
 class TaskCompletionCreate(BaseModel):
     tamamlanma_zamani: datetime
-    nfc_tag_uid: str | None = None
+    nfc_tag_uid: str | None = Field(None, max_length=_G.NFC_UID)
     gps_lat: Enlem | None = None
     gps_lng: Boylam | None = None
-    foto_key: str | None = None
-    notlar: str | None = None
+    foto_key: str | None = Field(None, max_length=_G.DOSYA_ANAHTARI)
+    notlar: str | None = Field(None, max_length=_G.NOT)
 
 
 class TaskCompletionOut(BaseModel):
@@ -3896,7 +3917,7 @@ Dil = Literal["tr", "en", "ar", "ru", "de", "fr", "es"]
 
 
 class DeviceRegister(BaseModel):
-    fcm_token: str = Field(..., min_length=1)
+    fcm_token: str = Field(..., min_length=1, max_length=_G.JETON)
     platform: DevicePlatform
     # Cihazin UI dili — push metni bu dilde uretilir (tur 16). Gonderilmezse
     # `tr` (eski istemciler bugunku davranisi korur). Dil uygulama icinden
@@ -4017,8 +4038,9 @@ _ALLOWED_BELGE_CT = {"application/pdf"}
 
 
 class PresignRequest(BaseModel):
-    content_type: str = Field(..., min_length=1, examples=["image/jpeg"])
-    dosya_adi: str | None = None
+    content_type: str = Field(..., min_length=1, max_length=_G.ICERIK_TIPI,
+                              examples=["image/jpeg"])
+    dosya_adi: str | None = Field(None, max_length=_G.DOSYA_ADI)
     boyut: int | None = Field(None, ge=1, description="Client-declared byte size")
     #: (E2E 2026-09) `gorsel` (varsayilan, eski davranis) | `belge` (ek
     #: sistemi: gorsel + PDF).
@@ -4081,19 +4103,19 @@ class AssetOut(BaseModel):
 
 
 class AssetCreate(BaseModel):
-    ad: str = Field(..., min_length=1)
+    ad: str = Field(..., min_length=1, max_length=_G.AD)
     kategori: AssetKategori | None = None
-    nfc_tag_uid: str | None = None
-    aciklama: str | None = None
+    nfc_tag_uid: str | None = Field(None, max_length=_G.NFC_UID)
+    aciklama: str | None = Field(None, max_length=_G.NOT)
     aktif: bool = True
 
 
 class AssetUpdate(BaseModel):
-    ad: str | None = Field(None, min_length=1)
+    ad: str | None = Field(None, min_length=1, max_length=_G.AD)
     kategori: AssetKategori | None = None
-    nfc_tag_uid: str | None = None
+    nfc_tag_uid: str | None = Field(None, max_length=_G.NFC_UID)
     durum: AssetDurum | None = None
-    aciklama: str | None = None
+    aciklama: str | None = Field(None, max_length=_G.NOT)
     aktif: bool | None = None
 
     @model_validator(mode="after")
@@ -4136,17 +4158,17 @@ class AssetCheckoutListResponse(BaseModel):
 
 
 class CheckoutRequest(BaseModel):
-    nfc_tag_uid: str | None = None
+    nfc_tag_uid: str | None = Field(None, max_length=_G.NFC_UID)
     gps_lat: Enlem | None = None
     gps_lng: Boylam | None = None
-    notlar: str | None = None
+    notlar: str | None = Field(None, max_length=_G.NOT)
 
 
 class CheckinRequest(BaseModel):
-    nfc_tag_uid: str | None = None
+    nfc_tag_uid: str | None = Field(None, max_length=_G.NFC_UID)
     gps_lat: Enlem | None = None
     gps_lng: Boylam | None = None
-    notlar: str | None = None
+    notlar: str | None = Field(None, max_length=_G.NOT)
 
 
 # --------------------------- tenant settings ------------------------------- #
@@ -4250,9 +4272,11 @@ class TenantSettingsUpdate(BaseModel):
     """admin: hepsi. yonetici: `ad` + konum + otopark kapasitesi (digerleri 403
     — bkz. router)."""
 
-    timezone: str | None = None
-    ad: str | None = None
-    yonetim_email: str | None = None
+    timezone: str | None = Field(None, max_length=_G.SAAT_DILIMI)
+    #: (P248 §3a) BASLIK (200): tesis olusturma 160'a, kayit 120'ye izin
+    #: veriyor; ayarda daha dar sinir eski tesisi kilitlerdi.
+    ad: str | None = Field(None, max_length=_G.BASLIK)
+    yonetim_email: str | None = Field(None, max_length=_G.EPOSTA)
     #: (P193 §4) Adres alanlari. Bos dizge `None`a cevrilir (asagidaki
     #: dogrulayici): `" "` TRUTHY oldugu icin "adres var" sayilir ve
     #: makbuzda bos bir satir birakirdi.
@@ -4262,7 +4286,7 @@ class TenantSettingsUpdate(BaseModel):
     #: DB CHECK ile AYNI kural: bes hane. Iki yerde iki farkli sinir,
     #: API'den gecen degerin veritabaninda reddedilmesi demekti.
     posta_kodu: str | None = Field(None, pattern=r"^[0-9]{5}$")
-    konum_ad: str | None = Field(None, min_length=1)
+    konum_ad: str | None = Field(None, min_length=1, max_length=_G.BASLIK)
     konum_lat: float | None = Field(None, ge=-90, le=90)
     konum_lon: float | None = Field(None, ge=-180, le=180)
     # Acikca null gonderilirse kapasite TANIMSIZ'a doner (oran yeniden null).
@@ -4379,11 +4403,11 @@ class YoneticiCreate(BaseModel):
     #: (`/users`, `/residents`) `telefon` diyor; yalniz bu uc `phone`
     #: istiyordu ve ayni aliskanlikla yazilan istek 422 aliyordu.
     phone: str = Field(
-        ..., min_length=1, examples=["+905321112203"],
+        ..., min_length=1, max_length=_G.TELEFON_HAM, examples=["+905321112203"],
         validation_alias=AliasChoices("phone", "telefon"),
     )
     email: EmailStr = Field(..., examples=["ayse@ornek.com"])
-    password: str | None = Field(None, min_length=8)
+    password: str | None = Field(None, min_length=8, max_length=_G.PAROLA)
 
     @field_validator("password")
     @classmethod
@@ -4397,7 +4421,8 @@ class TenantAdminCreate(BaseModel):
     durumda kurulum_tamamlandi=false — birincil adi ONAYLAR."""
 
     ad: str | None = Field(None, min_length=2, max_length=160, examples=["Acme Plaza"])
-    yonetim_email: str | None = Field(None, examples=["yonetim@acme.com"])
+    yonetim_email: str | None = Field(None, max_length=_G.EPOSTA,
+                                      examples=["yonetim@acme.com"])
     yoneticiler: list[YoneticiCreate] = Field(..., min_length=1)
 
     @field_validator("yonetim_email")
@@ -4521,7 +4546,7 @@ class TenantYoneticiUpdate(BaseModel):
     """Yonetici ad/telefon/aktiflik guncelleme (kismi; verilmeyen alan degismez)."""
 
     ad: str | None = Field(None, min_length=2, max_length=120)
-    phone: str | None = Field(None, min_length=1)
+    phone: str | None = Field(None, min_length=1, max_length=_G.TELEFON_HAM)
     is_active: bool | None = None
 
 
@@ -4555,7 +4580,8 @@ class TenantYoneticiAdd(BaseModel):
     """
 
     ad: str = Field(..., min_length=2, max_length=120, examples=["Ayse Yilmaz"])
-    phone: str = Field(..., min_length=1, examples=["+905321112203"])
+    phone: str = Field(..., min_length=1, max_length=_G.TELEFON_HAM,
+                       examples=["+905321112203"])
     #: (P197) ZORUNLU — gecici kod bu adrese gider ve `app_user.email`
     #: NOT NULL (goc 0089). E-postasiz eklenen yonetici, kodunu hicbir
     #: kanaldan alamazdi (SMS urun genelinde kapali).
@@ -4937,11 +4963,13 @@ class ResidentCreate(BaseModel):
     yazar ("A-12 sakini") — listede anlamli gorunur, gecici oldugu
     okunur ve kisi kaydolunca profilinden duzeltir."""
 
-    unit_no: str = Field(..., min_length=1, examples=["A-12"])
-    blok: str | None = None  # yalniz YENI acilan unit'e islenir
+    unit_no: str = Field(..., min_length=1, max_length=_G.DAIRE_NO, examples=["A-12"])
+    # yalniz YENI acilan unit'e islenir
+    blok: str | None = Field(None, max_length=_G.BLOK)
     # (E2E 2026-09, ARAYUZ-6) Kullanici adiyla ayni ust sinir (150).
     ad: str | None = Field(None, min_length=1, max_length=150)
-    telefon: str = Field(..., min_length=1, examples=["+905321112203"])
+    telefon: str = Field(..., min_length=1, max_length=_G.TELEFON_HAM,
+                         examples=["+905321112203"])
     #: (P197) ZORUNLU OLDU. Eski not "sakinde opsiyonel" diyordu; o kural
     #: sahiplenilemez hesap uretiyordu: davet YALNIZ e-postadan gider
     #: (SMS urun genelinde kapali), yani e-postasiz acilan sakin Tesis
@@ -5033,7 +5061,7 @@ class ResidentUpdate(BaseModel):
 
     # (E2E 2026-09, ARAYUZ-6) Olusturmayla ayni ust sinir.
     ad: str | None = Field(None, min_length=1, max_length=150)
-    telefon: str | None = Field(None, min_length=1)
+    telefon: str | None = Field(None, min_length=1, max_length=_G.TELEFON_HAM)
     #: `None` = "gonderilmedi" (degistirme). ACIKCA `null` gondermek de
     #: ayni anlama gelir — TEMIZLEME ARTIK YOK (bkz. docstring).
     email: EmailStr | None = None
@@ -5117,7 +5145,7 @@ class DuesAssessmentCreate(BaseModel):
     unit_id: uuid.UUID | None = None     # verilirse tek daire
     unit_ids: list[uuid.UUID] | None = None  # toplu hedef; yoksa tum aktif daireler
     son_odeme_tarihi: date | None = None
-    aciklama: str | None = None
+    aciklama: str | None = Field(None, max_length=_G.NOT)
     # --- P28 (hepsi OPSIYONEL: mevcut cagiranlar aynen calisir) ------------ #
     gelir_gider_tanim_id: uuid.UUID | None = None
     #: (P218) BU TAHAKKUK ICIN hedef kuralini EZ.
@@ -5217,7 +5245,7 @@ class DuesPaymentCreate(BaseModel):
     assessment_id: uuid.UUID | None = None
     tutar_kurus: int = Field(..., ge=1, le=KURUS_UST_SINIR)  # KURUS
     yontem: DuesYontem
-    makbuz_no: str | None = None
+    makbuz_no: str | None = Field(None, max_length=_G.KOD)
     odeme_zamani: datetime | None = None
     # 'YYYY-MM'; verilmezse assessment'tan turer, o da yoksa (E2E 2026-09)
     # dairenin ilk acik kaleminden / islem ayindan turer.
@@ -5419,7 +5447,7 @@ class IntegrationCreate(BaseModel):
     channel_type: IntegrationChannel = "webhook"
     endpoint_url: str = Field(..., min_length=1, max_length=2000)
     http_method: HttpMethod = "POST"
-    headers_json: dict[str, str] = Field(default_factory=dict)
+    headers_json: dict[BaslikMetni, JetonMetni] = Field(default_factory=dict)
     auth_type: AuthType = "none"
     # Write-only: yalniz yazilir, GET'te ASLA donmez. KEK ile sifreli saklanir.
     auth_secret: str | None = Field(None, max_length=4000)
@@ -5437,7 +5465,7 @@ class IntegrationUpdate(BaseModel):
     channel_type: IntegrationChannel | None = None
     endpoint_url: str | None = Field(None, min_length=1, max_length=2000)
     http_method: HttpMethod | None = None
-    headers_json: dict[str, str] | None = None
+    headers_json: dict[BaslikMetni, JetonMetni] | None = None
     auth_type: AuthType | None = None
     auth_secret: str | None = Field(None, max_length=4000)
     payload_template: str | None = Field(None, max_length=8000)
@@ -5786,7 +5814,7 @@ class SupportTicketCreate(BaseModel):
     konu: str = Field(..., min_length=1, max_length=200)
     aciklama: str = Field(..., min_length=1, max_length=4000)
     # Talep gorseli (WP-G) — opsiyonel; tenant-onekli MinIO anahtari.
-    foto_key: str | None = None
+    foto_key: str | None = Field(None, max_length=_G.DOSYA_ANAHTARI)
 
 
 class SupportTicketOut(BaseModel):
@@ -5830,7 +5858,7 @@ class SupportTicketUpdate(BaseModel):
     durum: SupportDurum | None = None
     admin_cevap: str | None = Field(None, max_length=4000)
     # Admin cevap gorseli (WP-G) — opsiyonel; admin kendi tenant onegi.
-    admin_cevap_foto_key: str | None = None
+    admin_cevap_foto_key: str | None = Field(None, max_length=_G.DOSYA_ANAHTARI)
 
 
 # -------------------------------- weather ---------------------------------- #
@@ -6004,7 +6032,7 @@ class AnprEventIn(BaseModel):
     okunur. Adaptor esleme tablosu: `docs/frigate-poc.md` §6.
     """
 
-    kaynak: str = Field(..., examples=["frigate"])
+    kaynak: str = Field(..., max_length=_G.KOD, examples=["frigate"])
     # Kaynagin KENDI olay kimligi — IDEMPOTENCY anahtari. Frigate ayni olayi
     # `update` ve `end` olarak iki kez yayinlar; bu alan olmadan tek arac iki
     # gecis acardi (P15'te olculdu).
@@ -6012,7 +6040,7 @@ class AnprEventIn(BaseModel):
     plaka: str | None = Field(None, max_length=64)
     zaman: datetime | None = None
     kamera: str | None = Field(None, max_length=120)
-    yon: str | None = Field(None, examples=["giris"])
+    yon: str | None = Field(None, max_length=_G.KOD, examples=["giris"])
     guven: float | None = Field(None, ge=0, le=100)
     foto_key: str | None = Field(None, max_length=500)
     ham: dict[str, Any] = Field(default_factory=dict)
@@ -6147,6 +6175,14 @@ class KasaCreate(BaseModel):
     #: -100 kabul (denetim raporunda eksi acilis). Kasanin acilisi elde
     #: olan paradir; eksi olamaz.
     acilis_bakiye_kurus: int = Field(0, ge=0, le=KURUS_UST_SINIR)
+
+    # (P248 §2 bulgusu) BOS TUTAR = 0. Web'in ortak tanim formu bos
+    # birakilan tutar alanini `null` gonderiyor; alan `int` oldugu icin
+    # firma/kasa acilis bakiyesi YAZILMADAN kayit 422 veriyordu.
+    @field_validator("acilis_bakiye_kurus", mode="before")
+    @classmethod
+    def _bos_bakiye_sifir(cls, v):
+        return 0 if v is None or v == "" else v
     banka_mi: bool = False
     iban: str | None = Field(None, max_length=42)
     banka_adi: str | None = Field(None, max_length=100)
@@ -6299,6 +6335,14 @@ class FirmaCreate(BaseModel):
     yetkili_ad: str | None = Field(None, max_length=150)
     yetkili_telefon: str | None = Field(None, max_length=30)
     acilis_bakiye_kurus: int = Field(0, ge=0, le=KURUS_UST_SINIR)
+
+    # (P248 §2 bulgusu) BOS TUTAR = 0. Web'in ortak tanim formu bos
+    # birakilan tutar alanini `null` gonderiyor; alan `int` oldugu icin
+    # firma/kasa acilis bakiyesi YAZILMADAN kayit 422 veriyordu.
+    @field_validator("acilis_bakiye_kurus", mode="before")
+    @classmethod
+    def _bos_bakiye_sifir(cls, v):
+        return 0 if v is None or v == "" else v
     acilis_bakiye_yon: BakiyeYon = "borc"
     aktif: bool = True
 
@@ -6580,7 +6624,7 @@ BorclandirmaKaynak = Literal["tekil", "toplu", "sayac", "ice_aktarim"]
 class TopluBorcSuzgec(BaseModel):
     """Toplu borclandirmanin HEDEF SUZGECI (P26 tip/grup + blok)."""
 
-    blok: str | None = None
+    blok: str | None = Field(None, max_length=_G.BLOK)
     unit_tip_id: uuid.UUID | None = None
     unit_grup_id: uuid.UUID | None = None
     #: Verilirse suzgec YERINE bu daireler (elle secim).
@@ -6705,9 +6749,9 @@ class BorcIceAktarimSatir(BaseModel):
     """Excel/CSV ice aktarim SATIRI — hatali satirlar tek tek raporlanir."""
 
     satir_no: int
-    unit_no: str
+    unit_no: str = Field(..., max_length=_G.DAIRE_NO)
     tutar_kurus: int | None = None
-    aciklama: str | None = None
+    aciklama: str | None = Field(None, max_length=_G.NOT)
 
 
 class BorcIceAktarimIstek(BaseModel):
@@ -7217,7 +7261,7 @@ class TopluTahsilatSatir(BaseModel):
     unit_id: uuid.UUID | None = None
     assessment_id: uuid.UUID | None = None
     tutar_kurus: int = Field(..., ge=1, le=KURUS_UST_SINIR)
-    aciklama: str | None = None
+    aciklama: str | None = Field(None, max_length=_G.NOT)
     donem: str | None = Field(
         None, min_length=1, max_length=7, pattern=DONEM_DESENI
     )
@@ -7642,7 +7686,7 @@ class RaporParametre(BaseModel):
     #: Gecikme tazminatinin HANGI TARIHE gore hesaplanacagi (ayri alan:
     #: donem raporunu BUGUNUN tazminatiyla almak isteyen yonetim var).
     tazminat_tarihi: date | None = None
-    blok: str | None = None
+    blok: str | None = Field(None, max_length=_G.BLOK)
     gelir_gider_tanim_id: uuid.UUID | None = None
     listeleme_tipi: str | None = Field(None, max_length=30)
     min_tutar_kurus: int | None = None
@@ -7987,7 +8031,7 @@ class MesajGonderIstek(BaseModel):
 
     sablon_id: uuid.UUID
     user_ids: list[uuid.UUID] | None = None
-    blok: str | None = None
+    blok: str | None = Field(None, max_length=_G.BLOK)
     #: "borclu" | "tumu" — borc durumuna gore suzgec.
     borc_durumu: str | None = Field(None, max_length=20)
     #: (P154 / Asama 9) ROL BAZLI segment — brief'in dorduncu alici kumesi.
@@ -8464,8 +8508,8 @@ class AnketCreate(BaseModel):
     #: EN AZ IKI secenek: tek secenekli anket oy toplamaz, onay toplar.
     secenekler: list[AnketSecenekIn] = Field(..., min_length=2, max_length=20)
     #: BOS = HERKES. Coklu secim.
-    hedef_roller: list[str] = Field(default_factory=list, max_length=6)
-    hedef_sakin_tipi: str | None = None
+    hedef_roller: list[KisaKod] = Field(default_factory=list, max_length=6)
+    hedef_sakin_tipi: str | None = Field(None, max_length=_G.KOD)
     #: SONRADAN DEGISTIRILEMEZ (veritabani tetikleyicisi + bilesik FK).
     anonim: bool = False
 
@@ -8667,7 +8711,7 @@ class IceAktarimSatir(BaseModel):
     """
 
     satir_no: int
-    degerler: dict[str, str | int | float | None] = Field(default_factory=dict)
+    degerler: dict[KisaKod, HucreMetni | int | float | None] = Field(default_factory=dict)
 
 
 class IceAktarimIstek(BaseModel):
@@ -8904,10 +8948,10 @@ class OauthSaglayiciListesi(BaseModel):
 class OauthBaslaRequest(BaseModel):
     #: `web` | `mobil`. Callback SONRASI nereye donulecegini belirler;
     #: adresin KENDISI ayarlardan gelir (acik yonlendirme).
-    yuzey: str = "web"
+    yuzey: str = Field("web", max_length=_G.KOD)
     #: (P180) `giris` (varsayilan — MEVCUT DAVRANIS) | `kayit` (yonetici kaydi).
     #: Niyet state'e yazilir ve callback ISTEKTEN DEGIL state'ten okur.
-    niyet: str = "giris"
+    niyet: str = Field("giris", max_length=_G.KOD)
     #: (P180) niyet=kayit icin iki onay ZORUNLU (backend de dogrular — istemci
     #: kilidine guvenilmez); `onay_ticari` istege bagli.
     onay_sozlesme: bool = False
@@ -8975,14 +9019,14 @@ class OauthKayitBaslaResponse(BaseModel):
 
 
 class OauthBaglaBaslaRequest(BaseModel):
-    baglama_jetonu: str
+    baglama_jetonu: str = Field(..., max_length=_G.JETON)
     tesis_kodu: str = Field(..., min_length=1, max_length=64)
     telefon: str = Field(..., min_length=5, max_length=32)
     model_config = ConfigDict(extra="forbid")
 
 
 class OauthBaglaDogrulaRequest(BaseModel):
-    baglama_jetonu: str
+    baglama_jetonu: str = Field(..., max_length=_G.JETON)
     telefon: str = Field(..., min_length=5, max_length=32)
     kod: str = Field(..., min_length=4, max_length=10)
     model_config = ConfigDict(extra="forbid")
@@ -9016,19 +9060,19 @@ class OauthRolTamamlaRequest(BaseModel):
       (`/auth/giris/eposta-kod-iste`) ile aynı sınıftadır.
     """
 
-    baglama_jetonu: str
+    baglama_jetonu: str = Field(..., max_length=_G.JETON)
     tesis_kodu: str = Field(..., min_length=3, max_length=40, examples=["OLTU-260715"])
-    rol: str | None = Field(default=None, examples=["resident"])
+    rol: str | None = Field(default=None, max_length=_G.KOD, examples=["resident"])
     model_config = ConfigDict(extra="forbid")
 
 
 class OauthRolTamamlaDogrulaRequest(BaseModel):
     """`email_verified=false` yolunda ikinci adım: e-posta OTP + bağlama."""
 
-    baglama_jetonu: str
+    baglama_jetonu: str = Field(..., max_length=_G.JETON)
     tesis_kodu: str = Field(..., min_length=3, max_length=40)
     #: (P191 §1) `rol-tamamla` ile AYNI kural: yoksa rol hesaptan okunur.
-    rol: str | None = Field(default=None, examples=["resident"])
+    rol: str | None = Field(default=None, max_length=_G.KOD, examples=["resident"])
     kod: str = Field(..., min_length=4, max_length=8)
     model_config = ConfigDict(extra="forbid")
 
@@ -9092,7 +9136,7 @@ class DavetParolaRequest(BaseModel):
 
     jeton: str = Field(..., min_length=8, max_length=128)
     ad: str | None = Field(None, min_length=1, max_length=120)
-    new_password: str = Field(..., min_length=8)
+    new_password: str = Field(..., min_length=8, max_length=_G.PAROLA)
 
     @field_validator("new_password")
     @classmethod
@@ -9108,7 +9152,7 @@ class DavetSosyalRequest(BaseModel):
     yerini tutar."""
 
     jeton: str = Field(..., min_length=8, max_length=128)
-    baglama_jetonu: str
+    baglama_jetonu: str = Field(..., max_length=_G.JETON)
     ad: str | None = Field(None, min_length=1, max_length=120)
 
 
@@ -9231,7 +9275,7 @@ class YoneticiDogrulaResponse(BaseModel):
 
 
 class YoneticiTesisRequest(BaseModel):
-    kurulum_jetonu: str
+    kurulum_jetonu: str = Field(..., max_length=_G.JETON)
     tesis_ad: str = Field(min_length=2, max_length=120, examples=["Oltu Sitesi"])
 
 
@@ -9245,7 +9289,7 @@ class RolEpostaBaslaRequest(BaseModel):
 
     tesis_kodu: str = Field(min_length=3, max_length=40, examples=["OLTU-260715"])
     eposta: EmailStr
-    rol: str = Field(examples=["resident"])
+    rol: str = Field(max_length=_G.KOD, examples=["resident"])
     #: Yalniz bilgi amacli: kuyruga dusen bir denemede yonetici kimin
     #: denedigini gorsun diye. Dogrulamada KULLANILMAZ.
     ad: str | None = Field(default=None, max_length=120)
@@ -9334,10 +9378,10 @@ def _surum_dogrula(v: str | None) -> str | None:
 
 
 class SurumPolitikasiUpdate(BaseModel):
-    asgari_surum: str | None = None
-    onerilen_surum: str | None = None
+    asgari_surum: str | None = Field(None, max_length=_G.KOD)
+    onerilen_surum: str | None = Field(None, max_length=_G.KOD)
     #: dil kodu -> metin. Bos birakilabilir; uygulama kendi metnini kullanir.
-    mesaj: dict[str, str] | None = None
+    mesaj: dict[KisaKod, NotMetni] | None = None
 
     @field_validator("asgari_surum", "onerilen_surum")
     @classmethod
@@ -9380,7 +9424,7 @@ class PanikOlustur(BaseModel):
     alinamadigi icin alarmin HIC gitmemesi demekti.
     """
 
-    tip: str
+    tip: str = Field(..., max_length=_G.KOD)
     #: (P243 §5c) NE OLDUGU — `tip`in yerine GECMEZ, yanina gelir.
     #: `tip` kimin tetikledigini, kategori ne oldugunu soyler.
     kategori: Literal[
@@ -9564,7 +9608,7 @@ class DiyafonOut(BaseModel):
 
 class DiyafonCreate(BaseModel):
     ad: str = Field(..., min_length=1, max_length=200)
-    yontem: str
+    yontem: str = Field(..., max_length=_G.KOD)
     host: str = Field(..., min_length=1, max_length=255)
     port: int | None = Field(None, ge=1, le=65535)
     kullanici: str | None = Field(None, max_length=200)
@@ -9663,7 +9707,7 @@ class AkilliEvKopruOut(BaseModel):
 
 class AkilliEvKopruCreate(BaseModel):
     ad: str = Field(..., min_length=1, max_length=200)
-    tur: str
+    tur: str = Field(..., max_length=_G.KOD)
     host: str = Field(..., min_length=1, max_length=255)
     port: int | None = Field(None, ge=1, le=65535)
     token: str | None = Field(None, max_length=1000)
@@ -9722,7 +9766,7 @@ class AkilliEvCihazOut(BaseModel):
 class AkilliEvCihazCreate(BaseModel):
     kopru_id: uuid.UUID
     ad: str = Field(..., min_length=1, max_length=200)
-    tip: str
+    tip: str = Field(..., max_length=_G.KOD)
     #: NULL = ORTAK ALAN.
     unit_id: uuid.UUID | None = None
     alan: str | None = Field(None, max_length=200)
@@ -9749,7 +9793,7 @@ class AkilliEvCihazListResponse(BaseModel):
 
 
 class AkilliEvKomutIn(BaseModel):
-    eylem: str
+    eylem: str = Field(..., max_length=_G.KOD)
 
 
 class AkilliEvKomutOut(BaseModel):
@@ -9758,7 +9802,7 @@ class AkilliEvKomutOut(BaseModel):
 
 
 class AkilliEvBolumOut(BaseModel):
-    bolum: str
+    bolum: str = Field(..., max_length=_G.KOD)
     acik: bool
 
 
@@ -9784,9 +9828,9 @@ class AkilliEvSenaryoOut(BaseModel):
 
 
 class AkilliEvSenaryoCreate(BaseModel):
-    olay: str
+    olay: str = Field(..., max_length=_G.KOD)
     cihaz_id: uuid.UUID
-    eylem: str
+    eylem: str = Field(..., max_length=_G.KOD)
     aktif: bool = True
 
     @field_validator("olay")
@@ -9816,7 +9860,7 @@ class AkilliEvOlayIn(BaseModel):
     olay_jetonu: str = Field(..., min_length=10, max_length=200)
     dis_kimlik: str = Field(..., min_length=1, max_length=300)
     #: `su_kacagi` | `gaz_kacagi` | `yangin`
-    olay: str
+    olay: str = Field(..., max_length=_G.KOD)
     deger: str | None = Field(None, max_length=200)
 
     @field_validator("olay")
@@ -10115,7 +10159,7 @@ class VardiyaIceAktarimSatir(BaseModel):
     #: DEGER `None` OLABILIR: Excel'de bos hucre `None` okunur ve
     #: istemciyi bunu "" yapmaya zorlamak, her istemcide tekrar eden
     #: bir temizlik adimi olurdu (ve biri unuttugunda 422 gelirdi).
-    degerler: dict[str, str | None] = Field(default_factory=dict)
+    degerler: dict[KisaKod, HucreMetni | None] = Field(default_factory=dict)
 
 
 class VardiyaIceAktarimIstek(BaseModel):

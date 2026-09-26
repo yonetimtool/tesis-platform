@@ -18155,10 +18155,13 @@ components:
         eposta:     { type: string, format: email }
         rol:
           type: string
-          enum: [resident, security, gorevli]
+          enum: [resident, security, tesis_gorevlisi, yonetici, guvenlik_amiri]
           description: |
-            `yonetici`/`admin` BILEREK YOK: yonetici kendi yolundan
-            (basvuru) gelir, ek yoneticiyi mevcut yonetici ekler.
+            `admin` BILEREK YOK. Sunucu sirayla `kayit._ROLLER` disini 422
+            ile reddeder (P184: `gorevli` degil `tesis_gorevlisi`).
+            (P248 §1) `guvenlik_amiri` eklendi; beyan guvenlik ailesinde
+            (security <-> guvenlik_amiri) eslesir, rol HER ZAMAN listedeki
+            hesaptan gelir — beyan yetki vermez.
         ad:      { type: string, maxLength: 120, nullable: true }
         telefon: { type: string, maxLength: 32, nullable: true }
     RolEpostaBaslaResponse:
@@ -18200,14 +18203,15 @@ components:
         yoneticiden daire istenmez.
 
         `rol` kumesi: `admin` YOK (platform sahibi, tesis kaydiyla
-        acilmaz); `guvenlik_amiri` YOK (brief'in mobil/web rol
-        listelerinde gecmiyor — enum'da duruyor, kaydolabilir yapmak
-        ayri bir urun karari).
+        acilmaz). (P248 §1) `guvenlik_amiri` EKLENDI: yonetici amiri
+        dogrudan ekler, amir mobilden kaydolur. Beyan guvenlik ailesinde
+        (security <-> guvenlik_amiri) eslesir; rol HER ZAMAN listedeki
+        hesaptan gelir.
       required: [rol, tesis_kodu, telefon]
       properties:
         rol:
           type: string
-          enum: [yonetici, resident, security, tesis_gorevlisi, denetci]
+          enum: [yonetici, resident, security, tesis_gorevlisi, denetci, guvenlik_amiri]
         tesis_kodu: { type: string, minLength: 4, maxLength: 32, example: "OLTU-260715" }
         telefon:    { type: string, minLength: 5, maxLength: 32, example: "+905321112203" }
         daire_no:   { type: string, maxLength: 32, nullable: true, description: "`resident` icin ZORUNLU" }

@@ -216,17 +216,23 @@ Future<ProviderContainer> _sur(
 }
 
 void main() {
-  testWidgets('UC rol listeleniyor; yonetici + denetci YOK', (tester) async {
+  // (P248 §1) DORT rol: guvenlik amiri eklendi (yonetici dogrudan ekliyor).
+  testWidgets('DORT rol listeleniyor; yonetici + denetci YOK', (tester) async {
     await _sur(tester, _SahteAuthApi());
 
-    for (final kimlik in ['resident', 'security', 'tesis_gorevlisi']) {
+    for (final kimlik in [
+      'resident',
+      'security',
+      'guvenlik_amiri',
+      'tesis_gorevlisi',
+    ]) {
       expect(find.byKey(Key('kayit-rol-$kimlik')), findsOneWidget,
           reason: '$kimlik rolu listede yok');
     }
     // Yonetici mobilde KAYDOLMAZ (web'den), denetci WEB rolu.
     expect(find.byKey(const Key('kayit-rol-yonetici')), findsNothing);
     expect(find.byKey(const Key('kayit-rol-denetci')), findsNothing);
-    expect(KayitRolu.values.length, 3);
+    expect(KayitRolu.values.length, 4);
   });
 
   testWidgets('E-POSTA zorunlu: bos birakilirsa ilerlemez', (tester) async {

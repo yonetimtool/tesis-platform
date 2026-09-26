@@ -103,6 +103,43 @@ def yonetilebilir(yoneten_rol: str) -> frozenset[str]:
     return YONETILEBILIR_ROLLER.get(yoneten_rol, frozenset())
 
 
+#: (P248 §1) KAYITTA BEYAN EDILEN ROL AILELERI.
+#:
+#: OLCULEN KUSUR: yoneticinin DOGRUDAN guvenlik amiri olarak ekledigi kisi
+#: mobilde "Kayit ol" dediginde listede kendi rolu yoktu, "Guvenlik"i
+#: secti; `_liste_kontrolu` `"guvenlik_amiri" != "security"` gorup
+#: `rol_uyusmuyor` ile kisiyi ONAY KUYRUGUNA atti (SSO yolunda ekranda
+#: "yonetici onayi bekliyor", e-posta yolunda HIC gelmeyen bir kod).
+#: Davet edilmis bir kisi onay beklememeliydi.
+#:
+#: KURAL: beyan, listedeki rolle AYNI AILEDEYSE eslesmis sayilir. Guvenlik
+#: ailesi = gorevli + amir; insanlar ikisini gunluk dilde ayirmaz ("ben
+#: guvenlikciyim"). Diger roller tek basina bir ailedir.
+#:
+#: YETKI YUKSELTMESI YOK: beyan HICBIR ZAMAN yetki vermez. Kaydin sonunda
+#: acilan oturumun rolu HER ZAMAN listedeki hesaptan gelir
+#: (`rol_eposta_dogrula` beklenen rolu kullanicidan okur, `set-password`
+#: jetonu kullanicinin kendi satirindan uretir). "Amir" beyan eden bir
+#: guvenlik gorevlisi guvenlik gorevlisi olarak girer; "Guvenlik" beyan
+#: eden amir amir olarak girer. Aile disi beyan (sakin <-> guvenlik,
+#: gorevli <-> guvenlik) eskisi gibi `rol_uyusmuyor` -> kuyruk.
+KAYIT_ROL_AILELERI: tuple[frozenset[str], ...] = (
+    frozenset({"security", "guvenlik_amiri"}),
+)
+
+
+def kayit_beyani_eslesir(beyan: str, liste_rolu: str) -> bool:
+    """Kayitta BEYAN edilen rol, listedeki hesabin roluyle eslesiyor mu?
+
+    Ayni rol ya da ayni aile (bkz. `KAYIT_ROL_AILELERI`). Eslesme yalniz
+    "kisi onaysiz sahiplenebilir mi" sorusunu yanitlar; rolun kendisini
+    DEGISTIRMEZ.
+    """
+    if beyan == liste_rolu:
+        return True
+    return any(beyan in a and liste_rolu in a for a in KAYIT_ROL_AILELERI)
+
+
 #: (P231 §2) BIR ROLUN PERSONEL LISTESINDE GOREBILECEGI ROLLER.
 #:
 #: OLCULEN SIZINTI (P231 §0, canli surulerek): `GET /users` cagiranin

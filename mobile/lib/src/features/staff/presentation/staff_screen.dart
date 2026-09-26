@@ -3,10 +3,12 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../core/ui/bos_durum.dart';
+import '../../auth/data/current_user_provider.dart';
 import '../../auth/domain/user_role.dart';
 import '../../auth/presentation/rol_adi.dart';
 import '../../tasks/presentation/task_complete_controller.dart'
@@ -101,9 +103,12 @@ class _StaffTile extends ConsumerWidget {
               : null,
           child: member.avatarUrl == null
               ? Icon(
-                  member.role == 'security'
-                      ? Icons.shield_outlined
-                      : Icons.cleaning_services_outlined,
+                  switch (member.role) {
+                    'security' => Icons.shield_outlined,
+                    // (P248 §1) Amir de bu listede (yonetici icin).
+                    'guvenlik_amiri' => Icons.local_police_outlined,
+                    _ => Icons.cleaning_services_outlined,
+                  },
                 )
               : null,
         ),
@@ -196,6 +201,11 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
   bool _fotoYukleniyor = false;
 
   bool get _isEdit => widget.existing != null;
+
+  bool get _amirSecilebilir =>
+      (ref.watch(currentUserRoleProvider).value?.amirAtayabilir ??
+          false) ||
+      widget.existing?.role == 'guvenlik_amiri';
 
   @override
   void initState() {
@@ -387,6 +397,16 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
                     value: 'security',
                     label: Text(rolAdi(l10n, UserRole.security)),
                     icon: const Icon(Icons.shield_outlined)),
+                // (P248 §1) GUVENLIK AMIRI — yonetici DOGRUDAN ekler ya da
+                // bir guvenlik gorevlisini amir yapar / amiri guvenlige
+                // dusurur. Yalniz amir ATAYABILEN role (sunucu kumesinin
+                // aynasi) ya da duzenlenen kayit zaten amirse cizilir —
+                // aksi halde secili deger segmentlerde bulunmazdi.
+                if (_amirSecilebilir)
+                  ButtonSegment(
+                      value: 'guvenlik_amiri',
+                      label: Text(rolAdi(l10n, UserRole.guvenlikAmiri)),
+                      icon: const Icon(Icons.local_police_outlined)),
                 ButtonSegment(
                     value: 'tesis_gorevlisi',
                     label: Text(rolAdi(l10n, UserRole.tesisGorevlisi)),
@@ -400,6 +420,7 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _adCtrl,
+              inputFormatters: GirdiSiniri.sinir(150), // sunucu: UserCreate.ad
               enabled: !_submitting,
               decoration: InputDecoration(
                 labelText: l10n.ortakAdSoyad,

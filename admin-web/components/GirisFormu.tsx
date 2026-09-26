@@ -38,8 +38,11 @@ import { MAGAZA_ANDROID, MAGAZA_IOS } from "@/lib/config";
 import { ParolaAlani } from "@/components/ParolaAlani";
 import { SosyalGiris } from "@/components/SosyalGiris";
 import { useT } from "@/lib/i18n/kullan";
-import { telefonGiris } from "@/lib/telefon";
+import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
+import { kimlikGonderimDegeri } from "@/lib/telefon";
+import { TelefonAlani } from "@/components/TelefonAlani";
 import type { Yuzey } from "@/lib/yuzey";
+import { SINIR } from "@/lib/girdi-siniri";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -80,7 +83,14 @@ async function yonlendirVarsaGit(res: Response): Promise<boolean> {
   return true;
 }
 
-export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
+export function GirisFormu({
+  yuzey,
+  ilkRed,
+}: {
+  yuzey: Yuzey;
+  /** (P248 §1) Middleware'in kapattigi mobil-yalniz oturumun red mesaji. */
+  ilkRed?: SozlukAnahtari;
+}) {
   // (P126 sonrasi) GIRIS YOLU YUZEYE GORE.
   //
   // `app.*` mobil uygulamanin web ikizidir: tesis kullanicisi mobilde
@@ -107,8 +117,11 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
   const [tenantSlug, setTenantSlug] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [magazaGoster, setMagazaGoster] = useState(false);
+  // (P248 §1) `ilkRed`: artakalan web oturumu middleware'de kapatilan
+  // mobil-yalniz rol (orn. guvenlik amiri) giris ekranina NEDENIYLE gelir —
+  // mesaj ve magaza baglantilari ilk karede cizilir.
+  const [error, setError] = useState<string | null>(() => (ilkRed ? t(ilkRed) : null));
+  const [magazaGoster, setMagazaGoster] = useState(Boolean(ilkRed));
   const [loading, setLoading] = useState(false);
   // (P162) BASARI ANIMASYONU (sartname §40): dugme loading -> onay -> kart
   // soluklasarak panele gecis. Yonlendirme bu bayrak dolayisiyla KISA BIR
@@ -157,7 +170,8 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
     // (P205 §1) TEK ALAN: hangisi saklanmissa o doldurulur. Eski
     // kayitlar iki ayri anahtar tasiyor olabilir — ikisi de kimlik
     // alanina duser.
-    if (d.telefon !== undefined) setKimlik(telefonGiris(d.telefon));
+    // (P248 §2) Saklanan telefon E.164; alan onu kendi bicimiyle cizer.
+    if (d.telefon !== undefined) setKimlik(d.telefon);
     else if (d.email !== undefined) setKimlik(d.email);
     setRememberMe(true);
     // PAROLA BURADA DOLDURULMAZ ve doldurulmayacak: parolayi bizim
@@ -177,7 +191,7 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
     }
     // TESIS KODU ARTIK SAKLANMAZ: kullanicidan istenmiyor ve secim
     // sonucu her giriste yeniden cozuluyor.
-    const k = kimlik.trim();
+    const k = kimlikGonderimDegeri(kimlik);
     tanimlayiciYaz(k.includes("@") ? { email: k } : { telefon: k });
     await kimligiSakla(k, password);
   }
@@ -381,8 +395,10 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
       // telefon da; ayrimi SUNUCU yapar. `login-phone` DURUYOR ama
       // yeni tek alan buraya gelir — ikinci bir uc cagirmak, ayni
       // karari (kimlik turu) iki yerde vermek olurdu.
+      // (P248 §2) Telefon yazildiysa E.164 gider (`+905431992904`) —
+      // kullanici ekleme ekraninin gonderdigi bicimle AYNI.
       const govde: Record<string, unknown> = {
-        kimlik: kimlik.trim(),
+        kimlik: kimlikGonderimDegeri(kimlik),
         password,
       };
       if (slug) govde.tenant_slug = slug;
@@ -396,7 +412,10 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
       // jeton uretmeden once tesis adlarini dondurmemeli — o bilgi
       // parolayi dogrulayan `tesislerim` ucunun isi.
       if (res.status === 409) {
-        const secenekler = await tesisleriGetir(kimlik.trim(), password);
+        const secenekler = await tesisleriGetir(
+          kimlikGonderimDegeri(kimlik),
+          password,
+        );
         if (secenekler.length > 1) {
           setSecim(secenekler);
           return;
@@ -618,7 +637,7 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
                   <label htmlFor="yz-yeni-parola" className={etiketSinifi} style={etiketStili}>
                     {t("kayitParola")}
                   </label>
-                  <input
+                  <input maxLength={SINIR.PAROLA}
                     id="yz-yeni-parola"
                     type="password"
                     autoComplete="new-password"
@@ -634,7 +653,7 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
                   <label htmlFor="yz-yeni-parola2" className={etiketSinifi} style={etiketStili}>
                     {t("kayitParolaTekrar")}
                   </label>
-                  <input
+                  <input maxLength={SINIR.PAROLA}
                     id="yz-yeni-parola2"
                     type="password"
                     autoComplete="new-password"
@@ -695,28 +714,36 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
                  kendi bicim denetimini devreye sokar ve telefon
                  numarasi yazan kullaniciya "gecerli bir e-posta
                  girin" dedirtirdi. */
-              <label className="block">
-                <span className={etiketSinifi} style={etiketStili}>
+              <div className="block">
+                {/* (P248 §2) `<label>` SARMALI KALKTI: telefon kipinde icinde
+                    ulke secici DUGMESI de var ve sarmal etiket ilk
+                    etiketlenebilir ogeyi — dugmeyi — hedeflerdi. */}
+                <label htmlFor="yz-kimlik" className={etiketSinifi} style={etiketStili}>
                   {t("girisKimlik")}
-                </span>
-                <input
+                </label>
+                {/* (P248 §2) ORTAK TELEFON BILESENI, KIMLIK KIPINDE: rakam
+                    ya da `+` ile baslayinca ulke secici belirir ve numara
+                    bicimlenir; harf/`@` gorulunce e-posta olarak kalir. */}
+                <TelefonAlani
                   key={`kimlik-${hataSayaci}`}
+                  kimlik
+                  cercevesiz
+                  zorunlu
+                  varsayilanUlke="TR"
                   id="yz-kimlik"
                   name="username"
-                  type="text"
-                  className={`${alanSinifi} giris-alan${error ? " giris-titre" : ""}`}
-                  style={alanStili}
-                  value={kimlik}
-                  onChange={(e) => setKimlik(e.target.value)}
+                  dataTest="giris-kimlik"
+                  etiket={t("girisKimlik")}
+                  kutuSinifi={`${alanSinifi} giris-alan${error ? " giris-titre" : ""}`}
+                  kutuStili={alanStili}
+                  deger={kimlik}
+                  onDegisti={setKimlik}
                   placeholder={t("girisKimlikOrnek")}
-                  autoComplete="username"
-                  aria-label={t("girisKimlik")}
-                  required
                 />
                 <span className="mt-1.5 block text-xs" style={{ color: METIN_SOLUK }}>
                   {t("girisKimlikYardim")}
                 </span>
-              </label>
+              </div>
             )}
 
             {kodAdimi === "kod" ? (
@@ -724,7 +751,7 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
                 <span className={etiketSinifi} style={etiketStili}>
                   {t("girisKod")}
                 </span>
-                <input
+                <input maxLength={12 /* sunucu: EpostaKodDogrulaIstek.kod */}
                   key={`kod-${hataSayaci}`}
                   id="yz-kod"
                   name="one-time-code"

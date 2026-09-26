@@ -70,10 +70,11 @@ from datetime import datetime, timedelta, timezone
 
 import jwt
 import redis.asyncio as aioredis
-from fastapi import APIRouter, Depends, Form, Header, Request, Response
+from fastapi import APIRouter, Depends, Form, Header, Query, Request, Response
 from fastapi.responses import RedirectResponse
 from sqlalchemy import func, select, text
 
+from .. import girdi_siniri as _G
 from ..audit import Action, record_audit
 from ..config import settings
 from ..db import SessionLocal, set_tenant
@@ -118,7 +119,13 @@ router = APIRouter(prefix="/auth/oauth", tags=["auth"])
 # (P191 §1) GIRISTE TAMAMLAMA ile baglanabilecek roller. `kayit._ROLLER`in
 # uzerine `denetci` eklenir: denetci web yuzeyinde calisir ve yonetici onu
 # da listeye ekler; disarida kalan tek rol platform `admin`idir.
-_TAMAMLA_ROLLERI = ("resident", "security", "tesis_gorevlisi", "yonetici", "denetci")
+#: (P248 §1) `guvenlik_amiri` EKLENDI: davet edilmis amir SSO ile girdiginde
+#: rol hesaptan okunuyor ama bu kumede olmadigi icin `rol_uyusmuyor` ->
+#: "onay bekliyor" ekrani (olculdu). Amir mobil-yalniz bir roldur; web
+#: oturumunu `admin-web` yuzey kapisi ayrica reddeder.
+_TAMAMLA_ROLLERI = (
+    "resident", "security", "tesis_gorevlisi", "yonetici", "denetci", "guvenlik_amiri",
+)
 
 _OTURUM_GECERSIZ = APIError(400, "bad_request", "oauth_oturum_gecersiz")
 _BAGLAMA_GECERSIZ = APIError(400, "bad_request", "oauth_baglama_gecersiz")
@@ -494,8 +501,9 @@ async def _callback_isle(
 async def callback_get(
     saglayici: str,
     istek: Request,
-    code: str | None = None,
-    state: str | None = None,
+    # (P248 §3a) saglayici kodu + imzali state: JETON siniri.
+    code: str | None = Query(None, max_length=_G.JETON),
+    state: str | None = Query(None, max_length=_G.JETON),
     redis: aioredis.Redis = Depends(get_redis),
 ) -> RedirectResponse:
     """Google/Microsoft geri donusu (GET)."""
@@ -506,8 +514,8 @@ async def callback_get(
 async def callback_post(
     saglayici: str,
     istek: Request,
-    code: str | None = Form(default=None),
-    state: str | None = Form(default=None),
+    code: str | None = Form(default=None, max_length=_G.JETON),
+    state: str | None = Form(default=None, max_length=_G.JETON),
     redis: aioredis.Redis = Depends(get_redis),
 ) -> RedirectResponse:
     """Apple geri donusu.

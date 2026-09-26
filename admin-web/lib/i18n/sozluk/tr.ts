@@ -580,6 +580,8 @@ export const tr = {
   girisPanelPlatformIcin: "Yönetim paneli yalnızca platform yöneticisi içindir. Tesis hesapları app.yönetiyor.com adresini veya mobil uygulamayı kullanır.",
   girisRolYakinda: "Bu hesap türü için web çalışma alanı henüz hazır değil. Şimdilik mobil uygulamayı kullanın.",
   girisMobilUygulama: "Bu hesap türü Yönetiyor mobil uygulamasında çalışır. Telefonunuzdaki uygulamadan giriş yapın.",
+  // (P248 §1) Amir mobil-yalniz oldu — rolunun adiyla soylenir.
+  girisAmirMobil: "Güvenlik amiri hesabı mobil uygulamadan kullanılır. Lütfen telefonunuzdaki Yönetiyor uygulamasından giriş yapın.",
   girisMagazaAndroid: "Google Play'de aç",
   girisMagazaIos: "App Store'da aç",
   girisParola: "Parola",

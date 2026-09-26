@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
+import '../../auth/data/current_user_provider.dart';
 import '../../tasks/domain/task_models.dart' show PresignTicket;
 
 /// GET /users öğesinden avatar_url (SAF — test edilebilir).
@@ -48,7 +49,11 @@ class StaffApi {
 
   static const fieldRoles = {'security', 'tesis_gorevlisi'};
 
-  Future<List<StaffMember>> getFieldStaff() async {
+  /// (P248 §1) [amirDahil] -> guvenlik amirleri de listelenir. Yonetici
+  /// amiri DOGRUDAN ekliyor ve sonradan guvenlige dusurebiliyor; listede
+  /// gorunmeyen bir amir mobilde duzenlenemezdi. Amir cagirdiginda KAPALI:
+  /// ikinci bir amiri duzenleyemez (sunucu 403), gostermek yanlis soz olurdu.
+  Future<List<StaffMember>> getFieldStaff({bool amirDahil = false}) async {
     try {
       final res = await _dio.get<Map<String, dynamic>>(
         '/users',
@@ -57,7 +62,9 @@ class StaffApi {
       final items = (res.data!['items'] as List).cast<Map<String, dynamic>>();
       return items
           .map(StaffMember.fromJson)
-          .where((s) => fieldRoles.contains(s.role))
+          .where((s) =>
+              fieldRoles.contains(s.role) ||
+              (amirDahil && s.role == 'guvenlik_amiri'))
           .toList();
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
@@ -200,5 +207,11 @@ final staffApiProvider =
     Provider<StaffApi>((ref) => StaffApi(ref.watch(dioProvider)));
 
 final fieldStaffProvider = FutureProvider.autoDispose<List<StaffMember>>(
-  (ref) => ref.watch(staffApiProvider).getFieldStaff(),
+  (ref) async {
+    // (P248 §1) Amirler yalniz amir ATAYABILEN role (admin/yonetici) listelenir.
+    final rol = await ref.watch(currentUserRoleProvider.future);
+    return ref
+        .watch(staffApiProvider)
+        .getFieldStaff(amirDahil: rol.amirAtayabilir);
+  },
 );

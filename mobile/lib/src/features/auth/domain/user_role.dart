@@ -106,6 +106,12 @@ enum UserRole {
   /// PARITE kurali bunu gecersiz kildi: bir ozellik iki yuzeyde de olur.
   bool get canManageAnket => this == admin || this == yonetici;
 
+  /// (P248 §1) GUVENLIK AMIRI ATAYABILIR mi (ekle / duzenle / rolu
+  /// guvenlik <-> amir arasinda degistir). Sunucudaki
+  /// `roller.YONETILEBILIR_ROLLER`in aynasi: `guvenlik_amiri` yalniz
+  /// admin + yoneticinin kumesinde; amirin kendisi YALNIZ `security` acar.
+  bool get amirAtayabilir => this == admin || this == yonetici;
+
   /// (P166 §8.2) Kurulum sihirbazi (`GET/PATCH /kurulum`) — admin +
   /// yonetici. Ucun `require_role`u ile AYNI kume; saha ve sakin 403
   /// alir, bu yuzden ekran ve hatirlatici onlarda istek bile ATMAZ.

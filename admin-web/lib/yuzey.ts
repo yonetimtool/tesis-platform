@@ -325,14 +325,10 @@ const TESIS_ROLLERI = new Set([
   "admin",
   // (P128/P129) Salt-okuma mali denetim — masabasi rolu.
   "denetci",
-  // (P213 §6) Guvenlik amiri — GECMIS KAYIT IZLEME masabasi isidir.
-  // P129'da "yakinda" kutusunda birakilmisti: rol backend'de vardi ama
-  // hicbir yuzeyde ekrani yoktu, yani pratikte HICBIR YERE giremiyordu.
-  // Gecmis kayit yetkisini bu role vermek, once ona bir yuzey vermeyi
-  // gerektirdi. KAPSAM DAR: kamera + ozet + profil (asagida) — devriye,
-  // vardiya ve kullanici ekranlari backend'de acik olsa da bu turun
-  // isteginde yoktu, ayri bir urun karari olarak birakildi.
-  "guvenlik_amiri",
+  // (P248 §1) `guvenlik_amiri` CIKARILDI -> MOBIL_ROLLERI. P213 §6'da
+  // gecmis kamera kaydi izleme icin web'e alinmisti; KULLANICI KARARI:
+  // amir YALNIZ mobilden girer ve gecmis kayit izleme mobile tasindi.
+  // Backend yetkisi (`_KAYIT_IZLEYICI`) AYNEN duruyor — mobil kullaniyor.
 ]);
 
 /**
@@ -343,7 +339,17 @@ const TESIS_ROLLERI = new Set([
  * gelecekte de planlanmiyor; onlarin urunu mobil uygulamadir. Yanlis
  * cumle, kullaniciyi haftalarca bekleyecegi bir seye baglar.
  */
-const MOBIL_ROLLERI = new Set(["resident", "security", "tesis_gorevlisi"]);
+const MOBIL_ROLLERI = new Set([
+  "resident",
+  "security",
+  "tesis_gorevlisi",
+  // (P248 §1) Guvenlik amiri — ekibinin basinda, sahada calisir; urunu
+  // mobil uygulamadir (vardiya, devriye, gorev, panik, gecmis kayit).
+  // Yonetici amirin hesabini web'den YONETMEYE devam eder (kullanici
+  // duzenle, rol degistir, vardiya) — kapanan yalniz amirin KENDI web
+  // oturumudur.
+  "guvenlik_amiri",
+]);
 
 /**
  * ROL x ROTA — `app.*`ta HANGI ROLE HANGI SAYFA GOSTERILIR.
@@ -378,10 +384,14 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   //
   // ROTAYI ACMAK SUNUCUYU ACMAZ: her uc kendi kapisini koruyor. Buradaki
   // liste yalnizca MENUYU ve yonlendirmeyi belirler.
+  //
+  // (P248 §1) AMIR TUM SATIRLARDAN CIKARILDI: rol artik MOBIL-YALNIZ
+  // (bkz. MOBIL_ROLLERI). Sunucudaki dar kapsam (P231 `gorunur_roller`)
+  // AYNEN duruyor — ayni ekranlari mobil kullaniyor.
 
   // --- YONETIM EKRANLARI: yonetici + admin -------------------------------
-  "/dashboard": ["admin", "yonetici", "guvenlik_amiri"],
-  "/shifts": ["admin", "yonetici", "guvenlik_amiri"],
+  "/dashboard": ["admin", "yonetici"],
+  "/shifts": ["admin", "yonetici"],
   // (P203 §4) WEB'DE YALNIZ YONETIM.
   //
   // Sunucu okumayi saha rollerine de aciyor ("bir sonraki vardiyada kim
@@ -392,10 +402,10 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   //
   // Saha, plani MOBILDEN gorur (istegin "mobilde en azindan
   // goruntuleme" sarti).
-  "/vardiya-plani": ["admin", "yonetici", "guvenlik_amiri"],
-  "/checkpoints": ["admin", "yonetici", "guvenlik_amiri"],
-  "/patrol-plans": ["admin", "yonetici", "guvenlik_amiri"],
-  "/tasks": ["admin", "yonetici", "guvenlik_amiri"],
+  "/vardiya-plani": ["admin", "yonetici"],
+  "/checkpoints": ["admin", "yonetici"],
+  "/patrol-plans": ["admin", "yonetici"],
+  "/tasks": ["admin", "yonetici"],
   "/assets": ["admin", "yonetici"],
   "/units": ["admin", "yonetici"],
   // (P193 §5) Sunucu `PATCH /tenant/settings`i yoneticiye zaten aciyordu
@@ -446,7 +456,7 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   "/raporlar": ["admin", "yonetici", "denetci"],
   // (P129) Seffaflik panosu zaten anonim ozet; denetci OKUR.
   "/transparency": ["admin", "yonetici", "denetci"],
-  "/users": ["admin", "yonetici", "guvenlik_amiri"],
+  "/users": ["admin", "yonetici"],
   // Sunucudaki `_YONETIM` ile AYNI kume (`GET /residents`). Ayrisirlarsa
   // ya yetkisiz kullaniciya menude gorunen bir sayfa gosterilir ya da
   // yetkili kullanicidan gizlenir.
@@ -466,7 +476,7 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   "/kurulum": ["admin", "yonetici"],
   // (P154 / Asama 8) Ice aktarim catisi — kurulum isi.
   "/ice-aktarim": ["admin", "yonetici"],
-  "/complaints": ["admin", "yonetici", "guvenlik_amiri"],
+  "/complaints": ["admin", "yonetici"],
   // (P240 §1) PANIK TAKIP — MASABASI ROLLERI.
   //
   // `security` BURADA YOK ve bu bir eksiklik DEGIL: P129'dan beri
@@ -481,7 +491,7 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   //
   // `resident` hicbir yuzeyde listede yok: baska dairelerin acil
   // durumlari kisisel veridir.
-  "/panik": ["admin", "yonetici", "guvenlik_amiri"],
+  "/panik": ["admin", "yonetici"],
   // (P240 §3) AKILLI EV — `resident` BU SAYFADA YOK.
   //
   // Ilk yazimda sakin de eklenmisti; `rol-menusu` kilidi HAKLI olarak
@@ -519,9 +529,10 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   // Amirin canli izlemesi ozet/panodan, gecmis kaydi
   // `/kamera-kayitlari`ndan gecer — P213'un dar kapsami DOGRUYDU.
   "/kameralar": ["admin", "yonetici"],
-  // Gecmis kayit IZLEME ayri sayfa ve amire ACIK — istegin birebir
-  // karsiligi: "gecmis kayit erisimi: yonetici ve guvenlik amiri".
-  "/kamera-kayitlari": ["admin", "yonetici", "guvenlik_amiri"],
+  // Gecmis kayit IZLEME ayri sayfa. (P248 §1) Amir web'den CIKTI —
+  // gecmis kaydi mobilde izler; sunucu `_KAYIT_IZLEYICI` amiri hala
+  // kapsiyor (mobil ayni ucu cagirir).
+  "/kamera-kayitlari": ["admin", "yonetici"],
   // Olaylar: guvenlik BILDIRIR (mobilde), yonetim OKUR (burada).
   // (P129) `security` cikarildi — `app.*`ta oturumu yok; kaydi mobilden
   // olusturur.
@@ -578,7 +589,7 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   "/arac-gecisleri": ["admin", "yonetici"],
 
   // --- HERKESIN / PAYLASILAN --------------------------------------------
-  "/profil": ["admin", "yonetici", "denetci", "guvenlik_amiri", SAKIN_MODU],
+  "/profil": ["admin", "yonetici", "denetci", SAKIN_MODU],
   "/kvkk": ["admin", "yonetici", "denetci", SAKIN_MODU],
   // Guvenilir esnaf: sunucu "herkes gorur/arayabilir" diyor (routers/
   // external_services.py). Yonetici icin ayni sayfa YAZMA formunu da acar.
@@ -617,8 +628,8 @@ export function rolYuzeyeGirebilir(rol: string | null, yuzey: Yuzey): boolean {
 
 /** Henuz `app.*`a alinmamis tesis rolleri (giriste "yakinda" mesaji icin).
  *
- * (P213 §6) LISTE BOSALDI. Tek uyesi `guvenlik_amiri` idi ve o artik
- * TESIS_ROLLERI'nde. Fonksiyon SILINMEDI cunku olctugu SORU hâlâ gecerli:
+ * (P213 §6) LISTE BOSALDI. Tek uyesi `guvenlik_amiri` idi; o once
+ * TESIS_ROLLERI'ne, (P248 §1) sonra MOBIL_ROLLERI'ne tasindi. Fonksiyon SILINMEDI cunku olctugu SORU hâlâ gecerli:
  * "backend'de var ama yuzeyi olmayan bir rol" bir daha dogarsa giriste
  * dogru mesaji verecek yer burasi. Bos liste, "boyle bir rol yok" demenin
  * durust yolu — `false` donduren bir govde yazmak ayni seyi sessizce
@@ -648,7 +659,16 @@ export function mobilYalnizRol(rol: string | null): boolean {
 export function girisRedKarari(
   rol: string | null,
   yuzey: Yuzey,
-): { anahtar: "girisMobilUygulama" | "girisRolYakinda" | "girisPanelPlatformIcin"; kod: string } {
+): {
+  anahtar: "girisMobilUygulama" | "girisAmirMobil" | "girisRolYakinda" | "girisPanelPlatformIcin";
+  kod: string;
+} {
+  // (P248 §1) AMIR HER YUZEYDE AYNI, ADINI SOYLEYEN MESAJI ALIR. Genel
+  // "bu hesap turu mobilde calisir" cumlesi amir icin YENI bir karar
+  // (P213'te web'e girebiliyordu) — kisi neden artik giremedigini
+  // rolunun adiyla okumali. Panelde de ayni: "panel platform icindir"
+  // demek, amiri app.* adresini denemeye gonderirdi; orada da giremez.
+  if (rol === "guvenlik_amiri") return { anahtar: "girisAmirMobil", kod: "mobil_uygulama" };
   if (yuzey !== "tesis") return { anahtar: "girisPanelPlatformIcin", kod: "forbidden" };
   if (mobilYalnizRol(rol)) return { anahtar: "girisMobilUygulama", kod: "mobil_uygulama" };
   if (tesisYuzeyiBekleyenRol(rol)) return { anahtar: "girisRolYakinda", kod: "forbidden" };

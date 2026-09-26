@@ -316,7 +316,8 @@ describe("rol calisma alanlari birbirine karismaz", () => {
     // Mobil-yalniz roller: giriste zaten kesiliyorlar (bkz. login
     // rotalari). Menu tarafinda da bos kalmalari, kapinin delinmesi
     // hâlinde ikinci bir savunmadir.
-    for (const rol of ["security", "tesis_gorevlisi", "resident"]) {
+    // (P248 §1) `guvenlik_amiri` bu sinifa KATILDI (mobil-yalniz).
+    for (const rol of ["security", "tesis_gorevlisi", "resident", "guvenlik_amiri"]) {
       const gorunen = TESIS_ROTALARI.filter((r) => rotaRoldeGorunur(r, rol));
       expect(gorunen, rol).toEqual([]);
     }

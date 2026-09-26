@@ -34,6 +34,7 @@ from ..hiz_siniri import (
     kod_istegi_say,
 )
 from ..kimlik import kimligi_coz
+from ..oturum_yuzeyi import etkinlik_isle, hareketsiz_mi, istek_yuzeyi
 from ..oturum_iptal import (
     erisim_jetonunu_kapat,
     iptal_edilmis_mi,
@@ -51,6 +52,7 @@ from ..models import (
     Unit,
     UnitResident,
 )
+from ..roller import kayit_beyani_eslesir
 from ..gonderim import tenant_ayari
 from ..schemas import (
     CikisIstek,
@@ -216,16 +218,19 @@ async def _issue_token_pair(redis: aioredis.Redis, user: AppUser) -> TokenPair:
     # (P247 §2) Kullanici IKINCIL modda ise (sakin) refresh bu modu tasir.
     from ..rol_gecisi import asil_rol, ikincil_modda_mi
 
-    access = create_access_token(
-        user_id=user.id, tenant_id=user.tenant_id, role=user.role,
-        asil_rol=asil_rol(user),
-    )
-
+    # (P248 §4) Yuzey jeton VERILIRKEN istekten okunur (BFF basligi).
+    yz = istek_yuzeyi()
     refresh_token, jti, fam = create_refresh_token(
         user_id=user.id, tenant_id=user.tenant_id,
         arol=user.role if ikincil_modda_mi(user) else None,
+        yz=yz,
+    )
+    access = create_access_token(
+        user_id=user.id, tenant_id=user.tenant_id, role=user.role,
+        asil_rol=asil_rol(user), yz=yz, fam=fam,
     )
     await _store_refresh(redis, jti, fam)
+    await etkinlik_isle(redis, yz, fam)
     return TokenPair(
         access_token=access,
         refresh_token=refresh_token,
@@ -595,6 +600,12 @@ async def refresh(
         await _revoke_family(redis, fam, jti)
         raise APIError(401, "invalid_token", "oturum_sonlandirildi")
 
+    # (P248 §4) HAREKETSIZLIK: web 2 sa, platform 30 dk. Etkinlik anahtari
+    # dusmusse aile kapanir (mobil jetonda `yz` yok -> uygulanmaz).
+    if await hareketsiz_mi(redis, claims):
+        await _revoke_family(redis, fam, jti)
+        raise APIError(401, "invalid_token", "oturum_hareketsizlik")
+
     # 2) rotation/reuse kontrolu.
     current = await redis.get(f"refresh:fam:{fam}")
     valid_fam = await redis.get(f"refresh:valid:{jti}")
@@ -646,18 +657,20 @@ async def refresh(
                     arol = None
             from ..rol_gecisi import asil_rol as _asil
 
+            yz = claims.get("yz")
             access = create_access_token(
                 user_id=user.id, tenant_id=user.tenant_id, role=user.role,
-                asil_rol=_asil(user),
+                asil_rol=_asil(user), yz=yz, fam=fam,
             )
             new_refresh, new_jti, _ = create_refresh_token(
                 user_id=user.id, tenant_id=user.tenant_id, family_id=fam,
-                arol=arol,
+                arol=arol, yz=yz,
             )
 
     # 4) rotation: eski jti'yi sil, yeni jti'yi aile guncel'i yap.
     await redis.delete(f"refresh:valid:{jti}")
     await _store_refresh(redis, new_jti, fam)
+    await etkinlik_isle(redis, yz, fam)
 
     return TokenPair(
         access_token=access,
@@ -770,7 +783,9 @@ async def rol_kayit_basla(
             uygun = (
                 user is not None
                 and user.is_active
-                and user.role == body.rol
+                # (P248 §1) AILE ICI beyan (guvenlik <-> amir) eslesir; rol
+                # hesaptan gelir — e-posta yolundaki `_liste_kontrolu` ile ayni.
+                and kayit_beyani_eslesir(body.rol, user.role)
                 # PAROLASI OLAN HESAP BU YOLDAN GECMEZ: kayit, parola
                 # BELIRLENMEMIS hesabi sahiplenmektir. Aksi hâlde uc,
                 # ikinci bir parola SIFIRLAMA yuzeyi olurdu; parolasini

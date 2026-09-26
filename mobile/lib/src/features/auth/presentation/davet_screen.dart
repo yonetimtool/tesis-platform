@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
@@ -216,6 +217,7 @@ class _DavetScreenState extends ConsumerState<DavetScreen> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _adCtrl,
+            inputFormatters: GirdiSiniri.sinir(120), // sunucu: DavetParolaRequest.ad
             enabled: !bekliyor,
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
@@ -227,6 +229,7 @@ class _DavetScreenState extends ConsumerState<DavetScreen> {
           TextFormField(
             key: const Key('davet-parola'),
             controller: _parolaCtrl,
+            inputFormatters: GirdiSiniri.sinir(GirdiSiniri.parola), // sunucu: DavetParolaRequest.new_password
             enabled: !bekliyor,
             obscureText: _obscure,
             decoration: InputDecoration(
@@ -286,6 +289,9 @@ class _DavetScreenState extends ConsumerState<DavetScreen> {
         'security' => l10n.kayitRolGuvenlik,
         'tesis_gorevlisi' => l10n.kayitRolTesisGorevlisi,
         'denetci' => l10n.rolDenetci,
+        // (P248 §1) Yonetici amiri DOGRUDAN ekliyor; davet ekrani rolu
+        // ham `guvenlik_amiri` metniyle gostermesin.
+        'guvenlik_amiri' => l10n.rolGuvenlikAmiri,
         _ => rol,
       };
 }

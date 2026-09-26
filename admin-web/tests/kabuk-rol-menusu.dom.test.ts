@@ -109,7 +109,8 @@ describe("app.* menusu role gore", () => {
     // `app.*` artik yonetici + denetci yuzeyidir; bu roller giriste
     // kesiliyor. Elinde gecerli cerez kalmis biri girse bile menu BOS
     // olmali — yariya kadar dolu bir kabuk "sistem bozuk" demektir.
-    for (const rol of ["resident", "security", "tesis_gorevlisi"]) {
+    // (P248 §1) `guvenlik_amiri` mobil-yalniz sinifa katildi.
+    for (const rol of ["resident", "security", "tesis_gorevlisi", "guvenlik_amiri"]) {
       const { unmount } = ciz(Kabuk(rol));
       expect(menuAdlari(), rol).toEqual([]);
       unmount();

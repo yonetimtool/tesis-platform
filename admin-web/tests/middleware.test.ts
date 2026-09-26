@@ -232,9 +232,37 @@ describe("rol kapisi (P126.7)", () => {
     expect(hedef("yonetici")).toBe("/dashboard");
     // (P129) Denetcinin gunu raporlarda gecer; panoyu goremez.
     expect(hedef("denetci")).toBe("/raporlar");
-    // Mobil-yalniz roller buraya normalde HIC gelmez (giriste kesilirler);
-    // gelirse de yuzeyin varsayilanina duserler — dongu yok.
-    expect(hedef("resident")).toBe("/dashboard");
+    // Mobil-yalniz roller buraya normalde HIC gelmez (giriste kesilirler).
+    // (P248 §1) Gelirse ARTIK `/dashboard`a DUSMEZLER (orada her kart 403
+    // veriyordu): oturum kapatilip giris ekranina NEDENIYLE yollanirlar.
+    expect(hedef("resident")).toBe("/login");
+  });
+
+  it("(P248 §1) ARTAKALAN AMIR OTURUMU: cikis + nedenli /login", () => {
+    // P213-P247 arasinda web'e girebilen amirin tarayicisinda cerez
+    // kalmis olabilir. Her korumali sayfada ayni sonuc: cerezler silinir,
+    // giris ekrani amirin mesajini cizer.
+    for (const yol of ["/", "/dashboard", "/kamera-kayitlari", "/users", "/profil"]) {
+      const res = middleware(rolIstegi(APP, yol, "guvenlik_amiri"));
+      expect(res.status, yol).toBe(307);
+      const loc = new URL(res.headers.get("location") ?? "");
+      expect(loc.pathname, yol).toBe("/login");
+      expect(loc.searchParams.get("neden"), yol).toBe("mobil_uygulama");
+      expect(loc.searchParams.get("rol"), yol).toBe("guvenlik_amiri");
+      const silinen = res.headers.getSetCookie?.() ?? [];
+      for (const ad of [ACCESS_COOKIE, REFRESH_COOKIE]) {
+        expect(
+          silinen.some((c) => c.startsWith(`${ad}=`) && /Max-Age=0|Expires=Thu, 01 Jan 1970/i.test(c)),
+          `${yol} ${ad}`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it("(P248 §1) yonetici AMIR SAYFALARINDA etkilenmez (yonetim web'de kalir)", () => {
+    for (const yol of ["/users", "/shifts", "/vardiya-plani", "/kamera-kayitlari"]) {
+      expect(middleware(rolIstegi(APP, yol, "yonetici")).status, yol).toBe(200);
+    }
   });
 
   it("BOZUK access cerezi kapiyi TETIKLEMEZ (cokme/kilitlenme yok)", () => {

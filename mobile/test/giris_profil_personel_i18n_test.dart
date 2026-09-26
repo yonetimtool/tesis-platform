@@ -63,7 +63,8 @@ class _FakeStaffApi extends StaffApi {
   final List<StaffMember> _items;
 
   @override
-  Future<List<StaffMember>> getFieldStaff() async => _items;
+  Future<List<StaffMember>> getFieldStaff({bool amirDahil = false}) async =>
+      _items;
 
   @override
   Future<void> setActive(String id, bool active) async {}

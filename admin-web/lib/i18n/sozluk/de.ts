@@ -558,6 +558,7 @@ export const de: Sozluk = {
   girisPanelPlatformIcin: "Das Verwaltungspanel ist nur für den Plattform-Administrator. Objektkonten nutzen app.yönetiyor.com oder die mobile App.",
   girisRolYakinda: "Der Web-Arbeitsbereich für diesen Kontotyp ist noch nicht bereit. Nutzen Sie vorerst die mobile App.",
   girisMobilUygulama: "Dieser Kontotyp funktioniert in der Yönetiyor-App. Bitte melden Sie sich in der App auf Ihrem Telefon an.",
+  girisAmirMobil: "Konten für Sicherheitsleiter werden in der mobilen App genutzt. Bitte melden Sie sich in der Yönetiyor-App auf Ihrem Telefon an.",
   girisMagazaAndroid: "In Google Play öffnen",
   girisMagazaIos: "Im App Store öffnen",
   girisParola: "Passwort",

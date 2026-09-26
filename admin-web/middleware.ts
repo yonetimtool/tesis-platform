@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { ACCESS_COOKIE, REFRESH_COOKIE } from "./lib/cookies";
+import { ACCESS_COOKIE, REFRESH_COOKIE, cookieDomain, cookieOptions } from "./lib/cookies";
 import {
   appKonagi,
   ayniKonakAdresi,
@@ -12,6 +12,7 @@ import {
   konakYuzeyi,
   kokRota,
   kokRotaRol,
+  mobilYalnizRol,
   rolYuzeyeGirebilir,
   rotaRoldeGorunur,
   rotaYuzeyi,
@@ -120,6 +121,32 @@ export function middleware(req: NextRequest): NextResponse {
   // kalir ve rol kapisi UYGULANMAZ — kullaniciyi yenileme akisi calismadan
   // once disari atmak, oturumu acik birine "yetkin yok" demek olurdu.
   const rol = tokenRolu(req.cookies.get(ACCESS_COOKIE)?.value);
+
+  // (P248 §1) MOBIL-YALNIZ ROLUN ARTAKALAN WEB OTURUMU -> CIKIS + MESAJ.
+  //
+  // Giris kapisi (`oturumAc`) yeni oturumu keser; ama P213-P247 arasinda
+  // web'e girebilen guvenlik amirinin tarayicisinda CEREZ KALMIS olabilir.
+  // Eski davranis onu rolun "kok"une yolluyordu — mobil-yalniz rolde kok
+  // yok, `/dashboard`a dusup her kartta 403 goruyordu. Dogru cevap
+  // oturumu kapatip giris ekraninda NEDENINI soylemek: cerezler silinir,
+  // `/login?neden=mobil_uygulama&rol=...` ekrani `girisRedKarari`nin
+  // mesajini (amir icin kendi adiyla) ve magaza baglantilarini cizer.
+  if (rol && mobilYalnizRol(rol)) {
+    const res = yerelYonlendir(
+      req,
+      "/login",
+      `?${new URLSearchParams({ neden: "mobil_uygulama", rol }).toString()}`,
+    );
+    res.cookies.delete(ACCESS_COOKIE);
+    res.cookies.delete(REFRESH_COOKIE);
+    // COOKIE_DOMAIN varyanti da silinir (lib/backend.ts `clearAuthCookies`
+    // ile ayni gerekce: ikisi ayni adla gonderilir).
+    if (cookieDomain()) {
+      res.cookies.set(ACCESS_COOKIE, "", { ...cookieOptions(0), maxAge: 0 });
+      res.cookies.set(REFRESH_COOKIE, "", { ...cookieOptions(0), maxAge: 0 });
+    }
+    return res;
+  }
 
   // (P190 §1) YANLIS KONAKTAKI TESIS ROLU -> `app.*`A KONAK-OTESI YONLENDIRME.
   //

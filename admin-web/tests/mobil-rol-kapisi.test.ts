@@ -47,10 +47,10 @@ describe("(P129) mobil-yalniz roller", () => {
     }
   });
 
-  // (P213 §6) Amir artik WEB rolu: mobil-yalniz da degil, "yakinda" da
-  // degil — dogrudan `app.*`a girer.
-  it("`guvenlik_amiri` mobil-yalniz DEGIL ve artik BEKLEMEDE de degil", () => {
-    expect(mobilYalnizRol("guvenlik_amiri")).toBe(false);
+  // (P248 §1) Amir YENIDEN mobil-yalniz (P213 §6'da web'e alinmisti).
+  it("`guvenlik_amiri` MOBIL-YALNIZ — `app.*`a GIREMEZ", () => {
+    expect(rolYuzeyeGirebilir("guvenlik_amiri", "tesis")).toBe(false);
+    expect(mobilYalnizRol("guvenlik_amiri")).toBe(true);
     expect(tesisYuzeyiBekleyenRol("guvenlik_amiri")).toBe(false);
   });
 
@@ -77,16 +77,16 @@ describe("(P129) giris reddi KARARI", () => {
     }
   });
 
-  // (P213 §6) Amir icin ARTIK RED KARARINA HIC VARILMIYOR: `oturumAc`
-  // once `rolYuzeyeGirebilir`e bakiyor ve amir gecti. Karar fonksiyonunu
-  // "null doner" diye olcmek yanlis olurdu — o fonksiyon yalnizca REDDIN
-  // metnini secer, reddedilip reddedilmeyecegine karar vermez.
-  it("`guvenlik_amiri` kapiyi GECER — red metni secicisine hic ulasilmaz", () => {
-    expect(rolYuzeyeGirebilir("guvenlik_amiri", "tesis")).toBe(true);
-    // Ayni cagriyi bir de REDDEDILEN bir rolle yaparak, testin
-    // "her sey null doner" gibi bir bosluga dusmedigini gosteriyoruz.
-    expect(rolYuzeyeGirebilir("resident", "tesis")).toBe(false);
-    expect(girisRedKarari("resident", "tesis").kod).toBe("mobil_uygulama");
+  // (P248 §1) Amir RED metnini KENDI ADIYLA alir — her yuzeyde.
+  // "Panel platform icindir" demek amiri app.*'i denemeye gonderirdi;
+  // orada da giremez. Kod `mobil_uygulama`: magaza baglantilari cizilir.
+  it("`guvenlik_amiri` -> amir mesaji + magaza kodu (tesis VE panel)", () => {
+    for (const y of ["tesis", "platform"] as const) {
+      expect(girisRedKarari("guvenlik_amiri", y), y).toEqual({
+        anahtar: "girisAmirMobil",
+        kod: "mobil_uygulama",
+      });
+    }
   });
 
   it("platform yuzeyi -> panel mesaji, rol ne olursa olsun", () => {

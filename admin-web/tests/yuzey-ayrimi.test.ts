@@ -199,42 +199,19 @@ describe("rol x yuzey kapisi (P126.1)", () => {
     }
   });
 
-  // (P213 §6) DAVRANIS DEGISTI. `guvenlik_amiri` P129'dan beri "yakinda"
-  // kutusundaydi: backend'de yetkileri VARDI ama hicbir yuzeyde ekrani
-  // yoktu, yani giris yapamiyordu. Gecmis kayit izleme yetkisi bu role
-  // verilince ona bir yuzey acmak ZORUNLU oldu.
-  it("`guvenlik_amiri` ARTIK tesis yuzeyine girer (dar rota kumesiyle)", () => {
-    expect(rolYuzeyeGirebilir("guvenlik_amiri", "tesis")).toBe(true);
+  // (P248 §1) DAVRANIS YINE DEGISTI. P213 §6'da `guvenlik_amiri` gecmis
+  // kamera kaydi icin web'e alinmisti, P231 ona dar bir menu acmisti.
+  // KULLANICI KARARI: amir YALNIZ mobilden girer (gecmis kayit izleme
+  // mobile tasindi). Sunucu yetkileri DEGISMEDI; kapanan WEB yuzeyi.
+  it("`guvenlik_amiri` MOBIL-YALNIZ: tesis yuzeyine GIREMEZ", () => {
+    expect(rolYuzeyeGirebilir("guvenlik_amiri", "tesis")).toBe(false);
+    expect(mobilYalnizRol("guvenlik_amiri")).toBe(true);
     expect(tesisYuzeyiBekleyenRol("guvenlik_amiri")).toBe(false);
-    expect(mobilYalnizRol("guvenlik_amiri")).toBe(false);
-    // Platform yuzeyi ETKILENMEDI.
     expect(rolYuzeyeGirebilir("guvenlik_amiri", "platform")).toBe(false);
   });
 
-  it("amirin kumesi DAR: kayit/ozet/profil VAR, para ve yonetim YOK", () => {
-    for (const r of ["/kamera-kayitlari", "/dashboard", "/profil"]) {
-      expect(rotaRoldeGorunur(r, "guvenlik_amiri"), r).toBe(true);
-    }
-    // (P231 §2) `/users` ARTIK VAR — ama KAPSAMI DAR.
-    //
-    // Amirin isi kendi ekibini yonetmek; personel listesini hic
-    // gorememek, "guvenlik personelini gorur" kuralini uygulanamaz
-    // kilardi. Sunucu listeyi `gorunur_roller` ile daraltiyor: amir
-    // YALNIZ `security` + `guvenlik_amiri` gorur, sakin/tesis
-    // gorevlisi/yonetici GORMEZ ve tekil uc 404 doner.
-    //
-    // Yani buradaki gevseme bir YETKI YUKSELTMESI DEGIL: ekran acildi,
-    // KUME acilmadi. `test_p231_amir_gorunurluk.py` bunu sunucuda
-    // olcuyor (IDOR testi dahil).
-    expect(rotaRoldeGorunur("/users", "guvenlik_amiri")).toBe(true);
-
-    // Yetki yukseltmesi olmadigini olcen asil iddia: amir tesisin
-    // PARASINI ve YONETIM ekranlarini gormez.
-    // `/kameralar` (kamera YONETIMI) de yasak: amir kamera ekleyemez,
-    // silemez, NVR kimligi giremez — backend `_WRITER` onu istemiyor.
-    // (P232) Bu satir P231'de kazara gevsetilmisti; kilit YAKALADI.
-    for (const r of ["/kameralar", "/finans", "/dues",
-                     "/tesis-ayarlari", "/raporlar"]) {
+  it("amir `app.*`ta HICBIR sayfa gormez (gecmis kayit dahil)", () => {
+    for (const r of TESIS_ROTALARI) {
       expect(rotaRoldeGorunur(r, "guvenlik_amiri"), r).toBe(false);
     }
   });

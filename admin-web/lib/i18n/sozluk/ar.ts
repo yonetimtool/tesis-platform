@@ -558,6 +558,7 @@ export const ar: Sozluk = {
   girisPanelPlatformIcin: "لوحة الإدارة مخصّصة لمسؤول المنصّة فقط. تستخدم حسابات المجمّع app.yönetiyor.com أو تطبيق الجوال.",
   girisRolYakinda: "مساحة العمل على الويب لهذا النوع من الحسابات ليست جاهزة بعد. يُرجى استخدام تطبيق الجوال حاليًا.",
   girisMobilUygulama: "يعمل هذا النوع من الحسابات في تطبيق Yönetiyor للهاتف. يرجى تسجيل الدخول من التطبيق على هاتفك.",
+  girisAmirMobil: "يُستخدم حساب رئيس الأمن في تطبيق الهاتف. يرجى تسجيل الدخول من تطبيق Yönetiyor على هاتفك.",
   girisMagazaAndroid: "افتح في Google Play",
   girisMagazaIos: "افتح في App Store",
   girisParola: "كلمة المرور",

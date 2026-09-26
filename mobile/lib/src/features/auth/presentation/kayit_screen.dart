@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
@@ -39,10 +40,10 @@ import 'sosyal_giris.dart';
 /// ===========================================================================
 /// Yonetici web'den (`yonetiyor.com`) kaydolur; mobilde yoneticiye yalniz
 /// GIRIS vardir. Bu yuzden rol listesinde yonetici YOK — yalniz sakin,
-/// guvenlik ve tesis gorevlisi.
+/// guvenlik, (P248 §1) guvenlik amiri ve tesis gorevlisi.
 ///
 /// ADIMLAR:
-///   1. ROL        — sakin | guvenlik | tesis gorevlisi
+///   1. ROL        — sakin | guvenlik | guvenlik amiri | tesis gorevlisi
 ///   2. YONTEM     — once sosyal (SSO), sonra "E-posta ile devam"
 ///   3. BILGILER   — YALNIZ parola yolunda: ad + e-posta(zorunlu) +
 ///                   telefon(istege bagli) + parola
@@ -62,6 +63,13 @@ class KayitScreen extends ConsumerStatefulWidget {
 enum KayitRolu {
   sakin('resident'),
   guvenlik('security'),
+  // (P248 §1) GUVENLIK AMIRI. Yonetici amiri dogrudan ekliyor; amir bu
+  // listede kendi rolunu bulamayinca "Guvenlik"i seciyordu ve sunucu
+  // (eski kural) onu onay kuyruguna atiyordu. Sunucu artik guvenlik
+  // ailesini (guvenlik <-> amir) eslesmis sayiyor ve rolu HER ZAMAN
+  // yoneticinin listesindeki hesaptan aliyor — bu secenek yetki VERMEZ,
+  // yalniz kisinin kendini dogru tarif etmesini saglar.
+  guvenlikAmiri('guvenlik_amiri'),
   tesisGorevlisi('tesis_gorevlisi');
 
   const KayitRolu(this.kimlik);
@@ -357,6 +365,7 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
     return switch (rol) {
       KayitRolu.sakin => l10n.kayitRolSakin,
       KayitRolu.guvenlik => l10n.kayitRolGuvenlik,
+      KayitRolu.guvenlikAmiri => l10n.rolGuvenlikAmiri,
       KayitRolu.tesisGorevlisi => l10n.kayitRolTesisGorevlisi,
     };
   }
@@ -364,6 +373,7 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
   IconData _rolSimgesi(KayitRolu rol) => switch (rol) {
         KayitRolu.sakin => Icons.home_outlined,
         KayitRolu.guvenlik => Icons.shield_outlined,
+        KayitRolu.guvenlikAmiri => Icons.local_police_outlined,
         KayitRolu.tesisGorevlisi => Icons.handyman_outlined,
       };
 
@@ -549,6 +559,7 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
           TextFormField(
             controller: _adCtrl,
             key: const Key('kayit-ad'),
+            inputFormatters: GirdiSiniri.sinir(120), // sunucu: RolEpostaBaslaRequest.ad
             enabled: !_bekliyor,
             textInputAction: TextInputAction.next,
             textCapitalization: TextCapitalization.words,
@@ -586,6 +597,7 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
           TextFormField(
             controller: _parolaCtrl,
             key: const Key('kayit-parola'),
+            inputFormatters: GirdiSiniri.sinir(GirdiSiniri.parola), // sunucu: SetPasswordRequest.new_password
             enabled: !_bekliyor,
             obscureText: true,
             textInputAction: TextInputAction.done,
@@ -687,6 +699,7 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
           TextFormField(
             controller: _tesisKoduCtrl,
             key: const Key('kayit-tesis-kodu'),
+            inputFormatters: GirdiSiniri.sinir(40), // sunucu: RolEpostaBaslaRequest.tesis_kodu
             enabled: !_bekliyor,
             textInputAction: TextInputAction.done,
             autocorrect: false,
@@ -743,6 +756,7 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _kodCtrl,
+            inputFormatters: GirdiSiniri.sinir(8), // sunucu: RolEpostaDogrulaRequest.kod
             enabled: !_bekliyor,
             keyboardType: TextInputType.number,
             textInputAction: TextInputAction.done,
