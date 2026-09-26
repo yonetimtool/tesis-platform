@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
@@ -361,6 +362,7 @@ class _OnayDiyaloguState extends State<_OnayDiyalogu> {
             const SizedBox(height: 12),
             TextField(
               controller: _ctrl,
+              inputFormatters: GirdiSiniri.sinir(GirdiSiniri.kod), // sunucu: AnprOnayIn.plaka (64)
               textCapitalization: TextCapitalization.characters,
               decoration: InputDecoration(
                 labelText: l10n.aracPlaka,

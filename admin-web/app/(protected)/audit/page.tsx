@@ -17,6 +17,7 @@ import { rolAdi } from "@/lib/roles";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import type { AuditLog, AuditLogList } from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
+import { SINIR } from "@/lib/girdi-siniri";
 
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`). "platform" bir
 // KAPSAM KIMLIGIDIR (tenant'i olmayan kayit), cumle degil.
@@ -188,14 +189,14 @@ export default function AuditPage() {
         >
           {ISLEM_SECENEKLERI(t)}
         </Secim>
-        <Alan
+        <Alan maxLength={SINIR.KOD}
           aria-label={t("denetimKaynakTipi")}
           value={resourceType}
           onChange={(e) => reset(setResourceType)(e.target.value)}
           placeholder={KAYNAK_IPUCU}
           className="w-40"
         />
-        <Alan
+        <Alan maxLength={SINIR.KOD}
           aria-label={t("ayarTenantId")}
           value={tenantId}
           onChange={(e) => reset(setTenantId)(e.target.value)}

@@ -21,6 +21,7 @@ import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
+import { SINIR } from "@/lib/girdi-siniri";
 
 interface Ayarlar {
   sms_saglayici: string | null;
@@ -181,7 +182,7 @@ export function MesajAyarlariSekmesi() {
           </AlanSarmal>
           <AlanSarmal etiket={t("mesajKullanici")}>
             {(b) => (
-              <Alan
+              <Alan maxLength={150 /* sunucu: MesajYapilandirmaUpdate.sms_kullanici */}
                 {...b}
                 value={deger("sms_kullanici")}
                 onChange={(e) => yaz("sms_kullanici", e.target.value)}
@@ -193,7 +194,7 @@ export function MesajAyarlariSekmesi() {
             ipucu={data?.sms_parola_var ? t("mesajParolaKayitli") : undefined}
           >
             {(b) => (
-              <Alan
+              <Alan maxLength={SINIR.BASLIK /* sunucu: sms_parola 200 */}
                 {...b}
                 type="password"
                 autoComplete="new-password"
@@ -204,7 +205,7 @@ export function MesajAyarlariSekmesi() {
           </AlanSarmal>
           <AlanSarmal etiket={t("mesajBaslikAlan")}>
             {(b) => (
-              <Alan
+              <Alan maxLength={40 /* sunucu: MesajYapilandirmaUpdate.sms_baslik */}
                 {...b}
                 value={deger("sms_baslik")}
                 onChange={(e) => yaz("sms_baslik", e.target.value)}
@@ -221,7 +222,7 @@ export function MesajAyarlariSekmesi() {
         <div className="grid gap-3 sm:grid-cols-2">
           <AlanSarmal etiket={t("mesajSmtpHost")}>
             {(b) => (
-              <Alan {...b} value={deger("smtp_host")} onChange={(e) => yaz("smtp_host", e.target.value)} />
+              <Alan maxLength={SINIR.BASLIK} {...b} value={deger("smtp_host")} onChange={(e) => yaz("smtp_host", e.target.value)} />
             )}
           </AlanSarmal>
           <AlanSarmal etiket={t("mesajSmtpPort")}>
@@ -236,7 +237,7 @@ export function MesajAyarlariSekmesi() {
           </AlanSarmal>
           <AlanSarmal etiket={t("mesajKullanici")}>
             {(b) => (
-              <Alan
+              <Alan maxLength={SINIR.BASLIK}
                 {...b}
                 value={deger("smtp_kullanici")}
                 onChange={(e) => yaz("smtp_kullanici", e.target.value)}
@@ -248,7 +249,7 @@ export function MesajAyarlariSekmesi() {
             ipucu={data?.smtp_parola_var ? t("mesajParolaKayitli") : undefined}
           >
             {(b) => (
-              <Alan
+              <Alan maxLength={SINIR.BASLIK /* sunucu: smtp_parola 200 */}
                 {...b}
                 type="password"
                 autoComplete="new-password"
@@ -259,7 +260,7 @@ export function MesajAyarlariSekmesi() {
           </AlanSarmal>
           <AlanSarmal etiket={t("mesajGonderen")}>
             {(b) => (
-              <Alan
+              <Alan maxLength={SINIR.BASLIK}
                 {...b}
                 value={deger("smtp_gonderen")}
                 onChange={(e) => yaz("smtp_gonderen", e.target.value)}
@@ -300,7 +301,7 @@ export function MesajAyarlariSekmesi() {
           </AlanSarmal>
           <AlanSarmal etiket={t("mesajTestHedef")}>
             {(b) => (
-              <Alan {...b} value={testHedef} onChange={(e) => setTestHedef(e.target.value)} />
+              <Alan maxLength={SINIR.BASLIK /* sunucu: MesajTestGonderim.hedef */} {...b} value={testHedef} onChange={(e) => setTestHedef(e.target.value)} />
             )}
           </AlanSarmal>
           <div className="flex items-end">

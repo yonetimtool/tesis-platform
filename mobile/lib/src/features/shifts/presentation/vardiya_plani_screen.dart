@@ -29,6 +29,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 import 'widgets/gun_takvimi.dart';
 import 'izin_formu.dart';
 import 'dongu_ata_dialogu.dart';
@@ -471,6 +472,7 @@ class _CikarSebepDialoguState extends State<_CikarSebepDialogu> {
       // bos kalirsa kayit sonradan hicbir soruyu yanitlayamaz.
       content: TextField(
         key: const Key('vardiya-cikar-sebep'),
+        inputFormatters: GirdiSiniri.sinir(500), // sunucu: DELETE ?not_metni (500)
         controller: _ctrl,
         decoration: InputDecoration(labelText: l10n.vardiyaCikarSebep),
       ),
@@ -784,6 +786,7 @@ class _HizliEkleDialoguState extends ConsumerState<_HizliEkleDialogu> {
             TextField(
               key: const Key('vardiya-ekle-mola'),
               controller: _molaCtrl,
+              inputFormatters: GirdiSiniri.sinir(GirdiSiniri.sayi),
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 labelText: l10n.vardiyaMolaDakika,
@@ -801,6 +804,7 @@ class _HizliEkleDialoguState extends ConsumerState<_HizliEkleDialogu> {
             TextField(
               key: const Key('vardiya-ekle-not'),
               controller: _notCtrl,
+              maxLength: 500, // sunucu: VardiyaPlanAtama.not_metni
               decoration: InputDecoration(labelText: l10n.vardiyaNot),
             ),
             const SizedBox(height: 8),

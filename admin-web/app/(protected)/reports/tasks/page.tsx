@@ -15,6 +15,7 @@ import type {
   UserListResponse,
 } from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
+import { csvIndir } from "@/lib/csv";
 
 
 // GOREV TIPI = DINAMIK KATEGORI. Sabit dort tip (temizlik/kontrol/ilaclama/
@@ -32,18 +33,6 @@ function toIso(local: string): string {
   if (!local) return "";
   const d = new Date(local);
   return Number.isNaN(d.getTime()) ? "" : d.toISOString();
-}
-
-function csvDownload(filename: string, rows: string[][]): void {
-  const esc = (c: string) => (/[",\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c);
-  const csv = rows.map((r) => r.map(esc).join(",")).join("\n");
-  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 export default function TaskReportPage() {
@@ -118,7 +107,7 @@ export default function TaskReportPage() {
         c.notlar ?? "",
       ]);
     }
-    csvDownload("gorev-gecmisi.csv", rows);
+    csvIndir("gorev-gecmisi.csv", rows);
   }
 
   const kategoriSecenekleri = (kategoriler?.items ?? []).map((k) => (

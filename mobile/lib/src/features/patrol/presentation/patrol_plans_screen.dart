@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../shifts/data/shifts_api.dart';
 import '../../../core/error/api_exception.dart';
@@ -380,6 +381,7 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
               EksikVeriUyarisi(goster: noktaDurum.hasError),
               TextFormField(
                 controller: _ad,
+                inputFormatters: GirdiSiniri.sinir(GirdiSiniri.ad), // sunucu: PatrolPlanCreate.ad
                 enabled: !_busy,
                 decoration: InputDecoration(
                   labelText: l10n.devriyePlanAdi,
@@ -418,6 +420,7 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _periyot,
+                inputFormatters: GirdiSiniri.sinir(GirdiSiniri.sayi),
                 enabled: !_busy,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(

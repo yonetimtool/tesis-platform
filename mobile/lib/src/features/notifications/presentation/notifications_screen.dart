@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/i18n/l10n.dart';
 import '../../../core/ui/merkez_diyalog.dart';
@@ -257,6 +258,7 @@ class _NotificationsState extends ConsumerState<NotificationsScreen> {
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
             child: TextField(
               controller: _aramaKtrl,
+              inputFormatters: GirdiSiniri.sinir(GirdiSiniri.arama), // sunucu: GET /notifications ?q
               onChanged: _aramaDegisti,
               decoration: InputDecoration(
                 isDense: true,

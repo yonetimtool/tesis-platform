@@ -54,6 +54,7 @@ import { apiSend } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
+import { SINIR } from "@/lib/girdi-siniri";
 
 type Alici = {
   user_id: string;
@@ -326,7 +327,7 @@ export default function PanikPage() {
           </>
         }
       >
-        <Alan
+        <Alan maxLength={SINIR.NOT}
           data-test="panik-kapanis-notu"
           aria-label={t("panikKapanisNotu")}
           placeholder={t("panikKapanisNotu")}

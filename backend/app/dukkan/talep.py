@@ -58,6 +58,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from .bildirim import bildir
 from .isletme import _denetim, _sahiplik_dogrula
 from .kimlik import DukkanKimlik, kimlik_zorunlu
@@ -72,10 +73,12 @@ KURUS_UST_SINIR = 1_000_000_000
 
 
 class TalepOlustur(BaseModel):
-    kategori_slug: str
-    il_slug: str
-    ilce_slug: str
-    mahalle_slug: str
+    # (P248 §3a) Dukkan semalari pydantic'in DUZ BaseModel'ini kullanir —
+    # Yonetio'nun 200k taban tavani BURADA YOK; her alan acik sinirli.
+    kategori_slug: str = Field(max_length=_G.SLUG)
+    il_slug: str = Field(max_length=_G.SLUG)
+    ilce_slug: str = Field(max_length=_G.SLUG)
+    mahalle_slug: str = Field(max_length=_G.SLUG)
     aciklama: str = Field(min_length=10, max_length=4000)
     baslik: str | None = Field(default=None, max_length=160)
     butce_min_kurus: int | None = Field(default=None, ge=0, le=KURUS_UST_SINIR)

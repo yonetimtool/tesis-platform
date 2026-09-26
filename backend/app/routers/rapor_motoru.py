@@ -24,6 +24,7 @@ from sqlalchemy import func, literal_column, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
+from .. import girdi_siniri as _G
 from ..hiz_siniri import DISA_AKTARIM_SINIRI
 from ..borclandirma import gecikme_kurus
 from .. import defter
@@ -1198,7 +1199,7 @@ def _param(body: RaporParametre) -> RaporParam:
 async def rapor_uret(
     kod: str,
     body: RaporParametre,
-    bicim: str = Query("tablo", description="tablo | excel | pdf"),
+    bicim: str = Query("tablo", description="tablo | excel | pdf", max_length=_G.KOD),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_RAPOR_OKUR),
 ):
@@ -1280,7 +1281,7 @@ async def rapor_uret(
 async def rapor_kuyruga_al(
     kod: str,
     body: RaporParametre,
-    bicim: str = Query("excel", description="excel | pdf"),
+    bicim: str = Query("excel", description="excel | pdf", max_length=_G.KOD),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_RAPOR_OKUR),
 ) -> RaporIsi:

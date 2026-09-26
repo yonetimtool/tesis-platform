@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/i18n/l10n.dart';
 import '../../../routing/app_router.dart';
@@ -137,6 +138,7 @@ class _AramaScreenState extends ConsumerState<AramaScreen> {
             padding: const EdgeInsets.all(12),
             child: TextField(
               key: const Key('arama-alani'),
+              inputFormatters: GirdiSiniri.sinir(GirdiSiniri.arama), // sunucu: GET /arama ?q
               controller: _ctrl,
               autofocus: true,
               textInputAction: TextInputAction.search,

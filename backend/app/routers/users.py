@@ -23,6 +23,8 @@ from ..hata_metinleri import istek_dili
 from ..hesap_silme import hesabi_sil_veya_anonimlestir
 from ..models import AppUser, Davet, Tenant, Unit, UnitResident, UserDevice
 from ..roller import gorunur_roller, yonetilebilir
+from ..tr_arama import LIKE_KACIS, like_icerir
+from .. import girdi_siniri as _G
 from ..schemas import (
     OdemeKoduListe,
     OdemeKoduSatiri,
@@ -189,7 +191,7 @@ async def list_users(
     offset: int = Query(0, ge=0),
     role: UserRoleLiteral | None = Query(None),
     is_active: bool | None = Query(None),
-    q: str | None = Query(None),
+    q: str | None = Query(None, max_length=_G.ARAMA),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_READER),
 ) -> UserAdminListResponse:
@@ -217,8 +219,10 @@ async def list_users(
     if is_active is not None:
         where.append(AppUser.is_active == is_active)
     if q:
-        like = f"%{q}%"
-        where.append(or_(AppUser.ad.ilike(like), AppUser.email.ilike(like)))
+        # (P248 §3b) `%`/`_` kacislanir: `?q=%` TUM kullanicilari donduruyordu.
+        like = like_icerir(q)
+        where.append(or_(AppUser.ad.ilike(like, escape=LIKE_KACIS),
+                         AppUser.email.ilike(like, escape=LIKE_KACIS)))
     total = (await db.execute(select(func.count()).select_from(AppUser).where(*where))).scalar_one()
     rows = (
         await db.execute(select(AppUser).where(*where).order_by(AppUser.ad, AppUser.id).limit(limit).offset(offset))

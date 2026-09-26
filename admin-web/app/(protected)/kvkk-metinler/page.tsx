@@ -23,6 +23,7 @@ import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import { useSorguSecimi } from "@/lib/sorgu-secimi";
+import { SINIR } from "@/lib/girdi-siniri";
 
 /**
  * (P168 §5 · P170 §2) KVKK VE YASAL METINLER — PLATFORM YONETIMI.
@@ -275,7 +276,7 @@ export default function KvkkMetinlerPage() {
           {t("kvkkSurumNotu")}
         </p>
         <AlanSarmal etiket={t("yonKvkkBaslik")} zorunlu>
-          {(b) => <Alan {...b} value={baslik} onChange={(e) => setBaslik(e.target.value)} />}
+          {(b) => <Alan maxLength={SINIR.BASLIK} {...b} value={baslik} onChange={(e) => setBaslik(e.target.value)} />}
         </AlanSarmal>
         <AlanSarmal etiket={t("yonKvkkGovde")} zorunlu>
           {() => (
@@ -283,6 +284,7 @@ export default function KvkkMetinlerPage() {
               deger={govde}
               onDegisti={setGovde}
               etiket={t("yonKvkkGovde")}
+              azami={SINIR.YASAL_METIN /* sunucu: KvkkMetinCreate.govde */}
             />
           )}
         </AlanSarmal>

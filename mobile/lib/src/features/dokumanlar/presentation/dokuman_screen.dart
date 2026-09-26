@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
@@ -84,6 +85,8 @@ class _DokumanScreenState extends ConsumerState<DokumanScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                   child: TextField(
+                    // yalniz istemci suzgeci (liste yerelde suzulur)
+                    inputFormatters: GirdiSiniri.sinir(GirdiSiniri.arama),
                     decoration: InputDecoration(
                       prefixIcon: const Icon(Icons.search),
                       hintText: l10n.dokumanAra,

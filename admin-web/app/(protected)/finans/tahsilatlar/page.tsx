@@ -40,6 +40,7 @@ import {
 import { apiSend, genIdempotencyKey } from "@/lib/client";
 import { useT } from "@/lib/i18n/kullan";
 import { kurusToTL, tlToKurus } from "@/lib/money";
+import { ISTEMCI_SINIR, SINIR } from "@/lib/girdi-siniri";
 
 const TIP = "tahsilat";
 // TAHSILAT YONTEMI: brief "varsayilan Otomatik" diyor. Uc bugun bir
@@ -299,7 +300,7 @@ function TekilModal({
         {aramaGerekli && (
           <AlanSarmal etiket={t("finansKisiAra")}>
             {(b) => (
-              <Alan
+              <Alan maxLength={SINIR.ARAMA}
                 {...b}
                 value={ara}
                 data-test="tahsilat-kisi-ara"
@@ -424,7 +425,7 @@ function TekilModal({
         </AlanSarmal>
         <AlanSarmal etiket={t("finansAlanTutar")} zorunlu>
           {(b) => (
-            <Alan {...b} value={tutar} inputMode="decimal"
+            <Alan maxLength={ISTEMCI_SINIR.SAYI} {...b} value={tutar} inputMode="decimal"
               onChange={(e) => setTutar(e.target.value)} />
           )}
         </AlanSarmal>
@@ -436,7 +437,7 @@ function TekilModal({
         </AlanSarmal>
         <AlanSarmal etiket={t("finansAlanAciklama")}>
           {(b) => (
-            <Alan {...b} value={aciklama}
+            <Alan maxLength={500 /* sunucu: TahsilatCreate.aciklama */} {...b} value={aciklama}
               onChange={(e) => setAciklama(e.target.value)} />
           )}
         </AlanSarmal>
@@ -557,7 +558,7 @@ function TopluModal({
               <option value="">{t("finansKisiSec")}</option>
               {kisiler.map((k) => <option key={k.id} value={k.id}>{k.ad}</option>)}
             </Secim>,
-            <Alan
+            <Alan maxLength={500 /* sunucu: TahsilatCreate.aciklama (toplu satir 2000) */}
               key="a"
               value={s.aciklama}
               aria-label={t("finansSutunAciklama")}

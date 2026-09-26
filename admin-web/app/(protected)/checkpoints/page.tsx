@@ -59,6 +59,7 @@ import { koordinatBoylamCoz, koordinatEnlemCoz } from "@/lib/sayi";
 import { useT } from "@/lib/i18n/kullan";
 import { alarmHaritasi, noktaDurumu } from "@/lib/rota-durumu";
 import { esikSonucu, mesafeMetre } from "@/lib/mesafe";
+import { ISTEMCI_SINIR, SINIR } from "@/lib/girdi-siniri";
 
 // Mobil POC ile tutarli: buyuk harf hex, ayracsiz.
 const NFC_PLACEHOLDER = "04A1B2C3D4";
@@ -490,7 +491,7 @@ export default function CheckpointsPage() {
         <form id="nokta-form" onSubmit={save} className="space-y-4">
           <AlanSarmal etiket={t("ortakAd")} zorunlu>
             {(b) => (
-              <Alan
+              <Alan maxLength={SINIR.AD}
                 {...b}
                 value={form.ad}
                 onChange={(e) => setForm({ ...form, ad: e.target.value })}
@@ -501,7 +502,7 @@ export default function CheckpointsPage() {
 
           <AlanSarmal etiket={t("noktaEtiketUid")} ipucu={t("noktaEtiketIpucu")} zorunlu>
             {(b) => (
-              <Alan
+              <Alan maxLength={SINIR.NFC_UID}
                 {...b}
                 className="font-mono uppercase"
                 value={form.nfc_tag_uid}
@@ -517,7 +518,7 @@ export default function CheckpointsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <AlanSarmal etiket={t("noktaGpsEnlem")}>
               {(b) => (
-                <Alan
+                <Alan maxLength={ISTEMCI_SINIR.SAYI}
                   {...b}
                   inputMode="decimal"
                   value={form.gps_lat}
@@ -528,7 +529,7 @@ export default function CheckpointsPage() {
             </AlanSarmal>
             <AlanSarmal etiket={t("noktaGpsBoylam")}>
               {(b) => (
-                <Alan
+                <Alan maxLength={ISTEMCI_SINIR.SAYI}
                   {...b}
                   inputMode="decimal"
                   value={form.gps_lng}

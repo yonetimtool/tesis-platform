@@ -21,6 +21,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from .. import defter
 from ..deps import get_tenant_db, require_role
 from ..models import AppUser, DuesAssessment
@@ -87,7 +88,7 @@ async def _tahsilat_ozet(db: AsyncSession, donem: str | None) -> TahsilatOzet:
 
 @router.get("/financial-summary", response_model=FinancialSummary)
 async def financial_summary(
-    donem: str | None = Query(None, description="'YYYY-MM'; bos = tum zamanlar"),
+    donem: str | None = Query(None, description="'YYYY-MM'; bos = tum zamanlar", max_length=_G.KOD),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_READER),
 ) -> FinancialSummary:

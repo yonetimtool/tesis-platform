@@ -42,6 +42,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from ..audit import Action, audit_user
 from ..belge_no import belge_no_ata
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
@@ -283,7 +284,7 @@ async def list_entries(
     tip: BudgetTip | None = Query(None),
     kategori_id: uuid.UUID | None = Query(None),
     kaynak: BudgetKaynak | None = Query(None),
-    donem: str | None = Query(None, description="'YYYY-MM' — ay filtresi"),
+    donem: str | None = Query(None, description="'YYYY-MM' — ay filtresi", max_length=_G.KOD),
     baslangic: date | None = Query(None),
     bitis: date | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
@@ -446,7 +447,7 @@ async def delete_entry(
 # -------------------------------- ozet -------------------------------------- #
 @router.get("/summary", response_model=BudgetSummary)
 async def budget_summary(
-    donem: str | None = Query(None, description="'YYYY-MM' — ay bazli ozet"),
+    donem: str | None = Query(None, description="'YYYY-MM' — ay bazli ozet", max_length=_G.KOD),
     baslangic: date | None = Query(None),
     bitis: date | None = Query(None),
     db: AsyncSession = Depends(get_tenant_db),
@@ -607,7 +608,7 @@ async def hedef_sil(
 @router.get("/karsilastirma", response_model=ButceKarsilastirma)
 async def butce_karsilastirma(
     yil: int = Query(..., ge=2000, le=2100),
-    donem: str | None = Query(None, description="'YYYY-MM'; bos = TUM YIL"),
+    donem: str | None = Query(None, description="'YYYY-MM'; bos = TUM YIL", max_length=_G.KOD),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_DEFTER_OKUR),
 ) -> ButceKarsilastirma:

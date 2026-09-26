@@ -915,6 +915,19 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Le corps de la requête est invalide.",
         "es": "El cuerpo de la solicitud no es válido.",
     },
+    # (P248 §3a) Uzunluk asimi — ust mesaj alan + sinir soyler. Genel
+    # "istek govdesi gecersiz" kullaniciya NEYIN yanlis oldugunu
+    # soylemiyordu; istemci maxLength'i atlatilirsa (eski surum, API
+    # istemcisi, yapistirma) kullanici yine anlasilir bir cumle gorur.
+    "metin_cok_uzun": {
+        "tr": "'{alan}' alanı en fazla {sinir} karakter olabilir.",
+        "en": "The '{alan}' field can be at most {sinir} characters.",
+        "ar": "يمكن أن يحتوي الحقل '{alan}' على {sinir} حرفًا كحد أقصى.",
+        "ru": "Поле '{alan}' может содержать не более {sinir} символов.",
+        "de": "Das Feld '{alan}' darf höchstens {sinir} Zeichen lang sein.",
+        "fr": "Le champ '{alan}' ne peut pas dépasser {sinir} caractères.",
+        "es": "El campo '{alan}' puede tener como máximo {sinir} caracteres.",
+    },
     "idempotency_key_zorunlu": {
         "tr": "Idempotency-Key başlığı zorunludur.",
         "en": "The Idempotency-Key header is required.",
@@ -968,6 +981,16 @@ METINLER: dict[str, dict[str, str]] = {
         "de": "Das Sitzungstoken enthält keine Anlagen-ID.",
         "fr": "Le jeton de session ne contient pas d'identifiant d'établissement.",
         "es": "El token de sesión no contiene el identificador de la instalación.",
+    },
+    # (P248 §4) Web 2 sa / platform 30 dk hareketsizlik.
+    "oturum_hareketsizlik": {
+        "tr": "Uzun süre işlem yapılmadığı için oturumunuz kapandı. Lütfen yeniden giriş yapın.",
+        "en": "Your session ended after a period of inactivity. Please sign in again.",
+        "ar": "انتهت جلستك بسبب عدم النشاط لفترة طويلة. يرجى تسجيل الدخول مرة أخرى.",
+        "ru": "Сеанс завершён из-за длительного бездействия. Войдите снова.",
+        "de": "Ihre Sitzung wurde wegen Inaktivität beendet. Bitte melden Sie sich erneut an.",
+        "fr": "Votre session a expiré après une période d’inactivité. Veuillez vous reconnecter.",
+        "es": "Su sesión se cerró por inactividad. Inicie sesión de nuevo.",
     },
     "oturum_sonlandirildi": {
         "tr": "Oturumunuz sonlandırıldı. Lütfen yeniden giriş yapın.",

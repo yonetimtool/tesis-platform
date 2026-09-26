@@ -9,6 +9,7 @@ import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { DILLER, DIL_ADLARI } from "@/lib/i18n/diller";
+import { SINIR } from "@/lib/girdi-siniri";
 
 /**
  * (P202) ZORUNLU / ONERILEN GUNCELLEME — PLATFORM YONETIMI.
@@ -171,7 +172,7 @@ function PlatformKarti({
           hata={asgariGecersiz ? t("surumBicimGecersiz") : undefined}
         >
           {(baglar) => (
-            <Alan
+            <Alan maxLength={SINIR.KOD}
               {...baglar}
               value={asgari}
               onChange={(e) => setAsgari(e.target.value)}
@@ -192,7 +193,7 @@ function PlatformKarti({
           }
         >
           {(baglar) => (
-            <Alan
+            <Alan maxLength={SINIR.KOD}
               {...baglar}
               value={onerilen}
               onChange={(e) => setOnerilen(e.target.value)}
@@ -210,7 +211,7 @@ function PlatformKarti({
         {DILLER.map((dil) => (
           <AlanSarmal key={dil} etiket={DIL_ADLARI[dil]}>
             {(baglar) => (
-              <Alan
+              <Alan maxLength={SINIR.NOT}
                 {...baglar}
                 value={mesaj[dil] ?? ""}
                 onChange={(e) => setMesaj((o) => ({ ...o, [dil]: e.target.value }))}

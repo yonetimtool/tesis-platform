@@ -19,12 +19,14 @@ from __future__ import annotations
 import re
 import unicodedata
 import uuid
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from .kimlik import DukkanKimlik, kimlik_zorunlu
 from .lokasyon_yukle import slugla
 from .siralama import siralama_puani_hesapla
@@ -120,29 +122,31 @@ class IsletmeOlustur(BaseModel):
     ad: str = Field(min_length=2, max_length=160)
     telefon: str = Field(min_length=7, max_length=32)
     aciklama: str | None = Field(default=None, max_length=4000)
-    eposta: str | None = None
-    whatsapp: str | None = None
+    # (P248 §3a) duz pydantic BaseModel: taban tavan YOK, her alan acik.
+    eposta: str | None = Field(default=None, max_length=_G.EPOSTA)
+    whatsapp: str | None = Field(default=None, max_length=_G.TELEFON_HAM)
     vergi_no: str | None = Field(default=None, max_length=11)
-    vergi_dairesi: str | None = None
-    adres_mahalle_slug: str | None = None
-    adres_il_slug: str | None = None
-    adres_ilce_slug: str | None = None
-    adres_detay: str | None = None
+    vergi_dairesi: str | None = Field(default=None, max_length=_G.AD)
+    adres_mahalle_slug: str | None = Field(default=None, max_length=_G.SLUG)
+    adres_il_slug: str | None = Field(default=None, max_length=_G.SLUG)
+    adres_ilce_slug: str | None = Field(default=None, max_length=_G.SLUG)
+    adres_detay: str | None = Field(default=None, max_length=_G.ADRES)
 
 
 class IsletmeGuncelle(BaseModel):
     ad: str | None = Field(default=None, min_length=2, max_length=160)
-    telefon: str | None = None
+    telefon: str | None = Field(default=None, max_length=_G.TELEFON_HAM)
     aciklama: str | None = Field(default=None, max_length=4000)
-    eposta: str | None = None
-    whatsapp: str | None = None
+    eposta: str | None = Field(default=None, max_length=_G.EPOSTA)
+    whatsapp: str | None = Field(default=None, max_length=_G.TELEFON_HAM)
     vergi_no: str | None = Field(default=None, max_length=11)
-    vergi_dairesi: str | None = None
-    adres_detay: str | None = None
+    vergi_dairesi: str | None = Field(default=None, max_length=_G.AD)
+    adres_detay: str | None = Field(default=None, max_length=_G.ADRES)
 
 
 class SlugListesi(BaseModel):
-    slugler: list[str] = Field(default_factory=list, max_length=500)
+    slugler: list[Annotated[str, Field(max_length=_G.SLUG)]] = Field(
+        default_factory=list, max_length=500)
 
 
 class MahalleListesi(BaseModel):
@@ -521,8 +525,8 @@ BELGE_ICERIK_TIPLERI = (
 
 class BelgeYukleIstek(BaseModel):
     tip: str = Field(pattern="^(vergi_levhasi|ustalik_belgesi|sicil|diger)$")
-    content_type: str
-    dosya_adi: str | None = None
+    content_type: str = Field(max_length=_G.ICERIK_TIPI)
+    dosya_adi: str | None = Field(default=None, max_length=_G.DOSYA_ADI)
 
 
 @router.post("/isletme/{isletme_id}/belge/presign")

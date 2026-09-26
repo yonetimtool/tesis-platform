@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/i18n/l10n.dart';
 import '../../../core/ui/merkez_diyalog.dart';
@@ -203,11 +204,13 @@ class _AnketFormSayfasiState extends ConsumerState<AnketFormSayfasi> {
             TextField(
               key: const Key('anket-baslik'),
               controller: _baslik,
+              inputFormatters: GirdiSiniri.sinir(GirdiSiniri.baslik), // sunucu: AnketCreate.baslik
               decoration: InputDecoration(labelText: l10n.anketBaslik),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: _aciklama,
+              maxLength: GirdiSiniri.not_, // sunucu: AnketCreate.aciklama
               decoration:
                   InputDecoration(labelText: l10n.anketAciklamaOpsiyonel),
             ),
@@ -226,6 +229,7 @@ class _AnketFormSayfasiState extends ConsumerState<AnketFormSayfasi> {
                       child: TextField(
                         key: Key('anket-madde-$i'),
                         controller: _maddeler[i],
+                        inputFormatters: GirdiSiniri.sinir(200), // sunucu: AnketSecenekIn.metin
                         decoration: InputDecoration(
                           labelText: l10n.anketSecenekNo('${i + 1}'),
                         ),

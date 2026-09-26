@@ -22,6 +22,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from .. import ceviri
 from ..ceviri_api import (
     ceviri_isaretle_ve_kuyrukla,
@@ -29,6 +30,7 @@ from ..ceviri_api import (
     yerel_harita,
 )
 from ..crud_helpers import translate_integrity
+from ..tr_arama import LIKE_KACIS, like_icerir
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, SiteKurali
@@ -94,6 +96,7 @@ async def list_rules(
         None,
         description="Accept-Language'i EZER. Dil kodu (tr/en/ar/ru/de/fr/es) "
         "ya da 'orijinal' (kaynak dil).",
+        max_length=_G.KOD,
     ),
     accept_language: str | None = Header(None, alias="Accept-Language"),
     db: AsyncSession = Depends(get_tenant_db),
@@ -104,8 +107,7 @@ async def list_rules(
         # SUNUCU tarafi arama: ILIKE + RLS (yalniz kendi tenant'inin
         # kurallari taranir — sizinti yok). % / _ joker karakterleri
         # kacislanir: arama LITERAL metin uzerinedir.
-        guvenli = q.replace("\\", "\\\\").replace("%", r"\%").replace("_", r"\_")
-        stmt = stmt.where(SiteKurali.baslik.ilike(f"%{guvenli}%", escape="\\"))
+        stmt = stmt.where(SiteKurali.baslik.ilike(like_icerir(q), escape=LIKE_KACIS))
     total = (
         await db.execute(select(func.count()).select_from(stmt.subquery()))
     ).scalar_one()
@@ -132,7 +134,7 @@ async def list_rules(
 @router.get("/{rule_id}", response_model=SiteKuraliOut)
 async def get_rule(
     rule_id: uuid.UUID,
-    dil: str | None = Query(None, description="Accept-Language'i ezer (bkz. liste)."),
+    dil: str | None = Query(None, description="Accept-Language'i ezer (bkz. liste).", max_length=_G.KOD),
     accept_language: str | None = Header(None, alias="Accept-Language"),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_READER),

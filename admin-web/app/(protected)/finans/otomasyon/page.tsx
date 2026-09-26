@@ -42,6 +42,7 @@ import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk/tipler";
 import { kurusToTL, tlToKurus } from "@/lib/money";
+import { ISTEMCI_SINIR, SINIR } from "@/lib/girdi-siniri";
 
 const YOK = "—";
 
@@ -188,7 +189,7 @@ function PlanModal({
     >
       <div className="grid gap-3">
         <AlanSarmal etiket={t("otoPlanAd")} zorunlu>
-          {(b) => <Alan {...b} value={ad} onChange={(e) => setAd(e.target.value)} />}
+          {(b) => <Alan maxLength={SINIR.AD /* sunucu: AidatPlaniCreate.ad / DuzenliGiderCreate.ad */} {...b} value={ad} onChange={(e) => setAd(e.target.value)} />}
         </AlanSarmal>
         <AlanSarmal etiket={t("finansSutunTur")} zorunlu>
           {(b) => (
@@ -200,7 +201,7 @@ function PlanModal({
         </AlanSarmal>
         <AlanSarmal etiket={t("finansAlanTutar")} zorunlu>
           {(b) => (
-            <Alan {...b} value={tutar} inputMode="decimal"
+            <Alan maxLength={ISTEMCI_SINIR.SAYI} {...b} value={tutar} inputMode="decimal"
               onChange={(e) => setTutar(e.target.value)} />
           )}
         </AlanSarmal>
@@ -371,7 +372,7 @@ function HatirlatmaKarti() {
         </AlanSarmal>
         <AlanSarmal etiket={t("otoKademeler")}>
           {(b) => (
-            <Alan {...b}
+            <Alan maxLength={SINIR.BASLIK} {...b}
               defaultValue={(data?.kademeler ?? []).join(", ")}
               disabled={mesgul}
               onBlur={(e) => void yaz({
@@ -388,7 +389,7 @@ function HatirlatmaKarti() {
       </div>
       <AlanSarmal etiket={t("otoHatirlatmaMetin")}>
         {(b) => (
-          <Alan {...b} defaultValue={data?.metin ?? ""} disabled={mesgul}
+          <Alan maxLength={1000 /* sunucu: HatirlatmaAyariUpdate.metin */} {...b} defaultValue={data?.metin ?? ""} disabled={mesgul}
             onBlur={(e) => void yaz({ metin: e.target.value || null })} />
         )}
       </AlanSarmal>
@@ -456,11 +457,11 @@ function GiderModal({
     >
       <div className="grid gap-3">
         <AlanSarmal etiket={t("otoPlanAd")} zorunlu>
-          {(b) => <Alan {...b} value={ad} onChange={(e) => setAd(e.target.value)} />}
+          {(b) => <Alan maxLength={SINIR.AD /* sunucu: AidatPlaniCreate.ad / DuzenliGiderCreate.ad */} {...b} value={ad} onChange={(e) => setAd(e.target.value)} />}
         </AlanSarmal>
         <AlanSarmal etiket={t("finansAlanTutar")} zorunlu>
           {(b) => (
-            <Alan {...b} value={tutar} inputMode="decimal"
+            <Alan maxLength={ISTEMCI_SINIR.SAYI} {...b} value={tutar} inputMode="decimal"
               onChange={(e) => setTutar(e.target.value)} />
           )}
         </AlanSarmal>

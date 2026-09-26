@@ -31,6 +31,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from .bildirim import bildir
 from .kimlik import DukkanKimlik, moderator_zorunlu
 from .siralama import siralama_puani_hesapla
@@ -54,7 +55,7 @@ class BelgeKarar(BaseModel):
 
 @router.get("/kuyruk")
 async def kuyruk(
-    durum: str = Query("onay_bekliyor"),
+    durum: str = Query("onay_bekliyor", max_length=_G.KOD),
     limit: int = Query(50, ge=1, le=200),
     _mod: DukkanKimlik = Depends(moderator_zorunlu),
     db: AsyncSession = Depends(get_dukkan_session),

@@ -33,6 +33,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from .isletme import _denetim, _sahiplik_dogrula
 from .kimlik import (
     OTP_MAKS_DENEME,
@@ -89,7 +90,7 @@ class CevapYaz(BaseModel):
 class SikayetYaz(BaseModel):
     tip: str = Field(pattern="^(odeme|hizmet|sahte_isletme|yorum|kisisel_veri|diger)$")
     metin: str = Field(min_length=10, max_length=4000)
-    isletme_slug: str | None = None
+    isletme_slug: str | None = Field(default=None, max_length=_G.SLUG)
     iletisim: str | None = Field(default=None, max_length=200)
 
 
@@ -431,7 +432,7 @@ async def yorum_daveti_gonder(
 async def davetli_yorum(
     govde: DavetliYorum,
     istek: Request,
-    telefon: str = Query(..., description="Davetin gonderildigi numara"),
+    telefon: str = Query(..., description="Davetin gonderildigi numara", max_length=_G.TELEFON_HAM),
     db: AsyncSession = Depends(get_dukkan_session),
 ) -> dict:
     """Davet koduyla yorum yazar — KIMLIKSIZ (OTP kimligi kaniti).

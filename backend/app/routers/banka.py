@@ -38,6 +38,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from ..hiz_siniri import DISA_AKTARIM_SINIRI
 from .. import storage
 from ..audit import Action, audit_user
@@ -365,7 +366,7 @@ async def eslestir_uc(
 # ============================ 3) LİSTE / EKRAN ============================== #
 @router.get("/hareketler", response_model=BankaHareketListesi)
 async def hareketler(
-    durum: str | None = Query(None, description="yeni|eslesti|manuel_inceleme|ilgisiz_gelir|masraf|ters_kayit"),
+    durum: str | None = Query(None, description="yeni|eslesti|manuel_inceleme|ilgisiz_gelir|masraf|ters_kayit", max_length=_G.KOD),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_tenant_db),

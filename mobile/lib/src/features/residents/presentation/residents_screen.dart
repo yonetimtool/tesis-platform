@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
@@ -74,6 +75,7 @@ class _ResidentsScreenState extends ConsumerState<ResidentsScreen> {
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
             child: TextField(
               controller: _aramaKtrl,
+              inputFormatters: GirdiSiniri.sinir(GirdiSiniri.arama), // sunucu: GET /residents ?q
               onChanged: _aramaDegisti,
               decoration: InputDecoration(
                 isDense: true,
@@ -457,6 +459,7 @@ class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _adCtrl,
+              inputFormatters: GirdiSiniri.sinir(150), // sunucu: ResidentCreate.ad
               enabled: !_submitting,
               decoration: InputDecoration(
                 labelText: l10n.ortakAdSoyad,
@@ -659,6 +662,7 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _unitCtrl,
+              inputFormatters: GirdiSiniri.sinir(GirdiSiniri.daireNo), // sunucu: ResidentCreate.unit_no
               enabled: !_submitting,
               decoration: InputDecoration(
                 labelText: l10n.binaDaireNo,
@@ -672,6 +676,7 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _blokCtrl,
+              inputFormatters: GirdiSiniri.sinir(GirdiSiniri.blok), // sunucu: ResidentCreate.blok
               enabled: !_submitting,
               decoration: InputDecoration(
                 labelText: l10n.sakinBlokAlani,

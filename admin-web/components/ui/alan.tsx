@@ -32,6 +32,8 @@ import {
   type SelectHTMLAttributes,
 } from "react";
 
+import { SINIR } from "@/lib/girdi-siniri";
+
 /* ------------------------------------------------------------------ */
 
 const TEMEL_KUTU: React.CSSProperties = {
@@ -135,15 +137,24 @@ export function AlanSarmal({
 
 /* ==================================================================== */
 
+/**
+ * (P248 §3a) VARSAYILAN `maxLength` = SINIR.BASLIK (200). Kullanici bir
+ * alana "istedigi kadar" yazabiliyordu; sunucu fazlasini 422 ile reddeder
+ * ama kullanici bunu ancak KAYDEDERKEN ogrenirdi. Cagiran, alanin sunucu
+ * sinirini (`lib/girdi-siniri.ts`) ACIKCA verir — varsayilan yalniz
+ * unutulan alanin guvenlik agidir (kilit: tests/girdi-maxlength-tarama).
+ */
 export function Alan({
   hatali = false,
   className = "",
   style,
+  maxLength = SINIR.BASLIK,
   ...rest
 }: InputHTMLAttributes<HTMLInputElement> & { hatali?: boolean }) {
   return (
     <input
       {...rest}
+      maxLength={maxLength}
       className={`odak-ic h-11 w-full px-3 outline-none ${className}`}
       style={{ ...kutuStili(hatali), ...style }}
     />
@@ -162,10 +173,15 @@ export function Alan({
 export const CokSatir = forwardRef<
   HTMLTextAreaElement,
   React.TextareaHTMLAttributes<HTMLTextAreaElement> & { hatali?: boolean }
->(function CokSatir({ hatali = false, className = "", style, ...rest }, ref) {
+>(function CokSatir(
+  // (P248 §3a) Varsayilan SINIR.NOT (2000) — bkz. `Alan`.
+  { hatali = false, className = "", style, maxLength = SINIR.NOT, ...rest },
+  ref,
+) {
   return (
     <textarea
       {...rest}
+      maxLength={maxLength}
       ref={ref}
       className={`odak-ic w-full px-3 py-2 outline-none ${className}`}
       style={{ ...kutuStili(hatali), ...style }}
@@ -252,6 +268,8 @@ export function AramaAlani({
         id={id}
         value={deger}
         onChange={(e) => onDegisim(e.target.value)}
+        // (P248 §3a) arama `q` parametresi sunucuda SINIR.ARAMA (100).
+        maxLength={SINIR.ARAMA}
         placeholder={yerTutucu}
         className="odak-ic h-11 w-full ps-9 pe-9 outline-none"
         style={TEMEL_KUTU}

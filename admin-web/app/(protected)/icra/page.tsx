@@ -27,6 +27,7 @@ import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { kurusToTL } from "@/lib/money";
 import { useSorguSecimi } from "@/lib/sorgu-secimi";
+import { SINIR } from "@/lib/girdi-siniri";
 
 /**
  * (P154 / Asama 7.1) ICRA DOSYALARI — brief: "ayri ust sekme".
@@ -507,6 +508,7 @@ export default function IcraPage() {
                 // ki dosya acmak IMKANSIZ hale gelmesin.
                 <Alan
                   {...b}
+                  maxLength={SINIR.KOD}
                   value={form.user_id}
                   onChange={(e) => setForm({ ...form, user_id: e.target.value })}
                   required

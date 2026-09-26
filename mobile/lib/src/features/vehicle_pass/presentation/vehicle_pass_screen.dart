@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
@@ -76,6 +77,7 @@ class VehiclePassScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
               child: TextField(
                 onSubmitted: controller.ara,
+                inputFormatters: GirdiSiniri.sinir(32), // sunucu: GET /vehicle-passes ?plaka (32)
                 textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
                   hintText: l10n.aracPlakaAra,
@@ -468,6 +470,7 @@ class _GirisFormuState extends ConsumerState<_GirisFormu> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _plaka,
+                  inputFormatters: GirdiSiniri.sinir(32), // sunucu: VehiclePassCreate.plaka
                   textCapitalization: TextCapitalization.characters,
                   decoration: InputDecoration(
                     labelText: l10n.aracPlaka,
@@ -480,6 +483,7 @@ class _GirisFormuState extends ConsumerState<_GirisFormu> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _tanim,
+                  inputFormatters: GirdiSiniri.sinir(120), // sunucu: VehiclePassCreate.arac_tanim
                   decoration: InputDecoration(
                     labelText: l10n.aracTanimAlani,
                     border: const OutlineInputBorder(),
@@ -488,6 +492,7 @@ class _GirisFormuState extends ConsumerState<_GirisFormu> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _daire,
+                  inputFormatters: GirdiSiniri.sinir(GirdiSiniri.daireNo), // sunucu: VehiclePassCreate.unit_no
                   decoration: InputDecoration(
                     labelText: l10n.aracDaireAlani,
                     border: const OutlineInputBorder(),

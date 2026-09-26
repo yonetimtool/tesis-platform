@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { SayfaBasligi } from "@/components/ui";
 import { useT } from "@/lib/i18n/kullan";
 import { useDukkanAcik } from "@/lib/ozellikler";
+import { SINIR } from "@/lib/girdi-siniri";
 
 /**
  * ==========================================================================
@@ -191,7 +192,7 @@ export default function YerelIsletmeler() {
           ))}
         </select>
         <div className="flex gap-2">
-          <input
+          <input maxLength={SINIR.ARAMA}
             aria-label={t("dukkanAra")}
             value={q}
             onChange={(e) => setQ(e.target.value)}

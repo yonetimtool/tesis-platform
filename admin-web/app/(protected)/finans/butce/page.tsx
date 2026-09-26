@@ -30,6 +30,7 @@ import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { kurusToTL, tlToKurus } from "@/lib/money";
+import { ISTEMCI_SINIR } from "@/lib/girdi-siniri";
 
 interface Satir {
   kategori_id: string | null;
@@ -169,7 +170,7 @@ export default function ButcePage() {
           </AlanSarmal>
           <AlanSarmal etiket={t("butHedef")}>
             {(b) => (
-              <Alan {...b} value={hedef} inputMode="decimal"
+              <Alan maxLength={ISTEMCI_SINIR.SAYI} {...b} value={hedef} inputMode="decimal"
                 onChange={(e) => setHedef(e.target.value)} />
             )}
           </AlanSarmal>

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/i18n/l10n.dart';
 import '../../../core/ui/bos_durum.dart';
@@ -313,6 +314,7 @@ class _DiyafonFormuState extends ConsumerState<_DiyafonFormu> {
             TextField(
               key: const Key('diyafon-ad'),
               controller: _ad,
+              inputFormatters: GirdiSiniri.sinir(GirdiSiniri.baslik), // sunucu: DiyafonCreate.ad
               decoration: InputDecoration(labelText: l10n.kameraAd),
             ),
             const SizedBox(height: 8),
@@ -347,12 +349,14 @@ class _DiyafonFormuState extends ConsumerState<_DiyafonFormu> {
             TextField(
               key: const Key('diyafon-host'),
               controller: _host,
+              inputFormatters: GirdiSiniri.sinir(255), // sunucu: DiyafonCreate.host
               decoration: InputDecoration(labelText: l10n.diyafonHost),
             ),
             const SizedBox(height: 8),
             TextField(
               key: const Key('diyafon-port'),
               controller: _port,
+              inputFormatters: GirdiSiniri.sinir(GirdiSiniri.sayi), // sunucu: DiyafonCreate.port (int)
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 labelText: l10n.diyafonPort,
@@ -367,6 +371,7 @@ class _DiyafonFormuState extends ConsumerState<_DiyafonFormu> {
               TextField(
                 key: const Key('diyafon-zil-yolu'),
                 controller: _zil,
+                inputFormatters: GirdiSiniri.sinir(500), // sunucu: DiyafonCreate.zil_yolu
                 decoration: InputDecoration(
                   labelText: l10n.diyafonZilYolu,
                   helperText: l10n.diyafonYolIpucu,
@@ -377,12 +382,14 @@ class _DiyafonFormuState extends ConsumerState<_DiyafonFormu> {
               TextField(
                 key: const Key('diyafon-kapi-yolu'),
                 controller: _kapi,
+                inputFormatters: GirdiSiniri.sinir(500), // sunucu: DiyafonCreate.kapi_yolu
                 decoration: InputDecoration(labelText: l10n.diyafonKapiYolu),
               ),
             ] else
               TextField(
                 key: const Key('diyafon-hedef'),
                 controller: _hedef,
+                inputFormatters: GirdiSiniri.sinir(GirdiSiniri.baslik), // sunucu: DiyafonCreate.hedef
                 decoration: InputDecoration(
                   labelText: l10n.diyafonHedef,
                   helperText: l10n.diyafonHedefIpucu,
@@ -393,12 +400,14 @@ class _DiyafonFormuState extends ConsumerState<_DiyafonFormu> {
             TextField(
               key: const Key('diyafon-kullanici'),
               controller: _kullanici,
+              inputFormatters: GirdiSiniri.sinir(GirdiSiniri.baslik), // sunucu: DiyafonCreate.kullanici
               decoration: InputDecoration(labelText: l10n.diyafonKullanici),
             ),
             const SizedBox(height: 8),
             TextField(
               key: const Key('diyafon-sifre'),
               controller: _sifre,
+              inputFormatters: GirdiSiniri.sinir(GirdiSiniri.gizli), // sunucu: DiyafonCreate.sifre
               obscureText: true,
               decoration: InputDecoration(
                 labelText: l10n.diyafonSifre,

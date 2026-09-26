@@ -12,6 +12,8 @@ import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import { kurusToTL } from "@/lib/money";
 import type { DuesAssessment, DuesPayment, UnitList } from "@/lib/types";
 import { useI18n, useT } from "@/lib/i18n/kullan";
+import { ISTEMCI_SINIR } from "@/lib/girdi-siniri";
+import { csvIndir } from "@/lib/csv";
 
 interface BorcRow {
   unit_id: string;
@@ -40,18 +42,6 @@ interface Report {
   borclular: BorcRow[];
   odemeler: OdemeRow[];
   serbestBasariliSayi: number; // doneme atfedilemeyen basarili odeme sayisi
-}
-
-function csvDownload(filename: string, rows: string[][]): void {
-  const esc = (c: string) => (/[",\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c);
-  const csv = rows.map((r) => r.map(esc).join(",")).join("\n");
-  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 export default function DuesReportPage() {
@@ -198,7 +188,7 @@ export default function DuesReportPage() {
         b.son_odeme ?? "",
       ]);
     }
-    csvDownload(`borclu-daireler-${report.donem}.csv`, rows);
+    csvIndir(`borclu-daireler-${report.donem}.csv`, rows);
   }
 
   const borcKolonlari: Kolon<BorcRow>[] = useMemo(
@@ -278,7 +268,7 @@ export default function DuesReportPage() {
           <div className="w-56">
             <AlanSarmal etiket={t("ortakDonem")} ipucu={t("raporDonemOrnek")}>
               {(b) => (
-                <Alan
+                <Alan maxLength={ISTEMCI_SINIR.DONEM}
                   {...b}
                   value={donem}
                   onChange={(e) => setDonem(e.target.value)}

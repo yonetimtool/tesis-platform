@@ -18,6 +18,7 @@ import {
 import { apiSend } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
+import { SINIR } from "@/lib/girdi-siniri";
 
 /**
  * (P167 §6.2) KARAR DEFTERI — kendi sayfasi.
@@ -242,10 +243,10 @@ export default function KararDefteriPage() {
 
           <div className="grid gap-3 sm:grid-cols-2">
             <AlanSarmal etiket={t("kararKonu")} zorunlu>
-              {(b) => <Alan {...b} value={konu} onChange={(e) => setKonu(e.target.value)} />}
+              {(b) => <Alan maxLength={SINIR.BASLIK} {...b} value={konu} onChange={(e) => setKonu(e.target.value)} />}
             </AlanSarmal>
             <AlanSarmal etiket={t("kararNo")} ipucu={t("kararNoIpucu")}>
-              {(b) => <Alan {...b} value={no} onChange={(e) => setNo(e.target.value)} />}
+              {(b) => <Alan maxLength={30 /* sunucu: KararDefteriCreate.karar_no */} {...b} value={no} onChange={(e) => setNo(e.target.value)} />}
             </AlanSarmal>
             <AlanSarmal etiket={t("kararTarih")}>
               {(b) => (
@@ -253,13 +254,13 @@ export default function KararDefteriPage() {
               )}
             </AlanSarmal>
             <AlanSarmal etiket={t("kararBaskan")}>
-              {(b) => <Alan {...b} value={baskan} onChange={(e) => setBaskan(e.target.value)} />}
+              {(b) => <Alan maxLength={150 /* sunucu: KararDefteriCreate.baskan_ad */} {...b} value={baskan} onChange={(e) => setBaskan(e.target.value)} />}
             </AlanSarmal>
           </div>
 
           <AlanSarmal etiket={t("kararMetin")} zorunlu>
             {(b) => (
-              <CokSatir {...b} rows={6} value={metin} onChange={(e) => setMetin(e.target.value)} />
+              <CokSatir maxLength={SINIR.UZUN_METIN} {...b} rows={6} value={metin} onChange={(e) => setMetin(e.target.value)} />
             )}
           </AlanSarmal>
 
@@ -271,12 +272,12 @@ export default function KararDefteriPage() {
               <div key={i} className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
                 <AlanSarmal etiket={t("kararUyeAd")}>
                   {(b) => (
-                    <Alan {...b} value={u.ad} onChange={(e) => uyeYaz(i, "ad", e.target.value)} />
+                    <Alan maxLength={150 /* sunucu: KararUyesiIn.ad */} {...b} value={u.ad} onChange={(e) => uyeYaz(i, "ad", e.target.value)} />
                   )}
                 </AlanSarmal>
                 <AlanSarmal etiket={t("kararUyeGorev")}>
                   {(b) => (
-                    <Alan
+                    <Alan maxLength={SINIR.AD /* sunucu: KararUyesiIn.gorev */}
                       {...b}
                       value={u.gorev ?? BOS}
                       onChange={(e) => uyeYaz(i, "gorev", e.target.value)}

@@ -28,6 +28,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/error/akis_hatasi.dart';
@@ -242,6 +243,7 @@ class _TahsilatScreenState extends ConsumerState<TahsilatScreen> {
               TextField(
                 key: const Key('tahsilat-tutar'),
                 controller: _tutarCtrl,
+                inputFormatters: GirdiSiniri.sinir(GirdiSiniri.tutar),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(labelText: l10n.finansAlanTutar),
               ),
@@ -269,6 +271,7 @@ class _TahsilatScreenState extends ConsumerState<TahsilatScreen> {
               TextField(
                 key: const Key('tahsilat-aciklama'),
                 controller: _aciklamaCtrl,
+                inputFormatters: GirdiSiniri.sinir(500), // sunucu: TahsilatCreate.aciklama
                 decoration: InputDecoration(labelText: l10n.finansAlanAciklama),
               ),
               const SizedBox(height: 20),

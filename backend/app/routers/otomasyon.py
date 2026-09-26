@@ -16,6 +16,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
@@ -348,7 +349,7 @@ async def gider_sil(
 async def gunluk(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
-    tur: str | None = Query(None),
+    tur: str | None = Query(None, max_length=_G.KOD),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_OKUR),
 ) -> OtomasyonGunlukListResponse:

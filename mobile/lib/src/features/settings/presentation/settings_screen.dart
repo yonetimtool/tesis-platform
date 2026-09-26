@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/config/app_config.dart';
 
@@ -415,6 +416,7 @@ class _TesisAdiKartiState extends ConsumerState<_TesisAdiKarti> {
             const SizedBox(height: 12),
             TextField(
               controller: _adCtrl,
+              inputFormatters: GirdiSiniri.sinir(GirdiSiniri.baslik), // sunucu: TenantSettingsUpdate.ad
               enabled: !_submitting,
               textInputAction: TextInputAction.done,
               textCapitalization: TextCapitalization.words,
@@ -702,6 +704,7 @@ class _HesapSilDiyaloguState extends ConsumerState<_HesapSilDiyalogu> {
               if (!_kodModu) ...[
                 TextField(
                   controller: _parola,
+                  inputFormatters: GirdiSiniri.sinir(200), // sunucu: HesapSilmeIstek.current_password
                   obscureText: true,
                   enabled: !_calisiyor,
                   decoration: InputDecoration(
@@ -731,6 +734,7 @@ class _HesapSilDiyaloguState extends ConsumerState<_HesapSilDiyalogu> {
               ] else
                 TextField(
                   controller: _kod,
+                  inputFormatters: GirdiSiniri.sinir(GirdiSiniri.kod), // sunucu: HesapSilmeIstek.kod
                   keyboardType: TextInputType.number,
                   enabled: !_calisiyor,
                   decoration: InputDecoration(

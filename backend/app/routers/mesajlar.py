@@ -17,6 +17,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from ..audit import Action, audit_user
 from ..config import settings
 from ..crud_helpers import get_or_404, translate_integrity
@@ -96,7 +97,7 @@ def _cikti(obj: MesajSablonu) -> MesajSablonuOut:
 # ============================== SABLON CRUD ================================= #
 @router.get("/mesaj-sablonlari", response_model=MesajSablonuListResponse)
 async def sablon_listesi(
-    kanal: str | None = Query(None),
+    kanal: str | None = Query(None, max_length=_G.KOD),
     aktif: bool | None = Query(None),
     limit: int = Query(100, ge=1, le=200),
     offset: int = Query(0, ge=0),
@@ -253,7 +254,7 @@ async def _degerler(
 @router.post("/mesajlar/onizleme", response_model=MesajOnizlemeOut)
 async def onizleme(
     body: MesajOnizlemeIstek,
-    kanal: str = Query("sms", description="sms | eposta"),
+    kanal: str = Query("sms", description="sms | eposta", max_length=_G.KOD),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_YONETIM),
 ) -> MesajOnizlemeOut:
@@ -606,9 +607,9 @@ async def mesaj_ayar_testi(
 
 @router.get("/mesajlar/gecmis", response_model=MesajGonderimListResponse)
 async def gecmis(
-    kanal: str | None = Query(None),
+    kanal: str | None = Query(None, max_length=_G.KOD),
     user_id: uuid.UUID | None = Query(None),
-    durum: str | None = Query(None),
+    durum: str | None = Query(None, max_length=_G.KOD),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_tenant_db),

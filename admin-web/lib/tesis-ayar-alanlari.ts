@@ -65,6 +65,8 @@ export interface Ayar {
   max?: number;
   /** YALNIZ admin degistirebilir (sunucu de zorlar; burada gorunurluk). */
   adminOnly?: boolean;
+  /** (P248 §3a) `metin` alanin sunucu `max_length`i (TenantSettingsUpdate). */
+  azami?: number;
 }
 
 /** Alan tipi -> HTML input tipi. Ucluda ("sayi" ? "number" : "text")
@@ -109,6 +111,7 @@ export const OPERASYON: Ayar[] = [
     // tek kademeye mahkum ederdi; bos birakmak KAPALI demektir ve
     // sunucu bunu 422 ile degil sessizce "kapali" diye okur.
     tip: "metin",
+    azami: 40, // sunucu: TenantSettingsUpdate.vardiya_hatirlatma_dk
   },
   {
     grup: "vardiya",
@@ -216,6 +219,7 @@ export const OPERASYON: Ayar[] = [
     etiket: "ayarGurultuMetni",
     ipucu: "ayarGurultuMetniIpucu",
     tip: "metin",
+    azami: 1000, // sunucu: TenantSettingsUpdate.gurultu_uyari_metni
   },
   // --- (P208 §1) SAYIM PENCERESI / SUSMA / SAKINE BILDIRIM ---
   {

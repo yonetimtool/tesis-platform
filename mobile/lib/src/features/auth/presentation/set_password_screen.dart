@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/i18n/l10n.dart';
 import '../../../core/validators/password_rule.dart';
@@ -73,6 +74,7 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
                     const SizedBox(height: 24),
                     TextFormField(
                       controller: _passwordCtrl,
+                      inputFormatters: GirdiSiniri.sinir(GirdiSiniri.parola), // sunucu: SetPasswordRequest.new_password
                       enabled: !submitting,
                       obscureText: _obscure,
                       textInputAction: TextInputAction.next,
@@ -103,6 +105,7 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _repeatCtrl,
+                      inputFormatters: GirdiSiniri.sinir(GirdiSiniri.parola),
                       enabled: !submitting,
                       obscureText: _obscure,
                       textInputAction: TextInputAction.done,

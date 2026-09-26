@@ -27,6 +27,7 @@ import { EtiketCipleri } from "@/components/mesaj/etiket-cipleri";
 import { MesajAyarlariSekmesi } from "@/components/mesaj/ayarlar-sekmesi";
 import { ZenginMetin } from "@/components/ZenginMetin";
 import { smsOlc } from "@/lib/sms-olcu";
+import { SINIR } from "@/lib/girdi-siniri";
 
 /** Sablon kanallari — veritabanindaki `mesaj_kanal` enum'uyla AYNI.
  *
@@ -478,7 +479,7 @@ export default function MesajlarPage() {
 </AlanSarmal>
           <AlanSarmal etiket={t("mesajAd")}>
   {(b) => (
-    <Alan {...b} value={ad} onChange={(e) => setAd(e.target.value)} />
+    <Alan maxLength={SINIR.AD} {...b} value={ad} onChange={(e) => setAd(e.target.value)} />
   )}
 </AlanSarmal>
           <AlanSarmal etiket={t("mesajAmac")}>
@@ -491,7 +492,7 @@ export default function MesajlarPage() {
           {kanal === "eposta" ? (
             <AlanSarmal etiket={t("mesajKonu")}>
   {(b) => (
-    <Alan {...b} value={konu} onChange={(e) => setKonu(e.target.value)} />
+    <Alan maxLength={SINIR.BASLIK} {...b} value={konu} onChange={(e) => setKonu(e.target.value)} />
   )}
 </AlanSarmal>
           ) : null}
@@ -542,6 +543,7 @@ export default function MesajlarPage() {
                 onDegisti={setGovde}
                 etiket={t("mesajGovde")}
                 ekleRef={zenginEkleRef}
+                azami={4000 /* sunucu: MesajSablonuCreate.govde */}
               />
             )}
           </AlanSarmal>
@@ -549,7 +551,7 @@ export default function MesajlarPage() {
           <>
             <AlanSarmal etiket={t("mesajGovde")}>
               {(b) => (
-                <CokSatir
+                <CokSatir maxLength={4000 /* sunucu: MesajSablonuCreate.govde */}
                   {...b}
                   ref={govdeRef}
                   rows={4}

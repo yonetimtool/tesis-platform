@@ -25,6 +25,7 @@ import { RolGecisPerdesi, useRolDurumu, useRolGecisi } from "@/components/RolGec
 import { bildirimHedefi, webRolu } from "@/lib/rol-gecisi";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
+import { SINIR } from "@/lib/girdi-siniri";
 
 // (P220 §3) IKI SEKME — "Tumu" KALDIRILDI ve varsayilan OKUNMAMIS.
 //
@@ -210,7 +211,7 @@ export default function NotificationsPage() {
 
       {/* (P220 §3) ARAMA — her iki sekmede; gerekce yukarida. */}
       <div className="flex flex-wrap items-center gap-2">
-        <input
+        <input maxLength={SINIR.ARAMA}
           type="search"
           value={arama}
           onChange={(e) => setArananMetin(e.target.value)}

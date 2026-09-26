@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../../l10n/gen/app_localizations.dart';
 import '../data/dukkan_api.dart';
@@ -105,6 +106,7 @@ class _DukkanSikayetScreenState extends ConsumerState<DukkanSikayetScreen> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: _metin,
+                  maxLength: 4000, // sunucu: SikayetYaz.metin
                   maxLines: 6,
                   decoration: InputDecoration(
                     labelText: t.dukkanSikayetMetin,
@@ -114,6 +116,7 @@ class _DukkanSikayetScreenState extends ConsumerState<DukkanSikayetScreen> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: _iletisim,
+                  inputFormatters: GirdiSiniri.sinir(GirdiSiniri.baslik), // sunucu: SikayetYaz.iletisim
                   decoration: InputDecoration(
                     labelText: t.dukkanSikayetIletisim,
                     helperText: t.dukkanSikayetIletisimIpucu,

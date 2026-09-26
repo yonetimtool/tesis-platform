@@ -24,6 +24,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
+from ..tr_arama import like_icerir, like_icerir_bos_degilse
 from .veritabani import get_dukkan_session
 
 router = APIRouter(prefix="/dukkan", tags=["dukkan"])
@@ -76,11 +78,11 @@ def _konum_kosulu(il, ilce, mahalle, param):
 
 @router.get("/isletme-ara")
 async def isletme_ara(
-    il: str | None = Query(None, description="il slug"),
-    ilce: str | None = Query(None),
-    mahalle: str | None = Query(None),
-    kategori: str | None = Query(None, description="hizmet kategorisi slug"),
-    q: str | None = Query(None, description="isletme adinda arama"),
+    il: str | None = Query(None, description="il slug", max_length=_G.SLUG),
+    ilce: str | None = Query(None, max_length=_G.SLUG),
+    mahalle: str | None = Query(None, max_length=_G.SLUG),
+    kategori: str | None = Query(None, description="hizmet kategorisi slug", max_length=_G.SLUG),
+    q: str | None = Query(None, description="isletme adinda arama", max_length=_G.ARAMA),
     sirala: str = Query("puan", pattern="^(puan|yeni|ad)$"),
     sayfa: int = Query(1, ge=1, le=500),
     boyut: int = Query(VARSAYILAN_BOYUT, ge=1, le=MAKS_BOYUT),
@@ -112,8 +114,9 @@ async def isletme_ara(
         # olculmustu.
         from .lokasyon_yukle import slugla
 
-        kosullar.append("(i.ad ILIKE :q OR i.slug LIKE :qs)")
-        param |= {"q": f"%{q}%", "qs": f"%{slugla(q)}%"}
+        # (P248 §3b) `%`/`_` kacislanir: `?q=%` tum isletmeleri getiriyordu.
+        kosullar.append("(i.ad ILIKE :q ESCAPE '\\' OR i.slug LIKE :qs ESCAPE '\\')")
+        param |= {"q": like_icerir(q), "qs": like_icerir_bos_degilse(slugla(q))}
 
     nere = " AND ".join(kosullar)
     toplam = (

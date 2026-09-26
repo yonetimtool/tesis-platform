@@ -43,6 +43,7 @@ import {
 import { useToast } from "@/components/Toast";
 import { Alan, AlanSarmal, Dugme, HataDurumu, Modal, Secim } from "@/components/ui";
 import { agIstegi } from "@/lib/client";
+import { ISTEMCI_SINIR, SINIR } from "@/lib/girdi-siniri";
 import { useT } from "@/lib/i18n/kullan";
 import {
   ALAN_TANIMLARI,
@@ -360,6 +361,9 @@ export function RaporModali({ rapor, kapat, onTablo, onKuyruk }: RaporModaliProp
           <Alan
             {...b}
             type={tip}
+            // (P248 §3a) sunucu: RaporParametre metinleri blok 32 / bolum 40;
+            // kurus metni ISTEMCI_SINIR.SAYI.
+            maxLength={tanim.tur === "kurus" ? ISTEMCI_SINIR.SAYI : SINIR.BLOK}
             // KURUS alani metin girdisi: `number` girdisi virgullu yazimi
             // (Turkiye'de olagan olan "1250,50") tarayiciya gore ya
             // reddeder ya da sessizce bosaltir.

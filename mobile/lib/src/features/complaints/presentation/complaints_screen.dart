@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
@@ -1641,6 +1642,7 @@ class _ConvertSheetState extends ConsumerState<_ConvertSheet> {
               const SizedBox(height: 16),
               TextField(
                 controller: _notCtrl,
+                maxLength: GirdiSiniri.not_, // sunucu: ComplaintConvertRequest.not
                 minLines: 2,
                 maxLines: 4,
                 enabled: !_saving,
@@ -1763,6 +1765,7 @@ class _DeclineSheetState extends ConsumerState<_DeclineSheet> {
             const SizedBox(height: 12),
             TextField(
               controller: _sebepCtrl,
+              maxLength: GirdiSiniri.not_, // sunucu: ComplaintDeclineRequest.sebep
               autofocus: true,
               minLines: 2,
               maxLines: 4,
@@ -1890,6 +1893,7 @@ class _ResolveSheetState extends ConsumerState<_ResolveSheet> {
             const SizedBox(height: 12),
             TextField(
               controller: _notCtrl,
+              maxLength: GirdiSiniri.not_, // sunucu: ComplaintResolveRequest.cozum_notu
               minLines: 2,
               maxLines: 4,
               enabled: !_saving,

@@ -48,6 +48,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from .arama import _GORUNUR
 from .isletme import _denetim, _sahiplik_dogrula
 from .kimlik import DukkanKimlik, kimlik_zorunlu
@@ -209,7 +210,7 @@ async def paketler(db: AsyncSession = Depends(get_dukkan_session)) -> dict:
 async def slot_durumu_ucu(
     kapsam: str = Query(..., pattern="^(mahalle|ilce|il)$"),
     bolge_id: uuid.UUID = Query(...),
-    kategori_slug: str = Query(..., min_length=1),
+    kategori_slug: str = Query(..., min_length=1, max_length=_G.SLUG),
     db: AsyncSession = Depends(get_dukkan_session),
 ) -> dict:
     """Bu bolgede yer var mi? Doner: slot_durumu + {"kategori_id"}.

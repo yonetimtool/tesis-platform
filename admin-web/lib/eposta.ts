@@ -1,3 +1,5 @@
+import { SINIR } from "@/lib/girdi-siniri";
+
 /**
  * (P233 §4) E-POSTA — bicim ve uzunluk, TEK kaynak.
  *
@@ -27,8 +29,9 @@
 /** RFC 5321: yerel kisim en cok 64 sekizli. */
 export const EPOSTA_YEREL_SINIR = 64;
 
-/** RFC 5321: adresin tamami en cok 254 karakter. */
-export const EPOSTA_SINIR = 254;
+/** RFC 5321: adresin tamami en cok 254 karakter. (P248 §3a) Deger
+ * sunucuyla ortak tek kaynaktan (`SINIR.EPOSTA`, kilit: girdi-siniri.test). */
+export const EPOSTA_SINIR = SINIR.EPOSTA;
 
 export type EpostaHatasi = "bos" | "bicim" | "yerelUzun" | "cokUzun";
 

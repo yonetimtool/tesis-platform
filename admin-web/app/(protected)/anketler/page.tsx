@@ -10,6 +10,7 @@ import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { rolAdi } from "@/lib/roles";
 import type { Anket, AnketList, AnketOyKimList } from "@/lib/types";
+import { SINIR } from "@/lib/girdi-siniri";
 
 /**
  * (P154 / Asama 7.2) ANKETLER — kendi sayfasi.
@@ -410,7 +411,7 @@ export default function AnketlerPage() {
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <AlanSarmal etiket={t("anketBaslik")}>
               {(b) => (
-                <Alan
+                <Alan maxLength={SINIR.BASLIK}
                   {...b}
                   data-test="anket-baslik"
                   value={form.baslik}
@@ -420,7 +421,7 @@ export default function AnketlerPage() {
             </AlanSarmal>
             <AlanSarmal etiket={t("anketAciklamaOpsiyonel")}>
               {(b) => (
-                <Alan
+                <Alan maxLength={SINIR.NOT}
                   {...b}
                   value={form.aciklama}
                   onChange={(e) => setForm({ ...form, aciklama: e.target.value })}
@@ -464,7 +465,7 @@ export default function AnketlerPage() {
               <div className="space-y-2">
                 {form.secenekler.map((deger, i) => (
                   <div key={i} className="flex items-center gap-2">
-                    <Alan
+                    <Alan maxLength={SINIR.BASLIK /* sunucu: AnketSecenekIn.metin */}
                       className="flex-1"
                       id={i === 0 ? b.id : undefined}
                       aria-describedby={i === 0 ? b["aria-describedby"] : undefined}

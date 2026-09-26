@@ -11,6 +11,7 @@ from sqlalchemy import and_, case, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from ..audit import Action, audit_user
 from ..errors import APIError
 from ..deps import get_tenant_db, require_role
@@ -259,7 +260,8 @@ async def list_notifications(
     offset: int = Query(0, ge=0),
     okundu: bool | None = Query(None),
     q: str | None = Query(
-        None, description="Metin aramasi (govde + tip). En az 2 karakter."
+        None, description="Metin aramasi (govde + tip). En az 2 karakter.",
+        max_length=_G.ARAMA,
     ),
     accept_language: str | None = Header(None, alias="Accept-Language"),
     db: AsyncSession = Depends(get_tenant_db),

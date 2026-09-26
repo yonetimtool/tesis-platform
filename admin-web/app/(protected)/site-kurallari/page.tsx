@@ -46,6 +46,7 @@ import { alanliHataMetni, apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { PresignTicket } from "@/lib/types";
+import { ISTEMCI_SINIR } from "@/lib/girdi-siniri";
 
 interface Kural {
   id: string;
@@ -263,7 +264,7 @@ export default function SiteKurallariYonetimPage() {
           </AlanSarmal>
           <AlanSarmal etiket={t("ortakSira")} ipucu={t("kuralSiraIpucu")}>
             {(b) => (
-              <Alan
+              <Alan maxLength={ISTEMCI_SINIR.SAYI}
                 {...b}
                 inputMode="numeric"
                 value={form.sira}

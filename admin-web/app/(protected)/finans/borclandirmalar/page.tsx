@@ -51,6 +51,7 @@ import { FinansOzetSeridi } from "@/components/finans/ozet-seridi";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk/tipler";
 import { kurusToTL, tlToKurus } from "@/lib/money";
+import { ISTEMCI_SINIR } from "@/lib/girdi-siniri";
 
 interface Tahakkuk {
   id: string;
@@ -511,10 +512,10 @@ function TekilModal({
           </AlanSarmal>
         </div>
         <AlanSarmal etiket={t("finansAlanTutar")} zorunlu>
-          {(b) => <Alan {...b} value={tutar} inputMode="decimal" onChange={(e) => setTutar(e.target.value)} />}
+          {(b) => <Alan maxLength={ISTEMCI_SINIR.SAYI} {...b} value={tutar} inputMode="decimal" onChange={(e) => setTutar(e.target.value)} />}
         </AlanSarmal>
         <AlanSarmal etiket={t("finansAlanAciklama")}>
-          {(b) => <Alan {...b} value={aciklama} onChange={(e) => setAciklama(e.target.value)} />}
+          {(b) => <Alan maxLength={500 /* sunucu: TopluBorcIstek.aciklama */} {...b} value={aciklama} onChange={(e) => setAciklama(e.target.value)} />}
         </AlanSarmal>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={gecikme} onChange={(e) => setGecikme(e.target.checked)} />
@@ -720,11 +721,11 @@ function TopluModal({
             ? t("finansAlanTutar")
             : t("finansDagitilacakToplam")}
         >
-          {(b) => <Alan {...b} value={tutar} inputMode="decimal"
+          {(b) => <Alan maxLength={ISTEMCI_SINIR.SAYI} {...b} value={tutar} inputMode="decimal"
             onChange={(e) => { setTutar(e.target.value); setOnizleme(null); }} />}
         </AlanSarmal>
         <AlanSarmal etiket={t("finansAlanAciklama")}>
-          {(b) => <Alan {...b} value={aciklama} onChange={(e) => setAciklama(e.target.value)} />}
+          {(b) => <Alan maxLength={500 /* sunucu: TopluBorcIstek.aciklama */} {...b} value={aciklama} onChange={(e) => setAciklama(e.target.value)} />}
         </AlanSarmal>
 
         {onizleme && (

@@ -15,13 +15,14 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from ..hiz_siniri import ARAMA_SINIRI
 from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..toplu_tahakkuk import oturuyor_coz
-from ..tr_arama import tr_kalip, tr_katla_sql
+from ..tr_arama import LIKE_KACIS, tr_kalip, tr_katla_sql
 from ..models import (
     AppUser,
     BuildingBlock,
@@ -141,7 +142,7 @@ async def list_units(
     # tavan artik uyumlu; 1000 pratikte her konut sitesini kapsar.
     limit: int = Query(50, ge=1, le=1000),
     offset: int = Query(0, ge=0),
-    blok: str | None = Query(None),
+    blok: str | None = Query(None, max_length=_G.BLOK),
     aktif: bool | None = Query(None),
     unit_tip_id: uuid.UUID | None = Query(
         None, description="(P26) Tipe gore suzgec"
@@ -425,12 +426,12 @@ async def daire_ara(
     kalip = tr_kalip(aranan)
 
     # Daire NO'suna gore eslesen daireler.
-    no_eslesen = select(Unit.id).where(tr_katla_sql(Unit.no).like(kalip))
+    no_eslesen = select(Unit.id).where(tr_katla_sql(Unit.no).like(kalip, escape=LIKE_KACIS))
     # SAKIN ADINA gore eslesen daireler (yalniz AKTIF baglanti).
     ad_eslesen = (
         select(UnitResident.unit_id)
         .join(AppUser, AppUser.id == UnitResident.user_id)
-        .where(tr_katla_sql(AppUser.ad).like(kalip), UnitResident.bitis.is_(None))
+        .where(tr_katla_sql(AppUser.ad).like(kalip, escape=LIKE_KACIS), UnitResident.bitis.is_(None))
     )
     daireler = (
         await db.execute(

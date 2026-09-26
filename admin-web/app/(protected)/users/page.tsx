@@ -839,7 +839,7 @@ export default function UsersPage() {
 
           <AlanSarmal etiket={t("ortakAd")} zorunlu>
             {(b) => (
-              <Alan
+              <Alan maxLength={150 /* sunucu: UserCreate.ad */}
                 {...b}
                 value={form.ad}
                 onChange={(e) => setForm({ ...form, ad: e.target.value })}

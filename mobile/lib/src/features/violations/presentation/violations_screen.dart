@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
@@ -421,6 +422,7 @@ class _IhlalFormuState extends ConsumerState<_IhlalFormu> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _baslik,
+                  inputFormatters: GirdiSiniri.sinir(GirdiSiniri.baslik), // sunucu: ViolationCreate.baslik
                   decoration: InputDecoration(
                     labelText: l10n.ihlalBaslikAlani,
                     border: const OutlineInputBorder(),
@@ -432,6 +434,7 @@ class _IhlalFormuState extends ConsumerState<_IhlalFormu> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _aciklama,
+                  maxLength: GirdiSiniri.not_, // sunucu: ViolationCreate.aciklama
                   maxLines: 3,
                   decoration: InputDecoration(
                     labelText: l10n.ihlalAciklamaAlani,
@@ -441,6 +444,7 @@ class _IhlalFormuState extends ConsumerState<_IhlalFormu> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _konum,
+                  inputFormatters: GirdiSiniri.sinir(GirdiSiniri.baslik), // sunucu: ViolationCreate.konum
                   decoration: InputDecoration(
                     labelText: l10n.ihlalKonumAlani,
                     border: const OutlineInputBorder(),

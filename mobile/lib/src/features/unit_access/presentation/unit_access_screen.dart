@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/i18n/l10n.dart';
 import '../../../core/ui/metin_iste_diyalogu.dart';
@@ -169,6 +170,7 @@ class UnitAccessScreen extends ConsumerWidget {
       baslik: context.l10n.izinIsteBaslik,
       onayEtiketi: context.l10n.izinIstekGonder,
       etiket: context.l10n.izinDaireNo,
+      enFazla: GirdiSiniri.daireNo, // sunucu: UnitAccessRequestCreate.unit_no
     );
     if (unitNo == null || unitNo.isEmpty) return;
     try {

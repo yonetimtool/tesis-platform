@@ -25,6 +25,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
+from ..tr_arama import like_icerir, like_icerir_bos_degilse
 from .lokasyon_yukle import slugla
 from .veritabani import get_dukkan_session
 
@@ -84,7 +86,7 @@ async def ilceler(
 async def mahalleler(
     il_slug: str,
     ilce_slug: str,
-    q: str | None = Query(None, description="Ad icinde arama"),
+    q: str | None = Query(None, description="Ad icinde arama", max_length=_G.ARAMA),
     db: AsyncSession = Depends(get_dukkan_session),
 ) -> dict:
     """Bir ilcenin mahalle/koyleri.
@@ -134,9 +136,11 @@ async def mahalleler(
     )
     param: dict = {"i": ilce[0]}
     if q:
-        sql = sql.format(filtre="AND (ad ILIKE :q OR slug LIKE :qs)")
-        param["q"] = f"%{q}%"
-        param["qs"] = f"%{slugla(q)}%"
+        # (P248 §3b) `%`/`_` kacislanir: `?q=%` ilcenin TUM mahallelerini
+        # donduruyordu.
+        sql = sql.format(filtre="AND (ad ILIKE :q ESCAPE '\\' OR slug LIKE :qs ESCAPE '\\')")
+        param["q"] = like_icerir(q)
+        param["qs"] = like_icerir_bos_degilse(slugla(q))
     else:
         sql = sql.format(filtre="")
     satirlar = (await db.execute(text(sql), param)).all()

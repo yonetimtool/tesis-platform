@@ -22,6 +22,7 @@ from sqlalchemy import Text as _Text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from .. import ceviri
 from ..ceviri_api import (
     ceviri_isaretle_ve_kuyrukla,
@@ -197,6 +198,7 @@ async def list_announcements(
         None,
         description="Accept-Language'i EZER. Dil kodu (tr/en/ar/ru/de/fr/es) "
         "ya da 'orijinal' (kaynak dil).",
+        max_length=_G.KOD,
     ),
     accept_language: str | None = Header(None, alias="Accept-Language"),
     db: AsyncSession = Depends(get_tenant_db),
@@ -235,7 +237,7 @@ async def list_announcements(
 @router.get("/{announcement_id}", response_model=AnnouncementOut)
 async def get_announcement(
     announcement_id: uuid.UUID,
-    dil: str | None = Query(None, description="Accept-Language'i ezer (bkz. liste)."),
+    dil: str | None = Query(None, description="Accept-Language'i ezer (bkz. liste).", max_length=_G.KOD),
     accept_language: str | None = Header(None, alias="Accept-Language"),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_READER),

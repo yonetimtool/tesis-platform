@@ -20,6 +20,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
+from .. import girdi_siniri as _G
 from ..crud_helpers import (
     coord_eq,
     get_or_404,
@@ -99,9 +100,10 @@ async def list_assets(
     kategori: AssetKategori | None = Query(None),
     durum: AssetDurum | None = Query(None),
     aktif: bool | None = Query(None),
-    nfc_tag_uid: str | None = Query(None, description="Tam eslesme (UID -> asset cozumu)"),
+    nfc_tag_uid: str | None = Query(None, description="Tam eslesme (UID -> asset cozumu)", max_length=_G.NFC_UID),
     checked_out_by: str | None = Query(
-        None, description="'me' veya user UUID (UUID yalniz admin) — acik zimmet filtresi"
+        None, description="'me' veya user UUID (UUID yalniz admin) — acik zimmet filtresi",
+        max_length=_G.KOD,
     ),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_VIEWER),

@@ -37,6 +37,7 @@ import type {
   AssetList,
   UserListResponse,
 } from "@/lib/types";
+import { SINIR } from "@/lib/girdi-siniri";
 
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 // NFC bir TEKNIK KIMLIKTIR — cevrilmez, sozluge girmez.
@@ -381,6 +382,7 @@ export default function AssetsPage() {
             <AlanSarmal etiket={t("ortakAd")}>
   {(b) => (
     <Alan {...b} value={form.ad}
+                  maxLength={SINIR.AD}
                 onChange={(e) => setForm({ ...form, ad: e.target.value })}
                 required />
   )}
@@ -403,7 +405,7 @@ export default function AssetsPage() {
               ipucu={t("demirbasEtiketIpucu")}
             >
               {(b) => (
-                <Alan
+                <Alan maxLength={SINIR.NFC_UID}
                   {...b}
                   className="font-mono uppercase"
                   value={form.nfc_tag_uid}
@@ -416,7 +418,7 @@ export default function AssetsPage() {
             </AlanSarmal>
             <AlanSarmal etiket={t("ortakAciklamaOpsiyonel")}>
   {(b) => (
-    <Alan {...b} value={form.aciklama}
+    <Alan maxLength={SINIR.NOT} {...b} value={form.aciklama}
                 onChange={(e) => setForm({ ...form, aciklama: e.target.value })} />
   )}
 </AlanSarmal>

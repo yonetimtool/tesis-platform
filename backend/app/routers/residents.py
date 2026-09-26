@@ -18,13 +18,14 @@ from sqlalchemy import and_, exists, func, or_, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from ..audit import Action, audit_user
 from ..crud_helpers import is_unique_violation, translate_integrity
 from ..davet import davet_olustur_ve_gonder
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..toplu_tahakkuk import oturuyor_coz
-from ..tr_arama import tr_kalip, tr_katla_sql
+from ..tr_arama import LIKE_KACIS, tr_kalip, tr_katla_sql
 from ..hata_metinleri import istek_dili
 from ..hesap_silme import hesabi_sil_veya_anonimlestir
 from ..models import AppUser, Unit, UnitResident
@@ -227,8 +228,9 @@ async def list_residents(
     q: str | None = Query(
         None,
         description="Ad, daire no ya da BLOK adinda arama (en az 2 karakter)",
+        max_length=_G.ARAMA,
     ),
-    blok: str | None = Query(None, description="Tek bloga daralt (tam eslesme)"),
+    blok: str | None = Query(None, description="Tek bloga daralt (tam eslesme)", max_length=_G.BLOK),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_YONETIM),
 ) -> ResidentListResponse:
@@ -294,7 +296,7 @@ async def list_residents(
         kalip = tr_kalip(aranan)
         kosullar.append(
             or_(
-                tr_katla_sql(AppUser.ad).like(kalip),
+                tr_katla_sql(AppUser.ad).like(kalip, escape=LIKE_KACIS),
                 exists(
                     select(1)
                     .select_from(UnitResident)
@@ -303,8 +305,8 @@ async def list_residents(
                         UnitResident.user_id == AppUser.id,
                         UnitResident.bitis.is_(None),
                         or_(
-                            tr_katla_sql(Unit.no).like(kalip),
-                            tr_katla_sql(Unit.blok).like(kalip),
+                            tr_katla_sql(Unit.no).like(kalip, escape=LIKE_KACIS),
+                            tr_katla_sql(Unit.blok).like(kalip, escape=LIKE_KACIS),
                         ),
                     )
                 ),

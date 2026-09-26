@@ -40,6 +40,7 @@ import { useT } from "@/lib/i18n/kullan";
 import { ApiHatasi } from "@/lib/client";
 import { tarihSaatUzun } from "@/lib/tarih";
 import { telefonNormalle } from "@/lib/telefon";
+import { SINIR } from "@/lib/girdi-siniri";
 
 /** (P226) Acilir liste secenek stili — DUZ renk, gradyan DEGIL. */
 const SECENEK_STILI = {
@@ -404,7 +405,7 @@ export default function TenantsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <AlanSarmal etiket={t("tesisAdiOpsiyonel")} ipucu={t("tesisAdiBosIpucu")}>
               {(b) => (
-                <Alan {...b}
+                <Alan maxLength={160 /* sunucu: TenantAdminCreate.ad */} {...b}
                                 value={form.ad}
                 onChange={(e) => setForm({ ...form, ad: e.target.value })}
                 minLength={2}
@@ -452,7 +453,7 @@ export default function TenantsPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <AlanSarmal etiket={t("tesisAdSoyad")}>
   {(b) => (
-    <Alan {...b} value={y.ad}
+    <Alan maxLength={120 /* sunucu: YoneticiCreate.ad */} {...b} value={y.ad}
                       onChange={(e) => setYonetici(i, { ad: e.target.value })}
                       required
                       minLength={2} />
@@ -559,7 +560,7 @@ export default function TenantsPage() {
           setKurulumSuzgec("");
         }}
       >
-<Alan
+<Alan maxLength={SINIR.ARAMA}
               aria-label={t("tesisAraEtiketi")}
               placeholder={t("tesisAraIpucu")}
               value={arama}

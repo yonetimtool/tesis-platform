@@ -20,6 +20,7 @@ import { kurulumHatirlaticiyiAc } from "@/components/KurulumHatirlatici";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
+import { ISTEMCI_SINIR, SINIR } from "@/lib/girdi-siniri";
 import { OPERASYON, GIRDI_TIPI } from "@/lib/tesis-ayar-alanlari";
 import type { TenantSettings } from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
@@ -177,13 +178,14 @@ export default function SettingsPage() {
 
             <AlanSarmal etiket={t("ayarTesisAdi")}>
   {(b) => (
-    <Alan {...b} value={ad} onChange={(e) => setAd(e.target.value)} required />
+    <Alan {...b} value={ad} maxLength={SINIR.BASLIK /* sunucu: TenantSettingsUpdate.ad */} onChange={(e) => setAd(e.target.value)} required />
   )}
 </AlanSarmal>
 
             <AlanSarmal etiket={t("ayarZamanDilimi")} ipucu={t("ayarSaatDilimiOrnek")}>
   {(b) => (
     <Alan {...b} value={timezone}
+                  maxLength={SINIR.KOD /* sunucu: TenantSettingsUpdate.timezone */}
                 onChange={(e) => setTimezone(e.target.value)}
                 required />
   )}
@@ -242,6 +244,7 @@ export default function SettingsPage() {
                   <Alan
                     aria-label={t(a.etiket)}
                     type={GIRDI_TIPI[a.tip]}
+                    maxLength={a.tip === "metin" ? (a.azami ?? SINIR.BASLIK) : ISTEMCI_SINIR.SAYI}
                     min={a.min}
                     max={a.max}
                     value={String(ops[a.anahtar] ?? "")}

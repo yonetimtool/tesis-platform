@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../core/ui/merkez_diyalog.dart';
@@ -152,6 +153,7 @@ class _IsletmeGovdesiState extends ConsumerState<_IsletmeGovdesi> {
             const SizedBox(height: 12),
             TextField(
               controller: _tutarKtrl,
+              inputFormatters: GirdiSiniri.sinir(GirdiSiniri.tutar),
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 labelText: t.dukkanTeklifTutar,
@@ -164,6 +166,7 @@ class _IsletmeGovdesiState extends ConsumerState<_IsletmeGovdesi> {
             const SizedBox(height: 8),
             TextField(
               controller: _mesajKtrl,
+              maxLength: GirdiSiniri.not_, // sunucu: TeklifVer.mesaj
               maxLines: 3,
               decoration: InputDecoration(labelText: t.dukkanTeklifMesaj),
             ),

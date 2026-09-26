@@ -36,6 +36,7 @@ from fastapi import APIRouter, Depends, Header, Query, Response
 from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from .. import anpr as anpr_core
 from ..audit import Action, audit_user
 from ..db import SessionLocal, set_tenant
@@ -244,7 +245,7 @@ async def olay_al(
 
 @router.get("/events", response_model=AnprEventListResponse)
 async def olay_listesi(
-    durum: str | None = Query(None),
+    durum: str | None = Query(None, max_length=_G.KOD),
     plaka: str | None = Query(None, min_length=1, max_length=64),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),

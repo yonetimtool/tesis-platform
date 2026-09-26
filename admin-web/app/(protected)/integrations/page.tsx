@@ -24,6 +24,7 @@ import type {
   IntegrationPreset,
   IntegrationTriggerResult,
 } from "@/lib/types";
+import { SINIR } from "@/lib/girdi-siniri";
 
 interface FormState {
   ad: string;
@@ -266,7 +267,7 @@ export default function IntegrationsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <AlanSarmal etiket={t("ortakAd")}>
   {(b) => (
-    <Alan {...b} value={form.ad}
+    <Alan maxLength={SINIR.BASLIK} {...b} value={form.ad}
                 onChange={(e) => setForm({ ...form, ad: e.target.value })}
                 required />
   )}
@@ -287,7 +288,7 @@ export default function IntegrationsPage() {
 </AlanSarmal>
             <AlanSarmal etiket={t("entegEndpointUrl")} ipucu={t("entegUrlIpucu")}>
   {(b) => (
-    <Alan {...b} value={form.endpoint_url}
+    <Alan maxLength={2000 /* sunucu: IntegrationCreate.endpoint_url */} {...b} value={form.endpoint_url}
                 onChange={(e) => setForm({ ...form, endpoint_url: e.target.value })}
                 placeholder="https://..."
                 required />
@@ -339,14 +340,14 @@ export default function IntegrationsPage() {
           </div>
           <AlanSarmal etiket={t("entegHeaderlar")}>
             {(b) => (
-              <CokSatir {...b} rows={4}
+              <CokSatir maxLength={SINIR.UZUN_NOT} {...b} rows={4}
               value={form.headers_text}
               onChange={(e) => setForm({ ...form, headers_text: e.target.value })} />
             )}
           </AlanSarmal>
           <AlanSarmal etiket={t("entegPayloadSablonu")} ipucu={t("entegYerTutucular")}>
             {(b) => (
-              <CokSatir {...b} rows={4}
+              <CokSatir maxLength={8000 /* sunucu: IntegrationCreate.payload_template */} {...b} rows={4}
               value={form.payload_template}
               onChange={(e) => setForm({ ...form, payload_template: e.target.value })} />
             )}

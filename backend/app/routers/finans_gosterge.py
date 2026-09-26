@@ -19,6 +19,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from .. import defter, yaslandirma
 from ..finans import tarih_metni, tl_metni
 from ..audit import Action, audit_user
@@ -61,7 +62,7 @@ async def borc_yaslandirma(
     ozet: bool = Query(
         False, description="true = daire listeleri BOS doner (kart gorunumu)"
     ),
-    kova: str | None = Query(None, description="Yalniz bu kovanin daireleri"),
+    kova: str | None = Query(None, description="Yalniz bu kovanin daireleri", max_length=_G.KOD),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_OKUR),
 ) -> YaslandirmaResponse:
@@ -93,7 +94,7 @@ async def borc_yaslandirma(
 # ========================= 5.2 TAHSILAT GOSTERGESI ========================== #
 @router.get("/finans/tahsilat-gostergesi", response_model=TahsilatGostergesi)
 async def tahsilat_gostergesi(
-    donem: str | None = Query(None, description="'YYYY-MM'; bos = bu ay"),
+    donem: str | None = Query(None, description="'YYYY-MM'; bos = bu ay", max_length=_G.KOD),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_OKUR),
 ) -> TahsilatGostergesi:

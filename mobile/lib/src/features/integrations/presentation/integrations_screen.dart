@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
@@ -475,6 +476,7 @@ class _IntegrationFormState extends ConsumerState<_IntegrationForm> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _ad,
+                inputFormatters: GirdiSiniri.sinir(GirdiSiniri.baslik), // sunucu: IntegrationCreate.ad
                 decoration: InputDecoration(
                   labelText: l10n.kameraAd,
                   border: const OutlineInputBorder(),
@@ -499,6 +501,7 @@ class _IntegrationFormState extends ConsumerState<_IntegrationForm> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _url,
+                inputFormatters: GirdiSiniri.sinir(2000), // sunucu: IntegrationCreate.endpoint_url
                 decoration: InputDecoration(
                   labelText: l10n.entegUrl,
                   hintText: 'https://...',
@@ -544,6 +547,7 @@ class _IntegrationFormState extends ConsumerState<_IntegrationForm> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _secret,
+                inputFormatters: GirdiSiniri.sinir(4000), // sunucu: IntegrationCreate.auth_secret
                 obscureText: true,
                 enabled: _authType != 'none',
                 decoration: InputDecoration(
@@ -557,6 +561,7 @@ class _IntegrationFormState extends ConsumerState<_IntegrationForm> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _template,
+                maxLength: 8000, // sunucu: IntegrationCreate.payload_template
                 minLines: 2,
                 maxLines: 4,
                 decoration: InputDecoration(

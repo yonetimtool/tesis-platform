@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { Alan, AlanSarmal, Dugme, HataDurumu } from "@/components/ui";
 import { useT } from "@/lib/i18n/kullan";
+import { SINIR } from "@/lib/girdi-siniri";
 
 /**
  * (P233 §1) TESIS KONUMU SECICI — yer adindan koordinat.
@@ -72,7 +73,7 @@ export function KonumSecici({
       <AlanSarmal etiket={t("ayarKonum")} ipucu={t("ayarKonumIpucu")}>
         {(b) => (
           <div className="flex gap-2">
-            <Alan
+            <Alan maxLength={SINIR.ARAMA}
               {...b}
               value={q}
               data-test="konum-ara"

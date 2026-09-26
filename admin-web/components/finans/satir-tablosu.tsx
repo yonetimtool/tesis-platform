@@ -26,6 +26,7 @@ import { useId, type ReactNode } from "react";
 import { Dugme } from "@/components/ui";
 import { useT } from "@/lib/i18n/kullan";
 import { kurusToTL, tlToKurus } from "@/lib/money";
+import { ISTEMCI_SINIR } from "@/lib/girdi-siniri";
 
 /** Her satirin tasidigi ortak alanlar; sayfalar kendi alanlarini ekler. */
 export interface SatirTabani {
@@ -121,7 +122,7 @@ export function SatirTablosu<T extends SatirTabani>({
                   </td>
                 ))}
                 <td className="p-1 align-top">
-                  <input
+                  <input maxLength={ISTEMCI_SINIR.SAYI}
                     value={s.tutar}
                     onChange={(e) => tutarYaz(s._k, e.target.value)}
                     inputMode="decimal"

@@ -16,6 +16,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from ..audit import Action, audit_user
 from ..deps import get_current_user, get_tenant_db
 from ..errors import APIError
@@ -70,7 +71,7 @@ async def _guncel(db: AsyncSession, tur: str = VARSAYILAN_TUR) -> KvkkMetin | No
 # ============================== METIN ======================================= #
 @router.get("/kvkk/metin", response_model=KvkkMetinOut)
 async def guncel_metin(
-    tur: str = Query(VARSAYILAN_TUR),
+    tur: str = Query(VARSAYILAN_TUR, max_length=_G.KOD),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(get_current_user),
 ) -> KvkkMetinOut:
@@ -104,7 +105,7 @@ async def guncel_metin(
 
 @router.get("/kvkk/durum", response_model=KvkkDurumOut)
 async def durum(
-    tur: str = Query(VARSAYILAN_TUR),
+    tur: str = Query(VARSAYILAN_TUR, max_length=_G.KOD),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(get_current_user),
 ) -> KvkkDurumOut:

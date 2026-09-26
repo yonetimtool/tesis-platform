@@ -104,9 +104,14 @@ export interface ZenginMetinProps {
   etiket: string;
   /** Imlecin oldugu yere metin eklemek icin (etiket cipleri). */
   ekleRef?: React.MutableRefObject<((metin: string) => void) | null>;
+  /** (P248 §3a) Sunucunun HTML govde siniri (`max_length` HAM HTML'e
+   *  uygulanir — temizlemeden ONCE). `contentEditable` `maxLength`
+   *  bilmez; siniri asacak ekleme `beforeinput`ta durdurulur. ZORUNLU:
+   *  sinirsiz bir zengin alan unutulamasin. */
+  azami: number;
 }
 
-export function ZenginMetin({ deger, onDegisti, etiket, ekleRef }: ZenginMetinProps) {
+export function ZenginMetin({ deger, onDegisti, etiket, ekleRef, azami }: ZenginMetinProps) {
   const t = useT();
   const kutuRef = useRef<HTMLDivElement | null>(null);
   const [odakli, setOdakli] = useState(false);
@@ -259,6 +264,17 @@ export function ZenginMetin({ deger, onDegisti, etiket, ekleRef }: ZenginMetinPr
         tabIndex={0}
         onFocus={() => setOdakli(true)}
         onBlur={() => setOdakli(false)}
+        onBeforeInput={(e) => {
+          // (P248 §3a) Silme/bicim serbest; YALNIZ ekleme sinirda durur.
+          const tur = (e.nativeEvent as InputEvent).inputType ?? "";
+          const uzunluk = kutuRef.current?.innerHTML.length ?? 0;
+          if (tur.startsWith("insert") && uzunluk >= azami) e.preventDefault();
+        }}
+        onPaste={(e) => {
+          const eklenen = e.clipboardData.getData("text/plain").length;
+          const uzunluk = kutuRef.current?.innerHTML.length ?? 0;
+          if (uzunluk + eklenen > azami) e.preventDefault();
+        }}
         onInput={() => onDegisti(kutuRef.current?.innerHTML ?? BOS)}
         className="odak-ic min-h-40 overflow-auto p-3"
         style={{

@@ -20,6 +20,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from ..audit import Action, audit_user
 from ..belge_no import belge_no_ata
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
@@ -507,7 +508,7 @@ async def hareket_ekle(
 
 @router.get("/finans/hareketler", response_model=HareketListResponse)
 async def hareket_listesi(
-    tip: str | None = Query(None),
+    tip: str | None = Query(None, max_length=_G.KOD),
     kasa_id: uuid.UUID | None = Query(None),
     user_id: uuid.UUID | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
@@ -1142,7 +1143,7 @@ async def _icra_zenginlestir(
 
 @router.get("/finans/icra-dosyalari", response_model=IcraDosyasiListResponse)
 async def icra_listesi(
-    durum: str | None = Query(None),
+    durum: str | None = Query(None, max_length=_G.KOD),
     user_id: uuid.UUID | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),

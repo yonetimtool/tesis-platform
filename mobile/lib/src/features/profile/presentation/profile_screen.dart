@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
@@ -374,6 +375,7 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _currentCtrl,
+                inputFormatters: GirdiSiniri.sinir(200), // sunucu: PasswordChangeRequest.current_password
                 enabled: !_submitting,
                 obscureText: _obscure,
                 decoration: InputDecoration(
@@ -398,6 +400,7 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _newCtrl,
+                inputFormatters: GirdiSiniri.sinir(GirdiSiniri.parola), // sunucu: PasswordChangeRequest.new_password
                 enabled: !_submitting,
                 obscureText: _obscure,
                 decoration: InputDecoration(
@@ -412,6 +415,7 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _confirmCtrl,
+                inputFormatters: GirdiSiniri.sinir(GirdiSiniri.parola),
                 enabled: !_submitting,
                 obscureText: _obscure,
                 textInputAction: TextInputAction.done,

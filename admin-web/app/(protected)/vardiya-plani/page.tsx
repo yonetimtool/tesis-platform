@@ -27,6 +27,7 @@ import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { rolAdi } from "@/lib/roles";
 import type { AsyncIs } from "@/lib/tipler";
+import { SINIR } from "@/lib/girdi-siniri";
 
 /**
  * (P205 §2) VARDIYA PLANLAMA — ZAMAN CIZELGESI.
@@ -650,7 +651,7 @@ export default function VardiyaPlaniSayfasi() {
             </AlanSarmal>
             <AlanSarmal etiket={t("vardiyaSuzgecKisi")}>
               {(baglar) => (
-                <Alan
+                <Alan maxLength={SINIR.ARAMA}
                   {...baglar}
                   value={aramaSuzgeci}
                   data-test="vardiya-suzgec-kisi"
@@ -1373,7 +1374,7 @@ function BlokAyrinti({
             bos kalirsa kayit sonradan hicbir soruyu yanitlamaz. */}
         <AlanSarmal etiket={t("vardiyaCikarSebep")}>
           {(baglar) => (
-            <Alan
+            <Alan maxLength={500 /* sunucu: VardiyaGuncelleIstek.not_metni */}
               {...baglar}
               value={sebep}
               data-test="vardiya-cikar-sebep"

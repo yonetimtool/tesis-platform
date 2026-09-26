@@ -20,6 +20,10 @@ karsilastirir. Sutunlar:
   hassas    yanitta kisisel/gizli alanlar          (KODDAN: yanit semasi)
   tavan     yalniz varsayilan tavana dayanan girdi alanlari (KODDAN)
   not       gerekce (kamu uc, haric denetim, sinirsiz hassas uc icin ZORUNLU)
+  girdi     (P248 §3a) govde + sorgu + form METIN girdilerinin DAR siniri:
+            `-` metin girdisi yok, `dar` hepsi sinirli, aksi halde
+            sinirsiz/sinif tavanini asan girdiler (KODDAN; bkz.
+            tests/girdi_olcum.py). `dar` disi deger test_p248 ile KIRMIZI.
 
 KODDAN hesaplanan bir sutun beyanla uyusmazsa test KIRMIZI: ornegin bir
 yanit semasina `telefon` eklenirse `hassas` degisir ve bu degisiklik
@@ -46,9 +50,11 @@ import pytest
 KILIT = Path(__file__).resolve().parent / "yetki" / "uc-guvenlik.tsv"
 GUNCELLE = os.getenv("UC_GUVENLIK_GUNCELLE") == "1"
 
+#: (P248 §3a) `girdi` SONA eklendi: `not` serbest metin ve eski dosyalar
+#: 10 sutunlu; sona eklemek eski kilidi okurken `not`u kaydirmaz.
 SUTUNLAR = ("metot", "yol", "kimlik", "kapsam", "sahiplik", "hiz", "denetim",
-            "hassas", "tavan", "not")
-HESAPLANAN = ("kimlik", "kapsam", "hiz", "denetim", "hassas", "tavan")
+            "hassas", "tavan", "not", "girdi")
+HESAPLANAN = ("kimlik", "kapsam", "hiz", "denetim", "hassas", "tavan", "girdi")
 SAHIPLIK_DEGERLERI = {"-", "kendi", "atama", "rol", "hedef"}
 
 #: Yanitta HASSAS sayilan alan adlari (kisisel veri / gizli bilgi).
@@ -141,6 +147,8 @@ def olcum() -> dict[tuple[str, str], dict[str, str]]:
     from app.genel_denetim import denetlenir_mi
     from app.main import app
 
+    from .girdi_olcum import girdi_sutunu
+
     sonuc: dict[tuple[str, str], dict[str, str]] = {}
     for r in app.routes:
         if not isinstance(r, APIRoute):
@@ -158,6 +166,7 @@ def olcum() -> dict[tuple[str, str], dict[str, str]]:
         for p in r.dependant.body_params:
             govde = getattr(p, "type_", None) or getattr(p.field_info, "annotation", None)
         tavan = sorted(_tavana_dayanan(govde)) if govde else []
+        girdi = girdi_sutunu(r)
         hassas = sorted({
             a.split(".")[-1] for a in _alanlar(r.response_model)
             if HASSAS.search(a.split(".")[-1]) and not BAYRAK.search(a.split(".")[-1])
@@ -176,6 +185,7 @@ def olcum() -> dict[tuple[str, str], dict[str, str]]:
             sonuc[(m, r.path)] = {
                 "kimlik": kimlik, "kapsam": kapsam, "hiz": hiz, "denetim": denetim,
                 "hassas": ",".join(hassas) or "-", "tavan": ",".join(tavan) or "-",
+                "girdi": girdi,
             }
     return sonuc
 
@@ -202,6 +212,7 @@ def _yaz(olculen, eski) -> None:
         satirlar.append("\t".join([
             m, y, o["kimlik"], o["kapsam"], e.get("sahiplik") or "?", o["hiz"],
             o["denetim"], o["hassas"], o["tavan"], e.get("not") or "",
+            o["girdi"],
         ]))
     KILIT.write_text(
         "# (P247 §6) UC GUVENLIK KILIDI — bkz. tests/test_p247_uc_guvenlik.py\n"

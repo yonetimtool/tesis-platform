@@ -36,6 +36,7 @@ import { apiSend, genIdempotencyKey } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { kurusToTL, tlToKurus } from "@/lib/money";
+import { ISTEMCI_SINIR } from "@/lib/girdi-siniri";
 
 const TIP = "iade";
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
@@ -169,10 +170,10 @@ function IadeModal({
           )}
         </AlanSarmal>
         <AlanSarmal etiket={t("finansAlanTutar")}>
-          {(b) => <Alan {...b} value={tutar} inputMode="decimal" onChange={(e) => setTutar(e.target.value)} />}
+          {(b) => <Alan maxLength={ISTEMCI_SINIR.SAYI} {...b} value={tutar} inputMode="decimal" onChange={(e) => setTutar(e.target.value)} />}
         </AlanSarmal>
         <AlanSarmal etiket={t("finansAlanAciklama")}>
-          {(b) => <Alan {...b} value={aciklama} onChange={(e) => setAciklama(e.target.value)} />}
+          {(b) => <Alan maxLength={500 /* sunucu: IadeIstek.aciklama */} {...b} value={aciklama} onChange={(e) => setAciklama(e.target.value)} />}
         </AlanSarmal>
         <HataDurumu mesaj={hata} />
       </div>

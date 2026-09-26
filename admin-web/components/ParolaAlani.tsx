@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 
+import { SINIR } from "@/lib/girdi-siniri";
 import { useT } from "@/lib/i18n/kullan";
 
 /**
@@ -36,6 +37,7 @@ export function ParolaAlani({
   name,
   disabled,
   style,
+  maxLength,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -49,6 +51,10 @@ export function ParolaAlani({
   disabled?: boolean;
   /** (P162) Giris ekrani cam yuzeyi token DEGIL satir-ici stil kullanir. */
   style?: React.CSSProperties;
+  /** (P248 §3a) Verilmezse: yeni parola (`autoComplete="new-password"`)
+   * SINIR.PAROLA (128), giris parolasi SINIR.GIZLI (500 — sunucu giriste
+   * daha genis: eski uzun parola sahibi disarida kalmasin). */
+  maxLength?: number;
 }) {
   const t = useT();
   const [acik, setAcik] = useState(false);
@@ -70,6 +76,10 @@ export function ParolaAlani({
         onChange={(e) => onChange(e.target.value)}
         autoComplete={autoComplete}
         minLength={minLength}
+        maxLength={
+          maxLength ??
+          (autoComplete === "new-password" ? SINIR.PAROLA : SINIR.GIZLI)
+        }
         required={required}
         placeholder={placeholder}
         disabled={disabled}

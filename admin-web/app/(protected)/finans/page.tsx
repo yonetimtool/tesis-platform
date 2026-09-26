@@ -32,6 +32,7 @@ import { useT } from "@/lib/i18n/kullan";
 import { BagimlilikUyarisi } from "@/components/BagimlilikUyarisi";
 import { kurusToTL, tlToKurus } from "@/lib/money";
 import { useSorguSecimi } from "@/lib/sorgu-secimi";
+import { ISTEMCI_SINIR } from "@/lib/girdi-siniri";
 
 /**
  * P40 — FINANS bolumu (P29 API'si).
@@ -416,7 +417,7 @@ export default function FinansPage() {
           </AlanSarmal>
           <AlanSarmal etiket={t("finansTutar")}>
             {(b) => (
-              <Alan
+              <Alan maxLength={ISTEMCI_SINIR.SAYI}
                 {...b}
                 inputMode="decimal"
                 value={yTutar}
@@ -443,7 +444,7 @@ export default function FinansPage() {
           </AlanSarmal>
           <AlanSarmal etiket={t("finansAciklama")}>
             {(b) => (
-              <Alan {...b} value={yAciklama} onChange={(e) => setYAciklama(e.target.value)} />
+              <Alan maxLength={500 /* sunucu: HareketSatir.aciklama */} {...b} value={yAciklama} onChange={(e) => setYAciklama(e.target.value)} />
             )}
           </AlanSarmal>
         </div>

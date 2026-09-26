@@ -20,6 +20,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
@@ -337,6 +338,7 @@ class _DonguAtaDialoguState extends ConsumerState<DonguAtaDialogu> {
               TextField(
                 key: const Key('dongu-kaydirma'),
                 controller: _kaydirmaCtrl,
+                inputFormatters: GirdiSiniri.sinir(GirdiSiniri.sayi),
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   labelText: l10n.donguKaydirma,

@@ -60,6 +60,7 @@ from ..schemas import (
     MesaiOzetOut,
 )
 from ..vardiya import plan_araligi, saat_farki
+from ..tr_arama import LIKE_KACIS, like_kacis
 
 router = APIRouter(prefix="/mesai", tags=["mesai"])
 
@@ -224,7 +225,8 @@ async def _yazilmis_mesai(db: AsyncSession, bas, son) -> set[uuid.UUID]:
                     FinansalHareket.tip == "gider",
                     FinansalHareket.tarih >= bas,
                     FinansalHareket.tarih <= son,
-                    FinansalHareket.aciklama.like(f"{ACIKLAMA_ONEKI}%"),
+                    FinansalHareket.aciklama.like(
+                        f"{like_kacis(ACIKLAMA_ONEKI)}%", escape=LIKE_KACIS),
                     FinansalHareket.ters_kayit_id.is_(None),
                     FinansalHareket.durum != "iptal",
                     FinansalHareket.id.notin_(defter.iptal_edilmis()),

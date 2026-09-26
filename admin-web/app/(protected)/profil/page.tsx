@@ -407,7 +407,7 @@ function HesapBilgileri({
         <section className="grid gap-4 sm:max-w-md">
           <AlanSarmal etiket={t("profilAd")} hata={adHatasi} zorunlu>
             {(baglar) => (
-              <Alan
+              <Alan maxLength={120 /* sunucu: MeContactUpdate.ad */}
                 {...baglar}
                 value={ad}
                 hatali={Boolean(adHatasi)}
@@ -486,7 +486,7 @@ function HesapBilgileri({
                 {kodBekleniyor && (
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="max-w-[10rem]">
-                      <Alan
+                      <Alan maxLength={8 /* sunucu: MeEpostaDogrulaRequest.kod */}
                         inputMode="numeric"
                         autoComplete="one-time-code"
                         value={kod}

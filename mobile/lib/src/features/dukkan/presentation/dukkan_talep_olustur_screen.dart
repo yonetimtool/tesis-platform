@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../../l10n/gen/app_localizations.dart';
 import '../data/dukkan_api.dart';
@@ -281,6 +282,7 @@ class _DukkanTalepOlusturScreenState
             isActive: _adim >= 1,
             content: TextField(
               controller: _aciklama,
+              maxLength: 4000, // sunucu: TalepOlustur.aciklama
               maxLines: 6,
               decoration: InputDecoration(
                 hintText: t.dukkanIhtiyacinIpucu,
@@ -328,6 +330,7 @@ class _DukkanTalepOlusturScreenState
                     padding: const EdgeInsets.only(top: 8),
                     child: TextField(
                       controller: _adres,
+                      inputFormatters: GirdiSiniri.sinir(GirdiSiniri.adres), // sunucu: TalepOlustur.acik_adres
                       decoration: InputDecoration(
                         labelText: t.dukkanAcikAdres,
                         border: const OutlineInputBorder(),

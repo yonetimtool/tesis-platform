@@ -22,11 +22,12 @@ uretimi (`rapor_ciktilari`) zaten sunucuda.
 from __future__ import annotations
 
 import datetime as dt
-from io import BytesIO
 
 from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
+
+from .hucre_guvenligi import guvenli_kaydet
 
 #: Kolon sirasi — sablon, disa aktarim ve ice aktarim AYNI listeyi
 #: kullanir. Ayri ayri yazilsaydi biri degistiginde oteki eskir ve
@@ -65,9 +66,8 @@ def ornek_sablon() -> bytes:
     ws.title = "vardiya"
     _baslik_yaz(ws)
     ws.append([ornek for _, ornek in KOLONLAR])
-    tampon = BytesIO()
-    wb.save(tampon)
-    return tampon.getvalue()
+    # (P248 §3c) formul enjeksiyonu kapisi (bkz. hucre_guvenligi).
+    return guvenli_kaydet(wb)
 
 
 def plan_disa_aktar(satirlar: list[dict], site_ad: str) -> bytes:
@@ -84,9 +84,8 @@ def plan_disa_aktar(satirlar: list[dict], site_ad: str) -> bytes:
     _baslik_yaz(ws)
     for s in satirlar:
         ws.append([str(s.get(kod, "") or "") for kod in KOLON_KODLARI])
-    tampon = BytesIO()
-    wb.save(tampon)
-    return tampon.getvalue()
+    # (P248 §3c) formul enjeksiyonu kapisi (bkz. hucre_guvenligi).
+    return guvenli_kaydet(wb)
 
 
 def saat_coz(deger: str) -> dt.time | None:

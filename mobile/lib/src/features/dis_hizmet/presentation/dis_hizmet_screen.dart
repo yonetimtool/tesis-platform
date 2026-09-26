@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
@@ -142,6 +143,7 @@ class _NoteCard extends ConsumerWidget {
       baslik: l10n.disBolumNotu,
       onayEtiketi: l10n.ortakKaydet,
       baslangic: note ?? '',
+      enFazla: GirdiSiniri.not_, // sunucu: DisHizmetNoteUpdate.note
       satirlar: 3,
     );
     if (result == null || !context.mounted) return;
@@ -349,6 +351,7 @@ class _HizmetFormState extends ConsumerState<_HizmetForm> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _tur,
+              inputFormatters: GirdiSiniri.sinir(80), // sunucu: DisHizmetCreate.tur
               enabled: !_busy,
               textCapitalization: TextCapitalization.words,
               decoration: InputDecoration(
@@ -366,6 +369,7 @@ class _HizmetFormState extends ConsumerState<_HizmetForm> {
                 Expanded(
                   child: TextFormField(
                     controller: _ad,
+                    inputFormatters: GirdiSiniri.sinir(120), // sunucu: DisHizmetCreate.ad
                     enabled: !_busy,
                     textCapitalization: TextCapitalization.words,
                     decoration: InputDecoration(
@@ -380,6 +384,7 @@ class _HizmetFormState extends ConsumerState<_HizmetForm> {
                 Expanded(
                   child: TextFormField(
                     controller: _soyad,
+                    inputFormatters: GirdiSiniri.sinir(120), // sunucu: DisHizmetCreate.soyad
                     enabled: !_busy,
                     textCapitalization: TextCapitalization.words,
                     decoration: InputDecoration(
@@ -403,6 +408,7 @@ class _HizmetFormState extends ConsumerState<_HizmetForm> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _aciklama,
+              maxLength: 1000, // sunucu: DisHizmetCreate.aciklama
               enabled: !_busy,
               maxLines: 2,
               decoration: InputDecoration(

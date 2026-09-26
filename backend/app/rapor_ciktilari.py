@@ -23,6 +23,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas as pdf_canvas
 
+from .hucre_guvenligi import guvenli_kaydet
 from .raporlar import RaporSonuc, kurus_metin
 
 #: PDF'te tek satira sigmayan sutun sayisi — ustunde YATAY sayfa kullanilir.
@@ -283,9 +284,9 @@ def excel_uret(
             except Exception:
                 pass
 
-    tampon = io.BytesIO()
-    wb.save(tampon)
-    return tampon.getvalue()
+    # (P248 §3c) Formul enjeksiyonu: kullanici metni `=`/`+`/`-`/`@` ile
+    # basliyorsa hucre DUZ METIN olur (bkz. hucre_guvenligi).
+    return guvenli_kaydet(wb)
 
 
 def _excel_deger(sutun, ham):

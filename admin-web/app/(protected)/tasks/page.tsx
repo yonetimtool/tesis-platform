@@ -55,6 +55,7 @@ import type {
   TaskList,
   UserListResponse,
 } from "@/lib/types";
+import { SINIR } from "@/lib/girdi-siniri";
 
 /**
  * (P160 / Asama 6) OLU `tip` ZINCIRI KALDIRILDI — olculdu.
@@ -740,14 +741,14 @@ export default function TasksPage() {
 
             <AlanSarmal etiket={t("ortakBaslik")}>
   {(b) => (
-    <Alan {...b} value={form.ad}
+    <Alan maxLength={SINIR.BASLIK /* sunucu: TaskCreate.ad */} {...b} value={form.ad}
                 onChange={(e) => setForm({ ...form, ad: e.target.value })}
                 required />
   )}
 </AlanSarmal>
             <AlanSarmal etiket={t("ortakAciklamaOpsiyonel")}>
   {(b) => (
-    <Alan {...b} value={form.aciklama}
+    <Alan maxLength={SINIR.UZUN_NOT /* sunucu: TaskCreate.aciklama */} {...b} value={form.aciklama}
                 onChange={(e) => setForm({ ...form, aciklama: e.target.value })} />
   )}
 </AlanSarmal>
@@ -912,7 +913,7 @@ export default function TasksPage() {
           {editingId ? null : (
             <AlanSarmal etiket={t("gorevAdimlar")} ipucu={t("gorevAdimSatirIpucu")}>
               {(b) => (
-                <CokSatir
+                <CokSatir maxLength={SINIR.UZUN_NOT}
                   {...b}
                   rows={3}
                   data-test="gorev-adimlar-metin"

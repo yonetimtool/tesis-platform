@@ -65,6 +65,7 @@ from ..models import (
 from ..roller import gorunur_roller
 from .announcements import duyuru_okuma_kosulu
 from ..schemas import AramaSonucu, AramaVurusu
+from ..tr_arama import LIKE_KACIS, like_kacis
 
 # Rol kumeleri ILGILI ROUTERDAN import edilir — kopyalanmaz.
 from .announcements import _READER as _DUYURU_ROLLERI
@@ -138,7 +139,7 @@ def _katla(sutun):
 
 def _es(sutun, desen: str):
     """`sutun ILIKE desen` — ama iki taraf da Turkce-katlanmis."""
-    return _katla(sutun).like(_katla_desen(desen), escape="\\")
+    return _katla(sutun).like(_katla_desen(desen), escape=LIKE_KACIS)
 
 
 def _katla_desen(desen: str) -> str:
@@ -386,7 +387,7 @@ async def arama(
     aranan = q.strip()
     # (E2E 2026-09) LIKE jokerleri KACIRILIR: "%" ya da "_" yazan kullanici
     # her seyi eslestiriyordu ("_" tek karakter joker).
-    kacik = aranan.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    kacik = like_kacis(aranan)
     desen = f"%{kacik}%"
     # PLAKA AYRI DESEN ISTER: `arac_kayit.plaka` normalize saklaniyor
     # (bosluksuz + BUYUK). Kullanici "34 abc 12" yazdiginda ham desen

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/ui/tarih_satiri.dart';
 import '../../../core/error/api_exception.dart';
@@ -316,6 +317,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _adCtrl,
+                inputFormatters: GirdiSiniri.sinir(200), // sunucu: TaskCreate.ad
                 decoration: InputDecoration(
                   labelText: l10n.gorevAdi,
                   border: const OutlineInputBorder(),
@@ -327,6 +329,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _aciklamaCtrl,
+                maxLength: GirdiSiniri.uzunNot, // sunucu: TaskCreate.aciklama
                 minLines: 2,
                 maxLines: 4,
                 decoration: InputDecoration(
@@ -442,6 +445,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _periyotCtrl,
+                inputFormatters: GirdiSiniri.sinir(GirdiSiniri.sayi),
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   labelText: l10n.gorevPeriyotDakika,
@@ -482,6 +486,9 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                 TextFormField(
                   key: const Key('gorev-adimlar-metin'),
                   controller: _adimlarCtrl,
+                  // sunucu: TaskCreate.adimlar <= 50 x TaskStepCreate.ad (200) + satir sonu;
+                  // satir basina 200 sunucuda olculur (422 + alan adi).
+                  maxLength: 50 * 201,
                   minLines: 2,
                   maxLines: 4,
                   decoration: InputDecoration(

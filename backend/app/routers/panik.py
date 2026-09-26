@@ -37,6 +37,7 @@ from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from ..audit import Action, audit_user
 from ..celery_app import celery_app
 from ..crud_helpers import get_or_404
@@ -469,7 +470,7 @@ async def aktifler(
 async def liste(
     limit: int = Query(25, ge=1, le=200),
     offset: int = Query(0, ge=0),
-    durum: str | None = Query(None),
+    durum: str | None = Query(None, max_length=_G.KOD),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_OKUR),
 ) -> PanikListResponse:

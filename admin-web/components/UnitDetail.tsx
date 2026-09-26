@@ -41,6 +41,7 @@ import type {
   UnitResident,
   UserListResponse,
 } from "@/lib/types";
+import { ISTEMCI_SINIR, SINIR } from "@/lib/girdi-siniri";
 
 // Manuel tahsilat: elden/havale/diger. (kart = provider/webhook akisi, panelde manuel odak.)
 // METIN DEGIL KIMLIK (modul duzeyi — README tur 18 dersi).
@@ -330,7 +331,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
         <form id="tahsilat-form" onSubmit={pay} className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <AlanSarmal etiket={t("aidatTutarTl")} ipucu={t("daireTutarOrnek")}>
-              {(b) => (<Alan {...b}
+              {(b) => (<Alan maxLength={ISTEMCI_SINIR.SAYI} {...b}
                 inputMode="decimal"
                 value={pTl}
                 onChange={(e) => setPTl(e.target.value)}
@@ -351,7 +352,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
               </Secim>)}
             </AlanSarmal>
             <AlanSarmal etiket={t("aidatMakbuzNoOpsiyonel")}>
-              {(b) => (<Alan {...b}
+              {(b) => (<Alan maxLength={SINIR.KOD /* sunucu: DuesPaymentCreate.makbuz_no */} {...b}
                 value={pMakbuz}
                 onChange={(e) => setPMakbuz(e.target.value)}
               />)}
@@ -377,7 +378,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
                   : t("daireDonemSerbest")
               }
             >
-              {(b) => (<Alan {...b}
+              {(b) => (<Alan maxLength={ISTEMCI_SINIR.DONEM} {...b}
                 value={pAssessment ? seciliTahakkukDonem : pDonem}
                 onChange={(e) => setPDonem(e.target.value)}
                 placeholder="2026-07"
@@ -459,7 +460,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
         <form id="tahakkuk-form" onSubmit={addAssessment} className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <AlanSarmal etiket={t("ortakDonem")} ipucu={t("daireDonemOrnek")}>
-              {(b) => (<Alan {...b}
+              {(b) => (<Alan maxLength={ISTEMCI_SINIR.DONEM} {...b}
               value={aDonem}
               onChange={(e) => setADonem(e.target.value)}
               placeholder="2026-07"
@@ -467,7 +468,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
             />)}
             </AlanSarmal>
           <AlanSarmal etiket={t("aidatTutarTl")}>
-              {(b) => (<Alan {...b}
+              {(b) => (<Alan maxLength={ISTEMCI_SINIR.SAYI} {...b}
               inputMode="decimal"
               value={aTl}
               onChange={(e) => setATl(e.target.value)}
@@ -483,7 +484,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
             />)}
             </AlanSarmal>
           <AlanSarmal etiket={t("ortakAciklamaOpsiyonel")}>
-              {(b) => (<Alan {...b}  value={aDesc} onChange={(e) => setADesc(e.target.value)} />)}
+              {(b) => (<Alan maxLength={SINIR.NOT /* sunucu: DuesAssessmentCreate.aciklama */} {...b}  value={aDesc} onChange={(e) => setADesc(e.target.value)} />)}
             </AlanSarmal>
         </div>
         <HataDurumu mesaj={aErr} />

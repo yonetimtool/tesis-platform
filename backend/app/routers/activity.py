@@ -44,6 +44,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser
@@ -313,7 +314,8 @@ def _decode_cursor(cursor: str) -> tuple[datetime, str]:
 async def list_activity(
     limit: int = Query(20, ge=1, le=100),
     cursor: str | None = Query(
-        None, description="Onceki yanitin meta.next_cursor degeri (opak)"
+        None, description="Onceki yanitin meta.next_cursor degeri (opak)",
+        max_length=_G.JETON,
     ),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_READER),

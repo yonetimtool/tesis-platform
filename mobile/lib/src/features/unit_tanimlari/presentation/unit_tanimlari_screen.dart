@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
@@ -347,6 +348,7 @@ class _TanimFormuState extends ConsumerState<_TanimFormu> {
                   ),
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                    ...GirdiSiniri.sinir(GirdiSiniri.tutar),
                   ],
                   decoration: InputDecoration(
                     labelText: l10n.daireTanimVarsayilanAidat,

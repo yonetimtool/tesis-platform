@@ -56,6 +56,7 @@ import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { rolAdi } from "@/lib/roles";
+import { ISTEMCI_SINIR } from "@/lib/girdi-siniri";
 
 /** JSX ucluda sabit metin yazilamaz (`sabit-metin` taramasi). */
 const IKINCIL = "ikincil" as const;
@@ -590,7 +591,7 @@ export function VardiyaEkleModali({
         <div className="flex flex-wrap items-end gap-2" data-test="vardiya-mola">
           <AlanSarmal etiket={t("vardiyaMolaDakika")} ipucu={t("vardiyaMolaDuser")}>
             {(baglar) => (
-              <Alan
+              <Alan maxLength={ISTEMCI_SINIR.SAYI}
                 {...baglar}
                 inputMode="numeric"
                 data-test="vardiya-ekle-mola"
@@ -846,7 +847,7 @@ export function VardiyaEkleModali({
 
         <AlanSarmal etiket={t("vardiyaNot")}>
           {(baglar) => (
-            <Alan
+            <Alan maxLength={500 /* sunucu: VardiyaAtamaIstek.not_metni */}
               {...baglar}
               value={not}
               data-test="vardiya-ekle-not"

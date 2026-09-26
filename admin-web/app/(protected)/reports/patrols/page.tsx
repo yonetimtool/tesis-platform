@@ -10,6 +10,7 @@ import { fetchAllPaged } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import type { PatrolPlanList, PatrolWindowListResponse, PatrolWindowRow } from "@/lib/types";
 import { useI18n, useT } from "@/lib/i18n/kullan";
+import { csvIndir } from "@/lib/csv";
 
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const D_OLUMLU = "olumlu" as const;
@@ -28,18 +29,6 @@ function toIso(local: string): string {
   if (!local) return "";
   const d = new Date(local);
   return Number.isNaN(d.getTime()) ? "" : d.toISOString();
-}
-
-function csvDownload(filename: string, rows: string[][]): void {
-  const esc = (c: string) => (/[",\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c);
-  const csv = rows.map((r) => r.map(esc).join(",")).join("\n");
-  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 export default function PatrolReportPage() {
@@ -119,7 +108,7 @@ export default function PatrolReportPage() {
         String(w.beklenen_checkpoint_sayisi),
       ]);
     }
-    csvDownload("tur-gecmisi.csv", rows);
+    csvIndir("tur-gecmisi.csv", rows);
   }
 
   const planSecenekleri = (plans?.items ?? []).map((p) => (

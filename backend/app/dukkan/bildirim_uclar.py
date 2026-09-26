@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from .kimlik import DukkanKimlik, kimlik_zorunlu
 from .veritabani import get_dukkan_session
 
@@ -50,7 +51,7 @@ async def cihaz_kaydet(
 
 @router.delete("/cihaz")
 async def cihaz_sil(
-    fcm_token: str = Query(..., min_length=10),
+    fcm_token: str = Query(..., min_length=10, max_length=_G.JETON),
     kimlik: DukkanKimlik = Depends(kimlik_zorunlu),
     db: AsyncSession = Depends(get_dukkan_session),
 ) -> dict:

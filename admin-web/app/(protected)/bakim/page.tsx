@@ -47,11 +47,13 @@ import {
 } from "@/components/ui";
 import { Ekler } from "@/components/Ekler";
 import { bakimOzetCsv } from "@/lib/bakim-ozet-csv";
+import { csvMetniIndir } from "@/lib/csv";
 import { TelefonAlani } from "@/components/TelefonAlani";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
+import { ISTEMCI_SINIR, SINIR } from "@/lib/girdi-siniri";
 
 type Ekipman = {
   id: string;
@@ -224,12 +226,7 @@ export default function BakimPage() {
       ],
       t("bakimYasal"),
     );
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `bakim-ozet-${o.yil}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    csvMetniIndir(`bakim-ozet-${o.yil}.csv`, csv);
   }
 
   function hata(e: unknown) {
@@ -502,7 +499,7 @@ export default function BakimPage() {
       <div className="mb-3" style={{ maxWidth: "10rem" }}>
         <AlanSarmal etiket={t("bakimOzetBaslik")}>
           {(p) => (
-            <Alan
+            <Alan maxLength={4}
               {...p}
               inputMode="numeric"
               data-test="bakim-ozet-yil"
@@ -636,7 +633,7 @@ export default function BakimPage() {
         <div className="space-y-3">
           <AlanSarmal etiket={t("ortakAd")}>
             {(p) => (
-              <Alan
+              <Alan maxLength={SINIR.BASLIK}
                 {...p}
                 data-test="bakim-ad"
                 value={ad}
@@ -646,7 +643,7 @@ export default function BakimPage() {
           </AlanSarmal>
           <AlanSarmal etiket={t("bakimTur")}>
             {(p) => (
-              <Alan
+              <Alan maxLength={SINIR.AD /* sunucu: BakimEkipmaniCreate.tur */}
                 {...p}
                 data-test="bakim-tur"
                 value={tur}
@@ -673,7 +670,7 @@ export default function BakimPage() {
           {periyot === "gun" && (
             <AlanSarmal etiket={t("bakimPeriyotGunSayisi")}>
               {(p) => (
-                <Alan
+                <Alan maxLength={ISTEMCI_SINIR.SAYI}
                   {...p}
                   inputMode="numeric"
                   data-test="bakim-periyot-gun"
@@ -696,7 +693,7 @@ export default function BakimPage() {
           </AlanSarmal>
           <AlanSarmal etiket={t("bakimSorumlu")}>
             {(p) => (
-              <Alan
+              <Alan maxLength={SINIR.BASLIK /* sunucu: BakimEkipmaniCreate.sorumlu_ad */}
                 {...p}
                 data-test="bakim-sorumlu"
                 value={sorumlu}
@@ -715,7 +712,7 @@ export default function BakimPage() {
           />
           <AlanSarmal etiket={t("bakimUyariGun")} ipucu={t("bakimUyariGunIpucu")}>
             {(p) => (
-              <Alan
+              <Alan maxLength={ISTEMCI_SINIR.SAYI}
                 {...p}
                 inputMode="numeric"
                 data-test="bakim-uyari-gun"
@@ -767,7 +764,7 @@ export default function BakimPage() {
           </AlanSarmal>
           <AlanSarmal etiket={t("bakimYapan")}>
             {(p) => (
-              <Alan
+              <Alan maxLength={SINIR.BASLIK /* sunucu: BakimKaydiCreate.yapan_ad */}
                 {...p}
                 data-test="bakim-kayit-yapan"
                 value={kYapan}
@@ -777,7 +774,7 @@ export default function BakimPage() {
           </AlanSarmal>
           <AlanSarmal etiket={t("bakimIslem")}>
             {(p) => (
-              <Alan
+              <Alan maxLength={4000 /* sunucu: BakimKaydiCreate.islem */}
                 {...p}
                 data-test="bakim-kayit-islem"
                 value={kIslem}
@@ -787,7 +784,7 @@ export default function BakimPage() {
           </AlanSarmal>
           <AlanSarmal etiket={t("bakimTutar")}>
             {(p) => (
-              <Alan
+              <Alan maxLength={ISTEMCI_SINIR.SAYI}
                 {...p}
                 inputMode="decimal"
                 data-test="bakim-kayit-tutar"

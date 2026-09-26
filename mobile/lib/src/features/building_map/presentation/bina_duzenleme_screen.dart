@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../residents/data/residents_api.dart';
 import '../data/daire_sakin_api.dart';
@@ -1020,6 +1021,7 @@ class _CascadeDeleteDialogState extends State<_CascadeDeleteDialog> {
           const SizedBox(height: 12),
           TextField(
             controller: _ctrl,
+            inputFormatters: GirdiSiniri.sinir(GirdiSiniri.blok), // onay: blok adini yeniden yazma
             autofocus: true,
             textCapitalization: TextCapitalization.characters,
             onChanged: (_) => setState(() {}),
@@ -1358,6 +1360,7 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
                   keyboardType: TextInputType.number,
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9-]')),
+                    ...GirdiSiniri.sinir(GirdiSiniri.sayi),
                   ],
                   decoration: InputDecoration(
                     labelText: l10n.binaKat,
@@ -1371,7 +1374,10 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
                 child: TextField(
                   controller: _sira,
                   keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    ...GirdiSiniri.sinir(GirdiSiniri.sayi),
+                  ],
                   decoration: InputDecoration(
                     labelText: l10n.binaSira,
                     hintText: '1',
@@ -1605,6 +1611,7 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
               Expanded(
                 child: TextField(
                   controller: _katSayisi,
+                  inputFormatters: GirdiSiniri.sinir(GirdiSiniri.sayi),
                   keyboardType: TextInputType.number,
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
@@ -1617,6 +1624,7 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
               Expanded(
                 child: TextField(
                   controller: _katBasi,
+                  inputFormatters: GirdiSiniri.sinir(GirdiSiniri.sayi),
                   keyboardType: TextInputType.number,
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
@@ -1630,6 +1638,7 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
           const SizedBox(height: 12),
           TextField(
             controller: _baslangic,
+            inputFormatters: GirdiSiniri.sinir(GirdiSiniri.sayi),
             keyboardType: TextInputType.number,
             onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
@@ -1641,6 +1650,7 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
           const SizedBox(height: 12),
           TextField(
             controller: _baslangicKat,
+            inputFormatters: GirdiSiniri.sinir(GirdiSiniri.sayi),
             // EKSI ISARETI GEREKLI: bodrum katlari negatif. `number`
             // klavyesi bazi cihazlarda eksiyi gostermez; `signed: true`
             // onu acar.

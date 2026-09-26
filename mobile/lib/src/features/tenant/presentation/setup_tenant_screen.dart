@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../data/tenant_api.dart';
@@ -97,6 +98,7 @@ class _SetupTenantScreenState extends ConsumerState<SetupTenantScreen> {
                     const SizedBox(height: 24),
                     TextFormField(
                       controller: _adCtrl,
+                      inputFormatters: GirdiSiniri.sinir(120), // sunucu: TenantSetup.ad
                       enabled: !_submitting,
                       textInputAction: TextInputAction.done,
                       textCapitalization: TextCapitalization.words,

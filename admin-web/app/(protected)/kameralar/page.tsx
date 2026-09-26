@@ -54,6 +54,7 @@ import {
   type KameraUrlHatasi,
 } from "@/lib/kamera-url";
 import type { CameraTur, Kamera, KameraListResponse } from "@/lib/types";
+import { SINIR } from "@/lib/girdi-siniri";
 
 // Kare tazeleme aralığı — mobildeki `kareAraligi` ile aynı (8 sn).
 const KARE_ARALIGI_MS = 8000;
@@ -697,7 +698,7 @@ export default function KameralarPage() {
           <div className="grid gap-3 sm:grid-cols-2">
             <AlanSarmal etiket={t("kameraAd")} zorunlu>
               {(b) => (
-                <Alan
+                <Alan maxLength={SINIR.AD}
                   {...b}
                   value={form.ad}
                   onChange={(e) => setForm({ ...form, ad: e.target.value })}
@@ -707,7 +708,7 @@ export default function KameralarPage() {
             </AlanSarmal>
             <AlanSarmal etiket={t("kameraKonum")}>
               {(b) => (
-                <Alan
+                <Alan maxLength={SINIR.BASLIK}
                   {...b}
                   value={form.konum}
                   onChange={(e) => setForm({ ...form, konum: e.target.value })}
@@ -726,7 +727,7 @@ export default function KameralarPage() {
                 zorunlu
               >
                 {(b) => (
-                  <Alan
+                  <Alan maxLength={SINIR.URL}
                     {...b}
                     value={form.stream_url}
                     onChange={(e) => adresYaz(e.target.value)}
@@ -810,7 +811,7 @@ export default function KameralarPage() {
                     ipucu={t("kameraAltAkisIpucu")}
                   >
                     {(b) => (
-                      <Alan
+                      <Alan maxLength={SINIR.URL}
                         {...b}
                         data-test="kamera-alt-akis"
                         value={form.alt_stream_url}
@@ -822,7 +823,7 @@ export default function KameralarPage() {
                   </AlanSarmal>
                   <AlanSarmal etiket={t("kameraRestream")} ipucu={t("kameraRestreamIpucu")}>
                     {(b) => (
-                      <Alan
+                      <Alan maxLength={SINIR.URL}
                         {...b}
                         value={form.restream_url}
                         onChange={(e) =>
@@ -833,7 +834,7 @@ export default function KameralarPage() {
                   </AlanSarmal>
                   <AlanSarmal etiket={t("kameraSnapshot")} ipucu={t("kameraSnapshotIpucu")}>
                     {(b) => (
-                      <Alan
+                      <Alan maxLength={SINIR.URL}
                         {...b}
                         value={form.snapshot_url}
                         onChange={(e) =>
@@ -938,7 +939,7 @@ export default function KameralarPage() {
                   }
                 >
                   {(b) => (
-                    <Alan
+                    <Alan maxLength={SINIR.URL}
                       {...b}
                       data-test="kamera-kayit-adres"
                       value={form.kayit_adres}
@@ -953,7 +954,7 @@ export default function KameralarPage() {
                 </AlanSarmal>
                 <AlanSarmal etiket={t("kamKayitKanal")}>
                   {(b) => (
-                    <Alan
+                    <Alan maxLength={SINIR.KOD}
                       {...b}
                       data-test="kamera-kayit-kanal"
                       value={form.kayit_kanal}
@@ -964,7 +965,7 @@ export default function KameralarPage() {
                 </AlanSarmal>
                 <AlanSarmal etiket={t("kamKayitKullanici")}>
                   {(b) => (
-                    <Alan
+                    <Alan maxLength={SINIR.GIZLI}
                       {...b}
                       data-test="kamera-kayit-kullanici"
                       value={form.kayit_kullanici}
@@ -977,7 +978,7 @@ export default function KameralarPage() {
                 </AlanSarmal>
                 <AlanSarmal etiket={t("kamKayitParola")} ipucu={t("kamKayitParolaNot")}>
                   {(b) => (
-                    <Alan
+                    <Alan maxLength={SINIR.GIZLI}
                       {...b}
                       type="password"
                       data-test="kamera-kayit-parola"

@@ -17,6 +17,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/error/akis_hatasi.dart';
@@ -253,12 +254,14 @@ class _SayacOkumaScreenState extends ConsumerState<SayacOkumaScreen> {
           TextField(
             key: const Key('sayac-donem'),
             controller: _donemCtrl,
+            inputFormatters: GirdiSiniri.sinir(7), // sunucu: SayacOkuma.donem (YYYY-MM)
             decoration: InputDecoration(labelText: l10n.sayacDonem),
           ),
           const SizedBox(height: 12),
           TextField(
             key: const Key('sayac-ana-tuketim'),
             controller: _anaTuketimCtrl,
+            inputFormatters: GirdiSiniri.sinir(GirdiSiniri.sayi),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(labelText: l10n.sayacAnaTuketim),
           ),
@@ -266,6 +269,7 @@ class _SayacOkumaScreenState extends ConsumerState<SayacOkumaScreen> {
           TextField(
             key: const Key('sayac-birim'),
             controller: _birimCtrl,
+            inputFormatters: GirdiSiniri.sinir(GirdiSiniri.sayi),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(labelText: l10n.sayacBirimFiyat),
           ),
@@ -291,6 +295,7 @@ class _SayacOkumaScreenState extends ConsumerState<SayacOkumaScreen> {
                             child: TextField(
                               key: Key('sayac-deger-${b.id}'),
                               controller: _ctrl(b.id),
+                              inputFormatters: GirdiSiniri.sinir(GirdiSiniri.sayi),
                               keyboardType: const TextInputType.numberWithOptions(
                                   decimal: true),
                               decoration: const InputDecoration(isDense: true),

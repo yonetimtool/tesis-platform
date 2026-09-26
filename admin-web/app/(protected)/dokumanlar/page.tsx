@@ -20,6 +20,7 @@ import {
 import { apiSend, agIstegi } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
+import { SINIR } from "@/lib/girdi-siniri";
 
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const BOY_KUCUK = "kucuk" as const;
@@ -481,11 +482,11 @@ export default function DokumanlarPage() {
           ) : null}
 
           <AlanSarmal etiket={t("dokumanAd")}>
-            {(b) => <Alan {...b} value={ad} onChange={(e) => setAd(e.target.value)} />}
+            {(b) => <Alan maxLength={SINIR.BASLIK /* sunucu: DokumanCreate.ad */} {...b} value={ad} onChange={(e) => setAd(e.target.value)} />}
           </AlanSarmal>
           <AlanSarmal etiket={t("dokumanAciklama")}>
             {(b) => (
-              <Alan {...b} value={aciklama} onChange={(e) => setAciklama(e.target.value)} />
+              <Alan maxLength={1000 /* sunucu: DokumanCreate.aciklama */} {...b} value={aciklama} onChange={(e) => setAciklama(e.target.value)} />
             )}
           </AlanSarmal>
           {/* VARSAYILAN KAPALI ve kutu boyle baslar: acik varsayilan,

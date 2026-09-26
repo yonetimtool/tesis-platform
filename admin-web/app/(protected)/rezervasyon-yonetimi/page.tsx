@@ -39,6 +39,7 @@ import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import { tarihBicimi } from "@/lib/tarih";
+import { SINIR } from "@/lib/girdi-siniri";
 
 type OrtakAlan = {
   id: string;
@@ -304,7 +305,7 @@ function AlanlarSekmesi() {
             <div className="grid gap-4 sm:grid-cols-2">
               <AlanSarmal etiket={t("rezYonAlanAdi")}>
                 {(b) => (
-                  <Alan {...b} value={taslak.ad}
+                  <Alan maxLength={SINIR.BASLIK /* sunucu: OrtakAlanCreate.ad */} {...b} value={taslak.ad}
                     onChange={(e) => setTaslak({ ...taslak, ad: e.target.value })} />
                 )}
               </AlanSarmal>
@@ -330,7 +331,7 @@ function AlanlarSekmesi() {
             </div>
             <AlanSarmal etiket={t("rezYonAciklama")}>
               {(b) => (
-                <Alan {...b} value={taslak.aciklama}
+                <Alan maxLength={1000 /* sunucu: OrtakAlanCreate.aciklama */} {...b} value={taslak.aciklama}
                   onChange={(e) => setTaslak({ ...taslak, aciklama: e.target.value })} />
               )}
             </AlanSarmal>

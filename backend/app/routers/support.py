@@ -18,6 +18,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from ..audit import audit_user
 from ..db import SessionLocal
 from ..deps import get_tenant_db, require_role
@@ -123,7 +124,7 @@ async def list_my_tickets(
 @router.get("/all", response_model=SupportTicketAdminListResponse)
 async def list_all_tickets(
     tenant_id: uuid.UUID | None = Query(None),
-    durum: str | None = Query(None),
+    durum: str | None = Query(None, max_length=_G.KOD),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     _: AppUser = Depends(_ADMIN),

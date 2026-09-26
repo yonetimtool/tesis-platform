@@ -31,6 +31,7 @@ from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from ..audit import Action, audit_user
 from ..deps import get_current_user, get_tenant_db, require_role
 from ..errors import APIError
@@ -234,7 +235,7 @@ async def _ust_kaydi_dogrula(
 
 @router.get("", response_model=EkListResponse)
 async def listele(
-    varlik_tipi: str = Query(...),
+    varlik_tipi: str = Query(..., max_length=_G.KOD),
     varlik_id: uuid.UUID = Query(...),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(get_current_user),

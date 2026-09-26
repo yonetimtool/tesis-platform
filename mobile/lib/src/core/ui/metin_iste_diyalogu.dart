@@ -23,7 +23,7 @@ class _MetinIsteGovde extends StatefulWidget {
     this.etiket,
     this.ipucu,
     this.baslangic,
-    this.enFazla,
+    required this.enFazla,
     this.satirlar = 1,
   });
 
@@ -32,7 +32,10 @@ class _MetinIsteGovde extends StatefulWidget {
   final String? etiket;
   final String? ipucu;
   final String? baslangic;
-  final int? enFazla;
+
+  /// (P248 §3a) ZORUNLU: sunucunun o alan icin kabul ettigi uzunluk.
+  /// Sinirsiz metin diyalogu artik yazilamaz.
+  final int enFazla;
   final int satirlar;
 
   @override
@@ -58,6 +61,11 @@ class _MetinIsteGovdeDurum extends State<_MetinIsteGovde> {
         controller: _ctrl,
         autofocus: true,
         maxLength: widget.enFazla,
+        // Tek satirda 100/100 sayaci gurultu; cok satirda kalan gorunur.
+        buildCounter: widget.satirlar > 1
+            ? null
+            : (_, {required currentLength, required isFocused, maxLength}) =>
+                null,
         maxLines: widget.satirlar,
         decoration: InputDecoration(
           labelText: widget.etiket,
@@ -87,7 +95,7 @@ Future<String?> metinIste(
   String? etiket,
   String? ipucu,
   String? baslangic,
-  int? enFazla,
+  required int enFazla,
   int satirlar = 1,
 }) {
   return showDialog<String>(

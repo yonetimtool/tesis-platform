@@ -34,6 +34,7 @@ import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
+import { ISTEMCI_SINIR, SINIR } from "@/lib/girdi-siniri";
 
 type Kopru = {
   id: string;
@@ -573,7 +574,7 @@ export default function AkilliEvPage() {
         <div className="space-y-3">
           <AlanSarmal etiket={t("ortakAd")}>
             {(alanProps) => (
-              <Alan
+              <Alan maxLength={SINIR.BASLIK}
                 {...alanProps}
                 data-test="akilli-ev-kopru-ad"
                 value={kopruAd}
@@ -583,7 +584,7 @@ export default function AkilliEvPage() {
           </AlanSarmal>
           <AlanSarmal etiket={t("diyafonHost")}>
             {(alanProps) => (
-              <Alan
+              <Alan maxLength={255 /* sunucu: AkilliEvKopruCreate.host */}
                 {...alanProps}
                 data-test="akilli-ev-kopru-host"
                 value={kopruHost}
@@ -593,7 +594,7 @@ export default function AkilliEvPage() {
           </AlanSarmal>
           <AlanSarmal etiket={t("diyafonPort")}>
             {(alanProps) => (
-              <Alan
+              <Alan maxLength={ISTEMCI_SINIR.SAYI}
                 {...alanProps}
                 inputMode="numeric"
                 data-test="akilli-ev-kopru-port"
@@ -604,7 +605,7 @@ export default function AkilliEvPage() {
           </AlanSarmal>
           <AlanSarmal etiket={t("akilliEvJeton")}>
             {(alanProps) => (
-              <Alan
+              <Alan maxLength={1000 /* sunucu: AkilliEvKopruCreate.token */}
                 {...alanProps}
                 type="password"
                 data-test="akilli-ev-kopru-token"
@@ -645,7 +646,7 @@ export default function AkilliEvPage() {
         <div className="space-y-3">
           <AlanSarmal etiket={t("ortakAd")}>
             {(alanProps) => (
-              <Alan
+              <Alan maxLength={SINIR.BASLIK}
                 {...alanProps}
                 data-test="akilli-ev-cihaz-ad"
                 value={cAd}
@@ -671,7 +672,7 @@ export default function AkilliEvPage() {
           </AlanSarmal>
           <AlanSarmal etiket={t("akilliEvKonum")}>
             {(alanProps) => (
-              <Alan
+              <Alan maxLength={SINIR.BASLIK}
                 {...alanProps}
                 data-test="akilli-ev-cihaz-alan"
                 value={cAlan}
@@ -681,7 +682,7 @@ export default function AkilliEvPage() {
           </AlanSarmal>
           <AlanSarmal etiket={t("akilliEvDisKimlik")}>
             {(alanProps) => (
-              <Alan
+              <Alan maxLength={300 /* sunucu: AkilliEvCihazCreate.dis_kimlik */}
                 {...alanProps}
                 data-test="akilli-ev-cihaz-kimlik"
                 value={cKimlik}

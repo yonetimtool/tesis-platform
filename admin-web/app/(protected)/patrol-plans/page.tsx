@@ -61,6 +61,7 @@ import type {
   PatrolPlanList,
   ShiftList,
 } from "@/lib/types";
+import { SINIR } from "@/lib/girdi-siniri";
 
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const DURUM_OLUMLU = "olumlu" as const;
@@ -518,7 +519,7 @@ export default function PatrolPlansPage() {
         <form id="plan-form" onSubmit={save} className="space-y-4">
           <AlanSarmal etiket={t("ortakAd")} zorunlu>
             {(b) => (
-              <Alan
+              <Alan maxLength={SINIR.AD}
                 {...b}
                 value={form.ad}
                 onChange={(e) => setForm({ ...form, ad: e.target.value })}

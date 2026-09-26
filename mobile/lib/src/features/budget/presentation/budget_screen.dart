@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/grafik/grafik_karti.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
@@ -502,6 +503,7 @@ class _EntryFormState extends ConsumerState<_EntryForm> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _tutarCtrl,
+                inputFormatters: GirdiSiniri.sinir(GirdiSiniri.tutar),
                 enabled: !_saving,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),

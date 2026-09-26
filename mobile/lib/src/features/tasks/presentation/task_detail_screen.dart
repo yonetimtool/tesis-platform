@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/i18n/l10n.dart';
 import '../../../core/theme/home_tokens.dart';
@@ -541,6 +542,8 @@ class _NoteStep extends StatelessWidget {
             const SizedBox(height: 8),
             TextField(
               onChanged: controller.setNotlar,
+              // sayac gizli: gorev_detay yerlesim kilidi (saha_akisi_surus_test)
+              inputFormatters: GirdiSiniri.sinir(GirdiSiniri.not_), // sunucu: TaskCompletionCreate.notlar
               maxLines: 3,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
@@ -1006,6 +1009,7 @@ class _AdimlarKartiState extends ConsumerState<_AdimlarKarti> {
                     children: [
                       TextField(
                         key: const Key('gorev-adim-yeni'),
+                        inputFormatters: GirdiSiniri.sinir(200), // sunucu: TaskStepCreate.ad
                         controller: _yeniAdim,
                         decoration: InputDecoration(
                           labelText: l10n.gorevAdimAd,

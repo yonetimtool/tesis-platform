@@ -23,6 +23,7 @@ import { TelefonAlani } from "@/components/TelefonAlani";
 import { useT } from "@/lib/i18n/kullan";
 import { tarihSaatUzun } from "@/lib/tarih";
 import { telefonNormalle } from "@/lib/telefon";
+import { SINIR } from "@/lib/girdi-siniri";
 
 // (P244 §10b) HAM PALET -> TOKEN. Zemin `color-mix` ile tondan
 // turetilir (tema degisince birlikte kayar), metin `-ink` varyantidir
@@ -442,6 +443,7 @@ export default function TenantDetailPage() {
                   <AlanSarmal etiket={t("ortakAd")}>
   {(b) => (
     <Alan {...b} value={ad}
+                      maxLength={120 /* sunucu: TenantYoneticiUpdate.ad */}
                       onChange={(e) => setAd(e.target.value)}
                       required
                       minLength={2} />
@@ -637,7 +639,7 @@ export default function TenantDetailPage() {
                       `w-full` tasiyor ve ustune gecilen sinif Tailwind'in
                       CSS sirasina gore SESSIZCE KAYBOLUYOR. */}
                   <span className="inline-block max-w-xs">
-                    <Alan
+                    <Alan maxLength={SINIR.BASLIK}
                       aria-label={t("tesisSilOnayEtiketi")}
                       value={confirmAd}
                       onChange={(e) => setConfirmAd(e.target.value)}

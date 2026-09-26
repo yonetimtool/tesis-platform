@@ -228,7 +228,7 @@ export default function DavetSayfasi() {
           <ErrorBox message={hata} />
           <label className="block">
             <span className="text-sm font-medium">{t("tesisAdSoyad")}</span>
-            <input
+            <input maxLength={120 /* sunucu: DavetParolaRequest.ad */}
               className={`${inputCls} mt-1`}
               value={ad}
               onChange={(e) => setAd(e.target.value)}

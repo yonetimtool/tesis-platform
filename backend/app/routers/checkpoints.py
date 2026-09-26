@@ -13,6 +13,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from ..config import settings
 from ..crud_helpers import get_or_404, norm_nfc, translate_integrity
 from ..deps import get_tenant_db, require_guvenlik_yazma, require_role
@@ -61,7 +62,7 @@ async def list_checkpoints(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     aktif: bool | None = Query(None),
-    nfc_tag_uid: str | None = Query(None),
+    nfc_tag_uid: str | None = Query(None, max_length=_G.NFC_UID),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_READER),
 ) -> CheckpointListResponse:

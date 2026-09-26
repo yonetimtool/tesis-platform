@@ -18,11 +18,13 @@ from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 
+from .. import girdi_siniri as _G
 from ..db import SessionLocal, set_tenant
 from ..deps import require_role
 from ..errors import APIError
 from ..audit import Action, audit_user
 from ..models import AppUser
+from ..tr_arama import like_icerir, like_icerir_bos_degilse
 from ..schemas import (
     KvkkMetinCreate,
     KvkkPlatformDurum,
@@ -282,8 +284,10 @@ async def list_tenants(
         # BOS/BOSLUKLU SORGU = SUZGEC YOK: `%%` her satiri
         # eslerdi ama niyeti gizlerdi; NULL gecmek sorguyu
         # da basitlestirir.
-        "q": f"%{q.strip()}%" if q and q.strip() else None,
-        "qs": f"%{_ascii_katla(q)}%" if q and q.strip() else None,
+        # (P248 §3b) `%`/`_` kacislanir (fonksiyondaki ILIKE/LIKE
+        # PostgreSQL varsayilani olan ters boluyu kacis sayar).
+        "q": like_icerir(q.strip()) if q and q.strip() else None,
+        "qs": like_icerir_bos_degilse(_ascii_katla(q)) if q and q.strip() else None,
         "kurulum": kurulum,
     }
     kaynak = "FROM public.list_all_tenants(:arsivli, :q, :qs, :kurulum)"
@@ -916,6 +920,7 @@ async def delete_tenant_endpoint(
             "(P224) Tesisin TAM ADI. 'SİL' gibi sabit bir kelime her "
             "tesiste ayni oldugu icin kas hafizasi olusturuyordu."
         ),
+        max_length=_G.KOD,
     ),
     user: AppUser = Depends(_ADMIN),
 ) -> Response:

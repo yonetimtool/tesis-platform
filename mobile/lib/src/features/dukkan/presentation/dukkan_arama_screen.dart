@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../routing/app_router.dart';
@@ -123,6 +124,7 @@ class _DukkanAramaScreenState extends ConsumerState<DukkanAramaScreen> {
               children: [
                 TextField(
                   controller: _aramaKontrol,
+                  inputFormatters: GirdiSiniri.sinir(GirdiSiniri.arama), // sunucu: /dukkan/isletme-ara ?q
                   textInputAction: TextInputAction.search,
                   onSubmitted: (_) => _ara(),
                   decoration: InputDecoration(

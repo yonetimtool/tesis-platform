@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
@@ -161,6 +162,7 @@ class _SifremiUnuttumFormuState extends ConsumerState<SifremiUnuttumFormu> {
           const SizedBox(height: 12),
           TextFormField(
             key: const Key('sifre-tesis'),
+            inputFormatters: GirdiSiniri.sinir(100), // sunucu: SifreKodIstek.tenant_slug
             controller: _tesisCtrl,
             enabled: !_mesgul,
             autocorrect: false,
@@ -199,6 +201,7 @@ class _SifremiUnuttumFormuState extends ConsumerState<SifremiUnuttumFormu> {
           const SizedBox(height: 12),
           TextFormField(
             key: const Key('sifre-kod'),
+            inputFormatters: GirdiSiniri.sinir(12), // sunucu: SifreSifirlaIstek.kod
             controller: _kodCtrl,
             enabled: !_mesgul,
             keyboardType: TextInputType.number,
@@ -213,6 +216,7 @@ class _SifremiUnuttumFormuState extends ConsumerState<SifremiUnuttumFormu> {
           const SizedBox(height: 12),
           TextFormField(
             key: const Key('sifre-yeni'),
+            inputFormatters: GirdiSiniri.sinir(GirdiSiniri.parola), // sunucu: SifreSifirlaIstek.yeni_parola
             controller: _parolaCtrl,
             enabled: !_mesgul,
             obscureText: _gizli,
@@ -238,6 +242,7 @@ class _SifremiUnuttumFormuState extends ConsumerState<SifremiUnuttumFormu> {
           const SizedBox(height: 12),
           TextFormField(
             key: const Key('sifre-tekrar'),
+            inputFormatters: GirdiSiniri.sinir(GirdiSiniri.parola),
             controller: _tekrarCtrl,
             enabled: !_mesgul,
             obscureText: _gizli,
@@ -329,6 +334,7 @@ class _TesisKoduSorusuState extends State<TesisKoduSorusu> {
           const SizedBox(height: 12),
           TextField(
             key: const Key('giris-kod-tesis'),
+            inputFormatters: GirdiSiniri.sinir(100), // sunucu: LoginRequest.tenant_slug (slug/kod)
             controller: _ctrl,
             autocorrect: false,
             autofocus: true,

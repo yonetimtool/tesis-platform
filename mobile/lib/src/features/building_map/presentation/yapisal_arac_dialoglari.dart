@@ -20,6 +20,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
@@ -246,6 +247,7 @@ class _KatSilDialogState extends ConsumerState<KatSilDialog> {
                 // yalnizca KAZAYLA olmasi engellendi.
                 TextField(
                   controller: _onayCtrl,
+                  inputFormatters: GirdiSiniri.sinir(GirdiSiniri.sayi),
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     labelText: l10n.binaKatOnayYaz(_kat!),
@@ -392,6 +394,8 @@ class _TopluTipDialogState extends ConsumerState<TopluTipDialog> {
                 Expanded(
                   child: TextField(
                     controller: _ifadeCtrl,
+                    // yalniz istemci: aralik ifadesi (sunucuya numara listesi gider)
+                    inputFormatters: GirdiSiniri.sinir(GirdiSiniri.baslik),
                     decoration: InputDecoration(
                       labelText: l10n.binaAralikSec,
                       hintText: '3,5,7-12',

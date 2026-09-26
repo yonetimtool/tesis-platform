@@ -19,6 +19,7 @@ import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { kurusToTL, tlToKurus } from "@/lib/money";
 import { sayiBicimi, sayiCoz } from "@/lib/sayi";
+import { ISTEMCI_SINIR } from "@/lib/girdi-siniri";
 
 /**
  * (E2E 2026-09, TESIS-01) Sayac fotografini DAIREYE ek olarak bagla —
@@ -328,7 +329,7 @@ export default function SayacOkumaPage() {
             </AlanSarmal>
             <AlanSarmal etiket={t("ortakDonem")}>
               {(b) => (
-                <Alan
+                <Alan maxLength={ISTEMCI_SINIR.DONEM}
                   {...b}
                   placeholder="2026-08"
                   value={donem}
@@ -338,7 +339,7 @@ export default function SayacOkumaPage() {
             </AlanSarmal>
             <AlanSarmal etiket={t("sayacAlanAnaTuketim")}>
               {(b) => (
-                <Alan
+                <Alan maxLength={ISTEMCI_SINIR.SAYI}
                   {...b}
                   inputMode="decimal"
                   value={anaTuketim}
@@ -348,7 +349,7 @@ export default function SayacOkumaPage() {
             </AlanSarmal>
             <AlanSarmal etiket={t("sayacAlanBirimFiyat")}>
               {(b) => (
-                <Alan
+                <Alan maxLength={ISTEMCI_SINIR.SAYI}
                   {...b}
                   inputMode="decimal"
                   value={birimFiyat}
@@ -371,7 +372,7 @@ export default function SayacOkumaPage() {
               {bolumler.map((b) => (
                 <AlanSarmal key={String(b.id)} etiket={String(b.unit_no ?? b.id)}>
                   {(alan) => (
-                    <Alan
+                    <Alan maxLength={ISTEMCI_SINIR.SAYI}
                       {...alan}
                       inputMode="decimal"
                       value={tuketimler[String(b.id)] ?? ""}
@@ -446,7 +447,7 @@ export default function SayacOkumaPage() {
               </AlanSarmal>
               <AlanSarmal etiket={t("ortakAciklamaOpsiyonel")}>
                 {(b) => (
-                  <Alan {...b} value={aciklama} onChange={(e) => setAciklama(e.target.value)} />
+                  <Alan maxLength={500 /* sunucu: SayacBorcIstek.aciklama */} {...b} value={aciklama} onChange={(e) => setAciklama(e.target.value)} />
                 )}
               </AlanSarmal>
             </div>

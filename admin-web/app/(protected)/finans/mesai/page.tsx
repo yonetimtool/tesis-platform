@@ -32,6 +32,7 @@ import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { kurusToTL } from "@/lib/money";
+import { ISTEMCI_SINIR } from "@/lib/girdi-siniri";
 
 /**
  * (P203 §5) FAZLA MESAI — aylik personel gideri.
@@ -241,7 +242,7 @@ export default function MesaiSayfasi() {
           <span className="flex items-end gap-2">
             <AlanSarmal etiket={t("mesaiKatsayiDuzenle")}>
               {(baglar) => (
-                <Alan
+                <Alan maxLength={ISTEMCI_SINIR.SAYI}
                   {...baglar}
                   data-test="mesai-katsayi-alan"
                   inputMode="decimal"

@@ -29,6 +29,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, norm_plaka, translate_integrity
 from ..deps import get_tenant_db, require_role
@@ -324,7 +325,7 @@ async def _gg_adlarla(
 @router.get("/gelir-gider-tanimlari", response_model=GelirGiderTanimListResponse)
 async def list_gg_tanimlari(
     aktif: bool | None = Query(None),
-    tip: str | None = Query(None, description="gelir | gider | her_ikisi"),
+    tip: str | None = Query(None, description="gelir | gider | her_ikisi", max_length=_G.KOD),
     limit: int = Query(100, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_tenant_db),
@@ -635,7 +636,7 @@ async def _arac_adlarla(
 @router.get("/arac-kayitlari", response_model=AracKayitListResponse)
 async def list_arac_kayitlari(
     aktif: bool | None = Query(None),
-    plaka: str | None = Query(None, description="Tam plaka (normalize edilir)"),
+    plaka: str | None = Query(None, description="Tam plaka (normalize edilir)", max_length=_G.KOD),
     limit: int = Query(100, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_tenant_db),

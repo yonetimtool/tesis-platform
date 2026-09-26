@@ -8,6 +8,7 @@ import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import { ogeBaglantisi, sayfaAra, type SayfaVurusu } from "@/lib/menu";
 import { useRol } from "@/lib/rol-kullan";
 import { SAKIN_MODU, rotaRoldeGorunur, type Yuzey } from "@/lib/yuzey";
+import { SINIR } from "@/lib/girdi-siniri";
 
 /**
  * (P154 / Asama 6.3) GLOBAL ARAMA — ust barda, TEK yer.
@@ -177,7 +178,7 @@ export function GlobalArama({
           text-[color:var(--yz-text)]`) ESKI dilin kalintisiydi: kabuk her sayfada
           ciziliyor, yani urunun en cok gorunen tek kontrolu eski dilde
           kaliyordu. */}
-      <input
+      <input maxLength={SINIR.ARAMA}
         type="search"
         value={q}
         onChange={(e) => setQ(e.target.value)}

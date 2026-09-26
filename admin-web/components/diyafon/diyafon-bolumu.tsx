@@ -39,6 +39,7 @@ import { apiSend } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
+import { SINIR } from "@/lib/girdi-siniri";
 
 type Yetenek = {
   metin_anons: boolean;
@@ -375,7 +376,7 @@ export function DiyafonBolumu() {
         <div className="space-y-3">
           <AlanSarmal etiket={t("ortakAd")} zorunlu>
             {(b) => (
-              <Alan
+              <Alan maxLength={SINIR.BASLIK}
                 {...b}
                 data-test="diyafon-ad"
                 value={form.ad}
@@ -401,7 +402,7 @@ export function DiyafonBolumu() {
           </AlanSarmal>
           <AlanSarmal etiket={t("diyafonHost")} zorunlu>
             {(b) => (
-              <Alan
+              <Alan maxLength={255 /* sunucu: DiyafonCreate.host */}
                 {...b}
                 data-test="diyafon-host"
                 value={form.host}
@@ -427,7 +428,7 @@ export function DiyafonBolumu() {
             <>
               <AlanSarmal etiket={t("diyafonZilYolu")} ipucu={t("diyafonYolIpucu")}>
                 {(b) => (
-                  <Alan
+                  <Alan maxLength={SINIR.ADRES /* sunucu: DiyafonCreate.zil_yolu */}
                     {...b}
                     data-test="diyafon-zil-yolu"
                     value={form.zil_yolu}
@@ -437,7 +438,7 @@ export function DiyafonBolumu() {
               </AlanSarmal>
               <AlanSarmal etiket={t("diyafonKapiYolu")} ipucu={t("diyafonYolIpucu")}>
                 {(b) => (
-                  <Alan
+                  <Alan maxLength={SINIR.ADRES /* sunucu: DiyafonCreate.kapi_yolu */}
                     {...b}
                     data-test="diyafon-kapi-yolu"
                     value={form.kapi_yolu}
@@ -449,7 +450,7 @@ export function DiyafonBolumu() {
           ) : (
             <AlanSarmal etiket={t("diyafonHedef")} ipucu={t("diyafonHedefIpucu")}>
               {(b) => (
-                <Alan
+                <Alan maxLength={SINIR.BASLIK}
                   {...b}
                   data-test="diyafon-hedef"
                   value={form.hedef}
@@ -460,7 +461,7 @@ export function DiyafonBolumu() {
           )}
           <AlanSarmal etiket={t("diyafonKullanici")}>
             {(b) => (
-              <Alan
+              <Alan maxLength={SINIR.BASLIK}
                 {...b}
                 data-test="diyafon-kullanici"
                 value={form.kullanici}
@@ -470,7 +471,7 @@ export function DiyafonBolumu() {
           </AlanSarmal>
           <AlanSarmal etiket={t("diyafonSifre")} ipucu={t("diyafonSifreIpucu")}>
             {(b) => (
-              <Alan
+              <Alan maxLength={SINIR.GIZLI}
                 {...b}
                 type="password"
                 data-test="diyafon-sifre"

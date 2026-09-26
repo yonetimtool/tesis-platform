@@ -21,6 +21,7 @@ import {
 import { agIstegi, sunucuMesaji } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
+import { SINIR } from "@/lib/girdi-siniri";
 
 const R_OLUMLU = "olumlu" as const;
 const R_UYARI = "uyari" as const;
@@ -224,7 +225,7 @@ export default function SupportPage() {
 </AlanSarmal>
         <AlanSarmal etiket={t("destekTesisTenantId")}>
   {(b) => (
-    <Alan {...b} value={tenantId}
+    <Alan maxLength={SINIR.KOD} {...b} value={tenantId}
             placeholder={t("destekUuidBos")}
             onChange={(e) => {
               setTenantId(e.target.value.trim());

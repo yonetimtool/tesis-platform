@@ -13,6 +13,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import text
 
+from .. import girdi_siniri as _G
 from ..db import SessionLocal
 from ..deps import require_role
 from ..models import AppUser
@@ -31,8 +32,8 @@ _QUERY = text(
 @router.get("", response_model=AuditLogListResponse)
 async def list_audit(
     tenant_id: uuid.UUID | None = Query(None, description="tenant filtresi (opsiyonel)"),
-    action: str | None = Query(None),
-    resource_type: str | None = Query(None),
+    action: str | None = Query(None, max_length=_G.KOD),
+    resource_type: str | None = Query(None, max_length=_G.KOD),
     date_from: datetime | None = Query(None, alias="from"),
     date_to: datetime | None = Query(None, alias="to"),
     limit: int = Query(50, ge=1, le=200),

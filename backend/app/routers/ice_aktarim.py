@@ -64,6 +64,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, translate_integrity
 from ..deps import get_tenant_db, require_role
@@ -891,7 +892,7 @@ async def turler(_: AppUser = Depends(_YONETIM)) -> list[IceAktarimTurOut]:
 async def aktar(
     tur: str,
     body: IceAktarimIstek,
-    accept_language: str | None = None,
+    accept_language: str | None = Query(None, max_length=_G.KOD),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_YONETIM),
 ) -> IceAktarimSonuc:

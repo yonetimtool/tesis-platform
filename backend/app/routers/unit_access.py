@@ -30,6 +30,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
+from .. import girdi_siniri as _G
 from ..audit import Action, audit_user
 from ..crud_helpers import translate_integrity
 from ..deps import get_tenant_db, require_role
@@ -286,7 +287,7 @@ async def list_granted_units(
 # ------------------------------- okuma -------------------------------------- #
 @router.get("", response_model=UnitAccessRequestListResponse)
 async def list_requests(
-    durum: str | None = Query(None),
+    durum: str | None = Query(None, max_length=_G.KOD),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_tenant_db),

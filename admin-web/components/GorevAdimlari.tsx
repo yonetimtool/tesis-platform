@@ -9,6 +9,7 @@ import { apiSend } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { PresignTicket, TaskStepList } from "@/lib/types";
+import { SINIR } from "@/lib/girdi-siniri";
 
 /**
  * (P237 §2) GOREV ALT ADIMLARI — web yuzeyi.
@@ -241,7 +242,7 @@ export function GorevAdimlari({
         <div className="min-w-0 flex-1">
           <AlanSarmal etiket={t("gorevAdimAd")}>
             {(b) => (
-              <Alan
+              <Alan maxLength={SINIR.BASLIK /* sunucu: TaskStepCreate.ad */}
                 {...b}
                 value={yeniAd}
                 data-test="gorev-adim-yeni"

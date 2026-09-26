@@ -1,3 +1,5 @@
+import { csvMetni } from "@/lib/csv";
+
 // (E2E 2026-09) Bakim yillik ozeti -> CSV (TESIS-14). Sayfa dosyasinda
 // degil: Next.js app dizininde `page.tsx` yalniz varsayilan bileseni ve
 // bilinen alanlari disari verebilir; test de bu saf fonksiyonu jsdom
@@ -26,7 +28,6 @@ export function bakimOzetCsv(
   basliklar: string[],
   yasalMetin: string,
 ): string {
-  const kacis = (c: string) => (/[";\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c);
   const satirlar: string[][] = [basliklar];
   for (const s of ozet.satirlar) {
     satirlar.push([
@@ -38,6 +39,8 @@ export function bakimOzetCsv(
       s.sonraki_bakim,
     ]);
   }
-  return "\ufeff" + satirlar.map((r) => r.map(kacis).join(";")).join("\n");
+  // (P248 §3c) Ortak yardimci: formul enjeksiyonu kacisi (`=`, `+`, `-`,
+  // `@` ile baslayan ekipman adi) + tirnak/ayrac kacisi.
+  return csvMetni(satirlar, ";");
 }
 

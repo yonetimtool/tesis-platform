@@ -19,6 +19,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from ..crud_helpers import coord_eq, get_or_404, is_unique_violation, nfc_eq, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
@@ -442,15 +443,18 @@ async def list_tasks(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     kategori_id: str | None = Query(
-        None, description="kategori UUID veya 'diger' (kategorisiz/Diğer)"
+        None, description="kategori UUID veya 'diger' (kategorisiz/Diğer)",
+        max_length=_G.KOD,
     ),
     aktif: bool | None = Query(None),
     atanan_user_id: str | None = Query(
-        None, description="'me' (token kullanicisi) veya user UUID — atanan filtresi (mobil §11)"
+        None, description="'me' (token kullanicisi) veya user UUID — atanan filtresi (mobil §11)",
+        max_length=_G.KOD,
     ),
     durum: str | None = Query(
         None,
         description="(P230 §4) atandi | baslandi | tamamlandi | gecikti",
+        max_length=_G.KOD,
     ),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_READER),

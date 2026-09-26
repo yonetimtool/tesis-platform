@@ -43,6 +43,7 @@ import { useRol } from "@/lib/rol-kullan";
 import type { Yuzey } from "@/lib/yuzey";
 
 import { Girinti } from "./yuzey";
+import { SINIR } from "@/lib/girdi-siniri";
 
 export interface PaletVurusu {
   kaynak: string;
@@ -318,7 +319,7 @@ export function KomutPaleti({
       >
         <div className="p-3">
           <Girinti>
-            <input
+            <input maxLength={SINIR.ARAMA}
               ref={girdiRef}
               value={q}
               onChange={(e) => setQ(e.target.value)}

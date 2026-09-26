@@ -89,12 +89,26 @@ def install_error_handlers(app: FastAPI) -> None:
         # `details[].message` pydantic'in KENDI (Ingilizce) metnidir: alan
         # duzeyinde teknik ayrinti, istemci onu kullaniciya ham gostermez.
         # Kullaniciya gosterilen UST mesaj cevrilir.
+        #
+        # (P248 §3a) UZUNLUK ASIMI OZEL: ust mesaj alani ve siniri
+        # kullanicinin dilinde soyler. Kod (`validation_error`) DEGISMEDI —
+        # istemciler koda gore dallaniyor.
+        dil = _dil(request)
+        mesaj = hata_metni("istek_govdesi_gecersiz", dil)
+        for e in exc.errors():
+            if e.get("type") == "string_too_long":
+                alan = next((str(p) for p in reversed(e.get("loc", []))
+                             if isinstance(p, str) and p not in ("body", "query")), "")
+                sinir = (e.get("ctx") or {}).get("max_length", "")
+                mesaj = hata_metni("metin_cok_uzun", dil,
+                                   {"alan": alan, "sinir": sinir})
+                break
         return JSONResponse(
             status_code=422,
             content={
                 "error": {
                     "code": "validation_error",
-                    "message": hata_metni("istek_govdesi_gecersiz", _dil(request)),
+                    "message": mesaj,
                     "details": [
                         {
                             "field": ".".join(str(p) for p in e.get("loc", []) if p != "body"),

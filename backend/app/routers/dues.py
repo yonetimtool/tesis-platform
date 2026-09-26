@@ -31,6 +31,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import girdi_siniri as _G
 from ..audit import Action, audit_user
 from ..belge_no import belge_no_ata
 from ..crud_helpers import (
@@ -573,7 +574,7 @@ async def list_assessments(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     unit_id: uuid.UUID | None = Query(None),
-    donem: str | None = Query(None),
+    donem: str | None = Query(None, max_length=_G.KOD),
     gelir_gider_tanim_id: uuid.UUID | None = Query(
         None, description="(P28) Borclandirma turune gore suzgec"
     ),
@@ -916,7 +917,7 @@ async def list_payments(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     unit_id: uuid.UUID | None = Query(None),
-    donem: str | None = Query(None, description="'YYYY-MM' — donem bazli rapor filtresi"),
+    donem: str | None = Query(None, description="'YYYY-MM' — donem bazli rapor filtresi", max_length=_G.KOD),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_REPORT),
 ) -> DuesPaymentListResponse:

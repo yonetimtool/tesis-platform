@@ -39,6 +39,7 @@ import { sayiBicimi, sayiCoz, tamsayiCoz } from "@/lib/sayi";
 import type { Unit, UnitList } from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
 import { kurusToTL } from "@/lib/money";
+import { ISTEMCI_SINIR, SINIR } from "@/lib/girdi-siniri";
 
 /** Sunucudaki `_BLOK_PATTERN` ile AYNI — ikisi ayrisirsa test duser. */
 const BLOK_KALIBI = /^[A-Za-z0-9]+$/;
@@ -508,7 +509,7 @@ export default function UnitsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <AlanSarmal etiket={t("binaDaireNo")} ipucu={t("daireNoIpucu")}>
   {(b) => (
-    <Alan {...b} value={form.no}
+    <Alan maxLength={SINIR.DAIRE_NO} {...b} value={form.no}
                 onChange={(e) => setForm({ ...form, no: e.target.value })}
                 placeholder="A-12"
                 pattern="[A-Za-z0-9-]+"
@@ -529,21 +530,21 @@ export default function UnitsPage() {
 </AlanSarmal>
             <AlanSarmal etiket={t("daireMetrekareOpsiyonel")}>
   {(b) => (
-    <Alan {...b} inputMode="decimal"
+    <Alan maxLength={ISTEMCI_SINIR.SAYI} {...b} inputMode="decimal"
                 value={form.metrekare}
                 onChange={(e) => setForm({ ...form, metrekare: e.target.value })} />
   )}
 </AlanSarmal>
             <AlanSarmal etiket={t("unitsArsaPayi")}>
   {(b) => (
-    <Alan {...b} inputMode="decimal"
+    <Alan maxLength={ISTEMCI_SINIR.SAYI} {...b} inputMode="decimal"
                 value={form.arsa_payi}
                 onChange={(e) => setForm({ ...form, arsa_payi: e.target.value })} />
   )}
 </AlanSarmal>
             <AlanSarmal etiket={t("daireKatOpsiyonel")} ipucu={t("katIpucu")}>
   {(b) => (
-    <Alan {...b} inputMode="numeric"
+    <Alan maxLength={ISTEMCI_SINIR.SAYI} {...b} inputMode="numeric"
                 value={form.kat}
                 onChange={(e) => setForm({ ...form, kat: e.target.value })}
                 placeholder="1" />
@@ -551,7 +552,7 @@ export default function UnitsPage() {
 </AlanSarmal>
             <AlanSarmal etiket={t("siraOpsiyonel")} ipucu={t("siraIpucu")}>
   {(b) => (
-    <Alan {...b} inputMode="numeric"
+    <Alan maxLength={ISTEMCI_SINIR.SAYI} {...b} inputMode="numeric"
                 value={form.sira}
                 onChange={(e) => setForm({ ...form, sira: e.target.value })}
                 placeholder="2" />
@@ -700,7 +701,7 @@ export default function UnitsPage() {
             .map((u) => (
               <AlanSarmal key={u.id} etiket={u.no}>
                 {(b) => (
-                  <Alan
+                  <Alan maxLength={ISTEMCI_SINIR.SAYI}
                     {...b}
                     inputMode="decimal"
                     value={paylar[u.id] ?? ""}

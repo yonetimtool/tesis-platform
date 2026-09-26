@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
@@ -338,6 +339,7 @@ class _CheckpointFormState extends ConsumerState<_CheckpointForm> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _ad,
+              inputFormatters: GirdiSiniri.sinir(GirdiSiniri.ad), // sunucu: CheckpointCreate.ad
               enabled: !_busy,
               textCapitalization: TextCapitalization.words,
               decoration: InputDecoration(
@@ -352,6 +354,7 @@ class _CheckpointFormState extends ConsumerState<_CheckpointForm> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _uid,
+              inputFormatters: GirdiSiniri.sinir(GirdiSiniri.nfcUid), // sunucu: CheckpointCreate.nfc_tag_uid
               enabled: !_busy,
               textCapitalization: TextCapitalization.characters,
               decoration: InputDecoration(
@@ -370,6 +373,7 @@ class _CheckpointFormState extends ConsumerState<_CheckpointForm> {
                 Expanded(
                   child: TextFormField(
                     controller: _lat,
+                    inputFormatters: GirdiSiniri.sinir(GirdiSiniri.sayi * 2), // koordinat (sayi)
                     enabled: !_busy,
                     keyboardType: const TextInputType.numberWithOptions(
                         decimal: true, signed: true),
@@ -386,6 +390,7 @@ class _CheckpointFormState extends ConsumerState<_CheckpointForm> {
                 Expanded(
                   child: TextFormField(
                     controller: _lng,
+                    inputFormatters: GirdiSiniri.sinir(GirdiSiniri.sayi * 2), // koordinat (sayi)
                     enabled: !_busy,
                     keyboardType: const TextInputType.numberWithOptions(
                         decimal: true, signed: true),

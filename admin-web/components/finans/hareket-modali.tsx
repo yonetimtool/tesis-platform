@@ -61,11 +61,14 @@ function hucreGirdi(
   onDegisti: (v: string) => void,
   etiket: string,
   tip?: string,
+  // (P248 §3a) sunucu: HareketSatir.aciklama 500 / belge_no 50.
+  azami: number = 500,
 ) {
   return (
     <Alan
       value={deger}
       type={tip}
+      maxLength={azami}
       aria-label={etiket}
       onChange={(e) => onDegisti(e.target.value)}
       className="!h-10 min-w-28"
@@ -216,7 +219,7 @@ export function HareketModali({
             t("finansSutunAciklama"),
           ]}
           hucreler={(s, guncelle) => [
-            hucreGirdi(s.belgeNo, (v) => guncelle({ belgeNo: v }), t("finansSutunBelgeNo")),
+            hucreGirdi(s.belgeNo, (v) => guncelle({ belgeNo: v }), t("finansSutunBelgeNo"), undefined, 50),
             hucreGirdi(s.tarih, (v) => guncelle({ tarih: v }), t("finansSutunTarih"), "date"),
             hucreSecim(s.firmaId, (v) => guncelle({ firmaId: v }), t("finansSutunFirma"), firmalar, t("finansFirmaSec")),
             hucreSecim(s.tanimId, (v) => guncelle({ tanimId: v }), t("finansSutunTur"), tanimlar, t("finansTurSec")),

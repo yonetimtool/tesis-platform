@@ -43,6 +43,7 @@ import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useI18n, useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
+import { SINIR } from "@/lib/girdi-siniri";
 
 type TakvimTip =
   | "etkinlik" | "devriye" | "aidat" | "gorev" | "rezervasyon" | "hatirlatma";
@@ -911,12 +912,12 @@ function HatirlatmaFormu({
       <div className="grid gap-3">
         <AlanSarmal etiket={t("takvimAlanBaslik")} zorunlu>
           {(b) => (
-            <Alan {...b} value={baslik} onChange={(e) => setBaslik(e.target.value)} />
+            <Alan maxLength={SINIR.BASLIK /* sunucu: HatirlatmaCreate.baslik */} {...b} value={baslik} onChange={(e) => setBaslik(e.target.value)} />
           )}
         </AlanSarmal>
         <AlanSarmal etiket={t("takvimAlanAciklama")}>
           {(b) => (
-            <CokSatir {...b} rows={3} value={aciklama}
+            <CokSatir maxLength={SINIR.NOT /* sunucu: HatirlatmaCreate.aciklama */} {...b} rows={3} value={aciklama}
               onChange={(e) => setAciklama(e.target.value)} />
           )}
         </AlanSarmal>

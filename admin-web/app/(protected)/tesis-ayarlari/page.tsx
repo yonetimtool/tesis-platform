@@ -20,6 +20,7 @@ import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { AYAR_GRUPLARI, GIRDI_TIPI, OPERASYON } from "@/lib/tesis-ayar-alanlari";
 import type { TenantSettings } from "@/lib/types";
+import { ISTEMCI_SINIR, SINIR } from "@/lib/girdi-siniri";
 
 /**
  * (P193 §5) TESIS AYARLARI — YONETICININ EKRANI.
@@ -55,6 +56,14 @@ import type { TenantSettings } from "@/lib/types";
  */
 
 /** Tesis kimlik/adres alanlari — yoneticinin yazabildikleri. */
+/** (P248 §3a) Adres alanlarinin sunucu siniri (TenantSettingsUpdate). */
+const ADRES_AZAMI: Record<string, number> = {
+  adres: SINIR.ADRES,
+  ilce: SINIR.AD,
+  il: SINIR.AD,
+  posta_kodu: 5,
+};
+
 const ADRES_ALANLARI = [
   { anahtar: "adres", etiket: "tesisAyarAdres" },
   { anahtar: "ilce", etiket: "tesisAyarIlce" },
@@ -146,7 +155,7 @@ export default function TesisAyarlariPage() {
             </h2>
             <AlanSarmal etiket={t("ayarTesisAdi")}>
               {(b) => (
-                <Alan
+                <Alan maxLength={SINIR.BASLIK}
                   {...b}
                   value={String(form.ad ?? "")}
                   onChange={(e) => yaz("ad", e.target.value)}
@@ -166,6 +175,8 @@ export default function TesisAyarlariPage() {
                   <Alan
                     {...b}
                     value={String(form[a.anahtar] ?? "")}
+                    // sunucu: TenantSettingsUpdate adres 500 / il, ilce 100 / posta_kodu 5
+                    maxLength={ADRES_AZAMI[a.anahtar]}
                     onChange={(e) => yaz(a.anahtar, e.target.value)}
                   />
                 )}
@@ -259,6 +270,7 @@ export default function TesisAyarlariPage() {
                     <Alan
                       aria-label={t(a.etiket)}
                       type={GIRDI_TIPI[a.tip]}
+                    maxLength={a.tip === "metin" ? (a.azami ?? SINIR.BASLIK) : ISTEMCI_SINIR.SAYI}
                       min={a.min}
                       max={a.max}
                       value={String(form[a.anahtar] ?? "")}

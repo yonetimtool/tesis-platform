@@ -34,6 +34,7 @@ import type {
   DuesPaymentList,
   UnitList,
 } from "@/lib/types";
+import { ISTEMCI_SINIR, SINIR } from "@/lib/girdi-siniri";
 
 /** (P244 §7b) `GET /finans/tahsilat-gostergesi` yaniti. */
 interface TahsilatGostergesi {
@@ -345,7 +346,7 @@ export default function DuesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:grid-cols-4">
             <AlanSarmal etiket={t("ortakDonem")} ipucu={t("aidatDonemOrnek")} zorunlu>
               {(b) => (
-                <Alan
+                <Alan maxLength={ISTEMCI_SINIR.DONEM}
                   {...b}
                   value={donem}
                   onChange={(e) => setDonem(e.target.value)}
@@ -356,7 +357,7 @@ export default function DuesPage() {
             </AlanSarmal>
             <AlanSarmal etiket={t("aidatTutarTl")} zorunlu>
               {(b) => (
-                <Alan
+                <Alan maxLength={ISTEMCI_SINIR.SAYI}
                   {...b}
                   inputMode="decimal"
                   value={tl}
@@ -373,7 +374,7 @@ export default function DuesPage() {
             </AlanSarmal>
             <AlanSarmal etiket={t("ortakAciklamaOpsiyonel")}>
               {(b) => (
-                <Alan {...b} value={desc} onChange={(e) => setDesc(e.target.value)} />
+                <Alan maxLength={SINIR.NOT /* sunucu: DuesAssessmentCreate.aciklama */} {...b} value={desc} onChange={(e) => setDesc(e.target.value)} />
               )}
             </AlanSarmal>
           </div>
@@ -421,7 +422,7 @@ export default function DuesPage() {
                     setADurum({ ...aDurum, sayfa: 1 });
                   }}
                 >
-                  <Alan
+                  <Alan maxLength={ISTEMCI_SINIR.DONEM}
                     aria-label={t("aidatDonemFiltresi")}
                     value={aDonem}
                     onChange={(e) => {

@@ -25,6 +25,7 @@ import type { Block, BlockList, KatOnizleme, Unit, UnitList } from "@/lib/types"
 import { sayiCoz, tamsayiCoz } from "@/lib/sayi";
 import { daireNoOnizle } from "@/lib/daire-no";
 import { useT } from "@/lib/i18n/kullan";
+import { ISTEMCI_SINIR, SINIR } from "@/lib/girdi-siniri";
 
 // Bloksuz kova (implicit tek blok) icin sentinel — gercek blok etiketi
 // alfanumerik ve >=1 karakter, bu deger asla cakismaz.
@@ -529,22 +530,22 @@ export default function BuildingEditorPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <AlanSarmal etiket={t("binaBlokEtiketi")} ipucu={t("binaBlokIpucu")} zorunlu>
               {(b) => (
-                <Alan {...b} value={oBlok} onChange={(e) => setOBlok(e.target.value)} />
+                <Alan maxLength={8 /* sunucu: UnitBulkCreate.blok */} {...b} value={oBlok} onChange={(e) => setOBlok(e.target.value)} />
               )}
             </AlanSarmal>
             <AlanSarmal etiket={t("daireKatSayisi")} zorunlu>
               {(b) => (
-                <Alan {...b} inputMode="numeric" value={oKat} onChange={(e) => setOKat(e.target.value)} />
+                <Alan maxLength={ISTEMCI_SINIR.SAYI} {...b} inputMode="numeric" value={oKat} onChange={(e) => setOKat(e.target.value)} />
               )}
             </AlanSarmal>
             <AlanSarmal etiket={t("daireKatBasi")} zorunlu>
               {(b) => (
-                <Alan {...b} inputMode="numeric" value={oDaire} onChange={(e) => setODaire(e.target.value)} />
+                <Alan maxLength={ISTEMCI_SINIR.SAYI} {...b} inputMode="numeric" value={oDaire} onChange={(e) => setODaire(e.target.value)} />
               )}
             </AlanSarmal>
             <AlanSarmal etiket={t("daireBaslangicNo")} zorunlu>
               {(b) => (
-                <Alan {...b} inputMode="numeric" value={oBaslangicNo} onChange={(e) => setOBaslangicNo(e.target.value)} />
+                <Alan maxLength={ISTEMCI_SINIR.SAYI} {...b} inputMode="numeric" value={oBaslangicNo} onChange={(e) => setOBaslangicNo(e.target.value)} />
               )}
             </AlanSarmal>
             {/* BASLANGIC KATI NEGATIF OLABILIR: bodrum ve zemin gercek
@@ -553,20 +554,20 @@ export default function BuildingEditorPage() {
                 tarayicilarda tekerlek ile deger degistiriyor. */}
             <AlanSarmal etiket={t("daireBaslangicKat")} ipucu={t("daireBaslangicKatIpucu")}>
               {(b) => (
-                <Alan {...b} value={oBaslangicKat} onChange={(e) => setOBaslangicKat(e.target.value)} />
+                <Alan maxLength={ISTEMCI_SINIR.SAYI} {...b} value={oBaslangicKat} onChange={(e) => setOBaslangicKat(e.target.value)} />
               )}
             </AlanSarmal>
             {/* (P193 §6) Parti geneli arsa payi ve metrekare. */}
             <AlanSarmal etiket={t("daireArsaPayi")} ipucu={t("daireArsaPayiPartiIpucu")}>
               {(b) => (
-                <Alan {...b} inputMode="decimal" value={oArsaPayi}
+                <Alan maxLength={ISTEMCI_SINIR.SAYI} {...b} inputMode="decimal" value={oArsaPayi}
                       onChange={(e) => setOArsaPayi(e.target.value)}
                       placeholder="0,0125" />
               )}
             </AlanSarmal>
             <AlanSarmal etiket={t("daireMetrekareOpsiyonel")}>
               {(b) => (
-                <Alan {...b} inputMode="decimal" value={oMetrekare}
+                <Alan maxLength={ISTEMCI_SINIR.SAYI} {...b} inputMode="decimal" value={oMetrekare}
                       onChange={(e) => setOMetrekare(e.target.value)}
                       placeholder="120" />
               )}
@@ -626,7 +627,7 @@ export default function BuildingEditorPage() {
             </AlanSarmal>
             <AlanSarmal etiket={t("binaKat")} zorunlu>
               {(b) => (
-                <Alan {...b} value={katSilKat} onChange={(e) => setKatSilKat(e.target.value)} />
+                <Alan maxLength={ISTEMCI_SINIR.SAYI} {...b} value={katSilKat} onChange={(e) => setKatSilKat(e.target.value)} />
               )}
             </AlanSarmal>
           </div>
@@ -682,7 +683,7 @@ export default function BuildingEditorPage() {
           {onizleme?.mali_kayit && (
             <AlanSarmal etiket={t("daireKatOnayYaz", { kat: katSilSayi.tur === "sayi" ? katSilSayi.deger : 0 })}>
               {(b) => (
-                <Alan
+                <Alan maxLength={SINIR.BASLIK}
                   {...b}
                   value={katSilOnayMetni}
                   onChange={(e) => setKatSilOnayMetni(e.target.value)}
@@ -717,7 +718,7 @@ export default function BuildingEditorPage() {
             <div className="grow">
               <AlanSarmal etiket={t("daireAralikSec")} ipucu={t("daireAralikIpucu")}>
                 {(b) => (
-                  <Alan {...b} value={aralikIfade} onChange={(e) => setAralikIfade(e.target.value)} placeholder="3,5,7-12" />
+                  <Alan maxLength={SINIR.BASLIK} {...b} value={aralikIfade} onChange={(e) => setAralikIfade(e.target.value)} placeholder="3,5,7-12" />
                 )}
               </AlanSarmal>
             </div>
@@ -852,7 +853,7 @@ export default function BuildingEditorPage() {
               )}
             <AlanSarmal etiket={t("binaKat")} ipucu={t("binaZeminIpucu")}>
   {(b) => (
-    <Alan {...b} inputMode="numeric"
+    <Alan maxLength={ISTEMCI_SINIR.SAYI} {...b} inputMode="numeric"
                 value={unitForm.kat}
                 onChange={(e) => setUnitForm({ ...unitForm, kat: e.target.value })}
                 placeholder="1" />
@@ -860,7 +861,7 @@ export default function BuildingEditorPage() {
 </AlanSarmal>
             <AlanSarmal etiket={t("binaSira")} ipucu={t("binaKattakiKonum")}>
   {(b) => (
-    <Alan {...b} inputMode="numeric"
+    <Alan maxLength={ISTEMCI_SINIR.SAYI} {...b} inputMode="numeric"
                 value={unitForm.sira}
                 onChange={(e) => setUnitForm({ ...unitForm, sira: e.target.value })}
                 placeholder="1" />

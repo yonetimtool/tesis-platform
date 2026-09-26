@@ -22,6 +22,7 @@ import { jsonFetcher } from "@/lib/fetcher";
 import type { GunTipi, Shift, ShiftList } from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
+import { SINIR } from "@/lib/girdi-siniri";
 
 const LIMIT = 20;
 // METIN DEGIL KIMLIK: `value` sozlesme degeri, `anahtar` gorunen adin
@@ -339,7 +340,7 @@ export function SablonBolumu({ personel }: { personel: Personel[] }) {
         <form id="vardiya-form" onSubmit={save} className="space-y-4">
           <AlanSarmal etiket={t("ortakAd")} zorunlu>
             {(b) => (
-              <Alan
+              <Alan maxLength={SINIR.AD /* sunucu: ShiftCreate.ad */}
                 {...b}
                 value={form.ad}
                 onChange={(e) => setForm({ ...form, ad: e.target.value })}

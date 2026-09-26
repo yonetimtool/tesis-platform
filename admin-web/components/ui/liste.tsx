@@ -4,6 +4,7 @@ import { useMemo, useState, type ReactNode } from "react";
 
 import { BosSatir, Tablo, TabloKart, Td, Th, Tr } from "./tablo-ilkelleri";
 import { useT } from "@/lib/i18n/kullan";
+import { SINIR } from "@/lib/girdi-siniri";
 
 /**
  * (P154 / Asama 6.2) TEK LISTE BILESENI.
@@ -220,7 +221,7 @@ export function Liste<T>({
                 {kolonlar.map((k) => (
                   <Th key={k.anahtar} dolgusuz className="px-2 pb-2">
                     {k.suzgec && (
-                      <input
+                      <input maxLength={SINIR.ARAMA}
                         aria-label={`${k.baslik} — ${t("listeSuzgec")}`}
                         className="w-full px-2 py-1"
                         style={{

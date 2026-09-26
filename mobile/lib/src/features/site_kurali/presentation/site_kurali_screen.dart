@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
@@ -61,6 +62,7 @@ class SiteKuraliScreen extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
             child: TextField(
               onChanged: controller.search,
+              inputFormatters: GirdiSiniri.sinir(GirdiSiniri.arama),
               decoration: InputDecoration(
                 hintText: l10n.kuralAramaIpucu,
                 prefixIcon: const Icon(Icons.search),
@@ -661,6 +663,7 @@ class _KuralFormState extends ConsumerState<_KuralForm> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _sira,
+                inputFormatters: GirdiSiniri.sinir(GirdiSiniri.sayi),
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   labelText: l10n.kuralSira,

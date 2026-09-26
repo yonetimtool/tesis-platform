@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
@@ -306,18 +307,22 @@ class _KayitFormuState extends ConsumerState<_KayitFormu> {
           ),
           TextField(
             key: const ValueKey('bakim-kayit-yapan'),
+            inputFormatters: GirdiSiniri.sinir(GirdiSiniri.baslik), // sunucu: BakimKaydiCreate.yapan_ad
             controller: _yapan,
             decoration: InputDecoration(labelText: l10n.bakimYapan),
           ),
           const SizedBox(height: 8),
           TextField(
             key: const ValueKey('bakim-kayit-islem'),
+            // tek satirlik alan: sayac gizli (yerlesim degismez)
+            inputFormatters: GirdiSiniri.sinir(4000), // sunucu: BakimKaydiCreate.islem
             controller: _islem,
             decoration: InputDecoration(labelText: l10n.bakimIslem),
           ),
           const SizedBox(height: 8),
           TextField(
             key: const ValueKey('bakim-kayit-tutar'),
+            inputFormatters: GirdiSiniri.sinir(GirdiSiniri.tutar),
             controller: _tutar,
             keyboardType: TextInputType.number,
             decoration: InputDecoration(labelText: l10n.bakimTutar),
