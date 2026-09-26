@@ -45,6 +45,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Alan } from "@/components/ui";
 import { useT } from "@/lib/i18n/kullan";
 import { ULKELER, ulkeBul, ulkeEslesiyor, ulkeEtiketi } from "@/lib/ulke-telefon";
+import { SINIR } from "@/lib/girdi-siniri";
 
 export function UlkeSecici({
   deger,
@@ -52,6 +53,8 @@ export function UlkeSecici({
   disabled,
   etiket,
   hatali,
+  kutuSinifi,
+  kutuStili,
 }: {
   /** Secili ISO kodu; bos = secilmedi. */
   deger: string;
@@ -59,6 +62,10 @@ export function UlkeSecici({
   disabled?: boolean;
   etiket: string;
   hatali?: boolean;
+  /** (P248 §2) Kendi paletini tasiyan ekran (giris vitrini) — numara
+   *  kutusuyla AYNI gorunum; verilmezse panel tokenlari. */
+  kutuSinifi?: string;
+  kutuStili?: React.CSSProperties;
 }) {
   const t = useT();
   const [acik, setAcik] = useState(false);
@@ -95,7 +102,7 @@ export function UlkeSecici({
           setAcik((a) => !a);
           setSorgu("");
         }}
-        className="odak-ic h-11 w-full px-3 text-start outline-none"
+        className={`odak-ic h-11 w-full px-3 text-start outline-none ${kutuSinifi ?? ""}`}
         style={{
           borderRadius: "var(--yz-radius-input)",
           background: "var(--yz-surface-sunken)",
@@ -105,6 +112,7 @@ export function UlkeSecici({
           borderColor: hatali ? "var(--yz-danger-edge)" : "var(--yz-border)",
           color: secili ? "var(--yz-text)" : "var(--yz-text-3)",
           fontSize: "var(--yz-fs-input)",
+          ...kutuStili,
         }}
       >
         {secili ? ulkeEtiketi(secili) : t("telefonUlkeSec")}
@@ -129,7 +137,7 @@ export function UlkeSecici({
           }}
         >
           <div className="p-1">
-            <Alan
+            <Alan maxLength={SINIR.ARAMA}
               autoFocus
               data-test="telefon-ulke-ara"
               aria-label={t("telefonUlkeAraYerTutucu")}

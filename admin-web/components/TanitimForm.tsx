@@ -18,6 +18,8 @@
 import { useState } from "react";
 
 import { epostaHataMetni } from "@/components/EpostaAlani";
+import { TelefonAlani, telefonHataMetni } from "@/components/TelefonAlani";
+import { telefonNormalle } from "@/lib/telefon";
 import { EPOSTA_SINIR } from "@/lib/eposta";
 import { useT } from "@/lib/i18n/kullan";
 import { useI18n } from "@/lib/i18n/kullan";
@@ -29,6 +31,9 @@ export function TanitimForm() {
   const { dil } = useI18n();
   const [durum, setDurum] = useState<Durum>("hazir");
   const [hata, setHata] = useState<string | null>(null);
+  // (P248 §2) TELEFON ORTAK BILESENDE — deger durumda (FormData degil):
+  // bilesen gosterimi ve saklamayi ayirir, sunucuya E.164 gider.
+  const [telefon, setTelefon] = useState("");
 
   async function gonder(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -46,6 +51,12 @@ export function TanitimForm() {
       setDurum("hata");
       return;
     }
+    const telefonSorunu = telefonHataMetni(telefon, false, t, true);
+    if (telefonSorunu) {
+      setHata(telefonSorunu);
+      setDurum("hata");
+      return;
+    }
     setDurum("gonderiliyor");
     setHata(null);
     try {
@@ -55,7 +66,7 @@ export function TanitimForm() {
         body: JSON.stringify({
           ad: String(veri.get("ad") ?? ""),
           email: String(veri.get("email") ?? "") || null,
-          telefon: String(veri.get("telefon") ?? "") || null,
+          telefon: telefonNormalle(telefon) || null,
           mesaj: String(veri.get("mesaj") ?? ""),
           dil,
         }),
@@ -111,10 +122,15 @@ export function TanitimForm() {
           className={alan}
         />
       </label>
-      <label className="block text-sm">
-        <span className="mb-1 block font-medium">{t("tanitimFormTelefon")}</span>
-        <input name="telefon" maxLength={40} className={alan} />
-      </label>
+      <div className="text-sm">
+        <TelefonAlani
+          etiket={t("tanitimFormTelefon")}
+          deger={telefon}
+          onDegisti={setTelefon}
+          name="telefon"
+          sabitHat
+        />
+      </div>
       <span className="hidden sm:block" />
       <label className="block text-sm sm:col-span-2">
         <span className="mb-1 block font-medium">{t("tanitimFormMesaj")}</span>

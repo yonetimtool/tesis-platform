@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/branding/yonetio_logo.dart';
+import '../../../core/ui/telefon_alani_widget.dart';
+import '../../../core/ui/ulke_telefon.dart';
 import '../../../core/i18n/l10n.dart';
 import '../data/auth_repository_impl.dart';
 import 'auth_controller.dart';
@@ -351,30 +354,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     // yutuyordu, yani e-posta YAZILAMIYORDU.
                     // `keyboardType` de `emailAddress` — iki kimlik
                     // icin de yazilabilir tek klavye.
-                    TextFormField(
-                      key: const Key('giris-kimlik'),
-                      controller: _kimlikCtrl,
-                      enabled: !submitting,
+                    // (P248 §2) ORTAK TELEFON WIDGET'I, KIMLIK KIPINDE.
+                    //
+                    // Kimlik alani artik `TelefonAlani(kimlik: true)`:
+                    // rakam ya da `+` ile baslayinca ulke kutusu belirir
+                    // ve numara diger ekranlardaki gibi bicimlenir; harf/
+                    // `@` gorulunce e-posta olarak kalir. Kullaniciya
+                    // "hangisiyle giriyorsun" yine SORULMAZ (P205).
+                    // Ulkesiz yazilan numara TR sayilir: giris hicbir sey
+                    // SAKLAMAZ, yanlis tahmin yalnizca 401 uretir.
+                    TelefonAlani(
+                      ktrl: _kimlikCtrl,
+                      kimlik: true,
+                      varsayilanUlke: kVarsayilanUlke,
+                      alanAnahtari: const Key('giris-kimlik'),
+                      etkin: !submitting,
                       textInputAction: TextInputAction.next,
-                      keyboardType: TextInputType.emailAddress,
-                      autocorrect: false,
-                      autofillHints: const [AutofillHints.username],
-                      decoration: InputDecoration(
-                        labelText: l10n.girisKimlik,
-                        hintText: l10n.girisKimlikOrnek,
-                        helperText: l10n.girisKimlikYardim,
-                        helperMaxLines: 2,
-                        prefixIcon: const Icon(Icons.person_outline),
-                        border: const OutlineInputBorder(),
-                      ),
+                      etiket: l10n.girisKimlik,
+                      ipucu: l10n.girisKimlikOrnek,
+                      yardimMetni: l10n.girisKimlikYardim,
                       // BICIM DENETIMI YOK (bos disinda): girdi telefon
                       // OLMAK ZORUNDA DEGIL ve "gecerli bir telefon
                       // girin" demek, e-posta yazan kullaniciyi
                       // engellerdi. Gecersiz kimlik SUNUCUDAN jenerik
                       // 401 alir — belirsizlik orada BILINCLI.
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? l10n.girisKimlikGerekli
-                          : null,
+                      dogrulayici: (v) =>
+                          v.trim().isEmpty ? l10n.girisKimlikGerekli : null,
                     ),
                     const SizedBox(height: 16),
                     // (E2E 2026-09, YETKI-13) KOD MODU: parola alani yerine
@@ -389,6 +394,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         const SizedBox(height: 12),
                         TextFormField(
                           key: const Key('giris-eposta-kod'),
+                          inputFormatters: GirdiSiniri.sinir(12), // sunucu: EpostaKodDogrulaIstek.kod
                           controller: _kodCtrl,
                           enabled: !submitting,
                           keyboardType: TextInputType.number,
@@ -408,6 +414,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ] else ...[
                     TextFormField(
                       controller: _passwordCtrl,
+                      // sunucu: LoginRequest.password (GIZLI — eski uzun parolalar icin)
+                      inputFormatters: GirdiSiniri.sinir(GirdiSiniri.gizli),
                       enabled: !submitting,
                       obscureText: _obscure,
                       textInputAction: TextInputAction.done,

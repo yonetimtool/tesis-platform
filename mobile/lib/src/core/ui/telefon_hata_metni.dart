@@ -14,8 +14,9 @@ String? telefonHataMetni(
   AppLocalizations l10n,
   String ham, {
   bool zorunlu = true,
+  bool sabitHat = false,
 }) {
-  return switch (telefonHatasi(ham, zorunlu: zorunlu)) {
+  return switch (telefonHatasi(ham, zorunlu: zorunlu, sabitHat: sabitHat)) {
     null => null,
     TelefonHatasi.bos => l10n.ortakTelefonZorunlu,
     TelefonHatasi.eksik => l10n.telefonHataEksik,

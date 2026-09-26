@@ -53,16 +53,33 @@ List<String> telefonIhlalleri(String kaynak, String yol) {
   if (yol.contains('core/ui/telefon_')) return const [];
   final temiz = _yorumsuz(kaynak);
   final bulgular = <String>[];
-  for (final desen in ['TextInputType.phone', 'TelefonBicimlendirici']) {
+  for (final desen in [
+    'TextInputType.phone',
+    'TelefonBicimlendirici',
+    // (P248 §2) Telefon otomatik doldurmasi da ancak kendi telefon
+    // alanini kuran bir ekranda olur.
+    'AutofillHints.telephoneNumber',
+  ]) {
     for (final m in RegExp(RegExp.escape(desen)).allMatches(temiz)) {
       final satir = temiz.substring(0, m.start).split('\n').length;
       bulgular.add('$yol:$satir  kendi telefon alanini kuruyor ($desen)');
     }
   }
+  // (P248 §2) ETIKETI TELEFON OLAN DUZ ALAN: klavyesi `phone` olmasa da
+  // (`TextInputType.text`/varsayilan) telefon ISTEYEN bir alan. Rakamlar
+  // bitisik, sinirsiz, ulke kodu secilemez — kullanicinin bildirdigi
+  // kusurun ta kendisi. `labelText: l10n.xxxTelefonyyy` deseni.
+  for (final m in RegExp(
+    r'labelText:\s*[A-Za-z0-9_]+\.[A-Za-z_]*(?:[Tt]elefon|[Pp]hone|[Gg]sm)[A-Za-z_]*',
+  ).allMatches(temiz)) {
+    final satir = temiz.substring(0, m.start).split('\n').length;
+    bulgular.add('$yol:$satir  etiketi telefon olan duz alan');
+  }
   return bulgular;
 }
 
 void main() {
+  _girisKilidi();
   test('DEDEKTOR: tarama KASITLI kusuru gorur', () {
     // 1) Kendi alanini kuran ekran → bulgu.
     expect(
@@ -89,7 +106,30 @@ void main() {
       ),
       isEmpty,
     );
-    // 4) YORUMDAKI ornek bulgu sayilmaz.
+    // 4) (P248 §2) Etiketi telefon olan DUZ alan (klavye `phone` degil).
+    expect(
+      telefonIhlalleri(
+        'TextField(decoration: InputDecoration(labelText: l10n.firmaTelefon))',
+        'lib/src/features/x/ornek.dart',
+      ),
+      hasLength(1),
+    );
+    expect(
+      telefonIhlalleri(
+        'autofillHints: const [AutofillHints.telephoneNumber]',
+        'lib/src/features/x/ornek.dart',
+      ),
+      hasLength(1),
+    );
+    // 5) ORTAK WIDGET'A etiket vermek ihlal DEGIL.
+    expect(
+      telefonIhlalleri(
+        'TelefonAlani(ktrl: k, etiket: l10n.profilTelefon)',
+        'lib/src/features/x/ornek.dart',
+      ),
+      isEmpty,
+    );
+    // 6) YORUMDAKI ornek bulgu sayilmaz.
     expect(
       telefonIhlalleri(
         '// ornek: TextInputType.phone',
@@ -112,7 +152,7 @@ void main() {
     );
   });
 
-  test('EN AZ YEDI alan paylasilan widgeti kullaniyor', () {
+  test('EN AZ SEKIZ alan paylasilan widgeti kullaniyor', () {
     // Kapsam kilidinin en sinsi bozulma bicimi: desen degisir, tarama
     // hicbir sey bulamaz ve "gecti" der. Sayi, taramanin GERCEKTEN bir
     // seye baktiginin kanitidir. Yedi = sakin(ekle+duzenle), personel,
@@ -124,8 +164,24 @@ void main() {
           .allMatches(_yorumsuz(f.readAsStringSync()))
           .length;
     }
-    expect(alan, greaterThanOrEqualTo(7),
+    // (P248 §2) SEKIZ: + giris ekraninin kimlik alani (kimlik kipi).
+    expect(alan, greaterThanOrEqualTo(8),
         reason: 'telefon alani sayisi beklenenden az — tarama bir seyi '
             'kaciriyor olabilir (bulunan: $alan)');
+  });
+}
+
+/// (P248 §2) GIRIS EKRANININ kimlik alani ORTAK widget'in kimlik kipi.
+///
+/// Giris alani klavyesi `emailAddress` oldugu icin yukaridaki desenlerin
+/// hicbirine takilmaz; kendi `TextFormField`ine geri donerse ulke kodu
+/// yine secilemez olur. Bu yuzden AYRICA kilitli.
+void _girisKilidi() {
+  test('giris ekrani kimlik alani TelefonAlani(kimlik: true)', () {
+    final k = _yorumsuz(File(
+      'lib/src/features/auth/presentation/login_screen.dart',
+    ).readAsStringSync());
+    expect(RegExp(r'TelefonAlani\([^;]*?kimlik:\s*true').hasMatch(k), isTrue);
+    expect(k.contains("Key('giris-kimlik')"), isTrue);
   });
 }

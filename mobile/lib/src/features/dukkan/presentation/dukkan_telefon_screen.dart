@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../core/ui/telefon_alani.dart';
@@ -65,7 +66,10 @@ class _DukkanTelefonState extends ConsumerState<DukkanTelefonScreen> {
   String get _telefon => telefonNormalle(_telefonKtrl.text);
 
   Future<void> _kodIste() async {
-    if (telefonHaneleri(_telefonKtrl.text).length != 10) {
+    // (P248 §2) ULKEYE GORE DENETIM: eskiden "10 hane" sabitti — yani
+    // ulke kodu secilebilse de 11 haneli bir Alman numarasi (+49 151...)
+    // bu kapidan HIC gecemiyordu. Kural artik ortak alaninki.
+    if (telefonHatasi(_telefonKtrl.text) != null) {
       setState(() => _hataKodu = 'telefon_bicimi_gecersiz');
       return;
     }
@@ -136,6 +140,7 @@ class _DukkanTelefonState extends ConsumerState<DukkanTelefonScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: _adKtrl,
+              inputFormatters: GirdiSiniri.sinir(120), // sunucu: auth_uclar ad_soyad
               textCapitalization: TextCapitalization.words,
               decoration: InputDecoration(
                 labelText: t.dukkanAdSoyadAlani,

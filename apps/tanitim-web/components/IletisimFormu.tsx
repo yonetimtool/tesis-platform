@@ -4,6 +4,8 @@ import { useState } from "react";
 
 import { ILETISIM_EPOSTA } from "@/config/site";
 import { HataDurumu } from "./HataDurumu";
+import { TelefonAlani, telefonHataMetni } from "./TelefonAlani";
+import { telefonNormalle } from "@/lib/telefon";
 
 /**
  * (P177 §2) ILETISIM FORMU.
@@ -29,6 +31,12 @@ export function IletisimFormu() {
       setHata("Size dönebilmemiz için e-posta ya da telefon bilgisi gerekiyor.");
       return;
     }
+    // (P248 §2) Iletisim numarasi sabit hat olabilir; istege bagli.
+    const telHata = telefonHataMetni(telefon, false, true);
+    if (telHata) {
+      setHata(telHata);
+      return;
+    }
     setGonderiliyor(true);
     try {
       const yanit = await fetch("/api/iletisim", {
@@ -37,7 +45,7 @@ export function IletisimFormu() {
         body: JSON.stringify({
           ad,
           email: eposta.trim() || null,
-          telefon: telefon.trim() || null,
+          telefon: telefonNormalle(telefon) || null,
           mesaj,
           dil: "tr",
         }),
@@ -89,11 +97,10 @@ export function IletisimFormu() {
           <input id="i-eposta" className="alan" type="email" maxLength={200}
             value={eposta} onChange={(e) => setEposta(e.target.value)} />
         </div>
-        <div>
-          <label className="alan-etiket" htmlFor="i-telefon">Telefon</label>
-          <input id="i-telefon" className="alan" type="tel" maxLength={40}
-            value={telefon} onChange={(e) => setTelefon(e.target.value)} />
-        </div>
+        <TelefonAlani id="i-telefon" etiket="Telefon" sabitHat
+          deger={telefon} onDegisti={setTelefon}
+          etiketSinifi="alan-etiket" kutuSinifi="alan" hataSinifi="alan-hatali"
+          yardimSinifi="alan-yardim" />
       </div>
       <p className="text-kucuk text-soluk">
         E-posta ya da telefondan en az birini yazın; size oradan döneriz.

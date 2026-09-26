@@ -121,12 +121,17 @@ void main() {
     // NOTUN da guncellenmesi gerektigini hatirlatir.
     final g = _oku(_giris);
     expect(g, contains('girisKimlik'));
-    expect(g, contains('TextInputType.emailAddress'));
+    // (P248 §2) Tek alan artik ortak telefon bileseninin KIMLIK kipinde:
+    // rakamla telefon (ulke kutusu + bicim), harf/@ ile e-posta.
+    expect(g, contains('kimlik: true'));
     // Telefon-yalniz alanin izleri geri gelmemeli. ("Cep telefonu"
     // etiketi ve rakam disini yutan bicimlendirici; ikincisi ADIYLA
     // aranmaz cunku ekranin aciklama yorumunda NEDEN kaldirildigi
     // yaziyor ve yazmaya da devam etmeli.)
     expect(g, isNot(contains('ortakCepTelefonu')));
-    expect(g, isNot(contains('inputFormatters')));
+    // (P248 §3) `inputFormatters` artik UZUNLUK siniri icin var
+    // (`GirdiSiniri.sinir`); yasak olan rakam disini YUTAN suzgec.
+    expect(g, isNot(contains('FilteringTextInputFormatter')));
+    expect(g, isNot(contains('digitsOnly')));
   });
 }

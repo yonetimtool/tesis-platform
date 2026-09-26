@@ -3,7 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { TelefonAlani, telefonHataMetni } from "@/components/TelefonAlani";
 import { api, hataMetni, jetonYaz } from "@/lib/istemci";
+import { telefonNormalle } from "@/lib/telefon";
 
 type KodYanit = { gonderildi: boolean; gonderim: string; dev_kod?: string };
 type GirisYanit = { access_token: string; yeni_kayit: boolean };
@@ -28,6 +30,13 @@ export default function Giris() {
   async function kodIste(e: React.FormEvent) {
     e.preventDefault();
     setHata(null);
+    // (P248 §2) GECERSIZ NUMARA ISTEK ATMADAN DURUR (ulke secilmedi,
+    // eksik/fazla hane) — sunucunun 422'si yerine alanin kendi cumlesi.
+    const telHata = telefonHataMetni(telefon, true);
+    if (telHata) {
+      setHata(telHata);
+      return;
+    }
     setBekle(true);
     try {
       // GONDERILEMEDIYSE UC 503 DONER ve `api` HATA FIRLATIR — yani
@@ -38,7 +47,9 @@ export default function Giris() {
       // "kod adimina" geciliyordu; kullanici olmayan bir SMS'i beklerdi.
       const y = await api<KodYanit>("/auth/telefon/kod", {
         metot: "POST",
-        govde: { telefon },
+        // (P248 §2) E.164 — Yonetiyor kullanici kaydiyla AYNI bicim; SSO
+        // koprusu telefonla eslestirdigi icin iki bicim iki hesap demekti.
+        govde: { telefon: telefonNormalle(telefon) },
       });
       setAdim("kod");
       if (y.dev_kod) {
@@ -59,7 +70,7 @@ export default function Giris() {
     try {
       const y = await api<GirisYanit>("/auth/telefon/dogrula", {
         metot: "POST",
-        govde: { telefon, kod, ad_soyad: ad || undefined },
+        govde: { telefon: telefonNormalle(telefon), kod, ad_soyad: ad || undefined },
       });
       jetonYaz(y.access_token);
       yonlendir.push("/panel");
@@ -79,17 +90,17 @@ export default function Giris() {
 
       {adim === "telefon" ? (
         <form onSubmit={kodIste} className="mt-6 space-y-4">
-          <label className="block">
-            <span className="text-sm font-medium">Telefon</span>
-            <input
-              type="tel"
-              required
-              value={telefon}
-              onChange={(e) => setTelefon(e.target.value)}
-              placeholder="05XX XXX XX XX"
-              className="mt-1 w-full rounded border border-[color:var(--dk-cizgi)] px-3 py-2"
-            />
-          </label>
+          {/* (P248 §2) ORTAK TELEFON ALANI: ulke kodu secilir, numara
+              bicimlenir, uzunluk sinirli (yabanci numara girilebilir). */}
+          <TelefonAlani
+            etiket="Telefon"
+            zorunlu
+            deger={telefon}
+            onDegisti={setTelefon}
+            etiketSinifi="block text-sm font-medium"
+            kutuSinifi="mt-1 rounded border border-[color:var(--dk-cizgi)] px-3 py-2"
+            yardimSinifi="mt-1 block text-xs"
+          />
           <button
             type="submit"
             disabled={bekle}

@@ -150,11 +150,13 @@ void main() {
     expect(call.phone, '+905321112203');
     expect(call.password, 'K7MR-2QWX');
     expect(call.rememberMe, isTrue);
-    // (P205 §1) GRUPLAMA KALKTI: `TelefonBicimlendirici` rakam disini
-    // YUTUYORDU — ayni alana e-posta yazilamazdi. Kullanici artik
-    // yazdigini aynen gorur; normallestirme yalniz TASIMADA yapilir
-    // (yukarida olculdu).
-    expect(find.text('05321112203'), findsOneWidget);
+    // (P248 §2) GRUPLAMA GERI GELDI — ama e-postayi YUTMADAN: alan ortak
+    // `TelefonAlani`nin kimlik kipi; rakamla baslayinca ulke kutusu
+    // belirir ve numara diger ekranlardaki gibi bicimlenir (bastaki `0`
+    // ulke kodunun yerini aldigi icin dusar). Harf yazilinca e-postaya
+    // doner — `login_kimlik_telefon_kipi_test.dart` olcuyor.
+    expect(find.text('532 111 22 03'), findsOneWidget);
+    expect(find.byKey(const Key('telefon-ulke')), findsOneWidget);
   });
 
   testWidgets('bos alanlarla giris → dogrulama, cagri yapilmaz',

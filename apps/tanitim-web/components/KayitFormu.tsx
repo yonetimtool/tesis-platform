@@ -5,6 +5,8 @@ import { useState } from "react";
 
 import { APP_ADRESI } from "@/config/site";
 import { HataDurumu } from "./HataDurumu";
+import { TelefonAlani, telefonHataMetni } from "./TelefonAlani";
+import { telefonNormalle } from "@/lib/telefon";
 import { MagazaDugmeleri } from "./MagazaDugmeleri";
 import { SsoDugmeleri } from "./SsoDugmeleri";
 
@@ -124,11 +126,18 @@ export function KayitFormu() {
       setHata("İki parola alanı aynı değil.");
       return;
     }
+    // (P248 §2) Yonetici cep numarasi: ulke secilmis, uzunluk tutmali.
+    const telHata = telefonHataMetni(alanlar.telefon, true);
+    if (telHata) {
+      setHata(telHata);
+      return;
+    }
     const veri = await gonder("/api/kayit/basvuru", {
       ad: alanlar.ad,
       soyad: alanlar.soyad,
       eposta: alanlar.eposta,
-      telefon: alanlar.telefon,
+      // (P248 §2) E.164 — panel kaydiyla AYNI bicim.
+      telefon: telefonNormalle(alanlar.telefon),
       parola: alanlar.parola,
       onay_sozlesme: onaySozlesme,
       onay_kvkk: onayKvkk,
@@ -149,7 +158,7 @@ export function KayitFormu() {
       ad: alanlar.ad,
       soyad: alanlar.soyad,
       eposta: alanlar.eposta,
-      telefon: alanlar.telefon,
+      telefon: telefonNormalle(alanlar.telefon),
       parola: alanlar.parola,
       onay_sozlesme: onaySozlesme,
       onay_kvkk: onayKvkk,
@@ -315,15 +324,14 @@ export function KayitFormu() {
           <p className="alan-yardim">Doğrulama kodu ve Tesis ID bu adrese gider.</p>
         </div>
         <div className="sm:col-span-2">
-          <label className="alan-etiket" htmlFor="telefon">Telefon</label>
-          <input id="telefon" className="alan" required type="tel" autoComplete="tel"
-            placeholder="05xx xxx xx xx"
-            value={alanlar.telefon} onChange={(e) => yaz("telefon", e.target.value)} />
           {/* SMS GONDERILMEZ (§6). Kullaniciya bunu SOYLEMEK gerekiyor:
-              telefon isteyen bir form, dogrulama SMS'i bekletir. */}
-          <p className="alan-yardim">
-            Yalnızca iletişim için. Bu numaraya SMS gönderilmez.
-          </p>
+              telefon isteyen bir form, dogrulama SMS'i bekletir.
+              (P248 §2) ORTAK TELEFON ALANI: ulke kodu secilir. */}
+          <TelefonAlani id="telefon" etiket="Telefon" zorunlu
+            deger={alanlar.telefon} onDegisti={(v) => yaz("telefon", v)}
+            etiketSinifi="alan-etiket" kutuSinifi="alan" hataSinifi="alan-hatali"
+            yardim="Yalnızca iletişim için. Bu numaraya SMS gönderilmez."
+            yardimSinifi="alan-yardim" />
         </div>
         <div>
           <label className="alan-etiket" htmlFor="parola">Parola</label>

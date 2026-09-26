@@ -39,6 +39,7 @@ import {
   ibanTemizle,
 } from "@/lib/iban";
 import { useSorguSecimi } from "@/lib/sorgu-secimi";
+import { ISTEMCI_SINIR, SINIR } from "@/lib/girdi-siniri";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
 /**
@@ -82,6 +83,8 @@ interface Alan {
   etiket: SozlukAnahtari;
   tip: AlanTip;
   zorunlu?: boolean;
+  /** (P248 §2) `tip: "telefon"` icin: sabit hat da kabul. */
+  sabitHat?: boolean;
   secenekler?: string[];
   /** (P218) Secenek degeri -> SOZLUK ANAHTARI.
    *
@@ -118,6 +121,35 @@ interface Alan {
    *  govdesinde YOKTUR; gondermek sessizce yok sayilirdi ve kullanici
    *  daireyi degistirdigini sanirdi. */
   sadeceOlustur?: boolean;
+  /** (P248 §3a) Sunucu `max_length`i; verilmezse `AZAMI_AD`dan, o da
+   *  yoksa SINIR.AD. Ayni ad farkli defterde farkli olabilir (firma adi
+   *  150, daire tipi 60) — bu yuzden alanin yaninda da verilebilir. */
+  azami?: number;
+}
+
+/** (P248 §3a) Alan adina gore sunucu siniri (Kasa/Firma/Personel/Arac/Sayac
+ *  semalari). Sayi/kurus alanlari metin olarak yazilir: ISTEMCI_SINIR.SAYI. */
+const AZAMI_AD: Record<string, number> = {
+  kod: 20, // KasaCreate.kod
+  iban: SINIR.IBAN,
+  banka_adi: SINIR.AD,
+  sube: SINIR.AD,
+  vergi_no: 11,
+  vergi_dairesi: SINIR.AD,
+  email: SINIR.EPOSTA,
+  yetkili_ad: 150,
+  gorev: SINIR.AD,
+  tc: 11,
+  plaka: 30,
+  marka: 50,
+  model: 50,
+  renk: 30,
+  tesisat_no: 50,
+};
+
+function azamiBul(a: { ad: string; tip: string; azami?: number }): number {
+  if (a.tip === "kurus" || a.tip === "sayi") return ISTEMCI_SINIR.SAYI;
+  return a.azami ?? AZAMI_AD[a.ad] ?? SINIR.AD;
 }
 
 interface Defter {
@@ -210,10 +242,14 @@ const DEFTERLER: Defter[] = [
     kaynak: "firmalar",
     baslikAnahtari: "tanimFirmalar",
     alanlar: [
-      { ad: "ad", etiket: "tanimAlanAd", tip: "metin", zorunlu: true, sutun: true },
+      { ad: "ad", etiket: "tanimAlanAd", tip: "metin", zorunlu: true, sutun: true, azami: 150 },
       { ad: "vergi_no", etiket: "tanimAlanVergiNo", tip: "metin", sutun: true },
       { ad: "vergi_dairesi", etiket: "tanimAlanVergiDairesi", tip: "metin" },
-      { ad: "telefon", etiket: "tanimAlanTelefon", tip: "metin", sutun: true },
+      // (P248 §2) FIRMA TELEFONU DA ORTAK BILESENDE. Duz `metin` idi:
+      // rakamlar bitisik, sinirsiz, ulke kodu secilemiyordu. Firma
+      // numarasi cogu zaman SABIT HAT (`0212...`) oldugu icin TR cep on
+      // eki (`5`) aranmaz.
+      { ad: "telefon", etiket: "tanimAlanTelefon", tip: "telefon", sabitHat: true, sutun: true },
       { ad: "email", etiket: "tanimAlanEposta", tip: "metin" },
       { ad: "yetkili_ad", etiket: "tanimAlanYetkili", tip: "metin" },
       { ad: "acilis_bakiye_kurus", etiket: "tanimAlanAcilisBakiye", tip: "kurus" },
@@ -247,7 +283,7 @@ const DEFTERLER: Defter[] = [
     kaynak: "personel-kayitlari",
     baslikAnahtari: "tanimPersonel",
     alanlar: [
-      { ad: "ad", etiket: "tanimAlanAd", tip: "metin", zorunlu: true, sutun: true },
+      { ad: "ad", etiket: "tanimAlanAd", tip: "metin", zorunlu: true, sutun: true, azami: 150 },
       { ad: "gorev", etiket: "tanimAlanGorev", tip: "metin", sutun: true },
       { ad: "tc", etiket: "tanimAlanTc", tip: "metin" },
       { ad: "telefon", etiket: "tanimAlanTelefon", tip: "telefon", sutun: true },
@@ -335,7 +371,7 @@ const DEFTERLER: Defter[] = [
     kaynak: "unit-tipleri",
     baslikAnahtari: "tanimDaireTipleri",
     alanlar: [
-      { ad: "ad", etiket: "tanimAlanAd", tip: "metin", zorunlu: true, sutun: true },
+      { ad: "ad", etiket: "tanimAlanAd", tip: "metin", zorunlu: true, sutun: true, azami: 60 },
       { ad: "varsayilan_aidat_kurus", etiket: "tanimAlanVarsayilanAidat", tip: "kurus", sutun: true },
       { ad: "aktif", etiket: "tanimAlanAktif", tip: "bool", sutun: true },
     ],
@@ -348,7 +384,7 @@ const DEFTERLER: Defter[] = [
     kaynak: "unit-gruplari",
     baslikAnahtari: "tanimDaireGruplari",
     alanlar: [
-      { ad: "ad", etiket: "tanimAlanAd", tip: "metin", zorunlu: true, sutun: true },
+      { ad: "ad", etiket: "tanimAlanAd", tip: "metin", zorunlu: true, sutun: true, azami: 60 },
       { ad: "aktif", etiket: "tanimAlanAktif", tip: "bool", sutun: true },
     ],
   },
@@ -682,7 +718,12 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
         // (P166 §9) GECERSIZ NUMARA ISTEK ATMADAN DURDURULUR. Sunucu
         // `max_length=30` disinda bir sey denetlemiyor: gecersiz numara
         // SESSIZCE kaydolur ve ancak SMS gitmeyince fark edilirdi.
-        const telHata = telefonHataMetni(metin, Boolean(a.zorunlu), t);
+        const telHata = telefonHataMetni(
+          metin,
+          Boolean(a.zorunlu),
+          t,
+          Boolean(a.sabitHat),
+        );
         if (telHata) {
           setFormHata(telHata);
           return;
@@ -855,13 +896,18 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
             // ve `aria-describedby` bagi bilesenin icinde kurulur. Disina
             // ikinci bir `AlanSarmal` koymak, ic ice iki etiket demekti.
             a.tip === "telefon" ? (
-              <TelefonAlani
-                key={a.ad}
-                etiket={t(a.etiket)}
-                zorunlu={Boolean(a.zorunlu)}
-                deger={String(form[a.ad] ?? "")}
-                onDegisti={(v) => setForm({ ...form, [a.ad]: v })}
-              />
+              // (P248 §2) IKI SUTUN GENISLIGINDE: yarim sutunda ulke kutusu
+              // (8rem) numara kutusunu `555 44 33`e sikistiriyordu
+              // (Playwright ekran goruntusu, 1280 px).
+              <div key={a.ad} className="sm:col-span-2">
+                <TelefonAlani
+                  etiket={t(a.etiket)}
+                  zorunlu={Boolean(a.zorunlu)}
+                  sabitHat={Boolean(a.sabitHat)}
+                  deger={String(form[a.ad] ?? "")}
+                  onDegisti={(v) => setForm({ ...form, [a.ad]: v })}
+                />
+              </div>
             ) : (
             <AlanSarmal key={a.ad} etiket={t(a.etiket)} ipucu={a.ipucu ? t(a.ipucu) : undefined}>
               {() =>
@@ -914,6 +960,7 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
                     aria-label={t(a.etiket)}
                     data-test={`tanim-banka-${a.ad}`}
                     list="p206-banka-listesi"
+                    maxLength={azamiBul(a)}
                     value={String(form[a.ad] ?? "")}
                     onChange={(e) => setForm({ ...form, [a.ad]: e.target.value })}
                   />
@@ -944,6 +991,7 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
                   aria-label={t(a.etiket)}
                   type={girisTipi(a.tip)}
                   inputMode={girisModu(a.tip)}
+                  maxLength={azamiBul(a)}
                   value={String(form[a.ad] ?? "")}
                   onChange={(e) => setForm({ ...form, [a.ad]: e.target.value })}
                 />
@@ -996,20 +1044,20 @@ function Ayarlar() {
       <div className="grid gap-3 sm:grid-cols-3">
         <AlanSarmal etiket={t("tanimAlanEvrakSeri")}>
   {(b) => (
-    <Alan {...b} value={seri}
+    <Alan {...b} value={seri} maxLength={5 /* sunucu: MuhasebeAyarUpdate.evrak_seri ^[A-Z]{1,5}$ */}
             onChange={(e) => setForm({ ...form, evrak_seri: e.target.value.toUpperCase() })} />
   )}
 </AlanSarmal>
         <AlanSarmal etiket={t("tanimAlanEvrakSira")}>
   {(b) => (
-    <Alan {...b} inputMode="numeric"
+    <Alan {...b} inputMode="numeric" maxLength={ISTEMCI_SINIR.SAYI}
             value={sira}
             onChange={(e) => setForm({ ...form, evrak_sira: e.target.value })} />
   )}
 </AlanSarmal>
         <AlanSarmal etiket={t("tanimAlanParaBirimi")}>
   {(b) => (
-    <Alan {...b} value={para}
+    <Alan {...b} value={para} maxLength={3 /* sunucu: MuhasebeAyarUpdate.para_birimi ^[A-Z]{3}$ */}
             onChange={(e) => setForm({ ...form, para_birimi: e.target.value.toUpperCase() })} />
   )}
 </AlanSarmal>

@@ -30,9 +30,11 @@
  */
 import { useMemo } from "react";
 
+import { TelefonAlani } from "@/components/TelefonAlani";
 import { Tablo, TabloBasligi, Td, Th, Tr } from "@/components/ui";
 import { Dugme } from "@/components/ui";
 import { useT } from "@/lib/i18n/kullan";
+import { ISTEMCI_SINIR } from "@/lib/girdi-siniri";
 
 export type AktarimAlani = { kod: string; zorunlu: boolean; ornek: string };
 export type SatirHatasi = { satir_no: number; alan: string | null; hata: string };
@@ -43,6 +45,18 @@ const KUCUK = "kucuk" as const;
 const BASLANGIC_SATIR = 5;
 const AYRAC = " · ";
 const IKI_NOKTA = ": ";
+
+/**
+ * (P248 §2) TELEFON SUTUNU — `telefon`, `sakin_telefon` ...
+ *
+ * Bu hucreler ORTAK telefon bileseniyle cizilir (ulke kodu secilir,
+ * numara bicimlenir, uzunluk sinirli). Duz `<input>` iken rakamlar bitisik
+ * ve sinirsiz yaziliyordu; yabanci numara ancak `+` elle yazilirsa
+ * girilebiliyordu.
+ */
+export function telefonSutunuMu(kod: string): boolean {
+  return /(^|_)telefon$/.test(kod);
+}
 
 function bosSatir(alanlar: AktarimAlani[]): Record<string, string> {
   return Object.fromEntries(alanlar.map((a) => [a.kod, ""]));
@@ -162,9 +176,34 @@ export function AktarimTablosu({
                     const hatali = satirHatalari.some(
                       (h) => h.alan === a.kod || h.alan === null,
                     );
+                    if (telefonSutunuMu(a.kod)) {
+                      return (
+                        <Td key={a.kod}>
+                          {/* EN AZ GENISLIK: tablo sutunlari icerige gore
+                              daraliyor; olculdu (1600 px ekran), numara
+                              kutusu 4 karaktere iniyordu ("7 82"). Ornek
+                              (`+90...`) yer tutucu YAPILMADI: ulke kodu
+                              ayri kutuda, numara kutusunda `+90` gormek
+                              yaniltirdi. */}
+                          <div style={{ minWidth: "17rem" }}>
+                            <TelefonAlani
+                              cercevesiz
+                              etiket={`${a.kod} ${i + 2}`}
+                              dataTest={`aktarim-hucre-${i}-${a.kod}`}
+                              deger={satir[a.kod] ?? ""}
+                              // Sunucunun buldugu hata kenarlikta; cumlesi
+                              // tablonun altinda (asagidaki liste).
+                              hata={hatali ? a.kod : null}
+                              onPaste={(e) => yapistir(e, i, j)}
+                              onDegisti={(v) => hucreYaz(i, a.kod, v)}
+                            />
+                          </div>
+                        </Td>
+                      );
+                    }
                     return (
                       <Td key={a.kod}>
-                        <input
+                        <input maxLength={ISTEMCI_SINIR.HUCRE}
                           className="odak-ic h-10 w-full px-2 outline-none"
                           data-test={`aktarim-hucre-${i}-${a.kod}`}
                           aria-label={`${a.kod} ${i + 2}`}

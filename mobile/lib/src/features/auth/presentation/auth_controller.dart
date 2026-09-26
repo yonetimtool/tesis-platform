@@ -387,7 +387,11 @@ class AuthController extends Notifier<AuthState> {
       // TELEFON: mevcut yol AYNEN korunur (ilk giris akisi orada) ve
       // telefon GLOBAL BENZERSIZ oldugu icin tesis secimi cikmaz.
       await loginPhone(
-        phone: telefonNormalle(k), password: password, rememberMe: rememberMe);
+        // (P248 §2) Kimlik alani ortak telefon widget'inda; telefonsa E.164,
+        // ulke cozulemediyse HAM metin (sunucu karar verir, 401 jenerik).
+        phone: kimlikGonderimDegeri(k),
+        password: password,
+        rememberMe: rememberMe);
       return null;
     }
     state = state.copyWith(

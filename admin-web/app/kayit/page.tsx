@@ -15,10 +15,10 @@ import {
 import { YonetioLogo } from "@/components/YonetioLogo";
 import { ParolaAlani } from "@/components/ParolaAlani";
 import { EpostaAlani } from "@/components/EpostaAlani";
-import { TelefonAlani } from "@/components/TelefonAlani";
+import { TelefonAlani, telefonHataMetni } from "@/components/TelefonAlani";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
-import { telefonHatasi, telefonNormalle } from "@/lib/telefon";
+import { telefonNormalle } from "@/lib/telefon";
 
 /* (P233 §3) YEREL TELEFON ALANI KALDIRILDI.
  *
@@ -358,9 +358,12 @@ export default function KayitSayfasi() {
     e.preventDefault();
     // Telefon HÂLÂ bir alan (arka uc yoneticiden iletisim numarasi ister)
     // ama artik bir giris anahtari degil — yalniz bicim dogrulanir.
-    const telHata = telefonHatasi(telefon);
+    // (P248 §2) HATA METNI ORTAK BILESENDEN: eskiden `ulkeYok`/`tasma`/
+    // `bos` da "numara eksik" diye soyleniyordu — ulke kodunu secmeyen
+    // kullanici neyi duzeltecegini bilemiyordu.
+    const telHata = telefonHataMetni(telefon, true, t);
     if (telHata) {
-      setHata(telHata === "gecersizOnEk" ? t("telefonHataOnEk") : t("telefonHataEksik"));
+      setHata(telHata);
       return;
     }
     if (yol === "parola" && parola !== parola2) {
@@ -698,7 +701,7 @@ export default function KayitSayfasi() {
           ) : null}
           <label className="block">
             <span className="text-sm font-medium">{t("kayitAd")}</span>
-            <input
+            <input maxLength={80 /* sunucu: YoneticiBasvuruRequest.ad */}
               className={`${inputCls} mt-1`}
               value={ad}
               onChange={(e) => setAd(e.target.value)}
@@ -711,7 +714,7 @@ export default function KayitSayfasi() {
           </label>
           <label className="block">
             <span className="text-sm font-medium">{t("kayitSoyad")}</span>
-            <input
+            <input maxLength={80 /* sunucu: YoneticiBasvuruRequest.soyad */}
               className={`${inputCls} mt-1`}
               value={soyad}
               onChange={(e) => setSoyad(e.target.value)}
@@ -845,7 +848,7 @@ export default function KayitSayfasi() {
               <h2 className="font-medium">{t("kayitTesisAdBaslik")}</h2>
               <label className="block">
                 <span className="text-sm font-medium">{t("kayitTesisAd")}</span>
-                <input
+                <input maxLength={120 /* sunucu: YoneticiTesisRequest.tesis_ad */}
                   className={`${inputCls} mt-1`}
                   value={tesisAdi}
                   onChange={(e) => setTesisAdi(e.target.value)}
@@ -863,7 +866,7 @@ export default function KayitSayfasi() {
           ) : (
             <label className="block">
               <span className="text-sm font-medium">{t("kayitTesisKodu")}</span>
-              <input
+              <input maxLength={40 /* sunucu: RolEpostaBaslaRequest.tesis_kodu */}
                 className={`${inputCls} mt-1`}
                 value={tesisKodu}
                 onChange={(e) => setTesisKodu(e.target.value)}
@@ -904,7 +907,7 @@ export default function KayitSayfasi() {
           </p>
           <label className="block">
             <span className="text-sm font-medium">{t("kayitKodAlani")}</span>
-            <input
+            <input maxLength={8 /* sunucu: YoneticiDogrulaRequest.kod */}
               className={`${inputCls} mt-1 tracking-widest`}
               value={kod}
               onChange={(e) => setKod(e.target.value)}

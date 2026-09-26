@@ -149,7 +149,10 @@ describe("giris formu isaretlemesi (parola yoneticisi icin)", () => {
     // yoneticisi icin gereken kararli ad artik `username`, ki bu
     // zaten `autocomplete="username"` ile ayni sozlesmeyi kurar.
     expect(kaynak).toContain('name="username"');
-    expect(kaynak).toMatch(/autoComplete="username"/);
+    // (P248 §2) Kimlik alani artik ORTAK telefon bileseninin kimlik
+    // kipi; `autocomplete="username"` orada kurulur ve DOM'da olculur
+    // (bkz. `p248-telefon-her-yerde.dom.test.ts`).
+    expect(kaynak).toMatch(/<TelefonAlani[\s\S]*?\bkimlik\b/);
 
     // PAROLA ALANI.
     expect(kaynak).toContain('name="password"');

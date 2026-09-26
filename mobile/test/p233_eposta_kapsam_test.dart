@@ -48,6 +48,10 @@ List<String> epostaIhlalleri(String kaynak, String yol) {
   if (yol.contains('core/ui/eposta_')) return const [];
   // GİRİŞ EKRANI MUAF — gerekçe dosya başında.
   if (yol.contains('auth/presentation/login_screen.dart')) return const [];
+  // (P248 §2) GIRIS KIMLIK ALANI ortak telefon bileseninin KIMLIK kipine
+  // tasindi (tek alan: e-posta VEYA telefon). Oradaki `emailAddress`
+  // klavyesi girisin tek alaninindir, bir form e-posta alani degil.
+  if (yol.contains('core/ui/telefon_alani_widget.dart')) return const [];
   final temiz = _yorumsuz(kaynak);
   final bulgular = <String>[];
   for (final m in RegExp(r'TextInputType\.emailAddress').allMatches(temiz)) {

@@ -219,7 +219,14 @@ enum TelefonHatasi {
 }
 
 /// [ham] için hata kimliği; `null` = geçerli.
-TelefonHatasi? telefonHatasi(String ham, {bool zorunlu = true}) {
+///
+/// (P248 §2) [sabitHat]: firma/işletme numarası — TR cep ön eki (`5`)
+/// ARANMAZ. Kişiye ait alanlarda verilmez (panel ikiziyle aynı).
+TelefonHatasi? telefonHatasi(
+  String ham, {
+  bool zorunlu = true,
+  bool sabitHat = false,
+}) {
   final p = telefonParcala(ham);
   // (P227 §3) TAŞMA ÖNCE SORULUR: numara kırpıldığı için aşağıdaki
   // denetimlerin hepsi GEÇERLİ görünür ve kullanıcı hatayı HİÇ görmezdi.
@@ -230,7 +237,7 @@ TelefonHatasi? telefonHatasi(String ham, {bool zorunlu = true}) {
   // için elimizde güvenilir veri yok; uydurulmuş bir kural gerçek bir
   // numarayı reddederdi.
   final onEk = p.ulke!.mobilOnEk;
-  if (onEk != null && !p.haneler.startsWith(onEk)) {
+  if (!sabitHat && onEk != null && !p.haneler.startsWith(onEk)) {
     return TelefonHatasi.gecersizOnEk;
   }
   if (p.haneler.length < p.ulke!.enAz) return TelefonHatasi.eksik;
@@ -240,3 +247,25 @@ TelefonHatasi? telefonHatasi(String ham, {bool zorunlu = true}) {
 /// TR ön ek kuralı — geriye dönük ad (P123'ten beri çağrılıyor).
 bool telefonOnEkiGecerli(String haneler) =>
     haneler.isEmpty || haneler.startsWith('5');
+
+/// (P248 §2) GİRİŞ KİMLİĞİ TELEFON MU — tek alanlı giriş (P205) için.
+///
+/// KARAR: alan RAKAM, `+` ya da `(` ile başlayıp YALNIZ telefon
+/// karakterleri taşıyorsa (rakam, boşluk, `+ ( ) - .`) telefon moduna
+/// geçilir; harf ya da `@` görülünce e-posta modunda kalınır. Panel ikizi
+/// `admin-web/lib/telefon.ts` `kimlikTelefonMu` ile AYNI kural.
+bool kimlikTelefonMu(String metin) {
+  final s = metin.trim();
+  if (s.isEmpty) return false;
+  return RegExp(r'^[\d+(]').hasMatch(s) &&
+      RegExp(r'^[\d\s+().\-]+$').hasMatch(s);
+}
+
+/// (P248 §2) Giriş ucuna gidecek kimlik: telefonsa E.164, değilse kırpılmış
+/// metin. Ülke çözülemezse HAM metin gider — sunucu son kararı verir.
+String kimlikGonderimDegeri(String ham) {
+  final s = ham.trim();
+  if (!kimlikTelefonMu(s)) return s;
+  final e164 = telefonNormalle(s);
+  return e164.isEmpty ? s : e164;
+}

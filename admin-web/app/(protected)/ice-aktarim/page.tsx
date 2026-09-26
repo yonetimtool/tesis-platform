@@ -20,9 +20,13 @@ import { useT } from "@/lib/i18n/kullan";
 import {
   AktarimTablosu,
   bosTablo,
+  telefonSutunuMu,
 } from "@/components/ice-aktarim/aktarim-tablosu";
+import { telefonNormalle } from "@/lib/telefon";
 import { useSorguSecimi } from "@/lib/sorgu-secimi";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
+import { ISTEMCI_SINIR } from "@/lib/girdi-siniri";
+import { csvHucresi, csvMetniIndir } from "@/lib/csv";
 
 /**
  * (P154 / Asama 8) ICE AKTARIM — dort tur, TEK akis.
@@ -305,16 +309,10 @@ function ornekSatirlari(tur: Tur): string[][] {
     const satirlar = [
       aciklama,
       tur.alanlar.map((a) => a.kod).join(";"),
-      ...ornekSatirlari(tur).map((r) => r.join(";")),
+      // (P248 §3c) Ornek hucreler de ortak kacistan gecer.
+      ...ornekSatirlari(tur).map((r) => r.map((c) => csvHucresi(c, ";")).join(";")),
     ].join("\r\n");
-    const bag = URL.createObjectURL(
-      new Blob(["\uFEFF" + satirlar], { type: "text/csv;charset=utf-8" }),
-    );
-    const a = document.createElement("a");
-    a.href = bag;
-    a.download = `yonetio-${tur.kod}-sablon.csv`;
-    a.click();
-    URL.revokeObjectURL(bag);
+    csvMetniIndir(`yonetio-${tur.kod}-sablon.csv`, "\uFEFF" + satirlar);
   }
 
   /** Eslemeye gore satirlari BIZIM alan kodlarimizla kurar. */
@@ -333,7 +331,18 @@ function ornekSatirlari(tur: Tur): string[][] {
   /** (P243 §3) TABLO KIPI: esleme YOK — sutunlar zaten alan kodlari. */
   function tabloGovdesi() {
     return tabloSatirlari
-      .map((satir, i) => ({ satir_no: i + 2, degerler: satir }))
+      .map((satir, i) => ({
+        satir_no: i + 2,
+        // (P248 §2) TELEFON HUCRESI E.164 GIDER — kullanici ekleme
+        // ekraniyla AYNI bicim. Ulke cozulemezse HAM deger gider: sunucu
+        // satiri `telefon_bicimi` ile isaretler (sessizce duzeltilmez).
+        degerler: Object.fromEntries(
+          Object.entries(satir).map(([k, v]) => [
+            k,
+            telefonSutunuMu(k) ? telefonNormalle(v) || v.trim() : v,
+          ]),
+        ),
+      }))
       // TAMAMEN BOS SATIRLAR ATILIR: tablo bes bos satirla aciliyor ve
       // kullanici ucunu doldurup gonderirse iki bos satir icin hata
       // gormemeli.
@@ -507,7 +516,7 @@ function ornekSatirlari(tur: Tur): string[][] {
         </AlanSarmal>
         <AlanSarmal etiket={t("iceAktarimVeri")} ipucu={t("iceAktarimVeriIpucu")}>
             {(b) => (
-              <CokSatir {...b} rows={4} value={ham}
+              <CokSatir maxLength={ISTEMCI_SINIR.YAPISTIRMA} {...b} rows={4} value={ham}
             onChange={(e) => {
               setHam(e.target.value);
               setSonuc(null);

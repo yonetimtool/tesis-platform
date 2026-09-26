@@ -154,7 +154,13 @@ void main() {
     await tester.pumpAndSettle(); // async prefill tamamlansin
 
     // Yalniz kimlik alani dolu; parola alani BOS.
-    expect(find.widgetWithText(TextFormField, '05321112203'), findsOneWidget);
+    // (P248 §2) Kimlik alani ortak `TelefonAlani`nin kimlik kipi: saklanan
+    // numara ON-DOLDURULUR ve diger ekranlardaki gibi BICIMLI gorunur
+    // (ulke kutusunda +90). Eskiden widget degeri yalniz `initState`te
+    // okuyordu; eszamansiz on-doldurma kutuya hic yansimazdi — bu test onu da
+    // olcuyor.
+    expect(find.widgetWithText(TextFormField, '532 111 22 03'), findsOneWidget);
+    expect(find.byKey(const Key('telefon-ulke')), findsOneWidget);
     expect(find.widgetWithText(TextFormField, 'sifre-123'), findsNothing);
     // "Beni hatirla" kutusu otomatik isaretli.
     expect(

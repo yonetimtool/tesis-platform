@@ -169,7 +169,8 @@ def kod_dogru_mu(kod: str, telefon: str, ozet: str) -> bool:
 
 
 def telefon_normalize(ham: str) -> str:
-    """Telefonu tek bicime cevirir. Doner: '+90XXXXXXXXXX'.
+    """Telefonu tek bicime cevirir. Doner: E.164 (`+90XXXXXXXXXX`; acik
+    ulke koduyla gelen yabanci numara kendi koduyla — P248 §2).
 
     NEDEN ZORUNLU: `dukkan_kullanici.telefon` UNIQUE ve kimligin
     CAPASI. "0555 111 22 33", "555 111 22 33" ve "+905551112233"
@@ -179,6 +180,23 @@ def telefon_normalize(ham: str) -> str:
     Ayrica Yonetiyor'dan gelen telefonla eslesme buna bagli: koprüden
     gelen numara farkli bicimdeyse SSO her seferinde YENI hesap acardi.
     """
+    # (P248 §2) ACIK ULKE KODU (`+49...`, `0049...`): E.164 olarak kabul
+    # edilir — Yonetiyor'un `normalize_phone`u ile AYNI kural (koprude ayni
+    # kisi ayni anahtari tasimali). Eskiden asagidaki TR kurallari her
+    # girdiye uygulaniyordu: `+4915123456789` (13 hane) 422 aliyordu ve
+    # `+4712345678` (NO, 10 hane) SESSIZCE `+904712345678` oluyordu —
+    # yabanci numarayla Dukkan'a giris imkansizdi.
+    temiz = (ham or "").strip()
+    # `(+44) 7911...` — bilesenlerin GORUNEN bicimi de acik ulke kodudur.
+    if temiz.lstrip("( ").startswith("+") or temiz.startswith("00"):
+        from ..security import normalize_phone
+
+        try:
+            return normalize_phone(temiz)
+        except ValueError:
+            raise HTTPException(
+                status_code=422, detail="telefon_bicimi_gecersiz"
+            ) from None
     rakam = "".join(c for c in ham if c.isdigit())
     if rakam.startswith("90") and len(rakam) == 12:
         return f"+{rakam}"

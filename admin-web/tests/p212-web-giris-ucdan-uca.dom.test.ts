@@ -92,7 +92,12 @@ it("TELEFONLA giris: govdede `kimlik` gider, TESIS KODU GITMEZ", async () => {
     expect(cagrilar.some((c) => c.url === "/api/auth/login")).toBe(true),
   );
   const post = cagrilar.find((c) => c.url === "/api/auth/login")!;
-  expect(post.govde.kimlik).toBe("05431992904");
+  // (P248 §2) DAVRANIS DEGISIMI: alan artik ORTAK telefon bileseninin
+  // kimlik kipinde; yazilan `0543...` TR'ye cozulur ve E.164 gider —
+  // kullanici ekleme ekraninin gonderdigi bicimle AYNI. Sunucu
+  // (`normalize_phone`) iki bicimi de kabul ediyordu; tek bicim, ayni
+  // numaranin iki yazimla dolasmasini bitirir.
+  expect(post.govde.kimlik).toBe("+905431992904");
   expect(post.govde.password).toBe("CokGizliParola1!");
   // Kullanicinin bildirdigi hata tam olarak bu alanin BEKLENMESINDEN
   // dogmustu; form onu GONDERMIYOR ve gondermemeli.

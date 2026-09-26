@@ -3,7 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { TelefonAlani, telefonHataMetni } from "@/components/TelefonAlani";
 import { api, hataMetni, jetonAl } from "@/lib/istemci";
+import { telefonNormalle } from "@/lib/telefon";
 
 export default function IsletmeKaydi() {
   const yonlendir = useRouter();
@@ -20,11 +22,23 @@ export default function IsletmeKaydi() {
   async function gonder(e: React.FormEvent) {
     e.preventDefault();
     setHata(null);
+    // (P248 §2) Isletme numarasi SABIT HAT olabilir (TR `5` aranmaz).
+    const telHata = telefonHataMetni(telefon, true, true);
+    if (telHata) {
+      setHata(telHata);
+      return;
+    }
     setBekle(true);
     try {
       const y = await api<{ id: string }>("/isletme", {
         metot: "POST",
-        govde: { ad, telefon, aciklama: aciklama || undefined },
+        govde: {
+          ad,
+          // (P248 §2) E.164 — dogrulama ucu (`telefon_normalize`) ve
+          // yorum eslesmesi ayni bicimi bekler.
+          telefon: telefonNormalle(telefon),
+          aciklama: aciklama || undefined,
+        },
       });
       yonlendir.push(`/panel/${y.id}`);
     } catch (h) {
@@ -55,20 +69,17 @@ export default function IsletmeKaydi() {
             className="mt-1 w-full rounded border border-[color:var(--dk-cizgi)] px-3 py-2"
           />
         </label>
-        <label className="block">
-          <span className="text-sm font-medium">İşletme telefonu *</span>
-          <input
-            type="tel"
-            required
-            value={telefon}
-            onChange={(e) => setTelefon(e.target.value)}
-            placeholder="05XX XXX XX XX"
-            className="mt-1 w-full rounded border border-[color:var(--dk-cizgi)] px-3 py-2"
-          />
-          <span className="mt-1 block text-xs text-[color:var(--dk-metin-soluk)]">
-            Müşterilerin arayacağı numara. Doğrulanması gerekir.
-          </span>
-        </label>
+        <TelefonAlani
+          etiket="İşletme telefonu *"
+          zorunlu
+          sabitHat
+          deger={telefon}
+          onDegisti={setTelefon}
+          etiketSinifi="block text-sm font-medium"
+          kutuSinifi="mt-1 rounded border border-[color:var(--dk-cizgi)] px-3 py-2"
+          yardim="Müşterilerin arayacağı numara. Doğrulanması gerekir."
+          yardimSinifi="mt-1 block text-xs text-[color:var(--dk-metin-soluk)]"
+        />
         <label className="block">
           <span className="text-sm font-medium">Kısa tanıtım</span>
           <textarea
