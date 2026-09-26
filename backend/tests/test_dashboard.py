@@ -9,9 +9,16 @@ import pytest
 from app.scheduler.service import detect_missed
 
 UTC = timezone.utc
-PAST_START = datetime(2029, 12, 31, 0, 0, tzinfo=UTC)
-PAST_END = datetime(2029, 12, 31, 1, 0, tzinfo=UTC)
-NOW_AFTER = datetime(2030, 1, 1, 0, 0, tzinfo=UTC)
+# (P248) PENCERELER GERCEK GECMISTE. Eskiden 2029 tarihliydi: saat basi
+# calisan `generate_patrol_windows` AKTIF planin GELECEKTEKI, takvime uymayan
+# 'bekliyor' pencerelerini siler (E2E/P239 — dogru urun davranisi) ve test
+# penceresini `detect_missed`ten once silebiliyordu. Dev DB'de tesis sayisi
+# artinca uretecin tek gecisi dakikalar surdu ve cakisma sik kirmizi verdi.
+# Gercek gecmisteki pencereye uretec dokunmaz (`pencere_baslangic > now`).
+_SIMDI = datetime.now(UTC).replace(minute=0, second=0, microsecond=0)
+PAST_START = _SIMDI - timedelta(days=2)
+PAST_END = PAST_START + timedelta(hours=1)
+NOW_AFTER = PAST_START + timedelta(days=1)
 
 
 def _headers(client, slug, cred):

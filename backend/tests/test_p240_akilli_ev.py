@@ -49,7 +49,15 @@ class SahteHA:
         while self._calis:
             try:
                 baglanti, _ = self.sok.accept()
-            except (socket.timeout, OSError):
+            except socket.timeout:
+                # (P248) BEKLEMEYE DEVAM: zaman asimi dongunun `_calis`
+                # bayragini yoklamasi icindir, sunucuyu OLDURMEZ. Eskiden
+                # `return` ediyordu: istek 5 sn'den gec gelirse (dev DB'de
+                # binlerce tesisi dolasan `tum_tenantlar_icin` gibi) sahte
+                # sunucu yok oluyor ve kopru "ulasilamiyor" aliyordu —
+                # yuke bagli, koda bagli olmayan kirmizi.
+                continue
+            except OSError:
                 return
             try:
                 ham = baglanti.recv(8192).decode("utf-8", "replace")
