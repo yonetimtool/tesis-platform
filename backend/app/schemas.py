@@ -2131,7 +2131,7 @@ class RolKayitBaslaRequest(BaseModel):
     rol: KayitRolu
     tesis_kodu: str = Field(min_length=4, max_length=32, examples=["OLTU-260715"])
     telefon: str = Field(min_length=5, max_length=32, examples=["+905321112203"])
-    daire_no: str | None = Field(default=None, max_length=32)
+    daire_no: str | None = Field(default=None, max_length=_G.DAIRE_NO)
     blok: str | None = Field(default=None, max_length=32)
 
     @model_validator(mode="after")
@@ -2564,13 +2564,14 @@ class VardiyaTopluOut(BaseModel):
 class VardiyaDilim(BaseModel):
     """Bir gunun TEK bir vardiya dilimi."""
 
-    ad: str = Field(..., min_length=1, max_length=40)
+    # (P248 gozden gecirme) 40 -> 60: "Gece Vardiyası (Hafta Sonu Nöbeti)".
+    ad: str = Field(..., min_length=1, max_length=60)
     baslangic: time
     bitis: time
 
 
 class VardiyaKalibiCreate(BaseModel):
-    ad: str = Field(..., min_length=1, max_length=60)
+    ad: str = Field(..., min_length=1, max_length=_G.AD)
     #: EN AZ BIR, EN FAZLA ALTI dilim. Alti, saatlik nobet gibi bir
     #: kaliba bile yeter; sinirsiz birakmak tek istekle yuzlerce
     #: vardiya uretilmesine kapi acardi.
@@ -2908,7 +2909,7 @@ class VisitorCreate(BaseModel):
     """
 
     unit_id: uuid.UUID | None = None
-    unit_no: str | None = Field(None, min_length=1, max_length=50)
+    unit_no: str | None = Field(None, min_length=1, max_length=_G.DAIRE_NO)
     ziyaretci_ad: str = Field(..., min_length=1, max_length=200)
     # Guvenligin sectigi TEK hedef sakin: bildirim + gorunurluk + karar YALNIZ
     # onda. O dairenin AKTIF sakini olmali (sunucu dogrular; degilse 422).
@@ -2931,7 +2932,7 @@ class VisitorUpdate(BaseModel):
     notlar ACIKCA null gonderilirse temizlenir; alan hic yoksa dokunulmaz."""
 
     unit_id: uuid.UUID | None = None
-    unit_no: str | None = Field(None, min_length=1, max_length=50)
+    unit_no: str | None = Field(None, min_length=1, max_length=_G.DAIRE_NO)
     ziyaretci_ad: str | None = Field(None, min_length=1, max_length=200)
     target_resident_user_id: uuid.UUID | None = None
     notlar: str | None = Field(None, min_length=1, max_length=1000)
@@ -2990,7 +2991,7 @@ class KargoCreate(BaseModel):
     visitor ile ayni desen). foto_key /uploads/presign akisindan gelir."""
 
     unit_id: uuid.UUID | None = None
-    unit_no: str | None = Field(None, min_length=1, max_length=50)
+    unit_no: str | None = Field(None, min_length=1, max_length=_G.DAIRE_NO)
     firma: str = Field(..., min_length=1, max_length=200)
     # Opsiyonel paket fotografi: /uploads/presign ile yuklenen obje anahtari.
     foto_key: str | None = Field(None, max_length=_G.DOSYA_ANAHTARI)
@@ -3064,7 +3065,7 @@ class UnitAccessRequestCreate(BaseModel):
     SEFERLIK gormek icin. Daire unit_id VEYA unit_no ile verilir (tam biri)."""
 
     unit_id: uuid.UUID | None = None
-    unit_no: str | None = Field(None, min_length=1, max_length=50)
+    unit_no: str | None = Field(None, min_length=1, max_length=_G.DAIRE_NO)
 
     @model_validator(mode="after")
     def _tek_daire_referansi(self) -> "UnitAccessRequestCreate":
@@ -3465,7 +3466,7 @@ class SiteKuraliListResponse(BaseModel):
 class DisHizmetCreate(BaseModel):
     """Guvenilir esnaf/hizmet kisisi — yonetici ekler. tur: Cilingir/Elektrik/..."""
 
-    tur: str = Field(..., min_length=1, max_length=80, examples=["Çilingir"])
+    tur: str = Field(..., min_length=1, max_length=_G.AD, examples=["Çilingir"])
     ad: str = Field(..., min_length=1, max_length=120)
     soyad: str = Field(..., min_length=1, max_length=120)
     telefon: str = Field(..., min_length=1, max_length=40)
@@ -3475,7 +3476,7 @@ class DisHizmetCreate(BaseModel):
 class DisHizmetUpdate(BaseModel):
     """Kismi guncelleme — verilmeyen alan degismez; en az bir alan gerekir."""
 
-    tur: str | None = Field(None, min_length=1, max_length=80)
+    tur: str | None = Field(None, min_length=1, max_length=_G.AD)
     ad: str | None = Field(None, min_length=1, max_length=120)
     soyad: str | None = Field(None, min_length=1, max_length=120)
     telefon: str | None = Field(None, min_length=1, max_length=40)
@@ -4606,7 +4607,8 @@ DuesDurum = Literal["basarili", "bekliyor", "iptal"]
 #: Tanim adi: SERBEST metin (1+0, dubleks, "Dükkan"), yalniz uzunluk sinirli.
 #: Desen KOYULMADI — kullanicinin yazacagi etiketi tahmin etmek, "1+1,5" ya da
 #: "stüdyo" diyen siteyi disarida birakirdi.
-_TANIM_AD = Field(..., min_length=1, max_length=60)
+# (P248 gozden gecirme) 60 -> 100: "Dubleks Çatı Katı (Bahçe Katlı)".
+_TANIM_AD = Field(..., min_length=1, max_length=_G.AD)
 
 
 class UnitGrupCreate(BaseModel):
@@ -4615,7 +4617,7 @@ class UnitGrupCreate(BaseModel):
 
 
 class UnitGrupUpdate(BaseModel):
-    ad: str | None = Field(None, min_length=1, max_length=60)
+    ad: str | None = Field(None, min_length=1, max_length=_G.AD)
     aktif: bool | None = None
 
     @model_validator(mode="after")
@@ -4650,7 +4652,7 @@ class UnitTipCreate(BaseModel):
 
 
 class UnitTipUpdate(BaseModel):
-    ad: str | None = Field(None, min_length=1, max_length=60)
+    ad: str | None = Field(None, min_length=1, max_length=_G.AD)
     varsayilan_aidat_kurus: int | None = Field(None, ge=0)
     aktif: bool | None = None
 
@@ -4720,21 +4722,29 @@ class UnitOut(BaseModel):
     updated_at: datetime | None = None
 
 
-# Daire no: harf + sayi + tire serbest kombinasyon ("A-12", "B3", "12");
-# bosluk/ozel karakter kabul edilmez (A5).
-_UNIT_NO_PATTERN = r"^[A-Za-z0-9-]+$"
-# Blok etiketi: kisa alfanumerik ("A", "B1"); tire/bosluk yok.
-_BLOK_PATTERN = r"^[A-Za-z0-9]+$"
+# (P248 §3 gozden gecirme) GERCEK ADLAR SIGMALI. Eski desenler yalniz ASCII
+# harf/rakam kabul ediyordu: "Güneş Blok", "Menekşe Blok", "A1 Blok Doğu",
+# "Dükkan 2" UZUNLUKTAN BAGIMSIZ reddediliyordu. `\w` Unicode'dur (Turkce
+# harfler dahil). Ic bosluk/tire (blokta nokta ve kesme de) serbest; bas ve
+# son harf/rakam — basta/sonda bosluklu "ayni" iki blok olusmasin. EGIK
+# CIZGI YOK: daire no `/units/by-no/{no}` yolunda gecer.
+# IKISI AYNI KUME: toplu olusturma daire no'yu "{blok}-{n}" diye KURAR
+# (`routers/units.py`); blokta izinli her karakter daire no'da da izinli
+# olmali, yoksa gecerli bir blok duzenlenemeyen daireler uretirdi.
+# Daire no: "A-12", "B3", "12", "Dükkan 2", "Ç-3", "Güneş Blok-12".
+# Blok: "A", "B1", "Güneş Blok", "A1 Blok Doğu", "C-2", "St. Paul".
+_UNIT_NO_PATTERN = r"^\w(?:[\w .'-]*\w)?$"
+_BLOK_PATTERN = _UNIT_NO_PATTERN
 # Yerlesim sinirlari (makul araliklar): kat -5 (bodrum) .. 200; sira 0 .. 999.
 _KAT_MIN, _KAT_MAX = -5, 200
 _SIRA_MIN, _SIRA_MAX = 0, 999
 
 
 class UnitCreate(BaseModel):
-    no: str = Field(..., min_length=1, max_length=50, pattern=_UNIT_NO_PATTERN)
+    no: str = Field(..., min_length=1, max_length=_G.DAIRE_NO, pattern=_UNIT_NO_PATTERN)
     # Blok ZORUNLU (canli site kurali): her yeni daire bir bloga baglanir. MEVCUT
     # blok-suz daireler (varsa) korunur — yalniz OLUSTURMA bloklu olmali.
-    blok: str = Field(..., min_length=1, max_length=8, pattern=_BLOK_PATTERN)
+    blok: str = Field(..., min_length=1, max_length=_G.BLOK, pattern=_BLOK_PATTERN)
     kat: int | None = Field(None, ge=_KAT_MIN, le=_KAT_MAX)
     sira: int | None = Field(None, ge=_SIRA_MIN, le=_SIRA_MAX)
     metrekare: float | None = None
@@ -4755,7 +4765,7 @@ class UnitBulkCreate(BaseModel):
     1..kat_basi_daire. En fazla 500 daire/istek."""
 
     # Blok ZORUNLU (toplu olusturma da bloga baglanir). no = '{blok}-{n}'.
-    blok: str = Field(..., min_length=1, max_length=8, pattern=_BLOK_PATTERN)
+    blok: str = Field(..., min_length=1, max_length=_G.BLOK, pattern=_BLOK_PATTERN)
     kat_sayisi: int = Field(..., ge=1, le=_KAT_MAX)
     kat_basi_daire: int = Field(..., ge=1, le=_SIRA_MAX)
     baslangic_no: int = Field(..., ge=0, le=999999)
@@ -4812,8 +4822,8 @@ class UnitBulkResult(BaseModel):
 
 
 class UnitUpdate(BaseModel):
-    no: str | None = Field(None, min_length=1, max_length=50, pattern=_UNIT_NO_PATTERN)
-    blok: str | None = Field(None, min_length=1, max_length=8, pattern=_BLOK_PATTERN)
+    no: str | None = Field(None, min_length=1, max_length=_G.DAIRE_NO, pattern=_UNIT_NO_PATTERN)
+    blok: str | None = Field(None, min_length=1, max_length=_G.BLOK, pattern=_BLOK_PATTERN)
     kat: int | None = Field(None, ge=_KAT_MIN, le=_KAT_MAX)
     sira: int | None = Field(None, ge=_SIRA_MIN, le=_SIRA_MAX)
     metrekare: float | None = None
@@ -4837,7 +4847,7 @@ class UnitLayoutUpdate(BaseModel):
     (null = 'yerlesimden cikar'); en az bir alan gerekir. Anonimlik: yerlesim
     hicbir sikayetci verisi tasimaz."""
 
-    blok: str | None = Field(None, min_length=1, max_length=8, pattern=_BLOK_PATTERN)
+    blok: str | None = Field(None, min_length=1, max_length=_G.BLOK, pattern=_BLOK_PATTERN)
     kat: int | None = Field(None, ge=_KAT_MIN, le=_KAT_MAX)
     sira: int | None = Field(None, ge=_SIRA_MIN, le=_SIRA_MAX)
 
@@ -4858,12 +4868,12 @@ class BlockCreate(BaseModel):
     """Bina blogu — yonetici/admin tanimlar (Rev-2 editoru iskeleti). `ad`
     kisa alfanumerik (blok etiketi); kat_sayisi opsiyonel."""
 
-    ad: str = Field(..., min_length=1, max_length=8, pattern=_BLOK_PATTERN)
+    ad: str = Field(..., min_length=1, max_length=_G.BLOK, pattern=_BLOK_PATTERN)
     kat_sayisi: int | None = Field(None, ge=0, le=_KAT_MAX)
 
 
 class BlockUpdate(BaseModel):
-    ad: str | None = Field(None, min_length=1, max_length=8, pattern=_BLOK_PATTERN)
+    ad: str | None = Field(None, min_length=1, max_length=_G.BLOK, pattern=_BLOK_PATTERN)
     kat_sayisi: int | None = Field(None, ge=0, le=_KAT_MAX)
 
     @model_validator(mode="after")
@@ -5880,7 +5890,7 @@ class VehiclePassCreate(BaseModel):
     arac_tanim: str | None = Field(None, min_length=1, max_length=120,
                                    examples=["BMW Siyah"])
     unit_id: uuid.UUID | None = None
-    unit_no: str | None = Field(None, min_length=1, max_length=50)
+    unit_no: str | None = Field(None, min_length=1, max_length=_G.DAIRE_NO)
     ziyaretci_mi: bool = False
     # Girilmezse sunucu saati (now()) damgalanir; geriye donuk kayit icin acik
     # deger verilebilir (gelecege damga 422 — router dogrular).
@@ -6326,7 +6336,9 @@ class GelirGiderTanimListResponse(BaseModel):
 
 # -------------------------------- firma ------------------------------------- #
 class FirmaCreate(BaseModel):
-    ad: str = Field(..., min_length=1, max_length=150)
+    # (P248 gozden gecirme) 150 -> 200: ticari unvan uzun olabilir
+    # ("… Danışmanlık Temizlik Güvenlik Hizmetleri Sanayi ve Ticaret A.Ş.").
+    ad: str = Field(..., min_length=1, max_length=_G.FIRMA_UNVAN)
     vergi_no: str | None = Field(None, pattern=_VERGI_NO_PATTERN)
     vergi_dairesi: str | None = Field(None, max_length=100)
     telefon: str | None = Field(None, max_length=30)
@@ -6348,7 +6360,7 @@ class FirmaCreate(BaseModel):
 
 
 class FirmaUpdate(BaseModel):
-    ad: str | None = Field(None, min_length=1, max_length=150)
+    ad: str | None = Field(None, min_length=1, max_length=_G.FIRMA_UNVAN)
     vergi_no: str | None = Field(None, pattern=_VERGI_NO_PATTERN)
     vergi_dairesi: str | None = Field(None, max_length=100)
     telefon: str | None = Field(None, max_length=30)
@@ -8583,7 +8595,7 @@ class TanitimIletisimIstek(BaseModel):
     """
 
     ad: str = Field(..., min_length=2, max_length=150)
-    email: str | None = Field(None, max_length=200)
+    email: str | None = Field(None, max_length=_G.EPOSTA)
     telefon: str | None = Field(None, max_length=40)
     mesaj: str = Field(..., min_length=5, max_length=5000)
     dil: str | None = Field(None, max_length=5)
@@ -9220,8 +9232,8 @@ class YoneticiBasvuruRequest(BaseModel):
     Sunucu onlari BASLIKTAN okur (`X-Istemci-Ip`, BFF ekler).
     """
 
-    ad: str = Field(min_length=2, max_length=80, examples=["Ayşe"])
-    soyad: str = Field(min_length=2, max_length=80, examples=["Yılmaz"])
+    ad: str = Field(min_length=2, max_length=_G.AD, examples=["Ayşe"])
+    soyad: str = Field(min_length=2, max_length=_G.AD, examples=["Yılmaz"])
     eposta: EmailStr = Field(examples=["ayse@ornek.com"])
     telefon: str = Field(min_length=5, max_length=32, examples=["+905321112203"])
     #: AYNI POLITIKA — `validate_password_strength`. Kendi `min_length`i

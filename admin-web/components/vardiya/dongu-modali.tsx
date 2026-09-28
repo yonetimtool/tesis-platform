@@ -32,6 +32,7 @@ import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { AsyncIs } from "@/lib/tipler";
+import { SINIR } from "@/lib/girdi-siniri";
 
 const IKINCIL = "ikincil" as const;
 const BIRINCIL = "birincil" as const;
@@ -370,7 +371,7 @@ export function DonguModali({
             </div>
             <AlanSarmal etiket={t("donguAd")}>
               {(baglar) => (
-                <Alan maxLength={60 /* sunucu: VardiyaKalibiCreate.ad */} {...baglar} value={ad} data-test="dongu-ad"
+                <Alan maxLength={SINIR.AD /* sunucu: VardiyaKalibiCreate.ad */} {...baglar} value={ad} data-test="dongu-ad"
                   onChange={(e) => setAd(e.target.value)} />
               )}
             </AlanSarmal>
@@ -380,7 +381,7 @@ export function DonguModali({
                 <div key={i} className="flex flex-wrap items-end gap-2">
                   <AlanSarmal etiket={t("donguDilimAd")}>
                     {(baglar) => (
-                      <div className="w-32"><Alan maxLength={40 /* sunucu: VardiyaDilim.ad */} {...baglar} value={d.ad}
+                      <div className="w-32"><Alan maxLength={60 /* sunucu: VardiyaDilim.ad */} {...baglar} value={d.ad}
                         onChange={(e) => setDilimler((ds) => ds.map((x, j) => (j === i ? { ...x, ad: e.target.value } : x)))} /></div>
                     )}
                   </AlanSarmal>

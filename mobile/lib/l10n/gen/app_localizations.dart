@@ -3159,7 +3159,7 @@ abstract class AppLocalizations {
   /// No description provided for @binaBlokEtiketiYardim.
   ///
   /// In tr, this message translates to:
-  /// **'Kısa alfanumerik (örn. A, B1) — tire yok'**
+  /// **'Blok adı (örn. A, B1, Menekşe Blok)'**
   String get binaBlokEtiketiYardim;
 
   /// No description provided for @binaDaireNoGerekli.
@@ -3207,7 +3207,7 @@ abstract class AppLocalizations {
   /// No description provided for @binaDaireNoYardim.
   ///
   /// In tr, this message translates to:
-  /// **'Alfanumerik + tire (örn. A-12, B3, 12)'**
+  /// **'Harf, sayı, boşluk ve tire (örn. A-12, B3, Dükkan 2)'**
   String get binaDaireNoYardim;
 
   /// No description provided for @binaSira.
@@ -3273,7 +3273,7 @@ abstract class AppLocalizations {
   /// No description provided for @binaTopluBaslik.
   ///
   /// In tr, this message translates to:
-  /// **'Toplu daire ekle — Blok {blok}'**
+  /// **'Toplu daire ekle — {blok}'**
   String binaTopluBaslik(Object blok);
 
   /// No description provided for @binaTopluBaslikBloksuz.
@@ -9830,7 +9830,7 @@ abstract class AppLocalizations {
   /// No description provided for @binaKatSilOzetOnay.
   ///
   /// In tr, this message translates to:
-  /// **'{blok} bloğu {kat}. kat silinecek: {daire} daire, {sakin} sakin ve {kayit} bağlı kayıt kalıcı olarak gider. Bu işlem geri alınamaz.'**
+  /// **'“{blok}” — {kat}. kat silinecek: {daire} daire, {sakin} sakin ve {kayit} bağlı kayıt kalıcı olarak gider. Bu işlem geri alınamaz.'**
   String binaKatSilOzetOnay(
     String blok,
     int kat,

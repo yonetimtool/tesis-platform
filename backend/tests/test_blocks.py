@@ -82,7 +82,11 @@ def test_blok_dup_ad_409(bworld, client):
 def test_blok_dogrulama_422(bworld, client):
     slug = bworld["slug_a"]
     admin = _headers(client, slug, bworld["admin_a"])
-    for bad in ({}, {"ad": ""}, {"ad": "A-1"}, {"ad": "cok-uzun-blok"}, {"ad": "A", "kat_sayisi": -1}):
+    # (P248) "A-1" ve bosluklu/Turkce adlar ARTIK GECERLI (gercek blok
+    # adlari). Gecersiz kalanlar: bos, bas/son bosluk ya da tire, egik cizgi,
+    # 50'yi asan uzunluk.
+    for bad in ({}, {"ad": ""}, {"ad": " A"}, {"ad": "A "}, {"ad": "-A"},
+                {"ad": "A/1"}, {"ad": "x" * 51}, {"ad": "A", "kat_sayisi": -1}):
         assert client.post("/blocks", headers=admin, json=bad).status_code == 422, bad
 
 

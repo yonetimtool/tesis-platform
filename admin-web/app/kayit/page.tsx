@@ -19,6 +19,7 @@ import { TelefonAlani, telefonHataMetni } from "@/components/TelefonAlani";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import { telefonNormalle } from "@/lib/telefon";
+import { SINIR } from "@/lib/girdi-siniri";
 
 /* (P233 §3) YEREL TELEFON ALANI KALDIRILDI.
  *
@@ -701,7 +702,7 @@ export default function KayitSayfasi() {
           ) : null}
           <label className="block">
             <span className="text-sm font-medium">{t("kayitAd")}</span>
-            <input maxLength={80 /* sunucu: YoneticiBasvuruRequest.ad */}
+            <input maxLength={SINIR.AD /* sunucu: YoneticiBasvuruRequest.ad */}
               className={`${inputCls} mt-1`}
               value={ad}
               onChange={(e) => setAd(e.target.value)}
@@ -714,7 +715,7 @@ export default function KayitSayfasi() {
           </label>
           <label className="block">
             <span className="text-sm font-medium">{t("kayitSoyad")}</span>
-            <input maxLength={80 /* sunucu: YoneticiBasvuruRequest.soyad */}
+            <input maxLength={SINIR.AD /* sunucu: YoneticiBasvuruRequest.soyad */}
               className={`${inputCls} mt-1`}
               value={soyad}
               onChange={(e) => setSoyad(e.target.value)}

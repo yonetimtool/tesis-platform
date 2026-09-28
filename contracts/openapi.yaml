@@ -17790,13 +17790,13 @@ components:
       type: object
       required: [ad]
       properties:
-        ad: { type: string, minLength: 1, maxLength: 8, pattern: "^[A-Za-z0-9]+$" }
+        ad: { type: string, minLength: 1, maxLength: 50, pattern: "^\\w(?:[\\w .'-]*\\w)?$" }
         kat_sayisi: { type: integer, nullable: true, minimum: 0, maximum: 200 }
     BlockUpdate:
       type: object
       minProperties: 1
       properties:
-        ad: { type: string, minLength: 1, maxLength: 8, pattern: "^[A-Za-z0-9]+$" }
+        ad: { type: string, minLength: 1, maxLength: 50, pattern: "^\\w(?:[\\w .'-]*\\w)?$" }
         kat_sayisi: { type: integer, nullable: true, minimum: 0, maximum: 200 }
     BlockList:
       type: object
@@ -20859,7 +20859,7 @@ components:
         blok:
           type: string
           nullable: true
-          maxLength: 8
+          maxLength: 50
           description: >
             Sema duzeyinde opsiyonel, IS KURALI olarak zorunlu: bos ise
             satir REDDEDILIR ama diger satirlar islenir. Sema
@@ -24079,7 +24079,7 @@ components:
       required: [no]
       properties:
         no: { type: string }
-        blok: { type: string, nullable: true, maxLength: 8, pattern: "^[A-Za-z0-9]+$" }
+        blok: { type: string, nullable: true, maxLength: 50, pattern: "^\\w(?:[\\w .'-]*\\w)?$" }
         kat: { type: integer, nullable: true, minimum: -5, maximum: 200 }
         sira: { type: integer, nullable: true, minimum: 0, maximum: 999 }
         metrekare: { type: number, format: double, nullable: true }
@@ -24101,7 +24101,7 @@ components:
         ardisik (kat kat). En fazla 500 daire/istek.
       required: [kat_sayisi, kat_basi_daire, baslangic_no]
       properties:
-        blok: { type: string, nullable: true, maxLength: 8, pattern: "^[A-Za-z0-9]+$" }
+        blok: { type: string, nullable: true, maxLength: 50, pattern: "^\\w(?:[\\w .'-]*\\w)?$" }
         kat_sayisi: { type: integer, minimum: 1, maximum: 200 }
         kat_basi_daire: { type: integer, minimum: 1, maximum: 999 }
         baslangic_no: { type: integer, minimum: 0, maximum: 999999 }
@@ -24153,7 +24153,7 @@ components:
       minProperties: 1
       properties:
         no: { type: string }
-        blok: { type: string, nullable: true, maxLength: 8, pattern: "^[A-Za-z0-9]+$" }
+        blok: { type: string, nullable: true, maxLength: 50, pattern: "^\\w(?:[\\w .'-]*\\w)?$" }
         kat: { type: integer, nullable: true, minimum: -5, maximum: 200 }
         sira: { type: integer, nullable: true, minimum: 0, maximum: 999 }
         metrekare: { type: number, format: double, nullable: true }
@@ -24176,7 +24176,7 @@ components:
         admin+yonetici (PATCH /units/{id}/layout). Alan null gonderilirse
         yerlesimden cikarilir; en az bir alan gerekir.
       properties:
-        blok: { type: string, nullable: true, maxLength: 8, pattern: "^[A-Za-z0-9]+$" }
+        blok: { type: string, nullable: true, maxLength: 50, pattern: "^\\w(?:[\\w .'-]*\\w)?$" }
         kat: { type: integer, nullable: true, minimum: -5, maximum: 200 }
         sira: { type: integer, nullable: true, minimum: 0, maximum: 999 }
 

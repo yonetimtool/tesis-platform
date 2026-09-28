@@ -1905,8 +1905,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get binaBlokEtiketi => 'رمز المبنى';
 
   @override
-  String get binaBlokEtiketiYardim =>
-      'أحرف وأرقام قصيرة (مثال: A، B1) — بدون شرطة';
+  String get binaBlokEtiketiYardim => 'اسم المبنى (مثال: A، B1، برج الشمس)';
 
   @override
   String get binaDaireNoGerekli => 'مطلوب رقم الوحدة (مثال: A-12، 12).';
@@ -1936,7 +1935,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get binaDaireNo => 'رقم الوحدة';
 
   @override
-  String get binaDaireNoYardim => 'أحرف وأرقام + شرطة (مثال: A-12، B3، 12)';
+  String get binaDaireNoYardim =>
+      'أحرف وأرقام ومسافات وشرطة (مثال: A-12، محل 2)';
 
   @override
   String get binaSira => 'الترتيب';
@@ -1982,7 +1982,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String binaTopluBaslik(Object blok) {
-    return 'إضافة وحدات بالجملة — المبنى $blok';
+    return 'إضافة وحدات بالجملة — $blok';
   }
 
   @override
@@ -5819,7 +5819,7 @@ class AppLocalizationsAr extends AppLocalizations {
     int sakin,
     int kayit,
   ) {
-    return 'سيتم حذف الطابق $kat من المبنى $blok: $daire شقة و$sakin ساكن و$kayit سجلًا مرتبطًا نهائيًا. لا يمكن التراجع.';
+    return 'سيتم حذف الطابق $kat من «$blok»: $daire شقة و$sakin ساكن و$kayit سجلًا مرتبطًا نهائيًا. لا يمكن التراجع.';
   }
 
   @override

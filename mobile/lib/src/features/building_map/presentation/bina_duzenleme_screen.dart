@@ -1127,10 +1127,14 @@ class _BlockFormState extends ConsumerState<_BlockForm> {
           const SizedBox(height: 12),
           TextField(
             controller: _ad,
-            maxLength: 8,
-            textCapitalization: TextCapitalization.characters,
+            // (P248) Gercek blok ADLARI: "Güneş Blok", "A1 Blok Doğu".
+            // Sunucu deseniyle ayni karakter kumesi (`blokKarakteri`);
+            // buyuk harfe ZORLAMA yok — "GÜNEŞ BLOK" kullanicinin yazdigi
+            // degil.
+            maxLength: GirdiSiniri.blok,
+            textCapitalization: TextCapitalization.words,
             inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+              FilteringTextInputFormatter.allow(GirdiSiniri.blokKarakteri),
             ],
             decoration: InputDecoration(
               labelText: context.l10n.binaBlokEtiketi,
@@ -1338,9 +1342,9 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
                   deger.text.trim().isNotEmpty && onizleme != deger.text.trim();
               return TextField(
                 controller: _no,
-                maxLength: 50,
+                maxLength: GirdiSiniri.daireNo,
                 inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9-]')),
+                  FilteringTextInputFormatter.allow(GirdiSiniri.blokKarakteri),
                 ],
                 decoration: InputDecoration(
                   labelText: l10n.binaDaireNo,

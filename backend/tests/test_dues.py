@@ -50,15 +50,15 @@ def test_unit_no_alfanumerik_kabul_gecersiz_red(client, world):
         assert r.json()["no"] == beklenen
         client.delete(f"/units/{r.json()['id']}", headers=admin)
 
-    # gecersiz formatlar -> 422 (bosluk, ozel karakter, bos); blok gecerli => 422 no'dan
-    for no in ("A 12", "A#12", "12!", " ", ""):
+    # gecersiz formatlar -> 422 (bas/son bosluk, egik cizgi, ozel karakter, bos); blok gecerli => 422 no'dan
+    for no in ("A/12", "A#12", "12!", " ", "", " A", "A "):
         r = client.post("/units", headers=admin, json={"no": no, "blok": "A"})
         assert r.status_code == 422, f"{no!r}: {r.status_code} {r.text}"
 
     # guncellemede de ayni kural
     u = _new_unit(client, admin)
     assert (
-        client.patch(f"/units/{u['id']}", headers=admin, json={"no": "B 7"}).status_code
+        client.patch(f"/units/{u['id']}", headers=admin, json={"no": "B/7"}).status_code
         == 422
     )
 

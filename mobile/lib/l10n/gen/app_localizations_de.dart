@@ -1786,8 +1786,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get binaBlokEtiketi => 'Blockbezeichnung';
 
   @override
-  String get binaBlokEtiketiYardim =>
-      'Kurz alphanumerisch (z. B. A, B1) — kein Bindestrich';
+  String get binaBlokEtiketiYardim => 'Blockname (z. B. A, B1, Haus Linde)';
 
   @override
   String get binaDaireNoGerekli =>
@@ -1821,7 +1820,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get binaDaireNoYardim =>
-      'Alphanumerisch + Bindestrich (z. B. A-12, B3, 12)';
+      'Buchstaben, Ziffern, Leerzeichen und Bindestrich (z. B. A-12, Laden 2)';
 
   @override
   String get binaSira => 'Position';
@@ -1867,7 +1866,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String binaTopluBaslik(Object blok) {
-    return 'Wohnungen im Block anlegen — Block $blok';
+    return 'Wohnungen anlegen — $blok';
   }
 
   @override
@@ -5736,7 +5735,7 @@ class AppLocalizationsDe extends AppLocalizations {
     int sakin,
     int kayit,
   ) {
-    return 'Etage $kat in Block $blok wird gelöscht: $daire Wohnungen, $sakin Bewohner und $kayit verknüpfte Datensätze werden dauerhaft entfernt. Nicht rückgängig zu machen.';
+    return 'Etage $kat in „$blok“ wird gelöscht: $daire Wohnungen, $sakin Bewohner und $kayit verknüpfte Datensätze werden dauerhaft entfernt. Nicht rückgängig zu machen.';
   }
 
   @override

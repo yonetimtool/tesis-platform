@@ -665,7 +665,7 @@
   "binaBlokDuzenle": "Blok düzenle",
   "binaYeniBlok": "Yeni blok",
   "binaBlokEtiketi": "Blok etiketi",
-  "binaBlokEtiketiYardim": "Kısa alfanumerik (örn. A, B1) — tire yok",
+  "binaBlokEtiketiYardim": "Blok adı (örn. A, B1, Menekşe Blok)",
   "binaDaireNoGerekli": "Daire no gerekli (örn. A-12, 12).",
   "binaKatSiraTamSayi": "Kat ve sıra tam sayı olmalı.",
   "binaDaireNoZatenVar": "Bu daire no zaten kayıtlı.",
@@ -677,7 +677,7 @@
   "binaDaireDuzenleBaslik": "Daire {no} — düzenle",
   "binaYeniDaire": "Yeni daire · {blok}",
   "binaDaireNo": "Daire no",
-  "binaDaireNoYardim": "Alfanumerik + tire (örn. A-12, B3, 12)",
+  "binaDaireNoYardim": "Harf, sayı, boşluk ve tire (örn. A-12, B3, Dükkan 2)",
   "binaSira": "Sıra",
   "binaSiraYardim": "Kattaki konum",
   "binaEnFazla500": "En fazla 500 daire (şu an {n}).",
@@ -704,7 +704,7 @@
     }
   },
   "binaEklenemedi": "Eklenemedi. Tekrar deneyin.",
-  "binaTopluBaslik": "Toplu daire ekle — Blok {blok}",
+  "binaTopluBaslik": "Toplu daire ekle — {blok}",
   "binaTopluBaslikBloksuz": "Toplu daire ekle — Bloksuz",
   "binaTopluAciklama": "Numaralar başlangıçtan itibaren ardışık, kat kat dolar. Var olanlar atlanır.",
   "binaKatSayisi": "Kat sayısı",
@@ -2568,7 +2568,7 @@
       }
     }
   },
-  "binaKatSilOzetOnay": "{blok} bloğu {kat}. kat silinecek: {daire} daire, {sakin} sakin ve {kayit} bağlı kayıt kalıcı olarak gider. Bu işlem geri alınamaz.",
+  "binaKatSilOzetOnay": "“{blok}” — {kat}. kat silinecek: {daire} daire, {sakin} sakin ve {kayit} bağlı kayıt kalıcı olarak gider. Bu işlem geri alınamaz.",
   "@binaKatSilOzetOnay": {
     "placeholders": {
       "blok": {

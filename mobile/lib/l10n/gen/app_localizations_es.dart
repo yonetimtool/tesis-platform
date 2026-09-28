@@ -1791,7 +1791,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get binaBlokEtiketiYardim =>
-      'Alfanumérico corto (ej. A, B1) — sin guiones';
+      'Nombre del bloque (p. ej. A, B1, Bloque Sol)';
 
   @override
   String get binaDaireNoGerekli =>
@@ -1823,7 +1823,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get binaDaireNo => 'Número de unidad';
 
   @override
-  String get binaDaireNoYardim => 'Alfanumérico + guion (ej. A-12, B3, 12)';
+  String get binaDaireNoYardim =>
+      'Letras, dígitos, espacios y guiones (p. ej. A-12, Local 2)';
 
   @override
   String get binaSira => 'Posición';
@@ -1869,7 +1870,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String binaTopluBaslik(Object blok) {
-    return 'Añadir en lote — Bloque $blok';
+    return 'Añadir en lote — $blok';
   }
 
   @override
@@ -5720,7 +5721,7 @@ class AppLocalizationsEs extends AppLocalizations {
     int sakin,
     int kayit,
   ) {
-    return 'Se eliminará la planta $kat del bloque $blok: $daire viviendas, $sakin residentes y $kayit registros vinculados se borrarán permanentemente. No se puede deshacer.';
+    return 'Se eliminará la planta $kat de «$blok»: $daire viviendas, $sakin residentes y $kayit registros vinculados se borrarán permanentemente. No se puede deshacer.';
   }
 
   @override

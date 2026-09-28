@@ -346,7 +346,9 @@ def test_SONLANDIR_yalniz_o_kisinin_gelecegini_iptal_eder(
     assert ali and max(ali) < kes
     veli = [t for t, b, d, *_ in _satirlar(owner_conn, world["a"], ekip[1]) if d == "planli"]
     assert max(veli) > kes, "otekilerin dongusu surer"
-    o = _beat(world["a"], dt.date.today() + dt.timedelta(days=5))
+    # Beat gunu `bas`a gore: ilk uretim `max(bugun, bas) + 61`e kadar gider;
+    # `today + 5` pazartesi/sali kosumunda (bas = bugun + 6/7) ufku ASMAZDI.
+    o = _beat(world["a"], bas + dt.timedelta(days=5))
     assert o["atama"] == 2
 
 

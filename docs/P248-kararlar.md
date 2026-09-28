@@ -215,6 +215,82 @@ uzunluğu §2'nin ortak bileşeninden geliyor.
 - Veriyi kırpan bir göç bilinçli olarak yazılmadı, çünkü veri kaybı
   demek.
 
+### (a-ek) Sınırların gerçek kullanım gözüyle gözden geçirilmesi
+
+**Kullanıcı itirazı:** "Blok adı sınırı 8 karakter — çok dar. 'Güneş
+Blok', 'Menekşe Blok', 'A1 Blok Doğu' gibi gerçek blok adları sığmıyor."
+
+**Ölçüm: sorun yalnızca uzunluk değildi.** Blok deseni
+(`^[A-Za-z0-9]+$`) boşluğu ve Türkçe harfi de reddediyordu. "Güneş Blok"
+uzunluktan bağımsız olarak hiç girilemiyordu. Daire no deseni de aynı
+durumdaydı ("Dükkan 2", "Ç-3" girilemiyordu).
+
+**Kural.** Her alan için gerçek kullanımda görülebilecek en uzun değer
+düşünüldü; sınır ondan geniş seçildi. Sınır güvenlik içindir (gövde
+şişirme, depolama), kullanıcıyı engellemek için değil.
+
+**Desen kararı (blok ve daire no).**
+
+- Desen: `^\w(?:[\w .'-]*\w)?$`.
+  - Unicode harf ve rakam kabul ediliyor (Türkçe dahil).
+  - İçeride boşluk, nokta, kesme ve tire olabiliyor.
+  - Baştaki ve sondaki karakter harf ya da rakam olmalı. Böylece " A" ile
+    "A" iki ayrı blok olamaz.
+- **Eğik çizgi yok.** Daire no `/units/by-no/{no}` yolunda geçiyor.
+- **İkisi aynı küme.** Toplu oluşturma daire no'yu `{blok}-{n}` diye
+  kuruyor. Blokta izinli her karakter daire no'da da izinli olmalı; yoksa
+  geçerli bir blok, bir daha düzenlenemeyen daireler üretir.
+
+**Aynı turda düzeltilen iki bağlı kusur.**
+
+- **Önek tespiti.** Blok öneki ilk tireden bölünüyordu. Tireli bir blokta
+  ("C-2") "C-2-5" numarası "C" bloğunu iddia ediyor sanılıyordu. Artık
+  numaranın başındaki kayıtlı blok adları aranıyor ve **en uzunu**
+  kazanıyor: "C" ve "C-2" ikisi de kayıtlıysa "C-2-7", "C-2"ye aittir.
+- **Arayüz metinleri.** "{blok} Blok", "Blok {blok}" ve "{blok} bloğu"
+  şablonları kısa bir kod varsayıyordu. Ad "Güneş Blok" olunca "Güneş Blok
+  Blok" görünürdü. Web ve mobilde 7 dilde "Blok: {blok}" ve tırnaklı ad
+  biçimine geçildi.
+- İpucu ve hata metinleri ("kısa alfanumerik", "Türkçe harf olmaz") yeni
+  kurala göre yeniden yazıldı. Mobil blok alanı artık büyük harfe
+  zorlamıyor.
+
+**Değişen sınırlar**
+
+| Alan | Eski → yeni | Gerçekçi en uzun örnek | Gerekçe |
+|---|---|---|---|
+| Blok adı (blok, daire, toplu oluşturma, sakin ekleme, süzgeçler) | 8 / 32 → **50** | "Güneş Vadisi Evleri 3. Etap Doğu" (32) | Gerçek blok adları; desen de Unicode'a açıldı |
+| Daire no | 50 → **60** | "Menekşe Blok Doğu-12"; en kötü durum: 50 karakterlik blok + tire + sayı | Toplu oluşturmanın ürettiği numara her zaman sığmalı |
+| Daire grubu / daire tipi adı | 60 → **100** | "Dubleks Çatı Katı (Bahçe Katlı, Teraslı)" (41) | DB CHECK de gevşetildi (göç 0156) |
+| Vardiya kalıbı adı | 60 → **100** | "Gece–Gündüz 12/36 İki Haftalık Rotasyon (Kış)" (45) | Genel ad sınırıyla aynı |
+| Vardiya dilim adı | 40 → **60** | "Gece Vardiyası (Hafta Sonu Nöbeti)" (34) | Izgarada görünür; 60 yeterli |
+| Yönetici başvurusu ad / soyad | 80 → **100** | Uzun birleşik ad ya da çift soyad | Genel ad sınırıyla aynı |
+| Dış hizmet türü | 80 → **100** | "Asansör Bakım ve Periyodik Kontrol Hizmetleri" (46) | — |
+| Firma adı (ticari unvan) | 150 → **200** | "… Danışmanlık Temizlik Güvenlik Hizmetleri Sanayi ve Ticaret Anonim Şirketi" (~95) | Unvanlar uzun olabilir; DB CHECK gevşetildi (göç 0156) |
+| Tanıtım formu e-posta | 200 → **254** | RFC 5321 üst sınırı | Diğer tüm e-posta alanlarıyla aynı |
+| Web dış hizmet ad / soyad / tür (istemci) | 80 / 80 / 60 → **120 / 120 / 100** | — | İstemci sunucudan **dardı**; eşitlendi |
+
+**Gözden geçirilip yeterli bulunanlar**
+
+| Alan | Sınır | Gerçekçi en uzun örnek |
+|---|---|---|
+| Kişi adı soyadı (sakin, kullanıcı, personel, firma yetkilisi) | 150 | "Muhammed Mustafa Abdurrahman Karaosmanoğlu Yıldırımhan" (~55) |
+| Genel ad (kamera, demirbaş, kontrol noktası, bütçe kategorisi, aidat planı, akıllı ev cihazı) | 100–200 | "B Blok Otopark Girişi Kamerası – Kuzey Kapı" (44) |
+| Tesis adı | 120 | "Güneş Vadisi Evleri Sitesi Yönetim Kurulu" (41) |
+| Başlık (duyuru, talep, anket, etkinlik, hatırlatma) | 200 | "Su kesintisi: 14 Ekim Salı 09.00–17.00 arası A ve B bloklarda planlı bakım" (~75) |
+| Kısa açıklama (aidat planı, bütçe hedefi, düzenli gider, açılış fişi) | 500 | Tek satırlık muhasebe açıklaması |
+| Not / açıklama (demirbaş, talep sonucu, görev notu, panik kapanış) | 2000 | Birkaç paragraf |
+| Kargo / ziyaretçi / rezervasyon notu | 1000 | Kısa not |
+| Uzun açıklama (görev, etkinlik) ve duyuru gövdesi | 5000 | Birkaç sayfa |
+| Site kuralı / karar defteri metni | 10 000 / 20 000 | Tüzük maddeleri |
+| Adres | 500 | "Atatürk Mah. Cumhuriyet Cad. No: 123/4 … Ataşehir/İstanbul 34750" (~110) |
+| E-posta | 254 | RFC 5321 |
+| Telefon (ham giriş) | 32 | "+44 7911 123456" (15) + biçim karakterleri; E.164 en fazla 16 |
+| Plaka | 30–64 | "34 ABC 1234" (11) |
+| Kargo firması / ziyaretçi adı | 200 | — |
+| Arama kutusu | 100 | — |
+| IBAN | 42 | 34 karakter + boşluklar |
+
 ### (b) SQL enjeksiyonu
 
 "1=1" gibi kalıplar süzülmüyor. Savunma parametreli sorgudur.

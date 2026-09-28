@@ -351,7 +351,7 @@ class _HizmetFormState extends ConsumerState<_HizmetForm> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _tur,
-              inputFormatters: GirdiSiniri.sinir(80), // sunucu: DisHizmetCreate.tur
+              inputFormatters: GirdiSiniri.sinir(GirdiSiniri.ad), // sunucu: DisHizmetCreate.tur
               enabled: !_busy,
               textCapitalization: TextCapitalization.words,
               decoration: InputDecoration(

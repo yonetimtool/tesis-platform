@@ -48,6 +48,7 @@ import { jsonFetcher } from "@/lib/fetcher";
 import { TelefonAlani, telefonHataMetni } from "@/components/TelefonAlani";
 import { useT } from "@/lib/i18n/kullan";
 import { telefonGiris, telefonHatasi, telefonNormalle } from "@/lib/telefon";
+import { SINIR } from "@/lib/girdi-siniri";
 
 type Hizmet = {
   id: string;
@@ -345,12 +346,12 @@ export default function DisHizmetlerPage() {
           <div className="grid gap-4 sm:grid-cols-2">
           <AlanSarmal etiket={t("disHizmetTur")} zorunlu>
             {(b) => (
-              <Alan {...b} value={tur} onChange={(e) => setTur(e.target.value)} maxLength={60} />
+              <Alan {...b} value={tur} onChange={(e) => setTur(e.target.value)} maxLength={SINIR.AD /* sunucu: DisHizmetCreate.tur */} />
             )}
           </AlanSarmal>
           <AlanSarmal etiket={t("disHizmetAd")} zorunlu>
             {(b) => (
-              <Alan {...b} value={ad} onChange={(e) => setAd(e.target.value)} maxLength={80} />
+              <Alan {...b} value={ad} onChange={(e) => setAd(e.target.value)} maxLength={120 /* sunucu: DisHizmetCreate.ad */} />
             )}
           </AlanSarmal>
           <AlanSarmal etiket={t("disHizmetSoyad")} zorunlu>
@@ -359,7 +360,7 @@ export default function DisHizmetlerPage() {
                 {...b}
                 value={soyad}
                 onChange={(e) => setSoyad(e.target.value)}
-                maxLength={80}
+                maxLength={120 /* sunucu: DisHizmetCreate.soyad */}
               />
             )}
           </AlanSarmal>

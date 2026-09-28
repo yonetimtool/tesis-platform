@@ -1790,8 +1790,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get binaBlokEtiketi => 'Libellé du bloc';
 
   @override
-  String get binaBlokEtiketiYardim =>
-      'Alphanumérique court (ex. A, B1) — sans tiret';
+  String get binaBlokEtiketiYardim => 'Nom du bloc (ex. A, B1, Bâtiment Est)';
 
   @override
   String get binaDaireNoGerekli =>
@@ -1823,7 +1822,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get binaDaireNo => 'Numéro de logement';
 
   @override
-  String get binaDaireNoYardim => 'Alphanumérique + tiret (ex. A-12, B3, 12)';
+  String get binaDaireNoYardim =>
+      'Lettres, chiffres, espaces et tirets (ex. A-12, Boutique 2)';
 
   @override
   String get binaSira => 'Position';
@@ -1869,7 +1869,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String binaTopluBaslik(Object blok) {
-    return 'Ajout groupé — Bloc $blok';
+    return 'Ajout groupé — $blok';
   }
 
   @override
@@ -5731,7 +5731,7 @@ class AppLocalizationsFr extends AppLocalizations {
     int sakin,
     int kayit,
   ) {
-    return 'L\'étage $kat du bloc $blok sera supprimé : $daire logements, $sakin résidents et $kayit enregistrements liés seront définitivement effacés. Action irréversible.';
+    return 'L\'étage $kat de « $blok » sera supprimé : $daire logements, $sakin résidents et $kayit enregistrements liés seront définitivement effacés. Action irréversible.';
   }
 
   @override

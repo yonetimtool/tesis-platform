@@ -56,11 +56,14 @@ DOSYA_ADI = 255          # dosya sistemi siniri
 ICERIK_TIPI = 150        # MIME tipi
 ARAMA = 100              # arama kutusu (`q`)
 HUCRE = 1000             # ice aktarim satirinda tek hucre
-BLOK = 32                # blok adi (unit.blok)
-DAIRE_NO = 50            # daire no (unit.no)
+# (P248 gozden gecirme) 8/32 -> 50: gercek blok ADLARI ("Menekşe Blok",
+# "A1 Blok Doğu", "Güneş Vadisi 3. Etap B"); desen de Unicode'a acildi.
+BLOK = 50                # blok adi (building_block.ad, unit.blok)
+DAIRE_NO = 60            # daire no (unit.no) — "{blok}-{n}" sigmali: BLOK 50 + tire + sayi
 NFC_UID = 64             # NFC etiket kimligi (7 bayt hex = 14; payli)
 IBAN = 42                # 34 karakter + bosluklar
 SAAT_DILIMI = 64         # IANA adi ("America/Argentina/ComodRivadavia" = 32)
+FIRMA_UNVAN = 200        # ticari unvan ("... Sanayi ve Ticaret A.Ş." ~100)
 MT940 = 2_000_000        # banka ekstresi dosya METNI (govde siniri 5 MB altinda)
 
 #: Istemcilerin tasidigi sabitler (kilit bunlari web/mobil ile karsilastirir).

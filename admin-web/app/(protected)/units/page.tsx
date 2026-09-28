@@ -39,10 +39,8 @@ import { sayiBicimi, sayiCoz, tamsayiCoz } from "@/lib/sayi";
 import type { Unit, UnitList } from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
 import { kurusToTL } from "@/lib/money";
-import { ISTEMCI_SINIR, SINIR } from "@/lib/girdi-siniri";
+import { AD_DESENI_HTML, BLOK_KALIBI, ISTEMCI_SINIR, SINIR } from "@/lib/girdi-siniri";
 
-/** Sunucudaki `_BLOK_PATTERN` ile AYNI — ikisi ayrisirsa test duser. */
-const BLOK_KALIBI = /^[A-Za-z0-9]+$/;
 
 const LIMIT = 20;
 
@@ -512,7 +510,7 @@ export default function UnitsPage() {
     <Alan maxLength={SINIR.DAIRE_NO} {...b} value={form.no}
                 onChange={(e) => setForm({ ...form, no: e.target.value })}
                 placeholder="A-12"
-                pattern="[A-Za-z0-9-]+"
+                pattern={AD_DESENI_HTML}
                 title={t("daireNoGecersiz")}
                 required />
   )}
@@ -521,8 +519,8 @@ export default function UnitsPage() {
   {(b) => (
     <Alan {...b} value={form.blok}
                 onChange={(e) => setForm({ ...form, blok: e.target.value })}
-                pattern="[A-Za-z0-9]+"
-                maxLength={8}
+                pattern={AD_DESENI_HTML}
+                maxLength={SINIR.BLOK}
                 title={t("blokGecersiz")}
                 placeholder="A"
                 required />

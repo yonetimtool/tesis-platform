@@ -39,8 +39,15 @@ abstract final class GirdiSiniri {
   static const int slug = 120;
   static const int dosyaAdi = 255;
   static const int arama = 100;
-  static const int blok = 32;
-  static const int daireNo = 50;
+  static const int blok = 50;
+  static const int daireNo = 60;
+
+  /// (P248) Blok ve daire no'nun KARAKTER kumesi — sunucudaki
+  /// `^\w(?:[\w .'-]*\w)?$` desenindeki karakterler (Unicode harf/rakam,
+  /// alt cizgi, bosluk, nokta, kesme, tire). Tus basiminda suzer; bas/son
+  /// kurali sunucuda (422, alan + kural kullanicinin dilinde).
+  static final RegExp blokKarakteri =
+      RegExp(r"[\p{L}\p{N}_ .'\-]", unicode: true);
   static const int nfcUid = 64;
   static const int iban = 42;
 

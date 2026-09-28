@@ -8,10 +8,9 @@
 // ACIKCA soyluyor ama istemci yalnizca `error.message`i okuyup gerisini
 // atiyordu; ekranda kalan tek cumle genel bir hata oluyordu.
 //
-// KISITLAMA SUNUCUDA KALDI ve bu DOGRU: daire numarasi `{blok}-{n}` diye
-// kuruluyor ve daire no kalibi (`^[A-Za-z0-9-]+$`) bosluk kabul etmiyor —
-// yani bosluklu bir blok, gecersiz bir daire numarasi uretirdi. API
-// sozlesmesi degistirilmedi (kilitli kural).
+// (P248) KALIP GERCEK ADLARA ACILDI (Unicode, ic bosluk/nokta/tire). Daire
+// no ayni kumeyi kullanir: toplu olusturma no'yu `{blok}-{n}` diye kurar,
+// blokta izinli her karakter daire no'da da izinli olmali.
 //
 // BU DOSYA IKI SEYI KILITLER:
 //   1. Istemcideki kalip ile SUNUCUDAKI kalip AYNI kalsin. Ayrisirlarsa
@@ -25,6 +24,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { ApiHatasi, alanliHataMetni } from "@/lib/client";
+import { BLOK_KALIBI } from "@/lib/girdi-siniri";
 
 const KOK = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SUNUCU_SEMA = readFileSync(
@@ -39,26 +39,27 @@ const UNITS_SAYFASI = readFileSync(
   "utf8",
 );
 
-describe("(P162) blok kalibi — istemci ve sunucu AYNI", () => {
-  it("sunucu kalibi hala `^[A-Za-z0-9]+$`", () => {
-    // Kalip gevserse (or. bosluk serbest birakilirsa) bu test duser ve
-    // istemcideki kopyanin da guncellenmesi gerektigi anlasilir.
-    expect(SUNUCU_SEMA).toContain('_BLOK_PATTERN = r"^[A-Za-z0-9]+$"');
+describe("(P162 → P248) blok kalibi — istemci ve sunucu AYNI", () => {
+  // (P248) Desen GERCEK ADLARA acildi: eski `^[A-Za-z0-9]+$` "Güneş Blok",
+  // "A1 Blok Doğu" gibi adlari uzunluktan bagimsiz reddediyordu. Daire no
+  // ayni kumeyi kullanir: toplu olusturma no'yu "{blok}-{n}" diye kurar.
+  it("sunucu deseni Unicode ve blok = daire no", () => {
+    expect(SUNUCU_SEMA).toContain(`_UNIT_NO_PATTERN = r"^\\w(?:[\\w .'-]*\\w)?$"`);
+    expect(SUNUCU_SEMA).toContain("_BLOK_PATTERN = _UNIT_NO_PATTERN");
   });
 
-  it("istemci AYNI kalibi tasir", () => {
-    expect(UNITS_SAYFASI).toContain("const BLOK_KALIBI = /^[A-Za-z0-9]+$/;");
+  it("istemci kalibi TEK KAYNAKTAN (lib/girdi-siniri) gelir, kopya yok", () => {
+    expect(UNITS_SAYFASI).toContain('from "@/lib/girdi-siniri"');
+    expect(UNITS_SAYFASI).not.toMatch(/const BLOK_KALIBI = /);
   });
 
   it("kalip GERCEK kullanici girdilerini dogru ayirir", () => {
-    const kalip = /^[A-Za-z0-9]+$/;
-    // Kullanicinin yazdigi tipik degerler — sikayetin kaynagi.
-    expect(kalip.test("A Blok")).toBe(false);
-    expect(kalip.test("B-1")).toBe(false);
-    expect(kalip.test("Aş")).toBe(false);
-    // Gecerli olanlar.
-    expect(kalip.test("A")).toBe(true);
-    expect(kalip.test("B2")).toBe(true);
+    for (const iyi of ["A", "B2", "A Blok", "Güneş Blok", "A1 Blok Doğu", "C-2", "St. Paul", "Dükkan 2", "Güneş Blok-12"]) {
+      expect(BLOK_KALIBI.test(iyi), iyi).toBe(true);
+    }
+    for (const kotu of ["", " A", "A ", "-A", "A-", "A/1", "A%", "A.B/"]) {
+      expect(BLOK_KALIBI.test(kotu), kotu).toBe(false);
+    }
   });
 
   it("istemci ISTEK ATMADAN uyarir (bos bir 422 turu daha az)", () => {

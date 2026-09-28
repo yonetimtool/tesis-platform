@@ -29,8 +29,8 @@ export const SINIR = {
   SLUG: 120,
   DOSYA_ADI: 255,
   ARAMA: 100,
-  BLOK: 32,
-  DAIRE_NO: 50,
+  BLOK: 50,
+  DAIRE_NO: 60,
   NFC_UID: 64,
   IBAN: 42,
 } as const;
@@ -52,3 +52,19 @@ export const ISTEMCI_SINIR = {
   /** Ice aktarim hucresi — sunucu: IceAktarimSatir.degerler (HucreMetni 1000). */
   HUCRE: 1000,
 } as const;
+
+// =========================================================================
+// (P248 gozden gecirme) BLOK ve DAIRE NO DESENI — sunucudaki
+// `_BLOK_PATTERN` / `_UNIT_NO_PATTERN` (`^\w(?:[\w .'-]*\w)?$`) ile AYNI.
+// =========================================================================
+// Eski desen yalniz ASCII harf/rakam kabul ediyordu: "Güneş Blok",
+// "Menekşe Blok", "A1 Blok Doğu", "Dükkan 2" uzunluktan BAGIMSIZ
+// reddediliyordu. Python `\w` Unicode'dur; JS'de karsiligi
+// `[\p{L}\p{N}_]`. Ic bosluk/nokta/kesme/tire serbest, bas ve son harf ya da
+// rakam. IKISI AYNI: toplu olusturma daire no'yu "{blok}-{n}" diye kurar.
+//
+// HTML `pattern` ozniteligi tarayicida `v` (eski motorlarda `u`) bayragiyla
+// derlenir; `\p{..}` ikisinde de gecerli, `-` karakter sinifinda kacisli.
+export const AD_DESENI_HTML = "[\\p{L}\\p{N}_](?:[\\p{L}\\p{N}_ .'\\-]*[\\p{L}\\p{N}_])?";
+export const BLOK_KALIBI = new RegExp(`^(?:${AD_DESENI_HTML})$`, "u");
+export const DAIRE_NO_KALIBI = BLOK_KALIBI;

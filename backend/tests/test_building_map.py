@@ -118,7 +118,7 @@ def test_layout_makul_olmayan_deger_422(mapworld, client):
     admin = _headers(client, slug, mapworld["admin_a"])
     u = _create_unit(client, slug, mapworld["admin_a"], f"LV-{mapworld['suffix']}")
     uid = u["id"]
-    for bad in ({"kat": 9999}, {"sira": -3}, {"blok": "A-1"}, {"blok": "cok-uzun-blok"}, {}):
+    for bad in ({"kat": 9999}, {"sira": -3}, {"blok": "A/1"}, {"blok": "x" * 51}, {}):
         r = client.patch(f"/units/{uid}/layout", headers=admin, json=bad)
         assert r.status_code == 422, (bad, r.text)
 

@@ -94,7 +94,7 @@ export function IletisimFormu() {
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="alan-etiket" htmlFor="i-eposta">E-posta</label>
-          <input id="i-eposta" className="alan" type="email" maxLength={200}
+          <input id="i-eposta" className="alan" type="email" maxLength={254}
             value={eposta} onChange={(e) => setEposta(e.target.value)} />
         </div>
         <TelefonAlani id="i-telefon" etiket="Telefon" sabitHat

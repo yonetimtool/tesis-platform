@@ -242,7 +242,7 @@ const DEFTERLER: Defter[] = [
     kaynak: "firmalar",
     baslikAnahtari: "tanimFirmalar",
     alanlar: [
-      { ad: "ad", etiket: "tanimAlanAd", tip: "metin", zorunlu: true, sutun: true, azami: 150 },
+      { ad: "ad", etiket: "tanimAlanAd", tip: "metin", zorunlu: true, sutun: true, azami: 200 /* sunucu: FirmaCreate.ad (DB CHECK 200) */ },
       { ad: "vergi_no", etiket: "tanimAlanVergiNo", tip: "metin", sutun: true },
       { ad: "vergi_dairesi", etiket: "tanimAlanVergiDairesi", tip: "metin" },
       // (P248 §2) FIRMA TELEFONU DA ORTAK BILESENDE. Duz `metin` idi:
@@ -371,7 +371,7 @@ const DEFTERLER: Defter[] = [
     kaynak: "unit-tipleri",
     baslikAnahtari: "tanimDaireTipleri",
     alanlar: [
-      { ad: "ad", etiket: "tanimAlanAd", tip: "metin", zorunlu: true, sutun: true, azami: 60 },
+      { ad: "ad", etiket: "tanimAlanAd", tip: "metin", zorunlu: true, sutun: true, azami: 100 /* sunucu: UnitTip/UnitGrup ad (DB CHECK 100) */ },
       { ad: "varsayilan_aidat_kurus", etiket: "tanimAlanVarsayilanAidat", tip: "kurus", sutun: true },
       { ad: "aktif", etiket: "tanimAlanAktif", tip: "bool", sutun: true },
     ],
@@ -384,7 +384,7 @@ const DEFTERLER: Defter[] = [
     kaynak: "unit-gruplari",
     baslikAnahtari: "tanimDaireGruplari",
     alanlar: [
-      { ad: "ad", etiket: "tanimAlanAd", tip: "metin", zorunlu: true, sutun: true, azami: 60 },
+      { ad: "ad", etiket: "tanimAlanAd", tip: "metin", zorunlu: true, sutun: true, azami: 100 /* sunucu: UnitTip/UnitGrup ad (DB CHECK 100) */ },
       { ad: "aktif", etiket: "tanimAlanAktif", tip: "bool", sutun: true },
     ],
   },

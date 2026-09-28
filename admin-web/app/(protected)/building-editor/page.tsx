@@ -25,7 +25,7 @@ import type { Block, BlockList, KatOnizleme, Unit, UnitList } from "@/lib/types"
 import { sayiCoz, tamsayiCoz } from "@/lib/sayi";
 import { daireNoOnizle } from "@/lib/daire-no";
 import { useT } from "@/lib/i18n/kullan";
-import { ISTEMCI_SINIR, SINIR } from "@/lib/girdi-siniri";
+import { AD_DESENI_HTML, BLOK_KALIBI, ISTEMCI_SINIR, SINIR } from "@/lib/girdi-siniri";
 
 // Bloksuz kova (implicit tek blok) icin sentinel — gercek blok etiketi
 // alfanumerik ve >=1 karakter, bu deger asla cakismaz.
@@ -60,8 +60,6 @@ const EMPTY_UNIT: UnitFormState = {
   open: false, editingId: null, blok: null, no: "", kat: "", sira: "", err: null, saving: false,
 };
 
-/** Sunucudaki `_BLOK_PATTERN` ile AYNI — ayrisirsa test duser. */
-const BLOK_KALIBI = /^[A-Za-z0-9]+$/;
 
 /**
  * (P244 §6c) BLOK KARTI YUZEYI — tek yerde.
@@ -195,8 +193,8 @@ export default function BuildingEditorPage() {
 
   async function topluOlustur(): Promise<void> {
     setOHata(null);
-    // (P162 §4.1) BLOK ADI SUNUCUDA `^[A-Za-z0-9]+$`. Istek ATILMADAN
-    // once sebebi soylenir; yoksa kullanici anlamsiz bir 422 alirdi.
+    // (P162 §4.1) Blok adi sunucu deseniyle istek ATILMADAN denetlenir
+    // (P248: Unicode, ic bosluk/nokta/tire serbest — `lib/girdi-siniri`).
     if (!BLOK_KALIBI.test(oBlok.trim())) {
       setOHata(t("daireBlokKalibi"));
       return;
@@ -530,7 +528,7 @@ export default function BuildingEditorPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <AlanSarmal etiket={t("binaBlokEtiketi")} ipucu={t("binaBlokIpucu")} zorunlu>
               {(b) => (
-                <Alan maxLength={8 /* sunucu: UnitBulkCreate.blok */} {...b} value={oBlok} onChange={(e) => setOBlok(e.target.value)} />
+                <Alan maxLength={SINIR.BLOK} {...b} value={oBlok} onChange={(e) => setOBlok(e.target.value)} />
               )}
             </AlanSarmal>
             <AlanSarmal etiket={t("daireKatSayisi")} zorunlu>
@@ -792,8 +790,8 @@ export default function BuildingEditorPage() {
   {(b) => (
     <Alan {...b} value={blockForm.ad}
                 onChange={(e) => setBlockForm({ ...blockForm, ad: e.target.value })}
-                pattern="[A-Za-z0-9]+"
-                maxLength={8}
+                pattern={AD_DESENI_HTML}
+                maxLength={SINIR.BLOK}
                 title={t("blokGecersiz")}
                 placeholder="A"
                 required />
@@ -834,8 +832,8 @@ export default function BuildingEditorPage() {
   {(b) => (
     <Alan {...b} value={unitForm.no}
                 onChange={(e) => setUnitForm({ ...unitForm, no: e.target.value })}
-                pattern="[A-Za-z0-9-]+"
-                maxLength={50}
+                pattern={AD_DESENI_HTML}
+                maxLength={SINIR.DAIRE_NO}
                 title={t("binaDaireNoGecersiz")}
                 placeholder="A-12"
                 required />

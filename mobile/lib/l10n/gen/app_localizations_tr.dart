@@ -1744,8 +1744,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get binaBlokEtiketi => 'Blok etiketi';
 
   @override
-  String get binaBlokEtiketiYardim =>
-      'Kısa alfanumerik (örn. A, B1) — tire yok';
+  String get binaBlokEtiketiYardim => 'Blok adı (örn. A, B1, Menekşe Blok)';
 
   @override
   String get binaDaireNoGerekli => 'Daire no gerekli (örn. A-12, 12).';
@@ -1775,7 +1774,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get binaDaireNo => 'Daire no';
 
   @override
-  String get binaDaireNoYardim => 'Alfanumerik + tire (örn. A-12, B3, 12)';
+  String get binaDaireNoYardim =>
+      'Harf, sayı, boşluk ve tire (örn. A-12, B3, Dükkan 2)';
 
   @override
   String get binaSira => 'Sıra';
@@ -1821,7 +1821,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String binaTopluBaslik(Object blok) {
-    return 'Toplu daire ekle — Blok $blok';
+    return 'Toplu daire ekle — $blok';
   }
 
   @override
@@ -5559,7 +5559,7 @@ class AppLocalizationsTr extends AppLocalizations {
     int sakin,
     int kayit,
   ) {
-    return '$blok bloğu $kat. kat silinecek: $daire daire, $sakin sakin ve $kayit bağlı kayıt kalıcı olarak gider. Bu işlem geri alınamaz.';
+    return '“$blok” — $kat. kat silinecek: $daire daire, $sakin sakin ve $kayit bağlı kayıt kalıcı olarak gider. Bu işlem geri alınamaz.';
   }
 
   @override

@@ -1897,7 +1897,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get binaBlokEtiketiYardim =>
-      'Короткий буквенно-цифровой код (напр. A, B1) — без дефиса';
+      'Название блока (например, A, B1, Корпус Север)';
 
   @override
   String get binaDaireNoGerekli => 'Требуется номер квартиры (напр. A-12, 12).';
@@ -1927,7 +1927,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get binaDaireNo => 'Номер квартиры';
 
   @override
-  String get binaDaireNoYardim => 'Буквы/цифры + дефис (напр. A-12, B3, 12)';
+  String get binaDaireNoYardim =>
+      'Буквы, цифры, пробелы и дефис (например, A-12, Магазин 2)';
 
   @override
   String get binaSira => 'Позиция';
@@ -1973,7 +1974,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String binaTopluBaslik(Object blok) {
-    return 'Массовое добавление — Блок $blok';
+    return 'Массовое добавление — $blok';
   }
 
   @override
@@ -5828,7 +5829,7 @@ class AppLocalizationsRu extends AppLocalizations {
     int sakin,
     int kayit,
   ) {
-    return 'Этаж $kat блока $blok будет удалён: $daire квартир, $sakin жильцов и $kayit связанных записей исчезнут навсегда. Отменить нельзя.';
+    return 'Этаж $kat в «$blok» будет удалён: $daire квартир, $sakin жильцов и $kayit связанных записей исчезнут навсегда. Отменить нельзя.';
   }
 
   @override

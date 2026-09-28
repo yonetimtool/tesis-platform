@@ -160,11 +160,24 @@ describe("(P163 §1) toplu olusturma — 405'in duzeltildigi yol", () => {
     ciz(BuildingEditorPage);
     await userEvent.click(await screen.findByRole("button", { name: "Toplu daire oluştur" }));
     const kutu = within(await screen.findByRole("dialog"));
-    await userEvent.type(kutu.getByRole("textbox", { name: /Blok/ }), "A Blok");
+    // (P248) "A Blok" ARTIK GECERLI (gercek blok adi). Gecersiz kalan:
+    // egik cizgi — daire no `/units/by-no/{no}` yolunda gecer.
+    await userEvent.type(kutu.getByRole("textbox", { name: /Blok/ }), "A/1");
     await userEvent.click(kutu.getByRole("button", { name: "Kaydet" }));
     // Sunucuya HIC gitmemeli; anlamsiz bir 422 yerine sebep yazilir.
     expect(c.some((x) => x.yontem === "POST")).toBe(false);
-    expect(await screen.findByText(/yalnızca harf ve rakam/i)).toBeInTheDocument();
+    expect(await screen.findByText(/harf, rakam, boşluk/i)).toBeInTheDocument();
+  });
+
+  it("(P248) GERCEK blok adi (Türkçe harf + bosluk) istekle GIDER", async () => {
+    const c = taklit();
+    ciz(BuildingEditorPage);
+    await userEvent.click(await screen.findByRole("button", { name: "Toplu daire oluştur" }));
+    const kutu = within(await screen.findByRole("dialog"));
+    await userEvent.type(kutu.getByRole("textbox", { name: /Blok/ }), "Güneş Blok");
+    await userEvent.click(kutu.getByRole("button", { name: "Kaydet" }));
+    await waitFor(() => expect(c.some((x) => x.yontem === "POST")).toBe(true));
+    expect(c.find((x) => x.yontem === "POST")!.govde!.blok).toBe("Güneş Blok");
   });
 });
 

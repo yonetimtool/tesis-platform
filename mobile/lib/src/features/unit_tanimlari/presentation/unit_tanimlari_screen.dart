@@ -327,7 +327,7 @@ class _TanimFormuState extends ConsumerState<_TanimFormu> {
               TextFormField(
                 controller: _adCtrl,
                 enabled: !_kaydediyor,
-                maxLength: 60,
+                maxLength: GirdiSiniri.ad, // sunucu: UnitTip/UnitGrup ad (DB CHECK 100)
                 decoration: InputDecoration(
                   labelText: '${l10n.daireTanimAd} *',
                   // Ipucu ORNEKTIR, hazir liste degil: ad serbest metindir.

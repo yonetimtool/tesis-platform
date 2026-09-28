@@ -1853,8 +1853,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get binaBlokEtiketi => 'Block label';
 
   @override
-  String get binaBlokEtiketiYardim =>
-      'Short alphanumeric (e.g. A, B1) — no dashes';
+  String get binaBlokEtiketiYardim => 'Block name (e.g. A, B1, Oak Block)';
 
   @override
   String get binaDaireNoGerekli => 'A unit number is required (e.g. A-12, 12).';
@@ -1884,7 +1883,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get binaDaireNo => 'Unit number';
 
   @override
-  String get binaDaireNoYardim => 'Alphanumeric + dash (e.g. A-12, B3, 12)';
+  String get binaDaireNoYardim =>
+      'Letters, digits, spaces and hyphens (e.g. A-12, B3, Shop 2)';
 
   @override
   String get binaSira => 'Position';
@@ -1930,7 +1930,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String binaTopluBaslik(Object blok) {
-    return 'Bulk add units — Block $blok';
+    return 'Bulk add units — $blok';
   }
 
   @override
@@ -5751,7 +5751,7 @@ class AppLocalizationsEn extends AppLocalizations {
     int sakin,
     int kayit,
   ) {
-    return 'Floor $kat of block $blok will be deleted: $daire units, $sakin residents and $kayit linked records are removed permanently. This cannot be undone.';
+    return 'Floor $kat of “$blok” will be deleted: $daire units, $sakin residents and $kayit linked records are removed permanently. This cannot be undone.';
   }
 
   @override

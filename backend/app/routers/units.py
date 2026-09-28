@@ -622,28 +622,35 @@ async def daire_no_kanonik(db: AsyncSession, no: str, blok: str | None) -> str:
         return no
     if no.isascii() and no.isdigit():
         return f"{blok}-{no}"
-    onek, ayrac, _ = no.partition("-")
-    if ayrac and onek and onek.casefold() != blok.casefold():
-        kayitli_blok = (
+    # (P248) BLOK ADI TIRE ve BOSLUK tasiyabilir ("C-2", "Güneş Blok"). Onek
+    # ilk tireden BOLUNEMEZ: "C-2-5" numarasi "C" blogunu iddia ediyor
+    # sanilirdi. Numaranin basinda "<ad>-" olarak gecen KAYITLI blok adlari
+    # aranir ve EN UZUNU (en ozgulu) kazanir: "C" ve "C-2" ikisi de kayitliysa
+    # "C-2-7" "C-2"ye aittir, "C" blogunda kullanilamaz.
+    no_kucuk = no.lower()
+    adaylar = [
+        a for (a,) in (
             await db.execute(
-                select(BuildingBlock.id)
-                .where(func.lower(BuildingBlock.ad) == onek.lower())
-                .limit(1)
-            )
-        ).scalar_one_or_none()
-        if kayitli_blok is None:
-            kayitli_blok = (
-                await db.execute(
-                    select(Unit.id)
-                    .where(func.lower(Unit.blok) == onek.lower())
-                    .limit(1)
+                select(BuildingBlock.ad).where(
+                    func.starts_with(no_kucuk, func.lower(BuildingBlock.ad) + "-")
+                ).union(
+                    select(Unit.blok).where(
+                        Unit.blok.is_not(None),
+                        func.starts_with(no_kucuk, func.lower(Unit.blok) + "-"),
+                    )
                 )
-            ).scalar_one_or_none()
-        if kayitli_blok is not None:
-            raise APIError(
-                422, "validation_error", "daire_no_blok_uyusmuyor",
-                no=no, no_blok=onek, blok=blok,
             )
+        ).all()
+        if a
+    ]
+    if no.casefold().startswith(blok.casefold() + "-"):
+        adaylar.append(blok)
+    onek = max(adaylar, key=len) if adaylar else None
+    if onek is not None and onek.casefold() != blok.casefold():
+        raise APIError(
+            422, "validation_error", "daire_no_blok_uyusmuyor",
+            no=no, no_blok=onek, blok=blok,
+        )
     return no
 
 

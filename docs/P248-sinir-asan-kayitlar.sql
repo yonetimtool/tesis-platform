@@ -24,9 +24,11 @@
 -- KAPSAM (226 kolon): tablo kolonlari, ayni adli girdi semasi alanlarinin
 -- (Create/Update/Istek...) max_length degeriyle eslendi; ayni kolon birden
 -- cok semada ise EN KUCUK sinir alindi (fazladan raporlama yonunde hata —
--- tani sorgusu icin guvenli taraf). Elle eklenenler (sema adi tablodan
--- farkli): asset_checkout.notlar, bank_transaction.karsi_ad,
--- bank_transaction.not_metni, complaint_status_history.sebep,
+-- tani sorgusu icin guvenli taraf). Tablo adiyla eslesen sema varsa YALNIZ
+-- o kullanilir; ortak alan adina dayali eslesme ancak o yoksa devreye girer
+-- (ilgisiz bir semanin daha kucuk `ad` siniri yanlis alarm uretmesin).
+-- Elle eklenenler (sema adi tablodan farkli): asset_checkout.notlar,
+-- bank_transaction.karsi_ad, bank_transaction.not_metni, complaint_status_history.sebep,
 -- panik_alarm.kapanis_notu, app_user.panik_aski_nedeni, camera.stream_url,
 -- camera.alt_stream_url, camera.restream_url, camera.snapshot_url,
 -- building_block.ad, tenant.dis_hizmet_notu.
@@ -35,8 +37,9 @@
 -- yeni sinirlar onlari etkilemez; tenant_portal alanlari — hicbir API ucu
 -- yazmiyor.
 --
--- Dev veritabaninda (2026-09-27) sonuc: 4 kolonda birer kayit (app_user.ad, dues_assessment.aciklama,
--- task.aciklama, task.ad) — hepsi 10 000 karakterlik E2E test artigi.
+-- Dev veritabaninda (2026-09-28) sonuc: 4 kolonda birer kayit
+-- (app_user.ad, dues_assessment.aciklama, task.aciklama, task.ad) —
+-- hepsi 10 000 karakterlik E2E test artigi.
 
 BEGIN TRANSACTION READ ONLY;
 
@@ -45,13 +48,13 @@ SELECT * FROM (
 UNION ALL
   SELECT 'aidat_plani' AS tablo, 'ad' AS kolon, 100 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM aidat_plani WHERE length(ad) > 100
 UNION ALL
-  SELECT 'akilli_ev_cihaz' AS tablo, 'ad' AS kolon, 100 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM akilli_ev_cihaz WHERE length(ad) > 100
+  SELECT 'akilli_ev_cihaz' AS tablo, 'ad' AS kolon, 200 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM akilli_ev_cihaz WHERE length(ad) > 200
 UNION ALL
   SELECT 'akilli_ev_cihaz' AS tablo, 'alan' AS kolon, 200 AS sinir, count(*) AS asan_kayit, max(length(alan)) AS en_uzun FROM akilli_ev_cihaz WHERE length(alan) > 200
 UNION ALL
   SELECT 'akilli_ev_cihaz' AS tablo, 'dis_kimlik' AS kolon, 300 AS sinir, count(*) AS asan_kayit, max(length(dis_kimlik)) AS en_uzun FROM akilli_ev_cihaz WHERE length(dis_kimlik) > 300
 UNION ALL
-  SELECT 'akilli_ev_kopru' AS tablo, 'ad' AS kolon, 100 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM akilli_ev_kopru WHERE length(ad) > 100
+  SELECT 'akilli_ev_kopru' AS tablo, 'ad' AS kolon, 200 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM akilli_ev_kopru WHERE length(ad) > 200
 UNION ALL
   SELECT 'akilli_ev_kopru' AS tablo, 'host' AS kolon, 255 AS sinir, count(*) AS asan_kayit, max(length(host)) AS en_uzun FROM akilli_ev_kopru WHERE length(host) > 255
 UNION ALL
@@ -89,7 +92,7 @@ UNION ALL
 UNION ALL
   SELECT 'app_user' AS tablo, 'ad' AS kolon, 120 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM app_user WHERE length(ad) > 120
 UNION ALL
-  SELECT 'app_user' AS tablo, 'email' AS kolon, 200 AS sinir, count(*) AS asan_kayit, max(length(email)) AS en_uzun FROM app_user WHERE length(email) > 200
+  SELECT 'app_user' AS tablo, 'email' AS kolon, 254 AS sinir, count(*) AS asan_kayit, max(length(email)) AS en_uzun FROM app_user WHERE length(email) > 254
 UNION ALL
   SELECT 'app_user' AS tablo, 'panik_aski_nedeni' AS kolon, 500 AS sinir, count(*) AS asan_kayit, max(length(panik_aski_nedeni)) AS en_uzun FROM app_user WHERE length(panik_aski_nedeni) > 500
 UNION ALL
@@ -103,7 +106,7 @@ UNION ALL
 UNION ALL
   SELECT 'arac_kayit' AS tablo, 'renk' AS kolon, 30 AS sinir, count(*) AS asan_kayit, max(length(renk)) AS en_uzun FROM arac_kayit WHERE length(renk) > 30
 UNION ALL
-  SELECT 'asset' AS tablo, 'aciklama' AS kolon, 500 AS sinir, count(*) AS asan_kayit, max(length(aciklama)) AS en_uzun FROM asset WHERE length(aciklama) > 500
+  SELECT 'asset' AS tablo, 'aciklama' AS kolon, 2000 AS sinir, count(*) AS asan_kayit, max(length(aciklama)) AS en_uzun FROM asset WHERE length(aciklama) > 2000
 UNION ALL
   SELECT 'asset' AS tablo, 'ad' AS kolon, 100 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM asset WHERE length(ad) > 100
 UNION ALL
@@ -111,7 +114,7 @@ UNION ALL
 UNION ALL
   SELECT 'asset_checkout' AS tablo, 'notlar' AS kolon, 2000 AS sinir, count(*) AS asan_kayit, max(length(notlar)) AS en_uzun FROM asset_checkout WHERE length(notlar) > 2000
 UNION ALL
-  SELECT 'bakim_ekipmani' AS tablo, 'ad' AS kolon, 100 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM bakim_ekipmani WHERE length(ad) > 100
+  SELECT 'bakim_ekipmani' AS tablo, 'ad' AS kolon, 200 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM bakim_ekipmani WHERE length(ad) > 200
 UNION ALL
   SELECT 'bakim_ekipmani' AS tablo, 'alan' AS kolon, 200 AS sinir, count(*) AS asan_kayit, max(length(alan)) AS en_uzun FROM bakim_ekipmani WHERE length(alan) > 200
 UNION ALL
@@ -121,7 +124,7 @@ UNION ALL
 UNION ALL
   SELECT 'bakim_ekipmani' AS tablo, 'sorumlu_telefon' AS kolon, 40 AS sinir, count(*) AS asan_kayit, max(length(sorumlu_telefon)) AS en_uzun FROM bakim_ekipmani WHERE length(sorumlu_telefon) > 40
 UNION ALL
-  SELECT 'bakim_ekipmani' AS tablo, 'tur' AS kolon, 64 AS sinir, count(*) AS asan_kayit, max(length(tur)) AS en_uzun FROM bakim_ekipmani WHERE length(tur) > 64
+  SELECT 'bakim_ekipmani' AS tablo, 'tur' AS kolon, 100 AS sinir, count(*) AS asan_kayit, max(length(tur)) AS en_uzun FROM bakim_ekipmani WHERE length(tur) > 100
 UNION ALL
   SELECT 'bakim_kaydi' AS tablo, 'islem' AS kolon, 4000 AS sinir, count(*) AS asan_kayit, max(length(islem)) AS en_uzun FROM bakim_kaydi WHERE length(islem) > 4000
 UNION ALL
@@ -135,9 +138,9 @@ UNION ALL
 UNION ALL
   SELECT 'budget_category' AS tablo, 'ad' AS kolon, 100 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM budget_category WHERE length(ad) > 100
 UNION ALL
-  SELECT 'budget_entry' AS tablo, 'aciklama' AS kolon, 500 AS sinir, count(*) AS asan_kayit, max(length(aciklama)) AS en_uzun FROM budget_entry WHERE length(aciklama) > 500
+  SELECT 'budget_entry' AS tablo, 'aciklama' AS kolon, 1000 AS sinir, count(*) AS asan_kayit, max(length(aciklama)) AS en_uzun FROM budget_entry WHERE length(aciklama) > 1000
 UNION ALL
-  SELECT 'building_block' AS tablo, 'ad' AS kolon, 8 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM building_block WHERE length(ad) > 8
+  SELECT 'building_block' AS tablo, 'ad' AS kolon, 50 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM building_block WHERE length(ad) > 50
 UNION ALL
   SELECT 'butce_hedefi' AS tablo, 'aciklama' AS kolon, 500 AS sinir, count(*) AS asan_kayit, max(length(aciklama)) AS en_uzun FROM butce_hedefi WHERE length(aciklama) > 500
 UNION ALL
@@ -175,13 +178,13 @@ UNION ALL
 UNION ALL
   SELECT 'dis_hizmet' AS tablo, 'aciklama' AS kolon, 1000 AS sinir, count(*) AS asan_kayit, max(length(aciklama)) AS en_uzun FROM dis_hizmet WHERE length(aciklama) > 1000
 UNION ALL
-  SELECT 'dis_hizmet' AS tablo, 'ad' AS kolon, 80 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM dis_hizmet WHERE length(ad) > 80
+  SELECT 'dis_hizmet' AS tablo, 'ad' AS kolon, 120 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM dis_hizmet WHERE length(ad) > 120
 UNION ALL
-  SELECT 'dis_hizmet' AS tablo, 'soyad' AS kolon, 80 AS sinir, count(*) AS asan_kayit, max(length(soyad)) AS en_uzun FROM dis_hizmet WHERE length(soyad) > 80
+  SELECT 'dis_hizmet' AS tablo, 'soyad' AS kolon, 120 AS sinir, count(*) AS asan_kayit, max(length(soyad)) AS en_uzun FROM dis_hizmet WHERE length(soyad) > 120
 UNION ALL
-  SELECT 'dis_hizmet' AS tablo, 'telefon' AS kolon, 32 AS sinir, count(*) AS asan_kayit, max(length(telefon)) AS en_uzun FROM dis_hizmet WHERE length(telefon) > 32
+  SELECT 'dis_hizmet' AS tablo, 'telefon' AS kolon, 40 AS sinir, count(*) AS asan_kayit, max(length(telefon)) AS en_uzun FROM dis_hizmet WHERE length(telefon) > 40
 UNION ALL
-  SELECT 'dis_hizmet' AS tablo, 'tur' AS kolon, 80 AS sinir, count(*) AS asan_kayit, max(length(tur)) AS en_uzun FROM dis_hizmet WHERE length(tur) > 80
+  SELECT 'dis_hizmet' AS tablo, 'tur' AS kolon, 100 AS sinir, count(*) AS asan_kayit, max(length(tur)) AS en_uzun FROM dis_hizmet WHERE length(tur) > 100
 UNION ALL
   SELECT 'diyafon' AS tablo, 'ad' AS kolon, 200 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM diyafon WHERE length(ad) > 200
 UNION ALL
@@ -195,7 +198,7 @@ UNION ALL
 UNION ALL
   SELECT 'diyafon' AS tablo, 'zil_yolu' AS kolon, 500 AS sinir, count(*) AS asan_kayit, max(length(zil_yolu)) AS en_uzun FROM diyafon WHERE length(zil_yolu) > 500
 UNION ALL
-  SELECT 'dues_assessment' AS tablo, 'aciklama' AS kolon, 500 AS sinir, count(*) AS asan_kayit, max(length(aciklama)) AS en_uzun FROM dues_assessment WHERE length(aciklama) > 500
+  SELECT 'dues_assessment' AS tablo, 'aciklama' AS kolon, 2000 AS sinir, count(*) AS asan_kayit, max(length(aciklama)) AS en_uzun FROM dues_assessment WHERE length(aciklama) > 2000
 UNION ALL
   SELECT 'dues_assessment' AS tablo, 'donem' AS kolon, 7 AS sinir, count(*) AS asan_kayit, max(length(donem)) AS en_uzun FROM dues_assessment WHERE length(donem) > 7
 UNION ALL
@@ -207,13 +210,13 @@ UNION ALL
 UNION ALL
   SELECT 'duzenli_gider' AS tablo, 'ad' AS kolon, 100 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM duzenli_gider WHERE length(ad) > 100
 UNION ALL
-  SELECT 'etkinlik' AS tablo, 'aciklama' AS kolon, 2000 AS sinir, count(*) AS asan_kayit, max(length(aciklama)) AS en_uzun FROM etkinlik WHERE length(aciklama) > 2000
+  SELECT 'etkinlik' AS tablo, 'aciklama' AS kolon, 5000 AS sinir, count(*) AS asan_kayit, max(length(aciklama)) AS en_uzun FROM etkinlik WHERE length(aciklama) > 5000
 UNION ALL
   SELECT 'etkinlik' AS tablo, 'baslik' AS kolon, 200 AS sinir, count(*) AS asan_kayit, max(length(baslik)) AS en_uzun FROM etkinlik WHERE length(baslik) > 200
 UNION ALL
   SELECT 'etkinlik' AS tablo, 'foto_key' AS kolon, 500 AS sinir, count(*) AS asan_kayit, max(length(foto_key)) AS en_uzun FROM etkinlik WHERE length(foto_key) > 500
 UNION ALL
-  SELECT 'etkinlik' AS tablo, 'konum' AS kolon, 200 AS sinir, count(*) AS asan_kayit, max(length(konum)) AS en_uzun FROM etkinlik WHERE length(konum) > 200
+  SELECT 'etkinlik' AS tablo, 'konum' AS kolon, 500 AS sinir, count(*) AS asan_kayit, max(length(konum)) AS en_uzun FROM etkinlik WHERE length(konum) > 500
 UNION ALL
   SELECT 'finansal_hareket' AS tablo, 'aciklama' AS kolon, 500 AS sinir, count(*) AS asan_kayit, max(length(aciklama)) AS en_uzun FROM finansal_hareket WHERE length(aciklama) > 500
 UNION ALL
@@ -221,11 +224,11 @@ UNION ALL
 UNION ALL
   SELECT 'finansal_hareket' AS tablo, 'donem' AS kolon, 7 AS sinir, count(*) AS asan_kayit, max(length(donem)) AS en_uzun FROM finansal_hareket WHERE length(donem) > 7
 UNION ALL
-  SELECT 'firma' AS tablo, 'ad' AS kolon, 100 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM firma WHERE length(ad) > 100
+  SELECT 'firma' AS tablo, 'ad' AS kolon, 200 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM firma WHERE length(ad) > 200
 UNION ALL
   SELECT 'firma' AS tablo, 'adres' AS kolon, 500 AS sinir, count(*) AS asan_kayit, max(length(adres)) AS en_uzun FROM firma WHERE length(adres) > 500
 UNION ALL
-  SELECT 'firma' AS tablo, 'email' AS kolon, 200 AS sinir, count(*) AS asan_kayit, max(length(email)) AS en_uzun FROM firma WHERE length(email) > 200
+  SELECT 'firma' AS tablo, 'email' AS kolon, 254 AS sinir, count(*) AS asan_kayit, max(length(email)) AS en_uzun FROM firma WHERE length(email) > 254
 UNION ALL
   SELECT 'firma' AS tablo, 'telefon' AS kolon, 30 AS sinir, count(*) AS asan_kayit, max(length(telefon)) AS en_uzun FROM firma WHERE length(telefon) > 30
 UNION ALL
@@ -257,7 +260,7 @@ UNION ALL
 UNION ALL
   SELECT 'iletisim_mesaji' AS tablo, 'ad' AS kolon, 150 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM iletisim_mesaji WHERE length(ad) > 150
 UNION ALL
-  SELECT 'iletisim_mesaji' AS tablo, 'email' AS kolon, 200 AS sinir, count(*) AS asan_kayit, max(length(email)) AS en_uzun FROM iletisim_mesaji WHERE length(email) > 200
+  SELECT 'iletisim_mesaji' AS tablo, 'email' AS kolon, 254 AS sinir, count(*) AS asan_kayit, max(length(email)) AS en_uzun FROM iletisim_mesaji WHERE length(email) > 254
 UNION ALL
   SELECT 'iletisim_mesaji' AS tablo, 'mesaj' AS kolon, 5000 AS sinir, count(*) AS asan_kayit, max(length(mesaj)) AS en_uzun FROM iletisim_mesaji WHERE length(mesaj) > 5000
 UNION ALL
@@ -297,11 +300,11 @@ UNION ALL
 UNION ALL
   SELECT 'kasa' AS tablo, 'sube' AS kolon, 100 AS sinir, count(*) AS asan_kayit, max(length(sube)) AS en_uzun FROM kasa WHERE length(sube) > 100
 UNION ALL
-  SELECT 'kayit_dogrulama' AS tablo, 'ad' AS kolon, 80 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM kayit_dogrulama WHERE length(ad) > 80
+  SELECT 'kayit_dogrulama' AS tablo, 'ad' AS kolon, 100 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM kayit_dogrulama WHERE length(ad) > 100
 UNION ALL
   SELECT 'kayit_dogrulama' AS tablo, 'telefon' AS kolon, 32 AS sinir, count(*) AS asan_kayit, max(length(telefon)) AS en_uzun FROM kayit_dogrulama WHERE length(telefon) > 32
 UNION ALL
-  SELECT 'kayit_onay_kuyrugu' AS tablo, 'ad' AS kolon, 80 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM kayit_onay_kuyrugu WHERE length(ad) > 80
+  SELECT 'kayit_onay_kuyrugu' AS tablo, 'ad' AS kolon, 100 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM kayit_onay_kuyrugu WHERE length(ad) > 100
 UNION ALL
   SELECT 'kayit_onay_kuyrugu' AS tablo, 'rol' AS kolon, 64 AS sinir, count(*) AS asan_kayit, max(length(rol)) AS en_uzun FROM kayit_onay_kuyrugu WHERE length(rol) > 64
 UNION ALL
@@ -337,9 +340,9 @@ UNION ALL
 UNION ALL
   SELECT 'mesaj_yapilandirma' AS tablo, 'smtp_parola' AS kolon, 200 AS sinir, count(*) AS asan_kayit, max(length(smtp_parola)) AS en_uzun FROM mesaj_yapilandirma WHERE length(smtp_parola) > 200
 UNION ALL
-  SELECT 'ortak_alan' AS tablo, 'aciklama' AS kolon, 500 AS sinir, count(*) AS asan_kayit, max(length(aciklama)) AS en_uzun FROM ortak_alan WHERE length(aciklama) > 500
+  SELECT 'ortak_alan' AS tablo, 'aciklama' AS kolon, 1000 AS sinir, count(*) AS asan_kayit, max(length(aciklama)) AS en_uzun FROM ortak_alan WHERE length(aciklama) > 1000
 UNION ALL
-  SELECT 'ortak_alan' AS tablo, 'ad' AS kolon, 100 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM ortak_alan WHERE length(ad) > 100
+  SELECT 'ortak_alan' AS tablo, 'ad' AS kolon, 200 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM ortak_alan WHERE length(ad) > 200
 UNION ALL
   SELECT 'panik_alarm' AS tablo, 'aciklama' AS kolon, 2000 AS sinir, count(*) AS asan_kayit, max(length(aciklama)) AS en_uzun FROM panik_alarm WHERE length(aciklama) > 2000
 UNION ALL
@@ -349,7 +352,7 @@ UNION ALL
 UNION ALL
   SELECT 'personel_kayit' AS tablo, 'ad' AS kolon, 150 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM personel_kayit WHERE length(ad) > 150
 UNION ALL
-  SELECT 'personel_kayit' AS tablo, 'email' AS kolon, 200 AS sinir, count(*) AS asan_kayit, max(length(email)) AS en_uzun FROM personel_kayit WHERE length(email) > 200
+  SELECT 'personel_kayit' AS tablo, 'email' AS kolon, 254 AS sinir, count(*) AS asan_kayit, max(length(email)) AS en_uzun FROM personel_kayit WHERE length(email) > 254
 UNION ALL
   SELECT 'personel_kayit' AS tablo, 'gorev' AS kolon, 100 AS sinir, count(*) AS asan_kayit, max(length(gorev)) AS en_uzun FROM personel_kayit WHERE length(gorev) > 100
 UNION ALL
@@ -395,13 +398,13 @@ UNION ALL
 UNION ALL
   SELECT 'tanitim_iletisim' AS tablo, 'dil' AS kolon, 5 AS sinir, count(*) AS asan_kayit, max(length(dil)) AS en_uzun FROM tanitim_iletisim WHERE length(dil) > 5
 UNION ALL
-  SELECT 'tanitim_iletisim' AS tablo, 'email' AS kolon, 200 AS sinir, count(*) AS asan_kayit, max(length(email)) AS en_uzun FROM tanitim_iletisim WHERE length(email) > 200
+  SELECT 'tanitim_iletisim' AS tablo, 'email' AS kolon, 254 AS sinir, count(*) AS asan_kayit, max(length(email)) AS en_uzun FROM tanitim_iletisim WHERE length(email) > 254
 UNION ALL
   SELECT 'tanitim_iletisim' AS tablo, 'mesaj' AS kolon, 5000 AS sinir, count(*) AS asan_kayit, max(length(mesaj)) AS en_uzun FROM tanitim_iletisim WHERE length(mesaj) > 5000
 UNION ALL
-  SELECT 'tanitim_iletisim' AS tablo, 'telefon' AS kolon, 30 AS sinir, count(*) AS asan_kayit, max(length(telefon)) AS en_uzun FROM tanitim_iletisim WHERE length(telefon) > 30
+  SELECT 'tanitim_iletisim' AS tablo, 'telefon' AS kolon, 40 AS sinir, count(*) AS asan_kayit, max(length(telefon)) AS en_uzun FROM tanitim_iletisim WHERE length(telefon) > 40
 UNION ALL
-  SELECT 'task' AS tablo, 'aciklama' AS kolon, 500 AS sinir, count(*) AS asan_kayit, max(length(aciklama)) AS en_uzun FROM task WHERE length(aciklama) > 500
+  SELECT 'task' AS tablo, 'aciklama' AS kolon, 5000 AS sinir, count(*) AS asan_kayit, max(length(aciklama)) AS en_uzun FROM task WHERE length(aciklama) > 5000
 UNION ALL
   SELECT 'task' AS tablo, 'ad' AS kolon, 100 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM task WHERE length(ad) > 100
 UNION ALL
@@ -449,21 +452,21 @@ UNION ALL
 UNION ALL
   SELECT 'tenant_dokuman' AS tablo, 'obje_anahtari' AS kolon, 500 AS sinir, count(*) AS asan_kayit, max(length(obje_anahtari)) AS en_uzun FROM tenant_dokuman WHERE length(obje_anahtari) > 500
 UNION ALL
-  SELECT 'unit' AS tablo, 'blok' AS kolon, 8 AS sinir, count(*) AS asan_kayit, max(length(blok)) AS en_uzun FROM unit WHERE length(blok) > 8
+  SELECT 'unit' AS tablo, 'blok' AS kolon, 50 AS sinir, count(*) AS asan_kayit, max(length(blok)) AS en_uzun FROM unit WHERE length(blok) > 50
 UNION ALL
-  SELECT 'unit' AS tablo, 'no' AS kolon, 50 AS sinir, count(*) AS asan_kayit, max(length(no)) AS en_uzun FROM unit WHERE length(no) > 50
+  SELECT 'unit' AS tablo, 'no' AS kolon, 60 AS sinir, count(*) AS asan_kayit, max(length(no)) AS en_uzun FROM unit WHERE length(no) > 60
 UNION ALL
   SELECT 'unit_complaint' AS tablo, 'notlar' AS kolon, 1000 AS sinir, count(*) AS asan_kayit, max(length(notlar)) AS en_uzun FROM unit_complaint WHERE length(notlar) > 1000
 UNION ALL
-  SELECT 'unit_grup' AS tablo, 'ad' AS kolon, 60 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM unit_grup WHERE length(ad) > 60
+  SELECT 'unit_grup' AS tablo, 'ad' AS kolon, 100 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM unit_grup WHERE length(ad) > 100
 UNION ALL
-  SELECT 'unit_tip' AS tablo, 'ad' AS kolon, 60 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM unit_tip WHERE length(ad) > 60
+  SELECT 'unit_tip' AS tablo, 'ad' AS kolon, 100 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM unit_tip WHERE length(ad) > 100
 UNION ALL
   SELECT 'vardiya_dongu_atama' AS tablo, 'not_metni' AS kolon, 500 AS sinir, count(*) AS asan_kayit, max(length(not_metni)) AS en_uzun FROM vardiya_dongu_atama WHERE length(not_metni) > 500
 UNION ALL
-  SELECT 'vardiya_izin' AS tablo, 'not_metni' AS kolon, 500 AS sinir, count(*) AS asan_kayit, max(length(not_metni)) AS en_uzun FROM vardiya_izin WHERE length(not_metni) > 500
+  SELECT 'vardiya_izin' AS tablo, 'not_metni' AS kolon, 1000 AS sinir, count(*) AS asan_kayit, max(length(not_metni)) AS en_uzun FROM vardiya_izin WHERE length(not_metni) > 1000
 UNION ALL
-  SELECT 'vardiya_kalibi' AS tablo, 'ad' AS kolon, 60 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM vardiya_kalibi WHERE length(ad) > 60
+  SELECT 'vardiya_kalibi' AS tablo, 'ad' AS kolon, 100 AS sinir, count(*) AS asan_kayit, max(length(ad)) AS en_uzun FROM vardiya_kalibi WHERE length(ad) > 100
 UNION ALL
   SELECT 'vardiya_plani' AS tablo, 'alan' AS kolon, 200 AS sinir, count(*) AS asan_kayit, max(length(alan)) AS en_uzun FROM vardiya_plani WHERE length(alan) > 200
 UNION ALL
