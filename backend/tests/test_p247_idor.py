@@ -447,7 +447,9 @@ def _ziyaretci(d: Dunya, metot: str, yol: str) -> list[Deneme]:
 
 @vaka(("GET", "/panik/{alarm_id}"), ("POST", "/panik/{alarm_id}/gordum"),
       ("POST", "/panik/{alarm_id}/iptal"), ("POST", "/panik/{alarm_id}/kapat"),
-      ("POST", "/panik/{alarm_id}/mudahale"))
+      ("POST", "/panik/{alarm_id}/mudahale"),
+      # (P249 §1b) Toplu uyari yanitlari — baska tesisin sakini REDDEDILIR.
+      ("POST", "/panik/{alarm_id}/guvendeyim"), ("POST", "/panik/{alarm_id}/yardim"))
 def _panik(d: Dunya, metot: str, yol: str) -> list[Deneme]:
     p = d.panik()
     son = yol.rsplit("/", 1)[-1]

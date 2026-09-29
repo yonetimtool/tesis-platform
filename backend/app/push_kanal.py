@@ -245,6 +245,25 @@ def alarm_mi(tip: str | None) -> bool:
     )
 
 
+#: (P249 §1c) iOS CRITICAL ALERT KAPSAMI — Apple basvurusundaki BEYANLA
+#: AYNI (docs/dis-basvurular.md, Request ID A5HC6338GM): yalniz GERCEK
+#: deprem, yangin, gaz kacagi ve tahliye. TATBIKAT kritik DEGIL, yardim
+#: cagrilari (saglik, guvenlik tehdidi, diger, yardim talebi) kritik
+#: DEGIL — onlar time-sensitive ile gider. Beyanin disina cikmak yetkinin
+#: geri alinmasina yol acabilir; kume GENISLETILMEDEN once basvuru
+#: guncellenmeli.
+KRITIK_UYARI_KIMLIKLERI: frozenset[str] = frozenset({
+    "panik_kategori_deprem",
+    "panik_kategori_yangin",
+    "panik_kategori_gaz",
+    "panik_kategori_tahliye",
+})
+
+
+def kritik_uyari_mi(kimlik: str | None) -> bool:
+    return kimlik in KRITIK_UYARI_KIMLIKLERI
+
+
 #: (P249 §1c) ALARM SES DOSYASI HENUZ YOK — sistem alarm sesi calar.
 #: Dosya gelince (bicim: docs/P249-kararlar.md §1c) `True` yapilir, iOS
 #: paketine `yonetio_alarm.caf`, Android `res/raw/yonetio_alarm` eklenir

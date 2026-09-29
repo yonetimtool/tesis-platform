@@ -168,6 +168,19 @@ def test_IOS_KRITIK_IZINLI_CIHAZA_KRITIK_SES():
     assert m2["apns"]["payload"]["aps"]["sound"] == "default"
 
 
+def test_KRITIK_UYARI_YALNIZ_APPLE_BEYANINDAKI_KATEGORILERDE():
+    """Basvuru beyani: yalniz deprem/yangin/gaz/tahliye; tatbikat ve yardim
+    cagrilari kritik DEGIL (docs/dis-basvurular.md)."""
+    from app.push_kanal import kritik_uyari_mi
+
+    for k in ("deprem", "yangin", "gaz", "tahliye"):
+        assert kritik_uyari_mi(f"panik_kategori_{k}")
+    for kimlik in ("panik_tatbikat_deprem", "panik_kategori_saglik",
+                   "panik_kategori_guvenlik_tehdidi", "panik_kategori_diger",
+                   "panik_alarm", "panik_yardim_talebi"):
+        assert not kritik_uyari_mi(kimlik), kimlik
+
+
 def test_SURUM_ESIGI():
     from app.push_gorunum import surum_en_az
 

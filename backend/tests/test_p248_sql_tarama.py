@@ -121,10 +121,16 @@ IZINLI: dict[tuple[str, str, str], str] = {
         "sabit kosul parcalari (' AND '); degerler :param",
     ('routers/tenants.py', 'list_tenants', 'kaynak'):
         'sabit FROM public.list_all_tenants(:arsivli, :q, :qs, :kurulum)',
-    ('scheduler/notify.py', '_fetch_device_tokens', '_KANAL_KOSULU'):
-        'modul sabiti',
-    ('scheduler/notify.py', '_fetch_device_tokens_for_users', '_KANAL_KOSULU'):
-        'modul sabiti',
+    # (P249 §1) ALARM TERCIHTEN MUAF: kosul ya sabit `_KANAL_KOSULU` ya da
+    # bos; secim bool bayraktan, kullanici girdisinden degil.
+    ('scheduler/notify.py', '_fetch_device_tokens', "'' if tercih_atla else _KANAL_KOSULU"):
+        'modul sabiti ya da bos (bool bayrak)',
+    ('scheduler/notify.py', '_fetch_device_tokens_for_users', "'' if tercih_atla else _KANAL_KOSULU"):
+        'modul sabiti ya da bos (bool bayrak)',
+    ('scheduler/notify.py', '_fetch_device_tokens', '_CIHAZ_SUTUNLARI'):
+        'modul sabiti (SELECT ... FROM ... JOIN), deger yok',
+    ('scheduler/notify.py', '_fetch_device_tokens_for_users', '_CIHAZ_SUTUNLARI'):
+        'modul sabiti (SELECT ... FROM ... JOIN), deger yok',
     ('scheduler/notify.py', '_hedef_yok_nedeni', "' OR '.join(kosul)"):
         'sabit kosul parcalari; degerler %s',
 }

@@ -25,7 +25,7 @@ from .. import push
 from ..config import settings
 from ..gunlukleme import guvenli_alanlar
 from ..push_gorunum import gorunum_kur, hedef_rol, surum_en_az
-from ..push_kanal import alarm_mi, kanal_sec, ses_adi
+from ..push_kanal import alarm_mi, kanal_sec, kritik_uyari_mi, ses_adi
 from ..push_metinleri import dil_normalize, push_basligi, push_govdesi
 from ..ceviri import VARSAYILAN_DIL
 
@@ -215,7 +215,11 @@ def _push_to_devices(
             c = cihazlar[t]
             sesli = True if alarm else c.sesli
             yerel = alarm and c.platform == "android" and surum_en_az(c.surum)
-            kritik = alarm and c.platform == "ios" and c.kritik_uyari
+            # Kritik ses YALNIZ Apple beyanindaki kimliklerde (tatbikat ve
+            # yardim cagrilari haric) — `push_kanal.KRITIK_UYARI_KIMLIKLERI`.
+            kritik = (
+                kritik_uyari_mi(kimlik) and c.platform == "ios" and c.kritik_uyari
+            )
             altlar.setdefault((sesli, yerel, kritik), []).append(t)
         for (sesli, yerel, kritik), alt in altlar.items():
             veri = dict(data or {})
