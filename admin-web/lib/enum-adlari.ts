@@ -62,6 +62,7 @@ export const BILDIRIM_TIP: EnumHarita = {
   panik_alarm: "bildirimTipPanikAlarm",
   panik_yanlis_alarm: "bildirimTipPanikYanlisAlarm",
   panik_yardim_talebi: "bildirimTipPanikYardimTalebi",
+  panik_tatbikat_duyuru: "bildirimTipPanikTatbikatDuyuru",
   panik_kapandi: "bildirimTipPanikKapandi",
   // (P240 §4) Entegrasyon baglantisi koptu (yonetim alarmi).
   entegrasyon_koptu: "bildirimTipEntegrasyonKoptu",

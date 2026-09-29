@@ -65,6 +65,7 @@ from .routers import bakim as bakim_router
 from .routers import vardiya_izin as vardiya_izin_router
 from .routers import diyafon as diyafon_router
 from .routers import panik as panik_router
+from .routers import tatbikat as tatbikat_router
 from .routers import ice_aktarim as ice_aktarim_router
 from .routers import kurulum as kurulum_router
 from .routers import takvim as takvim_router
@@ -246,6 +247,8 @@ app.include_router(kvkk_router.router)
 app.include_router(gurultu_router.router)
 app.include_router(anketler_router.router)
 app.include_router(panik_router.router)
+# (P249 §2) Tatbikat — `/tatbikat` (panik `/{alarm_id}` yoluyla cakismasin diye ayri onek).
+app.include_router(tatbikat_router.router)
 app.include_router(diyafon_router.router)
 app.include_router(akilli_ev_router.router)
 app.include_router(bakim_router.router)

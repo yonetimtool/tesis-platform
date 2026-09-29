@@ -9535,6 +9535,43 @@ class PanikDurumOut(BaseModel):
     personel: list[PanikDurumKisi]
 
 
+class TatbikatOlustur(BaseModel):
+    """(P249 §2) Tatbikat planla. `planlanan_at` bos -> HEMEN baslar."""
+
+    kategori: Literal["deprem", "yangin", "gaz", "tahliye"]
+    kapsam: Literal["site", "blok"] = "site"
+    blok: str | None = Field(None, max_length=_G.BLOK)
+    planlanan_at: datetime | None = None
+    #: Sakinlere onceden duyuru (yalniz ileri tarihli tatbikatta).
+    duyuru: bool = False
+    aciklama: str | None = Field(None, max_length=_G.NOT)
+
+
+class TatbikatOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    kategori: str
+    kapsam: str
+    blok: str | None = None
+    planlanan_at: datetime | None = None
+    duyuru: bool = False
+    duyuru_gonderildi_at: datetime | None = None
+    durum: str
+    olusturan_user_id: uuid.UUID | None = None
+    olusturan_ad: str | None = None
+    basladi_at: datetime | None = None
+    bitti_at: datetime | None = None
+    #: `elle` | `gercek_alarm` | `iptal`
+    bitis_nedeni: str | None = None
+    aciklama: str | None = None
+    created_at: datetime
+    #: Istegin dilinde ad ("Deprem tatbikati").
+    baslik: str = ""
+    #: Yayinlanan alarm (baslamadiysa None).
+    alarm_id: uuid.UUID | None = None
+
+
 class PanikAlarmOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -9584,6 +9621,21 @@ class PanikAlarmOut(BaseModel):
     talimat: list[str] = []
     #: Izleyenin KENDI yaniti (`guvende` | `yardim` | None).
     benim_yanitim: str | None = None
+    #: (P249 §2) TATBIKAT alarmi mi. Istemci ekranda ayrica serit cizer;
+    #: baslik zaten "TATBIKAT — ..." ile baslar.
+    tatbikat_id: uuid.UUID | None = None
+    tatbikat: bool = False
+
+
+class TatbikatRaporOut(BaseModel):
+    """(P249 §2) Tatbikat raporu — kac kisiye gitti, kaci acti, kaci
+    guvende, ne kadar surede, kim yanit vermedi (daire bazinda)."""
+
+    tatbikat: TatbikatOut
+    durum: PanikDurumOut | None = None
+    #: FCM'e denenen ve FCM'in KABUL ettigi push sayisi (teshis satirlari).
+    push_denenen: int = 0
+    push_gonderildi: int = 0
 
 
 class PanikKapat(BaseModel):

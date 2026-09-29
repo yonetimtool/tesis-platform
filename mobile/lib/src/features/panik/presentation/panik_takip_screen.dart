@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/i18n/l10n.dart';
 import '../../../core/ui/bos_durum.dart';
+import '../../../routing/app_router.dart';
 import '../data/panik_api.dart';
 import '../domain/panik_models.dart';
 import 'panik_sayfasi.dart' show panikTipAdi;
@@ -20,7 +22,19 @@ class PanikTakipScreen extends ConsumerWidget {
     final durum = ref.watch(panikListeProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.panikTakipBaslik)),
+      appBar: AppBar(
+        title: Text(l10n.panikTakipBaslik),
+        actions: [
+          // (P249 §2) TATBIKATLAR — takip ekraninin rolleri (yonetim +
+          // guvenlik) raporu okur; yonetim planlar.
+          TextButton.icon(
+            key: const Key('panik-takip-tatbikat'),
+            icon: const Icon(Icons.campaign_outlined),
+            label: Text(l10n.tatbikatBaslik),
+            onPressed: () => context.push(AppRoutes.tatbikat),
+          ),
+        ],
+      ),
       body: durum.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),

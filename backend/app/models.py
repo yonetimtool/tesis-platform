@@ -134,6 +134,8 @@ NOTIFICATION_TIP = ENUM(
     "panik_alarm", "panik_yanlis_alarm", "panik_kapandi",
     # (P249 §1, göç 0157) Toplu uyarıda "yardıma ihtiyacım var" — sahaya.
     "panik_yardim_talebi",
+    # (P249 §2, göç 0158) Planlı tatbikatın önceden duyurusu.
+    "panik_tatbikat_duyuru",
     # (P240 §4, göç 0141) Entegrasyon bağlantısı koptu (yönetim alarmı).
     "entegrasyon_koptu",
     # (P240 §3, göç 0143) Akıllı ev sensörleri: kaçak ve yangın.
@@ -5213,6 +5215,47 @@ class PanikAlarm(Base):
     mudahale_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     kapandi_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     iptal_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    #: (P249 §2, goc 0158) TATBIKAT alarmi mi. NULL = gercek alarm.
+    tatbikat_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    created_at = _created_at()
+
+
+class PanikTatbikat(Base):
+    """(P249 §2, goc 0158) Tatbikat plani + raporun dayanagi.
+
+    Yayin `panik_alarm` satiriyla (tatbikat_id) GERCEK yoldan yapilir;
+    bu satir planı (kategori, kapsam, zaman, duyuru) ve sonucu tasir.
+    """
+
+    __tablename__ = "panik_tatbikat"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_panik_tatbikat_id_tenant"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    kategori: Mapped[str] = mapped_column(PANIK_KATEGORI, nullable=False)
+    #: `site` | `blok`
+    kapsam: Mapped[str] = mapped_column(Text, nullable=False)
+    blok: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: NULL = hemen baslatildi.
+    planlanan_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    duyuru: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
+    duyuru_gonderildi_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    #: `planli` | `aktif` | `bitti` | `iptal`
+    durum: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'planli'"))
+    olusturan_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    basladi_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    bitti_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    #: `elle` | `gercek_alarm` | `iptal`
+    bitis_nedeni: Mapped[str | None] = mapped_column(Text, nullable=True)
+    aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at = _created_at()
 
 

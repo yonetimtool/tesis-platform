@@ -1236,8 +1236,24 @@ _YARDIM_TALEBI = PushMetni(
 )
 
 
+#: (P249 §2) Tatbikat duyurusu govdesi — "{zaman} · {yer}" + ne yapilacagi.
+_DUYURU_GOVDE = {
+    "tr": "{zaman} · {yer}. Alarm çaldığında talimatı uygulayın ve 'Güvendeyim'e basın.",
+    "en": "{zaman} · {yer}. When the alarm sounds, follow the instructions and press 'I am safe'.",
+    "de": "{zaman} · {yer}. Wenn der Alarm ertönt, folgen Sie den Anweisungen und drücken Sie „Ich bin in Sicherheit“.",
+    "fr": "{zaman} · {yer}. Quand l’alarme sonne, suivez les consignes et appuyez sur « Je suis en sécurité ».",
+    "es": "{zaman} · {yer}. Cuando suene la alarma, siga las instrucciones y pulse «Estoy a salvo».",
+    "ar": "{zaman} · {yer}. عند انطلاق الإنذار اتبع التعليمات واضغط «أنا بأمان».",
+    "ru": "{zaman} · {yer}. Когда прозвучит тревога, следуйте инструкциям и нажмите «Я в безопасности».",
+}
+_DUYURU_BASLIK_EK = {
+    "tr": "planlandı", "en": "scheduled", "de": "geplant", "fr": "planifié",
+    "es": "programado", "ar": "مُجدول", "ru": "запланированы",
+}
+
+
 def _panik_metinleri() -> dict[str, PushMetni]:
-    from app.panik_talimat import BASLIK, KISA, TATBIKAT, TOPLU
+    from app.panik_talimat import BASLIK, KISA, TATBIKAT, TATBIKAT_ADI, TOPLU
 
     diller = tuple(BASLIK["deprem"])
     cikti: dict[str, PushMetni] = {"panik_yardim_talebi": _YARDIM_TALEBI}
@@ -1255,6 +1271,14 @@ def _panik_metinleri() -> dict[str, PushMetni]:
                     for d in diller
                 },
                 params=("yer",),
+            )
+            # (P249 §2) ONCEDEN DUYURU — alarm sinifi DEGIL (onek farkli).
+            cikti[f"tatbikat_duyuru_{k}"] = PushMetni(
+                baslik={
+                    d: f"{TATBIKAT_ADI[k][d]} {_DUYURU_BASLIK_EK[d]}" for d in diller
+                },
+                govde=dict(_DUYURU_GOVDE),
+                params=("zaman", "yer"),
             )
         else:
             cikti[f"panik_kategori_{k}"] = PushMetni(

@@ -7985,4 +7985,82 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get panikTatbikatSerit => 'УЧЕНИЯ — Это не настоящая тревога';
+
+  @override
+  String get tatbikatBaslik => 'Учения';
+
+  @override
+  String get tatbikatPlanla => 'Запланировать учения';
+
+  @override
+  String get tatbikatTur => 'Тип учений';
+
+  @override
+  String get tatbikatKapsam => 'Охват';
+
+  @override
+  String get tatbikatKapsamSite => 'Весь комплекс';
+
+  @override
+  String get tatbikatKapsamBlok => 'Один блок';
+
+  @override
+  String get tatbikatBlok => 'Блок';
+
+  @override
+  String get tatbikatZaman => 'Время начала (пусто — сейчас)';
+
+  @override
+  String get tatbikatDuyuru =>
+      'Предупредить заранее (только для запланированных)';
+
+  @override
+  String get tatbikatAciklama => 'Примечание (необязательно)';
+
+  @override
+  String get tatbikatHemenUyari =>
+      'Без времени тревога уйдёт всем сразу после подтверждения. В заголовке на любом языке будет «УЧЕНИЯ».';
+
+  @override
+  String get tatbikatBaslat => 'Начать';
+
+  @override
+  String get tatbikatBitir => 'Завершить';
+
+  @override
+  String get tatbikatIptal => 'Отменить';
+
+  @override
+  String get tatbikatRapor => 'Отчёт';
+
+  @override
+  String get tatbikatPdf => 'Скачать PDF';
+
+  @override
+  String get tatbikatDurumPlanli => 'Запланировано';
+
+  @override
+  String get tatbikatDurumAktif => 'Идёт';
+
+  @override
+  String get tatbikatDurumBitti => 'Завершено';
+
+  @override
+  String get tatbikatDurumIptal => 'Отменено';
+
+  @override
+  String get tatbikatYok =>
+      'Учений пока нет. Запланируйте учения по землетрясению или пожару, чтобы проверить, доходит ли тревога до всех.';
+
+  @override
+  String tatbikatPushKabul(int gonderildi, int denenen) {
+    return 'Push принято: $gonderildi/$denenen';
+  }
+
+  @override
+  String get tatbikatGercekAlarmlaDurdu =>
+      'Остановлено из-за настоящей тревоги';
+
+  @override
+  String get tatbikatDuyuruGitti => 'Уведомление отправлено';
 }

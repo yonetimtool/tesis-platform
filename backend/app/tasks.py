@@ -288,6 +288,17 @@ def bakim_hatirlatma() -> dict:
     return tum_tenantlar_icin()
 
 
+@celery_app.task(name="scheduler.tatbikat_zamani")
+def tatbikat_zamani() -> dict:
+    """(P249 §2) Beat: zamani gelen planli tatbikatlari baslat (dakikada bir).
+
+    Yalniz ISI OLAN tesisler taranir (sahip baglantisiyla tek sorgu).
+    """
+    from .panik_tatbikat import tum_tenantlar_icin
+
+    return tum_tenantlar_icin()
+
+
 @celery_app.task(name="scheduler.ziyaretci_otomatik_kapanis")
 def ziyaretci_otomatik_kapanis() -> dict:
     """(P247 §3) Beat: 24 saatten eski, cikisi damgalanmamis ziyaretci

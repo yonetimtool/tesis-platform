@@ -51,6 +51,8 @@ import { Alan, BosDurum, Dugme, HataDurumu, Kart, Modal, Rozet, Tablo, TabloBasl
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { PanikDurumPaneli } from "@/components/panik/panik-durum";
+import { TatbikatBolumu } from "@/components/panik/tatbikat-bolumu";
+import { useRol } from "@/lib/rol-kullan";
 import { apiSend } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
@@ -121,6 +123,8 @@ export default function PanikPage() {
     // derse, yenilemeden gorunmeli.
     { refreshInterval: 15_000 },
   );
+  // (P249 §2) Tatbikat planlama yalniz yonetimde (sunucu da zorlar).
+  const rol = useRol(null);
   const [kapatilan, setKapatilan] = useState<Alarm | null>(null);
   // (P249 §1b) Daire bazinda durumu acilan toplu uyari.
   const [durumAlarm, setDurumAlarm] = useState<Alarm | null>(null);
@@ -332,6 +336,8 @@ export default function PanikPage() {
           </Tablo>
         )}
       </Kart>
+
+      <TatbikatBolumu yonetim={rol === "admin" || rol === "yonetici"} />
 
       <Modal
         acik={durumAlarm !== null}

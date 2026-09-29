@@ -84,6 +84,13 @@ bool rotaErisilebilir(String rota, UserRole role) {
   if (yol.startsWith('${AppRoutes.panikAlarm}/')) {
     return role != UserRole.denetci && role != UserRole.unknown;
   }
+  // (P249 §2) TATBIKATLAR — takip ekranindan acilir (menude karti yok);
+  // yonetim ve guvenlik raporu okur (sunucu `/tatbikat` kapisiyla ayni).
+  if (yol == AppRoutes.tatbikat) {
+    return const {
+      UserRole.yonetici, UserRole.admin, UserRole.security, UserRole.guvenlikAmiri,
+    }.contains(role);
+  }
   return erisilebilirRotalar(role).contains(yol);
 }
 
@@ -263,6 +270,10 @@ String? _hamHedef(Map<String, String> data, UserRole? role) {
     case 'panik_yanlis_alarm':
     case 'panik_kapandi':
       return AppRoutes.panikTakip;
+    // (P249 §2) Tatbikat duyurusu: yonetim/guvenlik tatbikat listesine;
+    // sakin icin hedef yok (bilgi bildirimi — erisim suzgeci keser).
+    case 'panik_tatbikat_duyuru':
+      return AppRoutes.tatbikat;
     case 'akilli_ev_kacak':
     case 'akilli_ev_yangin':
       return AppRoutes.akilliEv;

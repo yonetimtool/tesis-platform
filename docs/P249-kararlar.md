@@ -298,8 +298,13 @@ yüksek öncelikli bildirim olarak gelir.
   * cihazın izin durumunu kayıtta gönderiyor (`kritik_uyari`,
     göç 0157),
   * sunucu kritik ses yükünü (`critical: 1`,
-    `interruption-level: critical`) **yalnız izni açık cihazlara**
-    gönderiyor.
+    `interruption-level: critical`) **yalnız izni açık cihazlara** ve
+    **yalnız Apple başvurusundaki beyan kapsamında** gönderiyor: gerçek
+    deprem, yangın, gaz kaçağı ve tahliye
+    (`push_kanal.KRITIK_UYARI_KIMLIKLERI`). **Tatbikatlar kritik değil.**
+    Yardım çağrıları (sağlık, güvenlik tehdidi, diğer, yardım talebi) da
+    kritik değil; bunlar time-sensitive gider. Kapsam genişletilecekse
+    önce başvuru güncellenmeli (`docs/dis-basvurular.md`).
 * **ONAY GELİNCE DEĞİŞECEK TEK YER:** `mobile/ios/Runner/Runner.entitlements`.
   Şu iki satır eklenecek:
   ```xml
@@ -396,3 +401,104 @@ birim testleriyle desteklendi:
 5. Aynı adımları SAĞLIK için tekrarla. Beklenen: "SAĞLIK ACİLİ",
    kim/nerede, Gidiyorum/Gördüm; sakin telefonuna **gelmemeli**.
 6. Sorun olursa prod'da `docs/P249-sos-teshis.sql` sorgusunu çalıştır.
+
+---
+
+# §2 — TATBİKAT MODU
+
+## §2a Tatbikat gerçek yolun provasıdır, ayrı bir sistem değildir
+
+Tatbikat başlayınca bir `panik_alarm` satırı açılır ve **gerçek yayın
+yolu** çalışır (`panik_yayin.yayinla_senkron`): aynı push, aynı alarm
+kanalı, aynı tam ekran, aynı "Güvendeyim". Provada ayrı bir yol
+kullanılsaydı, gerçek günde çalışacak yol sınanmamış olurdu.
+`panik_tatbikat` tablosu (göç 0158) planı ve raporu tutar. Alarm satırı
+ona `tatbikat_id` ile bağlanır.
+
+| Kural | Nasıl |
+|---|---|
+| Yalnız yönetim başlatır | `POST /tatbikat` → admin, yönetici. Güvenlik raporu okur |
+| Kategori | Yalnız toplu uyarılar: deprem, yangın, gaz, tahliye (şema + DB CHECK) |
+| Kapsam | Tüm site ya da bir blok. Blokta: o bloktaki **aktif sakinler + tüm personel** (sayımı personel yapar) |
+| Zaman | Boş bırakılırsa hemen başlar. İleri tarih en fazla 1 yıl, saat dilimli (dilimsiz zaman reddedilir) |
+| Önceden duyuru | İsteğe bağlı, yalnız ileri tarihli tatbikatta. Alarm kanalından **değil**, genel kanaldan gider; metin "Deprem tatbikatı planlandı — 29.09.2026 14:00 · A Blok…" |
+| Başlatma | Zamanı gelince beat (dakikada bir, `scheduler.tatbikat_zamani`), ya da elle "Başlat". İptal penceresi yok (planlı eylem) |
+| Aynı anda bir tatbikat | İkincisi 409 `tatbikat_zaten_aktif` |
+| Denetim kaydı | `tatbikat_plan`, `tatbikat_baslat`, `tatbikat_bitir`, `tatbikat_iptal`, `tatbikat_rapor` (kim, ne zaman, kapsam meta'da) |
+
+## §2b Karıştırılamazlık
+
+* **Başlık:** her dilde başlığın önünde "TATBİKAT — DEPREM ALARMI" (DRILL,
+  ÜBUNG, EXERCICE, SIMULACRO, تمرين, УЧЕНИЯ). Bu yazı push'ta, tam
+  ekranda ve kayıtta aynıdır.
+* **Gövde:** push gövdesi "Bu bir tatbikattır." cümlesiyle başlar.
+* **Ekran:** tam ekranın en üstünde sarı zeminli ayrı bir şerit:
+  "TATBİKAT — Bu gerçek bir alarm değildir" (mobil ve web).
+* **Yanlış alarm sayacı:** tatbikat alarmları sayılmaz
+  (`tatbikat_id IS NULL`).
+* **SMS, diyafon anonsu, akıllı ev senaryosu çalışmaz.** SMS metninde
+  "tatbikat" yok ve maliyeti var. Diyafon anonsu siteye "TATBİKAT"
+  demeden seslenirdi. Bir akıllı ev senaryosu provada kapı açabilirdi.
+
+## §2c Gerçek alarm öncelikli
+
+* `GET /panik/aktif` gerçek alarmları **önce** döndürür. İstemci ilk
+  öğeyi tam ekran çizdiği için tatbikat sürerken gelen gerçek alarm
+  onun arkasında kalmaz.
+* **Gerçek bir toplu alarm** (deprem, yangın, gaz, tahliye) yayınlanınca
+  aktif tatbikat **durdurulur**. `bitis_nedeni = gercek_alarm`, rapor
+  bunu yazar. Aynı anda iki "deprem" ekranı (biri prova) karışıklık
+  yaratırdı.
+* Yardım çağrısı (sağlık vb.) tatbikatı durdurmaz, ama önce gösterilir.
+
+## §2d Ses: gerçek alarmla AYNI — karar
+
+**Gerekçe:** provanın amacı insanlara gerçek sesi tanıtmaktır. Deprem
+gecesi ilk kez duyulan bir ses, ne olduğu anlaşılmadan kapatılır.
+Karıştırılmayı önleyen şey ses değil metindir: başlığın ilk kelimesi
+"TATBİKAT", ekranda ayrıca şerit var, isteğe bağlı olarak da önceden
+duyuru gider. Farklı ses seçilseydi paniği önlerdi ama gerçek günün
+provası olmazdı.
+
+## §2e Sakin tatbikat bildirimini kapatamaz — karar
+
+Tatbikatın ölçüsü "alarm kime **ulaştı**". Kapatılabilseydi rapor,
+ulaşılamayan kişi yerine alarmı kapatan kişiyi "yanıtsız" gösterirdi.
+Tatbikat alarm sınıfındadır, bu yüzden bildirim tercihlerini de aşar
+(§1a). Rahatsızlığın çözümü tatbikatı **seyrek** yapmaktır; önerilen
+sıklık yılda 1–2'dir. Gerçek alarmları kapatma seçeneği zaten yok.
+
+## §2f Rapor
+
+`GET /tatbikat/{id}` ve `GET /tatbikat/{id}/rapor.pdf`. Rapor, ekrandaki
+"daire bazında durum" ile **aynı hesaptan** (`panik_durum.py`) üretilir:
+
+* **Kaç kişiye gitti:** alıcı satırı sayısı. Ayrıca FCM'in kabul ettiği
+  push sayısı ("bildirim kabul: 41/43"), teşhis satırlarından.
+* **Kaçı açtı:** "gördü" sayısı. Karar vermek de açmayı kapsar.
+* **Kaçı "Güvendeyim" dedi**, kaçı yardım istedi.
+* **Ortalama yanıt süresi:** alarmın gönderildiği andan yanıta kadar.
+* **Yanıt vermeyen daireler:** daire bazında, blok ve daire no ile.
+  Sıra: önce yardım isteyen, sonra yanıtsız, en son güvende.
+
+**"Telefona düştü" ölçülemez:** FCM teslim raporu vermiyor. Ölçülebilen,
+FCM'in mesajı kabul etmesi ve kişinin açmasıdır.
+
+## §2g Parite
+
+* **Web:** `/panik` sayfasında "Tatbikatlar" bölümü: liste, planla,
+  başlat, bitir, iptal, rapor penceresi, PDF.
+* **Mobil:** Acil durum çağrıları → "Tatbikatlar": liste, planla,
+  başlat, bitir, iptal, rapor ekranı.
+* **İstisna — PDF yalnız web'de.** PDF yazdırma ve arşiv için alınır;
+  bu bir masaüstü işidir. Mobil aynı raporu aynı veriyle ekranda
+  gösterir. Mobilde PDF indirme **yapılmadı**.
+
+## §2 ÖLÇÜLEMEDİ
+
+* Tatbikatın gerçek cihazlarda çalması ve iki cihazdan yanıt verilmesi
+  (cihaz yok). Sunucu akışı uçtan uca ölçüldü: planla, duyuru, beat ile
+  başlama, Güvendeyim, bitir, rapor, PDF, gerçek alarmın durdurması
+  (`test_p249_tatbikat.py`).
+* PDF'in görsel düzeni gözle kontrol edilmedi. Yalnız geçerli bir PDF
+  olduğu (`%PDF` imzası) ölçüldü.

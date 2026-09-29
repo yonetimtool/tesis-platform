@@ -10592,6 +10592,93 @@ paths:
             schema: { $ref: "#/components/schemas/PanikKapat" }
       responses:
         "200": { description: alarm }
+  /tatbikat:
+    get:
+      tags: [panik]
+      summary: Tatbikatlar (yonetim + guvenlik)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: tatbikatlar
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TatbikatOut" }
+    post:
+      tags: [panik]
+      summary: Tatbikat planla (yalniz yonetim); zaman bos -> HEMEN baslar
+      description: |
+        (P249 §2) Tatbikat GERCEK yayin yolundan gider (ayni push, alarm
+        kanali, tam ekran, "Guvendeyim"); her dilde basligin onunde
+        "TATBIKAT" yazar. Yalniz toplu kategoriler. Ayni anda tek aktif
+        tatbikat (409). Duyuru yalniz ileri tarihli tatbikatta (422).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TatbikatOlustur" }
+      responses:
+        "201":
+          description: tatbikat
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TatbikatOut" }
+        "403": { description: yonetim degil }
+        "409": { description: baska tatbikat suruyor }
+        "422": { description: gecersiz zaman / blok / duyuru }
+  /tatbikat/{id}:
+    get:
+      tags: [panik]
+      summary: Tatbikat raporu (daire bazinda durum + push kabul sayisi)
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: rapor
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TatbikatRaporOut" }
+  /tatbikat/{id}/rapor.pdf:
+    get:
+      tags: [panik]
+      summary: Tatbikat raporu PDF
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: PDF
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+  /tatbikat/{id}/baslat:
+    post:
+      tags: [panik]
+      summary: Planli tatbikati simdi baslat (yalniz yonetim)
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200": { description: tatbikat }
+        "409": { description: durum uygun degil ya da baska tatbikat suruyor }
+  /tatbikat/{id}/bitir:
+    post:
+      tags: [panik]
+      summary: Aktif tatbikati bitir (alarm kapanir, tam ekranlar kalkar)
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200": { description: tatbikat }
+        "409": { description: aktif degil }
+  /tatbikat/{id}/iptal:
+    post:
+      tags: [panik]
+      summary: Planli tatbikati iptal et
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200": { description: tatbikat }
+        "409": { description: planli degil }
   /users/{id}/panik-aski:
     patch:
       tags: [users]
@@ -19925,6 +20012,51 @@ components:
       type: object
       properties:
         kapanis_notu: { type: string, nullable: true, maxLength: 2000 }
+    TatbikatOlustur:
+      type: object
+      required: [kategori]
+      properties:
+        kategori: { type: string, enum: [deprem, yangin, gaz, tahliye] }
+        kapsam: { type: string, enum: [site, blok], default: site }
+        blok: { type: string, nullable: true, maxLength: 50 }
+        planlanan_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Saat dilimli. Bos -> HEMEN baslar.
+        duyuru: { type: boolean, default: false }
+        aciklama: { type: string, nullable: true, maxLength: 2000 }
+    TatbikatOut:
+      type: object
+      required: [id, kategori, kapsam, durum, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        kategori: { type: string }
+        kapsam: { type: string, enum: [site, blok] }
+        blok: { type: string, nullable: true }
+        planlanan_at: { type: string, format: date-time, nullable: true }
+        duyuru: { type: boolean }
+        duyuru_gonderildi_at: { type: string, format: date-time, nullable: true }
+        durum: { type: string, enum: [planli, aktif, bitti, iptal] }
+        olusturan_user_id: { type: string, format: uuid, nullable: true }
+        olusturan_ad: { type: string, nullable: true }
+        basladi_at: { type: string, format: date-time, nullable: true }
+        bitti_at: { type: string, format: date-time, nullable: true }
+        bitis_nedeni: { type: string, enum: [elle, gercek_alarm, iptal], nullable: true }
+        aciklama: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        baslik: { type: string }
+        alarm_id: { type: string, format: uuid, nullable: true }
+    TatbikatRaporOut:
+      type: object
+      required: [tatbikat]
+      properties:
+        tatbikat: { $ref: "#/components/schemas/TatbikatOut" }
+        durum:
+          allOf: [{ $ref: "#/components/schemas/PanikDurumOut" }]
+          nullable: true
+        push_denenen: { type: integer }
+        push_gonderildi: { type: integer }
     PanikDurumKisi:
       type: object
       required: [user_id, ad, rol]

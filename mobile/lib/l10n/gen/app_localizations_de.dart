@@ -7914,4 +7914,80 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get panikTatbikatSerit => 'ÜBUNG — Dies ist kein echter Alarm';
+
+  @override
+  String get tatbikatBaslik => 'Übungen';
+
+  @override
+  String get tatbikatPlanla => 'Übung planen';
+
+  @override
+  String get tatbikatTur => 'Übungsart';
+
+  @override
+  String get tatbikatKapsam => 'Umfang';
+
+  @override
+  String get tatbikatKapsamSite => 'Gesamte Anlage';
+
+  @override
+  String get tatbikatKapsamBlok => 'Ein Block';
+
+  @override
+  String get tatbikatBlok => 'Block';
+
+  @override
+  String get tatbikatZaman => 'Startzeit (leer = sofort)';
+
+  @override
+  String get tatbikatDuyuru => 'Vorab ankündigen (nur bei geplanten Übungen)';
+
+  @override
+  String get tatbikatAciklama => 'Notiz (optional)';
+
+  @override
+  String get tatbikatHemenUyari =>
+      'Ohne Zeit geht der Alarm sofort nach Bestätigung an alle im Umfang. Der Titel lautet in jeder Sprache „ÜBUNG“.';
+
+  @override
+  String get tatbikatBaslat => 'Starten';
+
+  @override
+  String get tatbikatBitir => 'Beenden';
+
+  @override
+  String get tatbikatIptal => 'Absagen';
+
+  @override
+  String get tatbikatRapor => 'Bericht';
+
+  @override
+  String get tatbikatPdf => 'PDF herunterladen';
+
+  @override
+  String get tatbikatDurumPlanli => 'Geplant';
+
+  @override
+  String get tatbikatDurumAktif => 'Läuft';
+
+  @override
+  String get tatbikatDurumBitti => 'Beendet';
+
+  @override
+  String get tatbikatDurumIptal => 'Abgesagt';
+
+  @override
+  String get tatbikatYok =>
+      'Noch keine Übungen. Planen Sie eine Erdbeben- oder Brandübung, um zu messen, ob der Alarm alle erreicht.';
+
+  @override
+  String tatbikatPushKabul(int gonderildi, int denenen) {
+    return 'Push angenommen: $gonderildi/$denenen';
+  }
+
+  @override
+  String get tatbikatGercekAlarmlaDurdu => 'Wegen eines echten Alarms gestoppt';
+
+  @override
+  String get tatbikatDuyuruGitti => 'Ankündigung gesendet';
 }

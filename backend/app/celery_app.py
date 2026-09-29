@@ -112,6 +112,11 @@ celery_app.conf.beat_schedule = {
     # olarak kapanir; guvenligin "N iceride" sayaci sonsuza dek sismez.
     # Esik saat cozunurluklu; gunde bir kosmak kaydi 48 saate kadar acik
     # birakirdi (gerekce: `ziyaretci_kapanis_isi` basligi).
+    # (P249 §2) Planli tatbikat — dakika cozunurlugu yeterli ("14:00").
+    "tatbikat-zamani": {
+        "task": "scheduler.tatbikat_zamani",
+        "schedule": 60.0,
+    },
     "ziyaretci-otomatik-kapanis": {
         "task": "scheduler.ziyaretci_otomatik_kapanis",
         "schedule": 3600.0,

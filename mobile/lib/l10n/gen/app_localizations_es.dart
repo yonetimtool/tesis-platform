@@ -7894,4 +7894,81 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get panikTatbikatSerit => 'SIMULACRO — Esta no es una alarma real';
+
+  @override
+  String get tatbikatBaslik => 'Simulacros';
+
+  @override
+  String get tatbikatPlanla => 'Planificar simulacro';
+
+  @override
+  String get tatbikatTur => 'Tipo de simulacro';
+
+  @override
+  String get tatbikatKapsam => 'Alcance';
+
+  @override
+  String get tatbikatKapsamSite => 'Todo el complejo';
+
+  @override
+  String get tatbikatKapsamBlok => 'Un bloque';
+
+  @override
+  String get tatbikatBlok => 'Bloque';
+
+  @override
+  String get tatbikatZaman => 'Hora de inicio (vacío = ahora)';
+
+  @override
+  String get tatbikatDuyuru =>
+      'Avisar con antelación (solo simulacros programados)';
+
+  @override
+  String get tatbikatAciklama => 'Nota (opcional)';
+
+  @override
+  String get tatbikatHemenUyari =>
+      'Sin hora, la alarma llega a todos al confirmar. El título dice «SIMULACRO» en cada idioma.';
+
+  @override
+  String get tatbikatBaslat => 'Iniciar';
+
+  @override
+  String get tatbikatBitir => 'Finalizar';
+
+  @override
+  String get tatbikatIptal => 'Cancelar';
+
+  @override
+  String get tatbikatRapor => 'Informe';
+
+  @override
+  String get tatbikatPdf => 'Descargar PDF';
+
+  @override
+  String get tatbikatDurumPlanli => 'Programado';
+
+  @override
+  String get tatbikatDurumAktif => 'En curso';
+
+  @override
+  String get tatbikatDurumBitti => 'Finalizado';
+
+  @override
+  String get tatbikatDurumIptal => 'Cancelado';
+
+  @override
+  String get tatbikatYok =>
+      'Aún no hay simulacros. Planifique uno de terremoto o incendio para medir si la alarma llega a todos.';
+
+  @override
+  String tatbikatPushKabul(int gonderildi, int denenen) {
+    return 'Push aceptados: $gonderildi/$denenen';
+  }
+
+  @override
+  String get tatbikatGercekAlarmlaDurdu => 'Detenido por una alarma real';
+
+  @override
+  String get tatbikatDuyuruGitti => 'Aviso enviado';
 }

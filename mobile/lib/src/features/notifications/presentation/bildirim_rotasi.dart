@@ -86,6 +86,8 @@ String? bildirimRotasi(AppNotification b, {UserRole? role}) {
     'panik_yanlis_alarm' ||
     'panik_kapandi' =>
       AppRoutes.panikTakip,
+    // (P249 §2) Tatbikat duyurusu -> tatbikat listesi (yonetim/guvenlik).
+    'panik_tatbikat_duyuru' => AppRoutes.tatbikat,
     // (P240 §3) Kacak/yangin -> cihazin oldugu ekran (vana, sensor).
     'akilli_ev_kacak' || 'akilli_ev_yangin' => AppRoutes.akilliEv,
     // (P240 §4) Kopan entegrasyon -> entegrasyon listesi (saglik sutunu).

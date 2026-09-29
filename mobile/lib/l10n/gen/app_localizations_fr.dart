@@ -7912,4 +7912,81 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get panikTatbikatSerit => 'EXERCICE — Ceci n’est pas une vraie alerte';
+
+  @override
+  String get tatbikatBaslik => 'Exercices';
+
+  @override
+  String get tatbikatPlanla => 'Planifier un exercice';
+
+  @override
+  String get tatbikatTur => 'Type d’exercice';
+
+  @override
+  String get tatbikatKapsam => 'Périmètre';
+
+  @override
+  String get tatbikatKapsamSite => 'Tout le site';
+
+  @override
+  String get tatbikatKapsamBlok => 'Un bloc';
+
+  @override
+  String get tatbikatBlok => 'Bloc';
+
+  @override
+  String get tatbikatZaman => 'Heure de début (vide = maintenant)';
+
+  @override
+  String get tatbikatDuyuru =>
+      'Prévenir à l’avance (exercices planifiés uniquement)';
+
+  @override
+  String get tatbikatAciklama => 'Note (facultatif)';
+
+  @override
+  String get tatbikatHemenUyari =>
+      'Sans heure, l’alerte part dès confirmation à tout le périmètre. Le titre indique « EXERCICE » dans chaque langue.';
+
+  @override
+  String get tatbikatBaslat => 'Démarrer';
+
+  @override
+  String get tatbikatBitir => 'Terminer';
+
+  @override
+  String get tatbikatIptal => 'Annuler';
+
+  @override
+  String get tatbikatRapor => 'Rapport';
+
+  @override
+  String get tatbikatPdf => 'Télécharger le PDF';
+
+  @override
+  String get tatbikatDurumPlanli => 'Planifié';
+
+  @override
+  String get tatbikatDurumAktif => 'En cours';
+
+  @override
+  String get tatbikatDurumBitti => 'Terminé';
+
+  @override
+  String get tatbikatDurumIptal => 'Annulé';
+
+  @override
+  String get tatbikatYok =>
+      'Aucun exercice. Planifiez un exercice séisme ou incendie pour vérifier que l’alerte atteint tout le monde.';
+
+  @override
+  String tatbikatPushKabul(int gonderildi, int denenen) {
+    return 'Push acceptés : $gonderildi/$denenen';
+  }
+
+  @override
+  String get tatbikatGercekAlarmlaDurdu => 'Arrêté à cause d’une vraie alerte';
+
+  @override
+  String get tatbikatDuyuruGitti => 'Avis envoyé';
 }

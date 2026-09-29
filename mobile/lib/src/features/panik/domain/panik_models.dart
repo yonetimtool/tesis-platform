@@ -98,6 +98,7 @@ class PanikAlarm {
     this.talimat = const [],
     this.benimYanitim,
     this.gonderildiAt,
+    this.tatbikat = false,
   });
 
   final String id;
@@ -144,6 +145,9 @@ class PanikAlarm {
   final String? benimYanitim;
   final DateTime? gonderildiAt;
 
+  /// (P249 §2) Tatbikat alarmi — ekranda ayrica "TATBIKAT" seridi.
+  final bool tatbikat;
+
   /// "A 12" / kontrol noktasi adi / bos.
   String get yer {
     if (daireNo != null && daireNo!.isNotEmpty) {
@@ -188,6 +192,7 @@ class PanikAlarm {
         gonderildiAt: j['gonderildi_at'] == null
             ? null
             : DateTime.parse(j['gonderildi_at'] as String),
+        tatbikat: (j['tatbikat'] as bool?) ?? false,
       );
 }
 

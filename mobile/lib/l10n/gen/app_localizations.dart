@@ -13690,6 +13690,150 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'TATBİKAT — Bu gerçek bir alarm değildir'**
   String get panikTatbikatSerit;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'Tatbikatlar'**
+  String get tatbikatBaslik;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'Tatbikat planla'**
+  String get tatbikatPlanla;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'Tatbikat türü'**
+  String get tatbikatTur;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapsam'**
+  String get tatbikatKapsam;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'Tüm site'**
+  String get tatbikatKapsamSite;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'Bir blok'**
+  String get tatbikatKapsamBlok;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok'**
+  String get tatbikatBlok;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlama zamanı (boş bırakılırsa hemen başlar)'**
+  String get tatbikatZaman;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'Önceden duyuru gönder (yalnız ileri tarihli tatbikatta)'**
+  String get tatbikatDuyuru;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'Not (isteğe bağlı)'**
+  String get tatbikatAciklama;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'Zaman boşsa alarm onayladığınız anda seçilen kapsamdaki herkese gider. Başlıkta her dilde “TATBİKAT” yazar.'**
+  String get tatbikatHemenUyari;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlat'**
+  String get tatbikatBaslat;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'Bitir'**
+  String get tatbikatBitir;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'İptal et'**
+  String get tatbikatIptal;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'Rapor'**
+  String get tatbikatRapor;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'PDF indir'**
+  String get tatbikatPdf;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'Planlandı'**
+  String get tatbikatDurumPlanli;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'Sürüyor'**
+  String get tatbikatDurumAktif;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'Bitti'**
+  String get tatbikatDurumBitti;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'İptal edildi'**
+  String get tatbikatDurumIptal;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz tatbikat yok. Deprem ya da yangın tatbikatı planlayarak alarmın herkese ulaşıp ulaşmadığını ölçebilirsiniz.'**
+  String get tatbikatYok;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'Bildirim kabul: {gonderildi}/{denenen}'**
+  String tatbikatPushKabul(int gonderildi, int denenen);
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'Gerçek alarm nedeniyle durduruldu'**
+  String get tatbikatGercekAlarmlaDurdu;
+
+  /// (P249 §2) Tatbikat
+  ///
+  /// In tr, this message translates to:
+  /// **'Duyuru gönderildi'**
+  String get tatbikatDuyuruGitti;
 }
 
 class _AppLocalizationsDelegate

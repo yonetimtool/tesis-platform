@@ -132,12 +132,27 @@ async def yayinla_senkron(db: AsyncSession, alarm: PanikAlarm) -> int:
     if alarm.durum in ("iptal", "kapandi", "yanlis_alarm"):
         return 0
 
-    kisiler = await _alicilar(db, alarm)
-    veri = await _veri(db, alarm)
+    tatbikat = None
+    if alarm.tatbikat_id is not None:
+        from .models import PanikTatbikat
+
+        tatbikat = await db.get(PanikTatbikat, alarm.tatbikat_id)
+    if tatbikat is not None:
+        # (P249 §2) TATBIKAT: alici kumesi kapsamdan (blok), metin
+        # "TATBIKAT" onekli, yer kapsamin adi.
+        from .panik_tatbikat import hedef_kisiler, yer_metni
+
+        kisiler = [k for k in await hedef_kisiler(db, tatbikat)
+                   if k.id != alarm.olusturan_user_id]
+        veri = {"ad": "", "yer": await yer_metni(db, tatbikat) or "-"}
+        kimlik = f"panik_tatbikat_{alarm.kategori}"
+    else:
+        kisiler = await _alicilar(db, alarm)
+        veri = await _veri(db, alarm)
+        # METIN KIMLIGI KATEGORIDEN: deprem uyarisiyla gaz kacagi uyarisi
+        # ayni cumleyi kullanamaz (goc 0146).
+        kimlik = kategori_kimligi(alarm.kategori)
     veri["tip"] = alarm.tip
-    # METIN KIMLIGI KATEGORIDEN: deprem uyarisiyla gaz kacagi uyarisi
-    # ayni cumleyi kullanamaz (goc 0146).
-    kimlik = kategori_kimligi(alarm.kategori)
 
     for k in kisiler:
         var = (
@@ -181,8 +196,19 @@ async def yayinla_senkron(db: AsyncSession, alarm: PanikAlarm) -> int:
               "panik_kategori": alarm.kategori or "",
               # (P249 §1b) Istemci iki deneyimden hangisini cizecegini
               # alarmi cekmeden de bilsin (bildirimden acilis).
-              "toplu": "1" if toplu_mu(alarm.kategori) else "0"},
+              "toplu": "1" if toplu_mu(alarm.kategori) else "0",
+              "tatbikat": "1" if tatbikat is not None else "0"},
     )
+    if tatbikat is not None:
+        # (P249 §2) PROVADA SMS, DIYAFON ANONSU ve AKILLI EV YOK: SMS'in
+        # metninde "tatbikat" yok ve maliyeti var; diyafon anonsu
+        # "TATBIKAT" demeden siteye seslenirdi; bir akilli ev senaryosu
+        # provada kapi ACABILIRDI.
+        return len(kisiler)
+    # (P249 §2) GERCEK TOPLU ALARM aktif tatbikati durdurur.
+    from .panik_tatbikat import gercek_alarm_tatbikati_durdurur
+
+    await gercek_alarm_tatbikati_durdurur(db, alarm)
     _sms_gonder(alarm, kisiler, veri)
     await _diyafon_anons(db, alarm, veri)
     await _akilli_ev_senaryolari(db, alarm)

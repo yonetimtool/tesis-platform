@@ -200,9 +200,34 @@ class _PanikAlarmIcerigiState extends ConsumerState<PanikAlarmIcerigi> {
             padding: const EdgeInsets.all(24),
             child: DefaultTextStyle.merge(
               style: TextStyle(color: yazi),
-              child: a.toplu
-                  ? _toplu(context, a, yazi)
-                  : _yardimCagrisi(context, a, yazi),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // (P249 §2) TATBIKAT SERIDI — basliktaki "TATBIKAT"a EK.
+                  // Gercek alarmla karistirilmasi imkansiz olmali: serit
+                  // sari zeminde, ekranin en ustunde.
+                  if (a.tatbikat)
+                    Container(
+                      key: const Key('panik-tatbikat-serit'),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(12),
+                      color: const Color(0xFFFFD600),
+                      child: Text(
+                        context.l10n.panikTatbikatSerit,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+                  a.toplu
+                      ? _toplu(context, a, yazi)
+                      : _yardimCagrisi(context, a, yazi),
+                ],
+              ),
             ),
           ),
         ),

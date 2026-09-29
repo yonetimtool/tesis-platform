@@ -437,3 +437,25 @@ def talimat(kategori: str | None, dil: str) -> list[str]:
     if kategori not in TALIMAT:
         return []
     return list(_dil(TALIMAT[kategori], dil))
+
+
+#: (P249 §2) Tatbikatin ADI — liste, rapor ve duyuru basligi.
+TATBIKAT_ADI: Final[dict[str, dict[str, str]]] = {
+    "deprem": {"tr": "Deprem tatbikatı", "en": "Earthquake drill", "de": "Erdbebenübung",
+               "fr": "Exercice séisme", "es": "Simulacro de terremoto",
+               "ar": "تمرين زلزال", "ru": "Учения по землетрясению"},
+    "yangin": {"tr": "Yangın tatbikatı", "en": "Fire drill", "de": "Brandschutzübung",
+               "fr": "Exercice incendie", "es": "Simulacro de incendio",
+               "ar": "تمرين حريق", "ru": "Пожарные учения"},
+    "gaz": {"tr": "Gaz kaçağı tatbikatı", "en": "Gas leak drill", "de": "Gasleck-Übung",
+            "fr": "Exercice fuite de gaz", "es": "Simulacro de fuga de gas",
+            "ar": "تمرين تسرب غاز", "ru": "Учения по утечке газа"},
+    "tahliye": {"tr": "Tahliye tatbikatı", "en": "Evacuation drill",
+                "de": "Evakuierungsübung", "fr": "Exercice d’évacuation",
+                "es": "Simulacro de evacuación", "ar": "تمرين إخلاء",
+                "ru": "Учения по эвакуации"},
+}
+
+
+def tatbikat_adi(kategori: str, dil: str) -> str:
+    return _dil(TATBIKAT_ADI.get(kategori, TATBIKAT_ADI["deprem"]), dil)

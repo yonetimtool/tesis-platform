@@ -56,6 +56,7 @@ type Alarm = {
   son_24s_yanlis_alarm: number;
   gonderildi_at: string | null;
   created_at: string;
+  tatbikat?: boolean;
 };
 
 const BIRINCIL = "birincil" as const;
@@ -101,6 +102,16 @@ export function PanikAlarmi() {
         className="max-h-full w-full max-w-lg overflow-y-auto rounded-lg p-6"
         style={{ background: "var(--yz-surface-1)" }}
       >
+        {alarm.tatbikat && (
+          // (P249 §2) TATBIKAT SERIDI — gercek alarmla karistirilamasin.
+          <p
+            data-test="panik-tatbikat-serit"
+            className="mb-3 rounded p-2 text-center font-bold"
+            style={{ background: "#FFD600", color: "#000" }}
+          >
+            {t("panikTatbikatSerit")}
+          </p>
+        )}
         <p
           data-test="panik-baslik"
           className="text-center font-bold"

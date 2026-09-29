@@ -125,7 +125,9 @@ async def _govde(
     # (P249 §1b) IKI DENEYIM + TEK KAYNAK METIN.
     toplu = toplu_mu(alarm.kategori)
     out.toplu = toplu
-    out.baslik = talimat_basligi(alarm.kategori, dil)
+    # (P249 §2) TATBIKAT: baslik "TATBIKAT — ..." ile baslar (her dilde).
+    out.tatbikat = alarm.tatbikat_id is not None
+    out.baslik = talimat_basligi(alarm.kategori, dil, tatbikat=out.tatbikat)
     out.talimat = talimat_adimlari(alarm.kategori, dil)
 
     if alarm.olusturan_user_id:
@@ -160,6 +162,8 @@ async def _govde(
                         .select_from(PanikAlarm)
                         .where(
                             PanikAlarm.olusturan_user_id == kisi.id,
+                            # (P249 §2) TATBIKAT SAYACA GIRMEZ.
+                            PanikAlarm.tatbikat_id.is_(None),
                             PanikAlarm.durum.in_(("iptal", "yanlis_alarm")),
                             PanikAlarm.created_at
                             >= _simdi() - dt.timedelta(hours=24),
@@ -482,10 +486,8 @@ async def _toplu_yanit(
     ya da yarali olan kisi "yardim"a gecebilmeli; tersi de (yardim geldi).
     """
     alarm = await get_or_404(db, PanikAlarm, alarm_id)
-    if not toplu_mu(alarm.kategori):
-        raise APIError(409, "conflict", "panik_toplu_degil")
-    if alarm.durum in ("kapandi", "iptal", "yanlis_alarm"):
-        raise APIError(409, "conflict", "panik_zaten_kapali")
+    # ALICILIK ONCE: alici olmayana alarmin turu ya da durumu hakkinda
+    # bilgi sizmasin (IDOR taramasi: once 409 "toplu degil" donuyordu).
     satir = (
         await db.execute(
             select(PanikAlici).where(
@@ -495,6 +497,10 @@ async def _toplu_yanit(
     ).scalar_one_or_none()
     if satir is None:
         raise APIError(403, "forbidden", "panik_alicisi_degil")
+    if not toplu_mu(alarm.kategori):
+        raise APIError(409, "conflict", "panik_toplu_degil")
+    if alarm.durum in ("kapandi", "iptal", "yanlis_alarm"):
+        raise APIError(409, "conflict", "panik_zaten_kapali")
     onceki = satir.yanit
     simdi = _simdi()
     satir.yanit = yanit
@@ -579,10 +585,16 @@ async def aktifler(
             PanikAlici.goruldu_at.is_(None),
             PanikAlarm.durum.in_(("acik", "mudahale")),
         )
+        # (P249 §2) GERCEK ALARM ONCE: istemci ilk ogeyi tam ekran cizer;
+        # tatbikat surerken gelen gercek alarm onun ARKASINDA kalmamali.
         # KARARLI SIRALAMA: ayni salisede (ayni `created_at`) sira
         # sorgudan sorguya degisirse sayfalar arasinda kayit atlanir
         # ya da tekrarlanir (`test_sayfalama_siralamasi`).
-        .order_by(PanikAlarm.created_at.desc(), PanikAlarm.id)
+        .order_by(
+            PanikAlarm.tatbikat_id.is_not(None),
+            PanikAlarm.created_at.desc(),
+            PanikAlarm.id,
+        )
         .limit(20)
     )
     return [await _govde(db, a, user, dil) for a in (await db.execute(sorgu)).scalars().all()]

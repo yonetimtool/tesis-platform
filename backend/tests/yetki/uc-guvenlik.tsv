@@ -494,6 +494,13 @@ POST	/tasks/{task_id}/basla	zorunlu	tesis	atama	-	ozel	-	-		-
 GET	/tasks/{task_id}/completions	zorunlu	tesis	atama	-	-	-	-		-
 POST	/tasks/{task_id}/completions	zorunlu	tesis	atama	-	ozel	-	-		dar
 DELETE	/tasks/{task_id}/completions/{completion_id}	zorunlu	tesis	rol	-	ozel	-	-		-
+GET	/tatbikat	zorunlu	tesis	rol	-	-	-	-		-
+POST	/tatbikat	zorunlu	tesis	rol	-	ozel	-	-		dar
+GET	/tatbikat/{tatbikat_id}	zorunlu	tesis	rol	-	-	-	-		-
+POST	/tatbikat/{tatbikat_id}/baslat	zorunlu	tesis	rol	-	ozel	-	-		-
+POST	/tatbikat/{tatbikat_id}/bitir	zorunlu	tesis	rol	-	ozel	-	-		-
+POST	/tatbikat/{tatbikat_id}/iptal	zorunlu	tesis	rol	-	ozel	-	-		-
+GET	/tatbikat/{tatbikat_id}/rapor.pdf	zorunlu	tesis	rol	-	ozel	-	-		-
 GET	/tenant/settings	zorunlu	tesis	-	-	-	adres,yonetim_email	-		-
 PATCH	/tenant/settings	zorunlu	tesis	-	-	ozel	adres,yonetim_email	-		dar
 POST	/tenant/setup	zorunlu	tesis	-	-	genel	adres,yonetim_email	-		dar

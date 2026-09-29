@@ -7709,4 +7709,81 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get panikTatbikatSerit => 'TATBİKAT — Bu gerçek bir alarm değildir';
+
+  @override
+  String get tatbikatBaslik => 'Tatbikatlar';
+
+  @override
+  String get tatbikatPlanla => 'Tatbikat planla';
+
+  @override
+  String get tatbikatTur => 'Tatbikat türü';
+
+  @override
+  String get tatbikatKapsam => 'Kapsam';
+
+  @override
+  String get tatbikatKapsamSite => 'Tüm site';
+
+  @override
+  String get tatbikatKapsamBlok => 'Bir blok';
+
+  @override
+  String get tatbikatBlok => 'Blok';
+
+  @override
+  String get tatbikatZaman => 'Başlama zamanı (boş bırakılırsa hemen başlar)';
+
+  @override
+  String get tatbikatDuyuru =>
+      'Önceden duyuru gönder (yalnız ileri tarihli tatbikatta)';
+
+  @override
+  String get tatbikatAciklama => 'Not (isteğe bağlı)';
+
+  @override
+  String get tatbikatHemenUyari =>
+      'Zaman boşsa alarm onayladığınız anda seçilen kapsamdaki herkese gider. Başlıkta her dilde “TATBİKAT” yazar.';
+
+  @override
+  String get tatbikatBaslat => 'Başlat';
+
+  @override
+  String get tatbikatBitir => 'Bitir';
+
+  @override
+  String get tatbikatIptal => 'İptal et';
+
+  @override
+  String get tatbikatRapor => 'Rapor';
+
+  @override
+  String get tatbikatPdf => 'PDF indir';
+
+  @override
+  String get tatbikatDurumPlanli => 'Planlandı';
+
+  @override
+  String get tatbikatDurumAktif => 'Sürüyor';
+
+  @override
+  String get tatbikatDurumBitti => 'Bitti';
+
+  @override
+  String get tatbikatDurumIptal => 'İptal edildi';
+
+  @override
+  String get tatbikatYok =>
+      'Henüz tatbikat yok. Deprem ya da yangın tatbikatı planlayarak alarmın herkese ulaşıp ulaşmadığını ölçebilirsiniz.';
+
+  @override
+  String tatbikatPushKabul(int gonderildi, int denenen) {
+    return 'Bildirim kabul: $gonderildi/$denenen';
+  }
+
+  @override
+  String get tatbikatGercekAlarmlaDurdu => 'Gerçek alarm nedeniyle durduruldu';
+
+  @override
+  String get tatbikatDuyuruGitti => 'Duyuru gönderildi';
 }

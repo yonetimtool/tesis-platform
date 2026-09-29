@@ -207,6 +207,12 @@ class Action:
     #: (P249 §1) Toplu uyarida "guvendeyim" / "yardima ihtiyacim var".
     PANIK_GUVENDE = "panik_guvende"
     PANIK_YARDIM = "panik_yardim"
+    #: (P249 §2) Tatbikat: kim planladi/baslatti/bitirdi/iptal etti, rapor indirildi.
+    TATBIKAT_PLAN = "tatbikat_plan"
+    TATBIKAT_BASLAT = "tatbikat_baslat"
+    TATBIKAT_BITIR = "tatbikat_bitir"
+    TATBIKAT_IPTAL = "tatbikat_iptal"
+    TATBIKAT_RAPOR = "tatbikat_rapor"
     # (P240 §2) DIYAFON — yapilandirma ve EYLEM ayri: kapi acmak fiziksel
     # erisim veren bir eylemdir ve yapilandirma degisikligiyle ayni
     # kutuya konamaz.

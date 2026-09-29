@@ -8,6 +8,7 @@ import '../features/akilli_ev/presentation/akilli_ev_ekrani.dart';
 import '../features/bakim/presentation/bakim_ekrani.dart';
 import '../features/panik/presentation/panik_alarm_ekrani.dart';
 import '../features/panik/presentation/panik_sayfasi.dart';
+import '../features/panik/presentation/tatbikat_ekrani.dart';
 import '../features/panik/presentation/panik_takip_screen.dart';
 import '../features/staff/presentation/kisi_sayfasi.dart';
 import '../features/announcements/presentation/announcements_screen.dart';
@@ -192,6 +193,8 @@ class AppRoutes {
   /// (P249 §1b) Tek alarm — bildirimden acilan alici ekrani.
   static const panikAlarm = '/panik-alarm';
   static String panikAlarmDetay(String id) => '$panikAlarm/$id';
+  /// (P249 §2) Tatbikatlar — takip ekranindan acilir.
+  static const tatbikat = '/tatbikat';
   // (P203 §4) Vardiya PLANI — sablon ekranindan (`/vardiyalar`) AYRI:
   // biri saatleri tanimlar, oteki kim hangi gun calisir.
   static const vardiyaPlani = '/vardiya-plani';
@@ -367,6 +370,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.panikTakip,
         builder: (context, state) => const PanikTakipScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.tatbikat,
+        builder: (context, state) => const TatbikatEkrani(),
       ),
       GoRoute(
         path: '${AppRoutes.panikAlarm}/:id',

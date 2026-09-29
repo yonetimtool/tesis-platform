@@ -7907,4 +7907,81 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get panikTatbikatSerit => 'DRILL — This is not a real alarm';
+
+  @override
+  String get tatbikatBaslik => 'Drills';
+
+  @override
+  String get tatbikatPlanla => 'Plan a drill';
+
+  @override
+  String get tatbikatTur => 'Drill type';
+
+  @override
+  String get tatbikatKapsam => 'Scope';
+
+  @override
+  String get tatbikatKapsamSite => 'Whole site';
+
+  @override
+  String get tatbikatKapsamBlok => 'One block';
+
+  @override
+  String get tatbikatBlok => 'Block';
+
+  @override
+  String get tatbikatZaman => 'Start time (leave empty to start now)';
+
+  @override
+  String get tatbikatDuyuru =>
+      'Send advance notice (only for scheduled drills)';
+
+  @override
+  String get tatbikatAciklama => 'Note (optional)';
+
+  @override
+  String get tatbikatHemenUyari =>
+      'Without a time, the alarm goes to everyone in scope as soon as you confirm. The title says “DRILL” in every language.';
+
+  @override
+  String get tatbikatBaslat => 'Start';
+
+  @override
+  String get tatbikatBitir => 'Finish';
+
+  @override
+  String get tatbikatIptal => 'Cancel';
+
+  @override
+  String get tatbikatRapor => 'Report';
+
+  @override
+  String get tatbikatPdf => 'Download PDF';
+
+  @override
+  String get tatbikatDurumPlanli => 'Scheduled';
+
+  @override
+  String get tatbikatDurumAktif => 'In progress';
+
+  @override
+  String get tatbikatDurumBitti => 'Finished';
+
+  @override
+  String get tatbikatDurumIptal => 'Cancelled';
+
+  @override
+  String get tatbikatYok =>
+      'No drills yet. Plan an earthquake or fire drill to measure whether the alarm reaches everyone.';
+
+  @override
+  String tatbikatPushKabul(int gonderildi, int denenen) {
+    return 'Push accepted: $gonderildi/$denenen';
+  }
+
+  @override
+  String get tatbikatGercekAlarmlaDurdu => 'Stopped because of a real alarm';
+
+  @override
+  String get tatbikatDuyuruGitti => 'Notice sent';
 }

@@ -7953,4 +7953,80 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get panikTatbikatSerit => 'تمرين — هذا ليس إنذارًا حقيقيًا';
+
+  @override
+  String get tatbikatBaslik => 'التمارين';
+
+  @override
+  String get tatbikatPlanla => 'تخطيط تمرين';
+
+  @override
+  String get tatbikatTur => 'نوع التمرين';
+
+  @override
+  String get tatbikatKapsam => 'النطاق';
+
+  @override
+  String get tatbikatKapsamSite => 'الموقع بالكامل';
+
+  @override
+  String get tatbikatKapsamBlok => 'مبنى واحد';
+
+  @override
+  String get tatbikatBlok => 'المبنى';
+
+  @override
+  String get tatbikatZaman => 'وقت البدء (اتركه فارغًا للبدء الآن)';
+
+  @override
+  String get tatbikatDuyuru => 'إرسال إشعار مسبق (للتمارين المجدولة فقط)';
+
+  @override
+  String get tatbikatAciklama => 'ملاحظة (اختياري)';
+
+  @override
+  String get tatbikatHemenUyari =>
+      'بدون وقت يصل الإنذار فور التأكيد إلى الجميع ضمن النطاق. يظهر «تمرين» في العنوان بكل لغة.';
+
+  @override
+  String get tatbikatBaslat => 'ابدأ';
+
+  @override
+  String get tatbikatBitir => 'إنهاء';
+
+  @override
+  String get tatbikatIptal => 'إلغاء';
+
+  @override
+  String get tatbikatRapor => 'التقرير';
+
+  @override
+  String get tatbikatPdf => 'تنزيل PDF';
+
+  @override
+  String get tatbikatDurumPlanli => 'مجدول';
+
+  @override
+  String get tatbikatDurumAktif => 'جارٍ';
+
+  @override
+  String get tatbikatDurumBitti => 'انتهى';
+
+  @override
+  String get tatbikatDurumIptal => 'أُلغي';
+
+  @override
+  String get tatbikatYok =>
+      'لا توجد تمارين بعد. خطّط لتمرين زلزال أو حريق لقياس وصول الإنذار إلى الجميع.';
+
+  @override
+  String tatbikatPushKabul(int gonderildi, int denenen) {
+    return 'إشعارات مقبولة: $gonderildi/$denenen';
+  }
+
+  @override
+  String get tatbikatGercekAlarmlaDurdu => 'أُوقف بسبب إنذار حقيقي';
+
+  @override
+  String get tatbikatDuyuruGitti => 'أُرسل الإشعار';
 }
