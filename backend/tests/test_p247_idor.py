@@ -55,6 +55,12 @@ ISTISNALAR: dict[tuple[str, str], str] = {
         "yol parametresi kayit kimligi DEGIL saglayici adidir; satir token "
         "kullanicisindan secilir, baskasinin kaydina isaret edilemez"
     ),
+    ("GET", "/sesli-mesaj"): (
+        "(P249 §3b) yol parametresi yok: liste token kullanicisinin AKTIF "
+        "dairelerinden ve kendi gonderdiklerinden suzulur; baskasinin "
+        "kaydina isaret edilecek bir kimlik alinmaz. Tekil erisim "
+        "(`/sesli-mesaj/{id}/dinle`, DELETE) vakayla olculuyor"
+    ),
 }
 
 
@@ -462,6 +468,34 @@ def _panik(d: Dunya, metot: str, yol: str) -> list[Deneme]:
     if son == "iptal":
         out.append(Deneme("guard_b", f"/panik/{p}/iptal", "red", govde))
     return out
+
+
+@vaka(("POST", "/visitors/{visitor_id}/onay"))
+def _ziyaretci_onay(d: Dunya, metot: str, yol: str) -> list[Deneme]:
+    """(P249 §3a) Onay talebine YALNIZ o dairenin sakini yanit verir."""
+    v = d.olustur("guard_a", "/visitors", {
+        "unit_id": str(d.unit["a"]), "ziyaretci_ad": "Idor Onay",
+        "target_resident_user_id": str(d.uid["sakin_a"]), "onay_iste": True})["id"]
+    return [Deneme("sakin_b", f"/visitors/{v}/onay", "red", {"karar": "onayla"})]
+
+
+@vaka(("GET", "/sesli-mesaj/{mesaj_id}/dinle"), ("DELETE", "/sesli-mesaj/{mesaj_id}"))
+def _sesli_mesaj(d: Dunya, metot: str, yol: str) -> list[Deneme]:
+    """(P249 §3b) Ses kisisel veri: yalniz dairenin sakini ve gonderen."""
+    u = str(d.unit["a"])
+    y = d.olustur("guard_a", f"/units/{u}/sesli-mesaj/yukleme",
+                  {"icerik_turu": "audio/mp4", "boyut": 1000})
+    import httpx
+
+    httpx.put(y["url"], content=b"\x00" * 1000,
+              headers={"Content-Type": "audio/mp4"}, timeout=10).raise_for_status()
+    m = d.olustur("guard_a", f"/units/{u}/sesli-mesaj",
+                  {"anahtar": y["anahtar"], "sure_ms": 1000, "boyut": 1000,
+                   "icerik_turu": "audio/mp4"})["id"]
+    if metot == "GET":
+        return [Deneme("sakin_b", f"/sesli-mesaj/{m}/dinle", "red"),
+                Deneme("sakin_a", f"/sesli-mesaj/{m}/dinle", "izin")]
+    return [Deneme("sakin_b", f"/sesli-mesaj/{m}", "red")]
 
 
 @vaka(("PATCH", "/notifications/{notification_id}"))

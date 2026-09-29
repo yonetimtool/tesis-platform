@@ -1290,3 +1290,81 @@ def _panik_metinleri() -> dict[str, PushMetni]:
 
 
 METINLER.update(_panik_metinleri())
+
+
+# =========================================================================== #
+# (P249 §3) GUVENLIKTEN DAIREYE ULASMA
+# =========================================================================== #
+def _pm(baslik: dict, govde: dict, params: tuple[str, ...]) -> PushMetni:
+    return PushMetni(baslik=baslik, govde=govde, params=params)
+
+
+METINLER.update({
+    # Sakine: kapida biri "sizi bekliyor" diyor — ONAY isteniyor.
+    "ziyaretci_onay_istegi": _pm(
+        {"tr": "Ziyaretçi onayı", "en": "Visitor approval", "de": "Besucherfreigabe",
+         "fr": "Validation visiteur", "es": "Aprobación de visitante",
+         "ar": "الموافقة على زائر", "ru": "Подтверждение посетителя"},
+        {"tr": "{ad} sizi bekliyor diyor ({daire}). Onaylıyor musunuz?",
+         "en": "{ad} says you are expecting them ({daire}). Do you approve?",
+         "de": "{ad} sagt, Sie erwarten ihn/sie ({daire}). Freigeben?",
+         "fr": "{ad} dit que vous l’attendez ({daire}). Validez-vous ?",
+         "es": "{ad} dice que usted le espera ({daire}). ¿Lo aprueba?",
+         "ar": "{ad} يقول إنك تنتظره ({daire}). هل توافق؟",
+         "ru": "{ad} говорит, что вы его ждёте ({daire}). Подтверждаете?"},
+        ("ad", "daire"),
+    ),
+    # Guvenlige: yanit.
+    "ziyaretci_onaylandi": _pm(
+        {"tr": "Ziyaretçi ONAYLANDI", "en": "Visitor APPROVED", "de": "Besucher FREIGEGEBEN",
+         "fr": "Visiteur VALIDÉ", "es": "Visitante APROBADO", "ar": "تمت الموافقة على الزائر",
+         "ru": "Посетитель ПОДТВЕРЖДЁН"},
+        {"tr": "{sakin} onayladı: {ad} — {daire}", "en": "{sakin} approved: {ad} — {daire}",
+         "de": "{sakin} hat freigegeben: {ad} — {daire}", "fr": "{sakin} a validé : {ad} — {daire}",
+         "es": "{sakin} aprobó: {ad} — {daire}", "ar": "وافق {sakin}: {ad} — {daire}",
+         "ru": "{sakin} подтвердил(а): {ad} — {daire}"},
+        ("sakin", "ad", "daire"),
+    ),
+    "ziyaretci_reddedildi": _pm(
+        {"tr": "Ziyaretçi REDDEDİLDİ", "en": "Visitor REFUSED", "de": "Besucher ABGELEHNT",
+         "fr": "Visiteur REFUSÉ", "es": "Visitante RECHAZADO", "ar": "رُفض الزائر",
+         "ru": "Посетителю ОТКАЗАНО"},
+        {"tr": "{sakin} reddetti: {ad} — {daire}. İçeri almayın.",
+         "en": "{sakin} refused: {ad} — {daire}. Do not let them in.",
+         "de": "{sakin} hat abgelehnt: {ad} — {daire}. Nicht einlassen.",
+         "fr": "{sakin} a refusé : {ad} — {daire}. Ne pas faire entrer.",
+         "es": "{sakin} rechazó: {ad} — {daire}. No le deje entrar.",
+         "ar": "رفض {sakin}: {ad} — {daire}. لا تسمح بالدخول.",
+         "ru": "{sakin} отказал(а): {ad} — {daire}. Не впускайте."},
+        ("sakin", "ad", "daire"),
+    ),
+    "ziyaretci_onay_cevap_yok": _pm(
+        {"tr": "Onay talebine cevap yok", "en": "No answer to approval request",
+         "de": "Keine Antwort auf Freigabeanfrage", "fr": "Pas de réponse à la demande",
+         "es": "Sin respuesta a la solicitud", "ar": "لا رد على طلب الموافقة",
+         "ru": "Нет ответа на запрос"},
+        {"tr": "{ad} — {daire}: sakinler yanıt vermedi. Sesli mesaj ya da telefonu deneyin.",
+         "en": "{ad} — {daire}: residents did not answer. Try a voice message or phone.",
+         "de": "{ad} — {daire}: keine Antwort. Sprachnachricht oder Telefon versuchen.",
+         "fr": "{ad} — {daire} : pas de réponse. Essayez un message vocal ou le téléphone.",
+         "es": "{ad} — {daire}: sin respuesta. Pruebe un mensaje de voz o el teléfono.",
+         "ar": "{ad} — {daire}: لم يرد السكان. جرّب رسالة صوتية أو الهاتف.",
+         "ru": "{ad} — {daire}: жильцы не ответили. Попробуйте голосовое сообщение или телефон."},
+        ("ad", "daire"),
+    ),
+    # Sakine: guvenlikten sesli mesaj.
+    "sesli_mesaj": _pm(
+        {"tr": "Güvenlikten sesli mesaj", "en": "Voice message from security",
+         "de": "Sprachnachricht vom Sicherheitsdienst", "fr": "Message vocal de la sécurité",
+         "es": "Mensaje de voz de seguridad", "ar": "رسالة صوتية من الأمن",
+         "ru": "Голосовое сообщение от охраны"},
+        {"tr": "{daire} için sesli mesaj var. Dinlemek için dokunun.",
+         "en": "There is a voice message for {daire}. Tap to listen.",
+         "de": "Sprachnachricht für {daire}. Zum Anhören tippen.",
+         "fr": "Message vocal pour {daire}. Touchez pour écouter.",
+         "es": "Hay un mensaje de voz para {daire}. Toque para escuchar.",
+         "ar": "توجد رسالة صوتية لـ {daire}. اضغط للاستماع.",
+         "ru": "Голосовое сообщение для {daire}. Нажмите, чтобы прослушать."},
+        ("daire",),
+    ),
+})

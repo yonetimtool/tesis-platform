@@ -3689,4 +3689,13 @@ export const en: Sozluk = {
   tatbikatKategoriYangin: "Fire",
   tatbikatKategoriGaz: "Gas leak",
   tatbikatKategoriTahliye: "Evacuation",
+  // (P249 §3) Daireye ulasma
+  ziyaretciKolonOnay: "Approval",
+  ziyaretciOnayBekliyor: "Waiting for an answer",
+  ziyaretciOnaylandi: "Approved",
+  ziyaretciReddedildi: "Refused",
+  ziyaretciCevapYok: "No answer",
+  bildirimTipZiyaretciOnayIstegi: "Visitor approval request",
+  bildirimTipZiyaretciOnayYaniti: "Visitor approval answer",
+  bildirimTipSesliMesaj: "Voice message from security",
 };

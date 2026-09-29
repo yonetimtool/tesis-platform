@@ -5620,6 +5620,33 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "422": { $ref: "#/components/responses/ValidationError" }
 
+  /visitors/{id}/onay:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [visitors]
+      summary: Ziyaretci onay talebine yanit (dairenin AKTIF sakini)
+      description: |
+        (P249 §3a) Ilk yanit gecerli (kosullu guncelleme); sonraki yanit ya da
+        suresi dolmus talep 409. Yanit kaydi acan guvenlige bildirim olarak
+        gider. Baska dairenin sakini 404 (varligi sizdirilmaz).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [karar]
+              properties:
+                karar: { type: string, enum: [onayla, reddet] }
+      responses:
+        "200":
+          description: guncel kayit
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Visitor" }
+        "404": { description: kayit yok ya da onay istenmemis }
+        "409": { description: talep kapandi }
   /visitors/{id}/checkout:
     parameters:
       - $ref: "#/components/parameters/PathId"
@@ -13229,6 +13256,102 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /units/{id}/ulas:
+    get:
+      tags: [daireye-ulas]
+      summary: Daireye ulas — aktif sakinler (NUMARA YOK)
+      description: |
+        (P249 §3) Guvenlik/amir/yonetim. Sakin basina yalniz
+        `telefonla_aranabilir` (evet/hayir) doner; numara bu uctan DONMEZ.
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200": { description: daire ozeti }
+  /units/{id}/ulas/telefon:
+    post:
+      tags: [daireye-ulas]
+      summary: TEK sakinin numarasi — yalniz izin aciksa, denetim kaydiyla
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id]
+              properties:
+                user_id: { type: string, format: uuid }
+      responses:
+        "200": { description: telefon }
+        "403": { description: sakin izin vermedi }
+        "404": { description: dairenin aktif sakini degil }
+  /units/{id}/sesli-mesaj/yukleme:
+    post:
+      tags: [daireye-ulas]
+      summary: Sesli mesaj icin imzali yukleme adresi (AAC/m4a, <=1 MB)
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [boyut]
+              properties:
+                icerik_turu: { type: string, maxLength: 40, default: audio/mp4 }
+                boyut: { type: integer, minimum: 1, maximum: 1048576 }
+      responses:
+        "200": { description: anahtar + url }
+  /units/{id}/sesli-mesaj:
+    post:
+      tags: [daireye-ulas]
+      summary: Yuklenen sesi daireye gonder (<=60 sn) — sakinlere bildirim
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [anahtar, sure_ms, boyut]
+              properties:
+                anahtar: { type: string, maxLength: 300 }
+                sure_ms: { type: integer, minimum: 1, maximum: 60000 }
+                boyut: { type: integer, minimum: 1, maximum: 1048576 }
+                icerik_turu: { type: string, maxLength: 40, default: audio/mp4 }
+      responses:
+        "201": { description: mesaj }
+        "409": { description: dairede aktif sakin yok }
+        "422": { description: anahtar bu daireye ait degil / tur / sure }
+  /sesli-mesaj:
+    get:
+      tags: [daireye-ulas]
+      summary: Sesli mesajlarim (sakin — dairesine gelenler; gonderen — gonderdikleri)
+      responses:
+        "200": { description: mesajlar }
+  /sesli-mesaj/{id}/dinle:
+    get:
+      tags: [daireye-ulas]
+      summary: Kisa omurlu dinleme adresi (sakin ya da gonderen)
+      description: |
+        (P249 §3b) Ses kisisel veridir: yonetim dahil baska kimse dinleyemez
+        (404). Ilk sakin dinlemesi kaydedilir.
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200": { description: url }
+        "404": { description: yok, silinmis ya da erisim yok }
+  /sesli-mesaj/{id}:
+    delete:
+      tags: [daireye-ulas]
+      summary: Sesli mesaji sil (sakin ya da gonderen) — dosya silinir
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "204": { description: silindi }
   /units/{id}/residents:
     parameters:
       - $ref: "#/components/parameters/PathId"
@@ -17597,6 +17720,13 @@ components:
         bildirim_eposta: { type: boolean }
         bildirim_sms: { type: boolean }
         bildirim_mobil: { type: boolean }
+        bildirim_sesi: { type: boolean }
+        yonetim_arayabilir:
+          type: boolean
+          description: >
+            (P249 §3e) "Yonetim beni bu numaradan arayabilir" — varsayilan
+            kapali. Aciksa numara yalniz "daireye ulas" ekraninda, tek kisi
+            icin ve denetim kaydiyla acilir.
     BildirimTercihUpdate:
       type: object
       description: KISMI guncelleme — gonderilmeyen kanal DEGISMEZ.
@@ -17604,6 +17734,8 @@ components:
         bildirim_eposta: { type: boolean, nullable: true }
         bildirim_sms: { type: boolean, nullable: true }
         bildirim_mobil: { type: boolean, nullable: true }
+        bildirim_sesi: { type: boolean, nullable: true }
+        yonetim_arayabilir: { type: boolean, nullable: true }
     CihazOut:
       type: object
       description: >
@@ -21212,6 +21344,17 @@ components:
             cikis damgalanmadi): "cikis kaydedilmedi". cikis_zamani kapanis
             anidir, gercek cikis degil.
         created_at: { type: string, format: date-time }
+        onay_durum:
+          type: string
+          nullable: true
+          enum: [bekliyor, onaylandi, reddedildi, cevap_yok]
+          description: >
+            (P249 §3a) Onay talebi. null => istenmedi (LOG davranisi). Onay
+            talebi dairenin TUM aktif sakinlerine sorulur; ilk yanit gecerli;
+            3 dk icinde yanit yoksa beat `cevap_yok` yapar.
+        onay_son_at: { type: string, format: date-time, nullable: true }
+        onay_yanit_at: { type: string, format: date-time, nullable: true }
+        onay_yanitlayan_ad: { type: string, nullable: true }
     VisitorCreate:
       type: object
       description: >
@@ -21235,6 +21378,12 @@ components:
             Guvenligin sectigi TEK hedef sakin (o dairenin aktif sakini). Push +
             gorunurluk + karar YALNIZ bu sakinde.
         notlar: { type: string, nullable: true, minLength: 1, maxLength: 1000 }
+        onay_iste:
+          type: boolean
+          default: false
+          description: >
+            (P249 §3a) true => dairenin tum aktif sakinlerine onay talebi
+            gider (bilgilendirme push'u yerine).
     VisitorUpdate:
       type: object
       description: >

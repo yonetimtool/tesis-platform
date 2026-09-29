@@ -110,6 +110,7 @@ class _SahteBildirimApi extends BildirimTercihApi {
     bool? sms,
     bool? mobil,
     bool? sesli,
+    bool? yonetimArayabilir,
   }) async {
     cagrilar.add((eposta: eposta, sms: sms, mobil: mobil, sesli: sesli));
     _t = _t.copyWith(eposta: eposta, sms: sms, mobil: mobil, sesli: sesli);

@@ -84,6 +84,14 @@ bool rotaErisilebilir(String rota, UserRole role) {
   if (yol.startsWith('${AppRoutes.panikAlarm}/')) {
     return role != UserRole.denetci && role != UserRole.unknown;
   }
+  // (P249 §3b) SESLI MESAJLAR — sakin (dairesine gelen) ve gonderen
+  // personel; menude karti yok, bildirimden ya da ziyaretcilerden acilir.
+  if (yol == AppRoutes.sesliMesajlar) {
+    return const {
+      UserRole.resident, UserRole.security, UserRole.guvenlikAmiri,
+      UserRole.yonetici, UserRole.admin,
+    }.contains(role);
+  }
   // (P249 §2) TATBIKATLAR — takip ekranindan acilir (menude karti yok);
   // yonetim ve guvenlik raporu okur (sunucu `/tatbikat` kapisiyla ayni).
   if (yol == AppRoutes.tatbikat) {
@@ -274,6 +282,13 @@ String? _hamHedef(Map<String, String> data, UserRole? role) {
     // sakin icin hedef yok (bilgi bildirimi — erisim suzgeci keser).
     case 'panik_tatbikat_duyuru':
       return AppRoutes.tatbikat;
+    // (P249 §3) Onay talebi (sakine) ve yaniti (guvenlige) ziyaretciler
+    // ekraninda; sesli mesaj kendi ekraninda.
+    case 'ziyaretci_onay_istegi':
+    case 'ziyaretci_onay_yaniti':
+      return AppRoutes.visitors;
+    case 'sesli_mesaj':
+      return AppRoutes.sesliMesajlar;
     case 'akilli_ev_kacak':
     case 'akilli_ev_yangin':
       return AppRoutes.akilliEv;

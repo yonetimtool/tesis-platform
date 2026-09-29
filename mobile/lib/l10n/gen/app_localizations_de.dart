@@ -7990,4 +7990,112 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get tatbikatDuyuruGitti => 'Ankündigung gesendet';
+
+  @override
+  String get daireyeUlasBaslik => 'Wohnung erreichen';
+
+  @override
+  String get daireyeUlasDaireAra => 'Wohnung suchen (Nr. oder Name)';
+
+  @override
+  String get daireyeUlasSakinler => 'Bewohner';
+
+  @override
+  String get daireyeUlasAdimOnay => '1 · Besucherfreigabe';
+
+  @override
+  String get daireyeUlasZiyaretciAd => 'Name des Besuchers';
+
+  @override
+  String get daireyeUlasOnayIste => 'Freigabe anfragen';
+
+  @override
+  String get ziyaretciOnayBekliyor => 'Warten auf Antwort';
+
+  @override
+  String get ziyaretciOnaylandi => 'FREIGEGEBEN';
+
+  @override
+  String get ziyaretciReddedildi => 'ABGELEHNT — nicht einlassen';
+
+  @override
+  String get ziyaretciCevapYok =>
+      'Keine Antwort — Sprachnachricht oder Telefon versuchen';
+
+  @override
+  String get daireyeUlasAdimSes => '2 · Sprachnachricht';
+
+  @override
+  String get sesliMesajBasiliTut => 'Halten, sprechen, loslassen (max. 60 s)';
+
+  @override
+  String sesliMesajKaydediliyor(int sn) {
+    return 'Aufnahme… $sn s';
+  }
+
+  @override
+  String get sesliMesajGonderildi => 'Sprachnachricht gesendet';
+
+  @override
+  String get sesliMesajMikrofonIzni =>
+      'Für Sprachnachrichten ist die Mikrofonberechtigung nötig.';
+
+  @override
+  String get daireyeUlasAdimTelefon => '3 · Anrufen';
+
+  @override
+  String daireyeUlasTelefonAra(String ad) {
+    return '$ad anrufen';
+  }
+
+  @override
+  String get daireyeUlasTelefonKayit =>
+      'Das Öffnen der Nummer wird protokolliert.';
+
+  @override
+  String get daireyeUlasTelefonYok =>
+      'Kein Bewohner dieser Wohnung erlaubt Anrufe.';
+
+  @override
+  String get sesliMesajlarBaslik => 'Sprachnachrichten';
+
+  @override
+  String get sesliMesajYok =>
+      'Keine Sprachnachrichten. Nachrichten werden nach 7 Tagen automatisch gelöscht.';
+
+  @override
+  String get sesliMesajDinle => 'Anhören';
+
+  @override
+  String get sesliMesajSil => 'Löschen';
+
+  @override
+  String get sesliMesajDinlendi => 'Angehört';
+
+  @override
+  String sesliMesajSure(int sn) {
+    return '$sn s';
+  }
+
+  @override
+  String get ziyaretciOnayla => 'Freigeben';
+
+  @override
+  String get ziyaretciReddet => 'Ablehnen';
+
+  @override
+  String ziyaretciOnaySoru(String ad) {
+    return '$ad sagt, Sie erwarten ihn/sie. Freigeben?';
+  }
+
+  @override
+  String get ziyaretciOnayIsteSecenek => 'Bewohner um Freigabe bitten (3 Min.)';
+
+  @override
+  String get ayarYonetimArayabilir =>
+      'Die Verwaltung darf mich unter dieser Nummer anrufen';
+
+  @override
+  String get ayarYonetimArayabilirAlt =>
+      'Der Sicherheitsdienst darf Sie anrufen, wenn er Ihre Wohnung anders nicht erreicht. Ihre Nummer erscheint in keiner Liste; jeder Anruf wird protokolliert.';
 }

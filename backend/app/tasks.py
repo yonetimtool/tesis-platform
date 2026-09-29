@@ -299,6 +299,23 @@ def tatbikat_zamani() -> dict:
     return tum_tenantlar_icin()
 
 
+@celery_app.task(name="scheduler.ziyaretci_onay_suresi")
+def ziyaretci_onay_suresi() -> dict:
+    """(P249 §3a) Beat: suresi dolan onay talebi -> `cevap_yok` + guvenlige
+    bildirim (dakikada bir)."""
+    from .daireye_ulas_isi import onay_suresi_dolanlar
+
+    return onay_suresi_dolanlar()
+
+
+@celery_app.task(name="scheduler.sesli_mesaj_imhasi")
+def sesli_mesaj_imhasi() -> dict:
+    """(P249 §3b) Beat: 7 gunden eski sesli mesajlar — KVKK imhasi (gecede bir)."""
+    from .daireye_ulas_isi import sesli_mesaj_imhasi as _imha
+
+    return _imha()
+
+
 @celery_app.task(name="scheduler.ziyaretci_otomatik_kapanis")
 def ziyaretci_otomatik_kapanis() -> dict:
     """(P247 §3) Beat: 24 saatten eski, cikisi damgalanmamis ziyaretci

@@ -47,6 +47,11 @@ export const BILDIRIM_ROTALARI: Record<string, string> = {
   panik_yanlis_alarm: "/panik",
   panik_yardim_talebi: "/panik",
   panik_tatbikat_duyuru: "/panik",
+  // (P249 §3) Onay talebi/yaniti ziyaretci kaydinda. Sesli mesajin web'de
+  // ekrani YOK (dinleme mobil; parite istisnasi docs §3.6) — liste sayfasi.
+  ziyaretci_onay_istegi: "/ziyaretciler",
+  ziyaretci_onay_yaniti: "/ziyaretciler",
+  sesli_mesaj: "/ziyaretciler",
   panik_kapandi: "/panik",
   akilli_ev_kacak: "/akilli-ev",
   akilli_ev_yangin: "/akilli-ev",

@@ -3689,4 +3689,13 @@ export const de: Sozluk = {
   tatbikatKategoriYangin: "Brand",
   tatbikatKategoriGaz: "Gasleck",
   tatbikatKategoriTahliye: "Evakuierung",
+  // (P249 §3) Daireye ulasma
+  ziyaretciKolonOnay: "Freigabe",
+  ziyaretciOnayBekliyor: "Warten auf Antwort",
+  ziyaretciOnaylandi: "Freigegeben",
+  ziyaretciReddedildi: "Abgelehnt",
+  ziyaretciCevapYok: "Keine Antwort",
+  bildirimTipZiyaretciOnayIstegi: "Besucher-Freigabeanfrage",
+  bildirimTipZiyaretciOnayYaniti: "Antwort auf Besucherfreigabe",
+  bildirimTipSesliMesaj: "Sprachnachricht vom Sicherheitsdienst",
 };

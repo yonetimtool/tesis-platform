@@ -3689,4 +3689,13 @@ export const ar: Sozluk = {
   tatbikatKategoriYangin: "حريق",
   tatbikatKategoriGaz: "تسرب غاز",
   tatbikatKategoriTahliye: "إخلاء",
+  // (P249 §3) Daireye ulasma
+  ziyaretciKolonOnay: "الموافقة",
+  ziyaretciOnayBekliyor: "بانتظار الرد",
+  ziyaretciOnaylandi: "تمت الموافقة",
+  ziyaretciReddedildi: "مرفوض",
+  ziyaretciCevapYok: "لا رد",
+  bildirimTipZiyaretciOnayIstegi: "طلب موافقة على زائر",
+  bildirimTipZiyaretciOnayYaniti: "رد الموافقة على زائر",
+  bildirimTipSesliMesaj: "رسالة صوتية من الأمن",
 };

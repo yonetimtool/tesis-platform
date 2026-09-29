@@ -856,13 +856,17 @@ class _BildirimKartiState extends ConsumerState<_BildirimKarti> {
     bool? sms,
     bool? mobil,
     bool? sesli,
+    bool? yonetimArayabilir,
   }) async {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     try {
-      await ref
-          .read(bildirimTercihApiProvider)
-          .guncelle(eposta: eposta, sms: sms, mobil: mobil, sesli: sesli);
+      await ref.read(bildirimTercihApiProvider).guncelle(
+          eposta: eposta,
+          sms: sms,
+          mobil: mobil,
+          sesli: sesli,
+          yonetimArayabilir: yonetimArayabilir);
       ref.invalidate(bildirimTercihProvider);
       if (mounted) {
         messenger.showSnackBar(
@@ -940,6 +944,18 @@ class _BildirimKartiState extends ConsumerState<_BildirimKarti> {
                 value: tercih.mobil,
                 onChanged: (v) => _kaydet(mobil: v),
               ),
+              // (P249 §3e) TELEFON YEDEGI IZNI — yalniz sakin. Numara hicbir
+              // listede gorunmez; guvenlik yalniz "daireye ulas" ekranindan,
+              // denetim kaydiyla arayabilir.
+              if (ref.watch(currentUserRoleProvider).value == UserRole.resident)
+                SwitchListTile(
+                  key: const Key('ayar-yonetim-arayabilir'),
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l10n.ayarYonetimArayabilir),
+                  subtitle: Text(l10n.ayarYonetimArayabilirAlt),
+                  value: tercih.yonetimArayabilir,
+                  onChanged: (v) => _kaydet(yonetimArayabilir: v),
+                ),
               // (P207 §2) SESLI UYARI ANAHTARI.
               if (tercih.mobil)
                 SwitchListTile(

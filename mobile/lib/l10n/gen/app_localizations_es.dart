@@ -7971,4 +7971,112 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get tatbikatDuyuruGitti => 'Aviso enviado';
+
+  @override
+  String get daireyeUlasBaslik => 'Contactar vivienda';
+
+  @override
+  String get daireyeUlasDaireAra => 'Buscar vivienda (n.º o nombre)';
+
+  @override
+  String get daireyeUlasSakinler => 'Residentes';
+
+  @override
+  String get daireyeUlasAdimOnay => '1 · Aprobación del visitante';
+
+  @override
+  String get daireyeUlasZiyaretciAd => 'Nombre del visitante';
+
+  @override
+  String get daireyeUlasOnayIste => 'Pedir aprobación';
+
+  @override
+  String get ziyaretciOnayBekliyor => 'Esperando respuesta';
+
+  @override
+  String get ziyaretciOnaylandi => 'APROBADO';
+
+  @override
+  String get ziyaretciReddedildi => 'RECHAZADO — no le deje entrar';
+
+  @override
+  String get ziyaretciCevapYok =>
+      'Sin respuesta — pruebe un mensaje de voz o el teléfono';
+
+  @override
+  String get daireyeUlasAdimSes => '2 · Mensaje de voz';
+
+  @override
+  String get sesliMesajBasiliTut => 'Mantenga, hable, suelte (máx. 60 s)';
+
+  @override
+  String sesliMesajKaydediliyor(int sn) {
+    return 'Grabando… $sn s';
+  }
+
+  @override
+  String get sesliMesajGonderildi => 'Mensaje de voz enviado';
+
+  @override
+  String get sesliMesajMikrofonIzni =>
+      'Se necesita permiso de micrófono para mensajes de voz.';
+
+  @override
+  String get daireyeUlasAdimTelefon => '3 · Llamar';
+
+  @override
+  String daireyeUlasTelefonAra(String ad) {
+    return 'Llamar a $ad';
+  }
+
+  @override
+  String get daireyeUlasTelefonKayit => 'Abrir el número queda registrado.';
+
+  @override
+  String get daireyeUlasTelefonYok =>
+      'Ningún residente de esta vivienda permite llamadas.';
+
+  @override
+  String get sesliMesajlarBaslik => 'Mensajes de voz';
+
+  @override
+  String get sesliMesajYok =>
+      'No hay mensajes de voz. Se borran automáticamente a los 7 días.';
+
+  @override
+  String get sesliMesajDinle => 'Escuchar';
+
+  @override
+  String get sesliMesajSil => 'Eliminar';
+
+  @override
+  String get sesliMesajDinlendi => 'Escuchado';
+
+  @override
+  String sesliMesajSure(int sn) {
+    return '$sn s';
+  }
+
+  @override
+  String get ziyaretciOnayla => 'Aprobar';
+
+  @override
+  String get ziyaretciReddet => 'Rechazar';
+
+  @override
+  String ziyaretciOnaySoru(String ad) {
+    return '$ad dice que usted le espera. ¿Lo aprueba?';
+  }
+
+  @override
+  String get ziyaretciOnayIsteSecenek =>
+      'Pedir aprobación a residentes (3 min)';
+
+  @override
+  String get ayarYonetimArayabilir =>
+      'La administración puede llamarme a este número';
+
+  @override
+  String get ayarYonetimArayabilirAlt =>
+      'Seguridad puede llamarle si no logra contactar su vivienda de otro modo. Su número no aparece en ninguna lista; cada llamada queda registrada.';
 }

@@ -3689,4 +3689,13 @@ export const ru: Sozluk = {
   tatbikatKategoriYangin: "Пожар",
   tatbikatKategoriGaz: "Утечка газа",
   tatbikatKategoriTahliye: "Эвакуация",
+  // (P249 §3) Daireye ulasma
+  ziyaretciKolonOnay: "Подтверждение",
+  ziyaretciOnayBekliyor: "Ожидание ответа",
+  ziyaretciOnaylandi: "Подтверждено",
+  ziyaretciReddedildi: "Отказано",
+  ziyaretciCevapYok: "Нет ответа",
+  bildirimTipZiyaretciOnayIstegi: "Запрос подтверждения посетителя",
+  bildirimTipZiyaretciOnayYaniti: "Ответ на запрос посетителя",
+  bildirimTipSesliMesaj: "Голосовое сообщение от охраны",
 };

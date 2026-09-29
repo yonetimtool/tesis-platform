@@ -60,7 +60,24 @@ type Ziyaretci = {
   cikis_otomatik?: boolean;
   target_resident_user_id?: string | null;
   target_resident_ad?: string | null;
+  // (P249 §3a) Onay talebi (mobilde guvenlik ister, sakin yanitlar).
+  onay_durum?: "bekliyor" | "onaylandi" | "reddedildi" | "cevap_yok" | null;
+  onay_yanitlayan_ad?: string | null;
 };
+
+/** (P249 §3a) Onay durumu etiketi — rozet METIN tasir. */
+const ONAY_ETIKET = {
+  bekliyor: "ziyaretciOnayBekliyor",
+  onaylandi: "ziyaretciOnaylandi",
+  reddedildi: "ziyaretciReddedildi",
+  cevap_yok: "ziyaretciCevapYok",
+} as const;
+const ONAY_ROZET = {
+  bekliyor: "bilgi",
+  onaylandi: "olumlu",
+  reddedildi: "kritik",
+  cevap_yok: "uyari",
+} as const;
 
 /** `GET /units/ara` satiri — daire + AKTIF sakinleri (tek yanitta). */
 type SakinOzet = { user_id: string; ad: string };
@@ -244,6 +261,20 @@ export default function ZiyaretcilerPage() {
           </Rozet>
         ),
       deger: (z: Ziyaretci) => (z.cikis_zamani ? "1" : "0"),
+    },
+    {
+      id: "onay",
+      baslik: t("ziyaretciKolonOnay"),
+      hucre: (z: Ziyaretci) =>
+        z.onay_durum ? (
+          <Rozet durum={ONAY_ROZET[z.onay_durum]}>
+            {t(ONAY_ETIKET[z.onay_durum])}
+            {z.onay_yanitlayan_ad ? ` · ${z.onay_yanitlayan_ad}` : ""}
+          </Rozet>
+        ) : (
+          "—"
+        ),
+      deger: (z: Ziyaretci) => z.onay_durum ?? "",
     },
     {
       id: "eylem",

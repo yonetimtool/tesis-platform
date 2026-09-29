@@ -206,6 +206,20 @@ def delete_prefix(prefix: str) -> int:
     return delete_objects(keys)
 
 
+def obje_boyutu(key: str) -> int | None:
+    """(P249 §3b) Depodaki nesnenin boyutu; YOKSA None.
+
+    Imzali adresle yuklenen dosyanin GERCEKTEN yuklendigini ve beyan
+    edilen boyutu asmadigini dogrulamak icin (presign gercek PUT boyutunu
+    denetlemez — `presign_put` notu).
+    """
+    try:
+        cevap = _client(ic=True).head_object(Bucket=settings.minio_bucket, Key=key)
+    except Exception:  # noqa: BLE001 — 404 ve erisim hatasi ayni sonuc: yok
+        return None
+    return int(cevap.get("ContentLength", 0))
+
+
 def presign_get(key: str) -> str:
     """Goruntuleme icin presigned GET URL (opsiyonel kullanim)."""
     return _client().generate_presigned_url(

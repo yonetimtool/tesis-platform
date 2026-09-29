@@ -3689,4 +3689,13 @@ export const es: Sozluk = {
   tatbikatKategoriYangin: "Incendio",
   tatbikatKategoriGaz: "Fuga de gas",
   tatbikatKategoriTahliye: "Evacuación",
+  // (P249 §3) Daireye ulasma
+  ziyaretciKolonOnay: "Aprobación",
+  ziyaretciOnayBekliyor: "Esperando respuesta",
+  ziyaretciOnaylandi: "Aprobado",
+  ziyaretciReddedildi: "Rechazado",
+  ziyaretciCevapYok: "Sin respuesta",
+  bildirimTipZiyaretciOnayIstegi: "Solicitud de aprobación de visitante",
+  bildirimTipZiyaretciOnayYaniti: "Respuesta de aprobación de visitante",
+  bildirimTipSesliMesaj: "Mensaje de voz de seguridad",
 };

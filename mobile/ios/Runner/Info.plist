@@ -40,6 +40,9 @@
 	<key>NFCReaderUsageDescription</key>
 	<string>Used to read the NFC tags at patrol checkpoints so a scan can be recorded as proof that the round was walked.</string>
 	<!-- image_picker: gorev tamamlama foto kaniti (kamera + galeri). -->
+	<!-- (P249 §3b) Guvenlikten daireye SESLI MESAJ kaydi (basili tut, konus). -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Used by security staff to record a short voice message for a unit's residents. Recording happens only while the button is held.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Used to take photos you attach to tasks, maintenance requests, events, parcels and site rules.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

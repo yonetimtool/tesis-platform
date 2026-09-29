@@ -8,3 +8,5 @@
 /* (P195) Required for Apple 90683; behaviour is UNCHANGED — the app always
    requests "when in use" only (see the note in Info.plist). */
 "NSLocationAlwaysAndWhenInUseUsageDescription" = "The app does not track your location in the background. Location is read only while you are actively scanning a patrol checkpoint, to record where the scan happened.";
+/* (P249 §3b) Sesli mesaj kaydi. */
+"NSMicrophoneUsageDescription" = "Used by security staff to record a short voice message for a unit's residents. Recording happens only while the button is held.";

@@ -186,6 +186,9 @@ def test_bildirim_varsayilani_ACIK(client, world):
         # beklenen bildirimler sessiz geliyordu; varsayilani kapali
         # yapmak, kusuru "ayar" diye kalici hale getirmek olurdu.
         "bildirim_sesi": True,
+        # (P249 §3e) TELEFON YEDEGI IZNI VARSAYILAN KAPALI: numara, sakin
+        # acmadikca hicbir yoldan gosterilmez.
+        "yonetim_arayabilir": False,
     }
 
 
@@ -202,6 +205,7 @@ def test_bildirim_KISMI_guncelleme_otekileri_kimildatmaz(client, world):
         # (P207 §2) SES ALANI DA KIMILDAMAZ: kismi guncellemenin
         # kapsami dorduncu alanla birlikte de gecerli.
         "bildirim_sesi": True,
+        "yonetim_arayabilir": False,
     }
 
 

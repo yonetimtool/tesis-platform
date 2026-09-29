@@ -213,6 +213,13 @@ class Action:
     TATBIKAT_BITIR = "tatbikat_bitir"
     TATBIKAT_IPTAL = "tatbikat_iptal"
     TATBIKAT_RAPOR = "tatbikat_rapor"
+    #: (P249 §3) Guvenlikten daireye ulasma.
+    VISITOR_ONAY_ISTE = "visitor_onay_iste"
+    VISITOR_ONAY_YANIT = "visitor_onay_yanit"
+    DAIRE_TELEFON_GOSTER = "daire_telefon_goster"
+    SESLI_MESAJ_GONDER = "sesli_mesaj_gonder"
+    SESLI_MESAJ_DINLE = "sesli_mesaj_dinle"
+    SESLI_MESAJ_SIL = "sesli_mesaj_sil"
     # (P240 §2) DIYAFON — yapilandirma ve EYLEM ayri: kapi acmak fiziksel
     # erisim veren bir eylemdir ve yapilandirma degisikligiyle ayni
     # kutuya konamaz.

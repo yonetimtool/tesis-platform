@@ -136,6 +136,9 @@ NOTIFICATION_TIP = ENUM(
     "panik_yardim_talebi",
     # (P249 §2, göç 0158) Planlı tatbikatın önceden duyurusu.
     "panik_tatbikat_duyuru",
+    # (P249 §3, göç 0159) Güvenlikten daireye ulaşma: ziyaretçi onay
+    # talebi (sakine), yanıtı (güvenliğe), sesli mesaj (sakine).
+    "ziyaretci_onay_istegi", "ziyaretci_onay_yaniti", "sesli_mesaj",
     # (P240 §4, göç 0141) Entegrasyon bağlantısı koptu (yönetim alarmı).
     "entegrasyon_koptu",
     # (P240 §3, göç 0143) Akıllı ev sensörleri: kaçak ve yangın.
@@ -730,6 +733,12 @@ class AppUser(Base):
     #: tamamini kapattirirdi.
     bildirim_sesi: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")
+    )
+    #: (P249 §3e, goc 0159) "Yonetim beni bu numaradan arayabilir".
+    #: VARSAYILAN KAPALI: numara yalniz bu acikken, "daireye ulas"
+    #: ekraninda, tek kisi icin ve denetim kaydiyla acilir.
+    yonetim_arayabilir: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
     )
     #: (P167 Asama 2, goc 0056) OZET SAYFASININ KULLANICI BASINA DUZENI —
     #: widget seridi + bolum sirasi/gizliligi. `localStorage` yerine burada
@@ -2148,6 +2157,15 @@ class Visitor(Base):
     )
     # Cikis damgasi (G3). NULL = ziyaretci HALA ICERIDE.
     cikis_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    #: (P249 §3a, goc 0159) ISTEGE BAGLI ONAY TALEBI. NULL = istenmedi
+    #: (eski LOG davranisi). `bekliyor` | `onaylandi` | `reddedildi` |
+    #: `cevap_yok`.
+    onay_durum: Mapped[str | None] = mapped_column(Text, nullable=True)
+    onay_son_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    onay_yanit_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    onay_yanitlayan_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
     # (P247 §3, goc 0154) Cikisi guvenlik DEGIL beat isi kapatti: kayit
     # "iceride" sayilmaz ama cikis GORULMEDI ("cikis kaydedilmedi").
     cikis_otomatik: Mapped[bool] = mapped_column(
@@ -5256,6 +5274,35 @@ class PanikTatbikat(Base):
     #: `elle` | `gercek_alarm` | `iptal`
     bitis_nedeni: Mapped[str | None] = mapped_column(Text, nullable=True)
     aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at = _created_at()
+
+
+class DaireSesliMesaj(Base):
+    """(P249 §3b, goc 0159) Guvenlikten daireye sesli mesaj.
+
+    Dosya depoda; 7 gun sonra (ya da sakin/gonderen silince) DOSYA silinir,
+    satir "silindi" isaretlenir — denetim izi kalir, icerik kalmaz.
+    """
+
+    __tablename__ = "daire_sesli_mesaj"
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    unit_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    gonderen_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    depo_anahtari: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sure_ms: Mapped[int] = mapped_column(Integer, nullable=False)
+    boyut: Mapped[int] = mapped_column(Integer, nullable=False)
+    icerik_turu: Mapped[str] = mapped_column(Text, nullable=False)
+    dinlendi_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    dinleyen_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    silindi_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     created_at = _created_at()
 
 

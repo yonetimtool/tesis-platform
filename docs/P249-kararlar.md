@@ -502,3 +502,249 @@ FCM'in mesajı kabul etmesi ve kişinin açmasıdır.
   (`test_p249_tatbikat.py`).
 * PDF'in görsel düzeni gözle kontrol edilmedi. Yalnız geçerli bir PDF
   olduğu (`%PDF` imzası) ölçüldü.
+
+---
+
+# §3 — GÜVENLİKTEN DAİREYE ULAŞMA
+
+**Saha sorunu:** Daire sahibi evde değil. Biri kapıya gelip "beni
+bekliyor" diyor. Güvenlik bunu doğrulayamıyor ve kişi içeri giriyor.
+
+Bu bölümde (a) ziyaretçi onay talebi, (b) sesli mesaj ve (e) telefon
+yedeği **yapıldı**; bunlar altyapı istemiyordu. (c) uygulama içi arama ve
+(d) diyafon üzerinden arama için **yalnız öneri** yazıldı; kod yok,
+onayını bekliyor.
+
+## §3.0 Akış ve ekran tasarımı — "Daireye ulaş"
+
+Tek ekran, tek yön: güvenlik daireyi seçer, basamaklar **yukarıdan aşağı**
+denenir. Bir basamak sonuç vermezse bir sonraki **kendiliğinden öne
+çıkar**, güvenlik neyi deneyeceğini düşünmek zorunda kalmaz.
+
+```
+┌───────────────────────────────────────────┐
+│ Daireye ulaş                    [A-12  ▾] │  ← daire seçimi (blok + no, arama)
+│ Sakinler: Ayşe Y. · Mehmet Y.             │  ← yalnız ad; telefon YOK
+├───────────────────────────────────────────┤
+│ 1  ZİYARETÇİ ONAYI                        │
+│    Ziyaretçi adı [__________]             │
+│    [ Onay iste ]                          │
+│    ⏳ Bekleniyor… 2:41                    │  ← geri sayım (3 dk)
+│    ✅ Ayşe Y. ONAYLADI 14:02 / ⛔ REDDETTİ │
+│    ⚠ 3 dakikada cevap yok  →  2'ye geç    │
+├───────────────────────────────────────────┤
+│ 2  SESLİ MESAJ           (basılı tut: kayıt)│
+│    [ 🎙  Basılı tut, konuş, bırak ]         │  ← en fazla 60 sn
+│    Gönderildi 14:04 · Dinlendi: —          │
+├───────────────────────────────────────────┤
+│ 3  UYGULAMADAN ARA       (öneri — §3c)     │  ← bugün gizli
+├───────────────────────────────────────────┤
+│ 4  TELEFONLA ARA                           │
+│    [ 📞 Ayşe Y.'yi ara ]                    │  ← yalnız izin veren sakin
+│    "Her arama kayda geçer."                │
+└───────────────────────────────────────────┘
+```
+
+* **Sıra:** onay talebi → (cevap yoksa) sesli mesaj ya da arama → (yine
+  yoksa) telefon. Sıra zorunlu değil. Güvenlik acil bir durumda 4'e
+  doğrudan geçebilir; kısıt yalnız telefonun **izin** ve **kayıt**
+  şartıdır.
+* **Durum kalıcıdır:** ekran kapansa da onay talebinin sonucu ziyaretçi
+  kaydında durur. Güvenlik "Ziyaretçiler" listesinden de görür.
+* **Sakin tarafı:** bildirime dokununca "X kişisi sizi bekliyor diyor"
+  kartı açılır, üzerinde **Onayla / Reddet** düğmeleri var. Sesli mesaj
+  bildirimi "Sesli mesajlar" listesini açar; dinle ya da sil.
+
+## §3a Ziyaretçi onay talebi — YAPILDI (mevcut akışın genişletmesi)
+
+Mevcut ziyaretçi kaydı (`POST /visitors`) yalnız kayıt tutuyordu, onay
+istemiyordu. Yeni bir akış yazılmadı; kayda **isteğe bağlı** bir onay
+talebi eklendi (`onay_iste: true`).
+
+* **Kime gider:** dairenin **tüm aktif sakinlerine**. Tek hedef
+  seçiminin mantığı bilgilendirme içindi; onayda o an evde olmayan
+  hedefi beklemek sorunu çözmez. İlk yanıt geçerlidir.
+* **Kanal:** kritik kanal, sesli. Alarm kanalı değil: bu bir alarm değil,
+  ama beklenen bir yanıttır.
+* **Yanıt:** `POST /visitors/{id}/onay` `{karar: onayla|reddet}`. Yalnız
+  o dairenin aktif sakini yanıt verebilir. Yanıt güvenliğe **kendi
+  bildirimiyle** gider ("Ayşe Y. ONAYLADI").
+* **Cevap yok:** süre **3 dakika** (`ZIYARETCI_ONAY_SURE_DK`). Kapıda
+  bekleyen biri için makul bir sınır; daha uzunu güvenliği kapıda
+  tutar. Süre dolunca beat (dakikada bir) kaydı `cevap_yok` yapar ve
+  güvenliğe "cevap yok" bildirimi gider.
+* **Denetim:** `visitor_onay_iste`, `visitor_onay_yanit`.
+
+## §3b Sesli mesaj — YAPILDI
+
+* **Kayıt:** basılı tut, konuş, bırak. En fazla **60 saniye**, **AAC
+  (m4a)**, mono, 32 kbps. 60 saniye yaklaşık 240 KB tutar; sunucu
+  1 MB'ı reddeder.
+* **Kim gönderir:** güvenlik, amir, yönetim. **Kime:** dairenin tüm aktif
+  sakinlerine. Bildirimde "Güvenlikten sesli mesaj — A-12" yazar.
+* **Dinleme:** sakin kendi dairesine gelen mesajı dinler. Sunucu 5
+  dakikalık imzalı bir adres verir; dosya herkese açık değildir. İlk
+  dinleme zamanı kaydedilir ve gönderen "dinlendi" bilgisini görür.
+* **KVKK — saklama 7 gün:** ses kişisel veridir (biyometrik nitelik
+  taşıyabilir). Amaç kapıdaki anlık durumu iletmektir. Gece çalışan
+  imha görevi 7 günden eski mesajları **hem kayıttan hem depodan**
+  siler.
+* **Silme:** sakin kendi dairesine gelen mesajı istediği an siler (kayıt
+  ve dosya). Gönderen de gönderdiği mesajı geri alabilir.
+* **Denetim:** gönderim, dinleme ve silme kayda geçer. Kayıtta sesin
+  içeriği değil, yalnız kim/ne zaman/hangi daire tutulur.
+
+## §3c Uygulama içi arama — ÖNERİ (kod yok, onay bekliyor)
+
+**Ne:** güvenlik uygulamadan daireyi arar ve sakinin telefonu gelen
+arama gibi çalar (iOS CallKit + VoIP push, Android ConnectionService).
+
+**Mimari:**
+* **Sinyal:** mevcut API üzerinden (WebSocket gerekmez). Arama isteği →
+  sunucu → VoIP push (iOS) / yüksek öncelikli data push (Android) →
+  sakin kabul eder → iki taraf SDP alışverişini sunucu üzerinden yapar.
+  Kısa bir süre (≤ 60 sn) için yoklama da yeterli.
+* **Medya:** WebRTC (`flutter_webrtc`). Eşler arası bağlantı çoğu
+  mobil ağda NAT arkasında kurulamaz; **TURN sunucusu şart**.
+* **TURN — iki yol:**
+
+| | Kendimiz (coturn) | Hazır servis (Twilio NTS, Cloudflare Calls TURN, Metered) |
+|---|---|---|
+| Maliyet | Sunucu + bant genişliği. Sesli arama ≈ 50–100 kbps; aylık birkaç yüz dakika için ihmal edilebilir | Dakika ya da GB başı; düşük hacimde aylık birkaç $ |
+| Bakım | TLS sertifikası, 3478/5349 UDP+TCP portları, geniş UDP port aralığı (49152–65535), izleme | Yok |
+| Tek sunucumuz | **Kaldırır** (coturn hafif), ama prod sunucusunun UDP port aralığını açmak ve NAT arkasındaysa dış IP'yi bildirmek gerekir. Bugün prod'a yalnız 80/443 açık | Etkilemez |
+| Öneri | — | **Başlangıçta hazır servis**; hacim büyürse coturn |
+
+* **iOS VoIP push kuralı:** iOS 13'ten beri **her VoIP push'ta CallKit
+  ile arama gösterilmek zorunda**. Gösterilmezse iOS uygulamayı
+  sonlandırır ve tekrarında VoIP push'u tamamen keser. Bu yüzden VoIP
+  push **yalnız gerçek arama** için gönderilmeli; iptal ya da "cevap
+  yok" durumu normal push ile bildirilmeli. Ayrıca APNs'e **ayrı VoIP
+  sertifikası / anahtar** gerekir ve FCM VoIP push göndermez; sunucudan
+  doğrudan APNs'e gidilmeli (yeni bağımlılık).
+* **Birden çok sakin:** **hepsi aynı anda çalsın**, ilk açan konuşur,
+  ötekilerin çağrısı "başka cihazda yanıtlandı" ile kapanır. Sırayla
+  çaldırmak kapıda bekleme süresini sakin sayısıyla çarpar.
+* **İzin:** sakinin profilinde "güvenlik beni uygulamadan arayabilir"
+  (varsayılan **açık** önerilir). Uygulama içi arama numara ifşa etmez.
+  Telefon yedeğindeki gizlilik sorunu burada yok.
+* **Tahmini iş:** 2–3 tur. VoIP/CallKit ve ConnectionService yerel kod
+  ister; Mac'te iOS derlemesi ve iki gerçek cihazla deneme gerekir
+  (burada ölçülemez).
+
+## §3d Diyafon üzerinden arama — ÖNERİ (kod yok, onay bekliyor)
+
+**Bizim kodda ne var (P240):**
+* `diyafon` tablosu **tesis başına** kayıt tutuyor: kapı paneli ya da
+  PBX. **Daire başına dahili numara YOK.**
+* SIP tarafında yalnız **sinyalleşme** var: `OPTIONS` (sağlık) ve
+  `MESSAGE` (ekrana metin anonsu).
+* **INVITE + RTP (sesli arama) YAZILMADI**, `sesli_anons` hiçbir
+  yöntemde açık değil. Kuru kontak yöntemi ses taşıyamaz.
+
+**Eksik olan:**
+1. **Daire → dahili eşlemesi:** `unit.diyafon_dahili` (ya da ayrı tablo).
+   Kurulumda yönetici girer ya da PBX'ten içe aktarılır.
+2. **Medya:** güvenliğin telefonundaki ses (WebRTC) ile dairenin iç
+   ünitesi (SIP/RTP) arasında **köprü**. Sunucuda bir SIP B2BUA ya da
+   medya sunucusu gerekir: **Asterisk / FreeSWITCH** ya da **Janus SIP
+   eklentisi**. §3c'deki WebRTC altyapısının üzerine kurulur.
+3. **Ağ:** sunucumuz sitenin yerel ağındaki PBX'e erişmeli (VPN ya da
+   sahada bir ağ geçidi). Bugün P240 bu erişimi sahadaki cihaz üzerinden
+   varsayıyor.
+
+**Hangi modellerde çalışır:**
+* **Çalışır (SIP destekli IP iç üniteler):** 2N (IP Verso ve iç
+  üniteler, doğal SIP), Akuvox (doğal SIP), Hikvision (DS-KH iç
+  üniteler SIP sunucusuna kaydedilebilir), Dahua VTH (SIP modu), Fanvil
+  ve Grandstream iç üniteler.
+* **Çalışmaz:** Türkiye'deki eski sitelerin çoğundaki **analog / 2 telli
+  sistemler** (eski Audio, Kocom, Commax analog serileri). SIP konuşmaz;
+  ancak üreticinin IP ağ geçidi varsa ve o da genellikle yalnız kapı
+  paneli içindir, daire başına değil.
+* **Kurulumda sorulacak:** sistemin IP mi analog mu olduğu, bir PBX /
+  SIP sunucusu olup olmadığı ve daire iç ünitelerinin SIP'e kayıtlı
+  olup olmadığı. Bu üçü yoksa (d) o sitede yapılamaz.
+
+**Öneri:** (d)'yi (c)'den **sonra** yap. Medya köprüsü (c) ile gelir.
+Önce bir pilot sitede iç ünite modelini ve PBX erişimini doğrula.
+(d)'nin avantajı: sakin evdeyse ama telefonu yanında değilse **iç ünite
+çalar**. Dezavantajı: sakin evde değilse hiçbir işe yaramaz. "Ev sahibi
+evde değil" senaryosunda (c) ve (e) daha etkilidir.
+
+## §3e Telefon yedeği — YAPILDI
+
+* **Sakin izni:** profilde "Yönetim beni bu numaradan arayabilir"
+  (`app_user.yonetim_arayabilir`, varsayılan **kapalı**). Sakin açar ve
+  kapatır. Mobil profil ekranında bulunur.
+* **Numara görünmez:** liste, arama ve dışa aktarım uçları değişmedi.
+  E2E turunda amire kapatılan sakin telefonu kuralı korunuyor. Numara
+  yalnız `POST /units/{id}/ulas/telefon` ile, **tek bir sakin** için ve
+  yalnız izni açıksa döner. İzin kapalıysa 403 döner ve numara hiç
+  gönderilmez.
+* **Kim:** güvenlik, amir, yönetim.
+* **Her istek denetim kaydına geçer** (`daire_telefon_goster`: kim,
+  hangi daire, hangi sakin, ne zaman). "Arama" değil "numara açıldı"
+  kaydedilir. Aramanın kendisi telefonun çeviricisinde olur ve uygulama
+  onu göremez; kayıt numaranın **açıldığı** anı tutar.
+* **Ekranda:** yalnız "Telefonla ara" düğmesi. Numara metin olarak
+  yazılmaz; düğme doğrudan çeviriciyi açar.
+
+## §3.5 Uçlar ve kurallar (yapılanlar)
+
+| Uç | Kim | Kural |
+|---|---|---|
+| `POST /visitors` `onay_iste: true` | güvenlik | Dairenin tüm aktif sakinlerine onay talebi; bilgilendirme push'u yerine gider |
+| `POST /visitors/{id}/onay` | dairenin aktif sakini | İlk yanıt geçerli (koşullu güncelleme), sonraki 409; başka daire 404 |
+| beat `scheduler.ziyaretci_onay_suresi` | — | 3 dk dolunca `cevap_yok` + güvenliğe bildirim (dakikada bir) |
+| `GET /units/{id}/ulas` | güvenlik, amir, yönetim | Aktif sakinler + "telefonla aranabilir mi"; **numara yok** |
+| `POST /units/{id}/ulas/telefon` | güvenlik, amir, yönetim | Tek sakin, izin açıksa; denetim `daire_telefon_goster` |
+| `POST /units/{id}/sesli-mesaj/yukleme` + `POST /units/{id}/sesli-mesaj` | güvenlik, amir, yönetim | İmzalı adresle depoya; anahtar o tesisin o dairesine ait olmalı; ≤ 60 sn, ≤ 1 MB, AAC |
+| `GET /sesli-mesaj`, `GET /sesli-mesaj/{id}/dinle`, `DELETE /sesli-mesaj/{id}` | dairenin sakini ya da gönderen | Yönetim dahil başkası dinleyemez (404) |
+| beat `scheduler.sesli_mesaj_imhasi` | — | 7 günden eski mesajların dosyası silinir (04:30) |
+| `PATCH /me/bildirim-tercihleri` `yonetim_arayabilir` | sakin | Varsayılan kapalı |
+
+Göç 0159: `visitor.onay_*`, `daire_sesli_mesaj` (RLS), `app_user.yonetim_arayabilir`,
+üç yeni bildirim türü.
+
+**IDOR taraması** tüm "hedef" uçlarını ölçüyor: onay yanıtı, dinleme,
+silme. **Beat manifesti** iki yeni görevle güncellendi. Prod'da beat
+imajı yeniden kurulmazsa görevler çalışmaz; manifest bunu açılışta
+gösterir.
+
+## §3.6 Parite
+
+* **Mobil:**
+  * güvenlik ve yönetim: Ziyaretçiler → "Daireye ulaş" ekranı (onay,
+    basılı tut sesli mesaj, izinli telefon), ziyaretçi formunda "Sakinlerden
+    onay iste";
+  * sakin: ziyaretçi kartında Onayla / Reddet, "Sesli mesajlar" ekranı
+    (dinle, sil), Ayarlar'da "Yönetim beni bu numaradan arayabilir".
+* **Web:** Ziyaretçiler sayfasında **onay durumu sütunu**. Yeni üç
+  bildirim türünün adı ve yönlendirmesi eklendi.
+* **İstisna — "Daireye ulaş" ekranı, ses kaydı ve dinleme web'de YOK.**
+  Gerekçe:
+  * bu kapıdaki bir iştir ve onu yapan roller (güvenlik, amir) yalnız
+    mobildedir;
+  * sakin de yalnız mobildedir;
+  * yönetici aynı ekranı mobilde kullanabilir (uçlar ona açık);
+  * tarayıcı kaydı Chrome'da WebM üretir, sunucu ise AAC bekler; web
+    kaydı ayrı bir dönüştürme işi olurdu.
+
+## §3 ÖLÇÜLEMEDİ
+
+* **Gerçek cihazda ses kaydı ve oynatma:**
+  * mikrofon izni penceresi;
+  * `record` paketinin AAC çıktısının iOS'ta `video_player` ile
+    oynatılması;
+  * basılı tutma hissi.
+
+  Birim testte kaydedici sahtelendi.
+* **İmzalı adrese PUT ÖLÇÜLDÜ** (dev MinIO, konteynerden gerçek
+  yükleme). Gönderim ucu dosyanın depoda **olduğunu** ve **1 MB'ı
+  aşmadığını** kendisi doğruluyor (`storage.obje_boyutu`). Yüklenmemiş
+  anahtar 422 alır. Mobil uygulamanın aynı PUT'u gerçek cihazdan yapması
+  ölçülmedi.
+* **iki sakinin aynı anda onaylaması:** sunucu koşullu güncellemeyle
+  tekini kazandırıyor (kod), eşzamanlı istekle ölçülmedi.
+* **(c) ve (d)** kod değil öneri; ölçülecek bir şey yok.

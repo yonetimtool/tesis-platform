@@ -8029,4 +8029,109 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get tatbikatDuyuruGitti => 'أُرسل الإشعار';
+
+  @override
+  String get daireyeUlasBaslik => 'الوصول إلى وحدة';
+
+  @override
+  String get daireyeUlasDaireAra => 'ابحث عن وحدة (الرقم أو اسم الساكن)';
+
+  @override
+  String get daireyeUlasSakinler => 'السكان';
+
+  @override
+  String get daireyeUlasAdimOnay => '1 · موافقة الزائر';
+
+  @override
+  String get daireyeUlasZiyaretciAd => 'اسم الزائر';
+
+  @override
+  String get daireyeUlasOnayIste => 'اطلب الموافقة';
+
+  @override
+  String get ziyaretciOnayBekliyor => 'بانتظار الرد';
+
+  @override
+  String get ziyaretciOnaylandi => 'تمت الموافقة';
+
+  @override
+  String get ziyaretciReddedildi => 'مرفوض — لا تسمح بالدخول';
+
+  @override
+  String get ziyaretciCevapYok => 'لا رد — جرّب رسالة صوتية أو الهاتف';
+
+  @override
+  String get daireyeUlasAdimSes => '2 · رسالة صوتية';
+
+  @override
+  String get sesliMesajBasiliTut =>
+      'اضغط مطولًا، تحدث، ثم اترك (60 ث كحد أقصى)';
+
+  @override
+  String sesliMesajKaydediliyor(int sn) {
+    return 'جارٍ التسجيل… $sn ث';
+  }
+
+  @override
+  String get sesliMesajGonderildi => 'أُرسلت الرسالة الصوتية';
+
+  @override
+  String get sesliMesajMikrofonIzni => 'يلزم إذن الميكروفون للرسائل الصوتية.';
+
+  @override
+  String get daireyeUlasAdimTelefon => '3 · اتصال هاتفي';
+
+  @override
+  String daireyeUlasTelefonAra(String ad) {
+    return 'اتصل بـ $ad';
+  }
+
+  @override
+  String get daireyeUlasTelefonKayit => 'يُسجَّل فتح الرقم.';
+
+  @override
+  String get daireyeUlasTelefonYok =>
+      'لا يوجد ساكن في هذه الوحدة يسمح بالاتصال.';
+
+  @override
+  String get sesliMesajlarBaslik => 'الرسائل الصوتية';
+
+  @override
+  String get sesliMesajYok =>
+      'لا توجد رسائل صوتية. تُحذف الرسائل تلقائيًا بعد 7 أيام.';
+
+  @override
+  String get sesliMesajDinle => 'استمع';
+
+  @override
+  String get sesliMesajSil => 'حذف';
+
+  @override
+  String get sesliMesajDinlendi => 'تم الاستماع';
+
+  @override
+  String sesliMesajSure(int sn) {
+    return '$sn ث';
+  }
+
+  @override
+  String get ziyaretciOnayla => 'موافقة';
+
+  @override
+  String get ziyaretciReddet => 'رفض';
+
+  @override
+  String ziyaretciOnaySoru(String ad) {
+    return '$ad يقول إنك تنتظره. هل توافق؟';
+  }
+
+  @override
+  String get ziyaretciOnayIsteSecenek => 'اطلب موافقة السكان (3 د)';
+
+  @override
+  String get ayarYonetimArayabilir => 'يمكن للإدارة الاتصال بي على هذا الرقم';
+
+  @override
+  String get ayarYonetimArayabilirAlt =>
+      'يمكن للأمن الاتصال بك إذا تعذّر الوصول إلى وحدتك بطريقة أخرى. لا يظهر رقمك في أي قائمة، ويُسجَّل كل اتصال.';
 }

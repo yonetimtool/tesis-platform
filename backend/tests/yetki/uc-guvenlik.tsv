@@ -453,6 +453,9 @@ PATCH	/sayaclar/bolum/{sayac_id}	zorunlu	tesis	rol	-	ozel	-	-		dar
 GET	/scans	zorunlu	tesis	-	-	-	-	-		-
 POST	/scans	zorunlu	tesis	-	-	haric	-	-	yuksek frekansli okutma; `scan_event` kendisi kayittir	dar
 POST	/scans/simule	zorunlu	tesis	-	-	genel	-	-		-
+GET	/sesli-mesaj	zorunlu	tesis	kendi	-	-	-	-		-
+DELETE	/sesli-mesaj/{mesaj_id}	zorunlu	tesis	hedef	-	ozel	-	-		-
+GET	/sesli-mesaj/{mesaj_id}/dinle	zorunlu	tesis	hedef	-	ozel	-	-		-
 GET	/shifts	zorunlu	tesis	-	-	-	-	-		-
 POST	/shifts	zorunlu	tesis	-	-	genel	-	-		dar
 DELETE	/shifts/{shift_id}	zorunlu	tesis	rol	-	genel	-	-		-
@@ -567,6 +570,10 @@ GET	/units/{unit_id}/residents	zorunlu	tesis	rol	-	-	-	-		-
 POST	/units/{unit_id}/residents	zorunlu	tesis	rol	-	ozel	-	-		-
 DELETE	/units/{unit_id}/residents/{user_id}	zorunlu	tesis	rol	-	ozel	-	-		-
 PATCH	/units/{unit_id}/residents/{user_id}	zorunlu	tesis	rol	-	ozel	-	-		-
+POST	/units/{unit_id}/sesli-mesaj	zorunlu	tesis	rol	-	ozel	-	-		dar
+POST	/units/{unit_id}/sesli-mesaj/yukleme	zorunlu	tesis	rol	-	genel	anahtar	-		dar
+GET	/units/{unit_id}/ulas	zorunlu	tesis	rol	-	-	-	-		-
+POST	/units/{unit_id}/ulas/telefon	zorunlu	tesis	rol	-	ozel	telefon	-		-
 POST	/uploads/presign	zorunlu	tesis	-	-	haric	-	-	yalniz imzali adres uretir; kayit baglandigi uc denetlenir	dar
 GET	/users	zorunlu	tesis	-	-	-	email	-		dar
 POST	/users	zorunlu	tesis	-	-	ozel	email,telefon	-		dar
@@ -620,6 +627,7 @@ POST	/visitors	zorunlu	tesis	-	-	ozel	-	-		dar
 GET	/visitors/{visitor_id}	zorunlu	tesis	hedef	-	-	-	-		-
 PATCH	/visitors/{visitor_id}	zorunlu	tesis	rol	-	ozel	-	-		dar
 POST	/visitors/{visitor_id}/checkout	zorunlu	tesis	rol	-	ozel	-	-		-
+POST	/visitors/{visitor_id}/onay	zorunlu	tesis	hedef	-	ozel	-	-		-
 GET	/weather	zorunlu	tesis	-	-	-	-	-		-
 POST	/webhooks/eposta/resend	kamu	platform	-	-	haric	-	-	saglayici imzasi (Svix/HMAC) dogrulanir; imzasiz 401	-
 POST	/webhooks/payments/{provider}	kamu	platform	-	-	haric	-	-	saglayici imzasi (Svix/HMAC) dogrulanir; imzasiz 401	-

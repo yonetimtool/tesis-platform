@@ -99,6 +99,7 @@ _GRUP_ONEKLERI: tuple[tuple[str, str], ...] = (
     ("entegrasyon_", "akilli_ev"),
     ("erisim_", "erisim"),
     ("dukkan_", "dukkan"),
+    ("sesli_mesaj", "ziyaretci"),
 )
 
 
@@ -117,7 +118,7 @@ _KAYIT_ANAHTARLARI: tuple[str, ...] = (
     "panik_id", "task_id", "complaint_id", "request_id", "kargo_id",
     "visitor_id", "rezervasyon_id", "patrol_window_id", "anket_id",
     "announcement_id", "etkinlik_id", "cihaz_id", "ekipman_id",
-    "shift_id", "receipt_id",
+    "shift_id", "receipt_id", "sesli_mesaj_id", "tatbikat_id",
 )
 
 
@@ -138,6 +139,8 @@ SAKIN_KIMLIKLERI: frozenset[str] = frozenset({
     "erisim_onaylandi", "erisim_reddedildi",
     "aidat_borc", "aidat_odendi", "aidat_hatirlatma",
     "gurultu_uyari_sakin", "akilli_ev_kacak", "akilli_ev_yangin",
+    # (P249 §3) Kapidan daireye: onay istegi ve sesli mesaj SAKINE aittir.
+    "ziyaretci_onay_istegi", "sesli_mesaj",
 })
 
 

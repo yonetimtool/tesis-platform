@@ -109,6 +109,8 @@ export const SAKIN_KIMLIKLERI: ReadonlySet<string> = new Set([
   "erisim_onaylandi", "erisim_reddedildi",
   "aidat_borc", "aidat_odendi", "aidat_hatirlatma",
   "gurultu_uyari_sakin", "akilli_ev_kacak", "akilli_ev_yangin",
+  // (P249 §3) Kapidan daireye: onay istegi ve sesli mesaj sakine aittir.
+  "ziyaretci_onay_istegi", "sesli_mesaj",
 ]);
 
 function aday(tip: string, webRol: string | null): string | null {

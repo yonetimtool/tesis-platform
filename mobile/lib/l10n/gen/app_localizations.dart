@@ -13834,6 +13834,192 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Duyuru gönderildi'**
   String get tatbikatDuyuruGitti;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Daireye ulaş'**
+  String get daireyeUlasBaslik;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire ara (no ya da sakin adı)'**
+  String get daireyeUlasDaireAra;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakinler'**
+  String get daireyeUlasSakinler;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'1 · Ziyaretçi onayı'**
+  String get daireyeUlasAdimOnay;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Ziyaretçinin adı'**
+  String get daireyeUlasZiyaretciAd;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Onay iste'**
+  String get daireyeUlasOnayIste;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Yanıt bekleniyor'**
+  String get ziyaretciOnayBekliyor;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'ONAYLANDI'**
+  String get ziyaretciOnaylandi;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'REDDEDİLDİ — içeri almayın'**
+  String get ziyaretciReddedildi;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Cevap yok — sesli mesaj ya da telefonu deneyin'**
+  String get ziyaretciCevapYok;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'2 · Sesli mesaj'**
+  String get daireyeUlasAdimSes;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Basılı tut, konuş, bırak (en fazla 60 sn)'**
+  String get sesliMesajBasiliTut;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaydediliyor… {sn} sn'**
+  String sesliMesajKaydediliyor(int sn);
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Sesli mesaj gönderildi'**
+  String get sesliMesajGonderildi;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Sesli mesaj için mikrofon izni gerekli.'**
+  String get sesliMesajMikrofonIzni;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'3 · Telefonla ara'**
+  String get daireyeUlasAdimTelefon;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'{ad} — telefonla ara'**
+  String daireyeUlasTelefonAra(String ad);
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Numara açıldığında kayda geçer.'**
+  String get daireyeUlasTelefonKayit;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu dairede telefonla aranmaya izin veren sakin yok.'**
+  String get daireyeUlasTelefonYok;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Sesli mesajlar'**
+  String get sesliMesajlarBaslik;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Sesli mesaj yok. Mesajlar 7 gün sonra kendiliğinden silinir.'**
+  String get sesliMesajYok;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Dinle'**
+  String get sesliMesajDinle;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Sil'**
+  String get sesliMesajSil;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Dinlendi'**
+  String get sesliMesajDinlendi;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'{sn} sn'**
+  String sesliMesajSure(int sn);
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Onayla'**
+  String get ziyaretciOnayla;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Reddet'**
+  String get ziyaretciReddet;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'{ad} sizi bekliyor diyor. Onaylıyor musunuz?'**
+  String ziyaretciOnaySoru(String ad);
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakinlerden onay iste (3 dk)'**
+  String get ziyaretciOnayIsteSecenek;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetim beni bu numaradan arayabilir'**
+  String get ayarYonetimArayabilir;
+
+  /// (P249 §3) Guvenlikten daireye ulasma
+  ///
+  /// In tr, this message translates to:
+  /// **'Güvenlik dairenize başka yolla ulaşamazsa sizi arayabilir. Numaranız hiçbir listede görünmez; her arama kayda geçer.'**
+  String get ayarYonetimArayabilirAlt;
 }
 
 class _AppLocalizationsDelegate

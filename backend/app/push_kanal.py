@@ -170,6 +170,14 @@ KRITIK_TIPLER: frozenset[str] = frozenset({
     # ayarlarina bir satir daha eklemek, o ekrani okunmaz yapardi.
     "gurultu_eskalasyon_guvenlik",
     "gurultu_eskalasyon_yonetim",
+    # (P249 §3) KAPIDA BEKLEYEN BIRI VAR: onay istegi, yaniti, cevapsizlik
+    # ve sesli mesaj dakikalar icinde anlamini yitirir — sesli, ekranin
+    # ustunde. Alarm sinifi DEGIL (dongulu siren gerekmez).
+    "ziyaretci_onay_istegi",
+    "ziyaretci_onaylandi",
+    "ziyaretci_reddedildi",
+    "ziyaretci_onay_cevap_yok",
+    "sesli_mesaj",
 })
 
 

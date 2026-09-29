@@ -7989,4 +7989,112 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tatbikatDuyuruGitti => 'Avis envoyé';
+
+  @override
+  String get daireyeUlasBaslik => 'Joindre un logement';
+
+  @override
+  String get daireyeUlasDaireAra => 'Chercher un logement (n° ou nom)';
+
+  @override
+  String get daireyeUlasSakinler => 'Résidents';
+
+  @override
+  String get daireyeUlasAdimOnay => '1 · Validation du visiteur';
+
+  @override
+  String get daireyeUlasZiyaretciAd => 'Nom du visiteur';
+
+  @override
+  String get daireyeUlasOnayIste => 'Demander la validation';
+
+  @override
+  String get ziyaretciOnayBekliyor => 'En attente de réponse';
+
+  @override
+  String get ziyaretciOnaylandi => 'VALIDÉ';
+
+  @override
+  String get ziyaretciReddedildi => 'REFUSÉ — ne pas faire entrer';
+
+  @override
+  String get ziyaretciCevapYok =>
+      'Pas de réponse — essayez un message vocal ou le téléphone';
+
+  @override
+  String get daireyeUlasAdimSes => '2 · Message vocal';
+
+  @override
+  String get sesliMesajBasiliTut => 'Maintenez, parlez, relâchez (60 s max)';
+
+  @override
+  String sesliMesajKaydediliyor(int sn) {
+    return 'Enregistrement… $sn s';
+  }
+
+  @override
+  String get sesliMesajGonderildi => 'Message vocal envoyé';
+
+  @override
+  String get sesliMesajMikrofonIzni =>
+      'L’accès au micro est nécessaire pour les messages vocaux.';
+
+  @override
+  String get daireyeUlasAdimTelefon => '3 · Appeler';
+
+  @override
+  String daireyeUlasTelefonAra(String ad) {
+    return 'Appeler $ad';
+  }
+
+  @override
+  String get daireyeUlasTelefonKayit =>
+      'L’ouverture du numéro est journalisée.';
+
+  @override
+  String get daireyeUlasTelefonYok =>
+      'Aucun résident de ce logement n’autorise les appels.';
+
+  @override
+  String get sesliMesajlarBaslik => 'Messages vocaux';
+
+  @override
+  String get sesliMesajYok =>
+      'Aucun message vocal. Les messages sont supprimés après 7 jours.';
+
+  @override
+  String get sesliMesajDinle => 'Écouter';
+
+  @override
+  String get sesliMesajSil => 'Supprimer';
+
+  @override
+  String get sesliMesajDinlendi => 'Écouté';
+
+  @override
+  String sesliMesajSure(int sn) {
+    return '$sn s';
+  }
+
+  @override
+  String get ziyaretciOnayla => 'Valider';
+
+  @override
+  String get ziyaretciReddet => 'Refuser';
+
+  @override
+  String ziyaretciOnaySoru(String ad) {
+    return '$ad dit que vous l’attendez. Validez-vous ?';
+  }
+
+  @override
+  String get ziyaretciOnayIsteSecenek =>
+      'Demander la validation aux résidents (3 min)';
+
+  @override
+  String get ayarYonetimArayabilir => 'La gestion peut m’appeler à ce numéro';
+
+  @override
+  String get ayarYonetimArayabilirAlt =>
+      'La sécurité peut vous appeler si elle ne peut pas joindre votre logement autrement. Votre numéro n’apparaît dans aucune liste ; chaque appel est journalisé.';
 }

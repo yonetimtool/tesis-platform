@@ -3766,4 +3766,13 @@ export const tr = {
   tatbikatKategoriYangin: "Yangın",
   tatbikatKategoriGaz: "Gaz kaçağı",
   tatbikatKategoriTahliye: "Tahliye",
+  // (P249 §3) Daireye ulasma
+  ziyaretciKolonOnay: "Onay",
+  ziyaretciOnayBekliyor: "Yanıt bekleniyor",
+  ziyaretciOnaylandi: "Onaylandı",
+  ziyaretciReddedildi: "Reddedildi",
+  ziyaretciCevapYok: "Cevap yok",
+  bildirimTipZiyaretciOnayIstegi: "Ziyaretçi onay talebi",
+  bildirimTipZiyaretciOnayYaniti: "Ziyaretçi onay yanıtı",
+  bildirimTipSesliMesaj: "Güvenlikten sesli mesaj",
 } as const;

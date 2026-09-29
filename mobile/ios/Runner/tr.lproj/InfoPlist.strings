@@ -9,3 +9,5 @@
 /* (P195) Apple 90683 icin GEREKLI anahtar; davranis DEGISMIYOR — uygulama
    her durumda yalniz "kullanirken" izni ister (bkz. Info.plist notu). */
 "NSLocationAlwaysAndWhenInUseUsageDescription" = "Uygulama arka planda konumunuzu izlemez. Konum yalnızca siz devriye noktası okuturken, okutmanın nerede yapıldığını kaydetmek için alınır.";
+/* (P249 §3b) Sesli mesaj kaydi. */
+"NSMicrophoneUsageDescription" = "Güvenlik görevlisinin daire sakinlerine kısa bir sesli mesaj kaydetmesi için kullanılır. Kayıt yalnızca düğme basılı tutulurken yapılır.";

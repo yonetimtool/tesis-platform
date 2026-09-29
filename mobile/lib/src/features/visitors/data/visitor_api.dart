@@ -130,6 +130,30 @@ class VisitorApi {
 
   /// (P247 §3) `POST /visitors/{id}/checkout` — guvenlik cikisi damgalar
   /// (govde YOK). Zaten cikmis/otomatik kapanmis kayit 409.
+  /// `GET /visitors/{id}` — onay talebinin durumunu izlemek icin.
+  Future<Visitor> getir(String id) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>('/visitors/$id');
+      return Visitor.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (P249 §3a) Sakinin yaniti: `onayla` | `reddet`. Ilk yanit gecerli
+  /// (sonraki 409).
+  Future<Visitor> onay(String id, {required bool onayla}) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/visitors/$id/onay',
+        data: {'karar': onayla ? 'onayla' : 'reddet'},
+      );
+      return Visitor.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   Future<Visitor> checkout(String id) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(

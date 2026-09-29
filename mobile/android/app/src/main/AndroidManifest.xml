@@ -21,6 +21,9 @@
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY"/>
     <!-- Acil durum alarmina konum eklemek icin (best-effort; izin verilmezse
          alarm konumsuz gider, BEKLETILMEZ). -->
+    <!-- (P249 §3b) Guvenlikten daireye SESLI MESAJ kaydi. Calisma zamaninda
+         yalniz "basili tut" dugmesine ilk basista istenir. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <!-- NFC olmayan cihazlarda da kurulabilsin; donanim zorunlu degil. -->

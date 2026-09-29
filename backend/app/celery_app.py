@@ -117,6 +117,16 @@ celery_app.conf.beat_schedule = {
         "task": "scheduler.tatbikat_zamani",
         "schedule": 60.0,
     },
+    # (P249 §3a) Onay talebi 3 dk — dakika cozunurlugu yeterli.
+    "ziyaretci-onay-suresi": {
+        "task": "scheduler.ziyaretci_onay_suresi",
+        "schedule": 60.0,
+    },
+    # (P249 §3b) Sesli mesaj KVKK imhasi — 04:30 Istanbul (01:30 UTC).
+    "sesli-mesaj-imhasi": {
+        "task": "scheduler.sesli_mesaj_imhasi",
+        "schedule": crontab(hour=1, minute=30),
+    },
     "ziyaretci-otomatik-kapanis": {
         "task": "scheduler.ziyaretci_otomatik_kapanis",
         "schedule": 3600.0,

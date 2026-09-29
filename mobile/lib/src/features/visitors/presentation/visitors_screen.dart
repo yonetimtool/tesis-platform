@@ -2,10 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../core/error/api_exception.dart';
+import '../../../routing/app_router.dart';
+import '../../auth/data/current_user_provider.dart';
+import '../../auth/domain/user_role.dart';
 import '../../call/presentation/call_button.dart';
 import '../data/visitor_api.dart';
 import '../domain/visitor_models.dart';
@@ -75,6 +79,36 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen> {
         title: Text(baslikBuyuk(context.l10n.modulZiyaretciler,
             context.dilKodu)),
         actions: [
+          // (P249 §3) Guvenlik: DAIREYE ULAS; sakin: SESLI MESAJLAR.
+          // ETIKETLI TASMA MENUSU: baska ekrana goturen eylem adini gorunur
+          // tasir (P237) ve 320 dp / 2x yazida baslik TASMAZ (etiketli
+          // dugmeler tasiyordu).
+          if (state.canRegister ||
+              ref.watch(currentUserRoleProvider).value == UserRole.resident)
+            PopupMenuButton<String>(
+              key: const Key('ziyaret-menu'),
+              onSelected: (rota) => context.push(rota),
+              itemBuilder: (_) => [
+                if (state.canRegister)
+                  PopupMenuItem(
+                    key: const Key('ziyaret-daireye-ulas'),
+                    value: AppRoutes.daireyeUlas,
+                    child: ListTile(
+                      leading: const Icon(Icons.contact_phone_outlined),
+                      title: Text(context.l10n.daireyeUlasBaslik),
+                    ),
+                  ),
+                if (ref.read(currentUserRoleProvider).value == UserRole.resident)
+                  PopupMenuItem(
+                    key: const Key('ziyaret-sesli-mesajlar'),
+                    value: AppRoutes.sesliMesajlar,
+                    child: ListTile(
+                      leading: const Icon(Icons.voicemail_outlined),
+                      title: Text(context.l10n.sesliMesajlarBaslik),
+                    ),
+                  ),
+              ],
+            ),
           IconButton(
             tooltip: context.l10n.ortakYenile,
             icon: const Icon(Icons.refresh),
@@ -233,6 +267,13 @@ class _VisitorCard extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(v.notlar!, maxLines: 2, overflow: TextOverflow.ellipsis),
               ],
+              if (v.onayDurum != null) ...[
+                const SizedBox(height: 6),
+                ZiyaretciOnaySatiri(
+                  visitor: v,
+                  onDegisti: ref.read(visitorsControllerProvider.notifier).refresh,
+                ),
+              ],
               if (v.cikisZamani != null) ...[
                 const SizedBox(height: 2),
                 Text(
@@ -251,6 +292,94 @@ class _VisitorCard extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// (P249 §3a) ONAY TALEBININ DURUMU — guvenlik sonucu gorur; sakin
+/// bekleyen talebe Onayla / Reddet der (ilk yanit gecerli).
+class ZiyaretciOnaySatiri extends ConsumerStatefulWidget {
+  const ZiyaretciOnaySatiri({super.key, required this.visitor, this.onDegisti});
+
+  final Visitor visitor;
+
+  /// Yanit yazildiktan sonra (liste yenilensin diye).
+  final Future<void> Function()? onDegisti;
+
+  @override
+  ConsumerState<ZiyaretciOnaySatiri> createState() =>
+      _ZiyaretciOnaySatiriState();
+}
+
+class _ZiyaretciOnaySatiriState extends ConsumerState<ZiyaretciOnaySatiri> {
+  bool _mesgul = false;
+
+  Future<void> _yanit(bool onayla) async {
+    setState(() => _mesgul = true);
+    try {
+      await ref
+          .read(visitorApiProvider)
+          .onay(widget.visitor.id, onayla: onayla);
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(apiHataMetni(context.l10n, e))));
+      }
+    } finally {
+      if (mounted) setState(() => _mesgul = false);
+      await widget.onDegisti?.call();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final v = widget.visitor;
+    final cs = Theme.of(context).colorScheme;
+    final sakin = ref.watch(currentUserRoleProvider).value == UserRole.resident;
+    final (metin, renk) = switch (v.onayDurum) {
+      'onaylandi' => (l10n.ziyaretciOnaylandi, cs.primary),
+      'reddedildi' => (l10n.ziyaretciReddedildi, cs.error),
+      'cevap_yok' => (l10n.ziyaretciCevapYok, cs.error),
+      _ => (l10n.ziyaretciOnayBekliyor, cs.onSurfaceVariant),
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          [
+            metin,
+            if (v.onayYanitlayanAd != null) v.onayYanitlayanAd!,
+          ].join(' · '),
+          key: Key('ziyaret-onay-durum-${v.id}'),
+          style: TextStyle(color: renk, fontWeight: FontWeight.w700),
+        ),
+        if (sakin && v.onayBekliyor) ...[
+          const SizedBox(height: 6),
+          Text(l10n.ziyaretciOnaySoru(v.ziyaretciAd)),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton(
+                  key: Key('ziyaret-onayla-${v.id}'),
+                  onPressed: _mesgul ? null : () => _yanit(true),
+                  child: Text(l10n.ziyaretciOnayla),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton(
+                  key: Key('ziyaret-reddet-${v.id}'),
+                  onPressed: _mesgul ? null : () => _yanit(false),
+                  child: Text(l10n.ziyaretciReddet),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 }
@@ -494,6 +623,9 @@ class _VisitorFormState extends ConsumerState<VisitorForm> {
   bool _busy = false;
   String? _hata;
 
+  /// (P249 §3a) Dairenin tum sakinlerinden onay iste.
+  bool _onayIste = false;
+
   /// Hedef sakin secicisi (tek hedef modeli): once daire sakinleri cekilir.
   List<UnitResidentBrief>? _residents;
   bool _loadingResidents = false;
@@ -654,6 +786,7 @@ class _VisitorFormState extends ConsumerState<VisitorForm> {
             unitNo: _unitNo.text.trim(),
             targetResidentUserId: _targetId!,
             notlar: notlar,
+            onayIste: _onayIste,
           ),
         );
       }
@@ -679,7 +812,10 @@ class _VisitorFormState extends ConsumerState<VisitorForm> {
       padding: EdgeInsets.fromLTRB(24, 16, 24, 24 + viewInsets.bottom),
       child: Form(
         key: _formKey,
-        child: Column(
+        // KAYDIRILABILIR: (P249 §3a) onay anahtari formu uzatti; kucuk
+        // ekranda ya da klavye acikken alt kisim tasiyordu.
+        child: SingleChildScrollView(
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -799,6 +935,16 @@ class _VisitorFormState extends ConsumerState<VisitorForm> {
               maxLength: 1000,
               maxLines: 2,
             ),
+            // (P249 §3a) ONAY TALEBI — yeni kayitta; dairenin TUM
+            // sakinlerine "sizi bekliyor diyor, onayliyor musunuz?" gider.
+            if (!_isEdit)
+              SwitchListTile(
+                key: const Key('ziyaret-onay-iste'),
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.ziyaretciOnayIsteSecenek),
+                value: _onayIste,
+                onChanged: (v) => setState(() => _onayIste = v),
+              ),
             if (_hata != null) ...[
               const SizedBox(height: 8),
               Text(_hata!, style: const TextStyle(color: Colors.red)),
@@ -821,6 +967,7 @@ class _VisitorFormState extends ConsumerState<VisitorForm> {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

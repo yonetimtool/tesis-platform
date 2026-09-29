@@ -32,6 +32,7 @@ class BildirimTercihApi {
     bool? sms,
     bool? mobil,
     bool? sesli,
+    bool? yonetimArayabilir,
   }) async {
     final data = <String, dynamic>{};
     if (eposta != null) data['bildirim_eposta'] = eposta;
@@ -42,6 +43,8 @@ class BildirimTercihApi {
     // degistiremez — "sesi kapat" ancak sunucunun BASKA BIR KANALA
     // gondermesiyle olur.
     if (sesli != null) data['bildirim_sesi'] = sesli;
+    // (P249 §3e) Telefon yedegi izni.
+    if (yonetimArayabilir != null) data['yonetim_arayabilir'] = yonetimArayabilir;
     try {
       final res = await _dio.patch<Map<String, dynamic>>(
         '/me/bildirim-tercihleri',

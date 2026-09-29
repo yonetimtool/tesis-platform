@@ -21,7 +21,7 @@ tasarim gerekmez (bkz. migration notu).
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select, update
@@ -40,6 +40,7 @@ from ..scheduler.notify import dispatch_external
 from ..schemas import (
     VisitorCreate,
     VisitorListResponse,
+    VisitorOnayIn,
     VisitorOut,
     VisitorUpdate,
 )
@@ -67,24 +68,31 @@ _IZIN_GEREKEN = {"admin", "yonetici"}
 
 _KAYDEDEN = aliased(AppUser)
 _TARGET = aliased(AppUser)
+_YANITLAYAN = aliased(AppUser)
+
+#: (P249 §3a) Onay talebine cevap suresi. Kapida bekleyen biri icin makul
+#: sinir; daha uzunu guvenligi kapida tutar. Dolunca beat `cevap_yok` yapar.
+ONAY_SURE_DK = 3
 
 
 def _out(row) -> VisitorOut:
-    obj, unit_no, kaydeden_ad, target_ad = row
+    obj, unit_no, kaydeden_ad, target_ad, yanitlayan_ad = row
     out = VisitorOut.model_validate(obj)
     out.unit_no = unit_no
     out.kaydeden_ad = kaydeden_ad
     out.target_resident_ad = target_ad
+    out.onay_yanitlayan_ad = yanitlayan_ad
     return out
 
 
 def _base_stmt():
-    """Liste/detay ortak SELECT'i: daire no + kaydeden/hedef adlari."""
+    """Liste/detay ortak SELECT'i: daire no + kaydeden/hedef/yanitlayan adlari."""
     return (
-        select(Visitor, Unit.no, _KAYDEDEN.ad, _TARGET.ad)
+        select(Visitor, Unit.no, _KAYDEDEN.ad, _TARGET.ad, _YANITLAYAN.ad)
         .join(Unit, Unit.id == Visitor.unit_id)
         .join(_KAYDEDEN, _KAYDEDEN.id == Visitor.kaydeden_user_id)
         .join(_TARGET, _TARGET.id == Visitor.target_resident_user_id)
+        .outerjoin(_YANITLAYAN, _YANITLAYAN.id == Visitor.onay_yanitlayan_user_id)
     )
 
 
@@ -107,9 +115,13 @@ def _scope(stmt, user: AppUser, unit_ids: list[uuid.UUID] | None):
     tumunu (RLS zaten tenant'i daraltir); yonetici bu fonksiyona ulasmadan once
     handler'da izinle daraltilir."""
     if user.role == "resident":
+        # (P249 §3a) ONAY TALEBI dairenin TUM aktif sakinlerine sorulur;
+        # soru sorulan sakin kaydi GORMELI (yanit verebilmesi icin). Onay
+        # istenmemis kayitlarda tek-hedef kurali AYNEN surer.
         return stmt.where(
-            Visitor.target_resident_user_id == user.id,
             Visitor.unit_id.in_(unit_ids or []),
+            (Visitor.target_resident_user_id == user.id)
+            | Visitor.onay_durum.is_not(None),
         )
     return stmt
 
@@ -159,12 +171,50 @@ async def create_visitor(
         kaydeden_user_id=user.id,
         target_resident_user_id=body.target_resident_user_id,
     )
+    if body.onay_iste:
+        obj.onay_durum = "bekliyor"
+        obj.onay_son_at = datetime.now(timezone.utc) + timedelta(minutes=ONAY_SURE_DK)
     db.add(obj)
     try:
         await db.flush()
     except IntegrityError as exc:
         raise translate_integrity(exc)
     await db.refresh(obj)
+
+    if body.onay_iste:
+        # (P249 §3a) ONAY TALEBI — dairenin TUM aktif sakinlerine; ilk
+        # yanit gecerli. Bilgilendirme push'u YERINE gider (ayni olay icin
+        # iki bildirim olmasin).
+        sakinler = list(
+            (
+                await db.execute(
+                    select(UnitResident.user_id).where(
+                        UnitResident.unit_id == unit.id, UnitResident.bitis.is_(None)
+                    )
+                )
+            ).scalars().all()
+        )
+        veri = {"ad": body.ziyaretci_ad, "daire": unit.no}
+        dispatch_external(
+            "ziyaretci_onay_istegi",
+            tenant_id=user.tenant_id,
+            target_user_ids=sakinler,
+            params=veri,
+            data={"tip": "ziyaretci_onay_istegi", "visitor_id": str(obj.id)},
+        )
+        sakin_bildirimi_yaz(
+            db, tenant_id=user.tenant_id, tip="ziyaretci_onay_istegi",
+            user_ids=sakinler, veri=veri,
+        )
+        await audit_user(
+            db, user, Action.VISITOR_ONAY_ISTE, resource_type="visitor",
+            resource_id=obj.id, meta={"unit_id": str(obj.unit_id), "alici": len(sakinler)},
+        )
+        await audit_user(
+            db, user, Action.VISITOR_CREATE, resource_type="visitor",
+            resource_id=obj.id, meta={"unit_id": str(obj.unit_id)},
+        )
+        return _out((obj, unit.no, user.ad, target_ad, None))
 
     # EK push: BILGILENDIRME — YALNIZ secilen hedef sakine (kisi hedefli;
     # dairenin diger sakinlerine/tenant'a sizmaz). Onay/red istenmez; hatasi
@@ -187,7 +237,65 @@ async def create_visitor(
         db, user, Action.VISITOR_CREATE, resource_type="visitor",
         resource_id=obj.id, meta={"unit_id": str(obj.unit_id)},
     )
-    return _out((obj, unit.no, user.ad, target_ad))
+    return _out((obj, unit.no, user.ad, target_ad, None))
+
+
+# ---------------------------- (P249 §3a) onay ------------------------------ #
+_SAKIN = require_role("resident")
+
+
+@router.post("/{visitor_id}/onay", response_model=VisitorOut)
+async def visitor_onay(
+    visitor_id: uuid.UUID,
+    body: VisitorOnayIn,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_SAKIN),
+) -> VisitorOut:
+    """Dairenin AKTIF sakini onaylar/reddeder. ILK yanit gecerli (kosullu
+    UPDATE — iki sakin ayni anda basarsa biri kazanir). Yanit kaydi acan
+    guvenlige KENDI bildirimiyle gider."""
+    unit_ids = await _aktif_daire_ids(db, user)
+    v = (
+        await db.execute(
+            select(Visitor).where(Visitor.id == visitor_id, Visitor.unit_id.in_(unit_ids or []))
+        )
+    ).scalar_one_or_none()
+    if v is None or v.onay_durum is None:
+        raise APIError(404, "not_found", "kayit_bulunamadi")
+    durum = "onaylandi" if body.karar == "onayla" else "reddedildi"
+    sonuc = await db.execute(
+        update(Visitor)
+        .where(Visitor.id == v.id, Visitor.onay_durum == "bekliyor")
+        .values(onay_durum=durum, onay_yanit_at=func.now(), onay_yanitlayan_user_id=user.id)
+    )
+    if sonuc.rowcount == 0:
+        # Baska bir sakin once yanitladi ya da sure doldu.
+        raise APIError(409, "conflict", "ziyaretci_onay_kapandi")
+    await db.flush()
+    unit_no = (await db.execute(select(Unit.no).where(Unit.id == v.unit_id))).scalar_one()
+    veri = {"ad": v.ziyaretci_ad, "daire": unit_no, "sakin": user.ad or ""}
+    kimlik = "ziyaretci_onaylandi" if durum == "onaylandi" else "ziyaretci_reddedildi"
+    dispatch_external(
+        kimlik,
+        tenant_id=user.tenant_id,
+        target_user_ids=[v.kaydeden_user_id],
+        params=veri,
+        data={"tip": "ziyaretci_onay_yaniti", "visitor_id": str(v.id)},
+    )
+    from ..models import Notification
+    from ..push_metinleri import push_govdesi
+
+    db.add(Notification(
+        tenant_id=user.tenant_id, user_id=v.kaydeden_user_id, tip="ziyaretci_onay_yaniti",
+        mesaj=push_govdesi(kimlik, "tr", veri), mesaj_kimlik=kimlik, mesaj_veri=veri,
+    ))
+    await audit_user(
+        db, user, Action.VISITOR_ONAY_YANIT, resource_type="visitor",
+        resource_id=v.id, meta={"karar": durum},
+    )
+    await db.refresh(v)
+    row = (await db.execute(_base_stmt().where(Visitor.id == v.id))).first()
+    return _out(row)
 
 
 # ------------------------------- duzenleme ---------------------------------- #

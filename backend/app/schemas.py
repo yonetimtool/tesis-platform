@@ -789,6 +789,8 @@ class BildirimTercihleri(BaseModel):
     #: bu, bildirimin GELIP GELMEYECEGINI degil SESLI olup olmayacagini
     #: soyler.
     bildirim_sesi: bool = True
+    #: (P249 §3e) "Yonetim beni bu numaradan arayabilir" — varsayilan kapali.
+    yonetim_arayabilir: bool = False
 
 
 class BildirimTercihUpdate(BaseModel):
@@ -810,6 +812,7 @@ class BildirimTercihUpdate(BaseModel):
     bildirim_sms: bool | None = None
     bildirim_mobil: bool | None = None
     bildirim_sesi: bool | None = None
+    yonetim_arayabilir: bool | None = None
 
 
 class CihazOut(BaseModel):
@@ -2917,6 +2920,10 @@ class VisitorCreate(BaseModel):
     # "not" SQL/Python anahtar sozcugu — kolon/alan adi codebase deseniyle
     # 'notlar' (asset_checkout ile ayni).
     notlar: str | None = Field(None, min_length=1, max_length=1000)
+    #: (P249 §3a) ONAY TALEBI: dairenin TUM aktif sakinlerine "X sizi
+    #: bekliyor diyor, onayliyor musunuz?" gider; ilk yanit gecerli.
+    #: Varsayilan kapali — eski LOG davranisi degismez.
+    onay_iste: bool = False
 
     @model_validator(mode="after")
     def _tek_daire_referansi(self) -> "VisitorCreate":
@@ -2965,6 +2972,18 @@ class VisitorOut(BaseModel):
     # ekran "Cikis kaydedilmedi" yazar; cikis_zamani kapanis anidir.
     cikis_otomatik: bool = False
     created_at: datetime
+    #: (P249 §3a) Onay talebi: NULL (istenmedi) | bekliyor | onaylandi |
+    #: reddedildi | cevap_yok.
+    onay_durum: str | None = None
+    onay_son_at: datetime | None = None
+    onay_yanit_at: datetime | None = None
+    onay_yanitlayan_ad: str | None = None
+
+
+class VisitorOnayIn(BaseModel):
+    """(P249 §3a) Sakinin yaniti."""
+
+    karar: Literal["onayla", "reddet"]
 
 
 class UnitResidentBriefOut(BaseModel):

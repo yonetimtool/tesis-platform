@@ -8063,4 +8063,113 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get tatbikatDuyuruGitti => 'Уведомление отправлено';
+
+  @override
+  String get daireyeUlasBaslik => 'Связаться с квартирой';
+
+  @override
+  String get daireyeUlasDaireAra => 'Поиск квартиры (номер или имя)';
+
+  @override
+  String get daireyeUlasSakinler => 'Жильцы';
+
+  @override
+  String get daireyeUlasAdimOnay => '1 · Подтверждение посетителя';
+
+  @override
+  String get daireyeUlasZiyaretciAd => 'Имя посетителя';
+
+  @override
+  String get daireyeUlasOnayIste => 'Запросить подтверждение';
+
+  @override
+  String get ziyaretciOnayBekliyor => 'Ожидание ответа';
+
+  @override
+  String get ziyaretciOnaylandi => 'ПОДТВЕРЖДЕНО';
+
+  @override
+  String get ziyaretciReddedildi => 'ОТКАЗАНО — не впускайте';
+
+  @override
+  String get ziyaretciCevapYok =>
+      'Нет ответа — попробуйте голосовое сообщение или телефон';
+
+  @override
+  String get daireyeUlasAdimSes => '2 · Голосовое сообщение';
+
+  @override
+  String get sesliMesajBasiliTut =>
+      'Удерживайте, говорите, отпустите (до 60 с)';
+
+  @override
+  String sesliMesajKaydediliyor(int sn) {
+    return 'Запись… $sn с';
+  }
+
+  @override
+  String get sesliMesajGonderildi => 'Голосовое сообщение отправлено';
+
+  @override
+  String get sesliMesajMikrofonIzni =>
+      'Для голосовых сообщений нужен доступ к микрофону.';
+
+  @override
+  String get daireyeUlasAdimTelefon => '3 · Позвонить';
+
+  @override
+  String daireyeUlasTelefonAra(String ad) {
+    return 'Позвонить: $ad';
+  }
+
+  @override
+  String get daireyeUlasTelefonKayit =>
+      'Открытие номера фиксируется в журнале.';
+
+  @override
+  String get daireyeUlasTelefonYok => 'Никто из жильцов не разрешил звонки.';
+
+  @override
+  String get sesliMesajlarBaslik => 'Голосовые сообщения';
+
+  @override
+  String get sesliMesajYok =>
+      'Голосовых сообщений нет. Они удаляются через 7 дней.';
+
+  @override
+  String get sesliMesajDinle => 'Прослушать';
+
+  @override
+  String get sesliMesajSil => 'Удалить';
+
+  @override
+  String get sesliMesajDinlendi => 'Прослушано';
+
+  @override
+  String sesliMesajSure(int sn) {
+    return '$sn с';
+  }
+
+  @override
+  String get ziyaretciOnayla => 'Подтвердить';
+
+  @override
+  String get ziyaretciReddet => 'Отказать';
+
+  @override
+  String ziyaretciOnaySoru(String ad) {
+    return '$ad говорит, что вы его ждёте. Подтверждаете?';
+  }
+
+  @override
+  String get ziyaretciOnayIsteSecenek =>
+      'Запросить подтверждение у жильцов (3 мин)';
+
+  @override
+  String get ayarYonetimArayabilir =>
+      'Управление может звонить мне на этот номер';
+
+  @override
+  String get ayarYonetimArayabilirAlt =>
+      'Охрана может позвонить вам, если не сможет связаться с квартирой иначе. Ваш номер не показывается в списках; каждый звонок фиксируется.';
 }

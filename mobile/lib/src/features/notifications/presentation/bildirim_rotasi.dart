@@ -88,6 +88,9 @@ String? bildirimRotasi(AppNotification b, {UserRole? role}) {
       AppRoutes.panikTakip,
     // (P249 §2) Tatbikat duyurusu -> tatbikat listesi (yonetim/guvenlik).
     'panik_tatbikat_duyuru' => AppRoutes.tatbikat,
+    // (P249 §3) Daireye ulasma.
+    'ziyaretci_onay_istegi' || 'ziyaretci_onay_yaniti' => AppRoutes.visitors,
+    'sesli_mesaj' => AppRoutes.sesliMesajlar,
     // (P240 §3) Kacak/yangin -> cihazin oldugu ekran (vana, sensor).
     'akilli_ev_kacak' || 'akilli_ev_yangin' => AppRoutes.akilliEv,
     // (P240 §4) Kopan entegrasyon -> entegrasyon listesi (saglik sutunu).
@@ -130,6 +133,8 @@ const sakinKimlikleri = <String>{
   'erisim_onaylandi', 'erisim_reddedildi',
   'aidat_borc', 'aidat_odendi', 'aidat_hatirlatma',
   'gurultu_uyari_sakin', 'akilli_ev_kacak', 'akilli_ev_yangin',
+  // (P249 §3) Kapidan daireye: onay istegi ve sesli mesaj sakine aittir.
+  'ziyaretci_onay_istegi', 'sesli_mesaj',
 };
 
 /// Satirin ait oldugu mod: sakin kimlikli tip -> sakin, digeri -> yonetici.

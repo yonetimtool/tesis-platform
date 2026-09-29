@@ -44,8 +44,10 @@ generate-patrol-windows	scheduler.generate_patrol_windows	3600.0
 gurultu-kuyrugu	scheduler.gurultu_kuyrugu	60.0
 mesaj-kuyrugu	scheduler.mesaj_kuyrugu	60.0
 run-retention	scheduler.run_retention	<crontab: 0 1 * * * (m/h/dM/MY/d)>
+sesli-mesaj-imhasi	scheduler.sesli_mesaj_imhasi	<crontab: 30 1 * * * (m/h/dM/MY/d)>
 summarize-shifts	scheduler.summarize_shifts	300.0
 tatbikat-zamani	scheduler.tatbikat_zamani	60.0
 vardiya-dongu-uret	scheduler.vardiya_dongu_uret	<crontab: 30 21 * * * (m/h/dM/MY/d)>
 vardiya-hatirlatma	scheduler.vardiya_hatirlatma	60.0
+ziyaretci-onay-suresi	scheduler.ziyaretci_onay_suresi	60.0
 ziyaretci-otomatik-kapanis	scheduler.ziyaretci_otomatik_kapanis	3600.0

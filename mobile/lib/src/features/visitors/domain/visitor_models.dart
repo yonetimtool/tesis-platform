@@ -22,6 +22,9 @@ class Visitor {
     this.targetResidentAd,
     this.cikisZamani,
     this.cikisOtomatik = false,
+    this.onayDurum,
+    this.onaySonAt,
+    this.onayYanitlayanAd,
   });
 
   final String id;
@@ -52,6 +55,14 @@ class Visitor {
 
   final DateTime createdAt;
 
+  /// (P249 §3a) Onay talebi: null (istenmedi) | `bekliyor` | `onaylandi`
+  /// | `reddedildi` | `cevap_yok`.
+  final String? onayDurum;
+  final DateTime? onaySonAt;
+  final String? onayYanitlayanAd;
+
+  bool get onayBekliyor => onayDurum == 'bekliyor';
+
   bool get iceride => cikisZamani == null;
 
   factory Visitor.fromJson(Map<String, dynamic> json) => Visitor(
@@ -68,6 +79,11 @@ class Visitor {
             ? null
             : DateTime.tryParse(json['cikis_zamani'] as String? ?? ''),
         cikisOtomatik: json['cikis_otomatik'] as bool? ?? false,
+        onayDurum: json['onay_durum'] as String?,
+        onaySonAt: json['onay_son_at'] == null
+            ? null
+            : DateTime.tryParse(json['onay_son_at'] as String? ?? ''),
+        onayYanitlayanAd: json['onay_yanitlayan_ad'] as String?,
         createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
             DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
       );
@@ -84,6 +100,7 @@ class VisitorDraft {
     required this.unitNo,
     required this.targetResidentUserId,
     this.notlar,
+    this.onayIste = false,
   });
 
   final String ziyaretciAd;
@@ -95,11 +112,15 @@ class VisitorDraft {
   /// Opsiyonel not; bos/null ise JSON'a HIC yazilmaz (sunucu minLength 1).
   final String? notlar;
 
+  /// (P249 §3a) Dairenin tum sakinlerinden ONAY iste.
+  final bool onayIste;
+
   Map<String, dynamic> toJson() => {
         'ziyaretci_ad': ziyaretciAd,
         'unit_no': unitNo,
         'target_resident_user_id': targetResidentUserId,
         if (notlar != null && notlar!.isNotEmpty) 'notlar': notlar,
+        if (onayIste) 'onay_iste': true,
       };
 }
 

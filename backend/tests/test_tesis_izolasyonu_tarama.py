@@ -72,6 +72,9 @@ TESIS_UCLARI: tuple[str, ...] = (
     "/panik",
     # (P240 §2) Diyafon listesi — ayni gerekce.
     "/diyafon",
+    # (P249 §2) Tatbikat listesi ve (§3b) sesli mesajlar — tesis-kapsamli.
+    "/tatbikat",
+    "/sesli-mesaj",
     # (P241 §2) Izin listesi — tesis-kapsamli.
     "/vardiya-izin",
     # (P247 §1) Dongu atamalari — kisi adlari + atlanan gunler tasir.
