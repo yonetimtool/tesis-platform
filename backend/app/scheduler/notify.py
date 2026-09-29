@@ -24,8 +24,8 @@ import psycopg
 from .. import push
 from ..config import settings
 from ..gunlukleme import guvenli_alanlar
-from ..push_gorunum import gorunum_kur, hedef_rol
-from ..push_kanal import kanal_sec, ses_adi
+from ..push_gorunum import gorunum_kur, hedef_rol, surum_en_az
+from ..push_kanal import alarm_mi, kanal_sec, ses_adi
 from ..push_metinleri import dil_normalize, push_basligi, push_govdesi
 from ..ceviri import VARSAYILAN_DIL
 
@@ -118,6 +118,10 @@ class Cihaz:
     #: yayini degil) ulasildigi — `data.hedef_rol` bunlardan cikar.
     rol: str = ""
     kisi_hedefli: bool = False
+    #: (P249 §1c) Uygulama surumu (yerel alarm esigi) ve iOS kritik uyari
+    #: izni.
+    surum: str | None = None
+    kritik_uyari: bool = False
 
 
 #: Saglayici TOPLAM durumu -> teshis durumu (token bazinda sonuc yoksa yedek).
@@ -143,17 +147,22 @@ def _push_to_devices(
     provider = push.get_push_provider()
     if tenant_id is None or not (target_roles or target_user_ids):
         return  # hedef bilgisi yok -> gonderim yapma (eski no-op)
+    # (P249 §1c) ALARM TERCIHTEN BAGIMSIZ: mobil bildirimi kapatmis
+    # kullanici da SOS alir (gerekce `push_kanal.ALARM_TIPLERI`).
+    alarm = alarm_mi(kimlik)
     # (P181 Bölüm 10.3) ROL + KISI hedefi BIRLIKTE cozulur ve TOKEN bazinda
     # DEDUP edilir: cok-rollu / hem-kisi-hem-rol hedeflenen kullanici TEK push
     # alir. Eskiden roller ve kisiler AYRI cagrilarla gonderiliyordu; ayni kisi
     # hem gorevli hem yonetici ise iki bildirim duyardi. Kanal tercihi
     # (`bildirim_mobil`, göç 0055) fetch SQL'inde uygulanir.
     cihazlar: dict[str, Cihaz] = {}  # token -> cihaz (ilk goren kazanir)
+    # Anahtar YALNIZ alarmda verilir: alarm disi cagri imzasi degismez.
+    ek = {"tercih_atla": True} if alarm else {}
     if target_roles:
-        for c in _fetch_device_tokens(tenant_id, target_roles):
+        for c in _fetch_device_tokens(tenant_id, target_roles, **ek):
             cihazlar.setdefault(c.token, c)
     if target_user_ids:
-        for c in _fetch_device_tokens_for_users(tenant_id, target_user_ids):
+        for c in _fetch_device_tokens_for_users(tenant_id, target_user_ids, **ek):
             cihazlar.setdefault(c.token, c)
     if not cihazlar:
         # (P191 §2) SESSIZ KALMA. "Push hic tetiklenmedi" ile "tetiklendi ama
@@ -197,10 +206,18 @@ def _push_to_devices(
         # yapildigi icin ses kirilimi burada IKINCI bir gruplamayla
         # yapilir — tek bir "sesli mi" degeri kullanmak, sesi kapatan
         # kullanicinin telefonunu caldirirdi.
-        for sesli in (True, False):
-            alt = [t for t in tokenlar if cihazlar[t].sesli is sesli]
-            if not alt:
-                continue
+        #
+        # (P249 §1c) ALARMDA iki kirilim daha: Android yerel alarm (surum
+        # esigi) ve iOS kritik uyari (cihaz izni). Alarm SESLI kirilimdan
+        # gider — tercih yok sayilir.
+        altlar: dict[tuple[bool, bool, bool], list[str]] = {}
+        for t in tokenlar:
+            c = cihazlar[t]
+            sesli = True if alarm else c.sesli
+            yerel = alarm and c.platform == "android" and surum_en_az(c.surum)
+            kritik = alarm and c.platform == "ios" and c.kritik_uyari
+            altlar.setdefault((sesli, yerel, kritik), []).append(t)
+        for (sesli, yerel, kritik), alt in altlar.items():
             veri = dict(data or {})
             if rol_:
                 veri["hedef_rol"] = rol_
@@ -218,6 +235,8 @@ def _push_to_devices(
                     # once/ayni islemde atar). Uygulama acilinca gercek
                     # sayiyla duzeltir.
                     rozet={t: okunmamis.get(cihazlar[t].user_id, 0) + 1 for t in alt},
+                    yerel_alarm=yerel,
+                    kritik=kritik,
                 ),
             )
             # FCM'in KALICI gecersiz dedigi token'lar -> budanacak.
@@ -255,8 +274,22 @@ def _push_to_devices(
 _KANAL_KOSULU = " AND u.bildirim_mobil = true"
 
 
+def _cihaz(r, *, kisi_hedefli: bool) -> Cihaz:
+    return Cihaz(
+        r[0], r[1], r[2], r[3], bool(r[4]), rol=r[5], kisi_hedefli=kisi_hedefli,
+        surum=r[6], kritik_uyari=bool(r[7]),
+    )
+
+
+_CIHAZ_SUTUNLARI = (
+    "SELECT d.fcm_token, d.dil, d.user_id, d.platform, "
+    "u.bildirim_sesi, u.role::text, d.uygulama_surum, d.kritik_uyari "
+    "FROM user_device d JOIN app_user u ON u.id = d.user_id "
+)
+
+
 def _fetch_device_tokens(
-    tenant_id: uuid.UUID, roles: Sequence[str]
+    tenant_id: uuid.UUID, roles: Sequence[str], *, tercih_atla: bool = False
 ) -> list[Cihaz]:
     """Hedef rollerdeki, MOBIL BILDIRIMI ACIK, aktif kullanicilarin aktif
     cihazlari: (token, DIL).
@@ -270,21 +303,16 @@ def _fetch_device_tokens(
                 "SELECT set_config('app.current_tenant_id', %s, true)", (str(tenant_id),)
             )
             cur.execute(
-                "SELECT d.fcm_token, d.dil, d.user_id, d.platform, "
-                "u.bildirim_sesi, u.role::text FROM user_device d "
-                "JOIN app_user u ON u.id = d.user_id "
-                "WHERE d.aktif = true AND u.is_active = true AND u.role::text = ANY(%s)"
-                + _KANAL_KOSULU,
+                _CIHAZ_SUTUNLARI
+                + "WHERE d.aktif = true AND u.is_active = true AND u.role::text = ANY(%s)"
+                + ("" if tercih_atla else _KANAL_KOSULU),
                 (list(roles),),
             )
-            return [
-                Cihaz(r[0], r[1], r[2], r[3], bool(r[4]), rol=r[5], kisi_hedefli=False)
-                for r in cur.fetchall()
-            ]
+            return [_cihaz(r, kisi_hedefli=False) for r in cur.fetchall()]
 
 
 def _fetch_device_tokens_for_users(
-    tenant_id: uuid.UUID, user_ids: Sequence[uuid.UUID]
+    tenant_id: uuid.UUID, user_ids: Sequence[uuid.UUID], *, tercih_atla: bool = False
 ) -> list[Cihaz]:
     """Belirli, MOBIL BILDIRIMI ACIK, aktif kullanicilarin aktif cihazlari:
     (token, DIL) (RLS-safe).
@@ -298,17 +326,12 @@ def _fetch_device_tokens_for_users(
                 "SELECT set_config('app.current_tenant_id', %s, true)", (str(tenant_id),)
             )
             cur.execute(
-                "SELECT d.fcm_token, d.dil, d.user_id, d.platform, "
-                "u.bildirim_sesi, u.role::text FROM user_device d "
-                "JOIN app_user u ON u.id = d.user_id "
-                "WHERE d.aktif = true AND u.is_active = true "
-                "AND u.id = ANY(%s::uuid[])" + _KANAL_KOSULU,
+                _CIHAZ_SUTUNLARI
+                + "WHERE d.aktif = true AND u.is_active = true "
+                "AND u.id = ANY(%s::uuid[])" + ("" if tercih_atla else _KANAL_KOSULU),
                 ([str(u) for u in user_ids],),
             )
-            return [
-                Cihaz(r[0], r[1], r[2], r[3], bool(r[4]), rol=r[5], kisi_hedefli=True)
-                for r in cur.fetchall()
-            ]
+            return [_cihaz(r, kisi_hedefli=True) for r in cur.fetchall()]
 
 
 def okunmamis_sayilari(

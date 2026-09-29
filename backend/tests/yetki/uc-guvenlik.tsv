@@ -403,10 +403,13 @@ GET	/panik	zorunlu	tesis	-	-	-	olusturan_telefon	-		dar
 POST	/panik	zorunlu	tesis	-	-	ozel	olusturan_telefon	-		dar
 GET	/panik/aktif	zorunlu	tesis	-	-	-	olusturan_telefon	-		-
 GET	/panik/{alarm_id}	zorunlu	tesis	hedef	-	-	olusturan_telefon	-		-
+GET	/panik/{alarm_id}/durum	zorunlu	tesis	rol	-	-	-	-		-
 POST	/panik/{alarm_id}/gordum	zorunlu	tesis	hedef	-	ozel	olusturan_telefon	-		-
+POST	/panik/{alarm_id}/guvendeyim	zorunlu	tesis	hedef	-	ozel	olusturan_telefon	-		-
 POST	/panik/{alarm_id}/iptal	zorunlu	tesis	hedef	-	ozel	olusturan_telefon	-		-
 POST	/panik/{alarm_id}/kapat	zorunlu	tesis	hedef	-	ozel	olusturan_telefon	-		dar
 POST	/panik/{alarm_id}/mudahale	zorunlu	tesis	hedef	-	ozel	olusturan_telefon	-		-
+POST	/panik/{alarm_id}/yardim	zorunlu	tesis	hedef	-	ozel	olusturan_telefon	-		-
 GET	/parking/occupancy	zorunlu	tesis	-	-	-	-	-		-
 GET	/patrol-plans	zorunlu	tesis	-	-	-	-	-		-
 POST	/patrol-plans	zorunlu	tesis	-	-	genel	-	-		dar

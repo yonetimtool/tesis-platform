@@ -13528,6 +13528,168 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Farklı bir zaman aralığı seçip yeniden arayın.'**
   String get kamKayitBulunamadiAciklama;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'GÜVENDEYİM'**
+  String get panikGuvendeyim;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'YARDIMA İHTİYACIM VAR'**
+  String get panikYardimIstiyorum;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'Güvende olduğunuzu bildirdiniz.'**
+  String get panikYanitGuvende;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'Yardım isteğiniz güvenliğe ve yönetime iletildi.'**
+  String get panikYanitYardim;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'Ne yapmalısınız'**
+  String get panikTalimatBaslik;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'Saat {saat}'**
+  String panikAlarmSaati(String saat);
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire bazında durum'**
+  String get panikDurumBaslik;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'Güvende'**
+  String get panikDurumGuvende;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'Yardım istiyor'**
+  String get panikDurumYardim;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'Yanıt yok'**
+  String get panikDurumYanitsiz;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'Personel ve yönetim'**
+  String get panikDurumPersonel;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'{alici} kişiye gitti · {guvende} güvende · {yardim} yardım istiyor · {yanitsiz} yanıtsız'**
+  String panikDurumSayilar(int alici, int guvende, int yardim, int yanitsiz);
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'Ortalama yanıt süresi: {n} sn'**
+  String panikOrtalamaYanit(int n);
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'Acil durum'**
+  String get panikDetayBaslik;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'SOS alarm ayarları'**
+  String get panikAlarmAyarBaslik;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'Acil durum alarmının telefon kilitliyken ve sessizdeyken de size ulaşması için bu ayarların açık olması gerekir.'**
+  String get panikAlarmAyarAciklama;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'Bildirim izni'**
+  String get panikAyarBildirim;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'SOS alarm kanalı'**
+  String get panikAyarKanal;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'Kilit ekranında tam ekran aç'**
+  String get panikAyarTamEkran;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'Rahatsız Etmeyin modunu delsin'**
+  String get panikAyarDnd;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'Kritik uyarılar (sessizde de çalar)'**
+  String get panikAyarKritik;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'Apple onayı bekleniyor. O zamana kadar alarm Odak modunu deler ama telefon sessizdeyken ÇALMAZ.'**
+  String get panikAyarKritikBekliyor;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'Zaman hassas bildirim (Odak modunu deler)'**
+  String get panikAyarZamanHassas;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'Açık'**
+  String get panikAyarAcik;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapalı'**
+  String get panikAyarKapali;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'Ayarlardan aç'**
+  String get panikAyarAc;
+
+  /// (P249 §1) SOS alici deneyimi
+  ///
+  /// In tr, this message translates to:
+  /// **'TATBİKAT — Bu gerçek bir alarm değildir'**
+  String get panikTatbikatSerit;
 }
 
 class _AppLocalizationsDelegate

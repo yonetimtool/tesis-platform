@@ -49,7 +49,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from collections.abc import Mapping
 
-from .push_kanal import PANIK_KATEGORI_ONEK
+from .push_kanal import PANIK_KATEGORI_ONEK, alarm_mi
 
 #: Kilit ekraninda icerigi ACIK gosterilen ve Odak modunu delen tipler.
 ACIL_TIPLER: frozenset[str] = frozenset({
@@ -63,7 +63,9 @@ ACIL_TIPLER: frozenset[str] = frozenset({
 
 def acil_mi(kimlik: str | None) -> bool:
     return bool(kimlik) and (
-        kimlik in ACIL_TIPLER or kimlik.startswith(PANIK_KATEGORI_ONEK)
+        kimlik in ACIL_TIPLER
+        or kimlik.startswith(PANIK_KATEGORI_ONEK)
+        or alarm_mi(kimlik)
     )
 
 
@@ -169,6 +171,14 @@ class PushGorunum:
     acil: bool = False
     #: token -> okunmamis sayisi (bu bildirim dahil).
     rozet: Mapping[str, int] = field(default_factory=dict)
+    #: (P249 §1c) ANDROID YEREL ALARM: gonderim `notification` govdesi
+    #: OLMADAN (data-only, yuksek oncelik) gider ve bildirimi uygulamanin
+    #: kendi servisi (`SosMesajServisi.kt`) kurar. Sistemin cizdigi
+    #: bildirim tam ekran acamaz, sesi donguye alamaz ve "Gordum" denince
+    #: susmaz. Yalniz bunu bilen surumlere (`YEREL_ALARM_SURUMU`).
+    yerel_alarm: bool = False
+    #: (P249 §1c) iOS CRITICAL ALERT: cihaz izni actiysa kritik ses yuku.
+    kritik: bool = False
 
 
 def gorunum_kur(
@@ -178,6 +188,8 @@ def gorunum_kur(
     data: Mapping[str, str] | None,
     kaynak: str | None,
     rozet: Mapping[str, int] | None = None,
+    yerel_alarm: bool = False,
+    kritik: bool = False,
 ) -> PushGorunum:
     return PushGorunum(
         kimlik=kimlik,
@@ -186,4 +198,25 @@ def gorunum_kur(
         kaynak=kaynak_kisalt(kaynak),
         acil=acil_mi(kimlik),
         rozet=dict(rozet or {}),
+        yerel_alarm=yerel_alarm,
+        kritik=kritik,
     )
+
+
+#: (P249 §1c) Android'de alarmi YEREL kuran ilk uygulama surumu. Daha
+#: eski surumler `notification` govdesi alir (servisleri data-only
+#: mesajdan bildirim KURMAZ — gonderilseydi alarm HIC gorunmezdi).
+YEREL_ALARM_SURUMU = (1, 8, 0)
+
+
+def surum_en_az(surum: str | None, esik: tuple[int, ...] = YEREL_ALARM_SURUMU) -> bool:
+    """"1.8.0" >= esik mi. Okunamayan/bos surum -> False (guvenli taraf:
+    eski davranis, sistem bildirimi)."""
+    if not surum:
+        return False
+    parcalar: list[int] = []
+    for p in surum.split("+")[0].split("."):
+        if not p.isdigit():
+            return False
+        parcalar.append(int(p))
+    return tuple(parcalar) >= esik

@@ -7618,4 +7618,95 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get kamKayitBulunamadiAciklama =>
       'Farklı bir zaman aralığı seçip yeniden arayın.';
+
+  @override
+  String get panikGuvendeyim => 'GÜVENDEYİM';
+
+  @override
+  String get panikYardimIstiyorum => 'YARDIMA İHTİYACIM VAR';
+
+  @override
+  String get panikYanitGuvende => 'Güvende olduğunuzu bildirdiniz.';
+
+  @override
+  String get panikYanitYardim =>
+      'Yardım isteğiniz güvenliğe ve yönetime iletildi.';
+
+  @override
+  String get panikTalimatBaslik => 'Ne yapmalısınız';
+
+  @override
+  String panikAlarmSaati(String saat) {
+    return 'Saat $saat';
+  }
+
+  @override
+  String get panikDurumBaslik => 'Daire bazında durum';
+
+  @override
+  String get panikDurumGuvende => 'Güvende';
+
+  @override
+  String get panikDurumYardim => 'Yardım istiyor';
+
+  @override
+  String get panikDurumYanitsiz => 'Yanıt yok';
+
+  @override
+  String get panikDurumPersonel => 'Personel ve yönetim';
+
+  @override
+  String panikDurumSayilar(int alici, int guvende, int yardim, int yanitsiz) {
+    return '$alici kişiye gitti · $guvende güvende · $yardim yardım istiyor · $yanitsiz yanıtsız';
+  }
+
+  @override
+  String panikOrtalamaYanit(int n) {
+    return 'Ortalama yanıt süresi: $n sn';
+  }
+
+  @override
+  String get panikDetayBaslik => 'Acil durum';
+
+  @override
+  String get panikAlarmAyarBaslik => 'SOS alarm ayarları';
+
+  @override
+  String get panikAlarmAyarAciklama =>
+      'Acil durum alarmının telefon kilitliyken ve sessizdeyken de size ulaşması için bu ayarların açık olması gerekir.';
+
+  @override
+  String get panikAyarBildirim => 'Bildirim izni';
+
+  @override
+  String get panikAyarKanal => 'SOS alarm kanalı';
+
+  @override
+  String get panikAyarTamEkran => 'Kilit ekranında tam ekran aç';
+
+  @override
+  String get panikAyarDnd => 'Rahatsız Etmeyin modunu delsin';
+
+  @override
+  String get panikAyarKritik => 'Kritik uyarılar (sessizde de çalar)';
+
+  @override
+  String get panikAyarKritikBekliyor =>
+      'Apple onayı bekleniyor. O zamana kadar alarm Odak modunu deler ama telefon sessizdeyken ÇALMAZ.';
+
+  @override
+  String get panikAyarZamanHassas =>
+      'Zaman hassas bildirim (Odak modunu deler)';
+
+  @override
+  String get panikAyarAcik => 'Açık';
+
+  @override
+  String get panikAyarKapali => 'Kapalı';
+
+  @override
+  String get panikAyarAc => 'Ayarlardan aç';
+
+  @override
+  String get panikTatbikatSerit => 'TATBİKAT — Bu gerçek bir alarm değildir';
 }

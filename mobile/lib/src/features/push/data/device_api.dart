@@ -34,6 +34,9 @@ class DeviceApi {
     required String dil,
     String? cihazKimligi,
     String? uygulamaSurum,
+    // (P249 §1c) iOS Critical Alerts izni cihazda acik mi. Null ise HIC
+    // gonderilmez: sunucu mevcut degeri korur.
+    bool? kritikUyari,
   }) async {
     try {
       await _dio.post<Map<String, dynamic>>(
@@ -49,6 +52,7 @@ class DeviceApi {
           // "bos" arasindaki farki kullaniyor (gonderilmeyen alan mevcut
           // degeri KORUR, bos dize onu SILERDI).
           'uygulama_surum': ?uygulamaSurum,
+          'kritik_uyari': ?kritikUyari,
         },
       );
     } on DioException catch (e) {

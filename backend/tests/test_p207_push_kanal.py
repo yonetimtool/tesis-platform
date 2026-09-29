@@ -115,6 +115,19 @@ def test_KANAL_KIMLIKLERI_MOBILLE_AYNI():
         assert f'"{kimlik}"' in kaynak, f"{kimlik} MainActivity.kt'te yok"
 
 
+def test_P249_ALARM_KANALI_MOBILLE_AYNI():
+    """Sunucu SOS'u `yonetio_alarm_v1` ile yerel olarak kurdurur; kanal
+    mobilde yoksa Android bildirimi GOSTERMEZ."""
+    kaynak = _mobil_kaynak(
+        "android/app/src/main/kotlin/com/app/yonetiyor/AlarmBildirimi.kt"
+    )
+    if kaynak is None:
+        pytest.skip("mobil kaynak bu koşumda yok (konteyner) — kilit ATLANDI")
+    from app.push_kanal import KANAL_ALARM
+
+    assert f'"{KANAL_ALARM}"' in kaynak
+
+
 def test_MANIFEST_VARSAYILAN_KANALI_GENEL():
     """Sunucu `channel_id` gondermezse (eski surum, teshis ucu) bildirim
     Android'in isimsiz varsayilan kanalina duserdi ve SESSIZ olurdu."""

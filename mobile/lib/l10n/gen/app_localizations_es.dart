@@ -7803,4 +7803,95 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get kamKayitBulunamadiAciklama =>
       'Elija otro intervalo de tiempo y vuelva a buscar.';
+
+  @override
+  String get panikGuvendeyim => 'ESTOY A SALVO';
+
+  @override
+  String get panikYardimIstiyorum => 'NECESITO AYUDA';
+
+  @override
+  String get panikYanitGuvende => 'Informó que está a salvo.';
+
+  @override
+  String get panikYanitYardim =>
+      'Su petición de ayuda se envió a seguridad y administración.';
+
+  @override
+  String get panikTalimatBaslik => 'Qué hacer';
+
+  @override
+  String panikAlarmSaati(String saat) {
+    return 'A las $saat';
+  }
+
+  @override
+  String get panikDurumBaslik => 'Estado por vivienda';
+
+  @override
+  String get panikDurumGuvende => 'A salvo';
+
+  @override
+  String get panikDurumYardim => 'Necesita ayuda';
+
+  @override
+  String get panikDurumYanitsiz => 'Sin respuesta';
+
+  @override
+  String get panikDurumPersonel => 'Personal y administración';
+
+  @override
+  String panikDurumSayilar(int alici, int guvende, int yardim, int yanitsiz) {
+    return 'Enviado a $alici · $guvende a salvo · $yardim piden ayuda · $yanitsiz sin respuesta';
+  }
+
+  @override
+  String panikOrtalamaYanit(int n) {
+    return 'Tiempo medio de respuesta: $n s';
+  }
+
+  @override
+  String get panikDetayBaslik => 'Emergencia';
+
+  @override
+  String get panikAlarmAyarBaslik => 'Ajustes de alarma SOS';
+
+  @override
+  String get panikAlarmAyarAciklama =>
+      'Estos ajustes deben estar activados para que las alarmas de emergencia le lleguen con el teléfono bloqueado o en silencio.';
+
+  @override
+  String get panikAyarBildirim => 'Permiso de notificaciones';
+
+  @override
+  String get panikAyarKanal => 'Canal de alarma SOS';
+
+  @override
+  String get panikAyarTamEkran => 'Pantalla completa en la pantalla de bloqueo';
+
+  @override
+  String get panikAyarDnd => 'Ignorar No molestar';
+
+  @override
+  String get panikAyarKritik => 'Alertas críticas (suenan incluso en silencio)';
+
+  @override
+  String get panikAyarKritikBekliyor =>
+      'Pendiente de aprobación de Apple. Hasta entonces la alarma atraviesa el modo Concentración pero NO suena en silencio.';
+
+  @override
+  String get panikAyarZamanHassas =>
+      'Notificaciones urgentes (atraviesan Concentración)';
+
+  @override
+  String get panikAyarAcik => 'Activado';
+
+  @override
+  String get panikAyarKapali => 'Desactivado';
+
+  @override
+  String get panikAyarAc => 'Abrir ajustes';
+
+  @override
+  String get panikTatbikatSerit => 'SIMULACRO — Esta no es una alarma real';
 }

@@ -64,6 +64,7 @@ async def register_device(
         cihaz_kimligi=body.cihaz_kimligi,
         # (P238) SURUM — yalniz veri toplama; bugun hicbir karara girmez.
         uygulama_surum=body.uygulama_surum,
+        kritik_uyari=bool(body.kritik_uyari),
         aktif=True,
     )
     stmt = stmt.on_conflict_do_update(
@@ -85,6 +86,13 @@ async def register_device(
             # elerdi; yani sessizce yanlis kisiye ulasmazdik.
             "uygulama_surum": func.coalesce(
                 stmt.excluded.uygulama_surum, UserDevice.uygulama_surum
+            ),
+            # (P249 §1c) GONDERILMEDIYSE KORUNUR — eski surumler alani
+            # bilmez; bilmemeleri ogrenilmis izni SILMEMELI.
+            "kritik_uyari": (
+                UserDevice.kritik_uyari
+                if body.kritik_uyari is None
+                else stmt.excluded.kritik_uyari
             ),
             "aktif": True,
             "updated_at": func.now(),

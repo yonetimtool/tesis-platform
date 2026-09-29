@@ -13,6 +13,7 @@ import '../../../core/theme/theme_controller.dart';
 import '../../../routing/app_router.dart';
 import '../../tesis/presentation/tesis_secici_karti.dart';
 import '../../auth/data/current_user_provider.dart';
+import '../../panik/presentation/sos_alarm_ayar_karti.dart';
 import '../../kvkk/data/kvkk_api.dart';
 import '../../kvkk/presentation/kvkk_onay_screen.dart'
     show PazarlamaAnahtarlari;
@@ -219,6 +220,10 @@ class SettingsScreen extends ConsumerWidget {
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           const _BildirimKarti(),
+          // (P249 §1c) SOS alarminin telefonda gercekten calmasi icin
+          // gereken sistem izinleri (kopru yoksa kart cizilmez).
+          const SizedBox(height: 8),
+          const SosAlarmAyarKarti(),
           const SizedBox(height: 24),
           // -------------------- IZINLER + AYDINLATMA (P36) -------------- #
           // Listenin SONUNDA: gorunum/dil gunluk ayarlardir, izinler nadiren

@@ -61,6 +61,7 @@ export const BILDIRIM_TIP: EnumHarita = {
   // (P240 §1) PANIK — uc ayri tip: alarm, yanlis alarm duzeltmesi, kapanis.
   panik_alarm: "bildirimTipPanikAlarm",
   panik_yanlis_alarm: "bildirimTipPanikYanlisAlarm",
+  panik_yardim_talebi: "bildirimTipPanikYardimTalebi",
   panik_kapandi: "bildirimTipPanikKapandi",
   // (P240 §4) Entegrasyon baglantisi koptu (yonetim alarmi).
   entegrasyon_koptu: "bildirimTipEntegrasyonKoptu",

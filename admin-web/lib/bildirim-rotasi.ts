@@ -45,6 +45,7 @@ export const BILDIRIM_ROTALARI: Record<string, string> = {
   // (P240) Panik / akilli ev / entegrasyon.
   panik_alarm: "/panik",
   panik_yanlis_alarm: "/panik",
+  panik_yardim_talebi: "/panik",
   panik_kapandi: "/panik",
   akilli_ev_kacak: "/akilli-ev",
   akilli_ev_yangin: "/akilli-ev",

@@ -50,6 +50,7 @@ import { Alan, BosDurum, Dugme, HataDurumu, Kart, Modal, Rozet, Tablo, TabloBasl
   IskeletMetin,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
+import { PanikDurumPaneli } from "@/components/panik/panik-durum";
 import { apiSend } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
@@ -77,6 +78,9 @@ type Alarm = {
   kapanis_notu: string | null;
   mudahale_suresi_sn: number | null;
   alicilar: Alici[];
+  /** (P249 §1b) Istegin dilinde kategori basligi ve toplu uyari mi. */
+  baslik: string;
+  toplu: boolean;
 };
 
 const DURUM_ETIKET: Record<string, SozlukAnahtari> = {
@@ -118,6 +122,8 @@ export default function PanikPage() {
     { refreshInterval: 15_000 },
   );
   const [kapatilan, setKapatilan] = useState<Alarm | null>(null);
+  // (P249 §1b) Daire bazinda durumu acilan toplu uyari.
+  const [durumAlarm, setDurumAlarm] = useState<Alarm | null>(null);
   const [not, setNot] = useState("");
   const [bekliyor, setBekliyor] = useState(false);
 
@@ -252,7 +258,16 @@ export default function PanikPage() {
                 return (
                   <Tr key={a.id} data-test={`panik-satir-${a.id}`}>
                     <Td>{formatDateTime(a.created_at)}</Td>
-                    <Td>{t(TIP_ETIKET[a.tip] ?? TIP_YEDEK)}</Td>
+                    <Td data-test={`panik-kategori-${a.id}`}>
+                      {/* (P249 §1b) KATEGORI ONCE: "DEPREM ALARMI" tipten
+                          ("Tum siteye anons") daha cok sey soyler. */}
+                      {a.baslik || t(TIP_ETIKET[a.tip] ?? TIP_YEDEK)}
+                      {a.baslik && (
+                        <span className="block" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+                          {t(TIP_ETIKET[a.tip] ?? TIP_YEDEK)}
+                        </span>
+                      )}
+                    </Td>
                     <Td>
                       <Rozet
                         durum={
@@ -285,6 +300,17 @@ export default function PanikPage() {
                         : t("panikSaniye", { n: a.mudahale_suresi_sn })}
                     </Td>
                     <Td>
+                      {a.toplu && (
+                        <Dugme
+                          type="button"
+                          boy="kucuk"
+                          tur={IKINCIL}
+                          data-test={`panik-durum-ac-${a.id}`}
+                          onClick={() => setDurumAlarm(a)}
+                        >
+                          {t("panikYanitGoster")}
+                        </Dugme>
+                      )}{" "}
                       {a.durum !== "kapandi" &&
                         a.durum !== "iptal" &&
                         a.durum !== "yanlis_alarm" && (
@@ -306,6 +332,14 @@ export default function PanikPage() {
           </Tablo>
         )}
       </Kart>
+
+      <Modal
+        acik={durumAlarm !== null}
+        onKapat={() => setDurumAlarm(null)}
+        baslik={durumAlarm ? `${durumAlarm.baslik} — ${t("panikYanitBaslik")}` : t("panikYanitBaslik")}
+      >
+        {durumAlarm && <PanikDurumPaneli alarmId={durumAlarm.id} />}
+      </Modal>
 
       <Modal
         acik={kapatilan !== null}

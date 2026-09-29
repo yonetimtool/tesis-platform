@@ -3932,6 +3932,9 @@ class DeviceRegister(BaseModel):
     #: (P238) Cihazdaki uygulama surumu ("1.4.1"). YALNIZ VERI TOPLAMA —
     #: bugun hicbir karara girmez. Gonderilmezse mevcut deger KORUNUR.
     uygulama_surum: str | None = Field(None, max_length=64)
+    #: (P249 §1c) iOS Critical Alerts izni cihazda ACIK mi. Gonderilmezse
+    #: mevcut deger KORUNUR (eski surumler alani bilmez).
+    kritik_uyari: bool | None = None
 
 
 class DeviceOut(BaseModel):
@@ -9480,6 +9483,56 @@ class PanikAliciOut(BaseModel):
     bildirildi_at: datetime
     goruldu_at: datetime | None = None
     mudahale_at: datetime | None = None
+    #: (P249 §1b) Toplu uyarida yanit: `guvende` | `yardim` | None.
+    yanit: str | None = None
+    yanit_at: datetime | None = None
+
+
+class PanikDurumKisi(BaseModel):
+    """(P249 §1b) Daire bazinda durumun bir satiri — bir alici."""
+
+    user_id: uuid.UUID
+    ad: str
+    rol: str
+    goruldu_at: datetime | None = None
+    yanit: str | None = None
+    yanit_at: datetime | None = None
+    #: Alarmin gonderildigi andan yanita kadar gecen sure (saniye).
+    yanit_suresi_sn: int | None = None
+
+
+class PanikDurumDaire(BaseModel):
+    """Bir daire ve orada oturan alicilar.
+
+    `durum` DAIREYE ait tek ozet — yoneticinin gozu once buna gider:
+      * `yardim`   — dairede en az bir kisi yardim istedi (EN USTTE),
+      * `yanitsiz` — dairede kimse yanit vermedi (tahliye sayiminin
+                      asil sorusu),
+      * `guvende`  — daireden en az bir kisi "guvendeyim" dedi.
+    """
+
+    unit_id: uuid.UUID | None = None
+    blok: str | None = None
+    daire_no: str | None = None
+    durum: Literal["yardim", "yanitsiz", "guvende"]
+    kisiler: list[PanikDurumKisi]
+
+
+class PanikDurumOut(BaseModel):
+    """(P249 §1b) GET /panik/{id}/durum — kim guvende, kim yardim istiyor,
+    kim yanit vermedi. Daireler once `yardim`, sonra `yanitsiz`."""
+
+    alarm_id: uuid.UUID
+    alici: int
+    goruldu: int
+    guvende: int
+    yardim: int
+    yanitsiz: int
+    #: Yanit verenlerin ortalama yanit suresi (saniye); yanit yoksa None.
+    ortalama_yanit_sn: int | None = None
+    daireler: list[PanikDurumDaire]
+    #: Dairesi olmayan alicilar (guvenlik, yonetim, gorevli).
+    personel: list[PanikDurumKisi]
 
 
 class PanikAlarmOut(BaseModel):
@@ -9522,6 +9575,15 @@ class PanikAlarmOut(BaseModel):
     #: Alarmi ENGELLEMEZ; aliciya BAGLAM verir.
     son_24s_yanlis_alarm: int = 0
     alicilar: list[PanikAliciOut] = []
+    #: (P249 §1b) IKI DENEYIM: toplu uyari (deprem/yangin/gaz/tahliye) mi,
+    #: yardim cagrisi mi. Istemci ekrani buna gore cizer.
+    toplu: bool = False
+    #: Istegin dilinde baslik ("DEPREM ALARMI") ve ADIM ADIM talimat.
+    #: Tek kaynak `panik_talimat.py` — push basligiyla ayni metin.
+    baslik: str = ""
+    talimat: list[str] = []
+    #: Izleyenin KENDI yaniti (`guvende` | `yardim` | None).
+    benim_yanitim: str | None = None
 
 
 class PanikKapat(BaseModel):

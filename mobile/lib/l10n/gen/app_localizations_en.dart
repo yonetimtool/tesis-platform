@@ -7816,4 +7816,95 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get kamKayitBulunamadiAciklama =>
       'Choose a different time range and search again.';
+
+  @override
+  String get panikGuvendeyim => 'I AM SAFE';
+
+  @override
+  String get panikYardimIstiyorum => 'I NEED HELP';
+
+  @override
+  String get panikYanitGuvende => 'You reported that you are safe.';
+
+  @override
+  String get panikYanitYardim =>
+      'Your request for help was sent to security and management.';
+
+  @override
+  String get panikTalimatBaslik => 'What to do';
+
+  @override
+  String panikAlarmSaati(String saat) {
+    return 'At $saat';
+  }
+
+  @override
+  String get panikDurumBaslik => 'Status by unit';
+
+  @override
+  String get panikDurumGuvende => 'Safe';
+
+  @override
+  String get panikDurumYardim => 'Needs help';
+
+  @override
+  String get panikDurumYanitsiz => 'No response';
+
+  @override
+  String get panikDurumPersonel => 'Staff and management';
+
+  @override
+  String panikDurumSayilar(int alici, int guvende, int yardim, int yanitsiz) {
+    return 'Sent to $alici · $guvende safe · $yardim need help · $yanitsiz no response';
+  }
+
+  @override
+  String panikOrtalamaYanit(int n) {
+    return 'Average response time: $n s';
+  }
+
+  @override
+  String get panikDetayBaslik => 'Emergency';
+
+  @override
+  String get panikAlarmAyarBaslik => 'SOS alarm settings';
+
+  @override
+  String get panikAlarmAyarAciklama =>
+      'These settings must be on for emergency alarms to reach you while the phone is locked or on silent.';
+
+  @override
+  String get panikAyarBildirim => 'Notification permission';
+
+  @override
+  String get panikAyarKanal => 'SOS alarm channel';
+
+  @override
+  String get panikAyarTamEkran => 'Open full screen on the lock screen';
+
+  @override
+  String get panikAyarDnd => 'Override Do Not Disturb';
+
+  @override
+  String get panikAyarKritik => 'Critical alerts (ring even on silent)';
+
+  @override
+  String get panikAyarKritikBekliyor =>
+      'Awaiting Apple approval. Until then the alarm breaks through Focus but does NOT ring on silent.';
+
+  @override
+  String get panikAyarZamanHassas =>
+      'Time-sensitive notifications (break through Focus)';
+
+  @override
+  String get panikAyarAcik => 'On';
+
+  @override
+  String get panikAyarKapali => 'Off';
+
+  @override
+  String get panikAyarAc => 'Open settings';
+
+  @override
+  String get panikTatbikatSerit => 'DRILL — This is not a real alarm';
 }

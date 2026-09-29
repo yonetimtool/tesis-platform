@@ -76,8 +76,16 @@ Set<String> _menusuzAmaAcik(UserRole role) => {
     };
 
 /// Bu rol bu hedefe gidebilir mi? (sorgu parametreleri yok sayilir)
-bool rotaErisilebilir(String rota, UserRole role) =>
-    erisilebilirRotalar(role).contains(rota.split('?').first);
+bool rotaErisilebilir(String rota, UserRole role) {
+  final yol = rota.split('?').first;
+  // (P249 §1b) TEK ALARM EKRANI — menude karti YOK (bir alarma ancak
+  // bildirimle gelinir) ama alarmi ALAN her rol acabilir: sunucu
+  // `GET /panik/{id}`de aliciligi zaten dogruluyor. Denetci alarm almaz.
+  if (yol.startsWith('${AppRoutes.panikAlarm}/')) {
+    return role != UserRole.denetci && role != UserRole.unknown;
+  }
+  return erisilebilirRotalar(role).contains(yol);
+}
 
 /// (P217) DEVRIYE alarmlarinin rol basina hedefi.
 ///
@@ -244,7 +252,14 @@ String? _hamHedef(Map<String, String> data, UserRole? role) {
     // `default -> null`a dusuyordu: su/gaz kacagi ya da YANGIN push'una
     // dokunan kullanici hicbir yere gitmiyordu. Liste haritasi artik
     // BURAYI cagiriyor — tek tablo.
+    // (P249 §1b) ALARMIN KENDISI ACILIR. Eskiden takip listesine
+    // gidiyordu: sakin o listede yalniz kendi actiklarini gordugu icin
+    // deprem push'una dokunan sakin BOS bir liste goruyordu.
     case 'panik_alarm':
+    case 'panik_yardim_talebi':
+      final id = data['panik_id'];
+      if (id != null && id.isNotEmpty) return AppRoutes.panikAlarmDetay(id);
+      return AppRoutes.panikTakip;
     case 'panik_yanlis_alarm':
     case 'panik_kapandi':
       return AppRoutes.panikTakip;

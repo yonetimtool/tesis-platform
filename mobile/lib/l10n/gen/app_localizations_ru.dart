@@ -7893,4 +7893,96 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get kamKayitBulunamadiAciklama =>
       'Выберите другой интервал времени и повторите поиск.';
+
+  @override
+  String get panikGuvendeyim => 'Я В БЕЗОПАСНОСТИ';
+
+  @override
+  String get panikYardimIstiyorum => 'МНЕ НУЖНА ПОМОЩЬ';
+
+  @override
+  String get panikYanitGuvende => 'Вы сообщили, что вы в безопасности.';
+
+  @override
+  String get panikYanitYardim =>
+      'Ваш запрос о помощи отправлен охране и управлению.';
+
+  @override
+  String get panikTalimatBaslik => 'Что делать';
+
+  @override
+  String panikAlarmSaati(String saat) {
+    return 'В $saat';
+  }
+
+  @override
+  String get panikDurumBaslik => 'Статус по квартирам';
+
+  @override
+  String get panikDurumGuvende => 'В безопасности';
+
+  @override
+  String get panikDurumYardim => 'Нужна помощь';
+
+  @override
+  String get panikDurumYanitsiz => 'Нет ответа';
+
+  @override
+  String get panikDurumPersonel => 'Персонал и управление';
+
+  @override
+  String panikDurumSayilar(int alici, int guvende, int yardim, int yanitsiz) {
+    return 'Отправлено $alici · $guvende в безопасности · $yardim нужна помощь · $yanitsiz без ответа';
+  }
+
+  @override
+  String panikOrtalamaYanit(int n) {
+    return 'Среднее время ответа: $n с';
+  }
+
+  @override
+  String get panikDetayBaslik => 'Чрезвычайная ситуация';
+
+  @override
+  String get panikAlarmAyarBaslik => 'Настройки тревоги SOS';
+
+  @override
+  String get panikAlarmAyarAciklama =>
+      'Эти настройки должны быть включены, чтобы тревога доходила до вас при заблокированном или беззвучном телефоне.';
+
+  @override
+  String get panikAyarBildirim => 'Разрешение на уведомления';
+
+  @override
+  String get panikAyarKanal => 'Канал тревоги SOS';
+
+  @override
+  String get panikAyarTamEkran => 'Полноэкранно на экране блокировки';
+
+  @override
+  String get panikAyarDnd => 'Обходить режим «Не беспокоить»';
+
+  @override
+  String get panikAyarKritik =>
+      'Критические оповещения (звучат даже в беззвучном режиме)';
+
+  @override
+  String get panikAyarKritikBekliyor =>
+      'Ожидается одобрение Apple. До тех пор тревога проходит через режим «Фокусирование», но НЕ звучит в беззвучном режиме.';
+
+  @override
+  String get panikAyarZamanHassas =>
+      'Срочные уведомления (проходят через «Фокусирование»)';
+
+  @override
+  String get panikAyarAcik => 'Вкл.';
+
+  @override
+  String get panikAyarKapali => 'Выкл.';
+
+  @override
+  String get panikAyarAc => 'Открыть настройки';
+
+  @override
+  String get panikTatbikatSerit => 'УЧЕНИЯ — Это не настоящая тревога';
 }

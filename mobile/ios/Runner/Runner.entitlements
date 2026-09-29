@@ -22,6 +22,26 @@
 	       * APNs Auth Key (.p8) Firebase konsoluna yuklenmeli. -->
 	<key>aps-environment</key>
 	<string>development</string>
+	<!-- (P249 §1c) TIME SENSITIVE BILDIRIM — SOS Odak modunu delsin.
+
+	     OLCULEN KUSUR: sunucu `interruption-level: time-sensitive`
+	     gonderiyordu ama bu yetki YOKTU; iOS yetkisiz uygulamanin bu
+	     alanini YOK SAYAR ve bildirim Odak modunda gizlenir.
+
+	     Apple ONAYI GEREKMEZ; Xcode > Signing & Capabilities >
+	     + "Time Sensitive Notifications" ile App ID'ye eklenir (otomatik
+	     imzada profil kendiliginden guncellenir).
+
+	     CRITICAL ALERTS (sessizde ve Odak'ta da calar) APPLE ONAYI ISTER.
+	     ONAY GELINCE DEGISECEK TEK YER BURASI — su iki satir eklenir:
+	       <key>com.apple.developer.usernotifications.critical-alerts</key>
+	       <true/>
+	     Sunucu ve Dart kodu hazir: uygulama izni `criticalAlert: true`
+	     ile zaten istiyor, cihazin izin durumunu kayitta gonderiyor
+	     (`kritik_uyari`) ve sunucu kritik ses yukunu yalniz izinli
+	     cihazlara yolluyor. Yetki ONAYSIZ eklenirse imza BASARISIZ olur. -->
+	<key>com.apple.developer.usernotifications.time-sensitive</key>
+	<true/>
 	<!-- (P114) CORE NFC. Bu yetkilendirme olmadan `nfc_manager` iOS'ta
 	     SESSIZCE calismaz: okuma oturumu acilir gibi gorunur ama etiket
 	     hic okunmaz. Yetkilendirme dosyasi TEK BASINA yetmez — Apple

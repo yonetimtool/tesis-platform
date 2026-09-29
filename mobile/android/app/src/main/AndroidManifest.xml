@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <!-- Uygulama ag erisimi gerektirir (login/refresh, scan gonderimi). -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- NFC etiket okuma (devriye noktalari). -->
@@ -7,6 +8,17 @@
          FirebaseMessaging.requestPermission() ile istenir; reddedilirse
          push gosterilmez ama uygulama normal calisir. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- (P249 §1c) SOS ALARMI TAM EKRAN — kilit ekraninin ustunde acilir.
+         Android 14+ bu izni yalniz arama/alarm uygulamalarina OTOMATIK
+         verir; digerlerinde kullanici ayarlardan acar (uygulama "SOS
+         alarm ayarlari"nda yonlendirir). Play Console'da "Tam ekran amaci"
+         beyani gerekir — metin docs/P249-kararlar.md §1c. -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
+    <!-- (P249 §1c) Rahatsiz Etmeyin erisimini SORGULAMAK icin (kullanici
+         verirse alarm kanali DND'yi deler). Izni kullanici sistem
+         ayarlarindan verir; bu satir yalniz o ekrana yonlendirmeye izin
+         verir. -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY"/>
     <!-- Acil durum alarmina konum eklemek icin (best-effort; izin verilmezse
          alarm konumsuz gider, BEKLETILMEZ). -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
@@ -78,6 +90,19 @@
                 <data android:scheme="com.app.yonetiyor"/>
             </intent-filter>
         </activity>
+        <!-- (P249 §1c) FCM SERVISI: eklentinin servisi SosMesajServisi ile
+             DEGISTIRILIR (onu genisletir). SOS data-only gelir ve bildirimi
+             uygulama kurar — tam ekran + dongulu alarm sesi. -->
+        <service
+            android:name="io.flutter.plugins.firebase.messaging.FlutterFirebaseMessagingService"
+            tools:node="remove" />
+        <service
+            android:name=".SosMesajServisi"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+            </intent-filter>
+        </service>
         <!-- Bildirim kucuk ikonu: Android bunu ALFA MASKESI olarak cizer —
              renk atilir, yalniz saydamlik kalir. Bu yuzden tam (gradyanli)
              logo DEGIL, basitlestirilmis monokrom isaret kullanilir; aksi

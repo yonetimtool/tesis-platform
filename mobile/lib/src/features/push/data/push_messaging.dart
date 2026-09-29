@@ -92,7 +92,13 @@ class FirebasePushMessaging implements PushMessaging {
   @override
   Future<PushIzinDurumu> requestPermission() async {
     try {
-      final ayarlar = await FirebaseMessaging.instance.requestPermission();
+      // (P249 §1c) `criticalAlert: true` — iOS Critical Alerts ISTEGI.
+      // Yetki dosyasinda (`Runner.entitlements`) izin YOKKEN iOS bu
+      // secenegi sessizce yok sayar; Apple onayi gelip yetki eklendiginde
+      // kod degismeden istem cikar. Android'de etkisizdir.
+      final ayarlar = await FirebaseMessaging.instance.requestPermission(
+        criticalAlert: true,
+      );
       return _izne(ayarlar.authorizationStatus);
     } catch (e) {
       debugPrint('Bildirim izni istenemedi: $e');

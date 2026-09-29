@@ -7820,4 +7820,96 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get kamKayitBulunamadiAciklama =>
       'Choisissez une autre plage horaire et relancez la recherche.';
+
+  @override
+  String get panikGuvendeyim => 'JE SUIS EN SÉCURITÉ';
+
+  @override
+  String get panikYardimIstiyorum => 'J’AI BESOIN D’AIDE';
+
+  @override
+  String get panikYanitGuvende => 'Vous avez signalé être en sécurité.';
+
+  @override
+  String get panikYanitYardim =>
+      'Votre demande d’aide a été transmise à la sécurité et à la gestion.';
+
+  @override
+  String get panikTalimatBaslik => 'Que faire';
+
+  @override
+  String panikAlarmSaati(String saat) {
+    return 'À $saat';
+  }
+
+  @override
+  String get panikDurumBaslik => 'État par logement';
+
+  @override
+  String get panikDurumGuvende => 'En sécurité';
+
+  @override
+  String get panikDurumYardim => 'A besoin d’aide';
+
+  @override
+  String get panikDurumYanitsiz => 'Pas de réponse';
+
+  @override
+  String get panikDurumPersonel => 'Personnel et gestion';
+
+  @override
+  String panikDurumSayilar(int alici, int guvende, int yardim, int yanitsiz) {
+    return 'Envoyé à $alici · $guvende en sécurité · $yardim demandent de l’aide · $yanitsiz sans réponse';
+  }
+
+  @override
+  String panikOrtalamaYanit(int n) {
+    return 'Temps de réponse moyen : $n s';
+  }
+
+  @override
+  String get panikDetayBaslik => 'Urgence';
+
+  @override
+  String get panikAlarmAyarBaslik => 'Réglages de l’alarme SOS';
+
+  @override
+  String get panikAlarmAyarAciklama =>
+      'Ces réglages doivent être activés pour que les alarmes d’urgence vous parviennent téléphone verrouillé ou en silencieux.';
+
+  @override
+  String get panikAyarBildirim => 'Autorisation des notifications';
+
+  @override
+  String get panikAyarKanal => 'Canal d’alarme SOS';
+
+  @override
+  String get panikAyarTamEkran => 'Plein écran sur l’écran verrouillé';
+
+  @override
+  String get panikAyarDnd => 'Ignorer Ne pas déranger';
+
+  @override
+  String get panikAyarKritik =>
+      'Alertes critiques (sonnent même en silencieux)';
+
+  @override
+  String get panikAyarKritikBekliyor =>
+      'En attente de l’accord d’Apple. D’ici là, l’alarme passe outre la Concentration mais NE sonne PAS en silencieux.';
+
+  @override
+  String get panikAyarZamanHassas =>
+      'Notifications urgentes (passent outre la Concentration)';
+
+  @override
+  String get panikAyarAcik => 'Activé';
+
+  @override
+  String get panikAyarKapali => 'Désactivé';
+
+  @override
+  String get panikAyarAc => 'Ouvrir les réglages';
+
+  @override
+  String get panikTatbikatSerit => 'EXERCICE — Ceci n’est pas une vraie alerte';
 }

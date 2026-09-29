@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../core/i18n/locale_controller.dart';
+import '../../panik/data/alarm_kanali.dart';
 import '../data/device_api.dart';
 import '../data/push_messaging.dart';
 import '../data/push_token_store.dart';
@@ -185,7 +186,16 @@ class PushRegistrar extends Notifier<PushState> {
       } catch (e) {
         debugPrint('Uygulama surumu okunamadi (surumsuz kaydedilecek): $e');
       }
+      // (P249 §1c) KRITIK UYARI IZNI (iOS) — kopru yoksa/Android'de null:
+      // alan gonderilmez, sunucu mevcut degeri korur.
+      bool? kritik;
+      try {
+        kritik = (await ref.read(alarmKanaliProvider).izinDurumu())?.kritikUyari;
+      } catch (e) {
+        debugPrint('Kritik uyari izni okunamadi: $e');
+      }
       await _api.register(
+        kritikUyari: kritik,
         fcmToken: token,
         platform: defaultTargetPlatform == TargetPlatform.iOS
             ? 'ios'

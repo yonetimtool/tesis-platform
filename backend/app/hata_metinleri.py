@@ -2477,6 +2477,15 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Cet appel est déjà clôturé.",
         "es": "Esta llamada ya está cerrada.",
     },
+    "panik_toplu_degil": {
+        "tr": "Bu yanıt yalnız deprem, yangın, gaz ve tahliye uyarılarında verilir.",
+        "en": "This reply is only for earthquake, fire, gas and evacuation alerts.",
+        "ar": "هذا الرد مخصص لإنذارات الزلزال والحريق والغاز والإخلاء فقط.",
+        "ru": "Этот ответ доступен только для тревог о землетрясении, пожаре, газе и эвакуации.",
+        "de": "Diese Antwort gibt es nur bei Erdbeben-, Feuer-, Gas- und Evakuierungsalarmen.",
+        "fr": "Cette réponse n’existe que pour les alertes séisme, incendie, gaz et évacuation.",
+        "es": "Esta respuesta solo existe en alertas de terremoto, incendio, gas y evacuación.",
+    },
     "panik_alicisi_degil": {
         "tr": "Bu çağrı size gönderilmedi.",
         "en": "This call was not sent to you.",

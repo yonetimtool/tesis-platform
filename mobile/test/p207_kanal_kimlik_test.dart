@@ -66,6 +66,28 @@ void main() {
     }
   });
 
+  test('(P249) ALARM KANALI: sunucu ve AlarmBildirimi.kt AYNI', () {
+    final py = backend.readAsStringSync();
+    final kt = File(
+      'android/app/src/main/kotlin/com/app/yonetiyor/AlarmBildirimi.kt',
+    ).readAsStringSync();
+    final deger = _pySabit(py, 'KANAL_ALARM');
+    expect(deger, isNotNull);
+    // Ayrisirsa sunucunun data-only mesaji yerel olarak VAR OLMAYAN bir
+    // kanala kurulur ve Android bildirimi GOSTERMEZ.
+    expect(kt.contains('KANAL_ALARM = "$deger"'), isTrue);
+    expect(kt.contains('USAGE_ALARM'), isTrue,
+        reason: 'alarm kanali sessizde calmali (USAGE_ALARM)');
+    expect(kt.contains('FLAG_INSISTENT'), isTrue,
+        reason: 'alarm sesi dongude calmali');
+    expect(kt.contains('setFullScreenIntent'), isTrue);
+    final manifest = File('android/app/src/main/AndroidManifest.xml')
+        .readAsStringSync();
+    expect(manifest.contains('.SosMesajServisi'), isTrue,
+        reason: 'yerel alarm servisi kayitli degil — data-only SOS GORUNMEZ');
+    expect(manifest.contains('USE_FULL_SCREEN_INTENT'), isTrue);
+  });
+
   test('MANIFEST varsayilan kanali GENEL kanalla ayni', () {
     // Sunucu `channel_id` gondermezse (eski surum, teshis ucu) bildirim
     // Android'in isimsiz varsayilan kanalina duser ve SESSIZ olur.

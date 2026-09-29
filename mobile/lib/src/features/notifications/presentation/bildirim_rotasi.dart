@@ -81,7 +81,10 @@ String? bildirimRotasi(AppNotification b, {UserRole? role}) {
     // eklendi ama bu beyaz liste guncellenmemisti — panik push'una
     // dokunan kullanici ALARM EKRANINA GITMIYOR, bildirim yalnizca
     // "okundu" isaretleniyordu. Acil durumda en pahali sessiz kusur.
-    'panik_alarm' || 'panik_yanlis_alarm' || 'panik_kapandi' =>
+    'panik_alarm' ||
+    'panik_yardim_talebi' ||
+    'panik_yanlis_alarm' ||
+    'panik_kapandi' =>
       AppRoutes.panikTakip,
     // (P240 §3) Kacak/yangin -> cihazin oldugu ekran (vana, sensor).
     'akilli_ev_kacak' || 'akilli_ev_yangin' => AppRoutes.akilliEv,

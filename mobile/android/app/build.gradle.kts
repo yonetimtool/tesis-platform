@@ -109,3 +109,14 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+// (P249 §1c) SOS YEREL ALARMI — `SosMesajServisi` eklentinin FCM servisini
+// genisletir; eklenti firebase-messaging'i yalniz KENDI derleme yolunda
+// (`implementation`) tasidigi icin uygulama modulu `RemoteMessage`i
+// goremiyordu. SURUM ELLE YAZILMAZ: firebase_core eklentisinin
+// `FirebaseSDKVersion`i (BOM) kullanilir — iki farkli Firebase surumu
+// ayni uygulamada catisirdi.
+dependencies {
+    implementation(platform("com.google.firebase:firebase-bom:34.15.0"))
+    implementation("com.google.firebase:firebase-messaging")
+}

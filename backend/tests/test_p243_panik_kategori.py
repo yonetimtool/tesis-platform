@@ -52,9 +52,13 @@ def test_HER_KATEGORININ_KENDI_TALIMATI_VAR(client, world):
     assert "asansör" in metinler["deprem"].lower()
     assert "elektrik" in metinler["gaz"].lower()
     assert "terk" in metinler["tahliye"].lower()
-    # GUVENLIK TEHDIDINDE "DISARI CIK" DEMIYORUZ — yerinde kal.
-    assert "kalın" in metinler["guvenlik_tehdidi"]
+    # GUVENLIK TEHDIDINDE "DISARI CIK" DEMIYORUZ.
+    #
+    # (P249 §1) Alici guvenlik ve yonetimdir (sakine gitmez); P243'teki
+    # "bulundugunuz yerde kalin, kapiyi kilitleyin" sakine hitap
+    # ediyordu. Olcu artik: terk demez, polise yonlendirir.
     assert "terk" not in metinler["guvenlik_tehdidi"].lower()
+    assert "155" in metinler["guvenlik_tehdidi"]
 
 
 def test_KATEGORI_METINLERI_YEDI_DILDE(client, world):

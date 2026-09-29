@@ -204,6 +204,9 @@ class Action:
     PANIK_MUDAHALE = "panik_mudahale"
     PANIK_KAPAT = "panik_kapat"
     PANIK_ASKI = "panik_aski"
+    #: (P249 §1) Toplu uyarida "guvendeyim" / "yardima ihtiyacim var".
+    PANIK_GUVENDE = "panik_guvende"
+    PANIK_YARDIM = "panik_yardim"
     # (P240 §2) DIYAFON — yapilandirma ve EYLEM ayri: kapi acmak fiziksel
     # erisim veren bir eylemdir ve yapilandirma degisikligiyle ayni
     # kutuya konamaz.

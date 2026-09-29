@@ -20,4 +20,7 @@
     <string name="kanal_vardiya_aciklama">Vardiyanız yaklaştığında sesli anonsla hatırlatır.</string>
     <string name="kanal_dukkan_ad">Yerel işletmeler</string>
     <string name="kanal_dukkan_aciklama">Teklif, iş ve işletme bildirimleri. Kapatmak site bildirimlerini etkilemez.</string>
+    <!-- (P249 §1c) SOS alarm kanali. -->
+    <string name="kanal_alarm_ad">SOS acil durum alarmı</string>
+    <string name="kanal_alarm_aciklama">Deprem, yangın, gaz, tahliye ve yardım çağrıları. Telefon sessizdeyken de alarm sesiyle çalar.</string>
 </resources>

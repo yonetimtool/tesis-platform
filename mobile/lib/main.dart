@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'l10n/gen/app_localizations.dart';
+import 'src/features/panik/data/alarm_kanali.dart';
 import 'src/features/panik/presentation/panik_gozcusu.dart';
 import 'src/core/i18n/locale_controller.dart';
 import 'src/core/startup/acilis_tercihleri.dart';
@@ -185,6 +186,14 @@ class TesisGuvenlikApp extends ConsumerWidget {
         }
         _pushGit(router, karar.rota);
       }());
+    });
+    // (P249 §1c) ANDROID YEREL ALARM BILDIRIMINE DOKUNUS -> o alarmin
+    // ekrani. Yerel bildirim FCM'in `getInitialMessage`ine DUSMEZ (onu
+    // uygulama kurdu); kimlik alarm koprusunden gelir.
+    ref.listen(alarmAcilisProvider, (prev, next) {
+      final id = next.value;
+      if (id == null || id.isEmpty) return;
+      _pushGit(router, AppRoutes.panikAlarmDetay(id));
     });
     return MaterialApp.router(
       title: 'Yönetiyor',

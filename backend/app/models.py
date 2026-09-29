@@ -132,6 +132,8 @@ NOTIFICATION_TIP = ENUM(
     # bildirir. Tek tipe indirmek, sahaya koşan kişiye "geri dön"
     # diyemeden aynı sesle üç kez seslenmek olurdu.
     "panik_alarm", "panik_yanlis_alarm", "panik_kapandi",
+    # (P249 §1, göç 0157) Toplu uyarıda "yardıma ihtiyacım var" — sahaya.
+    "panik_yardim_talebi",
     # (P240 §4, göç 0141) Entegrasyon bağlantısı koptu (yönetim alarmı).
     "entegrasyon_koptu",
     # (P240 §3, göç 0143) Akıllı ev sensörleri: kaçak ve yangın.
@@ -2633,6 +2635,12 @@ class UserDevice(Base):
     #:
     #: NULLABLE ve kalici olarak oyle: alani gondermeyen surumler sahada.
     uygulama_surum: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: (P249 §1c, goc 0157) iOS Critical Alerts izni cihazda ACIK mi.
+    #: Uygulama bildirim ayarlarindan okuyup kayitta gonderir; kritik ses
+    #: yuku yalniz bu cihazlara gider.
+    kritik_uyari: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
     aktif: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     created_at = _created_at()
     updated_at = _created_at()
@@ -5241,6 +5249,10 @@ class PanikAlici(Base):
     bildirildi_at = _created_at()
     goruldu_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     mudahale_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    #: (P249 §1, goc 0157) TOPLU UYARIDA YANIT: `guvende` | `yardim` | NULL.
+    #: NULL tahliye sayiminin asil sorusudur: kim HIC yanit vermedi.
+    yanit: Mapped[str | None] = mapped_column(Text, nullable=True)
+    yanit_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
 
 
 # --------------------------------------------------------------------------- #

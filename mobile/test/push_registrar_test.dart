@@ -99,6 +99,8 @@ class _FakeDeviceApi extends DeviceApi {
     String? cihazKimligi,
     // (P238) Cihazdaki uygulama surumu — YALNIZ VERI TOPLAMA.
     String? uygulamaSurum,
+    // (P249 §1c) iOS kritik uyari izni.
+    bool? kritikUyari,
   }) async {
     if (registerError != null) throw registerError!;
     registered.add((

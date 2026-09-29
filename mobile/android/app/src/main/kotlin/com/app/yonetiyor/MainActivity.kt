@@ -2,11 +2,15 @@ package com.app.yonetiyor
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.Intent
 import android.media.AudioAttributes
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodChannel
 
 /**
  * (P207 §2) BILDIRIM KANALLARI — sesin YASADIGI yer.
@@ -135,9 +139,117 @@ class MainActivity : FlutterActivity() {
         const val VARDIYA_SES = "yonetio_vardiya"
     }
 
+    // ======================================================================
+    // (P249 §1c) SOS ALARM KOPRUSU — `site.yonetio.app/alarm`
+    // ======================================================================
+    // Dart tarafi (`alarm_kanali.dart`) su yontemleri cagirir:
+    //   sustur(panikId)  — "Gordum"/"Guvendeyim" -> dongulu sesi kes,
+    //   acilisAlarmi()   — uygulama alarm bildiriminden mi acildi,
+    //   izinDurumu()     — tam ekran izni, Rahatsiz Etmeyin erisimi,
+    //                      alarm kanali acik mi,
+    //   tamEkranAyari / dndAyari / kanalAyari — ilgili sistem ekrani.
+    // Yerel bildirime dokunus FCM'in `getInitialMessage`ine DUSMEZ (onu
+    // biz kurduk); acilis kimligi bu kanaldan okunur.
+    private var alarmKanali: MethodChannel? = null
+    private var bekleyenAlarm: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         kanallariKur()
+        AlarmBildirimi.kanalKur(this)
+        alarmNiyetiniIsle(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        alarmNiyetiniIsle(intent)
+        bekleyenAlarm?.let { alarmKanali?.invokeMethod("alarmAcildi", it) }
+    }
+
+    /** Alarm bildiriminden gelindiyse KILIT EKRANININ USTUNDE ac. */
+    private fun alarmNiyetiniIsle(niyet: Intent?) {
+        val id = niyet?.getStringExtra(AlarmBildirimi.EK_PANIK_ID)
+        if (id.isNullOrEmpty()) return
+        bekleyenAlarm = id
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        }
+    }
+
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+        val kanal = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "site.yonetio.app/alarm")
+        alarmKanali = kanal
+        kanal.setMethodCallHandler { cagri, sonuc ->
+            when (cagri.method) {
+                "sustur" -> {
+                    val id = cagri.argument<String>("panikId") ?: ""
+                    if (id.isNotEmpty()) AlarmBildirimi.sustur(this, id)
+                    sonuc.success(null)
+                }
+                "acilisAlarmi" -> {
+                    sonuc.success(bekleyenAlarm)
+                    bekleyenAlarm = null
+                }
+                "izinDurumu" -> sonuc.success(izinDurumu())
+                "tamEkranAyari" -> {
+                    if (Build.VERSION.SDK_INT >= 34) {
+                        ayarAc(Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT,
+                            Uri.parse("package:$packageName")))
+                    }
+                    sonuc.success(null)
+                }
+                "dndAyari" -> {
+                    ayarAc(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+                    sonuc.success(null)
+                }
+                "kanalAyari" -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        ayarAc(Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).apply {
+                            putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                            putExtra(Settings.EXTRA_CHANNEL_ID, AlarmBildirimi.KANAL_ALARM)
+                        })
+                    }
+                    sonuc.success(null)
+                }
+                else -> sonuc.notImplemented()
+            }
+        }
+    }
+
+    private fun ayarAc(niyet: Intent) {
+        try {
+            startActivity(niyet.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (_: Exception) {
+            // Uretici ekrani kaldirmis olabilir: genel uygulama ayarlari.
+            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.parse("package:$packageName")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }
+    }
+
+    private fun izinDurumu(): Map<String, Any> {
+        val mgr = getSystemService(NotificationManager::class.java)
+        val tamEkran = if (Build.VERSION.SDK_INT >= 34) {
+            mgr?.canUseFullScreenIntent() ?: false
+        } else {
+            true
+        }
+        val kanalAcik = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val k = mgr?.getNotificationChannel(AlarmBildirimi.KANAL_ALARM)
+            k != null && k.importance != NotificationManager.IMPORTANCE_NONE
+        } else {
+            true
+        }
+        return mapOf(
+            "platform" to "android",
+            "tamEkran" to tamEkran,
+            "tamEkranSorulur" to (Build.VERSION.SDK_INT >= 34),
+            "dndErisimi" to (mgr?.isNotificationPolicyAccessGranted ?: false),
+            "kanalAcik" to kanalAcik,
+            "bildirimAcik" to (mgr?.areNotificationsEnabled() ?: false),
+        )
     }
 
     /** Kaynak KIMLIGINDEN ses adresi (bkz. yukaridaki kucultucu notu). */

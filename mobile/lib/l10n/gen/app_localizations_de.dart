@@ -7822,4 +7822,96 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get kamKayitBulunamadiAciklama =>
       'Wählen Sie einen anderen Zeitraum und suchen Sie erneut.';
+
+  @override
+  String get panikGuvendeyim => 'ICH BIN IN SICHERHEIT';
+
+  @override
+  String get panikYardimIstiyorum => 'ICH BRAUCHE HILFE';
+
+  @override
+  String get panikYanitGuvende =>
+      'Sie haben gemeldet, dass Sie in Sicherheit sind.';
+
+  @override
+  String get panikYanitYardim =>
+      'Ihre Hilfeanfrage wurde an Sicherheit und Verwaltung gesendet.';
+
+  @override
+  String get panikTalimatBaslik => 'Was zu tun ist';
+
+  @override
+  String panikAlarmSaati(String saat) {
+    return 'Um $saat';
+  }
+
+  @override
+  String get panikDurumBaslik => 'Status nach Wohnung';
+
+  @override
+  String get panikDurumGuvende => 'In Sicherheit';
+
+  @override
+  String get panikDurumYardim => 'Braucht Hilfe';
+
+  @override
+  String get panikDurumYanitsiz => 'Keine Antwort';
+
+  @override
+  String get panikDurumPersonel => 'Personal und Verwaltung';
+
+  @override
+  String panikDurumSayilar(int alici, int guvende, int yardim, int yanitsiz) {
+    return 'An $alici gesendet · $guvende sicher · $yardim brauchen Hilfe · $yanitsiz ohne Antwort';
+  }
+
+  @override
+  String panikOrtalamaYanit(int n) {
+    return 'Durchschnittliche Antwortzeit: $n s';
+  }
+
+  @override
+  String get panikDetayBaslik => 'Notfall';
+
+  @override
+  String get panikAlarmAyarBaslik => 'SOS-Alarmeinstellungen';
+
+  @override
+  String get panikAlarmAyarAciklama =>
+      'Diese Einstellungen müssen aktiv sein, damit Notfallalarme Sie auch bei gesperrtem oder stummem Telefon erreichen.';
+
+  @override
+  String get panikAyarBildirim => 'Benachrichtigungen';
+
+  @override
+  String get panikAyarKanal => 'SOS-Alarmkanal';
+
+  @override
+  String get panikAyarTamEkran => 'Auf dem Sperrbildschirm im Vollbild öffnen';
+
+  @override
+  String get panikAyarDnd => '„Bitte nicht stören“ übergehen';
+
+  @override
+  String get panikAyarKritik => 'Kritische Hinweise (klingeln auch lautlos)';
+
+  @override
+  String get panikAyarKritikBekliyor =>
+      'Warten auf Apple-Freigabe. Bis dahin durchbricht der Alarm den Fokus, klingelt aber NICHT im Lautlos-Modus.';
+
+  @override
+  String get panikAyarZamanHassas =>
+      'Zeitkritische Mitteilungen (durchbrechen Fokus)';
+
+  @override
+  String get panikAyarAcik => 'An';
+
+  @override
+  String get panikAyarKapali => 'Aus';
+
+  @override
+  String get panikAyarAc => 'Einstellungen öffnen';
+
+  @override
+  String get panikTatbikatSerit => 'ÜBUNG — Dies ist kein echter Alarm';
 }

@@ -7864,4 +7864,93 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get kamKayitBulunamadiAciklama =>
       'اختر فترة زمنية أخرى وابحث مرة أخرى.';
+
+  @override
+  String get panikGuvendeyim => 'أنا بأمان';
+
+  @override
+  String get panikYardimIstiyorum => 'أحتاج إلى مساعدة';
+
+  @override
+  String get panikYanitGuvende => 'أبلغتَ أنك بأمان.';
+
+  @override
+  String get panikYanitYardim => 'أُرسل طلب المساعدة إلى الأمن والإدارة.';
+
+  @override
+  String get panikTalimatBaslik => 'ما يجب فعله';
+
+  @override
+  String panikAlarmSaati(String saat) {
+    return 'الساعة $saat';
+  }
+
+  @override
+  String get panikDurumBaslik => 'الحالة حسب الوحدة';
+
+  @override
+  String get panikDurumGuvende => 'بأمان';
+
+  @override
+  String get panikDurumYardim => 'يحتاج مساعدة';
+
+  @override
+  String get panikDurumYanitsiz => 'لا رد';
+
+  @override
+  String get panikDurumPersonel => 'الموظفون والإدارة';
+
+  @override
+  String panikDurumSayilar(int alici, int guvende, int yardim, int yanitsiz) {
+    return 'أُرسل إلى $alici · $guvende بأمان · $yardim يطلبون المساعدة · $yanitsiz بلا رد';
+  }
+
+  @override
+  String panikOrtalamaYanit(int n) {
+    return 'متوسط زمن الرد: $n ث';
+  }
+
+  @override
+  String get panikDetayBaslik => 'حالة طارئة';
+
+  @override
+  String get panikAlarmAyarBaslik => 'إعدادات إنذار SOS';
+
+  @override
+  String get panikAlarmAyarAciklama =>
+      'يجب تفعيل هذه الإعدادات لتصلك إنذارات الطوارئ والهاتف مقفل أو صامت.';
+
+  @override
+  String get panikAyarBildirim => 'إذن الإشعارات';
+
+  @override
+  String get panikAyarKanal => 'قناة إنذار SOS';
+
+  @override
+  String get panikAyarTamEkran => 'فتح بملء الشاشة على شاشة القفل';
+
+  @override
+  String get panikAyarDnd => 'تجاوز وضع عدم الإزعاج';
+
+  @override
+  String get panikAyarKritik => 'تنبيهات حرجة (ترن حتى في الوضع الصامت)';
+
+  @override
+  String get panikAyarKritikBekliyor =>
+      'بانتظار موافقة Apple. حتى ذلك الحين يتجاوز الإنذار وضع التركيز لكنه لا يرن في الوضع الصامت.';
+
+  @override
+  String get panikAyarZamanHassas => 'إشعارات حساسة للوقت (تتجاوز وضع التركيز)';
+
+  @override
+  String get panikAyarAcik => 'مفعّل';
+
+  @override
+  String get panikAyarKapali => 'معطّل';
+
+  @override
+  String get panikAyarAc => 'فتح الإعدادات';
+
+  @override
+  String get panikTatbikatSerit => 'تمرين — هذا ليس إنذارًا حقيقيًا';
 }

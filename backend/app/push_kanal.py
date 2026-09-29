@@ -83,6 +83,19 @@ KANAL_VARDIYA = "yonetio_vardiya_v2"
 #: `_v1`: henuz ozel ses yok. Ses eklenirse `_v2` acilir (Android'de var
 #: olan bir kanalin sesi programla degistirilemez — modul basligi).
 KANAL_DUKKAN = "yonetio_dukkan_v1"
+#: (P249 §1c) SOS ALARM KANALI — kritik kanaldan AYRI.
+#:
+#: OLCULEN KUSUR: SOS, sikayet ve vardiya hatirlatmalariyla AYNI
+#: `yonetio_kritik_v2` kanalindan, ayni sesle gidiyordu. O kanalin ses
+#: turu `USAGE_NOTIFICATION`: telefon sessizde CALMAZ, Rahatsiz Etmeyin
+#: acikken SUSTURULUR. Alarm kanali:
+#:   * ses turu `USAGE_ALARM` + bildirim kategorisi `ALARM` — Android
+#:     alarm sesini zil modundan BAGIMSIZ calar ve Rahatsiz Etmeyin'in
+#:     varsayilan ayari ("alarmlara izin ver") onu gecirir,
+#:   * sesi SISTEM ALARM SESI — ozel dosya gelince kanal `_v2` olur
+#:     (Android'de var olan kanalin sesi programla degistirilemez).
+#: Mobilde `MainActivity.kt` ayni kimlikle olusturur.
+KANAL_ALARM = "yonetio_alarm_v1"
 
 #: Ozel ses dosyasinin ADI (uzantisiz — Android `res/raw`, iOS paket).
 #: DOSYA HENUZ YOK: `SES_HAZIR` false oldugu surece sistem sesi
@@ -204,6 +217,40 @@ DUKKAN_ONEK = "dukkan_"
 #: alarmlari GENEL kanaldan, sistem sesiyle gidiyordu. Kategori METNI
 #: degistirir, KANALI degil.
 PANIK_KATEGORI_ONEK = "panik_kategori_"
+#: (P249 §2) Tatbikat metinleri — kanal ve ses gercek alarmla AYNI
+#: (gerekce docs/P249-kararlar.md §2: gercek sesi tanitmak).
+PANIK_TATBIKAT_ONEK = "panik_tatbikat_"
+
+#: (P249 §1c) ALARM SINIFI: kendi kanalindan (alarm sesi), kullanicinin
+#: "sesli uyari" ve "mobil bildirim" tercihlerinden BAGIMSIZ gider.
+#:
+#: NEDEN TERCIH YOK SAYILIYOR: tercih bir RAHATSIZLIK ayaridir ("duyuru
+#: pinglerinden bunaldim"). Olculen durumda mobil bildirimi kapatan
+#: kullanici deprem alarmini da kapatmis oluyordu; sesi kapatan kullanici
+#: alarmi sessiz kanaldan, ekranin ustunde belirmeden aliyordu. Hayati
+#: bir uyari, bir rahatsizlik ayarina rehin birakilamaz. Kullanici
+#: alarmi isterse isletim sisteminin KANAL ayarindan kapatabilir — o
+#: bilincli ve ayri bir karardir.
+#:
+#: `panik_yanlis_alarm` ve `panik_kapandi` BURADA YOK: onlar bir sonuc
+#: bildirimidir, dongulu alarm sesiyle calmalari paniği uzatirdi.
+ALARM_TIPLERI: frozenset[str] = frozenset({"panik_alarm", "panik_yardim_talebi"})
+
+
+def alarm_mi(tip: str | None) -> bool:
+    return bool(tip) and (
+        tip in ALARM_TIPLERI
+        or tip.startswith(PANIK_KATEGORI_ONEK)
+        or tip.startswith(PANIK_TATBIKAT_ONEK)
+    )
+
+
+#: (P249 §1c) ALARM SES DOSYASI HENUZ YOK — sistem alarm sesi calar.
+#: Dosya gelince (bicim: docs/P249-kararlar.md §1c) `True` yapilir, iOS
+#: paketine `yonetio_alarm.caf`, Android `res/raw/yonetio_alarm` eklenir
+#: ve Android kanali `yonetio_alarm_v2` olarak YENIDEN acilir.
+ALARM_SES_HAZIR = False
+ALARM_SES_ADI = "yonetio_alarm"
 
 
 def _kritik_mi(tip: str | None) -> bool:
@@ -218,6 +265,10 @@ def kanal_sec(tip: str | None, *, sesli: bool) -> str:
     "kapattim ama caliyor" demekti — ve kullanici bir dahaki sefere
     bildirimlerin TAMAMINI sistemden kapatirdi.
     """
+    # (P249 §1c) ALARM TERCIHTEN ONCE: sesi kapatmis kullanici da alarmi
+    # alarm kanalindan alir (gerekce `ALARM_TIPLERI`).
+    if alarm_mi(tip):
+        return KANAL_ALARM
     if not sesli:
         return KANAL_SESSIZ
     # DUKKAN URUN AYRIMI — tip kontrollerinden ONCE: bir Dukkan tipi
@@ -234,6 +285,9 @@ def kanal_sec(tip: str | None, *, sesli: bool) -> str:
 
 def ses_adi(tip: str | None, *, sesli: bool) -> str | None:
     """iOS `aps.sound` degeri. Sessizde `None` (alan HIC gonderilmez)."""
+    if alarm_mi(tip):
+        # ALARM TERCIHTEN BAGIMSIZ calar. Dosya yokken sistem sesi.
+        return f"{ALARM_SES_ADI}.caf" if ALARM_SES_HAZIR else "default"
     if not sesli:
         return None
     # DUKKAN: sistem sesi. Yonetiyor'un kimlik sesi "binanla ilgili bir

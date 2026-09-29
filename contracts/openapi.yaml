@@ -10528,6 +10528,49 @@ paths:
       responses:
         "200": { description: alarm }
         "403": { description: alici degil }
+  /panik/{id}/guvendeyim:
+    post:
+      tags: [panik]
+      summary: Toplu uyarida "Guvendeyim" (yalniz ALICI)
+      description: |
+        (P249 §1b) Deprem/yangin/gaz/tahliye alarmlarinda sayim yaniti.
+        Tam ekrani kapatir (gormeyi de kapsar). Yanit degisebilir.
+        Yardim cagrisinda (saglik vb.) 409 `panik_toplu_degil`.
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200": { description: alarm }
+        "403": { description: alici degil }
+        "409": { description: toplu uyari degil ya da kapali }
+  /panik/{id}/yardim:
+    post:
+      tags: [panik]
+      summary: Toplu uyarida "Yardima ihtiyacim var" (yalniz ALICI)
+      description: |
+        (P249 §1b) Guvenlik ve yonetime `panik_yardim_talebi` bildirimi
+        gider (alarm kanalindan); yer istekte bulunanin dairesidir.
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200": { description: alarm }
+        "403": { description: alici degil }
+        "409": { description: toplu uyari degil ya da kapali }
+  /panik/{id}/durum:
+    get:
+      tags: [panik]
+      summary: Daire bazinda durum — kim guvende, kim yardim istiyor, kim yanitsiz
+      description: |
+        (P249 §1b) Yalniz guvenlik/amir/yonetim. Sakin GORMEZ: yanit
+        vermeyen daire bos olabilir — kisisel ve guvenlik bilgisidir.
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: durum
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PanikDurumOut" }
+        "403": { description: sakin }
   /panik/{id}/mudahale:
     post:
       tags: [panik]
@@ -16995,6 +17038,13 @@ components:
           description: >
             (P191-ek §1) Kararli KURULUM kimligi (donanim kimligi DEGIL).
             Verilirse ayni cihazin onceki jetonlari pasiflestirilir.
+        kritik_uyari:
+          type: boolean
+          nullable: true
+          description: >
+            (P249 §1c) iOS Critical Alerts izni cihazda ACIK mi. Sunucu
+            kritik ses yukunu yalniz bu cihazlara yollar. Gonderilmezse
+            mevcut deger KORUNUR.
 
     BankaHareket:
       type: object
@@ -19875,6 +19925,48 @@ components:
       type: object
       properties:
         kapanis_notu: { type: string, nullable: true, maxLength: 2000 }
+    PanikDurumKisi:
+      type: object
+      required: [user_id, ad, rol]
+      properties:
+        user_id: { type: string, format: uuid }
+        ad: { type: string }
+        rol: { type: string }
+        goruldu_at: { type: string, format: date-time, nullable: true }
+        yanit: { type: string, enum: [guvende, yardim], nullable: true }
+        yanit_at: { type: string, format: date-time, nullable: true }
+        yanit_suresi_sn: { type: integer, nullable: true }
+    PanikDurumDaire:
+      type: object
+      required: [durum, kisiler]
+      properties:
+        unit_id: { type: string, format: uuid, nullable: true }
+        blok: { type: string, nullable: true }
+        daire_no: { type: string, nullable: true }
+        durum: { type: string, enum: [yardim, yanitsiz, guvende] }
+        kisiler:
+          type: array
+          items: { $ref: "#/components/schemas/PanikDurumKisi" }
+    PanikDurumOut:
+      type: object
+      description: >
+        (P249 §1b) Daire bazinda durum. Daireler once `yardim`, sonra
+        `yanitsiz`, en son `guvende`. Dairesi olmayan alicilar `personel`.
+      required: [alarm_id, alici, goruldu, guvende, yardim, yanitsiz, daireler, personel]
+      properties:
+        alarm_id: { type: string, format: uuid }
+        alici: { type: integer }
+        goruldu: { type: integer }
+        guvende: { type: integer }
+        yardim: { type: integer }
+        yanitsiz: { type: integer }
+        ortalama_yanit_sn: { type: integer, nullable: true }
+        daireler:
+          type: array
+          items: { $ref: "#/components/schemas/PanikDurumDaire" }
+        personel:
+          type: array
+          items: { $ref: "#/components/schemas/PanikDurumKisi" }
     PanikAskiIn:
       type: object
       required: [bitis, neden]

@@ -223,6 +223,9 @@ def gorunumu_uygula(
 
     Ayrintili gerekce: `push_gorunum.py` modul basligi.
     """
+    if g.yerel_alarm:
+        _yerel_alarm_govdesi(msg, g, title=title)
+        return
     rozet = g.rozet.get(token)
     android = msg.setdefault("android", {})
     an = android.setdefault("notification", {})
@@ -252,6 +255,19 @@ def gorunumu_uygula(
     if rozet:
         aps["badge"] = rozet
     aps["interruption-level"] = "time-sensitive" if g.acil else "active"
+    if g.kritik:
+        # (P249 §1c) iOS CRITICAL ALERT — sessizde ve Odak modunda da
+        # calar. YALNIZ cihaz izni actiysa (`user_device.kritik_uyari`):
+        # yetkisi olmayan uygulamanin kritik yuku iOS tarafindan sessizce
+        # siradan bildirime indirilir, ama izni olmayan cihaza gondermek
+        # "kritik gonderildi" diye yaniltici bir iz birakirdi.
+        ses = aps.get("sound")
+        aps["sound"] = {
+            "critical": 1,
+            "name": ses if isinstance(ses, str) and ses else "default",
+            "volume": 1.0,
+        }
+        aps["interruption-level"] = "critical"
     # Bildirim Hizmeti Uzantisi (NSE) eklendiginde avatar/iletisim
     # bildirimi icin govdeyi DEGISTIREBILSIN; uzanti yokken etkisizdir.
     aps["mutable-content"] = 1
@@ -260,6 +276,37 @@ def gorunumu_uygula(
         "apns-push-type": "alert",
         **({"apns-collapse-id": g.etiket[:64]} if g.etiket else {}),
     }
+
+
+#: (P249 §1c) Yerel alarmin FCM omru. Suresi dolan alarm TESLIM EDILMEZ:
+#: telefonu bir saat kapali kalan kisiye "deprem" demek, olay coktan
+#: bittiyse yeni bir panik baslatmak olurdu. Uygulama acilinca aktif
+#: alarm zaten `GET /panik/aktif` ile gelir.
+YEREL_ALARM_OMRU = "3600s"
+
+
+def _yerel_alarm_govdesi(msg: dict, g: "PushGorunum", *, title: str) -> None:
+    """(P249 §1c) ANDROID YEREL ALARM — `notification` govdesi YOK.
+
+    NEDEN: `notification` govdeli mesaji uygulama kapaliyken isletim
+    sistemi cizer ve o bildirim tam ekran ACAMAZ, sesi DONGUYE alamaz,
+    "Gordum" denince SUSMAZ. Data-only + `priority=high` mesaj uygulamanin
+    kendi servisini (`SosMesajServisi.kt`) uyandirir; bildirimi o kurar.
+
+    BEDELI (docs/P249-kararlar.md §1c): bazi ureticiler kaydirilip
+    kapatilan uygulamayi "zorla durdurulmus" sayar ve o durumda HICBIR FCM
+    mesaji teslim edilmez — `notification` govdesi de. Yani bu yol, eski
+    yola gore teslimi AZALTMAZ; yalniz gorunumu zenginlestirir.
+    """
+    bildirim = msg.pop("notification", None) or {}
+    data = msg.setdefault("data", {})
+    data["yerel_alarm"] = "1"
+    data["baslik"] = f"{title} · {g.kaynak}" if g.kaynak else title
+    data["govde"] = str(bildirim.get("body", ""))
+    if g.etiket:
+        data["etiket"] = g.etiket
+    msg["android"] = {"priority": "high", "ttl": YEREL_ALARM_OMRU}
+    msg.pop("apns", None)
 
 
 # ------------------------------- noop -------------------------------------- #

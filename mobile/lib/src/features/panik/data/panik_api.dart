@@ -45,6 +45,29 @@ class PanikApi {
   Future<PanikAlarm> gordum(String id) => _eylem(id, 'gordum');
   Future<PanikAlarm> mudahale(String id) => _eylem(id, 'mudahale');
 
+  /// (P249 §1b) Toplu uyarida "Guvendeyim" / "Yardima ihtiyacim var".
+  Future<PanikAlarm> guvendeyim(String id) => _eylem(id, 'guvendeyim');
+  Future<PanikAlarm> yardim(String id) => _eylem(id, 'yardim');
+
+  Future<PanikAlarm> detay(String id) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>('/panik/$id');
+      return PanikAlarm.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (P249 §1b) Daire bazinda durum — yalniz yonetim/guvenlik.
+  Future<PanikDurum> durum(String id) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>('/panik/$id/durum');
+      return PanikDurum.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   Future<PanikAlarm> kapat(String id, {String? not}) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
@@ -104,4 +127,14 @@ final panikAktifProvider = FutureProvider.autoDispose<List<PanikAlarm>>(
 
 final panikListeProvider = FutureProvider.autoDispose<List<PanikAlarm>>(
   (ref) => ref.watch(panikApiProvider).liste(),
+);
+
+/// (P249 §1b) Tek alarm — bildirimden acilan alici ekraninin kaynagi.
+final panikDetayProvider = FutureProvider.autoDispose.family<PanikAlarm, String>(
+  (ref, id) => ref.watch(panikApiProvider).detay(id),
+);
+
+/// (P249 §1b) Daire bazinda durum.
+final panikDurumProvider = FutureProvider.autoDispose.family<PanikDurum, String>(
+  (ref, id) => ref.watch(panikApiProvider).durum(id),
 );

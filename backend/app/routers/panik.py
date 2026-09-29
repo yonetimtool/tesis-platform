@@ -33,7 +33,7 @@ from __future__ import annotations
 import datetime as dt
 import uuid
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, Query, Request, Response
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -51,6 +51,7 @@ from ..models import (
     Unit,
     UnitResident,
 )
+from ..hata_metinleri import istek_dili
 from ..panik import (
     ALICI_ROLLERI,
     IPTAL_PENCERESI_SN,
@@ -59,8 +60,12 @@ from ..panik import (
     aski_aktif,
     tetikleyebilir_mi,
 )
+from ..panik_talimat import baslik as talimat_basligi
+from ..panik_talimat import talimat as talimat_adimlari
+from ..panik_talimat import toplu_mu
 from ..schemas import (
     PanikAlarmOut,
+    PanikDurumOut,
     PanikAliciOut,
     PanikAskiIn,
     PanikAskiOut,
@@ -81,6 +86,12 @@ _OKUR = require_role(
     "resident", "security", "guvenlik_amiri", "tesis_gorevlisi", "yonetici", "admin"
 )
 _YONETIM = require_role("admin", "yonetici")
+
+
+def _istek_dili(request: Request) -> str:
+    """(P249 §1b) Talimat ve baslik ISTEGIN dilinde (hata metinleriyle ayni
+    ayristirici)."""
+    return istek_dili(request.headers.get("accept-language"))
 
 
 def _simdi() -> dt.datetime:
@@ -106,11 +117,16 @@ _TELEFON_GORUR = frozenset({"admin", "yonetici", "security", "guvenlik_amiri"})
 
 
 async def _govde(
-    db: AsyncSession, alarm: PanikAlarm, izleyen: AppUser
+    db: AsyncSession, alarm: PanikAlarm, izleyen: AppUser, dil: str = "tr"
 ) -> PanikAlarmOut:
     """Alarm -> yanit govdesi (adlar, daire, konum adi, sayaclar)."""
     out = PanikAlarmOut.model_validate(alarm)
     out.iptal_penceresi_sn = IPTAL_PENCERESI_SN
+    # (P249 §1b) IKI DENEYIM + TEK KAYNAK METIN.
+    toplu = toplu_mu(alarm.kategori)
+    out.toplu = toplu
+    out.baslik = talimat_basligi(alarm.kategori, dil)
+    out.talimat = talimat_adimlari(alarm.kategori, dil)
 
     if alarm.olusturan_user_id:
         kisi = (
@@ -131,6 +147,12 @@ async def _govde(
             # sakin alicilar alarmi basan komsunun telefonunu goruyordu.
             if izleyen.role in _TELEFON_GORUR or izleyen.id == kisi.id:
                 out.olusturan_telefon = kisi.telefon
+        # (P249 §1b) YANLIS ALARM SAYACI YALNIZ MUDAHALE EDENE ve YALNIZ
+        # YARDIM CAGRISINDA. Deprem uyarisinin altinda "yanlis alarm"
+        # yazisi, insanlarin uyariyi ciddiye almamasina yol acar; sakin bu
+        # bilgiyle yapacak bir sey de yoktur. Sayac bir GUVENLIK
+        # baglamidir: "bu kisi bugun iki kez yanlislikla basti".
+        if kisi is not None and not toplu and izleyen.role in _TELEFON_GORUR:
             out.son_24s_yanlis_alarm = int(
                 (
                     await db.execute(
@@ -175,17 +197,28 @@ async def _govde(
             .where(PanikAlici.alarm_id == alarm.id)
         )
     ).all()
-    out.alicilar = [
-        PanikAliciOut(
-            user_id=a.user_id,
-            ad=ad,
-            rol=rol,
-            bildirildi_at=a.bildirildi_at,
-            goruldu_at=a.goruldu_at,
-            mudahale_at=a.mudahale_at,
-        )
-        for a, ad, rol in satirlar
-    ]
+    for a, _ad, _rol in satirlar:
+        if a.user_id == izleyen.id:
+            out.benim_yanitim = a.yanit
+    # (P249 §1) ALICI LISTESI YALNIZ TAKIP EDENE (ve alarmi basana).
+    #
+    # OLCULEN SIZINTI: toplu uyari TUM SITEYE gidiyor ve yanit govdesi her
+    # aliciya OTEKI ALICILARIN adlarini ve rollerini donduruyordu — deprem
+    # alarmini acan bir sakin sitedeki herkesin adini goruyordu.
+    if izleyen.role in LISTE_ROLLERI or izleyen.id == alarm.olusturan_user_id:
+        out.alicilar = [
+            PanikAliciOut(
+                user_id=a.user_id,
+                ad=ad,
+                rol=rol,
+                bildirildi_at=a.bildirildi_at,
+                goruldu_at=a.goruldu_at,
+                mudahale_at=a.mudahale_at,
+                yanit=a.yanit,
+                yanit_at=a.yanit_at,
+            )
+            for a, ad, rol in satirlar
+        ]
     return out
 
 
@@ -211,6 +244,7 @@ async def tetikle(
     body: PanikOlustur,
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_TETIKLEYEN),
+    dil: str = Depends(_istek_dili),
 ) -> PanikAlarmOut:
     if not tetikleyebilir_mi(user.role, body.tip):
         raise APIError(403, "forbidden", "panik_tipi_yetkisiz")
@@ -236,7 +270,7 @@ async def tetikle(
         )
         if yeterince_eski:
             _yayin_planla(acik.id, user.tenant_id, 0)
-        return await _govde(db, acik, user)
+        return await _govde(db, acik, user, dil)
 
     unit_id = body.unit_id
     if body.tip == "sakin" and unit_id is None:
@@ -285,7 +319,7 @@ async def tetikle(
         alarm.durum = "iptal"
         alarm.iptal_at = _simdi()
         await db.flush()
-        return await _govde(db, alarm, user)
+        return await _govde(db, alarm, user, dil)
 
     if not _yayin_planla(alarm.id, user.tenant_id, IPTAL_PENCERESI_SN):
         # Broker yok -> SENKRON yayin. Iptal penceresi kaybedilir ama
@@ -294,7 +328,7 @@ async def tetikle(
 
         await yayinla_senkron(db, alarm)
 
-    return await _govde(db, alarm, user)
+    return await _govde(db, alarm, user, dil)
 
 
 @router.post("/{alarm_id}/iptal", response_model=PanikAlarmOut)
@@ -302,6 +336,7 @@ async def iptal(
     alarm_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_TETIKLEYEN),
+    dil: str = Depends(_istek_dili),
 ) -> PanikAlarmOut:
     alarm = await get_or_404(db, PanikAlarm, alarm_id)
     # IPTAL YALNIZ BASANA AIT: baskasinin alarmini iptal etmek, gercek
@@ -326,7 +361,7 @@ async def iptal(
         from ..panik_yayin import yanlis_alarm_duyur
 
         await yanlis_alarm_duyur(db, alarm)
-    return await _govde(db, alarm, user)
+    return await _govde(db, alarm, user, dil)
 
 
 @router.post("/{alarm_id}/gordum", response_model=PanikAlarmOut)
@@ -334,6 +369,7 @@ async def gordum(
     alarm_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_OKUR),
+    dil: str = Depends(_istek_dili),
 ) -> PanikAlarmOut:
     alarm = await get_or_404(db, PanikAlarm, alarm_id)
     satir = (
@@ -354,7 +390,7 @@ async def gordum(
             db, user, Action.PANIK_GORULDU, resource_type="panik_alarm",
             resource_id=alarm.id,
         )
-    return await _govde(db, alarm, user)
+    return await _govde(db, alarm, user, dil)
 
 
 @router.post("/{alarm_id}/mudahale", response_model=PanikAlarmOut)
@@ -362,6 +398,7 @@ async def mudahale(
     alarm_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_OKUR),
+    dil: str = Depends(_istek_dili),
 ) -> PanikAlarmOut:
     alarm = await get_or_404(db, PanikAlarm, alarm_id)
     satir = (
@@ -392,7 +429,7 @@ async def mudahale(
         db, user, Action.PANIK_MUDAHALE, resource_type="panik_alarm",
         resource_id=alarm.id,
     )
-    return await _govde(db, alarm, user)
+    return await _govde(db, alarm, user, dil)
 
 
 @router.post("/{alarm_id}/kapat", response_model=PanikAlarmOut)
@@ -401,6 +438,7 @@ async def kapat(
     body: PanikKapat,
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_OKUR),
+    dil: str = Depends(_istek_dili),
 ) -> PanikAlarmOut:
     alarm = await get_or_404(db, PanikAlarm, alarm_id)
     if alarm.durum in ("kapandi", "iptal", "yanlis_alarm"):
@@ -429,13 +467,97 @@ async def kapat(
     from ..panik_yayin import kapanis_duyur
 
     await kapanis_duyur(db, alarm)
-    return await _govde(db, alarm, user)
+    return await _govde(db, alarm, user, dil)
+
+
+async def _toplu_yanit(
+    db: AsyncSession, alarm_id: uuid.UUID, user: AppUser, yanit: str
+) -> PanikAlarm:
+    """(P249 §1b) Toplu uyarida "guvendeyim" / "yardima ihtiyacim var".
+
+    YALNIZ ALICI: sayim "alarmi ALANLARIN kaci guvende" sorusudur.
+    YALNIZ TOPLU UYARI: yardim cagrisinda (saglik vb.) "guvendeyim"
+    anlamsizdir — orada karar "gordum"/"gidiyorum"dur.
+    YANIT DEGISEBILIR: "guvendeyim" dedikten sonra enkaz altinda kalan
+    ya da yarali olan kisi "yardim"a gecebilmeli; tersi de (yardim geldi).
+    """
+    alarm = await get_or_404(db, PanikAlarm, alarm_id)
+    if not toplu_mu(alarm.kategori):
+        raise APIError(409, "conflict", "panik_toplu_degil")
+    if alarm.durum in ("kapandi", "iptal", "yanlis_alarm"):
+        raise APIError(409, "conflict", "panik_zaten_kapali")
+    satir = (
+        await db.execute(
+            select(PanikAlici).where(
+                PanikAlici.alarm_id == alarm.id, PanikAlici.user_id == user.id
+            )
+        )
+    ).scalar_one_or_none()
+    if satir is None:
+        raise APIError(403, "forbidden", "panik_alicisi_degil")
+    onceki = satir.yanit
+    simdi = _simdi()
+    satir.yanit = yanit
+    satir.yanit_at = simdi
+    # Yanit vermek GORMEYI de kapsar: tam ekran kapanir.
+    satir.goruldu_at = satir.goruldu_at or simdi
+    await db.flush()
+    await audit_user(
+        db, user,
+        Action.PANIK_GUVENDE if yanit == "guvende" else Action.PANIK_YARDIM,
+        resource_type="panik_alarm", resource_id=alarm.id,
+    )
+    if yanit == "yardim" and onceki != "yardim":
+        from ..panik_yayin import yardim_talebi_duyur
+
+        await yardim_talebi_duyur(db, alarm, user)
+    return alarm
+
+
+@router.post("/{alarm_id}/guvendeyim", response_model=PanikAlarmOut)
+async def guvendeyim(
+    alarm_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_OKUR),
+    dil: str = Depends(_istek_dili),
+) -> PanikAlarmOut:
+    alarm = await _toplu_yanit(db, alarm_id, user, "guvende")
+    return await _govde(db, alarm, user, dil)
+
+
+@router.post("/{alarm_id}/yardim", response_model=PanikAlarmOut)
+async def yardim_istiyorum(
+    alarm_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_OKUR),
+    dil: str = Depends(_istek_dili),
+) -> PanikAlarmOut:
+    alarm = await _toplu_yanit(db, alarm_id, user, "yardim")
+    return await _govde(db, alarm, user, dil)
+
+
+@router.get("/{alarm_id}/durum", response_model=PanikDurumOut)
+async def durum(
+    alarm_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(require_role(*sorted(LISTE_ROLLERI))),
+) -> PanikDurumOut:
+    """(P249 §1b) DAIRE BAZINDA DURUM — yonetim ve guvenlik icin.
+
+    Sakin bu tabloyu GORMEZ: hangi dairenin yanit vermedigi, o dairenin
+    bos olabilecegini soyler — kisisel veri ve guvenlik bilgisidir.
+    """
+    from ..panik_durum import durum_hesapla
+
+    alarm = await get_or_404(db, PanikAlarm, alarm_id)
+    return await durum_hesapla(db, alarm)
 
 
 @router.get("/aktif", response_model=list[PanikAlarmOut])
 async def aktifler(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_OKUR),
+    dil: str = Depends(_istek_dili),
 ) -> list[PanikAlarmOut]:
     """BANA gelen, KAPANMAMIS ve HENUZ GORMEDIGIM alarmlar.
 
@@ -463,7 +585,7 @@ async def aktifler(
         .order_by(PanikAlarm.created_at.desc(), PanikAlarm.id)
         .limit(20)
     )
-    return [await _govde(db, a, user) for a in (await db.execute(sorgu)).scalars().all()]
+    return [await _govde(db, a, user, dil) for a in (await db.execute(sorgu)).scalars().all()]
 
 
 @router.get("", response_model=PanikListResponse)
@@ -473,6 +595,7 @@ async def liste(
     durum: str | None = Query(None, max_length=_G.KOD),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_OKUR),
+    dil: str = Depends(_istek_dili),
 ) -> PanikListResponse:
     kosullar = []
     if user.role not in LISTE_ROLLERI:
@@ -500,7 +623,7 @@ async def liste(
     ).scalars().all()
     return PanikListResponse(
         meta=PageMetaOut(limit=limit, offset=offset, total=toplam),
-        items=[await _govde(db, a, user) for a in satirlar],
+        items=[await _govde(db, a, user, dil) for a in satirlar],
     )
 
 
@@ -509,6 +632,7 @@ async def detay(
     alarm_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_OKUR),
+    dil: str = Depends(_istek_dili),
 ) -> PanikAlarmOut:
     alarm = await get_or_404(db, PanikAlarm, alarm_id)
     if user.role not in LISTE_ROLLERI and alarm.olusturan_user_id != user.id:
@@ -521,4 +645,4 @@ async def detay(
         ).scalar_one_or_none()
         if alici is None:
             raise APIError(404, "not_found", "panik_bulunamadi")
-    return await _govde(db, alarm, user)
+    return await _govde(db, alarm, user, dil)

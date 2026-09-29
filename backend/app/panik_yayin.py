@@ -39,6 +39,7 @@ from starlette.concurrency import run_in_threadpool
 
 from .models import AppUser, Diyafon, Notification, PanikAlarm, PanikAlici, Unit
 from .panik import ALICI_ROLLERI, kategori_alicilari
+from .panik_talimat import toplu_mu
 from .push_metinleri import push_govdesi
 from .scheduler.notify import dispatch_external
 
@@ -110,6 +111,14 @@ async def _veri(db: AsyncSession, alarm: PanikAlarm) -> dict[str, str]:
             yer = no if (not blok or no.startswith(blok)) else f"{blok} {no}"
     if not yer and alarm.gps_lat is not None:
         yer = f"{alarm.gps_lat}, {alarm.gps_lng}"
+    if not yer and toplu_mu(alarm.kategori):
+        # (P249 §1) TOPLU UYARIDA YER = TESIS: "Depremde ne yapmali — -"
+        # okunamaz. Tesis adi dilden bagimsizdir (ozel ad).
+        from .models import Tenant
+
+        yer = (
+            await db.execute(select(Tenant.ad).where(Tenant.id == alarm.tenant_id))
+        ).scalar_one_or_none() or ""
     return {"ad": ad, "yer": yer or "-"}
 
 
@@ -169,7 +178,10 @@ async def yayinla_senkron(db: AsyncSession, alarm: PanikAlarm) -> int:
         params=veri,
         data={"tip": "panik_alarm", "panik_id": str(alarm.id),
               "panik_tip": alarm.tip,
-              "panik_kategori": alarm.kategori or ""},
+              "panik_kategori": alarm.kategori or "",
+              # (P249 §1b) Istemci iki deneyimden hangisini cizecegini
+              # alarmi cekmeden de bilsin (bildirimden acilis).
+              "toplu": "1" if toplu_mu(alarm.kategori) else "0"},
     )
     _sms_gonder(alarm, kisiler, veri)
     await _diyafon_anons(db, alarm, veri)
@@ -317,4 +329,66 @@ async def _ikincil_duyuru(db: AsyncSession, alarm: PanikAlarm, tip: str) -> None
         target_user_ids=alici_idler,
         params=veri,
         data={"tip": tip, "panik_id": str(alarm.id)},
+    )
+
+
+#: (P249 §1b) "Yardima ihtiyacim var" kime gider: sahada mudahale eden
+#: roller. Sakinlere GITMEZ: toplu uyarida herkes zaten kendi tahliyesiyle
+#: mesgul ve yardim isteyen kisinin yeri kisisel veridir.
+YARDIM_ROLLERI = ("security", "guvenlik_amiri", "yonetici", "admin")
+
+
+async def yardim_talebi_duyur(
+    db: AsyncSession, alarm: PanikAlarm, isteyen: AppUser
+) -> None:
+    """(P249 §1b) Toplu uyarida bir alici YARDIM istedi -> sahaya.
+
+    Yer ISTEYENIN dairesidir (alarmin yeri degil): depremde alarmi yonetim
+    tum siteye acmistir, yardim isteyen ise kendi dairesindedir.
+    """
+    from .models import UnitResident
+
+    uid = (
+        await db.execute(
+            select(UnitResident.unit_id)
+            .where(UnitResident.user_id == isteyen.id, UnitResident.bitis.is_(None))
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+    yer = ""
+    if uid is not None:
+        birim = (await db.execute(select(Unit).where(Unit.id == uid))).scalar_one_or_none()
+        if birim is not None:
+            no, blok = birim.no or "", birim.blok or ""
+            yer = no if (not blok or no.startswith(blok)) else f"{blok} {no}"
+    veri = {"ad": isteyen.ad or "", "yer": yer or "-"}
+    hedefler = [
+        k.id
+        for k in (
+            await db.execute(
+                select(AppUser).where(
+                    AppUser.is_active.is_(True), AppUser.role.in_(YARDIM_ROLLERI)
+                )
+            )
+        ).scalars().all()
+        if k.id != isteyen.id
+    ]
+    for hid in hedefler:
+        db.add(
+            Notification(
+                tenant_id=alarm.tenant_id,
+                user_id=hid,
+                tip="panik_yardim_talebi",
+                mesaj=push_govdesi("panik_yardim_talebi", "tr", veri),
+                mesaj_kimlik="panik_yardim_talebi",
+                mesaj_veri=veri,
+            )
+        )
+    await db.flush()
+    dispatch_external(
+        "panik_yardim_talebi",
+        tenant_id=alarm.tenant_id,
+        target_user_ids=hedefler,
+        params=veri,
+        data={"tip": "panik_yardim_talebi", "panik_id": str(alarm.id)},
     )

@@ -12,4 +12,7 @@
     <string name="kanal_vardiya_aciklama">Announces with sound when your shift is about to start.</string>
     <string name="kanal_dukkan_ad">Local businesses</string>
     <string name="kanal_dukkan_aciklama">Offer, job and business notifications. Turning this off does not affect building notifications.</string>
+    <!-- (P249 §1c) SOS alarm kanali. -->
+    <string name="kanal_alarm_ad">SOS emergency alarm</string>
+    <string name="kanal_alarm_aciklama">Earthquake, fire, gas, evacuation and help calls. Rings with the alarm sound even when the phone is on silent.</string>
 </resources>

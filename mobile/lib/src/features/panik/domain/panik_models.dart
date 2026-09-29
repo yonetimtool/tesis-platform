@@ -48,6 +48,7 @@ class PanikAlici {
     required this.rol,
     this.goruldu,
     this.mudahale,
+    this.yanit,
   });
 
   final String userId;
@@ -55,6 +56,9 @@ class PanikAlici {
   final String rol;
   final DateTime? goruldu;
   final DateTime? mudahale;
+
+  /// (P249 §1b) Toplu uyarida yanit: `guvende` | `yardim` | null.
+  final String? yanit;
 
   factory PanikAlici.fromJson(Map<String, dynamic> j) => PanikAlici(
         userId: j['user_id'] as String,
@@ -66,6 +70,7 @@ class PanikAlici {
         mudahale: j['mudahale_at'] == null
             ? null
             : DateTime.parse(j['mudahale_at'] as String),
+        yanit: j['yanit'] as String?,
       );
 }
 
@@ -87,6 +92,12 @@ class PanikAlarm {
     this.createdAt,
     this.kapandiAt,
     this.kapanisNotu,
+    this.kategori,
+    this.toplu = false,
+    this.baslik = '',
+    this.talimat = const [],
+    this.benimYanitim,
+    this.gonderildiAt,
   });
 
   final String id;
@@ -113,6 +124,25 @@ class PanikAlarm {
   final DateTime? createdAt;
   final DateTime? kapandiAt;
   final String? kapanisNotu;
+
+  /// (P249 §1) KATEGORI — P243'te sunucu donduruyordu ama bu model
+  /// OKUMUYORDU; alici ekrani bu yuzden deprem ile saglik acilini ayni
+  /// sabit sablonla ciziyordu. `null` = kategorisiz (P240 donemi).
+  final String? kategori;
+
+  /// Toplu uyari (deprem/yangin/gaz/tahliye) mi, yardim cagrisi mi.
+  /// Sunucu karar verir: iki ayri kumeyi istemcide yeniden yazmak, bir
+  /// gun ayrismalari demekti.
+  final bool toplu;
+
+  /// Istegin dilinde baslik ("DEPREM ALARMI") ve ADIM ADIM talimat —
+  /// tek kaynak sunucu (`panik_talimat.py`), push basligiyla ayni metin.
+  final String baslik;
+  final List<String> talimat;
+
+  /// Bu kullanicinin yaniti (`guvende` | `yardim` | null).
+  final String? benimYanitim;
+  final DateTime? gonderildiAt;
 
   /// "A 12" / kontrol noktasi adi / bos.
   String get yer {
@@ -148,5 +178,116 @@ class PanikAlarm {
             ? null
             : DateTime.parse(j['kapandi_at'] as String),
         kapanisNotu: j['kapanis_notu'] as String?,
+        kategori: j['kategori'] as String?,
+        toplu: (j['toplu'] as bool?) ?? false,
+        baslik: (j['baslik'] as String?) ?? '',
+        talimat: ((j['talimat'] as List?) ?? const [])
+            .whereType<String>()
+            .toList(),
+        benimYanitim: j['benim_yanitim'] as String?,
+        gonderildiAt: j['gonderildi_at'] == null
+            ? null
+            : DateTime.parse(j['gonderildi_at'] as String),
+      );
+}
+
+/// (P249 §1b) Daire bazinda durumun bir kisisi.
+class PanikDurumKisi {
+  const PanikDurumKisi({
+    required this.userId,
+    required this.ad,
+    required this.rol,
+    this.yanit,
+    this.goruldu = false,
+    this.yanitSuresiSn,
+  });
+
+  final String userId;
+  final String ad;
+  final String rol;
+  final String? yanit;
+  final bool goruldu;
+  final int? yanitSuresiSn;
+
+  factory PanikDurumKisi.fromJson(Map<String, dynamic> j) => PanikDurumKisi(
+        userId: j['user_id'] as String,
+        ad: (j['ad'] as String?) ?? '',
+        rol: (j['rol'] as String?) ?? '',
+        yanit: j['yanit'] as String?,
+        goruldu: j['goruldu_at'] != null,
+        yanitSuresiSn: (j['yanit_suresi_sn'] as num?)?.toInt(),
+      );
+}
+
+class PanikDurumDaire {
+  const PanikDurumDaire({
+    this.blok,
+    this.daireNo,
+    required this.durum,
+    required this.kisiler,
+  });
+
+  final String? blok;
+  final String? daireNo;
+
+  /// `yardim` | `yanitsiz` | `guvende` — sunucu siralar (yardim en ustte).
+  final String durum;
+  final List<PanikDurumKisi> kisiler;
+
+  String get ad {
+    final no = daireNo ?? '';
+    final b = blok ?? '';
+    return (b.isEmpty || no.startsWith(b)) ? no : '$b $no';
+  }
+
+  factory PanikDurumDaire.fromJson(Map<String, dynamic> j) => PanikDurumDaire(
+        blok: j['blok'] as String?,
+        daireNo: j['daire_no'] as String?,
+        durum: (j['durum'] as String?) ?? 'yanitsiz',
+        kisiler: ((j['kisiler'] as List?) ?? const [])
+            .whereType<Map>()
+            .map((m) => PanikDurumKisi.fromJson(Map<String, dynamic>.from(m)))
+            .toList(),
+      );
+}
+
+/// (P249 §1b) `GET /panik/{id}/durum` — kim guvende, kim yardim istiyor,
+/// kim yanit vermedi. Yalniz yonetim ve guvenlik.
+class PanikDurum {
+  const PanikDurum({
+    required this.alici,
+    required this.goruldu,
+    required this.guvende,
+    required this.yardim,
+    required this.yanitsiz,
+    this.ortalamaYanitSn,
+    this.daireler = const [],
+    this.personel = const [],
+  });
+
+  final int alici;
+  final int goruldu;
+  final int guvende;
+  final int yardim;
+  final int yanitsiz;
+  final int? ortalamaYanitSn;
+  final List<PanikDurumDaire> daireler;
+  final List<PanikDurumKisi> personel;
+
+  factory PanikDurum.fromJson(Map<String, dynamic> j) => PanikDurum(
+        alici: (j['alici'] as num?)?.toInt() ?? 0,
+        goruldu: (j['goruldu'] as num?)?.toInt() ?? 0,
+        guvende: (j['guvende'] as num?)?.toInt() ?? 0,
+        yardim: (j['yardim'] as num?)?.toInt() ?? 0,
+        yanitsiz: (j['yanitsiz'] as num?)?.toInt() ?? 0,
+        ortalamaYanitSn: (j['ortalama_yanit_sn'] as num?)?.toInt(),
+        daireler: ((j['daireler'] as List?) ?? const [])
+            .whereType<Map>()
+            .map((m) => PanikDurumDaire.fromJson(Map<String, dynamic>.from(m)))
+            .toList(),
+        personel: ((j['personel'] as List?) ?? const [])
+            .whereType<Map>()
+            .map((m) => PanikDurumKisi.fromJson(Map<String, dynamic>.from(m)))
+            .toList(),
       );
 }

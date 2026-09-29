@@ -15,6 +15,63 @@ import UserNotifications
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     kurTeshisKanali(engineBridge.pluginRegistry)
     kurRozetKanali(engineBridge.pluginRegistry)
+    kurAlarmKanali(engineBridge.pluginRegistry)
+  }
+
+  /// (P249 §1c) SOS ALARM KOPRUSU — Android'deki `site.yonetio.app/alarm`
+  /// ile AYNI ad ve yontemler. iOS'ta ses bildirimle bir kez calar (30 sn
+  /// sinir, dongu YOK); "Gordum"/"Guvendeyim" denince o alarmin teslim
+  /// edilmis bildirimleri merkezden KALDIRILIR.
+  ///
+  /// iOS'ta tam ekran yoktur (CallKit disinda) ve Rahatsiz Etmeyin'i yalniz
+  /// Critical Alerts deler — `izinDurumu` bunu Dart'a olduğu gibi bildirir.
+  private func kurAlarmKanali(_ registry: FlutterPluginRegistry) {
+    guard let registrar = registry.registrar(forPlugin: "YonetioAlarm") else { return }
+    let kanal = FlutterMethodChannel(
+      name: "site.yonetio.app/alarm",
+      binaryMessenger: registrar.messenger()
+    )
+    kanal.setMethodCallHandler { cagri, sonuc in
+      switch cagri.method {
+      case "sustur":
+        let argumanlar = cagri.arguments as? [String: Any]
+        guard let panikId = argumanlar?["panikId"] as? String, !panikId.isEmpty else {
+          sonuc(nil)
+          return
+        }
+        let merkez = UNUserNotificationCenter.current()
+        merkez.getDeliveredNotifications { teslimler in
+          let kimlikler = teslimler
+            .filter { ($0.request.content.userInfo["panik_id"] as? String) == panikId }
+            .map { $0.request.identifier }
+          merkez.removeDeliveredNotifications(withIdentifiers: kimlikler)
+          DispatchQueue.main.async { sonuc(nil) }
+        }
+      case "acilisAlarmi":
+        // iOS'ta dokunus FCM `getInitialMessage` ile gelir; ayri iz yok.
+        sonuc(nil)
+      case "izinDurumu":
+        UNUserNotificationCenter.current().getNotificationSettings { ayar in
+          var kritik = false
+          if #available(iOS 12.0, *) {
+            kritik = ayar.criticalAlertSetting == .enabled
+          }
+          var zamanHassas = false
+          if #available(iOS 15.0, *) {
+            zamanHassas = ayar.timeSensitiveSetting == .enabled
+          }
+          let durum: [String: Any] = [
+            "platform": "ios",
+            "bildirimAcik": ayar.authorizationStatus == .authorized,
+            "kritikUyari": kritik,
+            "zamanHassas": zamanHassas,
+          ]
+          DispatchQueue.main.async { sonuc(durum) }
+        }
+      default:
+        sonuc(FlutterMethodNotImplemented)
+      }
+    }
   }
 
   /// (P247 §5) UYGULAMA SIMGESI ROZETI — okunmamis bildirim sayisi.
