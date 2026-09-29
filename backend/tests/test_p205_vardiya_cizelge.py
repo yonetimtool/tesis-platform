@@ -223,13 +223,20 @@ def test_DUZENLEME_DENETIME_YAZILIR(client, world, duzen, owner_conn):
     plan_id = _ata(client, h, duzen, "gunduz").json()["id"]
     client.patch(f"/vardiya-plani/{plan_id}", headers=h,
                  json={"baslangic_saat": "09:00"})
+    # KENDI SATIRI KIMLIGIYLE: eylem + islem + kaynak. "Kaynagin en son
+    # denetim satiri" KARARSIZDI — genel denetim ara katmani ayni istek icin
+    # AYRI bir islemde `islem`siz bir satir yaziyor ve iki satirin zaman
+    # damgasi yaristiginda test o satiri okuyup KeyError veriyordu (tam
+    # takimda 1/1, tek basina 0/4). Kararsiz test bir gun gercek bir
+    # kirmiziyi gizler.
     with owner_conn.cursor() as cur:
         cur.execute(
             "SELECT meta FROM audit_log WHERE tenant_id=%s AND resource_id=%s "
-            "ORDER BY ts DESC LIMIT 1",
+            "AND action='vardiya_plan_update' AND meta->>'islem'='guncelle'",
             (world["a"], plan_id))
-        meta = cur.fetchone()[0]
-    assert meta["islem"] == "guncelle"
+        satirlar = cur.fetchall()
+    assert len(satirlar) == 1, f"guncelleme TAM BIR denetim satiri yazmali: {satirlar}"
+    meta = satirlar[0][0]
     # ONCEKI ve YENI birlikte yazilir: "neyin degistigi" sorusunu
     # yanitlamayan bir denetim kaydi hicbir ise yaramaz.
     assert "onceki" in meta and "yeni" in meta
