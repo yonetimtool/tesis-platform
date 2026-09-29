@@ -57,8 +57,10 @@ eksikler: list[str] = []
 
 # ------------------------------------------------ P249 §1 SOS ALICI DENEYIMI
 eksikler += grup("P249 §1 — SOS: iki ekran, Guvendeyim, durum", [
-    ("uc: guvendeyim", "/guvendeyim"),
-    ("uc: yardim", "/yardim"),
+    # Uc `'/panik/$id/$eylem'` kalibiyla kurulur: pakette EYLEM ADI durur
+    # (ilk olcum "/guvendeyim" arayip sahte YOK verdi).
+    ("uc eylemi: guvendeyim", "guvendeyim"),
+    ("uc eylemi: yardim", "yardim"),
     ("uc: durum", "/durum"),
     ("toplu alan", "toplu"),
     ("talimat alani", "talimat"),
