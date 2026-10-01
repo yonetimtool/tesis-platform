@@ -3,7 +3,7 @@
 // ==========================================================================
 // HEPSI ORTAM DEGISKENINDEN OKUNUR; varsayilanlar KANONIK prod adresleridir.
 // Test sunucusu (192.168.1.25) bunlari kendi ortam degiskenleriyle ezer
-// (bkz. infra/.env.test.example). Prod (192.168.1.105) DONDURULMUS.
+// (bkz. infra/.env.test.example). Prod (192.168.20.105) DONDURULMUS.
 
 /** Yoneticinin GIRIS yapacagi calisma alani. Sakine GONDERILMEZ (§6). */
 export const APP_ADRESI =

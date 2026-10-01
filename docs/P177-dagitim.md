@@ -1,7 +1,7 @@
 # P177 — Test sunucusu dağıtım adımları
 
 **Hedef:** `test.yonetio.site` → yeni tanıtım sitesi (`tanitim-web`).
-**Sunucu:** 192.168.1.25 (TEST). **Prod (192.168.1.105) DONDURULMUŞ —
+**Sunucu:** 192.168.1.25 (TEST). **Prod (192.168.20.105) DONDURULMUŞ —
 bu belgedeki hiçbir adım prod'da çalıştırılmaz.**
 
 `app-test.yonetio.site`, `panel-test.yonetio.site` ve

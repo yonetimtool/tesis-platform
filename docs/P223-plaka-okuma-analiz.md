@@ -73,7 +73,7 @@ yazıyorum:
   değil. Günde 200 araç girişi olan bir sitede iş, kapı başına günde
   birkaç yüz kısa OCR çağrısıdır.
 - Her kareyi işleyen naif bir kurulum ise tek kamerada bile bir CPU
-  çekirdeğini doyurur; 4 kamerada mevcut sunucu (192.168.1.105) API +
+  çekirdeğini doyurur; 4 kamerada mevcut sunucu (192.168.20.105) API +
   Postgres + Celery + MinIO ile birlikte **zorlanır**.
 
 **Ölçülmesi gereken, tahmin edilmemesi gereken:** seçilen hattın tek bir

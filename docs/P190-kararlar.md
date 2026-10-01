@@ -144,7 +144,7 @@ senkronu bu tur kapsam dışı (istenirse ayrı iş).
 
 ### Seçenek değerlendirmesi ve KARAR: (c) karma
 - (a) *Yalnız sürekli dönüştürme (RTSP→HLS)*: gerçek canlı ama N kamera ×
-  7/24 ffmpeg = prod (192.168.1.105, tek sunucu; api+worker+db+minio aynı
+  7/24 ffmpeg = prod (192.168.20.105, tek sunucu; api+worker+db+minio aynı
   makinede) için savurgan — kimse izlemezken de CPU yakar.
 - (b) *Yalnız periyodik kare*: ucuz ve ızgara için doğru; ama "tıklayınca
   canlı izle" isteğini karşılamaz.

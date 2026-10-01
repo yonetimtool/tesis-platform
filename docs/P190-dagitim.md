@@ -3,7 +3,7 @@
 Kararlar ve gerekçeler `docs/P190-kararlar.md`. Her bölüm ayrı commit;
 prod dağıtımı + cihaz testi kullanıcıda.
 
-## Dağıtım adımları (prod, 192.168.1.105)
+## Dağıtım adımları (prod, 192.168.20.105)
 
 ```bash
 docker compose -f docker-compose.prod.yml build migrate api admin-web worker
