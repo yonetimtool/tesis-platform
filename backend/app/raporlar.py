@@ -61,6 +61,8 @@ class RaporParam:
     unit_id: str | None = None
     #: Notlar raporu: notu YAZAN kisi.
     olusturan_user_id: str | None = None
+    #: (P252 §3) Maas / mesai giderinin KISISI (maas karti).
+    personel_kayit_id: str | None = None
     #: Notlar raporu: notun ait oldugu BOLUM (varlik tipi — daire, gorev,
     #: talep, icra dosyasi...). Brief'te "Bolum*".
     bolum: str | None = None

@@ -443,6 +443,7 @@ GET	/personel-kayitlari	zorunlu	tesis	-	-	-	email,iban,tc,telefon	-		-
 POST	/personel-kayitlari	zorunlu	tesis	-	-	ozel	email,iban,tc,telefon	-		dar
 DELETE	/personel-kayitlari/{personel_id}	zorunlu	tesis	rol	-	ozel	-	-		-
 PATCH	/personel-kayitlari/{personel_id}	zorunlu	tesis	rol	-	ozel	email,iban,tc,telefon	-		dar
+GET	/personel/detay	zorunlu	tesis	-	-	-	iban	-		-
 GET	/platform/gonderim-gunlugu	zorunlu	tesis	-	-	-	-	-		dar
 POST	/public/tanitim-iletisim	kamu	platform	-	-	haric	-	-	tanitim sitesi formu; hiz sinirli, yalniz yazma	dar
 POST	/push/cihaz-temizle	zorunlu	tesis	-	-	ozel	-	-		-

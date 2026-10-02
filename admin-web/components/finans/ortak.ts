@@ -44,6 +44,17 @@ export function useFirmalar() {
   return (data?.items ?? []).map((f) => ({ id: f.id, ad: f.ad }));
 }
 
+/** (P252 §3) Personel (maas kartlari) — rapor kisi suzgeci. Yalniz yonetim
+ *  okur; yetkisizde (denetci) liste bos doner ve alan "hepsi" kalir. */
+export function usePersoneller() {
+  const { data } = useSWR<Sayfali<{ id: string; ad: string }>>(
+    "/api/tanimlar/personel-kayitlari?limit=200",
+    jsonFetcher,
+    { revalidateOnFocus: false },
+  );
+  return (data?.items ?? []).map((p) => ({ id: p.id, ad: p.ad }));
+}
+
 /** Gelir/gider kalemleri — "Borclandirma Turu" ve "Gider Turu" ayni kaynak. */
 export function useGelirGiderTanimlari() {
   const { data } = useSWR<Sayfali<{ id: string; ad: string }>>(

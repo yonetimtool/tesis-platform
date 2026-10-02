@@ -67,6 +67,22 @@ class _Tel implements HttpClientAdapter {
             },
           ],
         },
+      ('GET', '/personel/detay') => {
+          'kart_id': 'k1', 'user_id': 'g1', 'ad': 'Ali Guvenlik', 'rol': 'security',
+          'calisma': {
+            'gorev': 'Güvenlik', 'maas_kurus': 2500000, 'odeme_gunu': 5,
+            'kasa_id': 'kasa1', 'kasa_ad': 'Merkez Kasa', 'giris_tarihi': '2026-09-01',
+            'aktif': true,
+          },
+          'odemeler': [
+            {'id': 'h1', 'tarih': '2026-10-05', 'donem': '2026-10', 'tutar_kurus': 2500000,
+             'tur': 'maas', 'durum': 'odendi', 'kasa_ad': 'Merkez Kasa'},
+            {'id': 'h2', 'tarih': '2026-09-30', 'donem': null, 'tutar_kurus': 225000,
+             'tur': 'mesai', 'durum': 'onay_bekliyor', 'kasa_ad': 'Merkez Kasa'},
+          ],
+          'bu_ay': {'vardiya_sayisi': 12, 'vardiya_saat': 144, 'devriye_tur': 30, 'okutma_sayisi': 240},
+          'yil_odenen_kurus': 2500000,
+        },
       ('GET', '/me/calisma') => {
           'calisma': {
             'gorev': 'Güvenlik', 'maas_kurus': 2500000, 'odeme_gunu': 5,
@@ -226,5 +242,26 @@ void main() {
     expect(find.text('₺25.000,00'), findsNWidgets(2));
     expect(find.text('Her ayın 5. günü'), findsOneWidget);
     expect(find.text('Maaş'), findsOneWidget);
+  });
+
+  testWidgets('YONETICI: satıra dokunma DETAYI açar (çalışma, bu ay, ödemeler)',
+      (tester) async {
+    final tel = await _sur(tester, 'yonetici', const StaffScreen());
+    await tester.tap(find.text('Ali Guvenlik'));
+    await tester.pumpAndSettle();
+    expect(tel.istekler.any((i) => i.yol == '/personel/detay'), isTrue);
+    expect(find.text('₺25.000,00'), findsWidgets);
+    expect(find.text('Merkez Kasa'), findsOneWidget);
+    expect(find.text('12 vardiya · 144 saat'), findsOneWidget);
+    expect(find.text('30 devriye turu · 240 okutma'), findsOneWidget);
+    expect(find.text('Maaş · 2026-10'), findsOneWidget);
+    expect(find.textContaining('Onay bekliyor'), findsOneWidget);
+  });
+
+  testWidgets('AMIR: satıra dokunma detaya GİTMEZ', (tester) async {
+    final tel = await _sur(tester, 'guvenlik_amiri', const StaffScreen());
+    await tester.tap(find.text('Ali Guvenlik'));
+    await tester.pumpAndSettle();
+    expect(tel.istekler.any((i) => i.yol == '/personel/detay'), isFalse);
   });
 }

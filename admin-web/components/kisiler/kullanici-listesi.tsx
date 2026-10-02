@@ -183,6 +183,8 @@ export interface KullaniciListesiOzellikleri {
   ekEylem?: (u: UserRow) => React.ReactNode;
   /** (P252 §1) Ekleme formunda "Calisma bilgileri" bolumu (Personel sekmesi). */
   calismaBolumu?: boolean;
+  /** (P252 §3) Ad hucresinin baglantisi (Personel: kisi detayi). */
+  adBaglantisi?: (u: UserRow) => string | null;
 }
 
 export default function KullaniciListesi({
@@ -191,6 +193,7 @@ export default function KullaniciListesi({
   aciklama,
   ekEylem,
   calismaBolumu = false,
+  adBaglantisi,
 }: KullaniciListesiOzellikleri = {}) {
   const t = useT();
   const kapsamda = (r: string) => !kapsam || kapsam.includes(r as UserRole);
@@ -579,7 +582,15 @@ export default function KullaniciListesi({
       {
         id: "ad", kartRolu: "baslik",
         baslik: t("ortakAd"),
-        hucre: (u) => u.ad,
+        // (P252 §3) Personel sekmesinde ad KISI DETAYINI acar.
+        hucre: (u) => {
+          const yol = adBaglantisi?.(u);
+          return yol ? (
+            <Link href={yol} className="underline" data-test={`kisi-detay-${u.id}`}>{u.ad}</Link>
+          ) : (
+            u.ad
+          );
+        },
         // Siralama SUNUCU TARAFLI kipte istemcide yapilmaz; uc bugun
         // `sort` parametresi almiyor, bu yuzden kolonlar siralanabilir
         // ISARETLENMEDI. Yanlis calisan bir ok gostermektense hic
@@ -637,7 +648,7 @@ export default function KullaniciListesi({
     // `t` disindaki bagimliliklar kararli; `openEdit`/`setActive` her
     // cizimde yeniden kurulsa da kolon tanimi yalniz metin tasiyor.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [t, ekEylem],
+    [t, ekEylem, adBaglantisi],
   );
 
   return (

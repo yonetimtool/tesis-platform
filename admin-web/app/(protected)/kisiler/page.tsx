@@ -29,6 +29,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { CalismaEylemi } from "@/components/kisiler/calisma-bilgileri";
+import { personelDetayYolu } from "@/lib/personel";
 import DavetListesi from "@/components/kisiler/davet-listesi";
 import KullaniciListesi from "@/components/kisiler/kullanici-listesi";
 import SakinListesi from "@/components/kisiler/sakin-listesi";
@@ -109,6 +110,7 @@ export default function KisilerPage() {
                   // (P252 §1) Ekleme formunda "Calisma bilgileri"; mevcut
                   // personelde satirdaki pencere (ayni maas karti).
                   calismaBolumu
+                  adBaglantisi={(u) => personelDetayYolu({ kisi: u.id })}
                   ekEylem={(u) => <CalismaEylemi kullanici={u} />}
                 />
               </GomuluSayfa>

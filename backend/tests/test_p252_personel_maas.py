@@ -295,3 +295,100 @@ def test_maas_GUNLUGU_otomasyon_gunlugunde_OKUNUR(client, world):
     assert r.json()["items"] and r.json()["items"][0]["tur"] == "maas"
     son = client.get("/otomasyon/son-calismalar", headers=y).json()["items"]
     assert any(s["kural"] == "maas" for s in son)
+
+
+# ------------------------------------------------------------------ §3
+def test_personel_DETAYI_yonetime_acik_amire_KAPALI(client, world, owner_conn):
+    """(P252 §3) Detay: calisma bilgileri (kasa adiyla), odeme gecmisi
+    (donem, tutar, kasa, tur, durum), bu ay ozeti, bu yil odenen. Hesap ya
+    da kart kimligiyle ayni kisi. Amir 403."""
+    y = _h(client, world["slug_a"], world["yonetici_a"])
+    kasa = _kasa(client, y, ad="Merkez Kasa P252")
+    u, _ = _personel(client, y, kasa_id=kasa, maas_kurus=2_500_000)
+    kart = _kart(client, y, u["id"])
+    client.post("/otomasyon/maaslar/calistir", headers=y)
+    d = client.get("/personel/detay", headers=y, params={"user_id": u["id"]})
+    assert d.status_code == 200, d.text
+    d = d.json()
+    assert d["kart_id"] == kart["id"] and d["user_id"] == u["id"]
+    assert d["calisma"]["maas_kurus"] == 2_500_000 and d["calisma"]["kasa_ad"] == "Merkez Kasa P252"
+    (o,) = d["odemeler"]
+    assert o["tur"] == "maas" and o["kasa_ad"] == "Merkez Kasa P252" and o["durum"] == "odendi"
+    assert o["donem"] == maas.donem(date.today()) and o["tutar_kurus"] == 2_500_000
+    assert d["yil_odenen_kurus"] == 2_500_000
+    assert set(d["bu_ay"]) == {"vardiya_sayisi", "vardiya_saat", "devriye_tur", "okutma_sayisi"}
+    # Ayni kisi kart kimligiyle.
+    assert client.get("/personel/detay", headers=y, params={"kart_id": kart["id"]}).json()["ad"] == d["ad"]
+    a = _h(client, world["slug_a"], world["amir_a"])
+    assert client.get("/personel/detay", headers=a, params={"user_id": u["id"]}).status_code == 403
+    assert client.get("/personel/detay", headers=y).status_code == 422
+    assert client.get("/personel/detay", headers=y,
+                      params={"kart_id": str(uuid.uuid4())}).status_code == 404
+
+
+def test_hareket_satiri_KISIYE_bagli_ve_finans_ozetinde_personel_gideri(client, world):
+    """(P252 §3) Kasa/finans hareketinde maas satiri kisinin adini ve kart
+    kimligini tasir (detaya baglanir); finans ozeti bu ayin personel
+    giderini AYRI satir verir."""
+    y = _h(client, world["slug_a"], world["yonetici_a"])
+    once = client.get("/finans/ozet", headers=y).json()["personel_gideri_ay_kurus"]
+    kasa = _kasa(client, y)
+    u, _ = _personel(client, y, kasa_id=kasa, maas_kurus=1_111_100)
+    kart = _kart(client, y, u["id"])
+    client.post("/otomasyon/maaslar/calistir", headers=y)
+    satirlar = client.get("/finans/hareketler", headers=y,
+                          params={"tip": "gider", "kasa_id": kasa}).json()["items"]
+    (s,) = [x for x in satirlar if x["personel_kayit_id"] == kart["id"]]
+    assert s["personel_ad"] == kart["ad"] and s["aciklama"].startswith(kart["ad"])
+    sonra = client.get("/finans/ozet", headers=y).json()["personel_gideri_ay_kurus"]
+    assert sonra - once == 1_111_100
+
+
+def test_SEFFAFLIKTA_kisi_maasi_YOK_tek_satir_personel_giderleri(client, world):
+    """(P252 §3, KVKK) Sakinin gordugu kirilimlarda "Personel maasi" ve
+    "Fazla mesai" ayri satir OLMAZ; tek satir "Personel giderleri".
+    Yonetimin raporu ise kalemleri ayri okuyabilir."""
+    y = _h(client, world["slug_a"], world["yonetici_a"])
+    s = _h(client, world["slug_a"], world["resident_a"])
+    kasa = _kasa(client, y)
+    _personel(client, y, kasa_id=kasa, maas_kurus=2_000_000)
+    client.post("/otomasyon/maaslar/calistir", headers=y)
+    ay = maas.donem(date.today())
+    pano = client.get(f"/transparency/{ay}", headers=y).json()
+    adlar = {k["ad"] for k in pano["gider_dagilimi"]}
+    ozet = client.get("/reports/financial-summary", headers=s, params={"donem": ay}).json()
+    adlar |= {k["ad"] for k in ozet["en_yuksek_giderler"]}
+    assert maas.PERSONEL_GIDERLERI_ADI in adlar
+    assert maas.SISTEM_KALEM_ADI[maas.KOD_MAAS] not in adlar
+    assert maas.SISTEM_KALEM_ADI[maas.KOD_MESAI] not in adlar
+
+
+def test_rapor_KALEM_ve_KISI_suzgeci_UYGULANIR(client, world):
+    """(P252 §3) "Finansal Hareketler" raporu: kalem suzgeci modalda vardi
+    ama sorguda YOKTU; kisi suzgeci yeni. Ikisi de satirlari daraltir."""
+    y = _h(client, world["slug_a"], world["yonetici_a"])
+    kasa = _kasa(client, y)
+    u1, _ = _personel(client, y, kasa_id=kasa, maas_kurus=1_234_500)
+    u2, _ = _personel(client, y, kasa_id=kasa, maas_kurus=2_345_600)
+    k1 = _kart(client, y, u1["id"])
+    client.post("/otomasyon/maaslar/calistir", headers=y)
+    bugun = date.today().isoformat()
+    r = client.post("/raporlar/finansal_hareketler?bicim=tablo", headers=y,
+                    json={"baslangic": bugun, "bitis": bugun, "personel_kayit_id": k1["id"]})
+    assert r.status_code == 200, r.text
+    tutarlar = {s["tutar_kurus"] for s in r.json()["satirlar"]}
+    assert tutarlar == {1_234_500}
+    tanimlar = client.get("/gelir-gider-tanimlari", headers=y, params={"limit": 200}).json()["items"]
+    maas_kalemi = next(t["id"] for t in tanimlar if t["ad"] == maas.SISTEM_KALEM_ADI[maas.KOD_MAAS])
+    baska = client.post("/gelir-gider-tanimlari", headers=y,
+                        json={"ad": f"P252 baska {uuid.uuid4().hex[:5]}", "tip": "gider"}).json()["id"]
+
+    def satirlar(govde):
+        r = client.post("/raporlar/finansal_hareketler?bicim=tablo", headers=y,
+                        json={"baslangic": bugun, "bitis": bugun, **govde})
+        assert r.status_code == 200, r.text
+        return {s["tutar_kurus"] for s in r.json()["satirlar"]}
+
+    assert {1_234_500, 2_345_600} <= satirlar({"gelir_gider_tanim_id": maas_kalemi})
+    assert not {1_234_500, 2_345_600} & satirlar({"gelir_gider_tanim_id": baska}), \
+        "kalem suzgeci uygulanmiyor"

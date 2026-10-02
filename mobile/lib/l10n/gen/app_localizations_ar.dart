@@ -8997,4 +8997,29 @@ class AppLocalizationsAr extends AppLocalizations {
   String otoMaasOnaylandi(String adet) {
     return 'تمت الموافقة على $adet من الرواتب.';
   }
+
+  @override
+  String get pdBuAy => 'هذا الشهر';
+
+  @override
+  String pdVardiya(String adet, String saat) {
+    return '$adet نوبات · $saat ساعة';
+  }
+
+  @override
+  String pdDevriye(String tur, String okutma) {
+    return '$tur جولات · $okutma مسح';
+  }
+
+  @override
+  String get pdYilOdenen => 'المدفوع هذا العام';
+
+  @override
+  String get pdOdemeGecmisi => 'سجل المدفوعات';
+
+  @override
+  String get pdKartYok => 'لا بيانات عمل (بلا راتب: متعاقد أو شركة خارجية).';
+
+  @override
+  String get pdCikis => 'تاريخ المغادرة';
 }

@@ -42,6 +42,8 @@ interface FinansOzet {
   borc_kurus: number;
   onay_bekleyen_adet: number;
   odenmis_fatura_ay_kurus: number;
+  /** (P252 §3) Bu ayin personel gideri (maas + fazla mesai). */
+  personel_gideri_ay_kurus?: number;
 }
 
 interface KasaBakiye {
@@ -86,6 +88,9 @@ const KARTLAR: {
     para: false, deger: (o) => o.onay_bekleyen_adet, href: "/finans" },
   { anahtar: "panoFinansOdenmisFatura", yol: "M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6",
     para: true, deger: (o) => o.odenmis_fatura_ay_kurus, href: "/finans?tip=gider" },
+  // (P252 §3) Personel giderleri ayri satir.
+  { anahtar: "finansOzetPersonel", yol: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z",
+    para: true, deger: (o) => o.personel_gideri_ay_kurus, href: "/finans/giderler" },
 ];
 
 /** Excel simgesi — YESIL TABLO (brief: "taninabilir ikonlar"). */

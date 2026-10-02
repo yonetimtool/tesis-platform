@@ -441,6 +441,7 @@ GET    /personel-kayitlari                                  IZIN   IZIN   RED   
 POST   /personel-kayitlari                                  IZIN   IZIN   RED    RED    RED    RED    RED   
 DELETE /personel-kayitlari/{id}                             IZIN   IZIN   RED    RED    RED    RED    RED   
 PATCH  /personel-kayitlari/{id}                             IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /personel/detay                                      IZIN   IZIN   RED    RED    RED    RED    RED   
 GET    /platform/gonderim-gunlugu                           IZIN   RED    RED    RED    RED    RED    RED   
 POST   /public/tanitim-iletisim                             IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 POST   /push/cihaz-temizle                                  IZIN   RED    RED    RED    RED    RED    RED   

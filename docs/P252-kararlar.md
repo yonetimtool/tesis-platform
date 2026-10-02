@@ -189,6 +189,43 @@
   Kalem adı yönetici tarafından değiştirilse bile birleştirme sistem
   koduna göre yapılır.
 
+#### §3 uygulama notları
+
+* **Detay ucu** `GET /personel/detay?user_id|kart_id`, yalnız admin ve
+  yönetici; amir 403 alır. Döndürdükleri:
+  * çalışma bilgileri, kasa adıyla;
+  * ödeme geçmişi: dönem, tarih, tutar, kasa, maaş / mesai / diğer, durum;
+  * bu ay: vardiya sayısı ve saati (plan satırlarından), devriye turu
+    (okutulan ayrı pencere) ve okutma sayısı;
+  * bu yıl ödenen (yalnız `odendi`).
+* **Web:**
+  * Sayfa `/kisiler/personel?kisi=` ya da `?kart=`; rota kapısı admin ve
+    yönetici. Adres tek yerden üretilir (`lib/personel.ts`).
+  * Kişiler › Personel satırında ad bağlantı.
+  * Kasa / finans hareketlerinde maaş satırının açıklaması kişi detayına
+    bağlantı (`personel_kayit_id`, `personel_ad`).
+  * Finans sayfası ve pano özetinde "Personel giderleri (bu ay)" kartı
+    (`personel_gideri_ay_kurus`). Değer şeffaflıkla aynı kırılımdan okunur.
+  * Raporlar › Finansal Hareketler'e "Personel" süzgeci eklendi.
+* **Yakalanan hata — süzgeç uygulanmıyordu:**
+  * Aynı raporun **kalem süzgeci** katalogda ve modalda vardı, sorguda yoktu.
+  * Sonuç: "Personel maaşı" seçen kullanıcı bütün hareketleri süzülmüş
+    sanarak alıyordu.
+  * İki süzgeç de uygulanır ve testle kilitlidir.
+* **Şeffaflık ve hızlı finansal özet** (sakine açık): sistem kodlu maaş ve
+  mesai kalemleri tek satırda "Personel giderleri" olur. Yönetimin rapor
+  kırılımı kalemleri ayrı gösterir (`personel_birlesik` yalnız
+  `gider_kategori_kirilimi`nde varsayılan açık).
+* **Mobil:**
+  * Personel satırına dokununca detay açılır (yalnız yönetim; amire
+    bağlantı yok, testli). Detaydan çalışma bilgileri düzenlenir.
+  * **İstisna (gerekçeli):**
+    * Mobilde kasa hareketi listesi ve `/finans/ozet` ekranı bu turdan önce
+      de yoktu. Bu yüzden hareket satırındaki kişi bağlantısı ve "Personel
+      giderleri" kartı mobilde yapılmadı.
+    * Mobil finans özeti `/reports/financial-summary`'yi okur;
+      birleştirilmiş "Personel giderleri" satırı oraya kendiliğinden düşer.
+
 ### §4 — Açık işler
 
 `docs/acik-is-exhaustive-deps-uyarilari.md` ve

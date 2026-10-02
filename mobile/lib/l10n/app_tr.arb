@@ -4434,5 +4434,32 @@
         "type": "String"
       }
     }
-  }
+  },
+  "pdBuAy": "Bu ay",
+  "pdVardiya": "{adet} vardiya · {saat} saat",
+  "@pdVardiya": {
+    "placeholders": {
+      "adet": {
+        "type": "String"
+      },
+      "saat": {
+        "type": "String"
+      }
+    }
+  },
+  "pdDevriye": "{tur} devriye turu · {okutma} okutma",
+  "@pdDevriye": {
+    "placeholders": {
+      "tur": {
+        "type": "String"
+      },
+      "okutma": {
+        "type": "String"
+      }
+    }
+  },
+  "pdYilOdenen": "Bu yıl ödenen",
+  "pdOdemeGecmisi": "Ödeme geçmişi",
+  "pdKartYok": "Çalışma bilgisi girilmemiş (maaşsız: sözleşmeli ya da dış firma).",
+  "pdCikis": "İşten çıkış"
 }

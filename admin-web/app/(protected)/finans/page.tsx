@@ -72,6 +72,8 @@ interface Ozet {
   acik_borc_kurus: number;
   kasa_toplam_kurus: number;
   icra_acik_dosya: number;
+  /** (P252 §3) Bu ayin maas + fazla mesai gideri (gerceklesmis). */
+  personel_gideri_ay_kurus?: number;
 }
 
 const TIPLER = ["tahsilat", "gider", "gelir", "virman", "iade", "acilis"] as const;
@@ -291,6 +293,15 @@ export default function FinansPage() {
             durum={ozet.icra_acik_dosya > 0 ? "kritik" : "olumlu"}
             ikon={<FinansIkonu yol={IKON_DOSYA} />}
             href="/icra"
+          />
+          {/* (P252 §3) Personel giderleri AYRI satir — gider toplaminin
+              "ne kadari personel" sorusunun cevabi. */}
+          <OzetKarti
+            etiket={t("finansOzetPersonel")}
+            deger={kurusToTL(ozet.personel_gideri_ay_kurus ?? 0)}
+            durum="notr"
+            ikon={<FinansIkonu yol={IKON_FATURA} />}
+            href="/finans/giderler"
           />
         </OzetSeridi>
       ) : null}

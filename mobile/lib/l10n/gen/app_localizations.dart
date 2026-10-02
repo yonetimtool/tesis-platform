@@ -15544,6 +15544,48 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'{adet} maaş onaylandı.'**
   String otoMaasOnaylandi(String adet);
+
+  /// No description provided for @pdBuAy.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu ay'**
+  String get pdBuAy;
+
+  /// No description provided for @pdVardiya.
+  ///
+  /// In tr, this message translates to:
+  /// **'{adet} vardiya · {saat} saat'**
+  String pdVardiya(String adet, String saat);
+
+  /// No description provided for @pdDevriye.
+  ///
+  /// In tr, this message translates to:
+  /// **'{tur} devriye turu · {okutma} okutma'**
+  String pdDevriye(String tur, String okutma);
+
+  /// No description provided for @pdYilOdenen.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu yıl ödenen'**
+  String get pdYilOdenen;
+
+  /// No description provided for @pdOdemeGecmisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ödeme geçmişi'**
+  String get pdOdemeGecmisi;
+
+  /// No description provided for @pdKartYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çalışma bilgisi girilmemiş (maaşsız: sözleşmeli ya da dış firma).'**
+  String get pdKartYok;
+
+  /// No description provided for @pdCikis.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşten çıkış'**
+  String get pdCikis;
 }
 
 class _AppLocalizationsDelegate

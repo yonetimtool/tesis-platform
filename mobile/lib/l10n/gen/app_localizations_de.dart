@@ -8971,4 +8971,30 @@ class AppLocalizationsDe extends AppLocalizations {
   String otoMaasOnaylandi(String adet) {
     return '$adet Gehälter freigegeben.';
   }
+
+  @override
+  String get pdBuAy => 'Dieser Monat';
+
+  @override
+  String pdVardiya(String adet, String saat) {
+    return '$adet Schichten · $saat Std.';
+  }
+
+  @override
+  String pdDevriye(String tur, String okutma) {
+    return '$tur Rundgänge · $okutma Scans';
+  }
+
+  @override
+  String get pdYilOdenen => 'Dieses Jahr gezahlt';
+
+  @override
+  String get pdOdemeGecmisi => 'Zahlungsverlauf';
+
+  @override
+  String get pdKartYok =>
+      'Keine Beschäftigungsdaten (ohne Gehalt: Vertrag oder Fremdfirma).';
+
+  @override
+  String get pdCikis => 'Austritt';
 }

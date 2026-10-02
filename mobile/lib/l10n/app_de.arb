@@ -2996,5 +2996,12 @@
   "otoMaasOnayAlt": "Teilmonatsbeträge sind anteilig berechnet; vor der Freigabe korrigierbar.",
   "otoMaasTumunuOnayla": "Alle freigeben ({adet})",
   "otoMaasOnayla": "Freigeben",
-  "otoMaasOnaylandi": "{adet} Gehälter freigegeben."
+  "otoMaasOnaylandi": "{adet} Gehälter freigegeben.",
+  "pdBuAy": "Dieser Monat",
+  "pdVardiya": "{adet} Schichten · {saat} Std.",
+  "pdDevriye": "{tur} Rundgänge · {okutma} Scans",
+  "pdYilOdenen": "Dieses Jahr gezahlt",
+  "pdOdemeGecmisi": "Zahlungsverlauf",
+  "pdKartYok": "Keine Beschäftigungsdaten (ohne Gehalt: Vertrag oder Fremdfirma).",
+  "pdCikis": "Austritt"
 }

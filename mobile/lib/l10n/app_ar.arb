@@ -2996,5 +2996,12 @@
   "otoMaasOnayAlt": "مبالغ الشهر الجزئي محسوبة بالتناسب؛ يمكنك تصحيحها قبل الموافقة.",
   "otoMaasTumunuOnayla": "الموافقة على الكل ({adet})",
   "otoMaasOnayla": "موافقة",
-  "otoMaasOnaylandi": "تمت الموافقة على {adet} من الرواتب."
+  "otoMaasOnaylandi": "تمت الموافقة على {adet} من الرواتب.",
+  "pdBuAy": "هذا الشهر",
+  "pdVardiya": "{adet} نوبات · {saat} ساعة",
+  "pdDevriye": "{tur} جولات · {okutma} مسح",
+  "pdYilOdenen": "المدفوع هذا العام",
+  "pdOdemeGecmisi": "سجل المدفوعات",
+  "pdKartYok": "لا بيانات عمل (بلا راتب: متعاقد أو شركة خارجية).",
+  "pdCikis": "تاريخ المغادرة"
 }

@@ -187,7 +187,8 @@ export function CalismaBilgileriPenceresi({
   acik,
   onKapat,
 }: {
-  kullanici: UserRow;
+  /** Pencere yalniz kimlik, ad, e-posta ve rolu okur (detay sayfasi da acar). */
+  kullanici: Pick<UserRow, "id" | "ad" | "email" | "role">;
   acik: boolean;
   onKapat: () => void;
 }) {

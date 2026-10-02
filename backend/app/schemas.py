@@ -7577,6 +7577,10 @@ class HareketOut(BaseModel):
     #: (E2E 2026-09, FINANS-21) Daire etiketi — tahsilat listesinde kimin
     #: odedigi gorunmuyordu.
     unit_no: str | None = None
+    #: (P252 §3) Maas / fazla mesai giderinin KISISI (maas karti) — satirdaki
+    #: ad kisi detayina baglanir. Hesapsiz personelde `user_id` bos olur.
+    personel_kayit_id: uuid.UUID | None = None
+    personel_ad: str | None = None
 
 
 class HareketListResponse(BaseModel):
@@ -7832,6 +7836,10 @@ class FinansOzet(BaseModel):
     onay_bekleyen_adet: int = 0
     #: (P167 §2.2) Bu ay ODENMIS gider toplami ("Odenmis Faturalar").
     odenmis_fatura_ay_kurus: int = 0
+    #: (P252 §3) Bu ayin PERSONEL GIDERI (maas + fazla mesai, gerceklesmis).
+    #: Odenmis faturalarin ICINDE de sayilir; ayri satir "bunun ne kadari
+    #: personel" sorusunu yanitlar.
+    personel_gideri_ay_kurus: int = 0
 
 
 # ================== (P167 Asama 2) OZET SAYFASI ============================= #
@@ -8064,6 +8072,8 @@ class RaporParametre(BaseModel):
     user_id: uuid.UUID | None = None
     unit_id: uuid.UUID | None = None
     olusturan_user_id: uuid.UUID | None = None
+    #: (P252 §3) Kisi suzgeci — maas ve fazla mesai giderleri (maas karti).
+    personel_kayit_id: uuid.UUID | None = None
     bolum: str | None = Field(None, max_length=40)
     ekstre_turu: str | None = Field(None, max_length=20)
     evrak_tipi: str | None = Field(None, max_length=20)

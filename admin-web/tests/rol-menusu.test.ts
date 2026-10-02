@@ -128,6 +128,8 @@ const BIRINCIL_UC: Record<string, string> = {
   "/devriye": "GET /patrol-windows",
   "/goruntuleme-izni": "POST /unit-access-request",
   "/finans/maas-kartlari": "GET /personel-kayitlari",
+  // (P252 §3) Kisi detayi — ucret ve odeme gecmisi.
+  "/kisiler/personel": "GET /personel/detay",
   // (P220 §4) Sakinler sayfasinin BIRINCIL ucu — `/users` DEGIL.
   // Sayfa acilinca ana listeyi getiren cagri budur ve rol kapisi
   // sunucudaki `_YONETIM` ile ayni.

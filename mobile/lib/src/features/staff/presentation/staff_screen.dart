@@ -16,6 +16,7 @@ import '../../tasks/presentation/task_complete_controller.dart'
     show imagePickerProvider;
 import '../data/staff_api.dart';
 import 'calisma_bilgileri.dart';
+import 'personel_detay_screen.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/ui/gorsel_cozme.dart';
 import '../../../core/ui/merkez_diyalog.dart';
@@ -126,6 +127,13 @@ class _StaffTile extends ConsumerWidget {
         ),
         title: Text(member.ad),
         subtitle: Text(roleLabel),
+        // (P252 §3) Satira dokunma KISI DETAYINI acar — yalniz yonetim
+        // (ucret ve odeme gecmisi). Amire dokunma bagli degil.
+        onTap: yonetim
+            ? () => Navigator.of(context).push(MaterialPageRoute<void>(
+                  builder: (_) => PersonelDetayScreen(kisi: member),
+                ))
+            : null,
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

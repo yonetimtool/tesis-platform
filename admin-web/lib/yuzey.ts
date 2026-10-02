@@ -141,6 +141,8 @@ export const TESIS_ROTALARI = [
   "/devriye",
   "/goruntuleme-izni",
   "/finans/maas-kartlari",
+  // (P252 §3) Personel detayi (calisma, odeme gecmisi, bu ay ozeti).
+  "/kisiler/personel",
   // (P220 §4) SAKINLER — TESIS rotasi, `/users` gibi.
   //
   // Bir tesisin daire sakinleri listesi; platformlar-arasi bir gorunum
@@ -477,6 +479,8 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   // (P251 §8) `unit_access.py` _REQUESTER = admin, yonetici.
   "/goruntuleme-izni": ["admin", "yonetici"],
   "/finans/maas-kartlari": ["admin", "yonetici"],
+  // (P252 §3) Ucret ve odeme gecmisi — yalniz yonetim (sunucu da 403).
+  "/kisiler/personel": ["admin", "yonetici"],
   // Sunucudaki `_YONETIM` ile AYNI kume (`GET /residents`). Ayrisirlarsa
   // ya yetkisiz kullaniciya menude gorunen bir sayfa gosterilir ya da
   // yetkili kullanicidan gizlenir.

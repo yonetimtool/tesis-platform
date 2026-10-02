@@ -35,6 +35,7 @@ from ..models import (
     FinansalHareket,
     IcraDosyasi,
     Kasa,
+    PersonelKayit,
     Unit,
 )
 from ..schemas import (
@@ -148,10 +149,17 @@ async def _adlarla(
             select(AppUser.id, AppUser.ad).where(AppUser.id.in_(u_idler))
         )).all()
     ) if u_idler else {}
+    p_idler = {k.personel_kayit_id for k in kayitlar if k.personel_kayit_id}
+    p_ad = dict(
+        (await db.execute(
+            select(PersonelKayit.id, PersonelKayit.ad).where(PersonelKayit.id.in_(p_idler))
+        )).all()
+    ) if p_idler else {}
     return [
         HareketOut.model_validate(k).model_copy(update={
             "kasa_ad": k_ad.get(k.kasa_id), "user_ad": u_ad.get(k.user_id),
             "unit_no": d_ad.get(k.unit_id), "iptal_edildi": k.id in iptalli,
+            "personel_ad": p_ad.get(k.personel_kayit_id),
         })
         for k in kayitlar
     ]
@@ -1343,4 +1351,5 @@ async def finans_ozet(
         borc_kurus=int(borc),
         onay_bekleyen_adet=int(onay_bekleyen),
         odenmis_fatura_ay_kurus=int(odenmis_fatura_ay),
+        personel_gideri_ay_kurus=await defter.personel_gideri(db, baslangic=ay_basi),
     )

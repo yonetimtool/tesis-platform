@@ -42,6 +42,7 @@ export type AlanTuru =
   | "daire"
   | "tanim"
   | "tanimCoklu"
+  | "personel"
   | "secim";
 
 export interface AlanTanimi {
@@ -72,6 +73,8 @@ export const ALAN_TANIMLARI: Record<string, AlanTanimi> = {
   unit_id: { tur: "daire", etiket: "raporDaire" },
   olusturan_user_id: { tur: "kisi", etiket: "raporOlusturan" },
   gelir_gider_tanim_id: { tur: "tanim", etiket: "raporTanim" },
+  // (P252 §3) Maas / fazla mesai giderinin kisisi (maas karti).
+  personel_kayit_id: { tur: "personel", etiket: "raporPersonel" },
   // BRIEF "Borclandirma Turu 1..5 (bes ayri alan)" diyor — o bir MODAL
   // YERLESIMIDIR; veri bir LISTEDIR. Bes ayri alan adi acmak, altincisi
   // istendiginde sozlesmeyi degistirmek zorunda birakirdi.

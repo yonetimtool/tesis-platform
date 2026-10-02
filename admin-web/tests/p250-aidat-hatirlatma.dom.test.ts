@@ -31,6 +31,11 @@ function taklit() {
     c.push({ url, metot, govde });
     let yanit: unknown = { items: [], meta: { total: 0 } };
     if (url.includes("hatirlatma-ayari")) yanit = AYAR;
+    // (P252 §2) Maas kurali — personelsiz tesis.
+    if (url.includes("maas-ayari")) {
+      yanit = { aktif: true, otomatik_onay: true, gruplar: [], personel_sayisi: 0,
+        aylik_toplam_kurus: 0, onay_bekleyenler: [] };
+    }
     if (url.includes("hatirlatma-epostalari")) {
       yanit = { meta: { total: 1 }, items: [
         { id: "m1", ad: "Ali VELİ", gonderim_zamani: "2026-10-01T10:00:00Z", durum: "geri_dondu" },

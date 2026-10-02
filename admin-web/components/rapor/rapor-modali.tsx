@@ -38,6 +38,7 @@ import {
   useGelirGiderTanimlari,
   useKasalar,
   useKisiler,
+  usePersoneller,
   type Secenek,
 } from "@/components/finans/ortak";
 import { useToast } from "@/components/Toast";
@@ -131,10 +132,14 @@ export function RaporModali({ rapor, kapat, onTablo, onKuyruk }: RaporModaliProp
   const { kisiler } = useKisiler();
   const daireler = useDaireler();
   const tanimlar = useGelirGiderTanimlari();
+  const personeller = usePersoneller();
 
   const kaynaklar = useMemo(
-    () => ({ kasa: kasalar, firma: firmalar, kisi: kisiler, daire: daireler, tanim: tanimlar }),
-    [kasalar, firmalar, kisiler, daireler, tanimlar],
+    () => ({
+      kasa: kasalar, firma: firmalar, kisi: kisiler, daire: daireler, tanim: tanimlar,
+      personel: personeller,
+    }),
+    [kasalar, firmalar, kisiler, daireler, tanimlar, personeller],
   );
 
   function yaz(ad: string, deger: Deger): void {
@@ -279,7 +284,7 @@ export function RaporModali({ rapor, kapat, onTablo, onKuyruk }: RaporModaliProp
 
     const liste =
       tanim.tur === "kasa" || tanim.tur === "firma" || tanim.tur === "kisi" ||
-      tanim.tur === "daire" || tanim.tur === "tanim"
+      tanim.tur === "daire" || tanim.tur === "tanim" || tanim.tur === "personel"
         ? kaynaklar[tanim.tur]
         : null;
 

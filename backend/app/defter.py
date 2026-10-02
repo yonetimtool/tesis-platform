@@ -64,7 +64,7 @@ from __future__ import annotations
 import uuid
 from datetime import date
 
-from sqlalchemy import Select, and_, case, func, or_, select
+from sqlalchemy import Select, and_, case, func, literal_column, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
@@ -817,8 +817,16 @@ async def gider_kategori_kirilimi(
     baslangic: date | None = None,
     bitis: date | None = None,
     limit: int | None = None,
+    personel_birlesik: bool = True,
 ) -> list[tuple[str, int]]:
     """Gider toplaminin kategori kirilimi — (ad, kurus), buyukten kucuge.
+
+    (P252 §3) Bu kirilim SAKINE ACIK yuzeylerin (seffaflik panosu, hizli
+    finansal ozet) kaynagi: maas ve fazla mesai kalemleri (sistem kodlu)
+    tek satirda "Personel giderleri" olarak birlesir. Tek guvenlikcisi
+    olan sitede "Personel maasi" satiri, o kisinin ucretini yayinlamak
+    olurdu (KVKK). Ad yonetici tarafindan degistirilse de birlesme KODA
+    gore yapilir.
 
     IKI TAKSONOMI VAR ve ikisi de gecerlidir: `budget_category` (butce
     modulu) ve `gelir_gider_tanim` (P27 muhasebe tanimlari). Defter
@@ -827,8 +835,28 @@ async def gider_kategori_kirilimi(
     hangisi doluysa oradan okunur.
     """
     return await kategori_kirilimi(
-        db, ("gider",), baslangic=baslangic, bitis=bitis, limit=limit
+        db, ("gider",), baslangic=baslangic, bitis=bitis, limit=limit,
+        personel_birlesik=personel_birlesik,
     )
+
+
+async def personel_gideri(
+    db: AsyncSession,
+    *,
+    baslangic: date | None = None,
+    bitis: date | None = None,
+) -> int:
+    """(P252 §3) Maas + fazla mesai (sistem kodlu kalemler) — gerceklesmis,
+    iptal/iade dusulmus. Seffaflikla AYNI kirilimdan okunur: finans
+    ozetindeki "Personel giderleri" ile panodaki satir hep tutar."""
+    from .maas import PERSONEL_GIDERLERI_ADI
+
+    for ad, toplam in await kategori_kirilimi(
+        db, ("gider",), baslangic=baslangic, bitis=bitis, personel_birlesik=True
+    ):
+        if ad == PERSONEL_GIDERLERI_ADI:
+            return toplam
+    return 0
 
 
 async def kategori_kirilimi(
@@ -838,6 +866,7 @@ async def kategori_kirilimi(
     baslangic: date | None = None,
     bitis: date | None = None,
     limit: int | None = None,
+    personel_birlesik: bool = False,
 ) -> list[tuple[str, int]]:
     """Gelir ya da gider toplaminin kategori kirilimi — (ad, kurus).
 
@@ -862,6 +891,14 @@ async def kategori_kirilimi(
         FinansalHareket.gelir_gider_tanim_id, orj.gelir_gider_tanim_id
     )
     ad = func.coalesce(BudgetCategory.ad, GelirGiderTanim.ad, KATEGORISIZ)
+    if personel_birlesik:
+        from .maas import PERSONEL_GIDERLERI_ADI, PERSONEL_KODLARI
+
+        ad = case(
+            (GelirGiderTanim.sistem_kodu.in_(PERSONEL_KODLARI),
+             literal_column(f"'{PERSONEL_GIDERLERI_ADI}'")),
+            else_=ad,
+        )
     where = [
         FinansalHareket.durum == GERCEKLESEN,
         or_(

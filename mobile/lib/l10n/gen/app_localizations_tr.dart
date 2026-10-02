@@ -8758,4 +8758,30 @@ class AppLocalizationsTr extends AppLocalizations {
   String otoMaasOnaylandi(String adet) {
     return '$adet maaş onaylandı.';
   }
+
+  @override
+  String get pdBuAy => 'Bu ay';
+
+  @override
+  String pdVardiya(String adet, String saat) {
+    return '$adet vardiya · $saat saat';
+  }
+
+  @override
+  String pdDevriye(String tur, String okutma) {
+    return '$tur devriye turu · $okutma okutma';
+  }
+
+  @override
+  String get pdYilOdenen => 'Bu yıl ödenen';
+
+  @override
+  String get pdOdemeGecmisi => 'Ödeme geçmişi';
+
+  @override
+  String get pdKartYok =>
+      'Çalışma bilgisi girilmemiş (maaşsız: sözleşmeli ya da dış firma).';
+
+  @override
+  String get pdCikis => 'İşten çıkış';
 }

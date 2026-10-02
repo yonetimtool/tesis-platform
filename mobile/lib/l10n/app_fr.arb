@@ -2996,5 +2996,12 @@
   "otoMaasOnayAlt": "Les montants partiels sont proratisés ; corrigez-les avant d'approuver.",
   "otoMaasTumunuOnayla": "Tout approuver ({adet})",
   "otoMaasOnayla": "Approuver",
-  "otoMaasOnaylandi": "{adet} salaires approuvés."
+  "otoMaasOnaylandi": "{adet} salaires approuvés.",
+  "pdBuAy": "Ce mois-ci",
+  "pdVardiya": "{adet} services · {saat} h",
+  "pdDevriye": "{tur} rondes · {okutma} scans",
+  "pdYilOdenen": "Payé cette année",
+  "pdOdemeGecmisi": "Historique des paiements",
+  "pdKartYok": "Aucune donnée d'emploi (sans salaire : contractuel ou sous-traitant).",
+  "pdCikis": "Date de sortie"
 }

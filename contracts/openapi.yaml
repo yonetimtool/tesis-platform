@@ -12358,6 +12358,26 @@ paths:
               schema: { $ref: "#/components/schemas/MaasCalistirmaSonucu" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+  /personel/detay:
+    get:
+      tags: [personel]
+      summary: (P252 §3) Personel detayi — calisma, odeme gecmisi, bu ay ozeti, yil toplami
+      description: |
+        `user_id` (hesap) ya da `kart_id` (maas karti; hesapsiz personel).
+        YALNIZ yonetim (admin/yonetici); amir 403.
+      parameters:
+        - { name: user_id, in: query, schema: { type: string, format: uuid } }
+        - { name: kart_id, in: query, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Detay
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PersonelDetay" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /otomasyon/maaslar/onayla:
     post:
       tags: [otomasyon]
@@ -23528,6 +23548,7 @@ components:
         user_id: { type: string, format: uuid, nullable: true }
         unit_id: { type: string, format: uuid, nullable: true }
         olusturan_user_id: { type: string, format: uuid, nullable: true }
+        personel_kayit_id: { type: string, format: uuid, nullable: true, description: "(P252 §3) Kisi suzgeci (maas karti)" }
         bolum: { type: string, nullable: true, maxLength: 40 }
         ekstre_turu: { type: string, nullable: true, maxLength: 20 }
         evrak_tipi: { type: string, nullable: true, maxLength: 20 }
@@ -23750,6 +23771,12 @@ components:
           type: string
           nullable: true
           description: (E2E 2026-09, FINANS-21) Daire etiketi — kimin odedigi.
+        personel_kayit_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: (P252 §3) Maas / fazla mesai giderinin kisisi (maas karti).
+        personel_ad: { type: string, nullable: true }
     FinansalHareketListe:
       type: object
       required: [meta, items]
@@ -24416,6 +24443,11 @@ components:
             Bu ay odenmis gider toplami. HAREKET TARIHINE gore, kayit
             zamanina gore DEGIL: gecen ayin faturasi bu ay girilmis
             olabilir ve onu bu ayin gideri saymak defterle celisirdi.
+        personel_gideri_ay_kurus:
+          type: integer
+          format: int64
+          default: 0
+          description: (P252 §3) Bu ayin personel gideri (maas + fazla mesai, gerceklesmis).
         icra_acik_dosya: { type: integer }
     TopluBorcSuzgec:
       type: object
@@ -24809,6 +24841,50 @@ components:
         personel_sayisi: { type: integer }
         aylik_toplam_kurus: { type: integer, format: int64 }
         onay_bekleyenler: { type: array, items: { $ref: "#/components/schemas/MaasOnayBekleyen" } }
+    PersonelDetay:
+      type: object
+      required: [ad, bu_ay]
+      properties:
+        kart_id: { type: string, format: uuid, nullable: true }
+        user_id: { type: string, format: uuid, nullable: true }
+        ad: { type: string }
+        rol: { type: string, nullable: true }
+        calisma:
+          type: object
+          nullable: true
+          properties:
+            giris_tarihi: { type: string, format: date, nullable: true }
+            cikis_tarihi: { type: string, format: date, nullable: true }
+            gorev: { type: string, nullable: true }
+            maas_kurus: { type: integer, format: int64, nullable: true }
+            odeme_gunu: { type: integer, nullable: true }
+            kasa_id: { type: string, format: uuid, nullable: true }
+            kasa_ad: { type: string, nullable: true }
+            iban: { type: string, nullable: true }
+            notlar: { type: string, nullable: true }
+            aktif: { type: boolean }
+        odemeler:
+          type: array
+          items:
+            type: object
+            required: [id, tarih, tutar_kurus, tur, durum]
+            properties:
+              id: { type: string, format: uuid }
+              tarih: { type: string, format: date }
+              donem: { type: string, nullable: true }
+              tutar_kurus: { type: integer, format: int64 }
+              tur: { type: string, enum: [maas, mesai, diger] }
+              durum: { type: string }
+              kasa_id: { type: string, format: uuid, nullable: true }
+              kasa_ad: { type: string, nullable: true }
+        bu_ay:
+          type: object
+          properties:
+            vardiya_sayisi: { type: integer }
+            vardiya_saat: { type: number }
+            devriye_tur: { type: integer }
+            okutma_sayisi: { type: integer }
+        yil_odenen_kurus: { type: integer, format: int64 }
     MaasOnayBekleyen:
       type: object
       required: [id, tarih, tutar_kurus]

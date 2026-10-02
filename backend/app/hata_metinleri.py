@@ -4245,4 +4245,13 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Cette action n'est pas disponible pour votre rôle.",
         "es": "Esta acción no está disponible para su rol.",
     },
+    "personel_detay_kimlik": {
+        "tr": "Personel hesabı ya da maaş kartı belirtilmeli.",
+        "en": "A staff account or salary card must be specified.",
+        "ar": "يجب تحديد حساب الموظف أو بطاقة الراتب.",
+        "ru": "Укажите учётную запись сотрудника или карточку зарплаты.",
+        "de": "Ein Personalkonto oder eine Gehaltskarte muss angegeben werden.",
+        "fr": "Un compte du personnel ou une fiche de salaire doit être indiqué.",
+        "es": "Debe indicarse una cuenta de personal o una ficha salarial.",
+    },
 }

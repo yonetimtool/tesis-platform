@@ -450,18 +450,19 @@ function MaasOnayBekleyenler({
             data-test={`maas-bekleyen-${s.id}`}>
             <span style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>
               {s.aciklama}
-              <span className="ml-2" style={{ color: "var(--yz-text-2)" }}>{saltTarihBicimi(s.tarih, dil)}</span>
+              <span className="ms-2" style={{ color: "var(--yz-text-2)" }}>{saltTarihBicimi(s.tarih, dil)}</span>
             </span>
             <span className="flex items-center gap-2">
-              <Alan
-                aria-label={t("finansSutunTutar")}
-                className="w-32"
-                inputMode="decimal"
-                maxLength={ISTEMCI_SINIR.SAYI}
-                disabled={mesgul}
-                value={tutarlar[s.id] ?? kurusToTLSade(s.tutar_kurus)}
-                onChange={(e) => setTutarlar({ ...tutarlar, [s.id]: e.target.value })}
-              />
+              <div className="w-32">
+                <Alan
+                  aria-label={t("finansSutunTutar")}
+                  inputMode="decimal"
+                  maxLength={ISTEMCI_SINIR.SAYI}
+                  disabled={mesgul}
+                  value={tutarlar[s.id] ?? kurusToTLSade(s.tutar_kurus)}
+                  onChange={(e) => setTutarlar({ ...tutarlar, [s.id]: e.target.value })}
+                />
+              </div>
               <Dugme boy="kucuk" disabled={mesgul} onClick={() => void tekOnay(s.id, s.tutar_kurus)}>
                 {t("otoMaasOnayla")}
               </Dugme>

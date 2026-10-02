@@ -9040,4 +9040,30 @@ class AppLocalizationsRu extends AppLocalizations {
   String otoMaasOnaylandi(String adet) {
     return 'Утверждено зарплат: $adet.';
   }
+
+  @override
+  String get pdBuAy => 'Этот месяц';
+
+  @override
+  String pdVardiya(String adet, String saat) {
+    return '$adet смен · $saat ч';
+  }
+
+  @override
+  String pdDevriye(String tur, String okutma) {
+    return '$tur обходов · $okutma сканов';
+  }
+
+  @override
+  String get pdYilOdenen => 'Выплачено в этом году';
+
+  @override
+  String get pdOdemeGecmisi => 'История выплат';
+
+  @override
+  String get pdKartYok =>
+      'Нет данных о работе (без зарплаты: договор или подрядчик).';
+
+  @override
+  String get pdCikis => 'Дата увольнения';
 }

@@ -30,6 +30,7 @@
 // dugmesi CIZMEZ; cizdigi sey "Iptal et"tir ve onayda ne olacagini
 // soyler: kayit KALIR, ters bir satir eklenir.
 
+import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import useSWR from "swr";
 
@@ -48,6 +49,7 @@ import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import { kurusToTL } from "@/lib/money";
+import { personelDetayYolu } from "@/lib/personel";
 import { saltTarihBicimi } from "@/lib/tarih";
 
 export interface Hareket {
@@ -67,6 +69,9 @@ export interface Hareket {
   iptal_edildi?: boolean;
   /** (E2E 2026-09, FINANS-21) Daire etiketi — kimin odedigi gorunsun. */
   unit_no?: string | null;
+  /** (P252 §3) Maas / mesai giderinin kisisi (maas karti). */
+  personel_kayit_id?: string | null;
+  personel_ad?: string | null;
 }
 
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
@@ -358,7 +363,21 @@ export function HareketSayfasi({
     {
       id: "aciklama",
       baslik: t("finansSutunAciklama"),
-      hucre: (h) => h.aciklama ?? YOK_ISARETI,
+      // (P252 §3) Maas / fazla mesai satiri KISIYE baglanir: aciklama
+      // ("Ahmet YILMAZ — Ekim 2026 maasi") kisi detayini acar.
+      hucre: (h) =>
+        h.personel_kayit_id ? (
+          <Link
+            href={personelDetayYolu({ kart: h.personel_kayit_id })}
+            className="underline"
+            title={h.personel_ad ?? undefined}
+            data-test="hareket-personel"
+          >
+            {h.aciklama ?? h.personel_ad}
+          </Link>
+        ) : (
+          h.aciklama ?? YOK_ISARETI
+        ),
     },
     {
       id: "eylem",

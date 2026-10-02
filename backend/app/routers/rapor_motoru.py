@@ -234,7 +234,7 @@ KATALOG_KAYITLARI = {
         "Finansal Hareketler", "Tüm hareket tipleri",
         "dokumler",
         ("baslangic", "bitis", "kasa_id", "listeleme_tipi", "evrak_tipi",
-         "gelir_gider_tanim_id", "calisma_sekli"),
+         "gelir_gider_tanim_id", "personel_kayit_id", "calisma_sekli"),
         # (P227 §2) BUTUNUN PARCALARI (hareket tipi dagilimi) -> PASTA.
         # Tip sayisi 6'yi asarsa cikti KENDILIGINDEN cubuga duser
         # (`_grafik_tipi_sec`) — o boyutta pasta okunmuyor.
@@ -899,6 +899,14 @@ async def _hareket_raporu(db: AsyncSession, kod: str, p: RaporParam) -> RaporSon
         q = q.where(FinansalHareket.tarih >= p.baslangic)
     if p.bitis:
         q = q.where(FinansalHareket.tarih <= p.bitis)
+    # (P252 §3) KALEM SUZGECI UYGULANIR. Katalog "Finansal Hareketler"
+    # raporuna `gelir_gider_tanim_id` alanini veriyordu ve modal onu
+    # ciziyordu; sorgu ise HIC kullanmiyordu — "Personel maasi" secen
+    # kullanici butun hareketleri suzulmus sanarak alirdi.
+    if p.gelir_gider_tanim_id:
+        q = q.where(FinansalHareket.gelir_gider_tanim_id == uuid.UUID(str(p.gelir_gider_tanim_id)))
+    if p.personel_kayit_id:
+        q = q.where(FinansalHareket.personel_kayit_id == uuid.UUID(str(p.personel_kayit_id)))
 
     satirlar = [
         {"tarih": t.isoformat() if t else "", "tip": tip, "yon": yon,
@@ -1184,7 +1192,7 @@ def _param(body: RaporParametre) -> RaporParam:
     ham = body.model_dump()
     for alan in (
         "gelir_gider_tanim_id", "kasa_id", "firma_id", "user_id", "unit_id",
-        "olusturan_user_id",
+        "olusturan_user_id", "personel_kayit_id",
     ):
         if ham.get(alan) is not None:
             ham[alan] = str(ham[alan])

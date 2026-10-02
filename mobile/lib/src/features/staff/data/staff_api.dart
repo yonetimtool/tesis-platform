@@ -230,6 +230,19 @@ class StaffApi {
     }
   }
 
+  /// (P252 §3) `GET /personel/detay` — yalniz yonetim (amire 403).
+  Future<Map<String, dynamic>> personelDetay(String userId) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/personel/detay',
+        queryParameters: {'user_id': userId},
+      );
+      return res.data ?? const {};
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   /// `GET /me/calisma` — kisinin KENDI calisma bilgisi (salt okunur).
   Future<Map<String, dynamic>?> benimCalismam() async {
     try {

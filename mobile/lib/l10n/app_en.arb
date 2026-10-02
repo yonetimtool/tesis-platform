@@ -2996,5 +2996,12 @@
   "otoMaasOnayAlt": "Partial-month amounts are prorated; you can correct them before approving.",
   "otoMaasTumunuOnayla": "Approve all ({adet})",
   "otoMaasOnayla": "Approve",
-  "otoMaasOnaylandi": "{adet} salaries approved."
+  "otoMaasOnaylandi": "{adet} salaries approved.",
+  "pdBuAy": "This month",
+  "pdVardiya": "{adet} shifts · {saat} h",
+  "pdDevriye": "{tur} patrol rounds · {okutma} scans",
+  "pdYilOdenen": "Paid this year",
+  "pdOdemeGecmisi": "Payment history",
+  "pdKartYok": "No employment details (unsalaried: contractor or outsourced).",
+  "pdCikis": "Leaving date"
 }

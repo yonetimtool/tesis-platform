@@ -2996,5 +2996,12 @@
   "otoMaasOnayAlt": "Суммы за неполный месяц рассчитаны пропорционально; их можно исправить.",
   "otoMaasTumunuOnayla": "Утвердить все ({adet})",
   "otoMaasOnayla": "Утвердить",
-  "otoMaasOnaylandi": "Утверждено зарплат: {adet}."
+  "otoMaasOnaylandi": "Утверждено зарплат: {adet}.",
+  "pdBuAy": "Этот месяц",
+  "pdVardiya": "{adet} смен · {saat} ч",
+  "pdDevriye": "{tur} обходов · {okutma} сканов",
+  "pdYilOdenen": "Выплачено в этом году",
+  "pdOdemeGecmisi": "История выплат",
+  "pdKartYok": "Нет данных о работе (без зарплаты: договор или подрядчик).",
+  "pdCikis": "Дата увольнения"
 }
