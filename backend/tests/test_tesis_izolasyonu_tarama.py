@@ -155,6 +155,12 @@ TESIS_UCLARI: tuple[str, ...] = (
     "/finans/yaslandirma",
     "/finans/tahsilat-gostergesi",
     "/finans/hatirlatma-gecmisi",
+    # (P250 §7) Otomatik hatirlatma e-postalari — kisi adlari tasir,
+    # tesis-kapsamli (mesaj_gonderim RLS).
+    "/finans/hatirlatma-epostalari",
+    # (P250 §4) Egitim videolari listesi — izlendi bilgisi HESABA ve
+    # tesise ait (egitim_izleme RLS); video satirlari platform geneli.
+    "/egitim-videolari",
     "/budget/hedefler",
     "/budget/karsilastirma",
     "/borclandirma/gecikme-ayari",

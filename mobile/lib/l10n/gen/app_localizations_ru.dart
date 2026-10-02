@@ -8387,4 +8387,65 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get panoHizliPersonel => 'Добавить сотрудника';
+
+  @override
+  String get otoHatirlatma => 'Напоминания о долге';
+
+  @override
+  String get otoHatirlatmaAciklama =>
+      'Оплатившим напоминания не приходят; не более одного уведомления в день на жителя.';
+
+  @override
+  String get otoAktif => 'Включено';
+
+  @override
+  String get otoVadeOncesi => 'За сколько дней до срока';
+
+  @override
+  String get otoHatirlatmaMetin => 'Текст напоминания (пусто = по умолчанию)';
+
+  @override
+  String get otoHatirlatmaIlkGun => 'Через сколько дней после срока';
+
+  @override
+  String get otoHatirlatmaTekrar => 'Сколько раз';
+
+  @override
+  String get otoHatirlatmaAralik => 'Каждые сколько дней';
+
+  @override
+  String get otoHatirlatmaEposta => 'Также отправлять e-mail';
+
+  @override
+  String otoHatirlatmaCumle(String gunler, String kanal) {
+    return 'Тем, кто не оплатил, отправляется напоминание через $gunler дн. после срока ($kanal).';
+  }
+
+  @override
+  String otoHatirlatmaVadeOncesiCumle(String gun) {
+    return 'Также напоминание за $gun дн. до срока.';
+  }
+
+  @override
+  String get otoHatirlatmaKapali => 'Автоматические напоминания выключены.';
+
+  @override
+  String get otoKanalBildirim => 'уведомление в приложении';
+
+  @override
+  String get otoKanalBildirimEposta => 'уведомление + e-mail';
+
+  @override
+  String get otoHatirlatmaKimeNotu =>
+      'Получают только те, у кого действительно есть долг; оплатившие — нет. Для долга квартиры соблюдается правило «кто платит» (собственник или проживающий). Тем, кто отключил e-mail-уведомления, письма не отправляются.';
+
+  @override
+  String get otoHatirlatmaMetinNotu =>
+      'Свой текст используется только в уведомлении; письмо отправляется по шаблону (сумма, период, платёжный код, IBAN).';
+
+  @override
+  String get otoEpostaGecmisi => 'Письма-напоминания';
+
+  @override
+  String get otoEpostaGecmisiBos => 'Писем-напоминаний пока не было.';
 }

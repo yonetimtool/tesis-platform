@@ -14404,6 +14404,114 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Personel ekle'**
   String get panoHizliPersonel;
+
+  /// No description provided for @otoHatirlatma.
+  ///
+  /// In tr, this message translates to:
+  /// **'Borç hatırlatma'**
+  String get otoHatirlatma;
+
+  /// No description provided for @otoHatirlatmaAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ödeyene hatırlatma gitmez; her sakine günde en fazla bir bildirim.'**
+  String get otoHatirlatmaAciklama;
+
+  /// No description provided for @otoAktif.
+  ///
+  /// In tr, this message translates to:
+  /// **'Etkin'**
+  String get otoAktif;
+
+  /// No description provided for @otoVadeOncesi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vadeden kaç gün önce'**
+  String get otoVadeOncesi;
+
+  /// No description provided for @otoHatirlatmaMetin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hatırlatma metni (boş = varsayılan)'**
+  String get otoHatirlatmaMetin;
+
+  /// No description provided for @otoHatirlatmaIlkGun.
+  ///
+  /// In tr, this message translates to:
+  /// **'Son ödeme gününden kaç gün sonra'**
+  String get otoHatirlatmaIlkGun;
+
+  /// No description provided for @otoHatirlatmaTekrar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaç kez'**
+  String get otoHatirlatmaTekrar;
+
+  /// No description provided for @otoHatirlatmaAralik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaç günde bir'**
+  String get otoHatirlatmaAralik;
+
+  /// No description provided for @otoHatirlatmaEposta.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta da gönder'**
+  String get otoHatirlatmaEposta;
+
+  /// No description provided for @otoHatirlatmaCumle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Son ödeme gününden {gunler} gün sonra ödemeyenlere hatırlatma gönderilir ({kanal}).'**
+  String otoHatirlatmaCumle(String gunler, String kanal);
+
+  /// No description provided for @otoHatirlatmaVadeOncesiCumle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ayrıca son ödeme gününden {gun} gün önce hatırlatılır.'**
+  String otoHatirlatmaVadeOncesiCumle(String gun);
+
+  /// No description provided for @otoHatirlatmaKapali.
+  ///
+  /// In tr, this message translates to:
+  /// **'Otomatik hatırlatma kapalı.'**
+  String get otoHatirlatmaKapali;
+
+  /// No description provided for @otoKanalBildirim.
+  ///
+  /// In tr, this message translates to:
+  /// **'uygulama bildirimi'**
+  String get otoKanalBildirim;
+
+  /// No description provided for @otoKanalBildirimEposta.
+  ///
+  /// In tr, this message translates to:
+  /// **'uygulama bildirimi + e-posta'**
+  String get otoKanalBildirimEposta;
+
+  /// No description provided for @otoHatirlatmaKimeNotu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yalnız gerçekten borcu olanlara gider; ödeyen hatırlatma almaz. Daireye yazılmış borçta \"kim öder\" kuralına uyulur (malik ya da oturan). E-posta bildirimlerini kapatan sakine e-posta gitmez.'**
+  String get otoHatirlatmaKimeNotu;
+
+  /// No description provided for @otoHatirlatmaMetinNotu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Özel metin yalnız uygulama bildiriminde kullanılır; e-posta kurumsal şablonla (tutar, dönem, ödeme kodu, IBAN) gider.'**
+  String get otoHatirlatmaMetinNotu;
+
+  /// No description provided for @otoEpostaGecmisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hatırlatma e-postaları'**
+  String get otoEpostaGecmisi;
+
+  /// No description provided for @otoEpostaGecmisiBos.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz hatırlatma e-postası gönderilmedi.'**
+  String get otoEpostaGecmisiBos;
 }
 
 class _AppLocalizationsDelegate

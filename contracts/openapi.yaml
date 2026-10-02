@@ -8849,6 +8849,36 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/TahsilatGostergesi" }
+  /finans/hatirlatma-epostalari:
+    get:
+      tags: [finans]
+      summary: (P250 §7) Otomatik aidat hatirlatma e-postalari — teslim durumuyla
+      parameters:
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200, default: 50 } }
+        - { name: offset, in: query, schema: { type: integer, minimum: 0, default: 0 } }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [meta, items]
+                properties:
+                  meta: { $ref: "#/components/schemas/PageMeta" }
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, gonderim_zamani, durum]
+                      properties:
+                        id: { type: string, format: uuid }
+                        user_id: { type: string, format: uuid, nullable: true }
+                        ad: { type: string, nullable: true }
+                        gonderim_zamani: { type: string, format: date-time }
+                        durum: { type: string, enum: [kuyrukta, gonderildi, iletildi, geri_dondu, basarisiz, yapilandirilmadi] }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
   /finans/hatirlatma-gecmisi:
     get:
       tags: [finans]
@@ -23662,6 +23692,10 @@ components:
             metin OLDUGU GIBI gonderilir (bicimlendirme hatasi yuzunden
             hic gondermemek en kotu sonuc olurdu).
         son_calisma: { type: string, format: date, nullable: true }
+        eposta: { type: boolean, description: "(P250 §7) Push'un yaninda e-posta da gitsin mi" }
+        ilk_gun: { type: integer, nullable: true, description: "(P250 §7) kademeler[0] — son odeme gununden kac gun sonra" }
+        tekrar_sayisi: { type: integer, description: "(P250 §7) kac kez (kademe sayisi)" }
+        aralik_gun: { type: integer, nullable: true, description: "(P250 §7) ilk iki kademe arasi gun (duzenli araliksa tum aralik)" }
     HatirlatmaAyariUpdate:
       type: object
       properties:
@@ -23672,6 +23706,10 @@ components:
           maxItems: 6
           items: { type: integer, minimum: 0, maximum: 365 }
         metin: { type: string, nullable: true, maxLength: 1000 }
+        eposta: { type: boolean }
+        ilk_gun: { type: integer, minimum: 0, maximum: 90, description: "(P250 §7) uclu birlikte: ilk_gun + tekrar_sayisi + aralik_gun -> kademeler" }
+        tekrar_sayisi: { type: integer, minimum: 1, maximum: 6 }
+        aralik_gun: { type: integer, minimum: 1, maximum: 60 }
     DuzenliGiderCreate:
       type: object
       required: [ad, tutar_kurus, sonraki_tarih]

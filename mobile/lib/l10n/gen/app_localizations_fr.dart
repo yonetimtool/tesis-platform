@@ -8312,4 +8312,66 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get panoHizliPersonel => 'Ajouter un employé';
+
+  @override
+  String get otoHatirlatma => 'Rappels de dette';
+
+  @override
+  String get otoHatirlatmaAciklama =>
+      'Les payeurs ne reçoivent aucun rappel ; au plus une notification par résident et par jour.';
+
+  @override
+  String get otoAktif => 'Activé';
+
+  @override
+  String get otoVadeOncesi => 'Jours avant l\'échéance';
+
+  @override
+  String get otoHatirlatmaMetin => 'Texte du rappel (vide = par défaut)';
+
+  @override
+  String get otoHatirlatmaIlkGun => 'Jours après l\'échéance';
+
+  @override
+  String get otoHatirlatmaTekrar => 'Combien de fois';
+
+  @override
+  String get otoHatirlatmaAralik => 'Tous les combien de jours';
+
+  @override
+  String get otoHatirlatmaEposta => 'Envoyer aussi un e-mail';
+
+  @override
+  String otoHatirlatmaCumle(String gunler, String kanal) {
+    return 'Ceux qui n\'ont pas payé reçoivent un rappel $gunler jours après l\'échéance ($kanal).';
+  }
+
+  @override
+  String otoHatirlatmaVadeOncesiCumle(String gun) {
+    return 'Un rappel est aussi envoyé $gun jours avant l\'échéance.';
+  }
+
+  @override
+  String get otoHatirlatmaKapali => 'Les rappels automatiques sont désactivés.';
+
+  @override
+  String get otoKanalBildirim => 'notification de l\'application';
+
+  @override
+  String get otoKanalBildirimEposta => 'notification + e-mail';
+
+  @override
+  String get otoHatirlatmaKimeNotu =>
+      'Seuls ceux qui doivent réellement le reçoivent ; ceux qui ont payé non. Pour une dette imputée au logement, la règle « qui paie » est appliquée (propriétaire ou occupant). Les résidents ayant désactivé les e-mails n\'en reçoivent pas.';
+
+  @override
+  String get otoHatirlatmaMetinNotu =>
+      'Le texte personnalisé ne sert qu\'à la notification ; l\'e-mail utilise le modèle (montant, période, code de paiement, IBAN).';
+
+  @override
+  String get otoEpostaGecmisi => 'E-mails de rappel';
+
+  @override
+  String get otoEpostaGecmisiBos =>
+      'Aucun e-mail de rappel envoyé pour l\'instant.';
 }

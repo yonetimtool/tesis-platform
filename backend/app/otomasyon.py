@@ -67,6 +67,7 @@ from .models import (
 )
 from .sakin_bildirimi import sakin_bildirimi_yaz
 from .schemas import TopluBorcIstek, TopluBorcSuzgec
+from .borclandirma import Bag, hedef_sec
 from .toplu_tahakkuk import tahakkuk_yaz, toplu_plan
 
 log = logging.getLogger(__name__)
@@ -443,29 +444,60 @@ async def borc_hatirlatmalari(
         ayar.son_calisma = bugun
         return {"gonderilen": 0, "durum": "acik_borc_yok"}
 
-    # Daireye yazilmis (hedefsiz) borclarin alicilari TEK sorguda.
+    # (P250 §7) KIM ODER KURALI — daireye yazilmis (hedefsiz) borc.
+    #
+    # ONCEDEN dairedeki AKTIF HERKESE gidiyordu: malikin bakim borcu
+    # kiraciya, kiracinin isletme borcu oturmayan malike de hatirlatiliyordu.
+    # Artik borcun tanimindaki kural (P218: malik / oturan oncelikli)
+    # hatirlatma aninda da uygulanir — tahakkukta hangi kural kisiyi
+    # secerdiyse hatirlatma da ONA gider. Kurala uyan kimse yoksa daireye
+    # hatirlatma GITMEZ (yanlis kisiye borc hatirlatmak, hic gondermemekten
+    # kotudur) ve sayisi gunluge yazilir.
     hedefsiz = {b.unit_id for b in acik if b.hedef_user_id is None}
-    daire_sakinleri: dict[uuid.UUID, list[uuid.UUID]] = {}
+    daire_baglari: dict[uuid.UUID, list[Bag]] = {}
     if hedefsiz:
         rows = (
             await db.execute(
-                select(UnitResident.unit_id, UnitResident.user_id).where(
+                select(
+                    UnitResident.unit_id, UnitResident.user_id,
+                    UnitResident.rol_tipi, UnitResident.oturuyor,
+                ).where(
                     UnitResident.unit_id.in_(hedefsiz),
                     UnitResident.bitis.is_(None),
                 )
             )
         ).all()
-        for unit_id, user_id in rows:
-            daire_sakinleri.setdefault(unit_id, []).append(user_id)
+        for unit_id, user_id, rol_tipi, oturuyor in rows:
+            daire_baglari.setdefault(unit_id, []).append(
+                Bag(user_id=str(user_id), rol_tipi=rol_tipi, oturuyor=bool(oturuyor))
+            )
+    tanim_idleri = {b.gelir_gider_tanim_id for b in acik if b.gelir_gider_tanim_id}
+    kurallar: dict[uuid.UUID, str | None] = dict(
+        (
+            await db.execute(
+                select(GelirGiderTanim.id, GelirGiderTanim.hedef_kurali).where(
+                    GelirGiderTanim.id.in_(tanim_idleri)
+                )
+            )
+        ).all()
+    ) if tanim_idleri else {}
 
     # KISI BASINA TEK BILDIRIM: uc ayri borcu olan sakine uc push gitmez.
     kisi: dict[uuid.UUID, tuple[int, date]] = {}
+    kisi_donemleri: dict[uuid.UUID, set[str]] = {}
+    alicisiz = 0
     for borc in acik:
         kalan = borc.tutar_kurus - odenen.get(borc.id, 0)
-        aliciler = (
-            [borc.hedef_user_id] if borc.hedef_user_id
-            else daire_sakinleri.get(borc.unit_id, [])
-        )
+        if borc.hedef_user_id:
+            aliciler = [borc.hedef_user_id]
+        else:
+            secilen = hedef_sec(
+                daire_baglari.get(borc.unit_id, []),
+                kurallar.get(borc.gelir_gider_tanim_id) if borc.gelir_gider_tanim_id else None,
+            )
+            aliciler = [uuid.UUID(secilen)] if secilen else []
+            if not aliciler:
+                alicisiz += 1
         for user_id in aliciler:
             onceki = kisi.get(user_id)
             kisi[user_id] = (
@@ -473,6 +505,7 @@ async def borc_hatirlatmalari(
                 min(onceki[1], borc.son_odeme_tarihi) if onceki
                 else borc.son_odeme_tarihi,
             )
+            kisi_donemleri.setdefault(user_id, set()).add(borc.donem)
 
     for user_id, (kalan, vade) in kisi.items():
         # (E2E 2026-09, BILDIRIM-14) Turkce tutar ve gun.ay.yil tarih —
@@ -499,13 +532,95 @@ async def borc_hatirlatmalari(
             # ayni cumleyi gostermeli.
             veri={**params, **({"metin": ozel} if ozel else {})},
         )
+    # (P250 §7) E-POSTA — push'un yaninda, ayar aciksa.
+    eposta = {"kuyruga": 0, "atlanan": 0}
+    if getattr(ayar, "eposta", False) and kisi:
+        eposta = await _hatirlatma_epostalari(
+            db, tenant_id=tenant_id, kisi=kisi, donemler=kisi_donemleri,
+        )
     ayar.son_calisma = bugun
     await _gunluk_yaz(
         db, tenant_id=tenant_id, tur="borc_hatirlatma",
         donem=donem_metni(bugun), adet=len(kisi),
         tutar_kurus=sum(k for k, _ in kisi.values()),
+        sonuc={"eposta": eposta["kuyruga"], "eposta_atlanan": eposta["atlanan"],
+               "alicisiz_daire": alicisiz},
     )
-    return {"gonderilen": len(kisi), "durum": "gonderildi"}
+    return {"gonderilen": len(kisi), "durum": "gonderildi",
+            "eposta": eposta["kuyruga"], "alicisiz": alicisiz}
+
+
+#: (P250 §7) `mesaj_gonderim.tur` degeri.
+AIDAT_HATIRLATMA_TUR = "aidat_hatirlatma"
+
+
+async def _hatirlatma_epostalari(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    kisi: dict[uuid.UUID, tuple[int, date]],
+    donemler: dict[uuid.UUID, set[str]],
+) -> dict:
+    """Borclu kisilere aidat hatirlatma e-postasi KUYRUGA yazar.
+
+    KUYRUK: `mesaj_kuyruk` dakikada bir, e-postalar arasinda aralik
+    birakarak gonderir (P250 §2) — yuz borclu bir gece gorevinde tek seferde
+    saglayiciya yuklenmez. Teslim durumu (P234) gecmiste gorunur.
+
+    TERCIHE UYAR: e-posta bildirimlerini kapatan kisiye GITMEZ. Aidat
+    hatirlatmasi yasal bir tebligat DEGILDIR (KMK'daki ihtar ayri ve
+    yazilidir); kisinin tercihini ezmenin gerekcesi yok. Push ve uygulama
+    ici bildirim kendi tercihleriyle (bildirim_mobil) gitmeye devam eder.
+    """
+    from . import islem_epostasi
+    from .aidat_hatirlatma_eposta import aidat_hatirlatma_eposta
+    from .models import AppUser, Kasa, Tenant
+    from .odeme_kodu import uret as kod_uret
+
+    kisiler = (
+        await db.execute(select(AppUser).where(AppUser.id.in_(list(kisi))))
+    ).scalars().all()
+    tenant = (await db.execute(select(Tenant).where(Tenant.id == tenant_id))).scalar_one()
+    kasa = (
+        await db.execute(
+            select(Kasa)
+            .where(Kasa.banka_mi.is_(True), Kasa.aktif.is_(True), Kasa.iban.is_not(None))
+            .order_by(Kasa.kod, Kasa.id)
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+    diller = await islem_epostasi.alici_dili(db, [k.id for k in kisiler], "tr")
+    yil = date.today().year
+    kuyruga = atlanan = 0
+    for k in kisiler:
+        if islem_epostasi.gonderilemez_sebebi(k):
+            atlanan += 1
+            continue
+        # Kodu olmayan sakine kod uretilir (tembel uretim, P193 §7).
+        if not k.odeme_kodu and k.role == "resident":
+            for _ in range(5):
+                k.odeme_kodu = kod_uret()
+                try:
+                    async with db.begin_nested():
+                        await db.flush()
+                    break
+                except IntegrityError:
+                    k.odeme_kodu = None
+        kalan, vade = kisi[k.id]
+        konu, metin, html = aidat_hatirlatma_eposta(
+            dil=diller[k.id], tesis_ad=tenant.ad, ad=k.ad,
+            tutar=tl_metni(kalan), donemler=sorted(donemler.get(k.id, set())),
+            vade=tarih_metni(vade), odeme_kodu=k.odeme_kodu,
+            banka_adi=kasa.banka_adi if kasa else None,
+            iban=kasa.iban if kasa else None, yil=yil,
+        )
+        islem_epostasi.kuyruga_al(
+            db, tenant_id=tenant_id, kisi=k, tur=AIDAT_HATIRLATMA_TUR,
+            konu=konu, metin=metin, html=html, gonderen_id=None,
+        )
+        kuyruga += 1
+    await db.flush()
+    return {"kuyruga": kuyruga, "atlanan": atlanan}
 
 
 # --------------------------------------------------------------------------- #

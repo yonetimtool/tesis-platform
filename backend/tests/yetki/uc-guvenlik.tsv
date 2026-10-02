@@ -278,6 +278,7 @@ POST	/finans/hareketler	zorunlu	tesis	-	-	ozel	-	-		dar
 POST	/finans/hareketler/{hareket_id}/iptal	zorunlu	tesis	rol	-	ozel	-	-		dar
 POST	/finans/hareketler/{hareket_id}/onayla	zorunlu	tesis	rol	-	ozel	-	-		dar
 POST	/finans/hareketler/{hareket_id}/reddet	zorunlu	tesis	rol	-	ozel	-	-		dar
+GET	/finans/hatirlatma-epostalari	zorunlu	tesis	-	-	-	-	-		-
 GET	/finans/hatirlatma-gecmisi	zorunlu	tesis	-	-	-	-	-		-
 POST	/finans/iade	zorunlu	tesis	-	-	ozel	-	-		dar
 GET	/finans/icra-dosyalari	zorunlu	tesis	-	-	-	-	-		dar
@@ -303,8 +304,8 @@ GET	/gelir-gider-tanimlari	zorunlu	tesis	-	-	-	-	-		dar
 POST	/gelir-gider-tanimlari	zorunlu	tesis	-	-	ozel	-	-		dar
 DELETE	/gelir-gider-tanimlari/{tanim_id}	zorunlu	tesis	rol	-	ozel	-	-		-
 PATCH	/gelir-gider-tanimlari/{tanim_id}	zorunlu	tesis	rol	-	ozel	-	-		dar
-GET	/hatirlatma-ayari	zorunlu	tesis	-	-	-	-	-		-
-PATCH	/hatirlatma-ayari	zorunlu	tesis	-	-	ozel	-	-		dar
+GET	/hatirlatma-ayari	zorunlu	tesis	-	-	-	eposta	-		-
+PATCH	/hatirlatma-ayari	zorunlu	tesis	-	-	ozel	eposta	-		dar
 GET	/hatirlatmalar	zorunlu	tesis	-	-	-	-	-		-
 POST	/hatirlatmalar	zorunlu	tesis	-	-	ozel	-	-		dar
 DELETE	/hatirlatmalar/{hatirlatma_id}	zorunlu	tesis	rol	-	ozel	-	-		-

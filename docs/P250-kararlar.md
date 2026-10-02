@@ -744,3 +744,94 @@ uçtan yazılsaydı:
 * Mobilde sürükle-bırak sıralamanın gerçek cihazdaki hissi (testte
   seçim + kayıt ölçüldü, sürükleme jesti ölçülmedi).
 
+---
+
+# §7 — OTOMATİK AİDAT HATIRLATMA E-POSTASI
+
+## Önce ölçüm: P192'nin borç hatırlatması bugün ne yapıyor
+
+| Soru | Cevap (kod okunarak ölçüldü) |
+|---|---|
+| Hangi kanaldan? | **Yalnız push + uygulama içi bildirim** (`otomasyon.borc_hatirlatmalari` → `_bildir` + `sakin_bildirimi_yaz`). **E-posta ve SMS yoktu.** Elle hatırlatma (`/finans/borclulara/hatirlat`) da aynı. |
+| Ne zaman? | Her gece **03:00 UTC (06:00 TR)**, `scheduler.finans_otomasyonu` içinde. Hedef günler: vade öncesi tek gün + vade sonrası kademeler (varsayılan 3, 10, 30). Günde bir kez (`son_calisma`). |
+| Beat'te var mı? | **Evet**: `celery_app.beat_schedule["finans-otomasyonu"]` ve `contracts/beat-gorevleri.txt`. |
+| Kime? | Kalanı > 0 olan borçlara. Borç bir kişiye yazılmışsa ona. **Daireye yazılmışsa dairedeki AKTİF HERKESE** (malik + kiracı). "Kim öder" kuralına bakılmıyordu. |
+| Varsayılan | **Kapalı** (`aktif=false`). Yönetici açmadıkça hiçbir şey gitmez. |
+| Prod'da gönderim kaydı var mı? | **ÖLÇÜLEMEDİ.** Bu makineden prod'a erişim yok. `docs/P250-hatirlatma-teshis.sql` dört soruyu yanıtlar: hangi tesislerde açık, gece görevi koştu mu (`otomasyon_gunlugu`), kaç bildirim ve e-posta gitti. |
+
+## Yapılanlar
+
+| İstek | Yapılan |
+|---|---|
+| Yönetici ayarlasın: kaç gün sonra, kaç kez, hangi aralıkla | Düz ayar: **"son ödeme gününden X gün sonra, Y kez, Z günde bir"**. Sunucu kademeleri bunlardan üretir (`ilk_gun + i·aralik_gun`); üçü birlikte verilir. Kademeleri doğrudan yazma yolu (eski istemciler) duruyor; ikisi birden gelirse 422. Vade öncesi hatırlatma da ayarlanabiliyor |
+| Yalnız gerçekten borcu olanlara | Var olan kural korundu: kalanı > 0 olan borç (defterdeki tahsilat etkisinden). Ödeyen hatırlatma almaz |
+| "Kim öder" kuralı (P192/P218) | **Yeni.** Daireye yazılmış borçta alıcı, borcun tanımındaki kurala göre seçilir (`borclandirma.hedef_sec`): malik kuralında malik, aksi hâlde oturan → kiracı → malik. Tahakkukta kim seçilirdiyse hatırlatma da ona gider. **Kurala uyan kimse yoksa daireye hatırlatma gitmez**: yanlış kişiye borç hatırlatmak hiç göndermemekten kötü. Sayısı günlüğe yazılır (`alicisiz_daire`). Push ve uygulama içi bildirim de aynı kurala tabi |
+| E-posta şablonu | Borç tutarı, dönem(ler), son ödeme günü, ödeme kodu (yoksa üretilir), banka + IBAN, havale açıklaması talimatı. Nazik dil: "Ödemenizi yaptıysanız bu mesajı dikkate almayın; ödemenin kayıtlara yansıması birkaç gün sürebilir." 7 dil, §2'deki kurumsal kabuk |
+| Gönderim geçmişi yönetici panelinde | Yeni `GET /finans/hatirlatma-epostalari`: kişi, zaman, **teslim durumu** (gönderildi / iletildi / geri döndü). Mevcut bildirim geçmişi (okundu bilgisiyle) duruyor |
+| Bildirim tercihine uy | E-posta bildirimlerini kapatan (`bildirim_eposta=false`) kişiye **e-posta gitmez**. Push kendi tercihiyle (`bildirim_mobil`) gitmeye devam eder |
+
+**Yasal zorunluluk değerlendirmesi:** aidat hatırlatması yasal bir
+tebligat değil. Kat Mülkiyeti Kanunu'nda borçlu kat malikine ihtar
+ayrıca ve yazılı yapılır. E-posta hatırlatması bir kolaylık; kişinin
+"e-posta istemiyorum" tercihini ezmeyi gerektirecek bir yükümlülük yok.
+Bu yüzden tercihe uyuluyor.
+
+**Gönderim yolu:** e-postalar §2'deki kuyruğa yazılıyor (`tur =
+aidat_hatirlatma`). Kuyruk dakikada bir, e-postalar arasında aralık
+bırakarak gönderir. Yüz borçlu bir gece görevinde sağlayıcıya tek
+seferde yüklenmez; HTML yeniden denemede korunur.
+
+**Yeni ayar `eposta` (göç 0164), varsayılan açık.** Yalnız hatırlatmanın
+kendisi açıksa çalışır (`aktif`, varsayılan kapalı). **Davranış
+değişikliği:** hatırlatmayı bugün açmış tesislerde dağıtımdan sonraki
+gece borçlulara e-posta da gider. İstenen tam olarak bu; dağıtım notunda
+yöneticilere duyurulmalı. Kapatmak için ayardaki "E-posta da gönder"
+anahtarı kullanılır.
+
+**Özel metin:** yöneticinin yazdığı metin yalnız uygulama bildiriminde
+kullanılıyor (P192 kararı). E-posta kurumsal şablonla gidiyor; arayüz
+bunu metin alanının altında yazıyor.
+
+## Parite
+
+* **Web:** otomasyon sayfasındaki hatırlatma kartı.
+  * Düz cümle özeti, gerçek kademelerle: "Son ödeme gününden 3, 10 ve
+    30 gün sonra ödemeyenlere hatırlatma gönderilir (uygulama bildirimi
+    + e-posta)."
+  * Aç/kapat, "E-posta da gönder", X/Y/Z alanları.
+  * "Kime gider" notu.
+  * E-posta geçmişi kartı.
+* **Mobil:** borçlular ekranından açılan **yeni** "Otomatik hatırlatma"
+  ekranı. Aynı cümle, aynı ayarlar, e-posta geçmişi. Mobilde hatırlatma
+  ayarı hiç yoktu.
+* **Tek kayıt:** iki yüzey aynı uçları kullanıyor, farklı ayar olamaz.
+  §9'daki otomasyon ekranı da aynı kaydı gösterecek.
+
+## Testte bulunan kusur
+
+Web'de alandan çıkınca yapılan otomatik kayıt, aynı anda tıklanan onay
+kutularını kilitliyordu: tıklama yutuluyordu. Düzeltme:
+
+* plan yalnız değiştiyse yazılıyor,
+* onay kutuları kayıt sırasında kilitlenmiyor.
+
+## Testler
+
+* Sunucu `test_p250_aidat_hatirlatma.py` (4):
+  * düz ayar → kademeler; eksik üçlü ve iki kaynak birden 422,
+  * **kim öder:** kuralsız daire borcunda yalnız oturan kiracıya, malik
+    kuralında yalnız maliğe (bildirim + e-posta),
+  * şablon: tutar "1.234,50", dönem, ödeme kodu, IBAN, nazik cümle,
+  * e-postayı kapatan kişiye e-posta yok, bildirim var,
+  * `eposta=false` iken yalnız bildirim,
+  * geçmiş ucu teslim durumuyla.
+* Web `p250-aidat-hatirlatma.dom.test.ts`: düz cümle, üçlü birlikte
+  gider, e-posta anahtarı ayrı, geçmiş durumu.
+* Mobil `p250_aidat_hatirlatma_test.dart`: aynı ölçümler.
+* Mevcut P192 otomasyon ve finans testleri yeşil.
+
+## ÖLÇÜLEMEDİ
+
+* **Prod gönderim kaydı:** yukarıdaki SQL ile operatör ölçmeli.
+* **Gerçek e-posta teslimi:** §2 ile aynı not; dev'de Resend yok.
+

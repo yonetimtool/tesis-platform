@@ -8295,4 +8295,68 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get panoHizliPersonel => 'Añadir personal';
+
+  @override
+  String get otoHatirlatma => 'Recordatorios de deuda';
+
+  @override
+  String get otoHatirlatmaAciklama =>
+      'Quien paga no recibe recordatorio; como máximo una notificación por residente al día.';
+
+  @override
+  String get otoAktif => 'Activo';
+
+  @override
+  String get otoVadeOncesi => 'Días antes del vencimiento';
+
+  @override
+  String get otoHatirlatmaMetin =>
+      'Texto del recordatorio (vacío = predeterminado)';
+
+  @override
+  String get otoHatirlatmaIlkGun => 'Días después del vencimiento';
+
+  @override
+  String get otoHatirlatmaTekrar => 'Cuántas veces';
+
+  @override
+  String get otoHatirlatmaAralik => 'Cada cuántos días';
+
+  @override
+  String get otoHatirlatmaEposta => 'Enviar también correo';
+
+  @override
+  String otoHatirlatmaCumle(String gunler, String kanal) {
+    return 'Quien no haya pagado recibe un recordatorio $gunler días después del vencimiento ($kanal).';
+  }
+
+  @override
+  String otoHatirlatmaVadeOncesiCumle(String gun) {
+    return 'También se recuerda $gun días antes del vencimiento.';
+  }
+
+  @override
+  String get otoHatirlatmaKapali =>
+      'Los recordatorios automáticos están desactivados.';
+
+  @override
+  String get otoKanalBildirim => 'notificación de la app';
+
+  @override
+  String get otoKanalBildirimEposta => 'notificación + correo';
+
+  @override
+  String get otoHatirlatmaKimeNotu =>
+      'Solo lo reciben quienes realmente deben; quien pagó no. En las deudas de la vivienda se aplica la regla «quién paga» (propietario u ocupante). Quien desactivó las notificaciones por correo no recibe correo.';
+
+  @override
+  String get otoHatirlatmaMetinNotu =>
+      'El texto personalizado solo se usa en la notificación; el correo usa la plantilla (importe, periodo, código de pago, IBAN).';
+
+  @override
+  String get otoEpostaGecmisi => 'Correos de recordatorio';
+
+  @override
+  String get otoEpostaGecmisiBos =>
+      'Aún no se han enviado correos de recordatorio.';
 }

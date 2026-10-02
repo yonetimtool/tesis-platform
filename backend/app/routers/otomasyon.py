@@ -225,6 +225,11 @@ async def hatirlatma_ayari_guncelle(
     """Borc hatirlatmasi: acik/kapali, vade oncesi gun, kademeler, metin."""
     obj = await _ayar(db, user.tenant_id)
     veri = body.model_dump(exclude_unset=True)
+    # (P250 §7) Duz ayar (ilk/tekrar/aralik) semada `kademeler`e cevrildi;
+    # kendileri sutun degil.
+    for k in ("ilk_gun", "tekrar_sayisi", "aralik_gun"):
+        if veri.pop(k, None) is not None:
+            veri["kademeler"] = body.kademeler
     for k, v in veri.items():
         setattr(obj, k, v)
     obj.updated_at = func.now()

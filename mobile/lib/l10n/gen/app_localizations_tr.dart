@@ -8106,4 +8106,65 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get panoHizliPersonel => 'Personel ekle';
+
+  @override
+  String get otoHatirlatma => 'Borç hatırlatma';
+
+  @override
+  String get otoHatirlatmaAciklama =>
+      'Ödeyene hatırlatma gitmez; her sakine günde en fazla bir bildirim.';
+
+  @override
+  String get otoAktif => 'Etkin';
+
+  @override
+  String get otoVadeOncesi => 'Vadeden kaç gün önce';
+
+  @override
+  String get otoHatirlatmaMetin => 'Hatırlatma metni (boş = varsayılan)';
+
+  @override
+  String get otoHatirlatmaIlkGun => 'Son ödeme gününden kaç gün sonra';
+
+  @override
+  String get otoHatirlatmaTekrar => 'Kaç kez';
+
+  @override
+  String get otoHatirlatmaAralik => 'Kaç günde bir';
+
+  @override
+  String get otoHatirlatmaEposta => 'E-posta da gönder';
+
+  @override
+  String otoHatirlatmaCumle(String gunler, String kanal) {
+    return 'Son ödeme gününden $gunler gün sonra ödemeyenlere hatırlatma gönderilir ($kanal).';
+  }
+
+  @override
+  String otoHatirlatmaVadeOncesiCumle(String gun) {
+    return 'Ayrıca son ödeme gününden $gun gün önce hatırlatılır.';
+  }
+
+  @override
+  String get otoHatirlatmaKapali => 'Otomatik hatırlatma kapalı.';
+
+  @override
+  String get otoKanalBildirim => 'uygulama bildirimi';
+
+  @override
+  String get otoKanalBildirimEposta => 'uygulama bildirimi + e-posta';
+
+  @override
+  String get otoHatirlatmaKimeNotu =>
+      'Yalnız gerçekten borcu olanlara gider; ödeyen hatırlatma almaz. Daireye yazılmış borçta \"kim öder\" kuralına uyulur (malik ya da oturan). E-posta bildirimlerini kapatan sakine e-posta gitmez.';
+
+  @override
+  String get otoHatirlatmaMetinNotu =>
+      'Özel metin yalnız uygulama bildiriminde kullanılır; e-posta kurumsal şablonla (tutar, dönem, ödeme kodu, IBAN) gider.';
+
+  @override
+  String get otoEpostaGecmisi => 'Hatırlatma e-postaları';
+
+  @override
+  String get otoEpostaGecmisiBos => 'Henüz hatırlatma e-postası gönderilmedi.';
 }

@@ -8347,4 +8347,65 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get panoHizliPersonel => 'إضافة موظف';
+
+  @override
+  String get otoHatirlatma => 'تذكيرات الدين';
+
+  @override
+  String get otoHatirlatmaAciklama =>
+      'لا تُرسل تذكيرات لمن دفع؛ إشعار واحد كحد أقصى لكل ساكن يوميًا.';
+
+  @override
+  String get otoAktif => 'مفعّل';
+
+  @override
+  String get otoVadeOncesi => 'عدد الأيام قبل الاستحقاق';
+
+  @override
+  String get otoHatirlatmaMetin => 'نص التذكير (فارغ = افتراضي)';
+
+  @override
+  String get otoHatirlatmaIlkGun => 'عدد الأيام بعد تاريخ الاستحقاق';
+
+  @override
+  String get otoHatirlatmaTekrar => 'كم مرة';
+
+  @override
+  String get otoHatirlatmaAralik => 'كل كم يومًا';
+
+  @override
+  String get otoHatirlatmaEposta => 'أرسل بريدًا إلكترونيًا أيضًا';
+
+  @override
+  String otoHatirlatmaCumle(String gunler, String kanal) {
+    return 'يتلقى من لم يدفع تذكيرًا بعد $gunler يومًا من تاريخ الاستحقاق ($kanal).';
+  }
+
+  @override
+  String otoHatirlatmaVadeOncesiCumle(String gun) {
+    return 'ويُرسل تذكير أيضًا قبل تاريخ الاستحقاق بـ $gun يومًا.';
+  }
+
+  @override
+  String get otoHatirlatmaKapali => 'التذكيرات التلقائية متوقفة.';
+
+  @override
+  String get otoKanalBildirim => 'إشعار التطبيق';
+
+  @override
+  String get otoKanalBildirimEposta => 'إشعار التطبيق + بريد إلكتروني';
+
+  @override
+  String get otoHatirlatmaKimeNotu =>
+      'يُرسل فقط لمن عليه دين فعلًا؛ ولا يُرسل لمن دفع. في الدين المسجل على الوحدة تُطبق قاعدة «من يدفع» (المالك أو الساكن). لا يُرسل بريد لمن أوقف إشعارات البريد.';
+
+  @override
+  String get otoHatirlatmaMetinNotu =>
+      'يُستخدم النص المخصص في إشعار التطبيق فقط؛ ويُرسل البريد بالقالب الرسمي (المبلغ، الفترة، رمز الدفع، IBAN).';
+
+  @override
+  String get otoEpostaGecmisi => 'رسائل التذكير';
+
+  @override
+  String get otoEpostaGecmisiBos => 'لم تُرسل رسائل تذكير بعد.';
 }

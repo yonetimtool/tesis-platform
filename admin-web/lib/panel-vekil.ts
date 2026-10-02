@@ -74,6 +74,8 @@ export const OKUMA: Record<string, string> = {
   "butce-hedefleri": "/budget/hedefler",
   "butce-karsilastirma": "/budget/karsilastirma",
   "hatirlatma-gecmisi": "/finans/hatirlatma-gecmisi",
+  // (P250 §7) Otomatik hatirlatma e-postalari — teslim durumuyla.
+  "hatirlatma-epostalari": "/finans/hatirlatma-epostalari",
   "butce-kategorileri": "/budget/categories",
   // --- (P202) surum politikasi (PLATFORM admini) ---
   "surum-politikasi": "/surum-politikasi",

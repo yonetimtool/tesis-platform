@@ -93,7 +93,10 @@ export function KurulumVideolariPenceresi({
     setKonumlandi(true);
   }, [acik, baslangic, adimlar, konumlandi]);
 
-  const adim = adimlar[sira];
+  // Konum secilmeden HICBIR adim cizilmez: yoksa bir an ilk adimin
+  // oynaticisi kurulur, sonra dogru adima gecilir (gereksiz oynatici ve
+  // o arada gelen ENDED yanlis adima yazilirdi — testte aralikli goruldu).
+  const adim = konumlandi ? adimlar[sira] : undefined;
 
   function git(i: number) {
     if (i < 0 || i >= adimlar.length) return;

@@ -18,7 +18,7 @@
 // bakilarak anlasilabilseydi, HICBIR SEY URETMEDIGI durum — ki asil
 // merak edilen odur — gorunmez kalirdi.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 
 import { useToast } from "@/components/Toast";
@@ -39,7 +39,8 @@ import {
 import { useGelirGiderTanimlari, useKasalar } from "@/components/finans/ortak";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
-import { useT } from "@/lib/i18n/kullan";
+import { useI18n, useT } from "@/lib/i18n/kullan";
+import { tarihSaatBicimi } from "@/lib/tarih";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk/tipler";
 import { kurusToTL, tlToKurus } from "@/lib/money";
 import { ISTEMCI_SINIR, SINIR } from "@/lib/girdi-siniri";
@@ -86,6 +87,11 @@ interface Ayar {
   vade_oncesi_gun: number;
   kademeler: number[];
   metin: string | null;
+  // (P250 §7)
+  eposta: boolean;
+  ilk_gun: number | null;
+  tekrar_sayisi: number;
+  aralik_gun: number | null;
 }
 
 // HAM ENUM EKRANA CIKMAZ: her deger bir sozluk anahtarina eslenir.
@@ -326,11 +332,44 @@ function PlanlarKarti() {
 }
 
 // ----------------------------- HATIRLATMA --------------------------------- #
+/**
+ * (P250 §7) Hatirlatma ayarinin DUZ CUMLESI — "son odeme gununden 3, 10 ve
+ * 30 gun sonra ... (bildirim + e-posta)". Ayarin KENDISINDEN kurulur:
+ * duz ayar alanlari duzensiz eski kademeleri ({3,10,30}) temsil
+ * edemeyebilir; cumle gercek kademeleri soyler.
+ */
+function hatirlatmaCumlesi(
+  a: Ayar,
+  t: ReturnType<typeof useT>,
+  dil: string,
+): string {
+  if (!a.aktif || a.kademeler.length === 0) return t("otoHatirlatmaKapali");
+  const gunler = new Intl.ListFormat(dil, { type: "conjunction" }).format(
+    a.kademeler.map(String),
+  );
+  const kanal = a.eposta ? t("otoKanalBildirimEposta") : t("otoKanalBildirim");
+  const ana = t("otoHatirlatmaCumle", { gunler, kanal });
+  return a.vade_oncesi_gun > 0
+    ? `${ana} ${t("otoHatirlatmaVadeOncesiCumle", { gun: a.vade_oncesi_gun })}`
+    : ana;
+}
+
 function HatirlatmaKarti() {
   const t = useT();
+  const { dil } = useI18n();
   const toast = useToast();
   const { data, mutate } = useSWR<Ayar>("/api/panel/hatirlatma-ayari", jsonFetcher);
   const [mesgul, setMesgul] = useState(false);
+  const [ilk, setIlk] = useState("");
+  const [tekrar, setTekrar] = useState("");
+  const [aralik, setAralik] = useState("");
+
+  useEffect(() => {
+    if (!data) return;
+    setIlk(String(data.ilk_gun ?? 3));
+    setTekrar(String(data.tekrar_sayisi || 3));
+    setAralik(String(data.aralik_gun ?? 7));
+  }, [data]);
 
   async function yaz(govde: Record<string, unknown>) {
     setMesgul(true);
@@ -344,24 +383,88 @@ function HatirlatmaKarti() {
     }
   }
 
+  // UCU BIRLIKTE gider (sunucu kademeleri bunlardan uretir). YALNIZ
+  // DEGISTIYSE: alandan cikmak tek basina kayit tetiklemesin (her
+  // odak gecisi gereksiz bir yazma ve kademeleri duzene sokma olurdu).
+  function plani_yaz() {
+    const yeni = {
+      ilk_gun: Number(ilk) || 0,
+      tekrar_sayisi: Math.max(1, Number(tekrar) || 1),
+      aralik_gun: Math.max(1, Number(aralik) || 1),
+    };
+    if (
+      data &&
+      yeni.ilk_gun === data.ilk_gun &&
+      yeni.tekrar_sayisi === data.tekrar_sayisi &&
+      yeni.aralik_gun === data.aralik_gun
+    ) {
+      return;
+    }
+    void yaz(yeni);
+  }
+
   return (
     <Kart>
       <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
         {t("otoHatirlatma")}
       </h2>
-      <p className="mb-3" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+      <p className="mb-2" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
         {t("otoHatirlatmaAciklama")}
       </p>
-      <div className="grid gap-3 sm:grid-cols-3">
+      {data && (
+        <p
+          data-test="hatirlatma-cumlesi"
+          className="mb-3 font-medium"
+          style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}
+        >
+          {hatirlatmaCumlesi(data, t, dil)}
+        </p>
+      )}
+      <div className="mb-3 flex flex-wrap gap-4">
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
+            data-test="hatirlatma-aktif"
             checked={data?.aktif ?? false}
-            disabled={mesgul}
             onChange={(e) => void yaz({ aktif: e.target.checked })}
           />
           {t("otoAktif")}
         </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            data-test="hatirlatma-eposta"
+            checked={data?.eposta ?? true}
+            onChange={(e) => void yaz({ eposta: e.target.checked })}
+          />
+          {t("otoHatirlatmaEposta")}
+        </label>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-4">
+        <AlanSarmal etiket={t("otoHatirlatmaIlkGun")}>
+          {(b) => (
+            <Alan {...b} data-test="hatirlatma-ilk" inputMode="numeric" maxLength={2}
+              value={ilk} disabled={mesgul}
+              onChange={(e) => setIlk(e.target.value.replace(/\D/g, ""))}
+              onBlur={plani_yaz} />
+          )}
+        </AlanSarmal>
+        <AlanSarmal etiket={t("otoHatirlatmaTekrar")}>
+          {(b) => (
+            <Alan {...b} data-test="hatirlatma-tekrar" inputMode="numeric" maxLength={1}
+              value={tekrar} disabled={mesgul}
+              onChange={(e) => setTekrar(e.target.value.replace(/\D/g, ""))}
+              onBlur={plani_yaz} />
+          )}
+        </AlanSarmal>
+        <AlanSarmal etiket={t("otoHatirlatmaAralik")}>
+          {(b) => (
+            <Alan {...b} data-test="hatirlatma-aralik" inputMode="numeric" maxLength={2}
+              value={aralik} disabled={mesgul}
+              onChange={(e) => setAralik(e.target.value.replace(/\D/g, ""))}
+              onBlur={plani_yaz} />
+          )}
+        </AlanSarmal>
         <AlanSarmal etiket={t("otoVadeOncesi")}>
           {(b) => (
             <Alan {...b} type="number" min={0} max={30}
@@ -370,29 +473,58 @@ function HatirlatmaKarti() {
               onBlur={(e) => void yaz({ vade_oncesi_gun: Number(e.target.value) })} />
           )}
         </AlanSarmal>
-        <AlanSarmal etiket={t("otoKademeler")}>
-          {(b) => (
-            <Alan maxLength={SINIR.BASLIK} {...b}
-              defaultValue={(data?.kademeler ?? []).join(", ")}
-              disabled={mesgul}
-              onBlur={(e) => void yaz({
-                // Serbest metin -> sayi listesi. Bos ve bozuk parcalar
-                // ATILIR: "3, , x, 10" yazan kullaniciya hata gostermek
-                // yerine anlasilan kismi almak daha az engelleyici.
-                kademeler: e.target.value
-                  .split(",")
-                  .map((p) => Number(p.trim()))
-                  .filter((n) => Number.isFinite(n) && n >= 0),
-              })} />
-          )}
-        </AlanSarmal>
       </div>
-      <AlanSarmal etiket={t("otoHatirlatmaMetin")}>
+      <p className="mt-2" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+        {t("otoHatirlatmaKimeNotu")}
+      </p>
+      <AlanSarmal etiket={t("otoHatirlatmaMetin")} ipucu={t("otoHatirlatmaMetinNotu")}>
         {(b) => (
           <Alan maxLength={1000 /* sunucu: HatirlatmaAyariUpdate.metin */} {...b} defaultValue={data?.metin ?? ""} disabled={mesgul}
             onBlur={(e) => void yaz({ metin: e.target.value || null })} />
         )}
       </AlanSarmal>
+    </Kart>
+  );
+}
+
+// (P250 §7) OTOMATIK HATIRLATMA E-POSTALARI — teslim durumuyla.
+const EPOSTA_DURUM_METNI: Record<string, SozlukAnahtari> = {
+  kuyrukta: "odemeKoduDurumkuyrukta",
+  gonderildi: "odemeKoduDurumgonderildi",
+  iletildi: "odemeKoduDurumiletildi",
+  geri_dondu: "odemeKoduDurumgeri_dondu",
+  basarisiz: "odemeKoduDurumbasarisiz",
+  yapilandirilmadi: "odemeKoduDurumyapilandirilmadi",
+};
+const EPOSTA_DURUM_YEDEK: SozlukAnahtari = "odemeKoduDurumbasarisiz";
+
+function HatirlatmaEpostalariKarti() {
+  const t = useT();
+  const { data } = useSWR<{ items: { id: string; ad: string | null; gonderim_zamani: string; durum: string }[] }>(
+    "/api/panel/hatirlatma-epostalari?limit=20",
+    jsonFetcher,
+  );
+  const ogeler = data?.items ?? [];
+  return (
+    <Kart>
+      <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+        {t("otoEpostaGecmisi")}
+      </h2>
+      {ogeler.length === 0 ? (
+        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+          {t("otoEpostaGecmisiBos")}
+        </p>
+      ) : (
+        <ul className="divide-y" data-test="hatirlatma-epostalari">
+          {ogeler.map((o) => (
+            <li key={o.id} className="flex flex-wrap items-center justify-between gap-2 py-2" style={{ fontSize: "var(--yz-fs-sm)" }}>
+              <span style={{ color: "var(--yz-text)" }}>{o.ad ?? YOK}</span>
+              <span style={{ color: "var(--yz-text-2)" }}>{tarihSaatBicimi(o.gonderim_zamani)}</span>
+              <Rozet>{t(EPOSTA_DURUM_METNI[o.durum] ?? EPOSTA_DURUM_YEDEK)}</Rozet>
+            </li>
+          ))}
+        </ul>
+      )}
     </Kart>
   );
 }
@@ -686,6 +818,7 @@ export default function OtomasyonPage() {
       <PlanlarKarti />
       <HatirlatmaKarti />
       <HatirlatmaGecmisiKarti />
+      <HatirlatmaEpostalariKarti />
       <GiderlerKarti />
       <GunlukKarti />
     </div>

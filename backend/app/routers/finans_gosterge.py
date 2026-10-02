@@ -24,10 +24,18 @@ from .. import defter, yaslandirma
 from ..finans import tarih_metni, tl_metni
 from ..audit import Action, audit_user
 from ..deps import get_tenant_db, require_role
-from ..models import AppUser, DuesAssessment, HatirlatmaAyari, Notification
+from ..models import (
+    AppUser,
+    DuesAssessment,
+    HatirlatmaAyari,
+    MesajGonderim,
+    Notification,
+)
 from ..sakin_bildirimi import sakin_bildirimi_yaz
 from ..schemas import (
     BorcluTopluIstek,
+    HatirlatmaEpostaSatiri,
+    HatirlatmaEpostalari,
     HatirlatmaGecmisi,
     HatirlatmaGecmisiSatiri,
     OdemePlaniIstek,
@@ -191,6 +199,48 @@ async def hatirlatma_gecmisi(
                 tutar=(n.mesaj_veri or {}).get("tutar"),
             )
             for n, ad in rows
+        ],
+    )
+
+
+@router.get("/finans/hatirlatma-epostalari", response_model=HatirlatmaEpostalari)
+async def hatirlatma_epostalari(
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_OKUR),
+) -> HatirlatmaEpostalari:
+    """(P250 §7) Otomatik aidat hatirlatma E-POSTALARI — kime, ne zaman,
+    teslim edildi mi (P234: gonderildi / iletildi / geri dondu).
+
+    Push/uygulama ici hatirlatmalarin listesi `hatirlatma-gecmisi`nde
+    (okundu bilgisiyle); e-postanin "okundu"su guvenilir olmadigi icin
+    burada TESLIM durumu gosterilir.
+    """
+    from ..islem_epostasi import teslim_durumu
+    from ..otomasyon import AIDAT_HATIRLATMA_TUR
+
+    where = [MesajGonderim.tur == AIDAT_HATIRLATMA_TUR]
+    total = (
+        await db.execute(select(func.count()).select_from(MesajGonderim).where(*where))
+    ).scalar_one()
+    rows = (
+        await db.execute(
+            select(MesajGonderim, AppUser.ad)
+            .outerjoin(AppUser, AppUser.id == MesajGonderim.user_id)
+            .where(*where)
+            .order_by(MesajGonderim.created_at.desc(), MesajGonderim.id.desc())
+            .limit(limit).offset(offset)
+        )
+    ).all()
+    return HatirlatmaEpostalari(
+        meta={"limit": limit, "offset": offset, "total": total},
+        items=[
+            HatirlatmaEpostaSatiri(
+                id=m.id, user_id=m.user_id, ad=ad, gonderim_zamani=m.created_at,
+                durum=teslim_durumu(m.durum, m.hata),
+            )
+            for m, ad in rows
         ],
     )
 

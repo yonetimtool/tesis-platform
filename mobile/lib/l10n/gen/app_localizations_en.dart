@@ -8304,4 +8304,65 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get panoHizliPersonel => 'Add staff';
+
+  @override
+  String get otoHatirlatma => 'Debt reminders';
+
+  @override
+  String get otoHatirlatmaAciklama =>
+      'Payers get no reminder; at most one notification per resident per day.';
+
+  @override
+  String get otoAktif => 'Enabled';
+
+  @override
+  String get otoVadeOncesi => 'Days before due date';
+
+  @override
+  String get otoHatirlatmaMetin => 'Reminder text (empty = default)';
+
+  @override
+  String get otoHatirlatmaIlkGun => 'Days after the due date';
+
+  @override
+  String get otoHatirlatmaTekrar => 'How many times';
+
+  @override
+  String get otoHatirlatmaAralik => 'Every how many days';
+
+  @override
+  String get otoHatirlatmaEposta => 'Also send email';
+
+  @override
+  String otoHatirlatmaCumle(String gunler, String kanal) {
+    return 'Members who have not paid get a reminder $gunler days after the due date ($kanal).';
+  }
+
+  @override
+  String otoHatirlatmaVadeOncesiCumle(String gun) {
+    return 'A reminder is also sent $gun days before the due date.';
+  }
+
+  @override
+  String get otoHatirlatmaKapali => 'Automatic reminders are off.';
+
+  @override
+  String get otoKanalBildirim => 'app notification';
+
+  @override
+  String get otoKanalBildirimEposta => 'app notification + email';
+
+  @override
+  String get otoHatirlatmaKimeNotu =>
+      'Only people who actually owe receive it; those who paid do not. For dues charged to a unit, the \"who pays\" rule is followed (owner or occupant). Residents who turned off email notifications get no email.';
+
+  @override
+  String get otoHatirlatmaMetinNotu =>
+      'Custom text is used only in the app notification; the email uses the branded template (amount, period, payment code, IBAN).';
+
+  @override
+  String get otoEpostaGecmisi => 'Reminder emails';
+
+  @override
+  String get otoEpostaGecmisiBos => 'No reminder emails sent yet.';
 }

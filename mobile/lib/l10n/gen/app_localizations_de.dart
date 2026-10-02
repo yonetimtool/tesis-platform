@@ -8314,4 +8314,65 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get panoHizliPersonel => 'Mitarbeiter anlegen';
+
+  @override
+  String get otoHatirlatma => 'Zahlungserinnerungen';
+
+  @override
+  String get otoHatirlatmaAciklama =>
+      'Zahler erhalten keine Erinnerung; höchstens eine Benachrichtigung pro Bewohner und Tag.';
+
+  @override
+  String get otoAktif => 'Aktiv';
+
+  @override
+  String get otoVadeOncesi => 'Tage vor Fälligkeit';
+
+  @override
+  String get otoHatirlatmaMetin => 'Erinnerungstext (leer = Standard)';
+
+  @override
+  String get otoHatirlatmaIlkGun => 'Tage nach Fälligkeit';
+
+  @override
+  String get otoHatirlatmaTekrar => 'Wie oft';
+
+  @override
+  String get otoHatirlatmaAralik => 'Alle wie viele Tage';
+
+  @override
+  String get otoHatirlatmaEposta => 'Auch E-Mail senden';
+
+  @override
+  String otoHatirlatmaCumle(String gunler, String kanal) {
+    return 'Wer nicht gezahlt hat, wird $gunler Tage nach Fälligkeit erinnert ($kanal).';
+  }
+
+  @override
+  String otoHatirlatmaVadeOncesiCumle(String gun) {
+    return 'Zusätzlich wird $gun Tage vor Fälligkeit erinnert.';
+  }
+
+  @override
+  String get otoHatirlatmaKapali => 'Automatische Erinnerungen sind aus.';
+
+  @override
+  String get otoKanalBildirim => 'App-Mitteilung';
+
+  @override
+  String get otoKanalBildirimEposta => 'App-Mitteilung + E-Mail';
+
+  @override
+  String get otoHatirlatmaKimeNotu =>
+      'Nur wer tatsächlich schuldet, erhält sie; wer gezahlt hat, nicht. Bei Forderungen an eine Wohnung gilt die Regel \"wer zahlt\" (Eigentümer oder Bewohner). Wer E-Mail-Benachrichtigungen abgeschaltet hat, erhält keine E-Mail.';
+
+  @override
+  String get otoHatirlatmaMetinNotu =>
+      'Eigener Text gilt nur für die App-Mitteilung; die E-Mail nutzt die Vorlage (Betrag, Zeitraum, Zahlungscode, IBAN).';
+
+  @override
+  String get otoEpostaGecmisi => 'Erinnerungs-E-Mails';
+
+  @override
+  String get otoEpostaGecmisiBos => 'Noch keine Erinnerungs-E-Mails gesendet.';
 }

@@ -84,7 +84,7 @@ it("video BITINCE izlendi gider ve 'Simdi bu adimi yap' vurgulanir; tiklayinca s
   const c = taklit();
   const onKapat = vi.fn();
   ciz(() => createElement(KurulumVideolariPenceresi, { acik: true, onKapat }));
-  await waitFor(() => expect(sonOynatici).not.toBeNull());
+  await waitFor(() => expect(sonOynatici?.videoId).toBe("ZyXwVuTsRq2"));
   expect(kanca("egitim-simdi-yap")?.getAttribute("data-vurgulu")).toBe("hayir");
   await act(async () => sonOynatici!.olay.onStateChange?.({ data: 0 }));
   await waitFor(() =>

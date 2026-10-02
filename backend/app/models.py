@@ -3834,6 +3834,10 @@ class HatirlatmaAyari(Base):
     #: CEVRILMEZ: yoneticinin yazdigi cumleyi makineyle degistirmek, onun
     #: soylemedigi bir seyi ona soyletmek olurdu.
     metin: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: (P250 §7, goc 0164) Push'un yaninda e-posta da gitsin mi.
+    eposta: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
     son_calisma = mapped_column(Date, nullable=True)
     created_at = _created_at()
     updated_at = _created_at()

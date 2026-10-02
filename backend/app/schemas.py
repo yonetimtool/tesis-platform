@@ -14,6 +14,7 @@ from pydantic import (
     EmailStr,
     Field,
     StringConstraints,
+    computed_field,
     field_validator,
     model_validator,
 )
@@ -7067,6 +7068,23 @@ class HatirlatmaGecmisi(BaseModel):
     items: list[HatirlatmaGecmisiSatiri]
 
 
+class HatirlatmaEpostaSatiri(BaseModel):
+    """(P250 §7) Otomatik aidat hatirlatma E-POSTASI — teslim durumuyla."""
+
+    id: uuid.UUID
+    user_id: uuid.UUID | None = None
+    ad: str | None = None
+    gonderim_zamani: datetime
+    #: kuyrukta | gonderildi | iletildi | geri_dondu | basarisiz |
+    #: yapilandirilmadi (P234 geri bildirimi).
+    durum: str
+
+
+class HatirlatmaEpostalari(BaseModel):
+    meta: PageMetaOut
+    items: list[HatirlatmaEpostaSatiri]
+
+
 class BorcluTopluIstek(BaseModel):
     """Secilen borclulara toplu islem.
 
@@ -7242,6 +7260,28 @@ class HatirlatmaAyariOut(BaseModel):
     kademeler: list[int] = []
     metin: str | None = None
     son_calisma: date | None = None
+    #: (P250 §7) Push'un yaninda e-posta da gitsin mi.
+    eposta: bool = True
+
+    # (P250 §7) YONETICININ DILIYLE: "son odeme gununden X gun sonra, Y kez,
+    # Z gunde bir". Kademelerden TURETILIR; kademeler duzenli araliksa
+    # birebir, degilse (eski {3,10,30}) ilk gun + adet + ilk aralik —
+    # istemci duz cumleyi `kademeler`den kurar, yanlis bir sey soylemez.
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def ilk_gun(self) -> int | None:
+        return self.kademeler[0] if self.kademeler else None
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def tekrar_sayisi(self) -> int:
+        return len(self.kademeler)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def aralik_gun(self) -> int | None:
+        k = self.kademeler
+        return k[1] - k[0] if len(k) > 1 else None
 
 
 class HatirlatmaAyariUpdate(BaseModel):
@@ -7249,6 +7289,30 @@ class HatirlatmaAyariUpdate(BaseModel):
     vade_oncesi_gun: int | None = Field(None, ge=0, le=30)
     kademeler: list[int] | None = Field(None, max_length=6)
     metin: str | None = Field(None, max_length=1000)
+    #: (P250 §7) E-posta kanali.
+    eposta: bool | None = None
+    #: (P250 §7) Duz ayar: "son odeme gununden `ilk_gun` gun sonra,
+    #: `tekrar_sayisi` kez, `aralik_gun` gunde bir". UCU BIRLIKTE verilir;
+    #: sunucu `kademeler`i bunlardan uretir (kademeler ile birlikte
+    #: verilirse 422 — iki ayri kaynak celisebilirdi).
+    ilk_gun: int | None = Field(None, ge=0, le=90)
+    tekrar_sayisi: int | None = Field(None, ge=1, le=6)
+    aralik_gun: int | None = Field(None, ge=1, le=60)
+
+    @model_validator(mode="after")
+    def _duz_ayar(self) -> "HatirlatmaAyariUpdate":
+        uclu = (self.ilk_gun, self.tekrar_sayisi, self.aralik_gun)
+        if all(v is None for v in uclu):
+            return self
+        if any(v is None for v in uclu):
+            raise ValueError("ilk_gun, tekrar_sayisi ve aralik_gun birlikte verilmeli")
+        if self.kademeler is not None:
+            raise ValueError("kademeler ile duz ayar birlikte verilemez")
+        kademeler = [self.ilk_gun + i * self.aralik_gun for i in range(self.tekrar_sayisi)]
+        if kademeler[-1] > 365:
+            raise ValueError("son hatirlatma vadeden en fazla 365 gun sonra olabilir")
+        self.kademeler = kademeler
+        return self
 
     @field_validator("kademeler")
     @classmethod
