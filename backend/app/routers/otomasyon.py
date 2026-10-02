@@ -468,7 +468,7 @@ async def _maas_ayari(db: AsyncSession, tenant_id: uuid.UUID) -> MaasAyariOut:
                 FinansalHareket.durum == "onay_bekliyor",
                 FinansalHareket.id.notin_(defter.iptal_edilmis()),
             )
-            .order_by(FinansalHareket.tarih, FinansalHareket.aciklama)
+            .order_by(FinansalHareket.tarih, FinansalHareket.aciklama, FinansalHareket.id)
             .limit(500)
         )
     ).scalars().all()

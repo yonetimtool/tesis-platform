@@ -125,6 +125,9 @@ TESIS_UCLARI: tuple[str, ...] = (
     "/mesaj-durumu",
     # (P250 §9) Kural basina son calisma + hatirlatma onizlemesi.
     "/otomasyon/son-calismalar",
+    # (P252 §2) Maas ayari: odeme gunu gruplari + onay bekleyen maaslar
+    # (aciklamada kisi adi). Baska tesisin bordrosu sizmamali.
+    "/otomasyon/maas-ayari",
     "/hatirlatma-ayari/onizleme",
     "/personel-kayitlari",
     "/vehicle-passes",

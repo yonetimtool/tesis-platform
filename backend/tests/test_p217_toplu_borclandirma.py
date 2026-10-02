@@ -78,6 +78,14 @@ def _govde(tanim_id: str, donem: str) -> dict:
             "aciklama": "p217 test"}
 
 
+def _donem(ay: str) -> str:
+    """Rastgele TEST donemi, 2040-2089. (P252) Eskiden 2010-2099'du ve
+    1/90 olasilikla 2026'ya — baska testlerin gercek donemine — dustu:
+    `_temizle` o donemi TUM tesislerde silmeye calisti ve gecikme faizi
+    kalemlerinin kaynak FK'sina takildi (tam kosuda gozlendi)."""
+    return f"20{uuid.uuid4().int % 50 + 40}-{ay}"
+
+
 def _temizle(owner_conn, donem: str) -> None:
     owner_conn.execute("DELETE FROM dues_assessment WHERE donem = %s", (donem,))
 
@@ -90,7 +98,7 @@ def test_ILK_KOSUM_kac_tahakkuk_OLUSTUGUNU_soyler(client, world, owner_conn):
     donmuyordu ve ekranda her durumda "Kaydedildi" yaziyordu."""
     h = _h(client, world["slug_a"], world["yonetici_a"])
     _daire(client, h)  # ON KOSUL: toplu borclandirma AKTIF DAIRELERI isler
-    donem = f"20{uuid.uuid4().int % 90 + 10}-01"
+    donem = _donem("01")
     _temizle(owner_conn, donem)
     try:
         r = client.post("/borclandirma/toplu", headers=h,
@@ -118,7 +126,7 @@ def test_IKINCI_KOSUM_hicbir_sey_yazmaz_ve_BUNU_SOYLER(client, world, owner_conn
     """
     h = _h(client, world["slug_a"], world["yonetici_a"])
     _daire(client, h)
-    donem = f"20{uuid.uuid4().int % 90 + 10}-02"
+    donem = _donem("02")
     _temizle(owner_conn, donem)
     govde = _govde(_gider_tanimi(client, h), donem)
     try:
@@ -144,7 +152,7 @@ def test_TEKIL_tahakkuk_da_olusan_doner(client, world, owner_conn):
     vermemesi ayni belirsizligi yarim birakmakti."""
     h = _h(client, world["slug_a"], world["yonetici_a"])
     daire = _daire(client, h)
-    donem = f"20{uuid.uuid4().int % 90 + 10}-03"
+    donem = _donem("03")
     _temizle(owner_conn, donem)
     try:
         r = client.post("/dues/assessments", headers=h, json={
@@ -162,7 +170,7 @@ def test_YONETICI_toplu_borclandirabilir(client, world, owner_conn):
     Istegin sorusu "gercekten acildi mi" — uctan uca olculuyor."""
     h = _h(client, world["slug_a"], world["yonetici_a"])
     _daire(client, h)
-    donem = f"20{uuid.uuid4().int % 90 + 10}-04"
+    donem = _donem("04")
     _temizle(owner_conn, donem)
     try:
         tanim = _gider_tanimi(client, h)
@@ -188,7 +196,7 @@ def test_DAIRE_LISTESI_acik_borcu_DONER(client, world, owner_conn):
     """
     h = _h(client, world["slug_a"], world["yonetici_a"])
     daire = _daire(client, h)
-    donem = f"20{uuid.uuid4().int % 90 + 10}-05"
+    donem = _donem("05")
     _temizle(owner_conn, donem)
     try:
         once = client.get("/units?limit=200", headers=h).json()["items"]
@@ -213,7 +221,7 @@ def test_BORC_tahsilati_DUSER(client, world, owner_conn):
     Aksi halde odemesini yapmis daire sonsuza dek borclu gorunurdu."""
     h = _h(client, world["slug_a"], world["yonetici_a"])
     daire = _daire(client, h)
-    donem = f"20{uuid.uuid4().int % 90 + 10}-06"
+    donem = _donem("06")
     _temizle(owner_conn, donem)
     try:
         a = client.post("/dues/assessments", headers=h, json={
@@ -258,7 +266,7 @@ def test_TAHAKKUK_deftere_YAZILMAZ_ve_bu_KUSUR_DEGIL(client, world, owner_conn):
     """
     h = _h(client, world["slug_a"], world["yonetici_a"])
     daire = _daire(client, h)
-    donem = f"20{uuid.uuid4().int % 90 + 10}-07"
+    donem = _donem("07")
     _temizle(owner_conn, donem)
     try:
         client.post("/dues/assessments", headers=h, json={

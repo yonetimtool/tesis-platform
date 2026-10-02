@@ -43,6 +43,9 @@ HEDEF_CAGRILAR = {"text", "exec_driver_sql", "execute", "literal_column",
 #: (dosya, fonksiyon, araya giren ifade) -> gerekce.
 #: Ifade metni `ast.unparse` ciktisidir.
 IZINLI: dict[tuple[str, str, str], str] = {
+    ('defter.py', 'kategori_kirilimi', 'PERSONEL_GIDERLERI_ADI'):
+        '(P252) modul sabiti "Personel giderleri" (kullanici girdisi degil); '
+        'GROUP BY ile ayni ifade olmasi icin literal — bind parametre GroupingError verir',
     ('bakim_hatirlatma_isi.py', 'tum_tenantlar_icin', 'KADEME_DAMGA[kademe]'):
         'kolon adi sabit sozlukten; kademe kod ici sabit',
     ('ceviri_api.py', 'ceviri_isaretle_ve_kuyrukla', 't.ceviri_tablo'):
