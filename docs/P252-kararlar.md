@@ -228,5 +228,20 @@
 
 ### §4 — Açık işler
 
-`docs/acik-is-exhaustive-deps-uyarilari.md` ve
-`docs/acik-is-rapor-kuyruk-kilitlenmesi.md`: ölçüm ve sonuç §4 bölümünde.
+İki açık iş kapandı; ayrıntılı ölçüm her birinin kendi belgesinin
+"Kapanış" bölümünde.
+
+* **exhaustive-deps** (`docs/acik-is-exhaustive-deps-uyarilari.md`):
+  * Dört uyarıdan biri gerçek kusur çıktı. İçe aktarımda tür adresten
+    değişince eski kolon eşlemesi yeni türe gidiyordu. Önce testle
+    gösterildi, sonra düzeltildi.
+  * Üçü zararsız; gerekçeli yorum yazıldı.
+  * Lint artık `--max-warnings 0`.
+* **rapor kuyruğu kilitlenmesi** (`docs/acik-is-rapor-kuyruk-kilitlenmesi.md`):
+  * db günlüğüyle ölçüldü: `DELETE FROM tenant` ile `UPDATE rapor_isi`
+    birbirini bekliyor.
+  * Kök neden: aynı işlemde ikinci UPDATE'in yabancı anahtar denetimini
+    yeniden çalıştırması.
+  * Prod'da da var (tesis silme, saklama). Ayrıca üretim boyunca açık kalan
+    işlem 60 sn idle sınırına takılabiliyordu.
+  * İşçi üç kısa işleme bölündü; yetim iş kurtarılıyor. Testle kilitlendi.

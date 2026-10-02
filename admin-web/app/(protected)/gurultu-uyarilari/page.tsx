@@ -93,6 +93,13 @@ export default function GurultuUyarilariPage() {
           ) : null,
       },
     ],
+    // (P252 §4) BILINCLI EKSIK BAGIMLILIK: satir eylemleri (`yapildi`) her
+    // cizimde yeniden kurulur ama yalniz KARARLI seyleri kapatir — set*
+    // islevleri, SWR `mutate` (anahtari `keyRef` uzerinden guncel okur),
+    // `useCallback`li `onayla`, `toast` ve bagimlilikta olan `t`. Eski
+    // kapanis eski durumu okumaz; onlari eklemek kolon tanimini her
+    // cizimde yeniden kurmaktan baska bir sey yapmazdi.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [t],
   );
 

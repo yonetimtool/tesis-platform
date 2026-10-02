@@ -165,12 +165,27 @@ export default function IceAktarimPage() {
   );
   const tur = turler?.find((x) => x.kod === turKod);
 
-  // TUR DEGISINCE TABLO SIFIRLANIR: sutunlar degisti, eski hucreler
-  // baska bir alanin altinda kalirdi.
+  // TUR DEGISINCE TABLO VE ESLEME SIFIRLANIR: sutunlar degisti, eski
+  // hucreler ve eski kolon eslemesi baska bir turun alanlarina isaret
+  // ederdi.
+  //
+  // (P252 §4) ESLEME de burada sifirlanir. Onceden yalniz acilir listenin
+  // `onChange`indaydi; tur ADRESTEN degisince (tarayicida geri, `?tur=`
+  // baglantisi) eski turun alan kodlari yeni ture gonderiliyordu
+  // (`p252-ice-aktarim-tur-degisimi` testi olctu).
+  //
+  // BAGIMLILIK BILINCLI OLARAK `tur?.kod`, `tur` DEGIL: SWR icerik
+  // ayniyken eski nesneyi korur, ama sunucu turun ICERIGINI degistirirse
+  // (ornek, aciklama) yeniden dogrulama YENI bir nesne getirir. `tur`a
+  // baglamak o anda kullanicinin yazdigi tabloyu, tur DEGISMEDEN silerdi
+  // (testle olculdu: ayni dosyadaki ikinci test).
   useEffect(() => {
     if (!tur) return;
     setTabloSatirlari(bosTablo(tur.alanlar));
+    setEsleme({});
     setSonuc(null);
+    setSorunlulariAtla(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- yukaridaki gerekce
   }, [tur?.kod]);
 
   // (P234 §2) ACIKLAMA SATIRI ATLANIR.

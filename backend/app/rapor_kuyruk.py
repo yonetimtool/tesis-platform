@@ -29,10 +29,10 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import psycopg
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from .config import settings
 from .db import tenant_session
@@ -75,6 +75,11 @@ _HATA_METINLERI: tuple[tuple[tuple[str, ...], str], ...] = (
         "Rapor cok buyuk. Tarih araligini daraltip tekrar deneyin",
     ),
 )
+
+
+#: (P252 §4) Bu sureden uzun `uretiliyor`da kalan is YETIM sayilir (isci
+#: olduruldu) ve yeniden teslimde yeniden uretilir.
+YETIM_SURESI = timedelta(minutes=30)
 
 
 def _hata_metni(exc: Exception) -> str:
@@ -122,69 +127,118 @@ async def isi_uret(is_id: uuid.UUID) -> dict:
         return {"durum": "bulunamadi"}
     tenant_id = satir[0]
 
+    # =====================================================================
+    # (P252 §4) UC KISA ISLEM — uretim ve yukleme ISLEM DISINDA.
+    # =====================================================================
+    # Eskiden tek islemdi: `uretiliyor` yazilir, rapor uretilir, dosya
+    # MinIO'ya yuklenir, ayni satir `hazir` yapilirdi. Iki kusur olculdu:
+    #
+    #  1. KILITLENME. Satirin son surumu AYNI islemin yazdigi surum
+    #     oldugundan Postgres ikinci UPDATE'te yabanci anahtar denetimini
+    #     yeniden calistirir (anahtar degismese de) ve tenant/app_user
+    #     satirina KEY SHARE ister. Tesis silinirken (cascade) silme o
+    #     satirlari tutup bu `rapor_isi` satirini beklediginden ikisi
+    #     birbirini bekliyordu — `test_rapor_kuyruk` tam kosuda her seferinde
+    #     (db gunlugu: `DELETE FROM tenant` <-> `UPDATE rapor_isi`).
+    #     Prod'da tesis silme ve saklama temizligi ayni yarisa girer.
+    #  2. 60 SN SINIRI. PDF/Excel uretimi ve yukleme sirasinda sorgu yok:
+    #     oturum "idle in transaction" sayilir ve goc 0074'un 60 sn
+    #     siniri agir bir raporda oturumu keserdi.
+    #
+    # Simdi: (1) `uretiliyor` yaz ve BITIR; (2) veriyi oku ve BITIR;
+    # (3) dosyayi islem disinda uret/yukle; (4) sonucu ayri bir islemde
+    # yaz. Satir arada silindiyse (tesis silindi) sessizce birakilir.
     async with tenant_session(tenant_id) as db:
+        # FOR UPDATE: es zamanli ikinci teslim burada bekler ve `uretiliyor`
+        # gorup cekilir (eskiden ikisi de `bekliyor` okuyup uretebiliyordu).
         isim = (
-            await db.execute(select(RaporIsi).where(RaporIsi.id == is_id))
+            await db.execute(
+                select(RaporIsi).where(RaporIsi.id == is_id).with_for_update()
+            )
         ).scalar_one_or_none()
         if isim is None:
             return {"durum": "bulunamadi"}
         # ZATEN ISLENMIS ISI TEKRAR URETME: Celery "en az bir kez" teslim
         # eder; ayni gorev iki kez calisabilir. Yeniden uretmek, ayni
         # dosyayi ikinci kez yazip MinIO'da coplenmis bir obje birakirdi.
-        if isim.durum in ("hazir", "uretiliyor"):
+        #
+        # YETIM IS ISTISNASI: `uretiliyor` artik AYRI islemde yaziliyor;
+        # isci olduruldugunde (OOM) geri alinmaz. `task_acks_late` gorevi
+        # yeniden teslim eder ve uzun suredir `uretiliyor`da kalan is
+        # yeniden uretilir — yoksa kullanici sonsuza kadar "uretiliyor"
+        # gorurdu.
+        yetim = (
+            isim.durum == "uretiliyor"
+            and isim.created_at is not None
+            and datetime.now(timezone.utc) - isim.created_at > YETIM_SURESI
+        )
+        if isim.durum == "hazir" or (isim.durum == "uretiliyor" and not yetim):
             return {"durum": isim.durum}
-
         isim.durum = "uretiliyor"
-        await db.flush()
+        kod, bicim, parametre, user_id = isim.kod, isim.bicim, isim.parametre, isim.user_id
 
-        try:
-            from .models import AppUser
-            from .routers.rapor_motoru import KATALOG_KAYITLARI, _param, _tenant, _uret
+    try:
+        from .models import AppUser
+        from .routers.rapor_motoru import KATALOG_KAYITLARI, _param, _tenant, _uret
 
+        async with tenant_session(tenant_id) as db:
             kullanici = (
-                await db.execute(select(AppUser).where(AppUser.id == isim.user_id))
+                await db.execute(select(AppUser).where(AppUser.id == user_id))
             ).scalar_one()
-            p = _param(RaporParametre(**isim.parametre))
-            sonuc = await _uret(db, kullanici, isim.kod, p)
+            p = _param(RaporParametre(**parametre))
+            sonuc = await _uret(db, kullanici, kod, p)
             tenant = await _tenant(db, kullanici)
+            site = {
+                "ad": tenant.ad,
+                "adres": adres_satiri(tenant.adres, tenant.ilce, tenant.il, tenant.posta_kodu),
+            }
 
-            # (P181 Bölüm 8) Katalogdaki grafik yapılandırması Excel/PDF'e gömülür.
-            _kayit = KATALOG_KAYITLARI.get(sonuc.kod)
-            grafik = _kayit.grafik if _kayit else None
-            if isim.bicim == "excel":
-                icerik = excel_uret(sonuc, tenant.ad, p.baslangic, p.bitis, grafik=grafik)
-                tur, uzanti = EXCEL_TURU, "xlsx"
-            else:
-                icerik = (
-                    metin_pdf(sonuc.baslik, sonuc.metin or "", tenant.ad)
-                    if not sonuc.sutunlar
-                    else pdf_uret(
-                        sonuc, tenant.ad, p.baslangic, p.bitis, grafik=grafik,
-                        site_adres=adres_satiri(
-                            tenant.adres, tenant.ilce, tenant.il, tenant.posta_kodu
-                        ),
-                    )
+        # (P181 Bölüm 8) Katalogdaki grafik yapılandırması Excel/PDF'e gömülür.
+        _kayit = KATALOG_KAYITLARI.get(sonuc.kod)
+        grafik = _kayit.grafik if _kayit else None
+        if bicim == "excel":
+            icerik = excel_uret(sonuc, site["ad"], p.baslangic, p.bitis, grafik=grafik)
+            tur, uzanti = EXCEL_TURU, "xlsx"
+        else:
+            icerik = (
+                metin_pdf(sonuc.baslik, sonuc.metin or "", site["ad"])
+                if not sonuc.sutunlar
+                else pdf_uret(
+                    sonuc, site["ad"], p.baslangic, p.bitis, grafik=grafik,
+                    site_adres=site["adres"],
                 )
-                tur, uzanti = PDF_TURU, "pdf"
+            )
+            tur, uzanti = PDF_TURU, "pdf"
 
-            gun = datetime.now(timezone.utc).strftime("%Y%m%d")
-            dosya_adi = f"{isim.kod}-{gun}.{uzanti}"
-            # ANAHTAR TENANT ONEKLI: `make_foto_key` ile ayni kural —
-            # oneksiz bir anahtar, tenant izolasyonunu obje deposunda
-            # kaybetmek olurdu.
-            key = f"{tenant_id}/raporlar/{is_id}.{uzanti}"
-            sunucudan_yukle(key, icerik, tur)
+        gun = datetime.now(timezone.utc).strftime("%Y%m%d")
+        dosya_adi = f"{kod}-{gun}.{uzanti}"
+        # ANAHTAR TENANT ONEKLI: `make_foto_key` ile ayni kural —
+        # oneksiz bir anahtar, tenant izolasyonunu obje deposunda
+        # kaybetmek olurdu.
+        key = f"{tenant_id}/raporlar/{is_id}.{uzanti}"
+        sunucudan_yukle(key, icerik, tur)
+        sonuc_alanlari = {
+            "dosya_key": key, "dosya_adi": dosya_adi, "durum": "hazir",
+            "biten_at": datetime.now(timezone.utc),
+        }
+        donus = {"durum": "hazir", "boyut": len(icerik)}
+    except Exception as exc:  # noqa: BLE001 — sebebi KAYDEDILIYOR
+        # YIGIN IZI LOG'A, KULLANICIYA KISA METIN: yigin izi arayuze
+        # sizarsa hem okunmaz hem de ic yapiyi disari verir.
+        log.exception("rapor isi basarisiz: %s", is_id)
+        sonuc_alanlari = {
+            "durum": "hata", "hata": _hata_metni(exc),
+            "biten_at": datetime.now(timezone.utc),
+        }
+        donus = {"durum": "hata"}
 
-            isim.dosya_key = key
-            isim.dosya_adi = dosya_adi
-            isim.durum = "hazir"
-            isim.biten_at = datetime.now(timezone.utc)
-            return {"durum": "hazir", "boyut": len(icerik)}
-        except Exception as exc:  # noqa: BLE001 — sebebi KAYDEDILIYOR
-            # YIGIN IZI LOG'A, KULLANICIYA KISA METIN: yigin izi arayuze
-            # sizarsa hem okunmaz hem de ic yapiyi disari verir.
-            log.exception("rapor isi basarisiz: %s", is_id)
-            isim.durum = "hata"
-            isim.hata = _hata_metni(exc)
-            isim.biten_at = datetime.now(timezone.utc)
-            return {"durum": "hata"}
+    async with tenant_session(tenant_id) as db:
+        guncellenen = (
+            await db.execute(
+                update(RaporIsi).where(RaporIsi.id == is_id).values(**sonuc_alanlari)
+            )
+        ).rowcount
+    if not guncellenen:
+        # Is (ya da tesis) uretim sirasinda silindi: yazacak satir yok.
+        return {"durum": "bulunamadi"}
+    return donus

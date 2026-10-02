@@ -1,6 +1,6 @@
 # Açık iş — `test_rapor_kuyruk` tam koşuda kilitleniyor
 
-**Durum:** açık, kaydedildi 2026-10-02 (P251 sonu). Sahibi atanmadı.
+**Durum:** KAPANDI 2026-10-02 (P252 §4). Ölçüm ve düzeltme aşağıda, en altta.
 
 ## Belirti
 
@@ -60,3 +60,60 @@ değerlendirilemiyor.
 
 Testi `skip`/`xfail` yapmak ya da teardown hatasını yutmak. Belirti
 kaybolur, kök neden (ve olası ürün yarışı) kalır.
+
+
+## Kapanış (P252 §4)
+
+### Ölçüm
+
+Postgres kilitlenme günlüğü (db konteyneri), beş tam koşunun beşinde aynı:
+
+```
+Process A: DELETE FROM tenant WHERE id IN ($1,$2)
+Process B: UPDATE rapor_isi SET durum=..., dosya_key=..., dosya_adi=..., biten_at=... WHERE id=...
+CONTEXT:  while deleting tuple (0,45) in relation "rapor_isi"
+```
+
+### Kök neden
+
+Aday doğruydu, mekanizma daha ince:
+
+* İşçi tek işlemde `uretiliyor` yazıyor, raporu üretiyor, MinIO'ya
+  yüklüyor ve aynı satırı `hazir` yapıyordu.
+* Satırın son sürümü aynı işleme ait olduğundan Postgres ikinci UPDATE'te
+  yabancı anahtar denetimini **yeniden** çalıştırır (anahtar değişmese de)
+  ve tenant/app_user satırında KEY SHARE kilidi ister.
+* Fikstürün cascade silmesi o satırları tutarken işçinin kilitlediği
+  `rapor_isi` satırını bekliyordu. İki işlem birbirini bekledi.
+
+### Prod değerlendirmesi
+
+Evet, aynı yarış prod'da da var:
+
+* Tesis silme ve saklama temizliği sırasında üretimdeki bir iş kilitlenme
+  verir.
+* İkinci ve daha olası bir risk: üretim ve yükleme sırasında oturum
+  "idle in transaction" kalıyordu. Göç 0074'ün 60 sn sınırı, ağır bir
+  raporda oturumu keser ve iş anlamsız bir hatayla düşerdi.
+
+### Düzeltme (`app/rapor_kuyruk.py`)
+
+* Üç kısa işlem: `uretiliyor` yaz ve bitir; veriyi oku ve bitir; dosyayı
+  işlem dışında üret ve yükle; sonucu ayrı işlemde yaz. Satır arada
+  silindiyse iş sessizce `bulunamadi` döner.
+* İlk adımda `FOR UPDATE`: eşzamanlı ikinci teslim bekler ve atlanır.
+* **Yetim iş:** `uretiliyor` artık commit'li, işçi öldürülürse geri
+  alınmaz. 30 dakikadan eski `uretiliyor` iş, yeniden teslimde yeniden
+  üretilir (`task_acks_late`).
+
+### Kilit
+
+`tests/test_p252_rapor_isci_kilit.py`, eski koda karşı 2/3 düşer, yeni
+kodla 3/3 geçer:
+
+* Yükleme anında iş satırı başka bir işlemin `FOR UPDATE NOWAIT` alabileceği
+  kadar kilitsiz olmalı.
+* Üretim sırasında silinen iş sessizce bırakılmalı.
+* Yetim iş yeniden üretilmeli, taze iş atlanmalı.
+
+Tam koşu sonucu P252 doğrulama kaydında.

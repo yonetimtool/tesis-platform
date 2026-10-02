@@ -8,8 +8,8 @@
     "start": "next start",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "next lint",
-    "dogrula": "tsc --noEmit && next lint && vitest run && NEXT_DIST_DIR=.next-dogrula next build"
+    "lint": "next lint --max-warnings 0",
+    "dogrula": "tsc --noEmit && next lint --max-warnings 0 && vitest run && NEXT_DIST_DIR=.next-dogrula next build"
   },
   "dependencies": {
     "@react-three/drei": "^9.122.0",

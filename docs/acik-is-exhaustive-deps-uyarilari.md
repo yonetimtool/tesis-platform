@@ -1,6 +1,6 @@
 # Açık iş — 4 `react-hooks/exhaustive-deps` uyarısı (sonraki tur)
 
-**Durum:** açık, kaydedildi 2026-10-02. Kullanıcı talimatı: "Bir sonraki
+**Durum:** KAPANDI 2026-10-02 (P252 §4) — sonuç en altta. Kullanıcı talimatı: "Bir sonraki
 turda kontrol et: gerçek kusur mu, bilinçli mi? Bilinçliyse yorumla
 gerekçesini yaz, değilse düzelt."
 
@@ -31,3 +31,31 @@ işleyiciyle kalmasına yol açabilir. Aşağıdaki satır numaraları
    düzelt.
 3. **Kilit:** dört uyarı da kapanınca derleme uyarısız bitmeli; gerekirse
    `next lint` çıktısında `exhaustive-deps` sayısını sıfır olarak kilitle.
+
+
+## Kapanış (P252 §4)
+
+| Sayfa | Sonuç |
+|---|---|
+| `ice-aktarim` (`useEffect`, `tur`) | **Gerçek kusur, ama uyarının söylediği değil.** |
+| `dokumanlar` (`gorunurluk`, `sil`) | Zararsız: gerekçeli yorum |
+| `gurultu-uyarilari` (`yapildi`) | Zararsız: gerekçeli yorum |
+| `raporlar` (`indir`) | Zararsız: gerekçeli yorum |
+
+**İçe aktarım:**
+
+* `tur` bağımlılığa eklenmez. Türün içeriği sunucuda değişirse yeniden
+  doğrulama yeni nesne getirir ve kullanıcının yazdığı tablo silinirdi.
+  Bu testle ölçüldü: `tur`'a bağlayınca test düşüyor.
+* Ölçülen asıl kusur: tür **adresten** değişince (tarayıcıda geri)
+  kolon eşlemesi sıfırlanmıyordu ve eski türün alanı yeni türe
+  gidiyordu. Önce test yazıldı ve düştü, sonra düzeltildi. Sıfırlama artık
+  `tur?.kod` etkisinde.
+* Test: `tests/p252-ice-aktarim-tur-degisimi.dom.test.ts`.
+
+**Zararsız üç `useMemo`:** satır eylemleri yalnız kararlı şeyleri kapatıyor.
+Bunlar `set*`, SWR `mutate` (anahtarı `keyRef`'ten güncel okur),
+`useCallback`'li `onayla`, `toast` ve bağımlılıkta olan `t`.
+
+**Kilit:** `lint` ve `dogrula` artık `next lint --max-warnings 0`. Yeni bir
+uyarı derlemeyi kırar.
