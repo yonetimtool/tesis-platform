@@ -8312,4 +8312,79 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get egitimIzlendi => 'Просмотрено';
+
+  @override
+  String get panoHizliSakin => 'Жильцы';
+
+  @override
+  String get panoHizliGorev => 'Создать задачу';
+
+  @override
+  String get panoHizliZiyaretci => 'Посетители';
+
+  @override
+  String get panoHizliBorclular => 'Должники';
+
+  @override
+  String get panoHizliGider => 'Внести расход';
+
+  @override
+  String get panoHizliRezervasyon => 'Бронирования';
+
+  @override
+  String get panoHizliVardiya => 'График смен';
+
+  @override
+  String get panoHizliAnket => 'Начать опрос';
+
+  @override
+  String get panoHizliRapor => 'Отчёты';
+
+  @override
+  String get panoHizliKurulum => 'Мастер настройки';
+
+  @override
+  String get panoHizliOzellestir => 'Настроить';
+
+  @override
+  String get panoHizliOzellestirAciklama =>
+      'Выберите и упорядочьте действия на карточке (до 8). Выбор сохраняется в аккаунте и одинаков в вебе и в приложении.';
+
+  @override
+  String get panoHizliVarsayilan => 'Вернуть по умолчанию';
+
+  @override
+  String panoHizliYukari(String ad) {
+    return 'Переместить $ad вверх';
+  }
+
+  @override
+  String panoHizliAsagi(String ad) {
+    return 'Переместить $ad вниз';
+  }
+
+  @override
+  String get panoHizliUstSinir => 'Можно выбрать не более 8 действий.';
+
+  @override
+  String get panoHizliBos =>
+      'На карточке нет действий — добавьте их через «Настроить».';
+
+  @override
+  String get panoHizliKaydedildi => 'Быстрые действия сохранены.';
+
+  @override
+  String get panoHizliIslemler => 'Быстрые действия';
+
+  @override
+  String get panoHizliAidat => 'Внести платёж';
+
+  @override
+  String get panoHizliTalep => 'Новое обращение';
+
+  @override
+  String get panoHizliDuyuru => 'Опубликовать объявление';
+
+  @override
+  String get panoHizliPersonel => 'Добавить сотрудника';
 }

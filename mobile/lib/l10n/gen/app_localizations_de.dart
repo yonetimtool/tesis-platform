@@ -8239,4 +8239,79 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get egitimIzlendi => 'Angesehen';
+
+  @override
+  String get panoHizliSakin => 'Bewohner';
+
+  @override
+  String get panoHizliGorev => 'Aufgabe erstellen';
+
+  @override
+  String get panoHizliZiyaretci => 'Besucher';
+
+  @override
+  String get panoHizliBorclular => 'Schuldner';
+
+  @override
+  String get panoHizliGider => 'Ausgabe erfassen';
+
+  @override
+  String get panoHizliRezervasyon => 'Reservierungen';
+
+  @override
+  String get panoHizliVardiya => 'Schichtplan';
+
+  @override
+  String get panoHizliAnket => 'Umfrage starten';
+
+  @override
+  String get panoHizliRapor => 'Berichte';
+
+  @override
+  String get panoHizliKurulum => 'Einrichtungsassistent';
+
+  @override
+  String get panoHizliOzellestir => 'Anpassen';
+
+  @override
+  String get panoHizliOzellestirAciklama =>
+      'Wählen und ordnen Sie die Aktionen auf der Karte (höchstens 8). Ihre Auswahl wird im Konto gespeichert und erscheint im Web und mobil gleich.';
+
+  @override
+  String get panoHizliVarsayilan => 'Auf Standard zurücksetzen';
+
+  @override
+  String panoHizliYukari(String ad) {
+    return '$ad nach oben';
+  }
+
+  @override
+  String panoHizliAsagi(String ad) {
+    return '$ad nach unten';
+  }
+
+  @override
+  String get panoHizliUstSinir => 'Höchstens 8 Aktionen wählbar.';
+
+  @override
+  String get panoHizliBos =>
+      'Keine Aktionen auf der Karte — mit Anpassen hinzufügen.';
+
+  @override
+  String get panoHizliKaydedildi => 'Schnellaktionen gespeichert.';
+
+  @override
+  String get panoHizliIslemler => 'Schnellaktionen';
+
+  @override
+  String get panoHizliAidat => 'Zahlung erfassen';
+
+  @override
+  String get panoHizliTalep => 'Neues Anliegen';
+
+  @override
+  String get panoHizliDuyuru => 'Mitteilung posten';
+
+  @override
+  String get panoHizliPersonel => 'Mitarbeiter anlegen';
 }

@@ -63,6 +63,7 @@ import { PanoFinansOzeti } from "@/components/pano/finans-ozeti";
 import { PanoTakvim } from "@/components/pano/takvim";
 import { WidgetSeridi, type WidgetAdayi } from "@/components/pano/widget-seridi";
 import { SayfaEylemleri } from "@/components/SayfaEylemleri";
+import { HizliIslemlerKarti } from "@/components/HizliIslemlerKarti";
 import { KurulumVideolariKarti } from "@/components/KurulumVideolari";
 import { useToast } from "@/components/Toast";
 import { KameraSeridi } from "@/components/KameraSeridi";
@@ -142,18 +143,10 @@ const IKON_UYARI = "M12 4 3 19h18L12 4ZM12 10v4M12 17h.01";
 const IKON_TUR = "M12 3a9 9 0 1 0 9 9M12 3v9l6 3";
 const IKON_BINA = "M4 20V6a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v14M13 20V10h6a1 1 0 0 1 1 1v9M3 20h18";
 /**
- * (P245) HIZLI ISLEMLER — referansin SABIT dort eylemi.
- *
- * Kisayol seridinden (P182) AYRIDIR: serit kullanicinin SECTIGI
- * rotalari tasir; buradakiler referansin listesi. Ikisini birlestirmek,
- * kullanicinin secimini referansin listesiyle ezmek olurdu.
+ * (P245 -> P250 §6) HIZLI ISLEMLER artik SABIT DEGIL: `HizliIslemlerKarti`
+ * kullanicinin secimini (hesapta) cizer. Kisayol seridinden (P182) hala
+ * AYRIDIR: serit menu sayfalarini, kart ISLEMLERI tasir.
  */
-const HIZLI_ISLEMLER: { rota: string; anahtar: SozlukAnahtari; ikon: string }[] = [
-  { rota: "/dues", anahtar: "panoHizliAidat", ikon: "M12 3v18M16 7.5C16 6 14.2 5 12 5S8 6 8 7.5 9.8 10 12 10s4 1 4 2.5S14.2 15 12 15s-4-1-4-2.5" },
-  { rota: "/complaints", anahtar: "panoHizliTalep", ikon: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" },
-  { rota: "/announcements", anahtar: "panoHizliDuyuru", ikon: "M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1ZM16 8a5 5 0 0 1 0 8" },
-  { rota: "/users", anahtar: "panoHizliPersonel", ikon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M22 11h-6" },
-];
 /** Yan panel/alt sira listelerinde kac satir gosterilecek. */
 const PANEL_SATIRI = 3;
 const BAGLANTI_STILI = {
@@ -1237,21 +1230,9 @@ export default function DashboardPage() {
         // referansin listesiyle ezmek olurdu.
         return (
           <div className="space-y-bolum">
-            <Kart className="space-y-3">
-              <BolumBasligi baslik={t("panoHizliIslemler")} />
-              <div className="grid grid-cols-2 gap-2">
-                {HIZLI_ISLEMLER.map((h) => (
-                  <DugmeBaglantisi
-                    key={h.rota}
-                    href={h.rota}
-                    className="justify-start"
-                  >
-                    <OzetIkonu yol={h.ikon} />
-                    {t(h.anahtar)}
-                  </DugmeBaglantisi>
-                ))}
-              </div>
-            </Kart>
+            {/* (P250 §6) HIZLI ISLEMLER artik KULLANICININ: secim ve sira
+                hesapta (P182 pano tercihi), secenekler role gore sunucudan. */}
+            <HizliIslemlerKarti baslik={<BolumBasligi baslik={t("panoHizliIslemler")} />} />
             <Kart className="space-y-3">
               <BolumBasligi
                 baslik={t("panoBolumDuyurular")}

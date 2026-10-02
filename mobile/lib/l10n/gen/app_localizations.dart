@@ -14266,6 +14266,144 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'İzlendi'**
   String get egitimIzlendi;
+
+  /// No description provided for @panoHizliSakin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakinler'**
+  String get panoHizliSakin;
+
+  /// No description provided for @panoHizliGorev.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görev oluştur'**
+  String get panoHizliGorev;
+
+  /// No description provided for @panoHizliZiyaretci.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ziyaretçiler'**
+  String get panoHizliZiyaretci;
+
+  /// No description provided for @panoHizliBorclular.
+  ///
+  /// In tr, this message translates to:
+  /// **'Borçlular'**
+  String get panoHizliBorclular;
+
+  /// No description provided for @panoHizliGider.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gider gir'**
+  String get panoHizliGider;
+
+  /// No description provided for @panoHizliRezervasyon.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rezervasyonlar'**
+  String get panoHizliRezervasyon;
+
+  /// No description provided for @panoHizliVardiya.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vardiya planı'**
+  String get panoHizliVardiya;
+
+  /// No description provided for @panoHizliAnket.
+  ///
+  /// In tr, this message translates to:
+  /// **'Anket başlat'**
+  String get panoHizliAnket;
+
+  /// No description provided for @panoHizliRapor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Raporlar'**
+  String get panoHizliRapor;
+
+  /// No description provided for @panoHizliKurulum.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kurulum sihirbazı'**
+  String get panoHizliKurulum;
+
+  /// No description provided for @panoHizliOzellestir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Özelleştir'**
+  String get panoHizliOzellestir;
+
+  /// No description provided for @panoHizliOzellestirAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kartta görünecek işlemleri seçin ve sıralayın (en fazla 8). Seçiminiz hesabınıza kaydedilir; web ve mobilde aynı görünür.'**
+  String get panoHizliOzellestirAciklama;
+
+  /// No description provided for @panoHizliVarsayilan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Varsayılana dön'**
+  String get panoHizliVarsayilan;
+
+  /// No description provided for @panoHizliYukari.
+  ///
+  /// In tr, this message translates to:
+  /// **'{ad} yukarı taşı'**
+  String panoHizliYukari(String ad);
+
+  /// No description provided for @panoHizliAsagi.
+  ///
+  /// In tr, this message translates to:
+  /// **'{ad} aşağı taşı'**
+  String panoHizliAsagi(String ad);
+
+  /// No description provided for @panoHizliUstSinir.
+  ///
+  /// In tr, this message translates to:
+  /// **'En fazla 8 işlem seçilebilir.'**
+  String get panoHizliUstSinir;
+
+  /// No description provided for @panoHizliBos.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kartta işlem yok — Özelleştir ile ekleyin.'**
+  String get panoHizliBos;
+
+  /// No description provided for @panoHizliKaydedildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hızlı işlemler kaydedildi.'**
+  String get panoHizliKaydedildi;
+
+  /// No description provided for @panoHizliIslemler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hızlı işlemler'**
+  String get panoHizliIslemler;
+
+  /// No description provided for @panoHizliAidat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tahsilat gir'**
+  String get panoHizliAidat;
+
+  /// No description provided for @panoHizliTalep.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni talep'**
+  String get panoHizliTalep;
+
+  /// No description provided for @panoHizliDuyuru.
+  ///
+  /// In tr, this message translates to:
+  /// **'Duyuru yayınla'**
+  String get panoHizliDuyuru;
+
+  /// No description provided for @panoHizliPersonel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Personel ekle'**
+  String get panoHizliPersonel;
 }
 
 class _AppLocalizationsDelegate

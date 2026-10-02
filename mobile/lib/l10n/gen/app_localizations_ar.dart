@@ -8273,4 +8273,78 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get egitimIzlendi => 'تمت المشاهدة';
+
+  @override
+  String get panoHizliSakin => 'السكان';
+
+  @override
+  String get panoHizliGorev => 'إنشاء مهمة';
+
+  @override
+  String get panoHizliZiyaretci => 'الزوار';
+
+  @override
+  String get panoHizliBorclular => 'المدينون';
+
+  @override
+  String get panoHizliGider => 'تسجيل مصروف';
+
+  @override
+  String get panoHizliRezervasyon => 'الحجوزات';
+
+  @override
+  String get panoHizliVardiya => 'خطة المناوبات';
+
+  @override
+  String get panoHizliAnket => 'بدء استطلاع';
+
+  @override
+  String get panoHizliRapor => 'التقارير';
+
+  @override
+  String get panoHizliKurulum => 'معالج الإعداد';
+
+  @override
+  String get panoHizliOzellestir => 'تخصيص';
+
+  @override
+  String get panoHizliOzellestirAciklama =>
+      'اختر الإجراءات المعروضة على البطاقة ورتّبها (حتى 8). يُحفظ اختيارك في حسابك ويظهر بالشكل نفسه على الويب والجوال.';
+
+  @override
+  String get panoHizliVarsayilan => 'العودة إلى الافتراضي';
+
+  @override
+  String panoHizliYukari(String ad) {
+    return 'نقل $ad لأعلى';
+  }
+
+  @override
+  String panoHizliAsagi(String ad) {
+    return 'نقل $ad لأسفل';
+  }
+
+  @override
+  String get panoHizliUstSinir => 'يمكن اختيار 8 إجراءات كحد أقصى.';
+
+  @override
+  String get panoHizliBos => 'لا توجد إجراءات على البطاقة — أضفها عبر تخصيص.';
+
+  @override
+  String get panoHizliKaydedildi => 'تم حفظ الإجراءات السريعة.';
+
+  @override
+  String get panoHizliIslemler => 'إجراءات سريعة';
+
+  @override
+  String get panoHizliAidat => 'تسجيل دفعة';
+
+  @override
+  String get panoHizliTalep => 'طلب جديد';
+
+  @override
+  String get panoHizliDuyuru => 'نشر إعلان';
+
+  @override
+  String get panoHizliPersonel => 'إضافة موظف';
 }

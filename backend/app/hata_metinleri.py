@@ -4200,4 +4200,13 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Saisissez un lien YouTube valide (youtube.com/watch?v=…, youtu.be/… ou youtube.com/shorts/…).",
         "es": "Introduzca un enlace de YouTube válido (youtube.com/watch?v=…, youtu.be/… o youtube.com/shorts/…).",
     },
+    "hizli_islem_yetkisiz": {
+        "tr": "Bu işlem rolünüz için kullanılamaz.",
+        "en": "This action is not available for your role.",
+        "ar": "هذا الإجراء غير متاح لدورك.",
+        "ru": "Это действие недоступно для вашей роли.",
+        "de": "Diese Aktion ist für Ihre Rolle nicht verfügbar.",
+        "fr": "Cette action n'est pas disponible pour votre rôle.",
+        "es": "Esta acción no está disponible para su rol.",
+    },
 }

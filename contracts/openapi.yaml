@@ -9340,6 +9340,38 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "422": { $ref: "#/components/responses/ValidationError" }
+  /me/hizli-islemler:
+    get:
+      tags: [me]
+      summary: (P250 §6) Hizli Islemler karti — rolun secenekleri + kullanicinin secimi
+      description: >
+        Secim hesapta (`pano_tercihi.hizli_islemler`, P182 altyapisi); web
+        ve mobil ayni uctan okur. Secenekler ROLE gore: yetkisi olmayan
+        islem listede yok. Secim yoksa varsayilan (aidat, talep, duyuru,
+        personel — rolun gorebildikleri).
+      responses:
+        "200":
+          description: Secenekler ve secim
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HizliIslemlerOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    put:
+      tags: [me]
+      summary: (P250 §6) Hizli Islemler secimini kaydet (sirali); null = varsayilana don
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HizliIslemlerYaz" }
+      responses:
+        "200":
+          description: Kaydedildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HizliIslemlerOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /me/pano-tercihi:
     get:
       tags: [takvim]
@@ -17835,6 +17867,22 @@ components:
           maxItems: 8
           items: { type: string, maxLength: 40 }
         baslik: { type: string, maxLength: 60, nullable: true }
+    HizliIslemlerOut:
+      type: object
+      required: [secenekler, secili, varsayilan, ozel]
+      properties:
+        secenekler: { type: array, items: { type: string } }
+        secili: { type: array, items: { type: string } }
+        varsayilan: { type: array, items: { type: string } }
+        ozel: { type: boolean }
+    HizliIslemlerYaz:
+      type: object
+      properties:
+        secili:
+          type: array
+          nullable: true
+          maxItems: 8
+          items: { type: string, maxLength: 40 }
     PanoTercihi:
       type: object
       description: >

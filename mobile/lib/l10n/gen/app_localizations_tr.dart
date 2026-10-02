@@ -8032,4 +8032,78 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get egitimIzlendi => 'İzlendi';
+
+  @override
+  String get panoHizliSakin => 'Sakinler';
+
+  @override
+  String get panoHizliGorev => 'Görev oluştur';
+
+  @override
+  String get panoHizliZiyaretci => 'Ziyaretçiler';
+
+  @override
+  String get panoHizliBorclular => 'Borçlular';
+
+  @override
+  String get panoHizliGider => 'Gider gir';
+
+  @override
+  String get panoHizliRezervasyon => 'Rezervasyonlar';
+
+  @override
+  String get panoHizliVardiya => 'Vardiya planı';
+
+  @override
+  String get panoHizliAnket => 'Anket başlat';
+
+  @override
+  String get panoHizliRapor => 'Raporlar';
+
+  @override
+  String get panoHizliKurulum => 'Kurulum sihirbazı';
+
+  @override
+  String get panoHizliOzellestir => 'Özelleştir';
+
+  @override
+  String get panoHizliOzellestirAciklama =>
+      'Kartta görünecek işlemleri seçin ve sıralayın (en fazla 8). Seçiminiz hesabınıza kaydedilir; web ve mobilde aynı görünür.';
+
+  @override
+  String get panoHizliVarsayilan => 'Varsayılana dön';
+
+  @override
+  String panoHizliYukari(String ad) {
+    return '$ad yukarı taşı';
+  }
+
+  @override
+  String panoHizliAsagi(String ad) {
+    return '$ad aşağı taşı';
+  }
+
+  @override
+  String get panoHizliUstSinir => 'En fazla 8 işlem seçilebilir.';
+
+  @override
+  String get panoHizliBos => 'Kartta işlem yok — Özelleştir ile ekleyin.';
+
+  @override
+  String get panoHizliKaydedildi => 'Hızlı işlemler kaydedildi.';
+
+  @override
+  String get panoHizliIslemler => 'Hızlı işlemler';
+
+  @override
+  String get panoHizliAidat => 'Tahsilat gir';
+
+  @override
+  String get panoHizliTalep => 'Yeni talep';
+
+  @override
+  String get panoHizliDuyuru => 'Duyuru yayınla';
+
+  @override
+  String get panoHizliPersonel => 'Personel ekle';
 }

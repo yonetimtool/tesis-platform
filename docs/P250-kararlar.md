@@ -669,3 +669,78 @@ Gönderimde değer zaten kırpılıyor.
 - Mobil `p250_giris_eposta_siniri_test.dart`: 300 karakter yazılınca kutuda
   254 kalıyor; 254'lük adres kırpılmıyor; telefon kipi biçimlenmeye devam
   ediyor; şifremi unuttum e-postası 254.
+
+---
+
+# §6 — HIZLI İŞLEMLER ÖZELLEŞTİRİLEBİLİR
+
+## Ne değişti
+
+P250 öncesi Özet sayfasındaki kart **sabit dört işlem** çiziyordu
+(Tahsilat gir, Yeni talep, Duyuru yayınla, Personel ekle) ve bu
+işlemler role göre süzülmüyordu. Şimdi:
+
+| İstek | Yapılan |
+|---|---|
+| Hangi işlemlerin görüneceğini seçebilsin, sırasını değiştirsin | "Özelleştir" penceresi (web) / ekranı (mobil): onay kutusu + sıralama (web ↑/↓, mobil sürükle). En fazla 8 işlem |
+| Seçenekler ROLE göre | Katalog **sunucuda** (`hizli_islem.KATALOG`, kimlik → roller). `GET /me/hizli-islemler` yalnız rolün görebildiklerini döner; yetkisiz kimlik yazılmaya çalışılırsa 422 |
+| Hesaba kayıtlı, web ve mobilde aynı | `app_user.pano_tercihi.hizli_islemler` (P182'nin kaydı) |
+| P182 altyapısı, ikinci sistem yok | Ayrı tablo ya da ayrı tercih kaydı açılmadı; aynı JSON kaydına yeni bir alan |
+| Varsayılana dönme | `PUT /me/hizli-islemler {"secili": null}` → alan silinir, varsayılan (eski dört işlem) gelir |
+
+**Katalog (14 işlem):** aidat (tahsilat gir), talep, duyuru, personel,
+sakin, görev, ziyaretçi, borçlular, gider, rezervasyon, vardiya, anket,
+rapor, kurulum.
+
+* **Her işlemin web ve mobil karşılığı var.** Yalnız bir yüzeyde olan
+  işlem kataloğa alınmadı (parite).
+* **Rol süzmesi gerçek:**
+  * güvenlik yalnız "ziyaretçi"yi,
+  * denetçi yalnız "rapor"u,
+  * güvenlik amiri görev / ziyaretçi / vardiyayı görür.
+* **Bugün kartı gösteren yüzeyler:** web Özet (admin, yönetici) ve mobil
+  yönetici ana ekranı. Katalog diğer roller için hazır.
+* **Rol sonradan değişirse** yetkisi kalkan işlem okunurken sessizce
+  düşer; kart yetkisiz bağlantı göstermez.
+
+## Kayıt: neden ayrı uç
+
+Web'in yerleşim kaydı (`PUT /me/pano-tercihi`) tercihi **bütün olarak**
+yazıyor (P182 kararı) ve hızlı işlem seçimini taşımıyor. Seçim aynı
+uçtan yazılsaydı:
+
+* sürükle-bırak ile yapılan bir yerleşim değişikliği hızlı işlem
+  seçimini silerdi,
+* mobil, bilmediği web alanlarını ezerdi.
+
+**Bu yüzden:**
+
+* seçim kendi ucundan (`/me/hizli-islemler`) aynı JSON kaydına
+  **birleştirilerek** yazılır,
+* yerlesim kaydı, gövdede yoksa bu alanı **korur**.
+
+İkisi de testle ölçüldü.
+
+## Testler
+
+* Sunucu `test_p250_hizli_islemler.py` (5):
+  * varsayılan ve role göre seçenekler (yönetici, güvenlik, denetçi),
+  * sıralı kayıt ve tekrar ayıklama, varsayılana dönüş,
+  * yetkisiz ve bilinmeyen işlem 422,
+  * yerleşim kaydı seçimi silmez,
+  * 8 üst sınırı.
+* Web `p250-hizli-islemler.dom.test.ts`: sıralı çizim; rol dışı seçenek
+  görünmez; seç, sırala, kaydet gövdesi; varsayılana dön = `null`.
+* Mobil `p250_hizli_islemler_test.dart`: aynı ölçümler, tel üzerindeki
+  gövde.
+* Kilit kayıtları:
+  * rol matrisi ve uç güvenlik tablosu (sahiplik `kendi`),
+  * denetçi salt-okuma kümesi (kişinin kendi ekran tercihi),
+  * openapi,
+  * hata metni.
+
+## ÖLÇÜLEMEDİ
+
+* Mobilde sürükle-bırak sıralamanın gerçek cihazdaki hissi (testte
+  seçim + kayıt ölçüldü, sürükleme jesti ölçülmedi).
+

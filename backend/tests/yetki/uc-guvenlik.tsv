@@ -366,6 +366,8 @@ GET	/me/etkinlik	zorunlu	tesis	-	-	ozel	-	-		-
 PATCH	/me/gorunum	zorunlu	tesis	-	-	haric	email	-	kisinin kendi arayuz tercihi / okundu isareti — bilgi degeri yok (silme ozel denetimli)	-
 POST	/me/hesap-sil	zorunlu	tesis	-	-	ozel	-	-		dar
 POST	/me/hesap-sil/eposta-kod-iste	zorunlu	tesis	-	var	genel	-	-		-
+GET	/me/hizli-islemler	zorunlu	tesis	kendi	-	-	-	-		-
+PUT	/me/hizli-islemler	zorunlu	tesis	kendi	-	genel	-	-		dar
 GET	/me/makbuzlar	zorunlu	tesis	-	-	-	-	-		-
 GET	/me/odeme-bilgileri	zorunlu	tesis	-	-	-	iban	-		-
 POST	/me/odeme/kart	zorunlu	tesis	-	-	ozel	-	-		-

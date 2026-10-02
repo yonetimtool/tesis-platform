@@ -7681,6 +7681,9 @@ class PanoTercihi(BaseModel):
     #: (P181 7.1/7.2) Satır bazlı yerleşim: her satır 1-4 sütun + opsiyonel
     #: banner. Verilmezse eski tam/yarım eşleşme kullanılır.
     satirlar: list[PanoSatir] | None = Field(None, max_length=20)
+    #: (P250 §6) Hizli Islemler kartinin secimi (sirali kimlikler). Ayri
+    #: uctan (`PUT /me/hizli-islemler`) yazilir; yerlesim kaydi onu KORUR.
+    hizli_islemler: list[str] | None = Field(None, max_length=8)
 
 
 HATIRLATMA_TEKRARLARI = ("yok", "gunluk", "haftalik", "aylik")
@@ -10513,3 +10516,26 @@ class EgitimVideoListe(BaseModel):
     izlenen: int
     #: Zorunlu kurulum adimlari tamam mi — kart kucuk cizilir, kaybolmaz.
     kurulum_tamam: bool
+
+
+
+# ============================================================================ #
+# (P250 §6) HIZLI ISLEMLER
+# ============================================================================ #
+class HizliIslemlerOut(BaseModel):
+    #: Bu rolun SECEBILECEGI islemler (katalog sirasi). Yetkisi olmayan
+    #: islem bu listede YOK.
+    secenekler: list[str]
+    #: Kartta gosterilecekler (sirali). Secim yoksa varsayilan.
+    secili: list[str]
+    varsayilan: list[str]
+    #: Kullanici kendi secimini yapti mi (varsayilana donunce false).
+    ozel: bool
+
+
+class HizliIslemlerYaz(BaseModel):
+    """`secili: null` = varsayilana don."""
+
+    secili: list[Annotated[str, Field(min_length=1, max_length=40)]] | None = Field(
+        None, max_length=8
+    )

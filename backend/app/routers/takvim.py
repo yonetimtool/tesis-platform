@@ -40,6 +40,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import hizli_islem
 from ..audit import Action, audit_user
 from ..deps import get_current_user, get_tenant_db, require_role
 from ..errors import APIError
@@ -55,6 +56,8 @@ from ..models import (
     Unit,
 )
 from ..schemas import (
+    HizliIslemlerOut,
+    HizliIslemlerYaz,
     HatirlatmaCreate,
     HatirlatmaOut,
     HatirlatmaUpdate,
@@ -440,6 +443,63 @@ async def pano_tercihi_yaz(
         temiz = PanoTercihi.model_validate(body)
     except Exception as exc:  # pydantic ValidationError
         raise APIError(422, "validation_error", "pano_tercihi_gecersiz") from exc
-    user.pano_tercihi = temiz.model_dump(exclude_none=True)
+    yeni = temiz.model_dump(exclude_none=True)
+    # (P250 §6) HIZLI ISLEM SECIMI KORUNUR: yerlesim kaydi (surukle-birak,
+    # widget) onu tasimaz; tasimadi diye silinseydi kullanicinin secimi bir
+    # sonraki yerlesim degisikliginde kaybolurdu. Secim kendi ucundan yazilir.
+    eski = (user.pano_tercihi or {}).get("hizli_islemler")
+    if "hizli_islemler" not in body and eski is not None:
+        yeni["hizli_islemler"] = eski
+    elif "hizli_islemler" in yeni:
+        yeni["hizli_islemler"] = hizli_islem.gecerli_secim(
+            user.role, yeni["hizli_islemler"]
+        )
+    user.pano_tercihi = yeni
     user.updated_at = func.now()
     return dict(user.pano_tercihi)
+
+
+# =========================================================================== #
+# (P250 §6) HIZLI ISLEMLER — kartin icerigi, role gore
+# =========================================================================== #
+def _hizli_cikti(user: AppUser) -> HizliIslemlerOut:
+    kayit = (user.pano_tercihi or {}).get("hizli_islemler")
+    return HizliIslemlerOut(
+        secenekler=hizli_islem.secenekler(user.role),
+        secili=hizli_islem.gecerli_secim(user.role, kayit),
+        varsayilan=hizli_islem.gecerli_secim(user.role, None),
+        ozel=kayit is not None,
+    )
+
+
+@router.get("/me/hizli-islemler", response_model=HizliIslemlerOut)
+async def hizli_islemlerim(
+    user: AppUser = Depends(get_current_user),
+) -> HizliIslemlerOut:
+    """Hizli Islemler karti: rolun secenekleri + kullanicinin secimi."""
+    return _hizli_cikti(user)
+
+
+@router.put("/me/hizli-islemler", response_model=HizliIslemlerOut)
+async def hizli_islemleri_yaz(
+    body: HizliIslemlerYaz,
+    user: AppUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_tenant_db),
+) -> HizliIslemlerOut:
+    """Secimi kaydet (sirali). `secili: null` = varsayilana don.
+
+    YETKISIZ ISLEM 422: rolun gormedigi bir kimlik secilemez (istemci
+    zaten gostermiyor; dogrudan API cagrisi da yazamasin).
+    """
+    tercih = dict(user.pano_tercihi or {})
+    if body.secili is None:
+        tercih.pop("hizli_islemler", None)
+    else:
+        izinli = set(hizli_islem.secenekler(user.role))
+        if any(k not in izinli for k in body.secili):
+            raise APIError(422, "validation_error", "hizli_islem_yetkisiz")
+        tercih["hizli_islemler"] = list(dict.fromkeys(body.secili))
+    user.pano_tercihi = tercih
+    user.updated_at = func.now()
+    await db.flush()
+    return _hizli_cikti(user)

@@ -325,6 +325,11 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     # video setini gordugu sete baglidir (`SET_ROLLERI`); bugun denetci
     # 403 alir.
     ("POST", "/egitim-videolari/{adim_kodu}/izlendi"),
+    # --- (P250 §6) Hizli Islemler secimi — `/me/pano-tercihi` ile AYNI
+    # sinif: kisinin KENDI ekran tercihi. Hangi islemin secilebilecegini
+    # rol katalogu belirler (yetkisiz kimlik 422); denetci yalniz raporu
+    # secebilir ve bu bir YAZMA yetkisi vermez.
+    ("PUT", "/me/hizli-islemler"),
 })
 
 #: Denetcinin OKUYABILDIGI uclardan ornekler (davranissal olcum).

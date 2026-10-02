@@ -8237,4 +8237,79 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get egitimIzlendi => 'Vue';
+
+  @override
+  String get panoHizliSakin => 'Résidents';
+
+  @override
+  String get panoHizliGorev => 'Créer une tâche';
+
+  @override
+  String get panoHizliZiyaretci => 'Visiteurs';
+
+  @override
+  String get panoHizliBorclular => 'Débiteurs';
+
+  @override
+  String get panoHizliGider => 'Saisir une dépense';
+
+  @override
+  String get panoHizliRezervasyon => 'Réservations';
+
+  @override
+  String get panoHizliVardiya => 'Planning des gardes';
+
+  @override
+  String get panoHizliAnket => 'Lancer un sondage';
+
+  @override
+  String get panoHizliRapor => 'Rapports';
+
+  @override
+  String get panoHizliKurulum => 'Assistant d\'installation';
+
+  @override
+  String get panoHizliOzellestir => 'Personnaliser';
+
+  @override
+  String get panoHizliOzellestirAciklama =>
+      'Choisissez et ordonnez les actions affichées sur la carte (8 au maximum). Votre choix est enregistré dans votre compte et identique sur le web et le mobile.';
+
+  @override
+  String get panoHizliVarsayilan => 'Rétablir par défaut';
+
+  @override
+  String panoHizliYukari(String ad) {
+    return 'Monter $ad';
+  }
+
+  @override
+  String panoHizliAsagi(String ad) {
+    return 'Descendre $ad';
+  }
+
+  @override
+  String get panoHizliUstSinir => 'Vous pouvez choisir 8 actions au maximum.';
+
+  @override
+  String get panoHizliBos =>
+      'Aucune action sur la carte — ajoutez-en avec Personnaliser.';
+
+  @override
+  String get panoHizliKaydedildi => 'Actions rapides enregistrées.';
+
+  @override
+  String get panoHizliIslemler => 'Actions rapides';
+
+  @override
+  String get panoHizliAidat => 'Saisir un encaissement';
+
+  @override
+  String get panoHizliTalep => 'Nouvelle demande';
+
+  @override
+  String get panoHizliDuyuru => 'Publier une annonce';
+
+  @override
+  String get panoHizliPersonel => 'Ajouter un employé';
 }

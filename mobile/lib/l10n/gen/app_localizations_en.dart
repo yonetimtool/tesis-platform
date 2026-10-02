@@ -8229,4 +8229,79 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get egitimIzlendi => 'Watched';
+
+  @override
+  String get panoHizliSakin => 'Residents';
+
+  @override
+  String get panoHizliGorev => 'Create task';
+
+  @override
+  String get panoHizliZiyaretci => 'Visitors';
+
+  @override
+  String get panoHizliBorclular => 'Debtors';
+
+  @override
+  String get panoHizliGider => 'Record expense';
+
+  @override
+  String get panoHizliRezervasyon => 'Reservations';
+
+  @override
+  String get panoHizliVardiya => 'Shift plan';
+
+  @override
+  String get panoHizliAnket => 'Start a poll';
+
+  @override
+  String get panoHizliRapor => 'Reports';
+
+  @override
+  String get panoHizliKurulum => 'Setup wizard';
+
+  @override
+  String get panoHizliOzellestir => 'Customize';
+
+  @override
+  String get panoHizliOzellestirAciklama =>
+      'Choose and order the actions shown on the card (up to 8). Your choice is saved to your account and appears the same on web and mobile.';
+
+  @override
+  String get panoHizliVarsayilan => 'Reset to default';
+
+  @override
+  String panoHizliYukari(String ad) {
+    return 'Move $ad up';
+  }
+
+  @override
+  String panoHizliAsagi(String ad) {
+    return 'Move $ad down';
+  }
+
+  @override
+  String get panoHizliUstSinir => 'You can choose up to 8 actions.';
+
+  @override
+  String get panoHizliBos =>
+      'No actions on the card — add some with Customize.';
+
+  @override
+  String get panoHizliKaydedildi => 'Quick actions saved.';
+
+  @override
+  String get panoHizliIslemler => 'Quick actions';
+
+  @override
+  String get panoHizliAidat => 'Record payment';
+
+  @override
+  String get panoHizliTalep => 'New request';
+
+  @override
+  String get panoHizliDuyuru => 'Post announcement';
+
+  @override
+  String get panoHizliPersonel => 'Add staff';
 }
