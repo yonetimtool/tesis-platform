@@ -78,3 +78,19 @@ ikinci alarm yayından sonra iptal edildi (yanlış alarm). Ardından
   boşalıyor, seçili durum açılır listede kalmadığı için ekran çöküyordu
   (Flutter assert). Son bilinen liste korunur, ilk yüklemede yedek
   liste kullanılır.
+
+# §9 — SOS İKİ KEZ GÖRÜNÜYOR (mobil)
+
+* **Kök neden:** yan menü başlığındaki düğme `Icons.sos_outlined`
+  simgesini ve "SOS" yazısını birlikte çiziyordu; simgenin kendisi "SOS"
+  harflerinden oluşuyor. Ekranda "SOS SOS" okunuyordu.
+* **Karar:** simge kaldırıldı; **kırmızı rozetli tek "SOS" yazısı**
+  kaldı (P237 kuralı: başka ekrana götüren eylemin adı görünür olmalı).
+  Ekran okuyucu kısaltmayı değil adı söyler: **"Acil durum"**
+  (`Semantics` etiketi, alt anlamlar dışlandı). Dokunma hedefi en az
+  48×48 (P220 kilidi korunuyor).
+* Başka ekranda aynı ikili yok (taranadı; panik alarm ekranındaki tek
+  `Icons.sos` "yardım" durumunun simgesi).
+* **Test:** `p251_tek_sos_test.dart` — tek "SOS" metni, simge yok,
+  ekran okuyucuda "Acil durum" (SOS değil), boyut ≥ 48×48, dokununca
+  `/panik`.

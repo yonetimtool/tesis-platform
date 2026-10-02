@@ -73,18 +73,33 @@ class HomeDrawer extends ConsumerWidget {
                 children: [
                   const Expanded(child: HomeMarka()),
                   if (panikGorunur(role))
-                    TextButton.icon(
-                      key: const Key('drawer-sos'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: Theme.of(context).colorScheme.error,
-                        // DOKUNMA HEDEFI 48 dp (P220 kilidi).
-                        minimumSize: const Size(48, 48),
+                    // (P251 §9) TEK SOS. Onceki hal "SOS SOS" okunuyordu:
+                    // `Icons.sos_outlined` simgesinin KENDISI "SOS"
+                    // harfleridir ve yanina bir de "SOS" yazisi konuyordu.
+                    // Simge kalkti; kirmizi rozetli TEK yazi kaldi. Ekran
+                    // okuyucu kisaltmayi degil ADI soyler ("Acil durum"),
+                    // gorunur yazi P237 kuralini (ad gorunur) karsilar.
+                    Semantics(
+                      button: true,
+                      label: context.l10n.panikBaslik,
+                      excludeSemantics: true,
+                      child: TextButton(
+                        key: const Key('drawer-sos'),
+                        style: TextButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.error,
+                          foregroundColor: Theme.of(context).colorScheme.onError,
+                          // DOKUNMA HEDEFI 48 dp (P220 kilidi).
+                          minimumSize: const Size(48, 48),
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          shape: const StadiumBorder(),
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                        onPressed: () => onModul(AppRoutes.panik),
+                        child: Text(context.l10n.panikKisa),
                       ),
-                      icon: const Icon(Icons.sos_outlined),
-                      // SIMGE TEK BASINA DEGIL (P237 kurali): baska bir
-                      // ekrana goturen eylem adini GORUNUR tasir.
-                      label: Text(context.l10n.panikKisa),
-                      onPressed: () => onModul(AppRoutes.panik),
                     ),
                 ],
               ),
