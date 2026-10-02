@@ -524,9 +524,16 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         // gorur (kendi ilettigi daireler isaretli) — ayri "Sikayetlerim"
         // sayfasina yonlendirilmez (D-viz Rev-1.1 fix).
         HomeMenuEntry.sikayetHaritasi,
-        // (P145) `complaints` sakinin MENUSUNDEN kalkti (Kerem): bildirme
-        // yuzeyi ana ekrandaki butonda, takip yuzeyi izgaradaki karoda.
-        // Menude ucuncu bir giris ayni yere ucuncu bir kapi aciyordu.
+        // (P145) `complaints` sakinin menusunden kaldirilmisti: "bildirme
+        // ana ekrandaki butonda, takip izgaradaki karoda".
+        //
+        // (P251 §8) GERI EKLENDI — OLCULDU: sakinin izgarasinda talep
+        // karosu YOK ("Sikayetlerim" karosu DAIRE sikayetlerine gider);
+        // kendi taleplerinin listesine tek yol "Bildir" formunu acip
+        // kapatmakti. Ustelik talep bildirimleri ("cozuldu/reddedildi")
+        // bu ekran menude olmadigi icin yanlis ekrana gidiyordu. Bildirme
+        // yolu (alt cubuk "Bildir" -> Talep / Ariza) aynen duruyor.
+        HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,
         HomeMenuEntry.transparency,

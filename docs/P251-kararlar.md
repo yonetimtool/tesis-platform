@@ -520,7 +520,7 @@ Kişiler · Tanımlar · Yönetim** (web'de en üstte Özet).
 | Tesis | Daireler (`/units`) | — | menü dışı (yapısal) | Mobilde daire listesi Bina yapısı ekranının içindedir (blok → daire); ayrı liste ekranı yok. |
 | Tesis | Görevler (`/tasks`) | Görevler (`taskTracking`) | ✓ aynı |  |
 | Tesis | Bakım takibi (`/bakim`) | Bakım takibi (`bakim`) | ✓ aynı |  |
-| Tesis | Demirbaş (`/assets`) | Demirbaş (`assets`) | ✓ aynı |  |
+| Tesis | Demirbaş (`/assets`) | — | yalnız web | Mobil Demirbaş ekranı saha personelinin NFC zimmet aracıdır (okut, zimmetine al, bırak); demirbaş kaydı, etiketleme ve envanter listesi web'de. Yönetici menüsüne zimmet aracı koymak saha kanıtı üretmeyen role saha işi vermek olurdu. |
 | Tesis | Şikayet Haritası (`/schematic`) | Şikayet Haritası (`sikayetHaritasi`) | ✓ aynı |  |
 | Tesis | Rezervasyon (`/rezervasyon-yonetimi`) | Rezervasyon (`rezervasyon`) | ✓ aynı |  |
 | Tesis | Dış hizmetler (`/dis-hizmetler`) | Dış hizmetler (`disHizmet`) | ✓ aynı |  |
@@ -572,7 +572,7 @@ Web sakin modu (P247) başlıksız tek bölümdür; grup mobilde ölçülür.
 |---|---|---|---|---|
 | Finans | Aidatım (`/aidatim`) | Aidatım (`myDues`) | ✓ aynı |  |
 | İletişim | Duyurular (`/duyurular`) | Duyurular (`announcements`) | ✓ aynı |  |
-| İletişim | Talep / Arıza (`/taleplerim`) | — | menü dışı (yapısal) | Mobilde sakinin talep bildirme yolu ana ekrandaki "Bildir" düğmesi, takibi ızgaradaki Talep / Arıza karosudur; menüye üçüncü bir kapı açmak P145 kararıyla kaldırıldı. |
+| İletişim | Talep / Arıza (`/taleplerim`) | Talep / Arıza (`complaints`) | ✓ aynı |  |
 | Tesis | Rezervasyon (`/rezervasyonlarim`) | Rezervasyon (`rezervasyon`) | ✓ aynı |  |
 | İletişim | Etkinlikler (`/etkinlikler`) | Etkinlikler (`etkinlik`) | ✓ aynı |  |
 | İletişim | Site kuralları (`/kurallar`) | Site kuralları (`siteKurallari`) | ✓ aynı |  |
@@ -736,7 +736,7 @@ açılmaya devam eder.
 ### Korunanlar
 
 * **Mobil yönetici menüsünde Demirbaş yok.** Mobil ekran saha personelinin NFC zimmet aracı. Tabloda "yalnız web"; mobilde "Bilgisayardan yapılanlar" listesinde.
-* **P145** korundu: sakinin mobil menüsünde Talep / Arıza yok (bildirim ana ekrandaki düğmeden, takip ızgara karosundan). Tabloda "menü dışı".
+* ~~P145 korundu~~ — **ölçüldü ve geri alındı**; bkz. aşağıdaki "Sakinin talep yolu".
 * **Web sakin modunda yalnız-mobil kalan sakin işleri** (ziyaretçi, kargo, akıllı ev, anketler…) tabloda gerekçeleriyle duruyor. Sakin modu, yöneticinin kendi dairesi için kısa yoldur.
 
 ### Ölçülemedi
@@ -768,3 +768,19 @@ açılmaya devam eder.
 * **"120 yerin %2'i dolu":** Türkçe ek sayıya bağlıdır ve yanlış çıkıyordu. Ek gerektirmeyen bir cümle kullanıldı: "Doluluk %2 · 120 yer".
 * **Finans grup başlığı:** web "Finansal İşlemler", mobil "Finans" idi; ikisi de "Finans" yapıldı. Grup başlıkları da kilide alındı (`contracts/menu-gruplari.tsv`).
 * **Uzun çeviriler:** "Otopark ve araç geçişleri"nin Almanca, Fransızca ve İspanyolca karşılıkları mobil ızgara karosunda üç satıra taşıyordu (P229 kilidi). Bu dillerde kısa karşılık kullanıldı; kilit yalnız Türkçe adı karşılaştırır.
+
+
+### Sakinin talep yolu (ölçüm, kullanıcı sorusu üzerine)
+
+| Soru | Ölçülen | Sonuç |
+|---|---|---|
+| Yeni talep nereden açılır? | Alt çubuktaki **"Bildir"** düğmesi → "Talep / Arıza Bildir" → `/complaints?bildir=1` (form hemen açılır). | ✓ bulunuyor |
+| Kendi taleplerinin durumu nereden izlenir? | Menüde Talep / Arıza **yok** (P145). Sakinin varsayılan ızgarasında talep karosu **yok**: kartlar Ziyaretçiler, Kargo, Aidat, **Şikayetlerim**, Duyurular, Site raporları. "Şikayetlerim" ise **daire (gürültü) şikayetlerinin** ekranı (`/sikayetlerim`); talepler orada görünmez. Talep listesine tek yol: "Bildir" formunu açıp kapatmak. | ✗ bulunamıyor |
+| Talep bildirimi nereye götürür? | `talep_cozuldu` / `talep_reddedildi` bildirimi sakini `/sikayetlerim`e götürüyordu (P217: `/complaints` sakin menüsünde olmadığı için erişim süzgecinden geçmiyordu). Kendi talebi o ekranda yok. | ✗ yanlış ekran |
+
+**Karar** (talimat: "bulamıyorsa menüye geri ekle"):
+* Talep / Arıza sakinin mobil menüsüne **geri eklendi** (İletişim grubu, web sakin modundaki "Talep / Arıza" ile aynı ad ve grup; tablo satırı artık "aynı").
+* Talep bildirimleri sakini de talep ekranına götürüyor. Daire şikayeti bildirimi (`sikayet_cozuldu`) "Şikayetlerim"e gitmeye devam ediyor.
+* Sakin talep ekranında yalnız kendi taleplerini görür; bu kısıt sunucuda (`complaints` "açan roller: kendi talepleri").
+* Talep / Arıza artık menüde olduğu için sakin onu "Ana ekranı düzenle"den ızgarasına karo olarak da ekleyebiliyor.
+* Kilitler: `home_menu_test`, `sakin_bildirim_yonlendirmesi_test` (talep → talep ekranı, daire şikayeti → Şikayetlerim) ve menü paritesi tablosu.

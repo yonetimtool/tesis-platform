@@ -306,7 +306,7 @@ void main() {
     test('resident: Ziyaretciler + Kargo + Goruntuleme izni + '
         'Rezervasyon + duyurular + Sikayet Haritasi + Aidatim + '
         'Site Butcesi (ayri "Sikayetlerim" sayfasi YOK — harita uzerinde · '
-        '(P145) Talep/Ariza MENUDE YOK — ana ekranda)', () {
+        '(P251 §8) Talep/Ariza MENUDE — kendi taleplerini izler)', () {
       expect(homeMenuForRole(UserRole.resident), const [
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
@@ -323,7 +323,9 @@ void main() {
         HomeMenuEntry.disHizmet,
         HomeMenuEntry.yerelIsletmeler,
         HomeMenuEntry.sikayetHaritasi,
-        // (P145) `complaints` KALKTI — izin degil UCUNCU KAPI kalkti.
+        // (P251 §8) `complaints` GERI GELDI (P145'te kalkmisti): sakinin
+        // izgarasinda talep karosu yok, kendi taleplerine baska yol yoktu.
+        HomeMenuEntry.complaints,
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,
         HomeMenuEntry.transparency,

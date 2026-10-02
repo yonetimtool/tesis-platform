@@ -269,7 +269,8 @@ const _yonetimGirisleri = {
   HomeMenuEntry.ihlaller,
   HomeMenuEntry.panikTakip,
   HomeMenuEntry.vardiyalar,
-  HomeMenuEntry.complaints,
+  // (P251 §8) `complaints` CIKTI: sakin de kendi TALEPLERINI bu ekranda
+  // izler (sunucu kendi kayitlariyla sinirlar); yonetime ozgu degil.
   HomeMenuEntry.bakim,
 };
 
@@ -374,7 +375,7 @@ void main() {
     // Kume anlamli olsun: her giris gercekten yoneticinin menusunde.
     expect(_yonetimGirisleri.difference(yonetici), isEmpty);
     // Erisim suzgeci de ayni: sakin modunda yonetim rotasi erisilemez.
-    for (final r in [AppRoutes.panikTakip, AppRoutes.bakim, AppRoutes.complaints]) {
+    for (final r in [AppRoutes.panikTakip, AppRoutes.bakim]) {
       expect(rotaErisilebilir(r, UserRole.resident), isFalse, reason: r);
     }
   });

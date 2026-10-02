@@ -65,8 +65,16 @@ void main() {
   // (E2E 2026-09) Rol verildiginde liste haritasi PUSH HARITASINI kullanir:
   // sakin talep bildirimine dokununca menusunde OLMAYAN `/complaints`e
   // degil, kendi "Sikayetlerim"ine gider.
-  test('ROLLU: sakin talep_cozuldu -> sikayetlerim', () {
+  // (P251 §8) DUZELTILDI: talep bildirimi sakini de TALEP ekranina
+  // goturur (artik menusunde). "Sikayetlerim" DAIRE sikayetlerinin
+  // ekranidir; talep orada hic gorunmuyordu.
+  test('ROLLU: sakin talep_cozuldu -> talep ekrani', () {
     expect(bildirimRotasi(_b('talep_cozuldu'), role: UserRole.resident),
+        AppRoutes.complaints);
+  });
+
+  test('ROLLU: sakin DAIRE sikayeti cozuldu -> sikayetlerim', () {
+    expect(bildirimRotasi(_b('sikayet_cozuldu'), role: UserRole.resident),
         AppRoutes.sikayetlerim);
   });
 }

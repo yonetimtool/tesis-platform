@@ -75,7 +75,7 @@ yonetici	yonetim	/kvkk	-	KVKK tercihlerim	yapisal	Kişisel izin tercihi; mobilde
 yonetici	yonetim	-	bilgisayardan	Bilgisayardan yapılanlar	yalniz_mobil	Yalnız web'de kalan işlemlerin listesi ve app.yonetiyor.com bağlantısı; web'de karşılığı o sayfaların kendisi.
 sakin	finans	/aidatim	myDues	Aidatım	ayni	-
 sakin	iletisim	/duyurular	announcements	Duyurular	ayni	-
-sakin	iletisim	/taleplerim	-	Talep / Arıza	yapisal	Mobilde sakinin talep bildirme yolu ana ekrandaki "Bildir" düğmesi, takibi ızgaradaki Talep / Arıza karosudur; menüye üçüncü bir kapı açmak P145 kararıyla kaldırıldı.
+sakin	iletisim	/taleplerim	complaints	Talep / Arıza	ayni	-
 sakin	tesis	/rezervasyonlarim	rezervasyon	Rezervasyon	ayni	-
 sakin	iletisim	/etkinlikler	etkinlik	Etkinlikler	ayni	-
 sakin	iletisim	/kurallar	siteKurallari	Site kuralları	ayni	-

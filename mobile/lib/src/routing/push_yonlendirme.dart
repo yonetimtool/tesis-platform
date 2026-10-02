@@ -174,13 +174,19 @@ String? _hamHedef(Map<String, String> data, UserRole? role) {
     case 'talep_is_emri':
     case 'talep_cozuldu':
     case 'talep_reddedildi':
-    case 'sikayet_cozuldu':
     case 'is_emri_atandi':
-      // (P217 OLCUM) SAKININ GIRISI FARKLI EKRAN. Matris cikarilinca
-      // gorundu: sakin `talep_cozuldu` / `talep_reddedildi` bildirimi
-      // ALIYOR ama `/complaints` onun menusunde YOK — yani bildirime
-      // dokundugunda HICBIR YERE gitmiyordu. Kendi taleplerinin girisi
-      // "Sikayetlerim".
+      // (P251 §8) TALEP bildirimi TALEP ekranina gider — sakin dahil.
+      // Asagidaki dal sakini "Sikayetlerim"e (DAIRE sikayetleri)
+      // gonderiyordu: `/complaints` sakin menusunde olmadigi icin. Artik
+      // menude; sakinin talep listesi sunucuda kendi kayitlariyla sinirli.
+      final id = data['complaint_id'];
+      return id == null || id.isEmpty
+          ? AppRoutes.complaints
+          : '${AppRoutes.complaints}?complaint_id=$id';
+    case 'sikayet_cozuldu':
+      // DAIRE sikayeti (`unit_complaints.py`) — sakinin kendi actigi daire
+      // sikayetlerinin ekrani "Sikayetlerim". (P217'de talep bildirimleri
+      // de buraya gidiyordu; P251 §8'de talepler kendi ekranina ayrildi.)
       final sakin = role == UserRole.resident;
       final taban = sakin ? AppRoutes.sikayetlerim : AppRoutes.complaints;
       final id = data['complaint_id'];
