@@ -2916,5 +2916,6 @@
   "rezGorselBekleyin": "Изображение ещё загружается — дождитесь окончания или удалите его.",
   "teslimAciklama_geri_dondu": "Возможно, адрес почты неверен.",
   "teslimAciklama_basarisiz": "Повторите попытку позже.",
-  "teslimAciklama_yapilandirilmadi": "Напишите на destek@yonetiyor.com."
+  "teslimAciklama_yapilandirilmadi": "Напишите на destek@yonetiyor.com.",
+  "semaSuresiDolmus": "Истёкшие (не учитываются на карте)"
 }

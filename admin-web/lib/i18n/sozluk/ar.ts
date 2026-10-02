@@ -709,6 +709,8 @@ export const ar: Sozluk = {
   kategoriGoruntuKirliligi: "تلوث بصري",
   haritaYuklenemedi: "تعذّر تحميل الشكاوى.",
   haritaAcikSikayetYok: "لا توجد شكاوى مفتوحة لهذه الوحدة.",
+  haritaAcikSikayetler: "الشكاوى المفتوحة",
+  haritaSuresiDolmus: "منتهية (غير محسوبة في الخريطة)",
   haritaYerlesimYok: "لم يتم إدخال التخطيط على الخريطة",
   kategoriGurultu: "ضوضاء",
   kategoriKapiOnu: "أمام الباب / الأحذية",

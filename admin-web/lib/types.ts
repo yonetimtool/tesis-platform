@@ -880,6 +880,8 @@ export interface UnitComplaint {
   created_at: string;
   complainant_user_id?: string | null;
   complainant_ad?: string | null;
+  /** (P251 §3) Harita penceresinden eski (haritada sayilmiyor). */
+  suresi_doldu?: boolean | null;
 }
 export interface UnitComplaintList {
   meta: PageMeta;

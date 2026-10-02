@@ -709,6 +709,8 @@ export const de: Sozluk = {
   kategoriGoruntuKirliligi: "Optische Verschmutzung",
   haritaYuklenemedi: "Beschwerden konnten nicht geladen werden.",
   haritaAcikSikayetYok: "Keine offenen Beschwerden für diese Wohneinheit.",
+  haritaAcikSikayetler: "Offene Beschwerden",
+  haritaSuresiDolmus: "Abgelaufen (nicht auf der Karte gezählt)",
   haritaYerlesimYok: "Keine Anordnung auf der Karte hinterlegt",
   kategoriGurultu: "Lärm",
   kategoriKapiOnu: "Türbereich / Schuhe",

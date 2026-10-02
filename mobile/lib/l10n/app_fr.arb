@@ -2916,5 +2916,6 @@
   "rezGorselBekleyin": "L'image est encore en cours d'envoi — attendez la fin ou retirez-la.",
   "teslimAciklama_geri_dondu": "L'adresse e-mail est peut-être invalide.",
   "teslimAciklama_basarisiz": "Réessayez plus tard.",
-  "teslimAciklama_yapilandirilmadi": "Contactez destek@yonetiyor.com."
+  "teslimAciklama_yapilandirilmadi": "Contactez destek@yonetiyor.com.",
+  "semaSuresiDolmus": "Expirées (non comptées sur le plan)"
 }

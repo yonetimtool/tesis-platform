@@ -45,6 +45,7 @@ class UnitComplaint {
     this.complainantUserId,
     this.complainantAd,
     this.okundu,
+    this.suresiDoldu = false,
   });
 
   final String id;
@@ -73,6 +74,10 @@ class UnitComplaint {
   /// demektir. Kuyruk gorunumu bu ayrimi korur (bkz. `okunmamisMi`).
   final bool? okundu;
 
+  /// (P251 §3) Harita penceresinden eski: hala acik ama haritada
+  /// SAYILMIYOR. Ayrinti ekrani bunu ayri baslik altinda gosterir.
+  final bool suresiDoldu;
+
   /// Kuyrukta ROZET/VURGU gerektiren satir: yalnizca uc okuma durumu
   /// bildirdiyse ve okunmamissa true.
   bool get okunmamisMi => okundu == false;
@@ -95,6 +100,7 @@ class UnitComplaint {
         complainantUserId: complainantUserId,
         complainantAd: complainantAd,
         okundu: true,
+        suresiDoldu: suresiDoldu,
       );
 
   factory UnitComplaint.fromJson(Map<String, dynamic> json) => UnitComplaint(
@@ -107,6 +113,7 @@ class UnitComplaint {
         complainantUserId: json['complainant_user_id'] as String?,
         complainantAd: json['complainant_ad'] as String?,
         okundu: json['okundu'] as bool?,
+        suresiDoldu: (json['suresi_doldu'] as bool?) ?? false,
         createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
             DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
       );

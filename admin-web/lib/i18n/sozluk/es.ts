@@ -709,6 +709,8 @@ export const es: Sozluk = {
   kategoriGoruntuKirliligi: "Contaminación visual",
   haritaYuklenemedi: "No se pudieron cargar las quejas.",
   haritaAcikSikayetYok: "No hay quejas abiertas para esta vivienda.",
+  haritaAcikSikayetler: "Quejas abiertas",
+  haritaSuresiDolmus: "Caducadas (no cuentan en el mapa)",
   haritaYerlesimYok: "Sin distribución en el mapa",
   kategoriGurultu: "Ruido",
   kategoriKapiOnu: "Entrada / calzado",

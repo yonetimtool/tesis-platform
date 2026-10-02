@@ -709,6 +709,8 @@ export const fr: Sozluk = {
   kategoriGoruntuKirliligi: "Pollution visuelle",
   haritaYuklenemedi: "Impossible de charger les signalements.",
   haritaAcikSikayetYok: "Aucun signalement ouvert pour ce logement.",
+  haritaAcikSikayetler: "Plaintes ouvertes",
+  haritaSuresiDolmus: "Expirées (non comptées sur le plan)",
   haritaYerlesimYok: "Aucune disposition saisie sur le plan",
   kategoriGurultu: "Bruit",
   kategoriKapiOnu: "Devant la porte / chaussures",

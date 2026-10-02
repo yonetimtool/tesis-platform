@@ -2916,5 +2916,6 @@
   "rezGorselBekleyin": "La imagen aún se está subiendo: espere a que termine o quítela.",
   "teslimAciklama_geri_dondu": "Es posible que la dirección de correo no sea válida.",
   "teslimAciklama_basarisiz": "Inténtelo de nuevo más tarde.",
-  "teslimAciklama_yapilandirilmadi": "Escriba a destek@yonetiyor.com."
+  "teslimAciklama_yapilandirilmadi": "Escriba a destek@yonetiyor.com.",
+  "semaSuresiDolmus": "Caducadas (no cuentan en el mapa)"
 }

@@ -15064,6 +15064,12 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'destek@yonetiyor.com ile iletişime geçin.'**
   String get teslimAciklama_yapilandirilmadi;
+
+  /// No description provided for @semaSuresiDolmus.
+  ///
+  /// In tr, this message translates to:
+  /// **'Süresi dolmuş (haritada sayılmıyor)'**
+  String get semaSuresiDolmus;
 }
 
 class _AppLocalizationsDelegate

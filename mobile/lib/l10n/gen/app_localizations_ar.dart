@@ -8733,4 +8733,7 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get teslimAciklama_yapilandirilmadi =>
       'تواصل مع destek@yonetiyor.com.';
+
+  @override
+  String get semaSuresiDolmus => 'منتهية (غير محسوبة في الخريطة)';
 }

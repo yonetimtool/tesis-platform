@@ -700,11 +700,29 @@ class _ComplaintList extends StatelessWidget {
         if (items.isEmpty) {
           return Center(child: Text(context.l10n.semaAcikSikayetYok));
         }
+        // (P251 §3) ACIK ONCE, SURESI DOLMUS AYRI BASLIK ALTINDA (web ile
+        // ayni): harita penceresinden eski sikayet haritada sayilmiyor;
+        // ayni listede durmasi basliktaki sayiyla celisiyordu.
+        final acik = items.where((c) => !c.suresiDoldu).toList();
+        final dolmus = items.where((c) => c.suresiDoldu).toList();
+        final satirlar = <Object>[
+          ...acik,
+          if (dolmus.isNotEmpty) context.l10n.semaSuresiDolmus,
+          ...dolmus,
+        ];
         return ListView.separated(
-          itemCount: items.length,
+          itemCount: satirlar.length,
           separatorBuilder: (_, _) => const Divider(height: 1),
           itemBuilder: (context, i) {
-            final c = items[i];
+            final o = satirlar[i];
+            if (o is String) {
+              return Padding(
+                key: const Key('sema-suresi-dolmus'),
+                padding: const EdgeInsets.only(top: 12, bottom: 4),
+                child: Text(o, style: Theme.of(context).textTheme.labelLarge),
+              );
+            }
+            final c = o as UnitComplaint;
             // F4 gizlilik: sikayet eden kimligi ARTIK gosterilmez (yonetim dahil).
             return ListTile(
               dense: true,

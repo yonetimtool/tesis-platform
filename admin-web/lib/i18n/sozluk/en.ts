@@ -709,6 +709,8 @@ export const en: Sozluk = {
   kategoriGoruntuKirliligi: "Visual pollution",
   haritaYuklenemedi: "Could not load complaints.",
   haritaAcikSikayetYok: "No open complaints for this unit.",
+  haritaAcikSikayetler: "Open complaints",
+  haritaSuresiDolmus: "Expired (not counted on the map)",
   haritaYerlesimYok: "No layout entered on the map",
   kategoriGurultu: "Noise",
   kategoriKapiOnu: "Doorway / shoes",

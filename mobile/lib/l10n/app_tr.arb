@@ -4284,5 +4284,6 @@
   "rezGorselBekleyin": "Görsel henüz yükleniyor — bitmesini bekleyin veya kaldırın.",
   "teslimAciklama_geri_dondu": "E-posta adresi geçersiz olabilir.",
   "teslimAciklama_basarisiz": "Bir süre sonra yeniden deneyin.",
-  "teslimAciklama_yapilandirilmadi": "destek@yonetiyor.com ile iletişime geçin."
+  "teslimAciklama_yapilandirilmadi": "destek@yonetiyor.com ile iletişime geçin.",
+  "semaSuresiDolmus": "Süresi dolmuş (haritada sayılmıyor)"
 }

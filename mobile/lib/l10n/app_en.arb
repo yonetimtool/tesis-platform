@@ -2916,5 +2916,6 @@
   "rezGorselBekleyin": "The image is still uploading — wait for it to finish or remove it.",
   "teslimAciklama_geri_dondu": "The e-mail address may be invalid.",
   "teslimAciklama_basarisiz": "Please try again later.",
-  "teslimAciklama_yapilandirilmadi": "Contact destek@yonetiyor.com."
+  "teslimAciklama_yapilandirilmadi": "Contact destek@yonetiyor.com.",
+  "semaSuresiDolmus": "Expired (not counted on the map)"
 }

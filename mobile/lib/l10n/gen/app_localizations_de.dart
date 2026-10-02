@@ -8705,4 +8705,7 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get teslimAciklama_yapilandirilmadi =>
       'Wenden Sie sich an destek@yonetiyor.com.';
+
+  @override
+  String get semaSuresiDolmus => 'Abgelaufen (nicht auf der Karte gezählt)';
 }

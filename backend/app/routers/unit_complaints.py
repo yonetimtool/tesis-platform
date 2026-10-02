@@ -593,15 +593,24 @@ async def list_unit_complaints(
             base.order_by(UnitComplaint.created_at.desc(), UnitComplaint.id.desc()).limit(limit).offset(offset)
         )
     ).all()
+    # (P251 §3) "Suresi dolmus" = harita penceresinden eski. Harita ile
+    # AYNI kaynak (`sikayet_harita_saat`): penceredeki tanim tek yerde.
+    saat = (await db.execute(select(Tenant.sikayet_harita_saat))).scalar_one_or_none()
+    sinir = (
+        datetime.now(tz=timezone.utc) - timedelta(hours=int(saat))
+        if saat and int(saat) > 0 else None
+    )
+    items = []
+    for obj, no, okundu_id in rows:
+        # complainant ARTIK DONMEZ (include_complainant=False, gizlilik).
+        out = UnitComplaintOut.from_model(
+            obj, unit_no=no, include_note=True, okundu=okundu_id is not None
+        )
+        out.suresi_doldu = bool(sinir is not None and obj.created_at < sinir)
+        items.append(out)
     return UnitComplaintListResponse(
         meta={"limit": limit, "offset": offset, "total": total},
-        items=[
-            # complainant ARTIK DONMEZ (include_complainant=False, gizlilik).
-            UnitComplaintOut.from_model(
-                obj, unit_no=no, include_note=True, okundu=okundu_id is not None
-            )
-            for obj, no, okundu_id in rows
-        ],
+        items=items,
     )
 
 

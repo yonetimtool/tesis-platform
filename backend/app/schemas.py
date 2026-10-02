@@ -5759,6 +5759,10 @@ class UnitComplaintOut(BaseModel):
     #: ISTEYEN yoneticiye gore okunmus mu (P24 triyaj). Yonetim uclarinda dolu,
     #: sakin uclarinda None — okuma durumu bir YONETIM kuyrugu kavramidir.
     okundu: bool | None = None
+    #: (P251 §3) Harita penceresinden (`sikayet_harita_saat`) ESKI mi —
+    #: "suresi dolmus": hala acik ama haritada SAYILMIYOR. Yonetim
+    #: listesinde dolu; pencere tanimsizsa (suresiz) hep False.
+    suresi_doldu: bool | None = None
 
     @classmethod
     def from_model(

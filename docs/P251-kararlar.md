@@ -308,3 +308,33 @@ Adaylar tek tek elendi:
 * **Test:** `p251-gonderim-gunlugu.dom.test.ts` — bildirimler sayfası push
   teşhis ucunu hiç çağırmıyor, tür "Kaçırılan devriye turu" yazıyor.
 
+# §3 — ŞİKAYET HARİTASI: AÇILIR PENCERE
+
+* **Ölçüm:** daire ayrıntısı sayfanın sağ sütununda bir paneldi
+  (`grid lg:grid-cols-[1fr_360px]`); aşağı kaydırılmış bir blokta daireye
+  tıklayan yönetici paneli göremiyordu.
+* **Karar:** ayrıntı ortak `Modal` içinde açılır: Esc ve dışarı tıklama
+  kapatır, odak pencerede kalır, kapanınca tıklanan hücreye döner
+  (ortak bileşenin mevcut erişilebilirlik davranışı). Sayfa tek sütun.
+* **İçerik:** başlıkta daire; altında blok, kat, sıra; **açık
+  şikayetler** (tür, tarih, açıklama) ve ayrı başlık altında **süresi
+  dolmuş** olanlar.
+* **"Süresi dolmuş" tanımı:** harita penceresinden (`sikayet_harita_saat`,
+  P219) eski, hâlâ açık şikayet — haritada sayılmıyor. Önceden ayrıntı
+  listesi bunları açık olanlarla karışık gösteriyor, başlıktaki sayı ile
+  liste çelişiyordu. Sunucu yönetim listesine `suresi_doldu` işareti
+  ekledi (haritayla aynı ayar, tek tanım; pencere 0 = süresiz → hiçbiri).
+* **Şikayet edenin kimliği — ÖLÇÜLDÜ, DEĞİŞTİRİLMEDİ:** istek "yalnız
+  yönetime görünsün (mevcut kural)" diyor; ölçülen mevcut kural daha
+  sıkı: **Rev-2 gizlilik kararıyla kimlik hiçbir uçtan dönmüyor, yönetim
+  dahil** (sunucu `include_complainant=False`; mobil testi bunu kilitliyor).
+  Bir gizlilik kuralını bu turda sessizce gevşetmedim; yönetime açılması
+  isteniyorsa ayrı karar gerekir. Web, alan dolu gelirse yine yalnız
+  yönetim ekranında gösterir.
+* **Mobil:** ayrıntı zaten açılır sayfadaydı (bottom sheet); "süresi
+  dolmuş" ayrımı aynı başlıkla eklendi.
+* **Testler:** sunucu `test_p251_sikayet_suresi.py` (işaret, süresiz
+  pencere, kimlik hâlâ dönmüyor); web `p251-sikayet-haritasi.dom.test.ts`
+  (pencere açılır, açık/dolmuş ayrı, Esc kapatır); mobil
+  `building_schematic_test` (ayrı başlık, sıra). Mevcut harita testleri
+  (134) yeşil; çift başlık testi pencere başlığına göre güncellendi.

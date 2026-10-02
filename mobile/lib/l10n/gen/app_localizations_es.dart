@@ -8689,4 +8689,7 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get teslimAciklama_yapilandirilmadi =>
       'Escriba a destek@yonetiyor.com.';
+
+  @override
+  String get semaSuresiDolmus => 'Caducadas (no cuentan en el mapa)';
 }

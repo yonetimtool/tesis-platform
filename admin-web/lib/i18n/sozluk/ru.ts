@@ -709,6 +709,8 @@ export const ru: Sozluk = {
   kategoriGoruntuKirliligi: "Визуальное загрязнение",
   haritaYuklenemedi: "Не удалось загрузить жалобы.",
   haritaAcikSikayetYok: "По этой квартире нет открытых жалоб.",
+  haritaAcikSikayetler: "Открытые жалобы",
+  haritaSuresiDolmus: "Истёкшие (не учитываются на карте)",
   haritaYerlesimYok: "Расположение на карте не задано",
   kategoriGurultu: "Шум",
   kategoriKapiOnu: "У двери / обувь",

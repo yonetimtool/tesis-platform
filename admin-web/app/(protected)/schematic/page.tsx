@@ -8,6 +8,7 @@ import {
   HataDurumu,
   IskeletMetin,
   Kart,
+  Modal,
   OzetKarti,
   OzetSeridi,
   SayfaBasligi,
@@ -162,7 +163,54 @@ function Legend() {
   );
 }
 
-function DetailPanel({ unit }: { unit: BuildingMapUnit }) {
+/** (P251 §3) Tek sikayet satiri: tur, tarih, aciklama. */
+function SikayetSatiri({ it }: { it: UnitComplaint }) {
+  const t = useT();
+  return (
+    <li
+      className="px-3 py-2"
+      style={{
+        borderRadius: "var(--yz-radius-sm)",
+        border: "1px solid var(--yz-border)",
+        fontSize: "var(--yz-fs-sm)",
+        color: "var(--yz-text)",
+      }}
+    >
+      <div className="flex justify-between gap-2">
+        <span style={{ fontWeight: 600 }}>
+          {KATEGORI_ANAHTAR[it.kategori] ? t(KATEGORI_ANAHTAR[it.kategori]) : it.kategori}
+        </span>
+        <span style={{ color: "var(--yz-text-3)" }}>{fmtDate(it.created_at)}</span>
+      </div>
+      {/* Sikayet eden kimligi: sunucu Rev-2'den beri HIC dondurmuyor
+          (yonetim dahil); alan gelirse yonetime gosterilir. */}
+      {it.complainant_ad && (
+        <p className="mt-0.5" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+          {t("haritaSikayetEden", { kisi: it.complainant_ad })}
+        </p>
+      )}
+      {it.notlar && (
+        <p className="mt-1" style={{ color: "var(--yz-text-2)" }}>
+          {it.notlar}
+        </p>
+      )}
+    </li>
+  );
+}
+
+/**
+ * (P251 §3) DAIRE AYRINTISI — ACILIR PENCERENIN ICERIGI.
+ *
+ * Onceden sayfanin SAG SUTUNUNDA bir panel idi: asagi kaydirilmis bir
+ * blokta daireye tiklayan yonetici ayrintiyi GOREMIYORDU (panel sayfanin
+ * en ustunde kaliyordu). Artik ortak `Modal` icinde: Esc ve disari
+ * tiklama kapatir, odak icerde kalir, kapaninca tiklanan hucreye doner.
+ *
+ * SURESI DOLMUS AYRI: harita penceresinden (`sikayet_harita_saat`) eski
+ * acik sikayetler haritada SAYILMIYOR; ayni listede durmalari basliktaki
+ * sayiyla listeyi celistiriyordu.
+ */
+function DaireAyrintisi({ unit }: { unit: BuildingMapUnit }) {
   const t = useT();
   // Sikayet listesi (durum=acik — sayimla tutarli). Rev-1: yonetim gorunumunde
   // notlar + complainant (sikayet eden) DOLU gelir (denetim; backend zorlar).
@@ -173,16 +221,16 @@ function DetailPanel({ unit }: { unit: BuildingMapUnit }) {
   const ton = renkTonu(unit.color);
   const items: UnitComplaint[] = data?.items ?? [];
 
+  const acik = items.filter((it) => !it.suresi_doldu);
+  const dolmus = items.filter((it) => it.suresi_doldu);
   return (
-    <Kart className="space-y-3">
+    <div className="space-y-3" data-test="harita-daire-ayrinti">
       <div className="flex items-center gap-2">
         <span
           className="inline-block h-4 w-4"
           style={{ borderRadius: "var(--yz-radius-sm)", background: ton }}
         />
-        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
-          {t("haritaDaireNo", { no: unit.unit_no })}
-        </h2>
+        {/* Daire no PENCERE BASLIGINDA (tekrar yazilmaz). */}
         {/* SAYI metin renginde: renkli metin 4.5 ister ve iki temada ayri
             olcum demekti; nokta zaten rengi tasiyor. */}
         <span className="ms-auto" style={{ fontWeight: 600, color: "var(--yz-text)" }}>
@@ -208,47 +256,30 @@ function DetailPanel({ unit }: { unit: BuildingMapUnit }) {
           {t("haritaAcikSikayetYok")}
         </p>
       )}
-      <ul className="space-y-1">
-        {items.map((it) => (
-          <li
-            key={it.id}
-            className="px-3 py-2"
-            style={{
-              borderRadius: "var(--yz-radius-sm)",
-              border: "1px solid var(--yz-border)",
-              fontSize: "var(--yz-fs-sm)",
-              color: "var(--yz-text)",
-            }}
-          >
-            <div className="flex justify-between">
-              <span style={{ fontWeight: 600 }}>
-                {KATEGORI_ANAHTAR[it.kategori]
-                  ? t(KATEGORI_ANAHTAR[it.kategori])
-                  : it.kategori}
-              </span>
-              <span style={{ color: "var(--yz-text-3)" }}>{fmtDate(it.created_at)}</span>
-            </div>
-            {/* Rev-1: sikayet eden kimligi YALNIZ yonetime (denetim). */}
-            {it.complainant_ad && (
-              <p
-                className="mt-0.5"
-                style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
-              >
-                {t("haritaSikayetEden", { kisi: it.complainant_ad })}
-              </p>
-            )}
-            {it.notlar && (
-              <p className="mt-1" style={{ color: "var(--yz-text-2)" }}>
-                {it.notlar}
-              </p>
-            )}
-          </li>
-        ))}
-      </ul>
+      {acik.length > 0 && (
+        <section className="space-y-1" data-test="harita-acik-sikayetler">
+          <h3 style={{ fontSize: "var(--yz-fs-sm)", fontWeight: 600, color: "var(--yz-text)" }}>
+            {t("haritaAcikSikayetler")}
+          </h3>
+          <ul className="space-y-1">
+            {acik.map((it) => <SikayetSatiri key={it.id} it={it} />)}
+          </ul>
+        </section>
+      )}
+      {dolmus.length > 0 && (
+        <section className="space-y-1" data-test="harita-suresi-dolmus">
+          <h3 style={{ fontSize: "var(--yz-fs-sm)", fontWeight: 600, color: "var(--yz-text-2)" }}>
+            {t("haritaSuresiDolmus")}
+          </h3>
+          <ul className="space-y-1">
+            {dolmus.map((it) => <SikayetSatiri key={it.id} it={it} />)}
+          </ul>
+        </section>
+      )}
       <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}>
         {t("haritaKimlikNotu")}
       </p>
-    </Kart>
+    </div>
   );
 }
 
@@ -407,7 +438,8 @@ export default function SchematicPage() {
         </Kart>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
+      {/* (P251 §3) TEK SUTUN: ayrinti artik acilir pencerede. */}
+      <div className="space-y-5">
         <Sekmeler
           aktifId={gorunum}
           onDegis={setGorunum}
@@ -520,24 +552,13 @@ export default function SchematicPage() {
           ]}
         />
 
-        {/* Detay paneli — secili daire */}
-        <div>
-          {selected ? (
-            <DetailPanel unit={selected} />
-          ) : (
-            <div
-              className="p-8 text-center"
-              style={{
-                borderRadius: "var(--yz-radius-card)",
-                border: "1px dashed var(--yz-border)",
-                fontSize: "var(--yz-fs-sm)",
-                color: "var(--yz-text-2)",
-              }}
-            >
-              {t("haritaDaireSecin")}
-            </div>
-          )}
-        </div>
+        <Modal
+          acik={selected !== null}
+          onKapat={() => setSelected(null)}
+          baslik={selected ? t("haritaDaireNo", { no: selected.unit_no }) : ""}
+        >
+          {selected ? <DaireAyrintisi unit={selected} /> : null}
+        </Modal>
       </div>
     </div>
   );

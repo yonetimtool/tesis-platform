@@ -752,6 +752,8 @@ export const tr = {
   kategoriGoruntuKirliligi: "Görüntü kirliliği",
   haritaYuklenemedi: "Şikayetler yüklenemedi.",
   haritaAcikSikayetYok: "Bu daire için açık şikayet yok.",
+  haritaAcikSikayetler: "Açık şikayetler",
+  haritaSuresiDolmus: "Süresi dolmuş (haritada sayılmıyor)",
   haritaYerlesimYok: "Haritada yerleşimi girilmemiş",
   kategoriGurultu: "Gürültü",
   kategoriKapiOnu: "Kapı önü / ayakkabı",

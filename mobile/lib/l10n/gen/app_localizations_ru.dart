@@ -8776,4 +8776,7 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get teslimAciklama_yapilandirilmadi =>
       'Напишите на destek@yonetiyor.com.';
+
+  @override
+  String get semaSuresiDolmus => 'Истёкшие (не учитываются на карте)';
 }

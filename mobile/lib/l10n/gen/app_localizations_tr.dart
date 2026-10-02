@@ -8495,4 +8495,7 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get teslimAciklama_yapilandirilmadi =>
       'destek@yonetiyor.com ile iletişime geçin.';
+
+  @override
+  String get semaSuresiDolmus => 'Süresi dolmuş (haritada sayılmıyor)';
 }

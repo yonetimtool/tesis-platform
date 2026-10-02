@@ -158,6 +158,30 @@ void main() {
     });
   });
 
+  // (P251 §3) Suresi dolmus (harita penceresi disi) sikayetler AYRI baslik
+  // altinda, acik olanlardan SONRA (web ile ayni).
+  testWidgets('detay: suresi dolmus sikayetler ayri basliktadir', (tester) async {
+    final eski = UnitComplaint(
+      id: 'c-2', targetUnitId: 'id-A-2', kategori: UnitComplaintKategori.diger,
+      durum: 'acik', notlar: 'Eski kayit', suresiDoldu: true,
+      createdAt: DateTime.utc(2026, 6, 1),
+    );
+    await tester.pumpWidget(
+      _app(UserRole.yonetici, map: _mgmtMap(), complaints: [eski, _c()]),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('A-2'));
+    await tester.pumpAndSettle();
+    final baslik = find.byKey(const Key('sema-suresi-dolmus'));
+    expect(baslik, findsOneWidget);
+    expect(find.text('Süresi dolmuş (haritada sayılmıyor)'), findsOneWidget);
+    // Acik olan ustte, suresi dolmus basligin altinda.
+    expect(tester.getTopLeft(find.text('Zarar verme')).dy,
+        lessThan(tester.getTopLeft(baslik).dy));
+    expect(tester.getTopLeft(find.textContaining('Eski kayit')).dy,
+        greaterThan(tester.getTopLeft(baslik).dy));
+  });
+
   group('YAPI gorunumu (shows_density=false)', () {
     testWidgets('resident: sayi/renk YOK; yapi notu; hucreler var', (tester) async {
       await tester.pumpWidget(_app(UserRole.resident, map: _structureMap()));
