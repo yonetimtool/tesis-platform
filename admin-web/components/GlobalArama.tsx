@@ -37,7 +37,8 @@ const HEDEF: Record<string, { etiket: SozlukAnahtari; rota: string }> = {
   kisi: { etiket: "kabukKullanicilar", rota: "/users" },
   daire: { etiket: "kabukDaireler", rota: "/units" },
   blok: { etiket: "kabukBinaDuzenleme", rota: "/building-editor" },
-  firma: { etiket: "kabukTanimlar", rota: "/tanimlar" },
+  // (P251 §7) Firma kaydi dogrudan Firmalar sekmesini acar.
+  firma: { etiket: "kabukTanimlar", rota: "/tanimlar?defter=firmalar" },
   gorev: { etiket: "kabukGorevler", rota: "/tasks" },
   duyuru: { etiket: "kabukDuyurular", rota: "/announcements" },
   talep: { etiket: "kabukTalepler", rota: "/complaints" },

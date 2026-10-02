@@ -16,9 +16,11 @@ import {
   GRUP_ANAHTARI,
   GRUP_IKONU,
   PROFIL_OGESI,
+  TANIM_SEKMELERI,
   _OGELER,
   kurulumGorunur,
   menuGruplari,
+  ogeAktif,
   ogeBaglantisi,
   profilGorunur,
   rotaninGrubu,
@@ -160,11 +162,8 @@ describe("(P166 §1) TAM LISTE — gizli menu katmani yok", () => {
     // Eskiden katli olan bolumlerin ogeleri de ICINDE (bu testin asil
     // amaci): kullanicilar, tanimlar, duyurular, finans hareketleri.
     expect(gorunen).toContain("/users");
-    // (P167 §1.6) KENDINE ISARET EDEN "/tanimlar" SATIRI KALKTI; yerine
-    // ekranin ON BIR DEFTERI ayri satirlar olarak listeleniyor. Yani
-    // sayfa KAYBOLMADI — daha gorunur oldu.
-    expect(gorunen).toContain("/tanimlar?defter=kasalar");
-    expect(gorunen).toContain("/tanimlar?defter=unit-tipleri");
+    // (P251 §7) Tanimlar TEK satir; sekmeler sayfanin icinde.
+    expect(gorunen).toContain("/tanimlar");
     expect(gorunen).toContain("/announcements");
     // (P167 Asama 4) SORGU SUZGECLERI GERCEK SAYFA OLDU: `/finans?tip=gelir`
     // yerine `/finans/gelirler`. Sebep brief §4 — her birinin kendi
@@ -220,13 +219,21 @@ describe("(P167 §1) MENU MIMARISI", () => {
     expect(mesaj).toEqual(["/mesajlar"]);
   });
 
-  it("§1.6 TANIMLAR bolumu, ekranin BUTUN sekmelerini listeler", () => {
+  it("(P251 §7) TANIMLAR bolumu: Bloklar + Ice aktarim + TEK 'Tanimlar' satiri", () => {
+    // P167 §1.6 sayfanin on iki sekmesini menuye ayri satir olarak
+    // koymustu; kullanici bunlari ayri SAYFA saniyordu. Sekme seridi
+    // sayfanin icinde — menu yalniz sayfayi gosterir.
     const tanimlar = yonetici().find((g) => g.id === "tanimlar");
-    const defterler = (tanimlar?.ogeler ?? [])
-      .filter((o) => o.href === "/tanimlar")
-      .map((o) => o.sorgu);
-    // `/tanimlar` sayfasindaki DEFTERLER dizisi + "ayarlar" sekmesi.
-    expect(defterler).toEqual([
+    expect((tanimlar?.ogeler ?? []).map(ogeBaglantisi)).toEqual([
+      "/building-editor",
+      "/ice-aktarim",
+      "/tanimlar",
+    ]);
+    expect(baglantilar().filter((h) => h.startsWith("/tanimlar"))).toEqual(["/tanimlar"]);
+  });
+
+  it("(P251 §7) sekmeler ARAMA icin ayri listede, sayfanin sirasiyla", () => {
+    expect(TANIM_SEKMELERI.map((o) => o.sorgu)).toEqual([
       "defter=kasalar",
       "defter=gelir-gider-gruplari",
       "defter=gelir-gider-tanimlari",
@@ -240,17 +247,13 @@ describe("(P167 §1) MENU MIMARISI", () => {
       "defter=unit-gruplari",
       "defter=ayarlar",
     ]);
-    // Bloklar ve Ice aktarim AYNI seviyede.
-    const hrefler = (tanimlar?.ogeler ?? []).map((o) => o.href);
-    expect(hrefler).toContain("/building-editor");
-    expect(hrefler).toContain("/ice-aktarim");
+    for (const o of TANIM_SEKMELERI) expect(o.href).toBe("/tanimlar");
   });
 
-  it("§1.6 KENDINE ISARET EDEN 'Tanimlar' satiri KALKTI", () => {
-    // `/tanimlar` (sorgusuz) bir alt baslik olarak dururken kullaniciya
-    // hicbir sey soylemiyordu: basligin adiyla ayni, hedefi de kendisi.
-    const sorgusuz = baglantilar().filter((h) => h === "/tanimlar");
-    expect(sorgusuz).toEqual([]);
+  it("(P251 §7) herhangi bir sekmedeyken menude 'Tanimlar' satiri AKTIF", () => {
+    const oge = yonetici().flatMap((g) => g.ogeler).find((o) => o.href === "/tanimlar")!;
+    expect(ogeAktif(oge, "/tanimlar", new URLSearchParams("defter=kasalar"))).toBe(true);
+    expect(ogeAktif(oge, "/tanimlar", null)).toBe(true);
   });
 
   it("§1.8 KURULUM SIHIRBAZI bolum ogesi DEGIL (alt cubukta)", () => {

@@ -392,3 +392,48 @@ Adaylar tek tek elendi:
   sınıfı taşıyor ya da gerekçeli istisnada.
 * Gerçek Chromium (1920 px): geniş sayfalarda ana alan 1664 px, özette
   1280 px; başlık 13 px / 600 / ana metin rengi.
+
+# §7 — Tanımlar menüsü tek giriş
+
+## Karar
+
+* Kenar çubuğunun Tanımlar bölümü 14 satırdan **3 satıra** indi:
+  **Bloklar · İçe aktarım · Tanımlar**. Bloklar ve İçe aktarım ayrı
+  sayfalar olduğu için kaldı. `/tanimlar` sayfasının 12 sekmesi (kasalar …
+  ayarlar) artık yalnız sayfanın içindeki sekme şeridinde.
+* **Derin bağlantı** değişmedi: `/tanimlar?defter=kasalar` doğrudan
+  Kasalar sekmesini açar. Bağımlılık uyarıları, kurulum sihirbazı ve
+  görevlerdeki "kategorileri düzenle" bağlantısı zaten sekmeyi veriyordu.
+* **Arama:** sekmeler `TANIM_SEKMELERI` listesinde (sıra sayfanın
+  `DEFTERLER` dizisiyle aynı). Sayfa araması bu listeyi menüye ek olarak
+  tarar: "kasalar" yazan kullanıcı `/tanimlar?defter=kasalar` sonucunu
+  alır. Görünürlük `/tanimlar` rotasının rol kapısından gelir; ikinci bir
+  yetki kararı yazılmadı.
+* Kayıt aramasında **firma** sonucu artık `/tanimlar?defter=firmalar`
+  açıyor. Önceden sorgusuz `/tanimlar`'a gidiyor ve ilk sekmeye (Kasalar)
+  düşüyordu.
+* **Yardım:** ekran yardımı sayfa düzeyinde (`/tanimlar` → tek metin).
+  Sekmeye özel yardım metni yok, bu yüzden bağlantının doğru sekmeyi
+  açması diye bir durum doğmuyor.
+* Herhangi bir sekmedeyken menüdeki "Tanımlar" satırı **aktif** görünür.
+* Bölüm başlığı ile satırın adı aynı ("Tanımlar"): istekte geçen ad
+  kullanıldı. P167 §1.6'daki "kendine işaret eden satır" itirazı, satırın
+  12 sekmenin yanında durduğu düzen içindi. Bölüm adlandırması §8
+  önerisiyle birlikte (onay bekliyor) yeniden ele alınacak.
+
+## Mobil
+
+Mobilde muhasebe defterleri yok (§8 tablosu: yalnız web). Mobil Tanımlar
+grubundaki öğelerin her biri ayrı bir ekran, tek bir sayfanın sekmesi
+değil. Bu yüzden aynı tekrar mobilde yok ve **mobilde değişiklik
+yapılmadı**.
+
+## Kilit
+
+`tests/menu-gruplari.test.ts`:
+* Tanımlar bölümü tam olarak 3 bağlantı içerir.
+* `TANIM_SEKMELERI` sayfanın sekme sırasını izler.
+* Sekmedeyken satır aktif kalır.
+
+`tests/sayfa-aramasi.test.ts`: "kasalar" araması derin bağlantıyı
+döndürür.

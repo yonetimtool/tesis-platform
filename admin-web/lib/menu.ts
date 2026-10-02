@@ -413,21 +413,13 @@ const OGELER: readonly MenuOgesi[] = [
   // menuden tikladiginda sekme seridinde ayni sirada bulacak.
   { href: "/building-editor", anahtar: "kabukBloklar", icon: "edit", grup: "tanimlar" },
   { href: "/ice-aktarim", anahtar: "iceAktarimBaslik", icon: "box", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=kasalar", anahtar: "tanimKasalar", icon: "money", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=gelir-gider-gruplari", anahtar: "tanimGelirGiderGruplari", icon: "folder", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=gelir-gider-tanimlari", anahtar: "tanimGelirGiderTanimlari", icon: "list", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=firmalar", anahtar: "tanimFirmalar", icon: "building", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=gorev-kategorileri", anahtar: "tanimGorevKategorileri", icon: "tag", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=personel-kayitlari", anahtar: "tanimPersonel", icon: "users", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=arac-kayitlari", anahtar: "tanimAraclar", icon: "car", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=sayaclar-ana", anahtar: "tanimSayaclar", icon: "gauge", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=sayaclar-bolum", anahtar: "tanimSayaclarBolum", icon: "submeter", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=unit-tipleri", anahtar: "tanimDaireTipleri", icon: "home", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=unit-gruplari", anahtar: "tanimDaireGruplari", icon: "homes", grup: "tanimlar" },
-  // "Ayarlar" sekmesi de bir BOLUMDUR ve menude yeri olmali; sayfada
-  // yerel duruma bagliydi, bu turda o da adrese tasindi (bkz. tanimlar
-  // sayfasi) — yoksa menuden acilamayan tek sekme olarak kalirdi.
-  { href: "/tanimlar", sorgu: "defter=ayarlar", anahtar: "tanimAyarlar", icon: "gear", grup: "tanimlar" },
+  // (P251 §7) ON IKI SEKME TEK SATIRA INDI. Kerem'in olcumu: ayni sayfanin
+  // sekmeleri kenar cubugunda ayri satir olunca kullanici bunlari ayri
+  // SAYFALAR saniyor ve menu Tanimlar bolumunde 14 satira uzuyordu. Sekme
+  // seridi sayfanin icinde zaten var; derin baglanti (`?defter=kasalar`)
+  // calismaya devam eder ve sekmeler ARAMADA hâlâ ayri ayri bulunur
+  // (`TANIM_SEKMELERI`, bkz. `sayfaAra`).
+  { href: "/tanimlar", anahtar: "kabukTanimlar", icon: "list", grup: "tanimlar" },
 
   { href: "/users", anahtar: "kabukKullanicilar", icon: "users", grup: "yonetim" },
   // (P220 §4) SAKINLER — `/users`TAN AYRI ve bu KASITLI.
@@ -458,6 +450,33 @@ const OGELER: readonly MenuOgesi[] = [
   // (P41) Yetki matrisi denetimin yaninda.
   { href: "/yetki", anahtar: "kabukYetki", icon: "shield", grup: "yonetim" },
   { href: "/kvkk", anahtar: "kabukKvkk", icon: "doc", grup: "yonetim" },
+];
+
+/**
+ * (P251 §7) `/tanimlar` SEKMELERI — menude DEGIL, aramada.
+ *
+ * Kenar cubugunda tek "Tanimlar" satiri var; ama "kasalar" yazan kullanici
+ * Kasalar SEKMESINE inmeli, sorgusuz `/tanimlar` onu ilk sekmeye
+ * dusururdu. Sira sayfanin `DEFTERLER` dizisiyle AYNI.
+ *
+ * Gorunurluk `/tanimlar` rotasindan gelir (`ROTA_ROLLERI`) — ikinci bir
+ * yetki karari yazilmadi.
+ */
+export const TANIM_SEKMELERI: readonly MenuOgesi[] = [
+  { href: "/tanimlar", sorgu: "defter=kasalar", anahtar: "tanimKasalar", icon: "money", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=gelir-gider-gruplari", anahtar: "tanimGelirGiderGruplari", icon: "folder", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=gelir-gider-tanimlari", anahtar: "tanimGelirGiderTanimlari", icon: "list", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=firmalar", anahtar: "tanimFirmalar", icon: "building", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=gorev-kategorileri", anahtar: "tanimGorevKategorileri", icon: "tag", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=personel-kayitlari", anahtar: "tanimPersonel", icon: "users", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=arac-kayitlari", anahtar: "tanimAraclar", icon: "car", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=sayaclar-ana", anahtar: "tanimSayaclar", icon: "gauge", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=sayaclar-bolum", anahtar: "tanimSayaclarBolum", icon: "submeter", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=unit-tipleri", anahtar: "tanimDaireTipleri", icon: "home", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=unit-gruplari", anahtar: "tanimDaireGruplari", icon: "homes", grup: "tanimlar" },
+  // "Ayarlar" sekmesi de adrese bagli (P167 §1.6) — aramadan acilabilir.
+  { href: "/tanimlar", sorgu: "defter=ayarlar", anahtar: "tanimAyarlar", icon: "gear", grup: "tanimlar" },
+
 ];
 
 /**
@@ -683,7 +702,9 @@ export function sayfaAra(
   // PROFIL ve KURULUM SIHIRBAZI menude bolum disindadir (§1.7 sag ust,
   // §1.8 alt cubuk) ama ikisi de birer SAYFA — aramanin onlari bulmamasi,
   // kullaniciyi "menude yok, o hâlde yok" sonucuna gotururdu.
-  for (const oge of [PROFIL_OGESI, KURULUM_OGESI]) {
+  // (P251 §7) Tanimlar sekmeleri de ayni sekilde: menude tek satir,
+  // aramada her sekme kendi adiyla ve kendi derin baglantisiyla.
+  for (const oge of [PROFIL_OGESI, KURULUM_OGESI, ...TANIM_SEKMELERI]) {
     if (ogeGorunur(oge, yuzey, rol)) {
       kume.push({ oge, grupAnahtari: GRUP_ANAHTARI[oge.grup] });
     }
