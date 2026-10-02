@@ -195,8 +195,14 @@ export function Th({
   sik = false,
   dolgusuz = false,
   className = "",
+  "aria-label": etiket,
 }: {
   children?: ReactNode;
+  /** (P251 §1) GORSEL OLARAK BOS sutunun (eylem) ekran okuyucu adi.
+   *  Onceden prop tanimli degildi; tireli ozellik TypeScript'te hata
+   *  vermedigi icin 9 tabloda sessizce YUTULUYOR, baslik bos kaliyordu.
+   *  Cocuk yoksa gorunmez metin olarak cizilir. */
+  "aria-label"?: string;
   // Ozet/gruplama satirlari birden fazla sutuna yayilir.
   colSpan?: number;
   hizala?: "start" | "end" | "center";
@@ -211,7 +217,7 @@ export function Th({
       colSpan={colSpan}
       className={`${_sinif(dolgusuz, sik)} font-medium ${h} ${className}`}
     >
-      {children}
+      {children ?? (etiket ? <span className="sr-only">{etiket}</span> : null)}
     </th>
   );
 }
@@ -224,13 +230,18 @@ export function Tr({
   children,
   className = "",
   onClick,
+  "data-test": dataTest,
 }: {
   children: ReactNode;
   className?: string;
   onClick?: () => void;
+  /** (P251 §1) Tireli ozellik TypeScript'te hata vermez; tanimsizken
+   *  sessizce yutuluyordu (panik satirlarinin `data-test`i hic yoktu). */
+  "data-test"?: string;
 }) {
   return (
     <tr
+      data-test={dataTest}
       onClick={onClick}
       // (P244 §4) HOVER ARTIK CSS'TE (`yz-satir`): satir ici `style` ile
       // `:hover` yazilamaz ve dokunmatikte `:hover` YAPISIR — kullanici
@@ -253,6 +264,7 @@ export function Td({
   sik = false,
   dolgusuz = false,
   className = "",
+  "data-test": dataTest,
 }: {
   children?: ReactNode;
   colSpan?: number;
@@ -261,11 +273,14 @@ export function Td({
   sik?: boolean;
   dolgusuz?: boolean;
   className?: string;
+  /** (P251 §1) Bkz. `Tr` — yutulmasin. */
+  "data-test"?: string;
 }) {
   const h =
     hizala === "end" ? "text-end" : hizala === "center" ? "text-center" : "text-start";
   return (
     <td
+      data-test={dataTest}
       colSpan={colSpan}
       className={`${_sinif(dolgusuz, sik)} ${h} ${sayi ? "tabular-nums" : ""} ${className}`}
     >

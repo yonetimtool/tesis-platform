@@ -8621,4 +8621,57 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get otoKurallarEkranBaslik => 'Reglas de automatización';
+
+  @override
+  String get panikAlarmDurumBeklemede => 'Pendiente';
+
+  @override
+  String get panikAlarmDurumAcik => 'Abierta';
+
+  @override
+  String get panikAlarmDurumMudahale => 'Atendiendo';
+
+  @override
+  String get panikAlarmDurumKapandi => 'Cerrada';
+
+  @override
+  String get panikAlarmDurumIptal => 'Cancelada';
+
+  @override
+  String get panikAlarmDurumYanlisAlarm => 'Falsa alarma';
+
+  @override
+  String get panikAlarmDurumHepsi => 'Todos los estados';
+
+  @override
+  String get panikDurumSuzgec => 'Filtrar por estado';
+
+  @override
+  String get panikOzetAcik => 'Llamadas abiertas';
+
+  @override
+  String get panikOzetBugun => 'Recibidas hoy';
+
+  @override
+  String get panikOzetKapanan => 'Cerradas';
+
+  @override
+  String panikOzetKapananAlt(String yanlis, String iptal) {
+    return '$yanlis falsa alarma · $iptal cancelada';
+  }
+
+  @override
+  String get panikKaynakSuzgec => 'Tipo de alarma';
+
+  @override
+  String get panikKaynakGercek => 'Alarmas reales';
+
+  @override
+  String get panikKaynakTatbikat => 'Simulacros';
+
+  @override
+  String get panikKaynakHepsi => 'Reales y simulacros';
+
+  @override
+  String get panikRozetTatbikat => 'Simulacro';
 }

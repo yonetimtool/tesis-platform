@@ -9891,9 +9891,31 @@ class PanikKapat(BaseModel):
     kapanis_notu: str | None = Field(None, max_length=2000)
 
 
+class PanikOzetOut(BaseModel):
+    """(P251 §1) Takip ekraninin sayilari — SUNUCUDA, durumdan.
+
+    Istemci "acik" sayisini `kapandi_at` bosluguyla hesapliyordu; iptal
+    ve yanlis alarm o damgayi hic yazmadigi icin SONSUZA KADAR acik
+    sayiliyordu. Tek tanim burada: acik = beklemede | acik | mudahale.
+    `kapanan` = sonuclanan HER alarm (kapandi + iptal + yanlis alarm);
+    ikisinin ayrintisi ayrica doner. Tatbikatlar sayilmaz (`tatbikat`
+    ayrica). Durum suzgecinden BAGIMSIZ (P244 §8c).
+    """
+    acik: int = 0
+    bugun: int = 0
+    kapanan: int = 0
+    yanlis_alarm: int = 0
+    iptal: int = 0
+    tatbikat: int = 0
+
+
 class PanikListResponse(BaseModel):
     meta: PageMetaOut
     items: list[PanikAlarmOut]
+    #: (P251 §1) Sunucunun TUM durumlari (enum'dan) — suzgec bundan cizilir,
+    #: yeni bir durum eklenince istemcide eksik kalmaz.
+    durumlar: list[str] = []
+    ozet: PanikOzetOut | None = None
 
 
 class PanikAskiIn(BaseModel):

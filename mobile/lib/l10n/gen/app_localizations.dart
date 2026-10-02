@@ -14938,6 +14938,108 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Otomasyon kuralları'**
   String get otoKurallarEkranBaslik;
+
+  /// No description provided for @panikAlarmDurumBeklemede.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bekliyor'**
+  String get panikAlarmDurumBeklemede;
+
+  /// No description provided for @panikAlarmDurumAcik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açık'**
+  String get panikAlarmDurumAcik;
+
+  /// No description provided for @panikAlarmDurumMudahale.
+  ///
+  /// In tr, this message translates to:
+  /// **'Müdahale ediliyor'**
+  String get panikAlarmDurumMudahale;
+
+  /// No description provided for @panikAlarmDurumKapandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapandı'**
+  String get panikAlarmDurumKapandi;
+
+  /// No description provided for @panikAlarmDurumIptal.
+  ///
+  /// In tr, this message translates to:
+  /// **'İptal'**
+  String get panikAlarmDurumIptal;
+
+  /// No description provided for @panikAlarmDurumYanlisAlarm.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yanlış alarm'**
+  String get panikAlarmDurumYanlisAlarm;
+
+  /// No description provided for @panikAlarmDurumHepsi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tüm durumlar'**
+  String get panikAlarmDurumHepsi;
+
+  /// No description provided for @panikDurumSuzgec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Duruma göre süz'**
+  String get panikDurumSuzgec;
+
+  /// No description provided for @panikOzetAcik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açık çağrı'**
+  String get panikOzetAcik;
+
+  /// No description provided for @panikOzetBugun.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bugün gelen'**
+  String get panikOzetBugun;
+
+  /// No description provided for @panikOzetKapanan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapanan'**
+  String get panikOzetKapanan;
+
+  /// No description provided for @panikOzetKapananAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'{yanlis} yanlış alarm · {iptal} iptal'**
+  String panikOzetKapananAlt(String yanlis, String iptal);
+
+  /// No description provided for @panikKaynakSuzgec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Alarm türü'**
+  String get panikKaynakSuzgec;
+
+  /// No description provided for @panikKaynakGercek.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gerçek alarmlar'**
+  String get panikKaynakGercek;
+
+  /// No description provided for @panikKaynakTatbikat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tatbikatlar'**
+  String get panikKaynakTatbikat;
+
+  /// No description provided for @panikKaynakHepsi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gerçek ve tatbikat'**
+  String get panikKaynakHepsi;
+
+  /// No description provided for @panikRozetTatbikat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tatbikat'**
+  String get panikRozetTatbikat;
 }
 
 class _AppLocalizationsDelegate

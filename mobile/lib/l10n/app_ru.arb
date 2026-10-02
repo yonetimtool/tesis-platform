@@ -2895,5 +2895,22 @@
   "otoSihirbazGeri": "Назад",
   "otoSihirbazKaydet": "Сохранить правило",
   "otoSihirbazEksik": "Завершите этот шаг.",
-  "otoKurallarEkranBaslik": "Правила автоматизации"
+  "otoKurallarEkranBaslik": "Правила автоматизации",
+  "panikAlarmDurumBeklemede": "Ожидает",
+  "panikAlarmDurumAcik": "Открыт",
+  "panikAlarmDurumMudahale": "Реагируют",
+  "panikAlarmDurumKapandi": "Закрыт",
+  "panikAlarmDurumIptal": "Отменён",
+  "panikAlarmDurumYanlisAlarm": "Ложная тревога",
+  "panikAlarmDurumHepsi": "Все статусы",
+  "panikDurumSuzgec": "Фильтр по статусу",
+  "panikOzetAcik": "Открытые вызовы",
+  "panikOzetBugun": "Поступило сегодня",
+  "panikOzetKapanan": "Закрытые",
+  "panikOzetKapananAlt": "{yanlis} ложных · {iptal} отменено",
+  "panikKaynakSuzgec": "Тип тревоги",
+  "panikKaynakGercek": "Реальные тревоги",
+  "panikKaynakTatbikat": "Учения",
+  "panikKaynakHepsi": "Реальные и учения",
+  "panikRozetTatbikat": "Учения"
 }

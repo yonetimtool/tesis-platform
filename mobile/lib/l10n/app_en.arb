@@ -2895,5 +2895,22 @@
   "otoSihirbazGeri": "Back",
   "otoSihirbazKaydet": "Save rule",
   "otoSihirbazEksik": "Please complete this step.",
-  "otoKurallarEkranBaslik": "Automation rules"
+  "otoKurallarEkranBaslik": "Automation rules",
+  "panikAlarmDurumBeklemede": "Pending",
+  "panikAlarmDurumAcik": "Open",
+  "panikAlarmDurumMudahale": "Responding",
+  "panikAlarmDurumKapandi": "Closed",
+  "panikAlarmDurumIptal": "Cancelled",
+  "panikAlarmDurumYanlisAlarm": "False alarm",
+  "panikAlarmDurumHepsi": "All statuses",
+  "panikDurumSuzgec": "Filter by status",
+  "panikOzetAcik": "Open calls",
+  "panikOzetBugun": "Received today",
+  "panikOzetKapanan": "Closed",
+  "panikOzetKapananAlt": "{yanlis} false alarm · {iptal} cancelled",
+  "panikKaynakSuzgec": "Alarm type",
+  "panikKaynakGercek": "Real alarms",
+  "panikKaynakTatbikat": "Drills",
+  "panikKaynakHepsi": "Real and drills",
+  "panikRozetTatbikat": "Drill"
 }

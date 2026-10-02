@@ -8666,4 +8666,57 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get otoKurallarEkranBaslik => 'قواعد الأتمتة';
+
+  @override
+  String get panikAlarmDurumBeklemede => 'قيد الانتظار';
+
+  @override
+  String get panikAlarmDurumAcik => 'مفتوح';
+
+  @override
+  String get panikAlarmDurumMudahale => 'جارٍ الاستجابة';
+
+  @override
+  String get panikAlarmDurumKapandi => 'مغلق';
+
+  @override
+  String get panikAlarmDurumIptal => 'ملغى';
+
+  @override
+  String get panikAlarmDurumYanlisAlarm => 'إنذار خاطئ';
+
+  @override
+  String get panikAlarmDurumHepsi => 'كل الحالات';
+
+  @override
+  String get panikDurumSuzgec => 'تصفية حسب الحالة';
+
+  @override
+  String get panikOzetAcik => 'نداءات مفتوحة';
+
+  @override
+  String get panikOzetBugun => 'وردت اليوم';
+
+  @override
+  String get panikOzetKapanan => 'مغلقة';
+
+  @override
+  String panikOzetKapananAlt(String yanlis, String iptal) {
+    return '$yanlis إنذار كاذب · $iptal ملغى';
+  }
+
+  @override
+  String get panikKaynakSuzgec => 'نوع الإنذار';
+
+  @override
+  String get panikKaynakGercek => 'إنذارات حقيقية';
+
+  @override
+  String get panikKaynakTatbikat => 'التدريبات';
+
+  @override
+  String get panikKaynakHepsi => 'الحقيقية والتدريبات';
+
+  @override
+  String get panikRozetTatbikat => 'تدريب';
 }

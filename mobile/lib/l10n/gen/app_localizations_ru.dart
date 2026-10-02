@@ -8709,4 +8709,57 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get otoKurallarEkranBaslik => 'Правила автоматизации';
+
+  @override
+  String get panikAlarmDurumBeklemede => 'Ожидает';
+
+  @override
+  String get panikAlarmDurumAcik => 'Открыт';
+
+  @override
+  String get panikAlarmDurumMudahale => 'Реагируют';
+
+  @override
+  String get panikAlarmDurumKapandi => 'Закрыт';
+
+  @override
+  String get panikAlarmDurumIptal => 'Отменён';
+
+  @override
+  String get panikAlarmDurumYanlisAlarm => 'Ложная тревога';
+
+  @override
+  String get panikAlarmDurumHepsi => 'Все статусы';
+
+  @override
+  String get panikDurumSuzgec => 'Фильтр по статусу';
+
+  @override
+  String get panikOzetAcik => 'Открытые вызовы';
+
+  @override
+  String get panikOzetBugun => 'Поступило сегодня';
+
+  @override
+  String get panikOzetKapanan => 'Закрытые';
+
+  @override
+  String panikOzetKapananAlt(String yanlis, String iptal) {
+    return '$yanlis ложных · $iptal отменено';
+  }
+
+  @override
+  String get panikKaynakSuzgec => 'Тип тревоги';
+
+  @override
+  String get panikKaynakGercek => 'Реальные тревоги';
+
+  @override
+  String get panikKaynakTatbikat => 'Учения';
+
+  @override
+  String get panikKaynakHepsi => 'Реальные и учения';
+
+  @override
+  String get panikRozetTatbikat => 'Учения';
 }

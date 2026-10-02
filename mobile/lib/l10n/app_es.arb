@@ -2895,5 +2895,22 @@
   "otoSihirbazGeri": "Atrás",
   "otoSihirbazKaydet": "Guardar regla",
   "otoSihirbazEksik": "Complete este paso.",
-  "otoKurallarEkranBaslik": "Reglas de automatización"
+  "otoKurallarEkranBaslik": "Reglas de automatización",
+  "panikAlarmDurumBeklemede": "Pendiente",
+  "panikAlarmDurumAcik": "Abierta",
+  "panikAlarmDurumMudahale": "Atendiendo",
+  "panikAlarmDurumKapandi": "Cerrada",
+  "panikAlarmDurumIptal": "Cancelada",
+  "panikAlarmDurumYanlisAlarm": "Falsa alarma",
+  "panikAlarmDurumHepsi": "Todos los estados",
+  "panikDurumSuzgec": "Filtrar por estado",
+  "panikOzetAcik": "Llamadas abiertas",
+  "panikOzetBugun": "Recibidas hoy",
+  "panikOzetKapanan": "Cerradas",
+  "panikOzetKapananAlt": "{yanlis} falsa alarma · {iptal} cancelada",
+  "panikKaynakSuzgec": "Tipo de alarma",
+  "panikKaynakGercek": "Alarmas reales",
+  "panikKaynakTatbikat": "Simulacros",
+  "panikKaynakHepsi": "Reales y simulacros",
+  "panikRozetTatbikat": "Simulacro"
 }

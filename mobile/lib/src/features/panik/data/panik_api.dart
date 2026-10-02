@@ -102,6 +102,23 @@ class PanikApi {
     }
   }
 
+  /// (P251 §1) Takip ekrani: liste + SUNUCUNUN sayilari + TUM durumlar.
+  Future<PanikListe> takip({String? durum, bool? tatbikat, int limit = 50}) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/panik',
+        queryParameters: {
+          'limit': limit,
+          'durum': ?durum,
+          'tatbikat': ?tatbikat,
+        },
+      );
+      return PanikListe.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   Future<List<PanikAlarm>> liste({int limit = 50}) async {
     try {
       final res = await _dio.get<Map<String, dynamic>>(
@@ -128,6 +145,17 @@ final panikAktifProvider = FutureProvider.autoDispose<List<PanikAlarm>>(
 final panikListeProvider = FutureProvider.autoDispose<List<PanikAlarm>>(
   (ref) => ref.watch(panikApiProvider).liste(),
 );
+
+/// (P251 §1) Takip ekrani suzgeci: (durum, tatbikat). `tatbikat` null =
+/// gercek + tatbikat; varsayilan `false` (gercek alarmlar), web ile ayni.
+typedef PanikSuzgec = ({String? durum, bool? tatbikat});
+
+final panikTakipProvider =
+    FutureProvider.autoDispose.family<PanikListe, PanikSuzgec>(
+      (ref, s) => ref
+          .watch(panikApiProvider)
+          .takip(durum: s.durum, tatbikat: s.tatbikat),
+    );
 
 /// (P249 §1b) Tek alarm — bildirimden acilan alici ekraninin kaynagi.
 final panikDetayProvider = FutureProvider.autoDispose.family<PanikAlarm, String>(

@@ -2895,5 +2895,22 @@
   "otoSihirbazGeri": "رجوع",
   "otoSihirbazKaydet": "حفظ القاعدة",
   "otoSihirbazEksik": "أكمل هذه الخطوة.",
-  "otoKurallarEkranBaslik": "قواعد الأتمتة"
+  "otoKurallarEkranBaslik": "قواعد الأتمتة",
+  "panikAlarmDurumBeklemede": "قيد الانتظار",
+  "panikAlarmDurumAcik": "مفتوح",
+  "panikAlarmDurumMudahale": "جارٍ الاستجابة",
+  "panikAlarmDurumKapandi": "مغلق",
+  "panikAlarmDurumIptal": "ملغى",
+  "panikAlarmDurumYanlisAlarm": "إنذار خاطئ",
+  "panikAlarmDurumHepsi": "كل الحالات",
+  "panikDurumSuzgec": "تصفية حسب الحالة",
+  "panikOzetAcik": "نداءات مفتوحة",
+  "panikOzetBugun": "وردت اليوم",
+  "panikOzetKapanan": "مغلقة",
+  "panikOzetKapananAlt": "{yanlis} إنذار كاذب · {iptal} ملغى",
+  "panikKaynakSuzgec": "نوع الإنذار",
+  "panikKaynakGercek": "إنذارات حقيقية",
+  "panikKaynakTatbikat": "التدريبات",
+  "panikKaynakHepsi": "الحقيقية والتدريبات",
+  "panikRozetTatbikat": "تدريب"
 }

@@ -2895,5 +2895,22 @@
   "otoSihirbazGeri": "Retour",
   "otoSihirbazKaydet": "Enregistrer la règle",
   "otoSihirbazEksik": "Veuillez compléter cette étape.",
-  "otoKurallarEkranBaslik": "Règles d'automatisation"
+  "otoKurallarEkranBaslik": "Règles d'automatisation",
+  "panikAlarmDurumBeklemede": "En attente",
+  "panikAlarmDurumAcik": "Ouvert",
+  "panikAlarmDurumMudahale": "Intervention",
+  "panikAlarmDurumKapandi": "Clôturé",
+  "panikAlarmDurumIptal": "Annulé",
+  "panikAlarmDurumYanlisAlarm": "Fausse alerte",
+  "panikAlarmDurumHepsi": "Tous les statuts",
+  "panikDurumSuzgec": "Filtrer par statut",
+  "panikOzetAcik": "Appels ouverts",
+  "panikOzetBugun": "Reçus aujourd'hui",
+  "panikOzetKapanan": "Clôturés",
+  "panikOzetKapananAlt": "{yanlis} fausse alerte · {iptal} annulée",
+  "panikKaynakSuzgec": "Type d'alerte",
+  "panikKaynakGercek": "Alertes réelles",
+  "panikKaynakTatbikat": "Exercices",
+  "panikKaynakHepsi": "Réelles et exercices",
+  "panikRozetTatbikat": "Exercice"
 }

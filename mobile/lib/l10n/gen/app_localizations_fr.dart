@@ -8637,4 +8637,57 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get otoKurallarEkranBaslik => 'Règles d\'automatisation';
+
+  @override
+  String get panikAlarmDurumBeklemede => 'En attente';
+
+  @override
+  String get panikAlarmDurumAcik => 'Ouvert';
+
+  @override
+  String get panikAlarmDurumMudahale => 'Intervention';
+
+  @override
+  String get panikAlarmDurumKapandi => 'Clôturé';
+
+  @override
+  String get panikAlarmDurumIptal => 'Annulé';
+
+  @override
+  String get panikAlarmDurumYanlisAlarm => 'Fausse alerte';
+
+  @override
+  String get panikAlarmDurumHepsi => 'Tous les statuts';
+
+  @override
+  String get panikDurumSuzgec => 'Filtrer par statut';
+
+  @override
+  String get panikOzetAcik => 'Appels ouverts';
+
+  @override
+  String get panikOzetBugun => 'Reçus aujourd\'hui';
+
+  @override
+  String get panikOzetKapanan => 'Clôturés';
+
+  @override
+  String panikOzetKapananAlt(String yanlis, String iptal) {
+    return '$yanlis fausse alerte · $iptal annulée';
+  }
+
+  @override
+  String get panikKaynakSuzgec => 'Type d\'alerte';
+
+  @override
+  String get panikKaynakGercek => 'Alertes réelles';
+
+  @override
+  String get panikKaynakTatbikat => 'Exercices';
+
+  @override
+  String get panikKaynakHepsi => 'Réelles et exercices';
+
+  @override
+  String get panikRozetTatbikat => 'Exercice';
 }

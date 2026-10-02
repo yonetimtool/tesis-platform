@@ -44,6 +44,7 @@ from ..crud_helpers import get_or_404
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import (
+    PANIK_DURUM,
     AppUser,
     Checkpoint,
     PanikAlarm,
@@ -71,6 +72,7 @@ from ..schemas import (
     PanikAskiOut,
     PanikKapat,
     PanikListResponse,
+    PanikOzetOut,
     PanikOlustur,
     PageMetaOut,
 )
@@ -605,17 +607,29 @@ async def liste(
     limit: int = Query(25, ge=1, le=200),
     offset: int = Query(0, ge=0),
     durum: str | None = Query(None, max_length=_G.KOD),
+    tatbikat: bool | None = Query(
+        None, description="(P251 §1) true: yalniz tatbikat, false: yalniz gercek"),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_OKUR),
     dil: str = Depends(_istek_dili),
 ) -> PanikListResponse:
-    kosullar = []
+    kapsam = []
     if user.role not in LISTE_ROLLERI:
         # SAKIN LISTEYI GORMEZ: baska dairelerin acil durumlari kisisel
         # veridir. Yalniz KENDI actiklarini gorur.
-        kosullar.append(PanikAlarm.olusturan_user_id == user.id)
+        kapsam.append(PanikAlarm.olusturan_user_id == user.id)
+    kosullar = list(kapsam)
     if durum:
+        # (P251 §1) Bilinmeyen durum 422 — enum disi deger veritabaninda
+        # tur hatasina (500) donusuyordu.
+        if durum not in PANIK_DURUM.enums:
+            raise APIError(422, "validation_error", "gecersiz_durum")
         kosullar.append(PanikAlarm.durum == durum)
+    if tatbikat is not None:
+        kosullar.append(
+            PanikAlarm.tatbikat_id.is_not(None) if tatbikat
+            else PanikAlarm.tatbikat_id.is_(None)
+        )
 
     toplam = int(
         (
@@ -636,7 +650,62 @@ async def liste(
     return PanikListResponse(
         meta=PageMetaOut(limit=limit, offset=offset, total=toplam),
         items=[await _govde(db, a, user, dil) for a in satirlar],
+        durumlar=list(PANIK_DURUM.enums),
+        ozet=await _ozet(db, user, kapsam),
     )
+
+
+#: (P251 §1) "Acik" TEK TANIM — sonuclanmamis her durum.
+ACIK_DURUMLAR = ("beklemede", "acik", "mudahale")
+
+
+async def _ozet(db: AsyncSession, user: AppUser, kapsam: list) -> PanikOzetOut:
+    """Takip ekraninin serit sayilari (durum/tatbikat suzgecinden bagimsiz)."""
+    from zoneinfo import ZoneInfo
+
+    from ..models import Tenant
+
+    tz_adi = (
+        await db.execute(select(Tenant.timezone).where(Tenant.id == user.tenant_id))
+    ).scalar_one_or_none() or "Europe/Istanbul"
+    try:
+        tz = ZoneInfo(tz_adi)
+    except Exception:  # noqa: BLE001 - bozuk tz adi sayilari dusurmesin
+        tz = ZoneInfo("Europe/Istanbul")
+    bugun_basi = dt.datetime.now(tz).replace(hour=0, minute=0, second=0, microsecond=0)
+
+    satirlar = (
+        await db.execute(
+            select(PanikAlarm.durum, PanikAlarm.tatbikat_id.is_not(None), func.count())
+            .where(*kapsam)
+            .group_by(PanikAlarm.durum, PanikAlarm.tatbikat_id.is_not(None))
+        )
+    ).all()
+    ozet = PanikOzetOut()
+    for durum, tatbikat_mi, adet in satirlar:
+        if tatbikat_mi:
+            ozet.tatbikat += adet
+            continue
+        if durum in ACIK_DURUMLAR:
+            ozet.acik += adet
+        else:
+            ozet.kapanan += adet
+            if durum == "yanlis_alarm":
+                ozet.yanlis_alarm += adet
+            elif durum == "iptal":
+                ozet.iptal += adet
+    ozet.bugun = int(
+        (
+            await db.execute(
+                select(func.count()).select_from(PanikAlarm).where(
+                    *kapsam,
+                    PanikAlarm.tatbikat_id.is_(None),
+                    PanikAlarm.created_at >= bugun_basi,
+                )
+            )
+        ).scalar_one()
+    )
+    return ozet
 
 
 @router.get("/{alarm_id}", response_model=PanikAlarmOut)

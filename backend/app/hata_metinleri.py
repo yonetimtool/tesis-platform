@@ -3436,6 +3436,15 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "La demande a déjà reçu une réponse (la première décision prévaut).",
         "es": "La solicitud ya fue respondida (vale la primera decisión).",
     },
+    "gecersiz_durum": {
+        "tr": "Bilinmeyen durum.",
+        "en": "Unknown status.",
+        "ar": "حالة غير معروفة.",
+        "ru": "Неизвестный статус.",
+        "de": "Unbekannter Status.",
+        "fr": "Statut inconnu.",
+        "es": "Estado desconocido.",
+    },
     "gecersiz_durum_gecisi": {
         "tr": "'{mevcut}' → '{hedef}' geçersiz durum geçişi.",
         "en": "'{mevcut}' → '{hedef}' is an invalid status transition.",

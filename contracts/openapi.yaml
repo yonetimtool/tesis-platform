@@ -10623,14 +10623,23 @@ paths:
         (P240 §1) SAKIN LISTEYI GORMEZ: baska dairelerin acil durumlari
         kisisel veridir. Sakin YALNIZ kendi actigi alarmlari gorur;
         guvenlik/amir/yonetim tesisin tamamini gorur.
+
+        (P251 §1) Yanit `ozet` (acik / bugun / kapanan / yanlis_alarm /
+        iptal / tatbikat — SUNUCUDA durumdan, suzgecten bagimsiz) ve
+        `durumlar` (enum'un tamami) tasir. Bilinmeyen `durum` 422.
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
         - name: durum
           in: query
           schema: { type: string }
+        - name: tatbikat
+          in: query
+          description: true = yalniz tatbikat, false = yalniz gercek alarm
+          schema: { type: boolean }
       responses:
         "200": { description: alarmlar }
+        "422": { $ref: "#/components/responses/ValidationError" }
     post:
       tags: [panik]
       summary: Panik tetikle (tip bazinda rol kapisi)

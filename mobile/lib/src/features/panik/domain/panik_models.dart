@@ -156,7 +156,10 @@ class PanikAlarm {
     return checkpointAd ?? '';
   }
 
-  bool get acik => durum == 'acik' || durum == 'mudahale';
+  /// (P251 §1) Sunucunun tek tanimi: sonuclanmamis her durum (iptal
+  /// penceresindeki `beklemede` dahil — yonetim onu da kapatabilir).
+  bool get acik =>
+      durum == 'beklemede' || durum == 'acik' || durum == 'mudahale';
 
   factory PanikAlarm.fromJson(Map<String, dynamic> j) => PanikAlarm(
         id: j['id'] as String,
@@ -295,4 +298,56 @@ class PanikDurum {
             .map((m) => PanikDurumKisi.fromJson(Map<String, dynamic>.from(m)))
             .toList(),
       );
+}
+
+
+/// (P251 §1) Takip ekraninin sayilari — SUNUCUDA, durumdan hesaplanir.
+/// Istemci `kapandiAt` ile saymaz: iptal/yanlis alarm o damgayi yazmaz.
+class PanikOzet {
+  const PanikOzet({
+    this.acik = 0,
+    this.bugun = 0,
+    this.kapanan = 0,
+    this.yanlisAlarm = 0,
+    this.iptal = 0,
+  });
+  final int acik;
+  final int bugun;
+  final int kapanan;
+  final int yanlisAlarm;
+  final int iptal;
+
+  factory PanikOzet.fromJson(Map<String, dynamic> j) => PanikOzet(
+    acik: (j['acik'] as num?)?.toInt() ?? 0,
+    bugun: (j['bugun'] as num?)?.toInt() ?? 0,
+    kapanan: (j['kapanan'] as num?)?.toInt() ?? 0,
+    yanlisAlarm: (j['yanlis_alarm'] as num?)?.toInt() ?? 0,
+    iptal: (j['iptal'] as num?)?.toInt() ?? 0,
+  );
+}
+
+class PanikListe {
+  const PanikListe({
+    required this.items,
+    required this.durumlar,
+    this.ozet = const PanikOzet(),
+  });
+  final List<PanikAlarm> items;
+
+  /// Sunucunun TUM durumlari (enum'dan) — suzgec bundan cizilir.
+  final List<String> durumlar;
+  final PanikOzet ozet;
+
+  factory PanikListe.fromJson(Map<String, dynamic> j) => PanikListe(
+    items: ((j['items'] as List?) ?? const [])
+        .whereType<Map>()
+        .map((m) => PanikAlarm.fromJson(Map<String, dynamic>.from(m)))
+        .toList(),
+    durumlar: [
+      for (final d in (j['durumlar'] as List?) ?? const []) '$d',
+    ],
+    ozet: j['ozet'] is Map
+        ? PanikOzet.fromJson(Map<String, dynamic>.from(j['ozet'] as Map))
+        : const PanikOzet(),
+  );
 }

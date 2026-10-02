@@ -25,7 +25,22 @@ import useSWR from "swr";
 
 // (P245) SUZGEC DEGERLERI — UCLUDE DIZE YAZILMAZ (`sabit-metin`).
 const SUZGEC_HEPSI = "" as const;
-const PANIK_DURUMLARI = ["beklemede", "acik", "mudahale", "kapandi", "iptal"] as const;
+/** (P251 §1) Yedek liste — yalniz ILK YUKLEMEDE. Asil liste sunucunun
+ *  enum'undan gelir (`durumlar`); P245'te elle yazilan liste "yanlis
+ *  alarm"i eksik birakmisti. */
+const PANIK_DURUMLARI_YEDEK = ["beklemede", "acik", "mudahale", "kapandi", "iptal", "yanlis_alarm"] as const;
+/** (P251 §1) Tatbikat suzgeci: varsayilan GERCEK alarmlar. Tatbikatlarin
+ *  kendi bolumu (rapor) asagida; listeye karismalari acil durum
+ *  sayisini ve gorunurlugunu bulandiriyordu. */
+const KAYNAK_GERCEK = "gercek" as const;
+const KAYNAK_TATBIKAT = "tatbikat" as const;
+const KAYNAK_HEPSI = "hepsi" as const;
+type Kaynak = typeof KAYNAK_GERCEK | typeof KAYNAK_TATBIKAT | typeof KAYNAK_HEPSI;
+const KAYNAK_SORGU: Record<Kaynak, string> = {
+  gercek: "&tatbikat=false",
+  tatbikat: "&tatbikat=true",
+  hepsi: "",
+};
 
 // (P245) OZET SERIDI IKONLARI.
 const IKON_ALARM = "M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z";
@@ -83,7 +98,19 @@ type Alarm = {
   /** (P249 §1b) Istegin dilinde kategori basligi ve toplu uyari mi. */
   baslik: string;
   toplu: boolean;
+  /** (P249 §2) Tatbikat alarmi mi. */
+  tatbikat?: boolean;
 };
+/** (P251 §1) SUNUCUNUN SAYILARI — durum ve tatbikat suzgecinden bagimsiz. */
+type Ozet = {
+  acik: number;
+  bugun: number;
+  kapanan: number;
+  yanlis_alarm: number;
+  iptal: number;
+  tatbikat: number;
+};
+type Liste = { items: Alarm[]; durumlar?: string[]; ozet?: Ozet | null };
 
 const DURUM_ETIKET: Record<string, SozlukAnahtari> = {
   beklemede: "panikDurumBeklemede",
@@ -109,15 +136,19 @@ export default function PanikPage() {
   const toast = useToast();
   // (P245) DURUM SUZGECI — SUNUCUDA (`?durum=`).
   const [durumSuzgec, setDurumSuzgec] = useState<string>(SUZGEC_HEPSI);
-  // SERIT SAYILARI SUZGECTEN BAGIMSIZ (P244 §8c dersi): suzgec acikken
-  // ayni kumeden saymak, "Kapanan" secildiginde "Acik cagri: 0" yazmak
-  // olurdu — yani ekran acik cagri OLMADIGINI soylerdi.
-  const { data: tumAlarmlar } = useSWR<{ items: Alarm[] }>(
-    "/api/panik?limit=200",
-    jsonFetcher,
-  );
-  const { data, error, isLoading, mutate } = useSWR<{ items: Alarm[] }>(
-    `/api/panik?limit=50${durumSuzgec ? `&durum=${durumSuzgec}` : ""}`,
+  const [kaynak, setKaynak] = useState<Kaynak>(KAYNAK_GERCEK);
+  // (P251 §1) TEK ISTEK, SAYILAR SUNUCUDAN.
+  //
+  // Onceden seridin sayilari IKINCI bir istekten (200 kayit) ve
+  // ISTEMCIDE `kapandi_at == null` ile hesaplaniyordu. Iki kusur
+  // OLCULDU: (1) iptal ve yanlis alarm `kapandi_at` YAZMAZ, yani
+  // sonsuza kadar "acik" sayiliyordu (ekrandaki "Acik cagri: 2"nin
+  // ikisi de yanlis alarm/iptaldi); (2) o istek HIC yenilenmiyordu —
+  // kapatilan alarm seritte "acik" kaliyordu. Simdi `ozet` listeyle
+  // ayni yanitta, durumdan hesaplanir ve 15 sn'de bir yenilenir.
+  // Suzgecten BAGIMSIZDIR (P244 §8c dersi).
+  const { data, error, isLoading, mutate } = useSWR<Liste>(
+    `/api/panik?limit=50${durumSuzgec ? `&durum=${durumSuzgec}` : ""}${KAYNAK_SORGU[kaynak]}`,
     jsonFetcher,
     // ACIK ALARM CANLI OLMALI: bu ekran acikken biri "gidiyorum"
     // derse, yenilemeden gorunmeli.
@@ -150,17 +181,11 @@ export default function PanikPage() {
 
   const satirlar = data?.items ?? [];
 
-  // SAYILAR GORUNEN LISTEDEN ve bu BILINCLI: uc durum suzgeci
-  // sunmuyor ve panik cagrisi tesis basina gunde birkac kayittir —
-  // sayfalama sinirina carpmaz.
-  const tumSatirlar = tumAlarmlar?.items ?? [];
-  const acikCagri = tumSatirlar.filter((a) => a.kapandi_at == null).length;
-  const kapananCagri = tumSatirlar.length - acikCagri;
-  const bugunBasi = new Date();
-  bugunBasi.setHours(0, 0, 0, 0);
-  const bugunCagri = tumSatirlar.filter(
-    (a) => new Date(a.created_at).getTime() >= bugunBasi.getTime(),
-  ).length;
+  const ozet = data?.ozet;
+  const acikCagri = ozet?.acik ?? 0;
+  const kapananCagri = ozet?.kapanan ?? 0;
+  const bugunCagri = ozet?.bugun ?? 0;
+  const durumlar = data?.durumlar?.length ? data.durumlar : PANIK_DURUMLARI_YEDEK;
 
   return (
     <div>
@@ -194,21 +219,41 @@ export default function PanikPage() {
           deger={String(kapananCagri)}
           durum="olumlu"
           ikon={<PanikIkonu yol={IKON_ONAY} />}
+          altBilgi={
+            ozet && ozet.yanlis_alarm + ozet.iptal > 0
+              ? t("panikOzetKapananAlt", { yanlis: ozet.yanlis_alarm, iptal: ozet.iptal })
+              : undefined
+          }
         />
       </OzetSeridi>
 
       <FiltreCubugu
-        aktifSayi={durumSuzgec ? 1 : 0}
-        onTemizle={() => setDurumSuzgec(SUZGEC_HEPSI)}
+        aktifSayi={(durumSuzgec ? 1 : 0) + (kaynak !== KAYNAK_GERCEK ? 1 : 0)}
+        onTemizle={() => {
+          setDurumSuzgec(SUZGEC_HEPSI);
+          setKaynak(KAYNAK_GERCEK);
+        }}
       >
         <Secim
+          aria-label={t("panikKaynakSuzgec")}
+          data-test="panik-kaynak"
+          value={kaynak}
+          onChange={(e) => setKaynak(e.target.value as Kaynak)}
+          className="w-auto"
+        >
+          <option value={KAYNAK_GERCEK}>{t("panikKaynakGercek")}</option>
+          <option value={KAYNAK_TATBIKAT}>{t("panikKaynakTatbikat")}</option>
+          <option value={KAYNAK_HEPSI}>{t("panikKaynakHepsi")}</option>
+        </Secim>
+        <Secim
           aria-label={t("panikDurumSuzgec")}
+          data-test="panik-durum-suzgec"
           value={durumSuzgec}
           onChange={(e) => setDurumSuzgec(e.target.value)}
           className="w-auto"
         >
           <option value={SUZGEC_HEPSI}>{t("panikDurumHepsi")}</option>
-          {PANIK_DURUMLARI.map((d) => (
+          {durumlar.map((d) => (
             <option key={d} value={d}>
               {t(DURUM_ETIKET[d] ?? DURUM_YEDEK)}
             </option>
@@ -248,9 +293,13 @@ export default function PanikPage() {
               <Th>{t("panikTipBasligi")}</Th>
               <Th>{t("ortakDurum")}</Th>
               <Th>{t("panikKimBasligi")}</Th>
-              <Th>{t("panikGorenSayisi", { goren: "", toplam: "" })}</Th>
+              {/* (P251 §1) "/ gordu" BASLIGI: satir metni yer tutuculari
+                  BOS verilerek baslik yapilmisti. Baslik kendi anahtarini
+                  tasir. Eylem sutunu da gorunur baslik alir (eskiden
+                  `aria-label` `Th`de yutuluyordu — bos baslik). */}
+              <Th>{t("panikGorenBasligi")}</Th>
               <Th>{t("panikMudahaleSuresi")}</Th>
-              <Th aria-label={t("panikKapat")} />
+              <Th>{t("ortakIslemSutunu")}</Th>
             </TabloBasligi>
             <tbody>
               {satirlar.map((a) => {
@@ -269,6 +318,11 @@ export default function PanikPage() {
                       {a.baslik && (
                         <span className="block" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
                           {t(TIP_ETIKET[a.tip] ?? TIP_YEDEK)}
+                        </span>
+                      )}
+                      {a.tatbikat && (
+                        <span className="mt-1 inline-block" data-test={`panik-tatbikat-${a.id}`}>
+                          <Rozet durum="bilgi">{t("panikRozetTatbikat")}</Rozet>
                         </span>
                       )}
                     </Td>

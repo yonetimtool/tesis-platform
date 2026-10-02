@@ -2895,5 +2895,22 @@
   "otoSihirbazGeri": "Zurück",
   "otoSihirbazKaydet": "Regel speichern",
   "otoSihirbazEksik": "Bitte schließen Sie diesen Schritt ab.",
-  "otoKurallarEkranBaslik": "Automatisierungsregeln"
+  "otoKurallarEkranBaslik": "Automatisierungsregeln",
+  "panikAlarmDurumBeklemede": "Ausstehend",
+  "panikAlarmDurumAcik": "Offen",
+  "panikAlarmDurumMudahale": "In Bearbeitung",
+  "panikAlarmDurumKapandi": "Geschlossen",
+  "panikAlarmDurumIptal": "Abgebrochen",
+  "panikAlarmDurumYanlisAlarm": "Fehlalarm",
+  "panikAlarmDurumHepsi": "Alle Status",
+  "panikDurumSuzgec": "Nach Status filtern",
+  "panikOzetAcik": "Offene Rufe",
+  "panikOzetBugun": "Heute eingegangen",
+  "panikOzetKapanan": "Geschlossen",
+  "panikOzetKapananAlt": "{yanlis} Fehlalarm · {iptal} storniert",
+  "panikKaynakSuzgec": "Alarmart",
+  "panikKaynakGercek": "Echte Alarme",
+  "panikKaynakTatbikat": "Übungen",
+  "panikKaynakHepsi": "Echt und Übungen",
+  "panikRozetTatbikat": "Übung"
 }
