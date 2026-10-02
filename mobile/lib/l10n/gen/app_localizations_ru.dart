@@ -8181,4 +8181,85 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get kisiAdZorunlu => 'Имя и фамилия обязательны.';
+
+  @override
+  String get odemeKoduTumunuSec => 'Выбрать все';
+
+  @override
+  String odemeKoduSecimEtiketi(String ad) {
+    return 'Выбрать $ad';
+  }
+
+  @override
+  String odemeKoduSecilenlereGonder(String n) {
+    return 'Отправить выбранным ($n)';
+  }
+
+  @override
+  String get odemeKoduEpostaGonder => 'Отправить письмо';
+
+  @override
+  String odemeKoduEpostaGonderEtiketi(String ad) {
+    return 'Отправить платёжный код: $ad';
+  }
+
+  @override
+  String get odemeKoduGonderildiTek => 'Письмо отправлено.';
+
+  @override
+  String odemeKoduKuyruga(String n) {
+    return '$n писем в очереди; они уйдут в течение нескольких минут.';
+  }
+
+  @override
+  String odemeKoduAtlandi(String n) {
+    return 'Не отправлено $n адресатам (нет адреса, письма отключены или только что отправлено).';
+  }
+
+  @override
+  String get odemeKoduDurumkuyrukta => 'В очереди';
+
+  @override
+  String get odemeKoduDurumgonderildi => 'Отправлено';
+
+  @override
+  String get odemeKoduDurumiletildi => 'Доставлено';
+
+  @override
+  String get odemeKoduDurumgeri_dondu => 'Возврат';
+
+  @override
+  String get odemeKoduDurumbasarisiz => 'Ошибка';
+
+  @override
+  String get odemeKoduDurumyapilandirilmadi => 'Почта не настроена';
+
+  @override
+  String get odemeKoduEngeleposta_yok => 'Нет адреса';
+
+  @override
+  String get odemeKoduEngeleposta_kapali => 'Уведомления по почте выключены';
+
+  @override
+  String get odemeKoduHicGonderilmedi => 'Не отправлено';
+
+  @override
+  String get odemeKoduBos => 'Пока нет активных жильцов.';
+
+  @override
+  String get odemeKodlariBaslik => 'Платёжные коды';
+
+  @override
+  String get odemeKodlariAciklama =>
+      'Если жильцы указывают свой код в назначении платежа, оплата сопоставляется автоматически. Код можно скопировать или отправить по почте; в письме есть и банковские реквизиты, и текст для назначения платежа.';
+
+  @override
+  String get odemeKoduKopyala => 'Скопировать код';
+
+  @override
+  String get odemeKoduKopyalandi => 'Код скопирован';
+
+  @override
+  String get odemeKoduBosAciklama =>
+      'Платёжные коды появятся здесь по мере добавления жильцов.';
 }

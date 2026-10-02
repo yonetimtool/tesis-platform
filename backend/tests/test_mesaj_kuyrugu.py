@@ -113,7 +113,8 @@ class _DusenSaglayici:
 
     ad = "sahte"
 
-    def gonder(self, hedef, konu, govde):
+    # (P250 §2) Kuyruk artik HTML govdeyi de gecirir.
+    def gonder(self, hedef, konu, govde, html=None, headers=None):
         from app.gonderim import GonderimSonucu
 
         return GonderimSonucu("basarisiz", self.ad, hata="sahte_ariza")

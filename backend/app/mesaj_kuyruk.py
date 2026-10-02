@@ -44,6 +44,7 @@ bir saglayici, kotayi kendi arizasiyla tuketirdi.
 """
 from __future__ import annotations
 
+import asyncio
 import uuid
 from datetime import datetime, timezone
 
@@ -68,6 +69,10 @@ MAX_DENEME = 3
 #: kuyrukta tek bir turun dakikalarca surmesi ve bir sonraki turla
 #: cakismasi demekti.
 TUR_BASINA_UST_SINIR = 200
+
+#: (P250 §2) Iki e-posta arasi bekleme. Resend varsayilan siniri saniyede
+#: 2 istek; 0.55 sn bu sinirin hemen altinda kalir.
+EPOSTA_ARALIGI_SN = 0.55
 
 
 async def _tur_ayari(db: AsyncSession) -> SaglayiciAyari | None:
@@ -121,10 +126,15 @@ async def kuyrugu_isle(db: AsyncSession, *, simdi: datetime | None = None) -> in
             )
             .order_by(MesajGonderim.created_at)
             .limit(TUR_BASINA_UST_SINIR)
+            # (P250 §2) SATIR KILIDI: e-posta araligi yuzunden bir tur
+            # 60 sn'yi asabilir ve beat bir sonraki turu baslatir. Kilitsiz
+            # iki tur AYNI satiri iki kez gonderirdi; kilitli satir atlanir.
+            .with_for_update(skip_locked=True)
         )).scalars().all()
     )
 
     islenen = 0
+    onceki_eposta = False
     for kayit in satirlar:
         if not denenmeli(
             deneme=kayit.deneme,
@@ -134,8 +144,18 @@ async def kuyrugu_isle(db: AsyncSession, *, simdi: datetime | None = None) -> in
         ):
             continue
 
+        # (P250 §2) TOPLU GONDERIM HIZ SINIRI: saglayici (Resend) saniyede
+        # 2 istek kabul ediyor; arka arkaya 200 e-posta, ilk ikisinden
+        # sonra 429 alip yeniden denemeye dusuyordu. E-postalar arasinda
+        # sabit bir aralik birakilir.
+        if kayit.kanal == "eposta":
+            if onceki_eposta and EPOSTA_ARALIGI_SN > 0:
+                await asyncio.sleep(EPOSTA_ARALIGI_SN)
+            onceki_eposta = True
         sonuc = kanal_saglayicisi(kayit.kanal, ayar).gonder(
-            kayit.hedef, kayit.konu, kayit.govde
+            kayit.hedef, kayit.konu, kayit.govde,
+            # (P250 §2) HTML govde yeniden denemede de gider.
+            html=kayit.govde_html,
         )
         kayit.deneme += 1
         kayit.son_deneme_at = an

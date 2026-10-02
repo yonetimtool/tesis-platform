@@ -14038,6 +14038,144 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Ad ve soyad zorunludur.'**
   String get kisiAdZorunlu;
+
+  /// No description provided for @odemeKoduTumunuSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tümünü seç'**
+  String get odemeKoduTumunuSec;
+
+  /// No description provided for @odemeKoduSecimEtiketi.
+  ///
+  /// In tr, this message translates to:
+  /// **'{ad} seç'**
+  String odemeKoduSecimEtiketi(String ad);
+
+  /// No description provided for @odemeKoduSecilenlereGonder.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçilenlere e-posta gönder ({n})'**
+  String odemeKoduSecilenlereGonder(String n);
+
+  /// No description provided for @odemeKoduEpostaGonder.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta gönder'**
+  String get odemeKoduEpostaGonder;
+
+  /// No description provided for @odemeKoduEpostaGonderEtiketi.
+  ///
+  /// In tr, this message translates to:
+  /// **'{ad} kişisine ödeme kodunu e-postayla gönder'**
+  String odemeKoduEpostaGonderEtiketi(String ad);
+
+  /// No description provided for @odemeKoduGonderildiTek.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta gönderildi.'**
+  String get odemeKoduGonderildiTek;
+
+  /// No description provided for @odemeKoduKuyruga.
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} e-posta sıraya alındı; birkaç dakika içinde gidecek.'**
+  String odemeKoduKuyruga(String n);
+
+  /// No description provided for @odemeKoduAtlandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} kişiye gönderilmedi (adres yok, e-posta kapalı ya da az önce gönderildi).'**
+  String odemeKoduAtlandi(String n);
+
+  /// No description provided for @odemeKoduDurumkuyrukta.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sırada'**
+  String get odemeKoduDurumkuyrukta;
+
+  /// No description provided for @odemeKoduDurumgonderildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderildi'**
+  String get odemeKoduDurumgonderildi;
+
+  /// No description provided for @odemeKoduDurumiletildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İletildi'**
+  String get odemeKoduDurumiletildi;
+
+  /// No description provided for @odemeKoduDurumgeri_dondu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geri döndü'**
+  String get odemeKoduDurumgeri_dondu;
+
+  /// No description provided for @odemeKoduDurumbasarisiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başarısız'**
+  String get odemeKoduDurumbasarisiz;
+
+  /// No description provided for @odemeKoduDurumyapilandirilmadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta ayarı yok'**
+  String get odemeKoduDurumyapilandirilmadi;
+
+  /// No description provided for @odemeKoduEngeleposta_yok.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta adresi yok'**
+  String get odemeKoduEngeleposta_yok;
+
+  /// No description provided for @odemeKoduEngeleposta_kapali.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta bildirimleri kapalı'**
+  String get odemeKoduEngeleposta_kapali;
+
+  /// No description provided for @odemeKoduHicGonderilmedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderilmedi'**
+  String get odemeKoduHicGonderilmedi;
+
+  /// No description provided for @odemeKoduBos.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz aktif sakin yok.'**
+  String get odemeKoduBos;
+
+  /// No description provided for @odemeKodlariBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ödeme kodları'**
+  String get odemeKodlariBaslik;
+
+  /// No description provided for @odemeKodlariAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakinler havale açıklamasına kendi kodunu yazarsa ödeme otomatik eşleşir. Kodu kopyalayabilir ya da e-postayla gönderebilirsiniz; e-postada banka bilgisi ve havale açıklaması da yer alır.'**
+  String get odemeKodlariAciklama;
+
+  /// No description provided for @odemeKoduKopyala.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kodu kopyala'**
+  String get odemeKoduKopyala;
+
+  /// No description provided for @odemeKoduKopyalandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kod kopyalandı'**
+  String get odemeKoduKopyalandi;
+
+  /// No description provided for @odemeKoduBosAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakin ekledikçe ödeme kodları burada görünür.'**
+  String get odemeKoduBosAciklama;
 }
 
 class _AppLocalizationsDelegate

@@ -8088,4 +8088,86 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get kisiAdZorunlu => 'El nombre y los apellidos son obligatorios.';
+
+  @override
+  String get odemeKoduTumunuSec => 'Seleccionar todo';
+
+  @override
+  String odemeKoduSecimEtiketi(String ad) {
+    return 'Seleccionar a $ad';
+  }
+
+  @override
+  String odemeKoduSecilenlereGonder(String n) {
+    return 'Enviar a seleccionados ($n)';
+  }
+
+  @override
+  String get odemeKoduEpostaGonder => 'Enviar correo';
+
+  @override
+  String odemeKoduEpostaGonderEtiketi(String ad) {
+    return 'Enviar el código de pago a $ad';
+  }
+
+  @override
+  String get odemeKoduGonderildiTek => 'Correo enviado.';
+
+  @override
+  String odemeKoduKuyruga(String n) {
+    return '$n correos en cola; se enviarán en unos minutos.';
+  }
+
+  @override
+  String odemeKoduAtlandi(String n) {
+    return 'No enviado a $n personas (sin dirección, correo desactivado o enviado hace poco).';
+  }
+
+  @override
+  String get odemeKoduDurumkuyrukta => 'En cola';
+
+  @override
+  String get odemeKoduDurumgonderildi => 'Enviado';
+
+  @override
+  String get odemeKoduDurumiletildi => 'Entregado';
+
+  @override
+  String get odemeKoduDurumgeri_dondu => 'Rebotado';
+
+  @override
+  String get odemeKoduDurumbasarisiz => 'Fallido';
+
+  @override
+  String get odemeKoduDurumyapilandirilmadi => 'Correo no configurado';
+
+  @override
+  String get odemeKoduEngeleposta_yok => 'Sin correo electrónico';
+
+  @override
+  String get odemeKoduEngeleposta_kapali =>
+      'Notificaciones por correo desactivadas';
+
+  @override
+  String get odemeKoduHicGonderilmedi => 'No enviado';
+
+  @override
+  String get odemeKoduBos => 'Todavía no hay residentes activos.';
+
+  @override
+  String get odemeKodlariBaslik => 'Códigos de pago';
+
+  @override
+  String get odemeKodlariAciklama =>
+      'Si los residentes escriben su código en el concepto de la transferencia, el pago se concilia automáticamente. Puede copiar el código o enviarlo por correo; el correo incluye también los datos bancarios y qué escribir en el concepto.';
+
+  @override
+  String get odemeKoduKopyala => 'Copiar código';
+
+  @override
+  String get odemeKoduKopyalandi => 'Código copiado';
+
+  @override
+  String get odemeKoduBosAciklama =>
+      'Los códigos de pago aparecen aquí a medida que añade residentes.';
 }

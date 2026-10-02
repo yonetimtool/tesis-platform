@@ -8106,4 +8106,85 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get kisiAdZorunlu => 'Le prénom et le nom sont obligatoires.';
+
+  @override
+  String get odemeKoduTumunuSec => 'Tout sélectionner';
+
+  @override
+  String odemeKoduSecimEtiketi(String ad) {
+    return 'Sélectionner $ad';
+  }
+
+  @override
+  String odemeKoduSecilenlereGonder(String n) {
+    return 'Envoyer aux sélectionnés ($n)';
+  }
+
+  @override
+  String get odemeKoduEpostaGonder => 'Envoyer l\'e-mail';
+
+  @override
+  String odemeKoduEpostaGonderEtiketi(String ad) {
+    return 'Envoyer le code de paiement à $ad';
+  }
+
+  @override
+  String get odemeKoduGonderildiTek => 'E-mail envoyé.';
+
+  @override
+  String odemeKoduKuyruga(String n) {
+    return '$n e-mails en file d\'attente ; ils partiront d\'ici quelques minutes.';
+  }
+
+  @override
+  String odemeKoduAtlandi(String n) {
+    return 'Non envoyé à $n personnes (pas d\'adresse, e-mail désactivé ou envoyé à l\'instant).';
+  }
+
+  @override
+  String get odemeKoduDurumkuyrukta => 'En file';
+
+  @override
+  String get odemeKoduDurumgonderildi => 'Envoyé';
+
+  @override
+  String get odemeKoduDurumiletildi => 'Remis';
+
+  @override
+  String get odemeKoduDurumgeri_dondu => 'Rejeté';
+
+  @override
+  String get odemeKoduDurumbasarisiz => 'Échec';
+
+  @override
+  String get odemeKoduDurumyapilandirilmadi => 'E-mail non configuré';
+
+  @override
+  String get odemeKoduEngeleposta_yok => 'Pas d\'adresse e-mail';
+
+  @override
+  String get odemeKoduEngeleposta_kapali => 'Notifications e-mail désactivées';
+
+  @override
+  String get odemeKoduHicGonderilmedi => 'Non envoyé';
+
+  @override
+  String get odemeKoduBos => 'Aucun résident actif pour l\'instant.';
+
+  @override
+  String get odemeKodlariBaslik => 'Codes de paiement';
+
+  @override
+  String get odemeKodlariAciklama =>
+      'Si les résidents indiquent leur code dans le libellé du virement, le paiement est rapproché automatiquement. Vous pouvez copier le code ou l\'envoyer par e-mail ; l\'e-mail contient aussi les coordonnées bancaires et le libellé à saisir.';
+
+  @override
+  String get odemeKoduKopyala => 'Copier le code';
+
+  @override
+  String get odemeKoduKopyalandi => 'Code copié';
+
+  @override
+  String get odemeKoduBosAciklama =>
+      'Les codes de paiement apparaissent ici à mesure que vous ajoutez des résidents.';
 }

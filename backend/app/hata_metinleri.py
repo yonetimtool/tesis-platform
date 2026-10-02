@@ -4146,4 +4146,13 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Fournisseur de paiement inconnu : {saglayici}",
         "es": "Proveedor de pago desconocido: {saglayici}",
     },
+    "odeme_kodu_iban_yok": {
+        "tr": "Önce bir banka hesabı (IBAN) tanımlayın: e-posta, ödemenin yapılacağı hesabı içerir.",
+        "en": "Define a bank account (IBAN) first: the email includes the account to pay into.",
+        "ar": "عرّف حسابًا بنكيًا (IBAN) أولًا: يتضمن البريد الإلكتروني الحساب الذي يتم الدفع إليه.",
+        "ru": "Сначала добавьте банковский счёт (IBAN): письмо содержит счёт для оплаты.",
+        "de": "Legen Sie zuerst ein Bankkonto (IBAN) an: Die E-Mail enthält das Konto, auf das gezahlt wird.",
+        "fr": "Définissez d'abord un compte bancaire (IBAN) : l'e-mail indique le compte à créditer.",
+        "es": "Defina primero una cuenta bancaria (IBAN): el correo incluye la cuenta en la que pagar.",
+    },
 }

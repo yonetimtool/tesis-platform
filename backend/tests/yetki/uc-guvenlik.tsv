@@ -578,7 +578,8 @@ POST	/uploads/presign	zorunlu	tesis	-	-	haric	-	-	yalniz imzali adres uretir; ka
 GET	/users	zorunlu	tesis	-	-	-	email	-		dar
 POST	/users	zorunlu	tesis	-	-	ozel	email,telefon	-		dar
 GET	/users/acilabilir-roller	zorunlu	tesis	-	-	-	-	-		-
-POST	/users/odeme-kodlari	zorunlu	tesis	-	-	genel	-	-		-
+POST	/users/odeme-kodlari	zorunlu	tesis	-	-	genel	email,eposta_durumu,eposta_engeli,eposta_zamani	-		-
+POST	/users/odeme-kodlari/eposta	zorunlu	tesis	rol	var	ozel	-	-		-
 DELETE	/users/{user_id}	zorunlu	tesis	rol	-	ozel	-	-		-
 GET	/users/{user_id}	zorunlu	tesis	rol	-	-	bildirim_eposta,email,telefon	-		-
 PATCH	/users/{user_id}	zorunlu	tesis	rol	-	ozel	bildirim_eposta,email,telefon	-		dar

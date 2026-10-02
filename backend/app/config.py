@@ -182,6 +182,11 @@ class Settings(BaseSettings):
     #
     # `admin-web/lib/magaza.ts` ve `davet_eposta.py` ayni kurali uygular
     # (url yoksa dugme cizilmez); tum yuzeyler ayni davranisi gosterir.
+    #: (P250) Kurumsal e-postalarin (odeme kodu, hos geldiniz, aidat
+    #: hatirlatma) baslik logosu. Mutlak, herkese acik URL olmali (e-posta
+    #: istemcisi oturumsuz ceker). Bos = metin isareti ("Yonetiyor").
+    eposta_logo_url: str = "https://app.yonetiyor.com/yonetio-marka-acik.png"
+
     play_store_url: str = (
         "https://play.google.com/store/apps/details?id=com.app.yonetiyor"
     )

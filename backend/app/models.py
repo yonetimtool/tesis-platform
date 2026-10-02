@@ -4084,6 +4084,11 @@ class MesajGonderim(Base):
     #: satirlarda NULL kalir — SMTP yanitindaki kuyruk kimligi guvenilir
     #: bir anahtar degildir.
     saglayici_mesaj_id: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: (P250 §2, goc 0161) Gonderimin ISI: `odeme_kodu`, `hosgeldin`,
+    #: `aidat_hatirlatma`... NULL = genel (sablonlu) gonderim.
+    tur: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: (P250 §2) HTML govde — yeniden deneme duz metne DUSMESIN diye saklanir.
+    govde_html: Mapped[str | None] = mapped_column(Text, nullable=True)
     gonderen_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), nullable=True
     )

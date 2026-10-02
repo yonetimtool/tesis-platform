@@ -1,12 +1,15 @@
   14,  16  308x28  SİTE SAKİNLERİ
-  68,  64  314x24  Ad, daire no ya da blokta ara…
-  79,  27  18x18  U+E567
- 142,  16  294x20  A
- 143, 341  18x18  U+F068
- 144, 310  12x16  1
- 201,  88  198x24  Ayse Sakin
- 210,  40  24x24  U+F107
- 210, 314  24x24  U+E404
- 225,  88  198x20  Daire A-12
+  68,  16  24x24  U+F2D8
+  68, 342  24x24  U+E15F
+  70,  56  270x20  Ödeme kodları
+ 116,  64  314x24  Ad, daire no ya da blokta ara…
+ 127,  27  18x18  U+E567
+ 190,  16  294x20  A
+ 191, 341  18x18  U+F068
+ 192, 310  12x16  1
+ 249,  88  198x24  Ayse Sakin
+ 258,  40  24x24  U+F107
+ 258, 314  24x24  U+E404
+ 273,  88  198x20  Daire A-12
  788, 181  24x24  U+E494
  790, 213  141x20  Sakin ekle

@@ -8098,4 +8098,85 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get kisiAdZorunlu => 'First and last name are required.';
+
+  @override
+  String get odemeKoduTumunuSec => 'Select all';
+
+  @override
+  String odemeKoduSecimEtiketi(String ad) {
+    return 'Select $ad';
+  }
+
+  @override
+  String odemeKoduSecilenlereGonder(String n) {
+    return 'Email selected ($n)';
+  }
+
+  @override
+  String get odemeKoduEpostaGonder => 'Send email';
+
+  @override
+  String odemeKoduEpostaGonderEtiketi(String ad) {
+    return 'Email the payment code to $ad';
+  }
+
+  @override
+  String get odemeKoduGonderildiTek => 'Email sent.';
+
+  @override
+  String odemeKoduKuyruga(String n) {
+    return '$n emails queued; they will go out within a few minutes.';
+  }
+
+  @override
+  String odemeKoduAtlandi(String n) {
+    return 'Not sent to $n people (no address, email turned off or sent just now).';
+  }
+
+  @override
+  String get odemeKoduDurumkuyrukta => 'Queued';
+
+  @override
+  String get odemeKoduDurumgonderildi => 'Sent';
+
+  @override
+  String get odemeKoduDurumiletildi => 'Delivered';
+
+  @override
+  String get odemeKoduDurumgeri_dondu => 'Bounced';
+
+  @override
+  String get odemeKoduDurumbasarisiz => 'Failed';
+
+  @override
+  String get odemeKoduDurumyapilandirilmadi => 'Email not set up';
+
+  @override
+  String get odemeKoduEngeleposta_yok => 'No email address';
+
+  @override
+  String get odemeKoduEngeleposta_kapali => 'Email notifications off';
+
+  @override
+  String get odemeKoduHicGonderilmedi => 'Not sent';
+
+  @override
+  String get odemeKoduBos => 'No active residents yet.';
+
+  @override
+  String get odemeKodlariBaslik => 'Payment codes';
+
+  @override
+  String get odemeKodlariAciklama =>
+      'If residents write their own code in the transfer description, the payment is matched automatically. You can copy a code or send it by email; the email also contains the bank details and what to write in the description.';
+
+  @override
+  String get odemeKoduKopyala => 'Copy code';
+
+  @override
+  String get odemeKoduKopyalandi => 'Code copied';
+
+  @override
+  String get odemeKoduBosAciklama =>
+      'Payment codes appear here as you add residents.';
 }

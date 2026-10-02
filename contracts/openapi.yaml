@@ -14246,6 +14246,33 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /users/odeme-kodlari/eposta:
+    post:
+      tags: [users]
+      summary: (P250 §2) Odeme kodu e-postasi — tek kisiye ya da secilenlere (admin + yonetici)
+      description: >
+        Tek kisi HEMEN gider; birden cok kisi kuyruga yazilir ve dakikada
+        bir, e-postalar arasinda aralik birakilarak gonderilir. Atlananlar
+        sebepleriyle doner (eposta_yok, eposta_kapali, yakin_zamanda —
+        ayni kisiye 15 dk icinde ikinci gonderim yok, sakin_degil). IBAN
+        tanimli degilse 422 `odeme_kodu_iban_yok`. Kullanici basina
+        dakikada 10 istek.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OdemeKoduEpostaIstek" }
+      responses:
+        "200":
+          description: Sonuc
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OdemeKoduEpostaSonuc" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { description: Hiz siniri ya da gunluk kota }
+
   /users/{id}:
     parameters:
       - $ref: "#/components/parameters/PathId"
@@ -17393,6 +17420,40 @@ components:
         ad: { type: string }
         daire_no: { type: string, nullable: true }
         odeme_kodu: { type: string }
+        email: { type: string, nullable: true }
+        created_at: { type: string, format: date-time, nullable: true }
+        eposta_durumu:
+          type: string
+          nullable: true
+          enum: [kuyrukta, gonderildi, iletildi, geri_dondu, basarisiz, yapilandirilmadi, null]
+          description: (P250 §2) Son odeme kodu e-postasinin teslim durumu (P234 geri bildirimi).
+        eposta_zamani: { type: string, format: date-time, nullable: true }
+        eposta_engeli:
+          type: string
+          nullable: true
+          description: (P250 §2) eposta_yok | eposta_kapali — gonderilemez sebebi.
+    OdemeKoduEpostaIstek:
+      type: object
+      required: [user_ids]
+      properties:
+        user_ids:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items: { type: string, format: uuid }
+    OdemeKoduEpostaSonuc:
+      type: object
+      properties:
+        gonderilen: { type: integer }
+        kuyruga_alinan: { type: integer }
+        atlananlar:
+          type: array
+          items:
+            type: object
+            required: [user_id, sebep]
+            properties:
+              user_id: { type: string, format: uuid }
+              sebep: { type: string, enum: [eposta_yok, eposta_kapali, yakin_zamanda, sakin_degil] }
     OdemeKoduListe:
       type: object
       required: [items]

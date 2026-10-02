@@ -8143,4 +8143,84 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get kisiAdZorunlu => 'الاسم الأول واسم العائلة مطلوبان.';
+
+  @override
+  String get odemeKoduTumunuSec => 'تحديد الكل';
+
+  @override
+  String odemeKoduSecimEtiketi(String ad) {
+    return 'تحديد $ad';
+  }
+
+  @override
+  String odemeKoduSecilenlereGonder(String n) {
+    return 'إرسال بريد إلى المحددين ($n)';
+  }
+
+  @override
+  String get odemeKoduEpostaGonder => 'إرسال بريد';
+
+  @override
+  String odemeKoduEpostaGonderEtiketi(String ad) {
+    return 'إرسال رمز الدفع إلى $ad';
+  }
+
+  @override
+  String get odemeKoduGonderildiTek => 'تم إرسال البريد.';
+
+  @override
+  String odemeKoduKuyruga(String n) {
+    return 'تمت جدولة $n رسائل؛ ستُرسل خلال دقائق.';
+  }
+
+  @override
+  String odemeKoduAtlandi(String n) {
+    return 'لم يُرسل إلى $n أشخاص (لا عنوان، أو البريد مُعطّل، أو أُرسل للتو).';
+  }
+
+  @override
+  String get odemeKoduDurumkuyrukta => 'في الانتظار';
+
+  @override
+  String get odemeKoduDurumgonderildi => 'أُرسل';
+
+  @override
+  String get odemeKoduDurumiletildi => 'سُلّم';
+
+  @override
+  String get odemeKoduDurumgeri_dondu => 'ارتد';
+
+  @override
+  String get odemeKoduDurumbasarisiz => 'فشل';
+
+  @override
+  String get odemeKoduDurumyapilandirilmadi => 'البريد غير مُعد';
+
+  @override
+  String get odemeKoduEngeleposta_yok => 'لا يوجد بريد';
+
+  @override
+  String get odemeKoduEngeleposta_kapali => 'إشعارات البريد مُعطّلة';
+
+  @override
+  String get odemeKoduHicGonderilmedi => 'لم يُرسل';
+
+  @override
+  String get odemeKoduBos => 'لا يوجد سكان نشطون بعد.';
+
+  @override
+  String get odemeKodlariBaslik => 'رموز الدفع';
+
+  @override
+  String get odemeKodlariAciklama =>
+      'إذا كتب السكان رمزهم في وصف التحويل، تتم مطابقة الدفعة تلقائيًا. يمكنك نسخ الرمز أو إرساله بالبريد؛ ويتضمن البريد أيضًا بيانات البنك وما يُكتب في الوصف.';
+
+  @override
+  String get odemeKoduKopyala => 'نسخ الرمز';
+
+  @override
+  String get odemeKoduKopyalandi => 'تم نسخ الرمز';
+
+  @override
+  String get odemeKoduBosAciklama => 'تظهر رموز الدفع هنا عند إضافة السكان.';
 }

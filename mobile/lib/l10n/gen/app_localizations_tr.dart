@@ -7901,4 +7901,85 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get kisiAdZorunlu => 'Ad ve soyad zorunludur.';
+
+  @override
+  String get odemeKoduTumunuSec => 'Tümünü seç';
+
+  @override
+  String odemeKoduSecimEtiketi(String ad) {
+    return '$ad seç';
+  }
+
+  @override
+  String odemeKoduSecilenlereGonder(String n) {
+    return 'Seçilenlere e-posta gönder ($n)';
+  }
+
+  @override
+  String get odemeKoduEpostaGonder => 'E-posta gönder';
+
+  @override
+  String odemeKoduEpostaGonderEtiketi(String ad) {
+    return '$ad kişisine ödeme kodunu e-postayla gönder';
+  }
+
+  @override
+  String get odemeKoduGonderildiTek => 'E-posta gönderildi.';
+
+  @override
+  String odemeKoduKuyruga(String n) {
+    return '$n e-posta sıraya alındı; birkaç dakika içinde gidecek.';
+  }
+
+  @override
+  String odemeKoduAtlandi(String n) {
+    return '$n kişiye gönderilmedi (adres yok, e-posta kapalı ya da az önce gönderildi).';
+  }
+
+  @override
+  String get odemeKoduDurumkuyrukta => 'Sırada';
+
+  @override
+  String get odemeKoduDurumgonderildi => 'Gönderildi';
+
+  @override
+  String get odemeKoduDurumiletildi => 'İletildi';
+
+  @override
+  String get odemeKoduDurumgeri_dondu => 'Geri döndü';
+
+  @override
+  String get odemeKoduDurumbasarisiz => 'Başarısız';
+
+  @override
+  String get odemeKoduDurumyapilandirilmadi => 'E-posta ayarı yok';
+
+  @override
+  String get odemeKoduEngeleposta_yok => 'E-posta adresi yok';
+
+  @override
+  String get odemeKoduEngeleposta_kapali => 'E-posta bildirimleri kapalı';
+
+  @override
+  String get odemeKoduHicGonderilmedi => 'Gönderilmedi';
+
+  @override
+  String get odemeKoduBos => 'Henüz aktif sakin yok.';
+
+  @override
+  String get odemeKodlariBaslik => 'Ödeme kodları';
+
+  @override
+  String get odemeKodlariAciklama =>
+      'Sakinler havale açıklamasına kendi kodunu yazarsa ödeme otomatik eşleşir. Kodu kopyalayabilir ya da e-postayla gönderebilirsiniz; e-postada banka bilgisi ve havale açıklaması da yer alır.';
+
+  @override
+  String get odemeKoduKopyala => 'Kodu kopyala';
+
+  @override
+  String get odemeKoduKopyalandi => 'Kod kopyalandı';
+
+  @override
+  String get odemeKoduBosAciklama =>
+      'Sakin ekledikçe ödeme kodları burada görünür.';
 }

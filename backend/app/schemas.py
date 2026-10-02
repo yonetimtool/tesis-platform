@@ -495,6 +495,39 @@ class OdemeKoduSatiri(BaseModel):
     #: yalniz ad ile ayni isimli iki sakin ayirt edilemezdi.
     daire_no: str | None = None
     odeme_kodu: str
+    #: (P250 §2) Kisinin e-postasi (tek tek gonderim icin gosterilir).
+    email: str | None = None
+    #: (P250 §2) Hesabin olusturulma zamani — liste EN YENI USTTE siralanir.
+    created_at: datetime | None = None
+    #: (P250 §2) Son odeme kodu e-postasinin teslim durumu:
+    #: kuyrukta | gonderildi | iletildi | geri_dondu | basarisiz |
+    #: yapilandirilmadi. Hic gonderilmediyse null.
+    eposta_durumu: str | None = None
+    eposta_zamani: datetime | None = None
+    #: (P250 §2) E-posta GONDERILEMIYORSA sebebi: `eposta_yok` (adres yok)
+    #: ya da `eposta_kapali` (kisi e-posta bildirimlerini kapatti).
+    eposta_engeli: str | None = None
+
+
+class OdemeKoduEpostaIstek(BaseModel):
+    """(P250 §2) Odeme kodu e-postasi — tek kisiye ya da secilenlere."""
+
+    user_ids: list[uuid.UUID] = Field(..., min_length=1, max_length=500)
+
+
+class OdemeKoduAtlanan(BaseModel):
+    user_id: uuid.UUID
+    #: eposta_yok | eposta_kapali | yakin_zamanda | sakin_degil
+    sebep: str
+
+
+class OdemeKoduEpostaSonuc(BaseModel):
+    """`gonderilen`: HEMEN giden (tek kisilik istek). `kuyruga_alinan`:
+    toplu istekte kuyruga yazilan; dakikada bir, hiz sinirli gider."""
+
+    gonderilen: int = 0
+    kuyruga_alinan: int = 0
+    atlananlar: list[OdemeKoduAtlanan] = Field(default_factory=list)
 
 
 class OdemeKoduListe(BaseModel):

@@ -22,11 +22,18 @@ from ..errors import APIError
 from ..hata_metinleri import istek_dili
 from ..hesap_silme import hesabi_sil_veya_anonimlestir
 from ..kisi_adi import guncelle as kisi_adi_guncelle, tam_ad
+from .. import islem_epostasi
+from ..gonderim import kota_kontrol, tenant_ayari
+from ..hiz_siniri import kullanici_siniri
+from ..odeme_kodu_eposta import odeme_kodu_eposta as odeme_kodu_eposta_metni
 from ..models import AppUser, Davet, Tenant, Unit, UnitResident, UserDevice
 from ..roller import gorunur_roller, yonetilebilir
 from ..tr_arama import LIKE_KACIS, like_icerir
 from .. import girdi_siniri as _G
 from ..schemas import (
+    OdemeKoduAtlanan,
+    OdemeKoduEpostaIstek,
+    OdemeKoduEpostaSonuc,
     OdemeKoduListe,
     OdemeKoduSatiri,
     AcilabilirRollerOut,
@@ -328,7 +335,9 @@ async def odeme_kodlari(
         (await db.execute(
             select(AppUser)
             .where(AppUser.role == "resident", AppUser.is_active.is_(True))
-            .order_by(AppUser.ad)
+            # (P250 §2) YENI EKLENEN EN USTTE: yonetici bir sakin ekleyip
+            # kodunu gondermek istediginde onu listenin sonunda aramasin.
+            .order_by(AppUser.created_at.desc(), AppUser.id)
         )).scalars().all()
     )
     uretilen = 0
@@ -359,16 +368,154 @@ async def odeme_kodlari(
             )
         ).all()
     )
+    # (P250 §2) Son odeme kodu e-postasinin teslim durumu (P234 geri
+    # bildirimi): gonderildi / iletildi / geri dondu.
+    durumlar = await islem_epostasi.son_durumlar(
+        db, ODEME_KODU_TUR, [k.id for k in sakinler]
+    )
     return OdemeKoduListe(
         uretilen=uretilen,
         items=[
             OdemeKoduSatiri(
                 user_id=k.id, ad=k.ad, daire_no=daireler.get(k.id),
                 odeme_kodu=k.odeme_kodu or "",
+                email=k.email if not islem_epostasi.gonderilemez_sebebi(
+                    k, tercihe_uy=False) else None,
+                created_at=k.created_at,
+                eposta_durumu=durumlar.get(k.id, (None, None))[0],
+                eposta_zamani=durumlar.get(k.id, (None, None))[1],
+                eposta_engeli=islem_epostasi.gonderilemez_sebebi(k),
             )
             for k in sakinler
             if k.odeme_kodu
         ],
+    )
+
+
+#: (P250 §2) `mesaj_gonderim.tur` degeri.
+ODEME_KODU_TUR = "odeme_kodu"
+#: (P250 §2) Ayni kisiye bu sure icinde ikinci odeme kodu e-postasi GITMEZ.
+#: Cift tiklama ve "gitti mi?" diye tekrar basma, sakine ayni e-postayi
+#: arka arkaya yollardi. Geri donmus/basarisiz gonderim sayilmaz.
+ODEME_KODU_TEKRAR_DK = 15
+
+
+@router.post(
+    "/odeme-kodlari/eposta",
+    response_model=OdemeKoduEpostaSonuc,
+    dependencies=[Depends(kullanici_siniri("odeme_kodu_eposta", 10, 60))],
+)
+async def odeme_kodu_eposta(
+    body: OdemeKoduEpostaIstek,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YONETIM),
+    accept_language: str | None = Header(None),
+) -> OdemeKoduEpostaSonuc:
+    """(P250 §2) Odeme kodunu e-postayla gonderir — tek kisiye ya da toplu.
+
+    TEK KISI HEMEN gider (yonetici sonucu aninda gorur). BIRDEN COK kisi
+    KUYRUGA yazilir: `mesaj_kuyruk` dakikada bir, e-postalar arasinda
+    aralik birakarak gonderir (saglayicinin saniyelik siniri). Yonetici
+    durumu listede izler: kuyrukta -> gonderildi -> iletildi / geri dondu.
+
+    IBAN TANIMLI DEGILSE 422: e-postanin ozu "bu hesaba, bu kodla ode";
+    hesap bilgisi olmadan gondermek sakini yonetime sormaya yollardi.
+    """
+    from .. import odeme_kodu as kod_modulu
+    from ..routers.sakin_odeme import _banka_kasasi
+
+    kasa = await _banka_kasasi(db)
+    if kasa is None:
+        raise APIError(422, "validation_error", "odeme_kodu_iban_yok")
+
+    idler = list(dict.fromkeys(body.user_ids))
+    kisiler = {
+        k.id: k
+        for k in (
+            await db.execute(
+                select(AppUser).where(
+                    AppUser.id.in_(idler),
+                    AppUser.role == "resident",
+                    AppUser.is_active.is_(True),
+                )
+            )
+        ).scalars().all()
+    }
+    atlananlar: list[OdemeKoduAtlanan] = []
+    yakin = await islem_epostasi.yakin_zamanda_gonderilenler(
+        db, ODEME_KODU_TUR, idler, ODEME_KODU_TEKRAR_DK
+    )
+    hedefler: list[AppUser] = []
+    for uid in idler:
+        k = kisiler.get(uid)
+        sebep = (
+            "sakin_degil" if k is None
+            else islem_epostasi.gonderilemez_sebebi(k)
+            or ("yakin_zamanda" if uid in yakin else None)
+        )
+        if sebep:
+            atlananlar.append(OdemeKoduAtlanan(user_id=uid, sebep=sebep))
+        else:
+            hedefler.append(k)
+
+    await kota_kontrol(db, user.tenant_id, len(hedefler))
+
+    # Kodu olmayan sakine kod uretilir (liste ucuyla ayni tembel kural).
+    for k in hedefler:
+        while not k.odeme_kodu:
+            k.odeme_kodu = kod_modulu.uret()
+            try:
+                async with db.begin_nested():
+                    await db.flush()
+            except IntegrityError:
+                k.odeme_kodu = None
+
+    tenant = (
+        await db.execute(select(Tenant).where(Tenant.id == user.tenant_id))
+    ).scalar_one()
+    daireler = dict(
+        (
+            await db.execute(
+                select(UnitResident.user_id, Unit.no)
+                .join(Unit, Unit.id == UnitResident.unit_id)
+                .where(
+                    UnitResident.bitis.is_(None),
+                    UnitResident.user_id.in_([k.id for k in hedefler]),
+                )
+            )
+        ).all()
+    ) if hedefler else {}
+    diller = await islem_epostasi.alici_dili(
+        db, [k.id for k in hedefler], istek_dili(accept_language)
+    )
+    yil = datetime.now(tz=timezone.utc).year
+    toplu = len(hedefler) > 1
+    ayar = None if toplu else await tenant_ayari(db, user.tenant_id)
+    for k in hedefler:
+        konu, metin, html = odeme_kodu_eposta_metni(
+            dil=diller[k.id], tesis_ad=tenant.ad, ad=k.ad,
+            daire=daireler.get(k.id), odeme_kodu=k.odeme_kodu,
+            banka_adi=kasa.banka_adi, iban=kasa.iban, alici=None, yil=yil,
+        )
+        ortak = dict(
+            tenant_id=user.tenant_id, kisi=k, tur=ODEME_KODU_TUR,
+            konu=konu, metin=metin, html=html, gonderen_id=user.id,
+        )
+        if toplu:
+            islem_epostasi.kuyruga_al(db, **ortak)
+        else:
+            islem_epostasi.hemen_gonder(db, ayar=ayar, **ortak)
+    await db.flush()
+    await audit_user(
+        db, user, Action.MESAJ_GONDER, resource_type="mesaj_gonderim",
+        resource_id=None,
+        meta={"tur": ODEME_KODU_TUR, "hedef": len(hedefler),
+              "atlanan": len(atlananlar), "toplu": toplu},
+    )
+    return OdemeKoduEpostaSonuc(
+        gonderilen=0 if toplu else len(hedefler),
+        kuyruga_alinan=len(hedefler) if toplu else 0,
+        atlananlar=atlananlar,
     )
 
 

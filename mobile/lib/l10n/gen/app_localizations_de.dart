@@ -8107,4 +8107,85 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get kisiAdZorunlu => 'Vor- und Nachname sind erforderlich.';
+
+  @override
+  String get odemeKoduTumunuSec => 'Alle auswählen';
+
+  @override
+  String odemeKoduSecimEtiketi(String ad) {
+    return '$ad auswählen';
+  }
+
+  @override
+  String odemeKoduSecilenlereGonder(String n) {
+    return 'An Ausgewählte senden ($n)';
+  }
+
+  @override
+  String get odemeKoduEpostaGonder => 'E-Mail senden';
+
+  @override
+  String odemeKoduEpostaGonderEtiketi(String ad) {
+    return 'Zahlungscode per E-Mail an $ad senden';
+  }
+
+  @override
+  String get odemeKoduGonderildiTek => 'E-Mail gesendet.';
+
+  @override
+  String odemeKoduKuyruga(String n) {
+    return '$n E-Mails in der Warteschlange; sie werden in wenigen Minuten versendet.';
+  }
+
+  @override
+  String odemeKoduAtlandi(String n) {
+    return 'An $n Personen nicht gesendet (keine Adresse, E-Mail deaktiviert oder gerade erst gesendet).';
+  }
+
+  @override
+  String get odemeKoduDurumkuyrukta => 'In Warteschlange';
+
+  @override
+  String get odemeKoduDurumgonderildi => 'Gesendet';
+
+  @override
+  String get odemeKoduDurumiletildi => 'Zugestellt';
+
+  @override
+  String get odemeKoduDurumgeri_dondu => 'Unzustellbar';
+
+  @override
+  String get odemeKoduDurumbasarisiz => 'Fehlgeschlagen';
+
+  @override
+  String get odemeKoduDurumyapilandirilmadi => 'E-Mail nicht eingerichtet';
+
+  @override
+  String get odemeKoduEngeleposta_yok => 'Keine E-Mail-Adresse';
+
+  @override
+  String get odemeKoduEngeleposta_kapali => 'E-Mail-Benachrichtigungen aus';
+
+  @override
+  String get odemeKoduHicGonderilmedi => 'Nicht gesendet';
+
+  @override
+  String get odemeKoduBos => 'Noch keine aktiven Bewohner.';
+
+  @override
+  String get odemeKodlariBaslik => 'Zahlungscodes';
+
+  @override
+  String get odemeKodlariAciklama =>
+      'Schreiben Bewohner ihren Code in den Verwendungszweck, wird die Zahlung automatisch zugeordnet. Sie können den Code kopieren oder per E-Mail senden; die E-Mail enthält auch die Bankverbindung und den Verwendungszweck.';
+
+  @override
+  String get odemeKoduKopyala => 'Code kopieren';
+
+  @override
+  String get odemeKoduKopyalandi => 'Code kopiert';
+
+  @override
+  String get odemeKoduBosAciklama =>
+      'Zahlungscodes erscheinen hier, sobald Sie Bewohner hinzufügen.';
 }

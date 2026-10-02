@@ -9,6 +9,7 @@ import '../../../core/i18n/l10n.dart';
 import '../../../core/kisi_adi.dart';
 import '../../../core/ui/ad_soyad_alanlari.dart';
 import '../../../core/ui/bos_durum.dart';
+import '../../odeme_kodlari/presentation/odeme_kodlari_screen.dart';
 import '../data/residents_api.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/ui/merkez_diyalog.dart';
@@ -73,6 +74,21 @@ class _ResidentsScreenState extends ConsumerState<ResidentsScreen> {
       ),
       body: Column(
         children: [
+          // (P250 §2) ODEME KODLARI — web'deki "Odeme kodlari" penceresinin
+          // mobil karsiligi. UST CUBUKTA DEGIL: 2x yazi olceginde baslikla
+          // birlikte tasiyordu (olculdu); liste satiri metni sarar.
+          ListTile(
+            key: const Key('sakin-odeme-kodlari'),
+            dense: true,
+            leading: const Icon(Icons.qr_code_2_outlined),
+            title: Text(l10n.odemeKodlariBaslik),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const OdemeKodlariScreen(),
+              ),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
             child: TextField(

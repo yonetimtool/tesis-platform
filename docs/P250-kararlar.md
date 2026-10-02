@@ -168,6 +168,140 @@ okuyacak biçimde güncellendi (göç 0160, imza aynı).
 
 ---
 
+# §2 — ÖDEME KODLARI
+
+## Yapılanlar
+
+| İstek | Web | Mobil | Sunucu |
+|---|---|---|---|
+| Her kodun yanında KOPYALA | ✓ ortak `KopyaKod` | ✓ (panoya alır, bildirim) | — |
+| Satır seçimi + tümünü seç | ✓ | ✓ | — |
+| E-posta: tek kişiye | ✓ satır düğmesi | ✓ satır düğmesi | `POST /users/odeme-kodlari/eposta` — **hemen** gider |
+| E-posta: seçilenlere toplu | ✓ "Seçilenlere e-posta gönder (n)" | ✓ alt düğme | aynı uç — **kuyruğa** yazılır |
+| Yeni eklenen kişi EN ÜSTTE | sunucu sırası | sunucu sırası | `ORDER BY created_at DESC` (önce ada göreydi) |
+| Kurumsal şablon, logolu | — | — | `odeme_kodu_eposta.py` + ortak kabuk `eposta_kabugu.py` |
+| Teslim durumu listede | rozet | çip | `eposta_durumu`: kuyrukta / gönderildi / iletildi / geri döndü / başarısız / e-posta ayarı yok |
+| Hız sınırı + tekrar koruması | — | — | aşağıda |
+
+**Mobilde bu ekran hiç yoktu:** yalnız sakin kendi kodunu görebiliyordu.
+Parite için yönetici ekranı eklendi. Giriş noktası "Sakinler"
+ekranının üst çubuğunda **etiketli** bir düğme (P237 kuralı: başka
+ekrana giden eylem etiketsiz olamaz).
+
+## Şablon
+
+Kullanıcının istediği içerik:
+
+* kişinin adı ("Merhaba Işıl ÖZTÜRK"),
+* daire,
+* büyük ve seçilebilir **ödeme kodu çipi**,
+* banka adı ve IBAN,
+* "Havale / EFT yaparken açıklama alanına yalnızca ödeme kodunuzu
+  yazın: TS-XXXXXX",
+* kısa açıklama (kod sayesinde ödeme otomatik eşleşir, yazılmazsa elle
+  eşleştirilir ve gecikebilir),
+* uygulama satırı ve mağaza düğmeleri.
+
+7 dilde, HTML + düz metin (multipart). Arapçada sağdan sola yazılır.
+
+**Görünüm:** davet e-postasıyla aynı kurumsal kabuk. Lacivert başlıkta
+"yönetiyor" logosu (`yonetio-marka-acik.png`), beyaz kart, koyu mod,
+Outlook (MSO) desteği.
+
+* **Ortak kabuk:** `eposta_kabugu.py`. §3 (hoş geldiniz) ve §7 (aidat
+  hatırlatma) aynı kabuğu kullanacak.
+* **Logo adresi:** `EPOSTA_LOGO_URL` ayarı. Varsayılan
+  `https://app.yonetiyor.com/yonetio-marka-acik.png`; boş bırakılırsa
+  metin işareti çizilir.
+
+**Dil:** kişinin dili `app_user`da tutulmuyor. En son kullandığı aktif
+cihazın dili (push ile aynı kaynak) kullanılır; cihaz yoksa yöneticinin
+istek dili. Yardımcı: `islem_epostasi.alici_dili`.
+
+**IBAN tanımlı değilse gönderim 422** (`odeme_kodu_iban_yok`): "önce
+banka hesabı (IBAN) tanımlayın". E-postanın özü "bu hesaba, bu kodla
+öde". Hesap bilgisi olmadan gönderilen e-posta sakini yönetime sormaya
+yollardı. IBAN P27'den beri kasa tanımında; ikinci bir IBAN alanı
+açılmadı.
+
+## Teslim durumu (P234 Resend geri bildirimi)
+
+* `mesaj_gonderim`e **`tur`** sütunu eklendi (göç 0161). Değerler:
+  `odeme_kodu`, ileride `hosgeldin` ve `aidat_hatirlatma`. "Bu kişiye
+  ödeme kodu e-postası en son ne zaman gitti, ne oldu?" sorusu ancak
+  satırın hangi işten geldiği bilinirse cevaplanır.
+* Listede kişi başına bu türdeki **en son** satır gösterilir. Ham durum
+  arayüz durumuna çevrilir (`islem_epostasi.teslim_durumu`):
+  * `iletildi` ve `okundu` → **iletildi**. `okundu` ayrı gösterilmedi;
+    açılma pikseli güvenilir değil, Apple Mail önceden yükler.
+  * `basarisiz` + `hata='bounce'` → **geri döndü**. P234 webhook'u bounce'u
+    böyle yazıyor.
+  * diğer `basarisiz` → **başarısız**; `yapilandirilmadi` → **e-posta
+    ayarı yok**.
+* Gönderilemeyen kişi seçilemez ve satırda sebebi görünür: **adres yok**
+  ya da **e-posta bildirimleri kapalı**.
+
+## Hız sınırı ve tekrar koruması
+
+| Koruma | Değer | Neden |
+|---|---|---|
+| Toplu gönderim kuyruktan | tek kişi hemen, birden çok kişi kuyruğa | Yöneticinin tarayıcısı yüzlerce gönderimi beklemesin |
+| Kuyrukta e-postalar arası aralık | 0,55 sn (`mesaj_kuyruk.EPOSTA_ARALIGI_SN`) | Resend saniyede 2 istek kabul ediyor; arka arkaya 200 e-posta ilk ikisinden sonra 429 alıyordu |
+| Aynı kişiye tekrar | 15 dk içinde ikinci ödeme kodu e-postası **gitmez** (`yakin_zamanda`) | Çift tıklama ve "gitti mi?" diye yeniden basma. Geri dönen / başarısız gönderim sayılmaz, adres düzeltilip yeniden gönderilebilir |
+| Uç hız sınırı | kullanıcı başına dakikada 10 istek | Kötüye kullanım |
+| Günlük kota | mevcut tesis kotası (`kota_kontrol`) | Yarım gönderim yerine hiç gönderim |
+| Liste boyu | istek başına en çok 500 kişi | Girdi sınırı |
+
+**Kuyrukta iki düzeltme:**
+
+1. **Yeniden deneme HTML'i kaybediyordu.** Kuyruk yalnız düz `govde`yi
+   gönderiyordu. Kurumsal HTML e-posta ikinci denemede düz metne
+   düşüyordu. `govde_html` artık saklanıyor ve yeniden denemede aynı
+   haliyle gidiyor.
+2. **Satır kilidi.** E-posta aralığı yüzünden bir tur 60 saniyeyi
+   aşabilir ve beat bir sonraki turu başlatır. İki tur aynı satırı iki
+   kez gönderirdi. Artık `FOR UPDATE SKIP LOCKED`: kilitli satır atlanır.
+
+**Bildirim tercihi:** `bildirim_eposta=false` kişiye ödeme kodu
+e-postası gitmez (`eposta_kapali`). Kişi yine kodunu uygulamada görür.
+
+## Testler
+
+* Sunucu `test_p250_odeme_kodu_eposta.py` (8):
+  * yeni eklenen en üstte,
+  * tek kişiye hemen gönderim; şablonda ad, kod, IBAN, açıklama
+    talimatı ve logo,
+  * 15 dk tekrar koruması,
+  * toplu gönderim kuyruğa yazılır, kuyruk işlenince gönderilir, HTML
+    korunur,
+  * bounce → "geri döndü" ve yeniden gönderilebilir,
+  * e-postası kapalı kişi atlanır,
+  * IBAN yoksa 422,
+  * sakin ve güvenlik 403.
+* Web `p250-odeme-kodlari.dom.test.ts`: sıra, her kodda kopyala, durum
+  rozetleri, tümünü seç yalnız gönderilebilirleri seçer, toplu ve tek
+  gövde, adressiz kişinin düğmesi kapalı.
+* Mobil `p250_odeme_kodlari_test.dart`: aynı ölçümler, tel üzerindeki
+  gövde.
+* Kilit kayıtları:
+  * `rol-matrisi.txt`: yeni uç yalnız admin ve yönetici,
+  * `uc-guvenlik.tsv`: sahiplik `rol`, hız `var`, denetim `ozel`,
+  * openapi,
+  * hata metni 7 dilde.
+
+## ÖLÇÜLEMEDİ
+
+* **Gerçek teslim.** Dev'de Resend anahtarı yok; gönderim konsol
+  sağlayıcısıyla "gönderildi" oluyor. "İletildi" ve "geri döndü"
+  durumları P234 webhook'unun yazdığı değerlerle testte kuruldu. Gerçek
+  bir Resend olayıyla prod'da ölçülmeli.
+* **E-postanın gerçek istemcide görünümü** (Gmail, Outlook, Apple Mail,
+  koyu mod). HTML davet e-postasıyla aynı kalıpta. Logo görselinin
+  `app.yonetiyor.com` üzerinden oturumsuz açıldığı prod'da
+  doğrulanmalı.
+
+---
+
 # §5 — GİRİŞ EKRANI E-POSTA SINIRI
 
 ## Ölçüm (değişiklikten önce)

@@ -29,6 +29,7 @@ import { alanliHataMetni, apiSend } from "@/lib/client";
 import type { UnitList } from "@/lib/types";
 import { jsonFetcher } from "@/lib/fetcher";
 import { AdSoyadAlanlari } from "@/components/AdSoyadAlanlari";
+import { OdemeKodlariPenceresi } from "@/components/OdemeKodlariPenceresi";
 import { EpostaAlani } from "@/components/EpostaAlani";
 import { adAyir, adBicimle, soyadBicimle } from "@/lib/kisi-adi";
 import { TelefonAlani } from "@/components/TelefonAlani";
@@ -266,11 +267,6 @@ export default function UsersPage() {
   // (P193 §7) BILDIRIM TESHISI (eksik 5) + ODEME KODLARI (eksik 10).
   const [teshis, setTeshis] = useState<UserDetail | null>(null);
   const [kodAcik, setKodAcik] = useState(false);
-  const [kodHata, setKodHata] = useState<string | null>(null);
-  const [kodlar, setKodlar] = useState<{
-    uretilen: number;
-    items: { user_id: string; ad: string; daire_no: string | null; odeme_kodu: string }[];
-  } | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [formErr, setFormErr] = useState<string | null>(null);
@@ -350,24 +346,6 @@ export default function UsersPage() {
       setSecilenBlok(birim ? birim.blok || BLOKSUZ : "");
     } catch {
       // Detay cekilemezse form yine acik kalir (telefon bos); kaydetmeye engel yok.
-    }
-  }
-
-  async function odemeKodlariniAc(): Promise<void> {
-    setKodHata(null);
-    setKodAcik(true);
-    setKodlar(null);
-    try {
-      // POST cunku uc YAZAR: eksik kodlari uretir (tembel uretim, bkz.
-      // `routers/users.py`). Yonetici "kodlari duyuracagim" dedigi anda
-      // kodlarin VAR OLMASI gerekir.
-      const d = await apiSend<{
-        uretilen: number;
-        items: { user_id: string; ad: string; daire_no: string | null; odeme_kodu: string }[];
-      }>("/api/users/odeme-kodlari", "POST", {});
-      setKodlar(d);
-    } catch (e) {
-      setKodHata(e instanceof Error ? e.message : t("ortakHataOlustu"));
     }
   }
 
@@ -617,7 +595,7 @@ export default function UsersPage() {
                 kesin calismasi sakinin havale aciklamasina kendi kodunu
                 yazmasina bagli; kod sakinin uygulamasinda gorunuyordu ama
                 yonetici goremiyor, dolayisiyla DUYURAMIYORDU. */}
-            <Dugme boy="kucuk" onClick={() => void odemeKodlariniAc()}>
+            <Dugme boy="kucuk" onClick={() => setKodAcik(true)}>
               {t("kullaniciOdemeKodlari")}
             </Dugme>
             <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
@@ -1032,45 +1010,8 @@ export default function UsersPage() {
         </form>
       </Modal>
 
-      {/* (P193 §7) ODEME KODLARI LISTESI */}
-      <Modal
-        acik={kodAcik}
-        onKapat={() => setKodAcik(false)}
-        baslik={t("kullaniciOdemeKodlari")}
-        genislikSinifi="max-w-2xl"
-        eylemler={
-          <Dugme tur="sessiz" onClick={() => setKodAcik(false)}>
-            {t("ortakKapat")}
-          </Dugme>
-        }
-      >
-        <div className="space-y-2">
-          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-            {t("kullaniciOdemeKodlariAciklama")}
-          </p>
-          {kodHata && (
-            <p role="alert" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}>
-              {kodHata}
-            </p>
-          )}
-          {kodlar && (
-            <ul className="space-y-1">
-              {kodlar.items.map((k) => (
-                <li
-                  key={k.user_id}
-                  className="flex flex-wrap items-center gap-2"
-                  style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}
-                >
-                  <span className="font-mono font-semibold">{k.odeme_kodu}</span>
-                  <span style={{ color: "var(--yz-text-2)" }}>
-                    {k.daire_no ?? "—"} · {k.ad}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </Modal>
+      {/* (P193 §7 · P250 §2) ODEME KODLARI: kopyala, sec, e-postayla gonder. */}
+      <OdemeKodlariPenceresi acik={kodAcik} onKapat={() => setKodAcik(false)} />
       {diyalog}
     </div>
   );
