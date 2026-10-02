@@ -90,10 +90,14 @@ it("TUR SECILINCE SUTUNLARI OLAN BOS TABLO acilir", async () => {
   const basliklar = Array.from(
     kanca("aktarim-tablosu")!.querySelectorAll("th"),
   ).map((x) => x.textContent ?? "");
-  expect(basliklar.some((b) => b.includes("blok") && b.includes("zorunlu"))).toBe(
+  // (P251 §6) BASLIK OKUNUR AD — ham alan kodu ("blok", "sakin_eposta") degil.
+  expect(basliklar.some((b) => b.includes("Blok") && b.includes("zorunlu"))).toBe(
     true,
   );
-  expect(basliklar.some((b) => b.includes("sakin_eposta"))).toBe(true);
+  expect(basliklar.some((b) => b.includes("E-posta"))).toBe(true);
+  expect(basliklar.some((b) => b.includes("sakin_"))).toBe(false);
+  // (P251 §6) Ilk satir "1" (eskiden Excel basligi sayilip "2" idi).
+  expect(kanca("aktarim-satir-0")!.textContent).toBe("1");
   // ESLEME ADIMI YOK.
   expect(document.body.textContent).not.toContain("Kolon eşleme");
 });
@@ -175,7 +179,7 @@ it("HATALI SATIR HUCREDE ve LISTEDE, SATIR NUMARASIYLA", async () => {
     guncellenen: 0,
     hatali: 1,
     hatalar: [
-      { satir_no: 2, alan: "daire_no", hata: "Zorunlu alan eksik." },
+      { satir_no: 1, alan: "daire_no", hata: "Zorunlu alan eksik." },
     ],
     aktarim_id: null,
     uygulanmadi: true,
@@ -196,8 +200,9 @@ it("HATALI SATIR HUCREDE ve LISTEDE, SATIR NUMARASIYLA", async () => {
   await waitFor(() => expect(kanca("aktarim-hata-listesi")).toBeTruthy());
   // SATIR NUMARASI VE ALAN ADI YAZILI: "bir yerde sorun var" demek,
   // kullaniciyi 200 satirda aramaya gondermekti.
-  expect(kanca("aktarim-hata-listesi")!.textContent).toContain("2");
-  expect(kanca("aktarim-hata-listesi")!.textContent).toContain("daire_no");
+  // (P251 §6) Satir numarasi EKRANDAKIYLE AYNI (1) ve alan OKUNUR adla.
+  expect(kanca("aktarim-hata-listesi")!.textContent).toContain("Satır 1");
+  expect(kanca("aktarim-hata-listesi")!.textContent).toContain("Daire no");
   // HUCRE DE ISARETLI — ve renk tek basina degil, satir no da kirmizi.
   expect(
     (kanca("aktarim-hucre-0-daire_no") as HTMLInputElement).getAttribute(

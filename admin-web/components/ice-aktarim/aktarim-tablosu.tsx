@@ -31,10 +31,26 @@
 import { useMemo } from "react";
 
 import { TelefonAlani } from "@/components/TelefonAlani";
-import { Tablo, TabloBasligi, Td, Th, Tr } from "@/components/ui";
+import { Secim, Tablo, TabloBasligi, Td, Th, Tr } from "@/components/ui";
 import { Dugme } from "@/components/ui";
 import { useT } from "@/lib/i18n/kullan";
 import { ISTEMCI_SINIR } from "@/lib/girdi-siniri";
+import {
+  ROL_TIPI_SECENEKLERI,
+  alanEtiketi,
+  rolSutunuMu,
+  rolTipiNormalle,
+} from "@/lib/ice-aktarim-alanlari";
+
+/**
+ * (P251 §6) SATIR NUMARASI 1'DEN BASLAR — ekranda gorunen ile sunucunun
+ * hata satirinda soyledigi AYNI sayi. Onceden `i + 2` idi (Excel'in baslik
+ * satiri sayilmisti); bu tabloda baslik satiri YOK, yani ilk satir "2"
+ * diye gorunuyordu.
+ */
+export function satirNo(i: number): number {
+  return i + 1;
+}
 
 export type AktarimAlani = { kod: string; zorunlu: boolean; ornek: string };
 export type SatirHatasi = { satir_no: number; alan: string | null; hata: string };
@@ -44,6 +60,7 @@ const KUCUK = "kucuk" as const;
 /** Ilk acilista gosterilen bos satir sayisi. */
 const BASLANGIC_SATIR = 5;
 const AYRAC = " · ";
+const BOS_SECIM = "—";
 const IKI_NOKTA = ": ";
 
 /**
@@ -90,7 +107,7 @@ export function AktarimTablosu({
 }) {
   const t = useT();
 
-  /** satir_no (2'den baslar) -> o satirin hatalari. */
+  /** satir_no (1'den baslar, `satirNo`) -> o satirin hatalari. */
   const hataHaritasi = useMemo(() => {
     const h = new Map<number, SatirHatasi[]>();
     for (const x of hatalar) {
@@ -123,7 +140,11 @@ export function AktarimTablosu({
       while (yeni.length <= hedef) yeni.push(bosSatir(alanlar));
       hucreler.forEach((deger, j) => {
         const alan = alanlar[kolon + j];
-        if (alan) yeni[hedef][alan.kod] = deger.trim();
+        // (P251 §6) Rol metni koda cevrilir ("Kiracı" -> kiraci): acilir
+        // liste taninmayan metni gosteremez.
+        if (alan) {
+          yeni[hedef][alan.kod] = rolSutunuMu(alan.kod) ? rolTipiNormalle(deger) : deger.trim();
+        }
       });
     });
     onDegis(yeni);
@@ -142,8 +163,9 @@ export function AktarimTablosu({
               <Th key={a.kod}>
                 {/* SUTUNUN NE OLDUGU ve ZORUNLULUGU BASLIKTA: altta
                     bir aciklama satiri, kaydirinca ekrandan cikardi. */}
-                <span>
-                  {a.kod}
+                {/* (P251 §6) OKUNUR AD — ham alan kodu degil. */}
+                <span className="whitespace-nowrap" title={a.kod}>
+                  {alanEtiketi(t, a.kod)}
                   {a.zorunlu ? ` (${t("iceAktarimZorunluSutun")})` : ""}
                 </span>
               </Th>
@@ -152,7 +174,7 @@ export function AktarimTablosu({
           </TabloBasligi>
           <tbody>
             {satirlar.map((satir, i) => {
-              const satirHatalari = hataHaritasi.get(i + 2) ?? [];
+              const satirHatalari = hataHaritasi.get(satirNo(i)) ?? [];
               return (
                 <Tr key={i}>
                   {/* `Tr` `data-test` GECIRMIYOR (P239'da `Td` icin de
@@ -169,7 +191,7 @@ export function AktarimTablosu({
                             : "var(--yz-text-3)",
                       }}
                     >
-                      {i + 2}
+                      {satirNo(i)}
                     </span>
                   </Td>
                   {alanlar.map((a, j) => {
@@ -188,7 +210,7 @@ export function AktarimTablosu({
                           <div style={{ minWidth: "17rem" }}>
                             <TelefonAlani
                               cercevesiz
-                              etiket={`${a.kod} ${i + 2}`}
+                              etiket={`${alanEtiketi(t, a.kod)} ${satirNo(i)}`}
                               dataTest={`aktarim-hucre-${i}-${a.kod}`}
                               deger={satir[a.kod] ?? ""}
                               // Sunucunun buldugu hata kenarlikta; cumlesi
@@ -201,12 +223,43 @@ export function AktarimTablosu({
                         </Td>
                       );
                     }
+                    if (rolSutunuMu(a.kod)) {
+                      // (P251 §6) ROL ACILIR LISTE: serbest metin kutusunda
+                      // ornek ("malik | kiraci | malik_oturan") kesiliyordu
+                      // ve yazim hatasi ancak sunucuda yakalaniyordu.
+                      const deger = satir[a.kod] ?? "";
+                      const tanimsiz =
+                        deger !== "" && !ROL_TIPI_SECENEKLERI.some(([k]) => k === deger);
+                      return (
+                        <Td key={a.kod}>
+                          {/* Genislik SARMALAYICIDA (P236: ilkelin icindeki
+                              `w-full` ustune gecilen sinifi ezer). */}
+                          <div className="min-w-[11rem]">
+                          <Secim
+                            data-test={`aktarim-hucre-${i}-${a.kod}`}
+                            aria-label={`${alanEtiketi(t, a.kod)} ${satirNo(i)}`}
+                            aria-invalid={hatali || tanimsiz || undefined}
+                            value={deger}
+                            onChange={(e) => hucreYaz(i, a.kod, e.target.value)}
+                          >
+                            <option value="">{BOS_SECIM}</option>
+                            {ROL_TIPI_SECENEKLERI.map(([k, etiket]) => (
+                              <option key={k} value={k}>{t(etiket)}</option>
+                            ))}
+                            {/* Taninmayan yapistirilmis deger KAYBOLMAZ: secili
+                                ve gorunur kalir, sunucu satiri isaretler. */}
+                            {tanimsiz && <option value={deger}>{deger}</option>}
+                          </Secim>
+                          </div>
+                        </Td>
+                      );
+                    }
                     return (
                       <Td key={a.kod}>
                         <input maxLength={ISTEMCI_SINIR.HUCRE}
                           className="odak-ic h-10 w-full px-2 outline-none"
                           data-test={`aktarim-hucre-${i}-${a.kod}`}
-                          aria-label={`${a.kod} ${i + 2}`}
+                          aria-label={`${alanEtiketi(t, a.kod)} ${satirNo(i)}`}
                           aria-invalid={hatali || undefined}
                           style={{
                             background: "var(--yz-surface-1)",
@@ -254,7 +307,7 @@ export function AktarimTablosu({
               style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-danger)" }}
             >
               {t("iceAktarimSatirNo")} {h.satir_no}
-              {h.alan ? `${AYRAC}${h.alan}` : ""}
+              {h.alan ? `${AYRAC}${alanEtiketi(t, h.alan)}` : ""}
               {IKI_NOKTA}
               {h.hata}
             </li>

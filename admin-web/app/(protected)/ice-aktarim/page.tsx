@@ -17,8 +17,10 @@ import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
+import { alanEtiketi } from "@/lib/ice-aktarim-alanlari";
 import {
   AktarimTablosu,
+  satirNo,
   bosTablo,
   telefonSutunuMu,
 } from "@/components/ice-aktarim/aktarim-tablosu";
@@ -312,12 +314,14 @@ function ornekSatirlari(tur: Tur): string[][] {
       tur.alanlar
         .map(
           (a) =>
-            `${a.kod} (${a.zorunlu ? zorunluEtiket : istegeBagliEtiket})`,
+            `${alanEtiketi(t, a.kod)} (${a.zorunlu ? zorunluEtiket : istegeBagliEtiket})`,
         )
         .join(" | ");
     const satirlar = [
       aciklama,
-      tur.alanlar.map((a) => a.kod).join(";"),
+      // (P251 §6) BASLIK OKUNUR AD — esleme ekraninda da ayni adlar
+      // gorundugu icin kullanici sutunu kolayca eslestirir.
+      tur.alanlar.map((a) => csvHucresi(alanEtiketi(t, a.kod), ";")).join(";"),
       // (P248 §3c) Ornek hucreler de ortak kacistan gecer.
       ...ornekSatirlari(tur).map((r) => r.map((c) => csvHucresi(c, ";")).join(";")),
     ].join("\r\n");
@@ -333,7 +337,9 @@ function ornekSatirlari(tur: Tur): string[][] {
         if (!alanKod) continue;
         degerler[alanKod] = (h[Number(kolonStr)] ?? "").trim();
       }
-      return { satir_no: i + (baslikVar ? 2 : 1), degerler };
+      // (P251 §6) VERI SATIRI NUMARASI, 1'den: baslik satiri SAYILMAZ.
+      // Onizleme ve hata satiri ayni sayiyi kullanir.
+      return { satir_no: i + 1, degerler };
     });
   }
 
@@ -341,7 +347,8 @@ function ornekSatirlari(tur: Tur): string[][] {
   function tabloGovdesi() {
     return tabloSatirlari
       .map((satir, i) => ({
-        satir_no: i + 2,
+        // (P251 §6) Ekranda gorunen satir numarasiyla AYNI (`satirNo`).
+        satir_no: satirNo(i),
         // (P248 §2) TELEFON HUCRESI E.164 GIDER — kullanici ekleme
         // ekraniyla AYNI bicim. Ulke cozulemezse HAM deger gider: sunucu
         // satiri `telefon_bicimi` ile isaretler (sessizce duzeltilmez).
@@ -444,7 +451,7 @@ function ornekSatirlari(tur: Tur): string[][] {
           <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
             {t("iceAktarimSablonSatiri")}:{" "}
             <code className="break-all">
-              {tur.alanlar.map((a) => a.kod).join(";")}
+              {tur.alanlar.map((a) => alanEtiketi(t, a.kod)).join(" · ")}
             </code>
             <br />
             {t("iceAktarimOrnekSatiri")}:{" "}
@@ -457,7 +464,7 @@ function ornekSatirlari(tur: Tur): string[][] {
                 yukledikten sonra degil. */}
             {t("iceAktarimZorunluAlanlar")}:{" "}
             <code className="break-all">
-              {tur.alanlar.filter((a) => a.zorunlu).map((a) => a.kod).join(";")}
+              {tur.alanlar.filter((a) => a.zorunlu).map((a) => alanEtiketi(t, a.kod)).join(" · ")}
             </code>
           </p>
         )}
@@ -568,7 +575,7 @@ function ornekSatirlari(tur: Tur): string[][] {
                     <option value="">{t("iceAktarimKullanma")}</option>
                     {tur.alanlar.map((a) => (
                       <option key={a.kod} value={a.kod}>
-                        {a.kod}
+                        {alanEtiketi(t, a.kod)}
                         {a.zorunlu ? " *" : ""}
                       </option>
                     ))}
@@ -692,7 +699,7 @@ function ornekSatirlari(tur: Tur): string[][] {
               {sonuc.hatalar.map((h, i) => (
                 <li key={i}>
                   {t("iceAktarimSatir", { no: h.satir_no })}
-                  {h.alan ? ` · ${h.alan}` : ""} — {h.hata}
+                  {h.alan ? ` · ${alanEtiketi(t, h.alan)}` : ""} — {h.hata}
                 </li>
               ))}
             </ul>
@@ -714,7 +721,7 @@ function ornekSatirlari(tur: Tur): string[][] {
                 {(sonuc.atlananlar ?? []).map((h, i) => (
                   <li key={i}>
                     {t("iceAktarimSatir", { no: h.satir_no })}
-                    {h.alan ? ` · ${h.alan}` : ""} — {h.hata}
+                    {h.alan ? ` · ${alanEtiketi(t, h.alan)}` : ""} — {h.hata}
                   </li>
                 ))}
               </ul>

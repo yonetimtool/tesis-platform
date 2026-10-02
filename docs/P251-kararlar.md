@@ -168,3 +168,58 @@ Adaylar tek tek elendi:
 * Gerçek tarayıcı: etkinlik yönetiminde görsel küçük resim olarak
   göründü, görselsiz kayıtlarda ikon kutusu.
 
+# §6 — İÇE AKTARIM TABLOSU
+
+## Ölçüm
+
+* Tablo kipinde satırlar `i + 2` ile numaralanıyordu (Excel'in başlık
+  satırı sayılmıştı); tabloda başlık satırı yok, ilk satır "2" görünüyordu.
+  Sunucuya da `satir_no = i + 2` gidiyordu; hata listesi "Satır 2"
+  diyordu.
+* Dosya kipinde numara başlık işaretine göre 1 ya da 2'den başlıyordu.
+* Başlıklar, eşleme seçenekleri, hata satırları ve şablon açıklaması ham
+  alan kodunu gösteriyordu (`sakin_ad`, `rol_tipi`).
+* `rol_tipi` serbest metin kutusuydu; örnek metin ("malik | kiraci |
+  malik_oturan") kesiliyordu; "Kiracı" yazan kullanıcı sunucuda
+  `gecersiz_rol_tipi` alıyordu (Türkçe `ı` ve "KİRACI" tanınmıyordu).
+* Ad/soyad P250'de ayrılmıştı (şablon, tablo, sunucu biçimleme) —
+  doğrulandı, değişiklik gerekmedi. Telefon sütunu P248'in ortak telefon
+  bileşeniyle — doğrulandı (gerçek tarayıcıda ülke kodu + numara).
+
+## Kararlar
+
+* **Satır numarası her yerde 1'den, başlık sayılmadan** (tablo ve dosya
+  kipi). Ekranda görünen, sunucuya giden ve hata listesinde yazan sayı
+  aynı (`satirNo`).
+* **Okunur başlık:** alan kodları sözlükten okunur ada çevrilir (7 dil):
+  Ad, Soyad, E-posta, Telefon, Blok, Daire no, **Malik / Kiracı**, Plaka,
+  Araç markası, Araç modeli, Arsa payı, Metrekare, Tutar, Açıklama.
+  Daire türündeki `sakin_*` sütunları aynı adla ("sakin_ad" → "Ad").
+  Sözlükte karşılığı olmayan yeni bir kod olduğu gibi görünür (eksik
+  çeviri fark edilsin). Kod sunucu sözleşmesidir, değişmedi; başlığın
+  `title`'ında durur. İndirilen şablonun başlık satırı ve açıklaması da
+  okunur adlarla; dosya kipinde eşleme el ile yapıldığı için eski
+  (kodlu) dosyalar da çalışmaya devam eder.
+* **Rol açılır liste:** Malik / Kiracı / Malik (oturuyor). Excel'den
+  yapıştırılan "Kiracı", "malik-oturan", "Malik ve oturan" koda çevrilir;
+  tanınmayan değer kaybolmaz, seçili kalır ve sunucu satırı işaretler
+  (sessizce düzeltilmez). Sunucu da dosya kipi için Türkçe yazımı tanır
+  (`tr_kucuk` + `ı→i`).
+* **Mobil:** içe aktarım yalnız web'de (P204 kararı; mobil ekran
+  "toplu aktarım bilgisayardan yapılır" der). Bu bölümde mobil
+  değişiklik yok.
+
+## Testler
+
+* Sunucu `test_p251_ice_aktarim.py` (2): hata satır numarası gönderilenle
+  aynı; "Kiracı", "KİRACI", "Malik oturan" kabul, "komşu" satır hatası;
+  ad/soyad Türkçe biçim ("ışıl ilhan" → "Işıl İLHAN").
+* Web `p251-ice-aktarim.dom.test.ts` (2): rol `<select>` ve seçenekleri,
+  telefon ortak bileşen, yapıştırılan "Kiracı" → `kiraci`, istek
+  gövdesinde `satir_no` [1, 2]; normalleştirme yardımcısı.
+* `p243-aktarim-tablosu.dom.test.ts` yeni davranışa güncellendi: başlıkta
+  "Blok (zorunlu)", "E-posta" (ham kod yok), ilk satır "1", hata "Satır
+  1 · Daire no".
+* Gerçek tarayıcı: başlıklar okunur, satır 1'den, rol listesi kesilmeden.
+  **Not:** tablo sayfayı yatayda taşırıyor — §4'te (içerik genişliği)
+  ele alındı.

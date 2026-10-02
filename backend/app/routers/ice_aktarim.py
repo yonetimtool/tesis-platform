@@ -395,7 +395,9 @@ async def _uygula_kisi(
     # (P234 §2) `malik_oturan` UCUNCU BIR ROL DEGIL: malik + oturuyor.
     # Kullanicinin yazma bicimleri (tire/alt tire/bosluk) normallestirilir —
     # "malik-oturan" yazip hata almak, sutunun kendisini kullanilmaz kilardi.
-    ham_rol = (_metin(d, "rol_tipi") or "").lower().replace("-", "_")
+    # (P251 §6) Turkce yazim da taninir: "Kiracı" / "KİRACI" -> kiraci.
+    # Duz `.lower()` "KİRACI"yi "ki̇raci" (birlesik nokta) yapiyordu.
+    ham_rol = tr_kucuk(_metin(d, "rol_tipi") or "").replace("ı", "i").replace("-", "_")
     ham_rol = "_".join(ham_rol.split()) or None
     oturuyor = ham_rol == "malik_oturan"
     rol = "malik" if oturuyor else ham_rol
