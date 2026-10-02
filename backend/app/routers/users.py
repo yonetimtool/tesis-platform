@@ -645,6 +645,9 @@ async def update_user(
     if eposta_degisti and obj.password_set:
         raise _EPOSTA_TAMAMLANAN
 
+    # Denetimdeki alan listesi yardimcidan ONCE: `ad`/`soyad` `data`dan
+    # cikarilir ve sonra okunsa ad degisikligi denetimde gorunmezdi.
+    degisen_alanlar = list(data.keys())
     kisi_adi_guncelle(obj, data)  # (P250 §1) ad/soyad birlikte
     for key, value in data.items():
         setattr(obj, key, value)
@@ -708,7 +711,7 @@ async def update_user(
         # yalniz alan ADLARI + hangi yan etkiler tetiklendi.
         resource_id=obj.id,
         meta={
-            "fields": list(data.keys()),
+            "fields": degisen_alanlar,
             "hedef_rol": obj.role,
             **({"davet_yeniden": True} if davet_yeniden else {}),
             **({"daire_baglari_kaldirildi": kaldirilan_bag} if kaldirilan_bag else {}),
