@@ -39,6 +39,8 @@ export const ETIKETLER: EtiketTanimi[] = [
   { ad: "aidat_tutari", etiket: "mesajEtiketAidat" },
   { ad: "kiraci_bakiyesi", etiket: "mesajEtiketKiraciBakiye" },
   { ad: "bakiye_detayli", etiket: "mesajEtiketBakiyeDetay" },
+  // (P250 §8) Hazir sablonlarin (odeme kodu, aidat hatirlatma) kullandigi.
+  { ad: "odeme_kodu", etiket: "mesajEtiketOdemeKodu" },
 ];
 
 export function EtiketCipleri({ onEkle }: { onEkle: (metin: string) => void }) {

@@ -61,6 +61,18 @@ ISTISNALAR: dict[tuple[str, str], str] = {
         "kaydina isaret edilecek bir kimlik alinmaz. Tekil erisim "
         "(`/sesli-mesaj/{id}/dinle`, DELETE) vakayla olculuyor"
     ),
+    ("GET", "/me/hizli-islemler"): (
+        "(P250 §6) yol parametresi yok: kayit token kullanicisinin "
+        "`pano_tercihi` satiridir; baskasinin kaydina isaret edilemez"
+    ),
+    ("PUT", "/me/hizli-islemler"): (
+        "(P250 §6) yol parametresi yok: yalniz token kullanicisinin "
+        "tercihi yazilir; govdede kullanici kimligi alinmaz"
+    ),
+    ("POST", "/egitim-videolari/{adim_kodu}/izlendi"): (
+        "(P250 §4) `adim_kodu` kayit kimligi DEGIL kurulum adiminin adidir; "
+        "izlendi satiri token kullanicisina yazilir"
+    ),
 }
 
 

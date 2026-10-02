@@ -121,6 +121,8 @@ TESIS_UCLARI: tuple[str, ...] = (
     "/hatirlatmalar",
     "/mesajlar/gecmis",
     "/mesaj-sablonlari",
+    # (P250 §8) Tesisin kanal durumu (sir yok, sayac tesis-kapsamli).
+    "/mesaj-durumu",
     "/personel-kayitlari",
     "/vehicle-passes",
     "/violations",

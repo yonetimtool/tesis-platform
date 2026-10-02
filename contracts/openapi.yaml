@@ -11539,7 +11539,7 @@ paths:
   /mesaj-ayarlari:
     get:
       tags: [mesajlar]
-      summary: Tesisin SMS/e-posta saglayici ayarlari (admin+yonetici)
+      summary: Tesisin SMS/e-posta saglayici ayarlari (yalniz platform admini)
       description: |
         **(P168 §4.4)** SIRLAR HIC DONMEZ — "maskeli" bile degil.
 
@@ -11561,7 +11561,7 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
     put:
       tags: [mesajlar]
-      summary: Ayarlari kaydet (admin+yonetici)
+      summary: Ayarlari kaydet (yalniz platform admini)
       description: |
         **(P168 §4.4)** BOS BIRAKILAN PAROLA MEVCUDU KORUR: alan hic
         gonderilmezse (`null`) degistirilmez; acikca BOS DIZGE
@@ -11582,7 +11582,7 @@ paths:
   /mesaj-ayarlari/test:
     post:
       tags: [mesajlar]
-      summary: Test gonderimi (admin+yonetici)
+      summary: Test gonderimi (yalniz platform admini)
       description: |
         **(P168 §4.4)** GERCEKTEN GONDERIR: "ayarlar dolu mu" diye bakmak
         yanlis parolayi ya da yanlis basligi YAKALAMAZ — saglayici
@@ -11600,6 +11600,73 @@ paths:
         "200":
           description: Sonuc (durum + saglayici + varsa hata)
         "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /mesaj-durumu:
+    get:
+      tags: [mesajlar]
+      summary: Kanallar gonderebilir mi (admin+yonetici, sir yok)
+      description: |
+        **(P250 §8)** Teknik ayarlar platform paneline tasindi; yonetici
+        yalniz "SMS hazir mi / e-posta hazir mi", bugun gonderilen sayi
+        ve gunluk kotayi gorur. Saglayici, kullanici, parola DONMEZ.
+      responses:
+        "200": { description: Durum }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /mesaj-sablonlari/hazir:
+    get:
+      tags: [mesajlar]
+      summary: Hazir sablon kutuphanesi (admin+yonetici)
+      description: |
+        **(P250 §8)** Platformun hazir sablonlari (aidat hatirlatma,
+        toplanti duyurusu, su/elektrik kesintisi, bakim, bayram tebrigi,
+        hos geldiniz, odeme kodu) secilen dilde. Kaydedilmez; yonetici
+        duzenleyip `POST /mesaj-sablonlari` ile kendi sablonu yapar.
+      parameters:
+        - { name: kanal, in: query, schema: { type: string, enum: [sms, eposta] } }
+        - { name: dil, in: query, schema: { type: string } }
+      responses:
+        "200": { description: Sablonlar }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /tenants/{tenant_id}/mesaj-ayarlari:
+    parameters:
+      - { name: tenant_id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [mesajlar]
+      summary: Secilen tesisin teknik mesaj ayarlari (platform paneli)
+      description: "**(P250 §8)** Sirlar donmez (bkz. `/mesaj-ayarlari`)."
+      responses:
+        "200": { description: Ayarlar }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      tags: [mesajlar]
+      summary: Secilen tesisin teknik mesaj ayarlarini kaydet (platform paneli)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MesajYapilandirmaUpdate" }
+      responses:
+        "200": { description: Kaydedildi }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /tenants/{tenant_id}/mesaj-ayarlari/test:
+    parameters:
+      - { name: tenant_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [mesajlar]
+      summary: Secilen tesis icin test gonderimi (platform paneli)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MesajTestGonderim" }
+      responses:
+        "200": { description: Sonuc }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
         "422": { $ref: "#/components/responses/ValidationError" }
   /mesajlar/gecmis:
     get:

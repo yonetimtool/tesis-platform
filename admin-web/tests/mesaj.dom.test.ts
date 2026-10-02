@@ -39,9 +39,11 @@ describe("Mesaj sayfasi", () => {
       "/api/panel/mesaj-gecmis": GECMIS,
     });
     ciz(MesajlarPage);
-    for (const ad of ["Gönderim", "SMS Şablonları", "E-posta Şablonları", "Ayarlar"]) {
+    for (const ad of ["Gönderim", "SMS Şablonları", "E-posta Şablonları"]) {
       expect(await screen.findByRole("tab", { name: ad })).toBeInTheDocument();
     }
+    // (P250 §8) Teknik "Ayarlar" sekmesi PLATFORM paneline tasindi.
+    expect(screen.queryByRole("tab", { name: "Ayarlar" })).toBeNull();
     // Varsayilan sekme GONDERIM: kullanicinin en sik yaptigi is odur.
     expect(screen.getByRole("tab", { name: "Gönderim" })).toHaveAttribute(
       "aria-selected",

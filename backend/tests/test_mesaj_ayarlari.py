@@ -26,7 +26,8 @@ def _headers(client, slug, cred):
 # 1. "YAPILANDIRILMADI" — sessiz yalanin kilidi
 # --------------------------------------------------------------------------- #
 def test_SAGLAYICI_YOKKEN_gonderildi_DENMEZ(client, world):
-    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    # (P250 §8) Teknik ayarlar yalniz PLATFORM ADMINI.
+    y = _headers(client, world["slug_a"], world["admin_a"])
     r = client.post("/mesaj-ayarlari/test", headers=y, json={
         "kanal": "sms", "hedef": "05001112233"})
     assert r.status_code == 200, r.text
@@ -44,7 +45,8 @@ def test_TEST_GONDERIMI_GECMISE_YAZILMAZ(client, world):
     Gonderim gecmisine dusmesi, "kime ne gonderdik" defterini kirletirdi
     ve KVKK kaniti olan o defteri okunmaz hale getirirdi.
     """
-    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    # (P250 §8) Teknik ayarlar yalniz PLATFORM ADMINI.
+    y = _headers(client, world["slug_a"], world["admin_a"])
     once = client.get("/mesajlar/gecmis", headers=y, params={"limit": 1}).json()
     client.post("/mesaj-ayarlari/test", headers=y, json={
         "kanal": "eposta", "hedef": "test@ornek.com"})
@@ -62,7 +64,8 @@ def test_PAROLA_ASLA_DONMEZ_yalnizca_VARLIGI(client, world):
     deger de bir DEGERDIR, forma girer ve "kaydet"te gercek parolanin
     uzerine `****` yazilirdi.
     """
-    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    # (P250 §8) Teknik ayarlar yalniz PLATFORM ADMINI.
+    y = _headers(client, world["slug_a"], world["admin_a"])
     client.put("/mesaj-ayarlari", headers=y, json={
         "sms_saglayici": "netgsm", "sms_kullanici": "u1",
         "sms_parola": "gizli-parola", "sms_baslik": "YONETIO"})
@@ -78,7 +81,8 @@ def test_PAROLA_ASLA_DONMEZ_yalnizca_VARLIGI(client, world):
 def test_BOS_BIRAKILAN_PAROLA_MEVCUDU_KORUR(client, world):
     """Arayuz parolayi hic gormedigi icin, her kaydediste yeniden yazmak
     zorunda kalmak kullaniciyi parolayi bir yere kopyalamaya iterdi."""
-    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    # (P250 §8) Teknik ayarlar yalniz PLATFORM ADMINI.
+    y = _headers(client, world["slug_a"], world["admin_a"])
     client.put("/mesaj-ayarlari", headers=y, json={
         "sms_saglayici": "netgsm", "sms_kullanici": "u1",
         "sms_parola": "p1", "sms_baslik": "BASLIK"})
@@ -91,7 +95,8 @@ def test_BOS_BIRAKILAN_PAROLA_MEVCUDU_KORUR(client, world):
 
 def test_ACIKCA_BOS_DIZGE_PAROLAYI_TEMIZLER(client, world):
     # Silmenin de bir yolu olmali; `None` "degistirme", `""` "temizle".
-    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    # (P250 §8) Teknik ayarlar yalniz PLATFORM ADMINI.
+    y = _headers(client, world["slug_a"], world["admin_a"])
     client.put("/mesaj-ayarlari", headers=y, json={"sms_parola": "p1"})
     assert client.get("/mesaj-ayarlari", headers=y).json()["sms_parola_var"] is True
     client.put("/mesaj-ayarlari", headers=y, json={"sms_parola": ""})
@@ -115,7 +120,8 @@ def test_HAZIR_BAYRAGI_gercek_secimle_AYNI_yoldan(client, world):
     vurur; bu yuzden ikinci adim iki kipi de kabul eder. Birinci adim
     ise HER KIPTE gecerlidir: yarim yapilandirma asla "hazir" olamaz.
     """
-    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    # (P250 §8) Teknik ayarlar yalniz PLATFORM ADMINI.
+    y = _headers(client, world["slug_a"], world["admin_a"])
     # Yarim yapilandirma: saglayici secili ama parola yok.
     client.put("/mesaj-ayarlari", headers=y, json={
         "sms_saglayici": "netgsm", "sms_kullanici": "u", "sms_parola": "",
@@ -142,13 +148,15 @@ def test_HAZIR_BAYRAGI_gercek_secimle_AYNI_yoldan(client, world):
 def test_KOTA_SIFIR_KABUL_ETMEZ(client, world):
     # `0` "sinirsiz" mi "kapali" mi belirsiz olurdu; NULL "sinir yok"
     # anlamini tasir ve kisit da bunu zorlar.
-    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    # (P250 §8) Teknik ayarlar yalniz PLATFORM ADMINI.
+    y = _headers(client, world["slug_a"], world["admin_a"])
     assert client.put("/mesaj-ayarlari", headers=y,
                       json={"gunluk_kota": 0}).status_code == 422
 
 
 def test_KOTA_kaydedilir_ve_KULLANIM_gorunur(client, world):
-    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    # (P250 §8) Teknik ayarlar yalniz PLATFORM ADMINI.
+    y = _headers(client, world["slug_a"], world["admin_a"])
     r = client.put("/mesaj-ayarlari", headers=y, json={"gunluk_kota": 500})
     assert r.status_code == 200, r.text
     govde = client.get("/mesaj-ayarlari", headers=y).json()
@@ -163,7 +171,8 @@ def test_KOTA_kaydedilir_ve_KULLANIM_gorunur(client, world):
 # --------------------------------------------------------------------------- #
 def test_SAHA_ROLLERI_ayarlara_ULASAMAZ(client, world):
     # Saglayici parolasi tesisin sirridir.
-    for kim in ("guard_a", "gorevli_a", "resident_a"):
+    # (P250 §8) Site YONETICISI de artik ulasamaz: teknik ayar platformun.
+    for kim in ("guard_a", "gorevli_a", "resident_a", "yonetici_a"):
         h = _headers(client, world["slug_a"], world[kim])
         assert client.get("/mesaj-ayarlari", headers=h).status_code == 403, kim
         assert client.put("/mesaj-ayarlari", headers=h,
@@ -204,14 +213,16 @@ def test_KAYNAK_KURALI_UC_DALI_DA(client, world):
 
 def test_YAPILANDIRMA_YOKKEN_kaynak_YOK(client, world):
     """Test ortaminda ne tesis ayari ne ENV var."""
-    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    # (P250 §8) Teknik ayarlar yalniz PLATFORM ADMINI.
+    y = _headers(client, world["slug_a"], world["admin_a"])
     d = client.get("/mesaj-ayarlari", headers=y).json()
     assert d["eposta_kaynak"] == "yok"
     assert d["sms_kaynak"] == "yok"
 
 
 def test_KAYNAK_TESIS_AYARI_ISE_TESIS_bildirilir(client, world):
-    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    # (P250 §8) Teknik ayarlar yalniz PLATFORM ADMINI.
+    y = _headers(client, world["slug_a"], world["admin_a"])
     r = client.put("/mesaj-ayarlari", headers=y, json={
         "smtp_host": "mail.tesis.example", "smtp_gonderen": "k@tesis.example"})
     assert r.status_code == 200, r.text

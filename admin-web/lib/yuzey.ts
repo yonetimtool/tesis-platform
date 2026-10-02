@@ -65,6 +65,9 @@ export const PLATFORM_ROTALARI = [
   "/surum-politikasi",
   // (P250 §4) Kurulum egitim videolari — YouTube baglantilari.
   "/egitim-videolari",
+  // (P250 §8) SMS/e-posta TEKNIK ayarlari (saglayici, SMTP, kota) —
+  // tesis yoneticisinden alindi, tesis secilerek buradan yonetilir.
+  "/mesaj-ayarlari",
 ] as const;
 
 /**

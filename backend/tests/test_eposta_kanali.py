@@ -149,7 +149,8 @@ def test_TESIS_YALNIZ_SMTPSINI_GIRDIYSE_SMS_YINE_ENVDEN(monkeypatch):
 # 2. YAPILANDIRMA YOKKEN — "GONDERILDI" DEMEZ
 # --------------------------------------------------------------------------- #
 def test_YAPILANDIRMA_YOKKEN_test_gonderimi_YAPILANDIRILMADI_doner(client, world):
-    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    # (P250 §8) Test gonderimi platform admininin.
+    y = _headers(client, world["slug_a"], world["admin_a"])
     r = client.post("/mesaj-ayarlari/test", headers=y, json={
         "kanal": "eposta", "hedef": "deneme@example.com"})
     assert r.status_code == 200, r.text
@@ -162,7 +163,8 @@ def test_YAPILANDIRMA_YOKKEN_test_gonderimi_YAPILANDIRILMADI_doner(client, world
 
 
 def test_TEST_GONDERIMI_GECMISE_YAZILMAZ(client, world):
-    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    # (P250 §8) Test gonderimi platform admininin.
+    y = _headers(client, world["slug_a"], world["admin_a"])
     once = client.get("/mesajlar/gecmis?kanal=eposta", headers=y).json()["meta"]["total"]
     client.post("/mesaj-ayarlari/test", headers=y, json={
         "kanal": "eposta", "hedef": "deneme@example.com"})

@@ -11,6 +11,7 @@ ve riza gerektirmez — bu ayrim sablonun `amac` alaninda tasinir.
 from __future__ import annotations
 
 import uuid
+from typing import Literal
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
@@ -24,6 +25,7 @@ from ..crud_helpers import get_or_404, translate_integrity
 from .. import defter
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
+from ..hazir_sablonlar import listele as hazir_sablon_listesi
 from ..gonderim import (
     SaglayiciAyari,
     kota_kontrol,
@@ -52,6 +54,8 @@ from ..models import (
     UnitResident,
 )
 from ..schemas import (
+    HazirSablon,
+    HazirSablonListesi,
     MesajGonderIstek,
     MesajGonderSonuc,
     MesajGonderimListResponse,
@@ -64,6 +68,7 @@ from ..schemas import (
     MesajSablonuUpdate,
     MesajTestGonderim,
     MesajTestSonuc,
+    MesajDurumuOut,
     MesajYapilandirmaOut,
     MesajYapilandirmaUpdate,
     SmsOlcumOut,
@@ -122,6 +127,23 @@ async def sablon_listesi(
         meta={"limit": limit, "offset": offset, "total": total},
         items=[_cikti(k) for k in kayitlar],
     )
+
+
+@router.get("/mesaj-sablonlari/hazir", response_model=HazirSablonListesi)
+async def hazir_sablonlar(
+    kanal: Literal["sms", "eposta"] = Query("eposta"),
+    dil: str | None = Query(None, max_length=_G.KOD),
+    _: AppUser = Depends(_YONETIM),
+) -> HazirSablonListesi:
+    """(P250 §8) Platformun hazir sablon kutuphanesi — secilen dilde.
+
+    Dil verilmezse Turkce. Yonetici birini secer, formda duzenler ve
+    `POST /mesaj-sablonlari` ile KENDI sablonu olarak kaydeder;
+    kutuphane metni hicbir zaman dogrudan gonderilmez.
+    """
+    return HazirSablonListesi(items=[
+        HazirSablon(**s) for s in hazir_sablon_listesi(kanal, dil or "tr")
+    ])
 
 
 @router.post("/mesaj-sablonlari", response_model=MesajSablonuOut, status_code=201)
@@ -203,6 +225,7 @@ async def _degerler(
             "bakiye_detayli": "Aidat: 750,00 · Elektrik: 500,50",
             "borcu_detayli": "Temmuz 2026 aidat: 750,00",
             "odeme_linki": "https://ornek/ode",
+            "odeme_kodu": "AB12CD",
         }
 
     kisi = (
@@ -248,6 +271,8 @@ async def _degerler(
         # (P120) BIZE AIT OLMAYAN bir alan adi kullaniliyordu — bkz.
         # `Settings.portal_base_url` gerekcesi.
         "odeme_linki": f"{settings.portal_base_url}/ode",
+        # (P250 §8) Kodu olmayan kisi icin BOS (etiket metinde kalmaz).
+        "odeme_kodu": (kisi.odeme_kodu if kisi else None) or "",
     }
 
 
@@ -492,14 +517,24 @@ def ayar_kaynagi(tesiste: bool, hazir: bool) -> str:
     return "tesis" if tesiste else "genel"
 
 
-@router.get("/mesaj-ayarlari", response_model=MesajYapilandirmaOut)
-async def mesaj_ayarlari(
-    db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_YONETIM),
-) -> MesajYapilandirmaOut:
+# =========================================================================== #
+# (P250 §8) TEKNIK AYARLAR PLATFORM PANELINE TASINDI
+# =========================================================================== #
+# Saglayici, API anahtari, gonderen adi, SMTP gibi TEKNIK ayarlari artik
+# yalniz PLATFORM ADMINI gorur ve degistirir (panel.*, tesis secerek:
+# `/tenants/{tenant_id}/mesaj-ayarlari`). Site yoneticisi bunlari GORMEZ;
+# onda mesaj GONDERME, SABLONLAR ve salt-okunur bir "kanal hazir mi"
+# durumu (`/mesaj-durumu`) kalir.
+#
+# Eski `/mesaj-ayarlari` uclari durur ama ADMIN-YALNIZ (kendi tesisi):
+# yayindaki eski web surumu yoneticiye 403 gosterir, ayar sizmaz.
+_PLATFORM = require_role("admin")
+
+
+async def _ayar_cikti(db: AsyncSession, tenant_id: uuid.UUID) -> MesajYapilandirmaOut:
     """Tesisin mesaj ayarlari — SIRLAR DONMEZ, yalnizca VARLIKLARI."""
-    y = await db.get(MesajYapilandirma, user.tenant_id)
-    ayar = await tenant_ayari(db, user.tenant_id)
+    y = await db.get(MesajYapilandirma, tenant_id)
+    ayar = await tenant_ayari(db, tenant_id)
     # HAZIRLIK KANAL BAZINDA OLCULUR ve gercek secim fonksiyonuyla ayni
     # yoldan gecer: "ayarlar dolu mu" diye ayrica kontrol etseydik, o
     # kontrol bir gun gercek secimden ayrisirdi.
@@ -548,23 +583,16 @@ async def mesaj_ayarlari(
     )
 
 
-@router.put("/mesaj-ayarlari", response_model=MesajYapilandirmaOut)
-async def mesaj_ayarlari_kaydet(
-    body: MesajYapilandirmaUpdate,
-    db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_YONETIM),
-) -> MesajYapilandirmaOut:
-    """Ayarlari kaydet.
-
-    BOS BIRAKILAN PAROLA MEVCUDU KORUR: arayuz parolayi hic gormedigi
-    icin (bkz. `MesajYapilandirmaOut`), formu her kaydedisde parolayi
-    yeniden yazmak zorunda kalmak kullaniciyi parolayi bir yere
-    kopyalayip yapistirmaya iterdi. Acikca BOS DIZGE gonderilirse
-    TEMIZLENIR — silmenin de bir yolu olmali.
-    """
-    y = await db.get(MesajYapilandirma, user.tenant_id)
+async def _ayar_yaz(
+    db: AsyncSession, user: AppUser, tenant_id: uuid.UUID, body: MesajYapilandirmaUpdate,
+    denetim_db: AsyncSession | None = None,
+) -> None:
+    """`denetim_db`: denetim kaydinin yazilacagi oturum. Admin BASKA tesisin
+    ayarini yazarken kayit ADMININ kendi tesisine duser (audit_log RLS'i
+    `tenant_id = baglam` ister; kaydin "kim yapti" tarafi admindir)."""
+    y = await db.get(MesajYapilandirma, tenant_id)
     if y is None:
-        y = MesajYapilandirma(tenant_id=user.tenant_id)
+        y = MesajYapilandirma(tenant_id=tenant_id)
         db.add(y)
     veri = body.model_dump(exclude_unset=True)
     for alan, deger in veri.items():
@@ -573,21 +601,73 @@ async def mesaj_ayarlari_kaydet(
         setattr(y, alan, deger)
     await db.flush()
     await audit_user(
-        db, user, Action.MESAJ_SABLON_UPSERT, resource_type="mesaj_yapilandirma",
-        resource_id=user.tenant_id,
+        denetim_db or db, user, Action.MESAJ_SABLON_UPSERT, resource_type="mesaj_yapilandirma",
+        resource_id=tenant_id,
         # SIR DENETIME DE YAZILMAZ — yalnizca HANGI alanlarin degistigi.
-        meta={"alanlar": sorted(veri)},
+        meta={"alanlar": sorted(veri), "tesis": str(tenant_id)},
     )
-    return await mesaj_ayarlari(db=db, user=user)
+
+
+async def _ayar_testi(
+    db: AsyncSession, tenant_id: uuid.UUID, body: MesajTestGonderim
+) -> MesajTestSonuc:
+    ayar = await tenant_ayari(db, tenant_id)
+    sonuc = kanal_saglayicisi(body.kanal, ayar).gonder(
+        body.hedef, "Test", "Yonetio test mesaji."
+    )
+    return MesajTestSonuc(durum=sonuc.durum, saglayici=sonuc.saglayici, hata=sonuc.hata)
+
+
+@router.get("/mesaj-ayarlari", response_model=MesajYapilandirmaOut)
+async def mesaj_ayarlari(
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_PLATFORM),
+) -> MesajYapilandirmaOut:
+    """Kendi tesisinin ayarlari — (P250 §8) yalniz platform admini."""
+    return await _ayar_cikti(db, user.tenant_id)
+
+
+@router.get("/mesaj-durumu", response_model=MesajDurumuOut)
+async def mesaj_durumu(
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YONETIM),
+) -> MesajDurumuOut:
+    """(P250 §8) Yoneticinin GORDUGU tek sey: kanal calisiyor mu, bugun kac
+    mesaj gitti, kota. Saglayici, anahtar ve gonderen adi YOK — teknik
+    ayar platformun isi. Kanal hazir degilse yonetici "platform yonetimiyle
+    iletisime gecin" gorur; neden hazir olmadigini cozmek ona dusmez."""
+    a = await _ayar_cikti(db, user.tenant_id)
+    return MesajDurumuOut(
+        sms_hazir=a.sms_hazir, eposta_hazir=a.eposta_hazir,
+        bugun_gonderilen=a.bugun_gonderilen, gunluk_kota=a.gunluk_kota,
+    )
+
+
+@router.put("/mesaj-ayarlari", response_model=MesajYapilandirmaOut)
+async def mesaj_ayarlari_kaydet(
+    body: MesajYapilandirmaUpdate,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_PLATFORM),
+) -> MesajYapilandirmaOut:
+    """Ayarlari kaydet — (P250 §8) yalniz platform admini.
+
+    BOS BIRAKILAN PAROLA MEVCUDU KORUR: arayuz parolayi hic gormedigi
+    icin (bkz. `MesajYapilandirmaOut`), formu her kaydedisde parolayi
+    yeniden yazmak zorunda kalmak kullaniciyi parolayi bir yere
+    kopyalayip yapistirmaya iterdi. Acikca BOS DIZGE gonderilirse
+    TEMIZLENIR — silmenin de bir yolu olmali.
+    """
+    await _ayar_yaz(db, user, user.tenant_id, body)
+    return await _ayar_cikti(db, user.tenant_id)
 
 
 @router.post("/mesaj-ayarlari/test", response_model=MesajTestSonuc)
 async def mesaj_ayar_testi(
     body: MesajTestGonderim,
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_YONETIM),
+    user: AppUser = Depends(_PLATFORM),
 ) -> MesajTestSonuc:
-    """(P168 §4.4) TEST GONDERIMI.
+    """(P168 §4.4) TEST GONDERIMI — (P250 §8) yalniz platform admini.
 
     NEDEN GERCEKTEN GONDERIR: "ayarlar dolu mu" diye bakmak, yanlis
     parolayi ya da yanlis basligi YAKALAMAZ — saglayici reddedene kadar
@@ -596,13 +676,74 @@ async def mesaj_ayar_testi(
     GECMISE YAZILMAZ: test bir bildirim degildir; gonderim gecmisine
     dusmesi, "kime ne gonderdik" defterini kirletirdi.
     """
-    ayar = await tenant_ayari(db, user.tenant_id)
-    sonuc = kanal_saglayicisi(body.kanal, ayar).gonder(
-        body.hedef, "Test", "Yonetio test mesaji."
-    )
-    return MesajTestSonuc(
-        durum=sonuc.durum, saglayici=sonuc.saglayici, hata=sonuc.hata
-    )
+    return await _ayar_testi(db, user.tenant_id, body)
+
+
+# ------------------- PLATFORM PANELI: tesis secerek ------------------------ #
+async def _tesis_oturumu(tenant_id: uuid.UUID):
+    """Admin BASKA bir tesisin ayarina bakar: kendi oturumu + o tesisin RLS
+    baglami (`routers/tenants.py` ile ayni desen). Tesis yoksa 404."""
+    from ..db import SessionLocal, set_tenant
+
+    session = SessionLocal()
+    await session.begin()
+    await set_tenant(session, tenant_id)
+    var = (
+        await session.execute(select(Tenant.id).where(Tenant.id == tenant_id))
+    ).scalar_one_or_none()
+    if var is None:
+        await session.rollback()
+        await session.close()
+        raise APIError(404, "not_found", "tenant_bulunamadi")
+    return session
+
+
+@router.get("/tenants/{tenant_id}/mesaj-ayarlari", response_model=MesajYapilandirmaOut)
+async def tesis_mesaj_ayarlari(
+    tenant_id: uuid.UUID,
+    _: AppUser = Depends(_PLATFORM),
+) -> MesajYapilandirmaOut:
+    """(P250 §8) Platform paneli: secilen tesisin teknik mesaj ayarlari."""
+    session = await _tesis_oturumu(tenant_id)
+    try:
+        return await _ayar_cikti(session, tenant_id)
+    finally:
+        await session.rollback()
+        await session.close()
+
+
+@router.put("/tenants/{tenant_id}/mesaj-ayarlari", response_model=MesajYapilandirmaOut)
+async def tesis_mesaj_ayarlari_kaydet(
+    tenant_id: uuid.UUID,
+    body: MesajYapilandirmaUpdate,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_PLATFORM),
+) -> MesajYapilandirmaOut:
+    session = await _tesis_oturumu(tenant_id)
+    try:
+        await _ayar_yaz(session, user, tenant_id, body, denetim_db=db)
+        cikti = await _ayar_cikti(session, tenant_id)
+        await session.commit()
+        return cikti
+    except Exception:
+        await session.rollback()
+        raise
+    finally:
+        await session.close()
+
+
+@router.post("/tenants/{tenant_id}/mesaj-ayarlari/test", response_model=MesajTestSonuc)
+async def tesis_mesaj_ayar_testi(
+    tenant_id: uuid.UUID,
+    body: MesajTestGonderim,
+    _: AppUser = Depends(_PLATFORM),
+) -> MesajTestSonuc:
+    session = await _tesis_oturumu(tenant_id)
+    try:
+        return await _ayar_testi(session, tenant_id, body)
+    finally:
+        await session.rollback()
+        await session.close()
 
 
 @router.get("/mesajlar/gecmis", response_model=MesajGonderimListResponse)

@@ -24,7 +24,13 @@ import { useT } from "@/lib/i18n/kullan";
 import { useSorguSecimi } from "@/lib/sorgu-secimi";
 import { Sekmeler } from "@/components/ui";
 import { EtiketCipleri } from "@/components/mesaj/etiket-cipleri";
-import { MesajAyarlariSekmesi } from "@/components/mesaj/ayarlar-sekmesi";
+import {
+  HazirSablonPenceresi,
+  MesajDurumKarti,
+  duzMetniHtmlYap,
+  yerTutuculari,
+  type HazirSablon,
+} from "@/components/mesaj/hazir-sablonlar";
 import { ZenginMetin } from "@/components/ZenginMetin";
 import { smsOlc } from "@/lib/sms-olcu";
 import { SINIR } from "@/lib/girdi-siniri";
@@ -39,9 +45,11 @@ import { SINIR } from "@/lib/girdi-siniri";
 type Kanal = "sms" | "eposta";
 const KANALLAR: readonly Kanal[] = ["sms", "eposta"];
 
-/** (P168 §4) Brief'in dort sekmesi. Sira brief'in sirasi. */
-type SekmeId = "gonderim" | "sms" | "eposta" | "ayarlar";
-const SEKMELER: readonly SekmeId[] = ["gonderim", "sms", "eposta", "ayarlar"];
+/** (P168 §4) Sekmeler. (P250 §8) "Ayarlar" sekmesi PLATFORM paneline
+ *  tasindi (`/mesaj-ayarlari`, tesis secilerek); burada yalniz kanal
+ *  DURUMU kalir (`MesajDurumKarti`). */
+type SekmeId = "gonderim" | "sms" | "eposta";
+const SEKMELER: readonly SekmeId[] = ["gonderim", "sms", "eposta"];
 
 /**
  * P40 — MESAJ bolumu (P32 API'si).
@@ -124,16 +132,38 @@ export default function MesajlarPage() {
   const [hata, setHata] = useState<string | null>(null);
   const [mesgul, setMesgul] = useState(false);
   const [modalAcik, setModalAcik] = useState(false);
+  /** (P250 §8) Hazir sablon secicisi hangi kanal icin acik. */
+  const [hazirKanal, setHazirKanal] = useState<Kanal | null>(null);
 
   // --- onizleme + gonderim ---
   const [seciliId, setSeciliId] = useState("");
   const [onizleme, setOnizleme] = useState<Onizleme | null>(null);
   const [sonuc, setSonuc] = useState<Record<string, number> | null>(null);
 
+  /** (P250 §8) Hazir sablon -> yeni sablon formu (duzenlenip kaydedilir). */
+  function hazirSablonuKullan(s: HazirSablon): void {
+    setKanal(s.kanal);
+    setAd(s.ad);
+    setKonu(s.konu ?? "");
+    setGovde(s.kanal === "eposta" ? duzMetniHtmlYap(s.govde) : s.govde);
+    setAmac("operasyonel");
+    setHata(null);
+    setHazirKanal(null);
+    setModalAcik(true);
+  }
+
+  // (P250 §8) Doldurulmamis `[TARİH]` gibi yer tutucular KAYDI ENGELLER:
+  // sakine "[SAAT]'te toplanti" giden bir mesaj geri alinamaz.
+  const eksikYerler = yerTutuculari(`${kanal === "eposta" ? konu : ""} ${govde}`);
+
   async function sablonEkle(): Promise<void> {
     setHata(null);
     if (!ad.trim() || !govde.trim()) {
       setHata(t("mesajAdGovdeGerekli"));
+      return;
+    }
+    if (eksikYerler.length > 0) {
+      setHata(t("mesajYerTutucuUyari", { liste: eksikYerler.join(" ") }));
       return;
     }
     setMesgul(true);
@@ -276,17 +306,22 @@ export default function MesajlarPage() {
         <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
           {kanal === "sms" ? t("mesajSekmeSms") : t("mesajSekmeEposta")}
         </h2>
-        <Dugme
-          tur="birincil"
-          boy="kucuk"
-          onClick={() => {
-            setHata(null);
-            setKanal(kanal);
-            setModalAcik(true);
-          }}
-        >
-          {t("mesajYeniSablon")}
-        </Dugme>
+        <div className="flex flex-wrap gap-2">
+          <Dugme boy="kucuk" data-test={`hazir-ac-${kanal}`} onClick={() => setHazirKanal(kanal)}>
+            {t("mesajHazirSablonlar")}
+          </Dugme>
+          <Dugme
+            tur="birincil"
+            boy="kucuk"
+            onClick={() => {
+              setHata(null);
+              setKanal(kanal);
+              setModalAcik(true);
+            }}
+          >
+            {t("mesajYeniSablon")}
+          </Dugme>
+        </div>
       </div>
       <VeriTablosu<Sablon>
         kolonlar={sablonKolonlari}
@@ -430,6 +465,7 @@ export default function MesajlarPage() {
         eksik={(sablonlar?.items.length ?? 1) === 0}
       />
       <HataDurumu mesaj={hata ?? (sErr ? t("mesajSablonHata") : null)} />
+      <MesajDurumKarti />
 
       <Sekmeler
         aktifId={sekme}
@@ -442,13 +478,16 @@ export default function MesajlarPage() {
             baslik: t("mesajSekmeEposta"),
             icerik: sablonListesi("eposta"),
           },
-          {
-            id: "ayarlar",
-            baslik: t("mesajSekmeAyarlar"),
-            icerik: <MesajAyarlariSekmesi />,
-          },
         ]}
       />
+
+      {hazirKanal ? (
+        <HazirSablonPenceresi
+          kanal={hazirKanal}
+          onSec={hazirSablonuKullan}
+          onKapat={() => setHazirKanal(null)}
+        />
+      ) : null}
 
       {/* MODAL SEKMELERIN DISINDA: hangi sekmeden acilirsa acilsin ayni
           modal kullanilir ve sekme degisince kapanmamali. */}
@@ -531,6 +570,12 @@ export default function MesajlarPage() {
             }}
           />
         </div>
+
+        {eksikYerler.length > 0 ? (
+          <p role="status" data-test="yer-tutucu-uyari" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-warning-ink)" }}>
+            {t("mesajYerTutucuUyari", { liste: eksikYerler.join(" ") })}
+          </p>
+        ) : null}
 
         {kanal === "eposta" ? (
           // (P168 §4.2) E-POSTA GOVDESI ZENGIN METIN. SMS'te bicimlendirme

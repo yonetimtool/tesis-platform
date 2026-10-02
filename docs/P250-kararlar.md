@@ -835,3 +835,114 @@ kutularını kilitliyordu: tıklama yutuluyordu. Düzeltme:
 * **Prod gönderim kaydı:** yukarıdaki SQL ile operatör ölçmeli.
 * **Gerçek e-posta teslimi:** §2 ile aynı not; dev'de Resend yok.
 
+
+# §8 — SMS / E-POSTA: TEKNİK AYARLAR PLATFORMDA, ŞABLONLAR YÖNETİCİDE
+
+## Ne değişti (DAVRANIŞ DEĞİŞİKLİĞİ)
+
+* **Teknik ayarlar** (sağlayıcı, kullanıcı adı, parola/API anahtarı,
+  SMS başlığı, SMTP sunucu/port, gönderen adı, günlük kota, test
+  gönderimi) artık **yalnız platform admini** içindir:
+  * `GET/PUT /mesaj-ayarlari`, `POST /mesaj-ayarlari/test` →
+    yöneticiye **403** (önce yönetici+admin idi). Rol matrisi kilidi
+    bu değişikliği satır satır gösteriyor.
+  * Yeni uçlar: `GET/PUT /tenants/{tenant_id}/mesaj-ayarlari`,
+    `POST /tenants/{tenant_id}/mesaj-ayarlari/test` (admin). Platform
+    admini tesis seçer, o tesisin RLS bağlamında okur/yazar. Denetim
+    kaydı adminin kendi tesisine düşer (`audit_log` RLS'i bağlam tesisini
+    ister); kayıtta `tesis` alanı hedef tesisi taşır, sır yazılmaz.
+* **Yönetici** ne görür:
+  * `GET /mesaj-durumu`: SMS hazır mı, e-posta hazır mı, bugün
+    gönderilen, günlük kota. Sağlayıcı/kullanıcı/parola **dönmez**
+    (testte cevap metninde bu alanların adları da aranıyor).
+  * Mesaj gönderme, şablonlar, geçmiş — değişmedi.
+  * "Ayarlar" sekmesi kaldırıldı; yerine durum kartı: "Gönderim
+    ayarlarını platform yönetimi yapar. Bir kanal hazır değilse
+    destek@yonetiyor.com ile iletişime geçin."
+* **Kurulum sihirbazı "E-posta gönderimi" adımı:** hedef ekran yine
+  Mesajlar (durum orada görünüyor) ama metin "ayarları girin" demiyor:
+  "hazır göründüğünü kontrol edin; değilse destek ile iletişime geçin".
+  Adımın ölçüsü değişmedi (kanal gerçekten gönderebiliyor mu).
+
+**Neden:** yanlış bir SMTP parolası tesisin bütün davet, hoş geldiniz,
+ödeme kodu ve hatırlatma e-postalarını sessizce durduruyordu; bu ayarı
+düzeltecek bilgi de (sağlayıcı hesabı) zaten platformdaydı.
+
+## Hazır şablon kütüphanesi
+
+* `backend/app/hazir_sablonlar.py`: 8 şablon — aidat hatırlatma,
+  toplantı duyurusu, su kesintisi, elektrik kesintisi, bakım bildirimi,
+  bayram tebriği, hoş geldiniz, ödeme kodu. Her biri **e-posta** (konu +
+  gövde) ve **SMS** (kısa) sürümüyle, **7 dilde**.
+* Uç: `GET /mesaj-sablonlari/hazir?kanal=sms|eposta&dil=xx` (yönetici).
+  Bilinmeyen dil → Türkçe; geçersiz kanal → 422.
+* **Kütüphane metni doğrudan gönderilmez.** Yönetici "Hazır şablonlar"
+  → "Kullan" der, metin yeni-şablon formuna düşer, düzenler ve
+  `POST /mesaj-sablonlari` ile **kendi şablonu** olarak kaydeder.
+* **Değişkenler** gönderimde kişiye göre dolar: `{adi_soyadi}`,
+  `{adres}` (daire), `{site_adi}`, `{tarih}`, `{borc}`, `{bakiye}`,
+  `{aidat_tutari}` ve **yeni** `{odeme_kodu}` (kişinin ödeme kodu;
+  kodu yoksa boş — etiket metinde kalmaz). Web'deki etiket çiplerine
+  "Ödeme kodu" eklendi; çip listesi ile sunucu kümesinin eşitliği
+  mevcut kilitle ölçülüyor.
+* **Yöneticinin dolduracağı yerler** `[TARİH]`, `[SAAT]`, `[GÜNDEM]`
+  gibi **köşeli parantezle** yazıldı, süslü değil: bilinmeyen süslü
+  etiket sunucuda bilerek korunur ve sakine "{saat}" olarak giderdi.
+  Form doldurulmamış köşeli parantezleri canlı uyarıyla gösterir ve
+  **kaydı engeller**.
+* **SMS uzunluğu:** Türkçe harfler (ı, ğ, ş) mesajı 70 karakterlik
+  parçalara düşürür. Her dilde her SMS şablonu, örnek değerler
+  doldurulduğunda **en fazla 2 parça** (testle ölçülüyor). SMS formundaki
+  canlı karakter/parça sayacı zaten vardı, değişmedi.
+* E-posta gövdesi zengin metin editörüne düz metinden çevrilerek
+  (kaçışlı, paragraf + satır sonu) yerleşir.
+* **Neden tablo değil kod:** kütüphane ürünün metnidir, sürümle birlikte
+  gözden geçirilir; yöneticinin değiştirdiği metin zaten kendi
+  `mesaj_sablonu` satırına yazılıyor. Göç yok.
+
+## Platform paneli
+
+* `panel.*` → "SMS ve e-posta ayarları" (`/mesaj-ayarlari`): tesis arama
+  (ilk 20 eşleşme; prod'da binlerce tesis var), tesis seçilince mevcut
+  ayar formu o tesisin `/api/tenants/<id>/mesaj-ayarlari` ucuna bağlanır.
+  Tesis değişince form sıfırlanır (A'ya yazılmış parola B'ye gitmesin).
+* Rota `PLATFORM_ROTALARI`, menü (platform grubu), middleware eşleyicisi.
+
+## Parite — mobil İSTİSNA (gerekçeli)
+
+* **Mobilde mesaj yönetimi hiç yok** (şablon/gönderim ekranı P32'den
+  beri yalnız web). Bu bölüm mevcut bir mobil ekranı değiştirmiyor;
+  hazır şablon kütüphanesi web'in şablon formuna bağlı.
+* **Platform paneli yalnız web** (`panel.*`): mobil uygulamada platform
+  admini yüzeyi yok.
+* Mobilde **yapılmadı**: hazır şablon seçici ve kanal durum kartı.
+  Yönetici mobilde mesaj göndermediği için karşılığı olacak ekran yok.
+
+## Testler
+
+* Sunucu `test_p250_mesaj_ayar_sablon.py` (12): yönetici 403 (oku/yaz/
+  test/tesis ucu), durum ucu sırsız; admin B tesisini yazar, A
+  etkilenmez, olmayan tesis 404, test gönderimi "gönderildi" demez;
+  kütüphane 7 dil × 2 kanal × 8 şablon tam, bilinmeyen etiket yok, SMS
+  ≤ 2 parça; uç dil/kanal/422; hazır şablon kaydedilir ve önizlemede
+  `{odeme_kodu}` dolar.
+* `test_mesaj_ayarlari.py`, `test_eposta_kanali.py`: ayar çağrıları
+  admin'e çevrildi; yönetici rolü artık 403 bekleniyor.
+* Kilitler: openapi, rol matrisi, uç güvenlik (`/tenants/{id}/…` →
+  `rol`), tesis izolasyonu taramasına `/mesaj-durumu`.
+* Web `p250-mesaj-sablon.dom.test.ts` (5): Ayarlar sekmesi yok + durum
+  kartı; hazır şablon → form → POST gövdesi; köşeli parantez kaydı
+  engeller; yardımcılar; platform tesis seçimi → GET/PUT doğru tesis
+  ucuna. `mesaj.dom.test.ts` sekme beklentisi güncellendi.
+* **Önceki bölümlerden yakalanan:** §4 ve §6'nın `kendi` sahiplik
+  beyanlı uçlarına (`/me/hizli-islemler`, `/egitim-videolari/{adim}/
+  izlendi`) IDOR vakası/istisnası yazılmamıştı; gerekçeli istisna
+  eklendi (yol parametresi kayıt kimliği değil, satır token
+  kullanıcısından seçiliyor).
+
+## ÖLÇÜLEMEDİ
+
+* Gerçek SMS/e-posta teslimi: dev'de sağlayıcı yok; test gönderimi
+  "yapılandırılmadı" döner (doğru davranış).
+* Çevirilerin anadil kontrolü (de/fr/es/ar/ru): metinler tarafımdan
+  yazıldı, anadili konuşan biri okumadı.

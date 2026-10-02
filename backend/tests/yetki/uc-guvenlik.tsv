@@ -390,9 +390,11 @@ POST	/mesai/gidere-yaz	zorunlu	tesis	-	-	ozel	-	-		-
 GET	/mesai/ozet	zorunlu	tesis	-	-	-	-	-		-
 GET	/mesaj-ayarlari	zorunlu	tesis	-	-	-	sms_kullanici,smtp_kullanici	-		-
 PUT	/mesaj-ayarlari	zorunlu	tesis	-	-	ozel	sms_kullanici,smtp_kullanici	-		dar
-POST	/mesaj-ayarlari/test	zorunlu	tesis	-	-	ozel	-	-		dar
+POST	/mesaj-ayarlari/test	zorunlu	tesis	-	-	genel	-	-		dar
+GET	/mesaj-durumu	zorunlu	tesis	-	-	-	-	-		-
 GET	/mesaj-sablonlari	zorunlu	tesis	-	-	-	-	-		dar
 POST	/mesaj-sablonlari	zorunlu	tesis	-	-	ozel	-	-		dar
+GET	/mesaj-sablonlari/hazir	zorunlu	tesis	-	-	-	-	-		dar
 DELETE	/mesaj-sablonlari/{sablon_id}	zorunlu	tesis	rol	-	ozel	-	-		-
 PATCH	/mesaj-sablonlari/{sablon_id}	zorunlu	tesis	rol	-	ozel	-	-		dar
 GET	/mesajlar/gecmis	zorunlu	tesis	-	-	-	-	-		dar
@@ -524,6 +526,9 @@ POST	/tenants/{tenant_id}/arsivle	zorunlu	tesis	rol	-	ozel	kullanici	-		-
 POST	/tenants/{tenant_id}/geri-al	zorunlu	tesis	rol	-	ozel	kullanici	-		-
 GET	/tenants/{tenant_id}/kvkk	zorunlu	tesis	rol	-	-	-	-		-
 POST	/tenants/{tenant_id}/kvkk	zorunlu	tesis	rol	-	genel	-	-		dar
+GET	/tenants/{tenant_id}/mesaj-ayarlari	zorunlu	tesis	rol	-	-	sms_kullanici,smtp_kullanici	-		-
+PUT	/tenants/{tenant_id}/mesaj-ayarlari	zorunlu	tesis	rol	-	ozel	sms_kullanici,smtp_kullanici	-		dar
+POST	/tenants/{tenant_id}/mesaj-ayarlari/test	zorunlu	tesis	rol	-	genel	-	-		dar
 GET	/tenants/{tenant_id}/silme-ozeti	zorunlu	tesis	rol	-	-	kullanici	-		-
 PATCH	/tenants/{tenant_id}/yonetici	zorunlu	tesis	rol	-	genel	telefon	-		dar
 POST	/tenants/{tenant_id}/yonetici/reset-credential	zorunlu	tesis	rol	-	genel	-	-		-

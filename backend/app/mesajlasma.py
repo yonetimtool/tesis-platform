@@ -21,6 +21,8 @@ ETIKETLER = (
     "adi_soyadi", "adres", "site_adi", "tarih",
     "bakiye", "borc", "aidat_tutari", "kiraci_bakiyesi",
     "bakiye_detayli", "borcu_detayli", "odeme_linki",
+    # (P250 §8) Hazir sablonlar (odeme kodu, aidat hatirlatma, hos geldiniz).
+    "odeme_kodu",
 )
 
 _DESEN = re.compile(r"\{([a-z_]+)\}")

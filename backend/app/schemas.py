@@ -8269,6 +8269,28 @@ class MesajGonderimListResponse(BaseModel):
     items: list[MesajGonderimOut]
 
 
+class HazirSablon(BaseModel):
+    """(P250 §8) Platform kutuphanesindeki hazir sablon (kaydedilmemis)."""
+    kod: str
+    kanal: str
+    ad: str
+    konu: str | None = None
+    govde: str
+
+
+class HazirSablonListesi(BaseModel):
+    items: list[HazirSablon]
+
+
+class MesajDurumuOut(BaseModel):
+    """(P250 §8) Yoneticinin gordugu kanal durumu — teknik ayar YOK."""
+
+    sms_hazir: bool
+    eposta_hazir: bool
+    bugun_gonderilen: int = 0
+    gunluk_kota: int | None = None
+
+
 class MesajYapilandirmaOut(BaseModel):
     """(P168 §4.4) Ayarlar ekranina donen yapilandirma.
 

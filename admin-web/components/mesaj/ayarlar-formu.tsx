@@ -1,6 +1,11 @@
 "use client";
 
-// (P168 §4.4) MESAJ AYARLARI SEKMESI — saglayici, SMTP, kota, test.
+// (P168 §4.4) MESAJ AYARLARI — saglayici, SMTP, kota, test.
+//
+// (P250 §8) PLATFORM PANELINE TASINDI. Tesis yoneticisi bu formu ARTIK
+// GORMEZ (sunucu 403 de verir); platform admini tesis secer ve form o
+// tesisin `/api/tenants/<id>/mesaj-ayarlari` ucuna baglanir. Yonetici
+// kendi ekraninda yalniz "SMS/e-posta hazir mi" durumunu gorur.
 //
 // =========================================================================
 // SIRLAR: ALAN BOS BASLAR, "kayitli" BILGISI AYRI SATIRDA
@@ -42,7 +47,6 @@ interface Ayarlar {
 }
 
 const BOS = "";
-const UC = "/api/panel/mesaj-ayarlari";
 const KANAL_SMS = "sms";
 const KANAL_EPOSTA = "eposta";
 const SAGLAYICI_NETGSM = "netgsm";
@@ -69,7 +73,8 @@ function durumMetni(
     : t("mesajHazir");
 }
 
-export function MesajAyarlariSekmesi() {
+/** `uc`: secilen tesisin ayar ucu (`/api/tenants/<id>/mesaj-ayarlari`). */
+export function MesajAyarlariFormu({ uc: UC }: { uc: string }) {
   const t = useT();
   const toast = useToast();
   const { data, error, mutate } = useSWR<Ayarlar>(UC, jsonFetcher);

@@ -255,6 +255,7 @@ export const config = {
     // (P202) Surum politikasi — PLATFORM ekrani, oturum kapisi SART.
     "/surum-politikasi/:path*",
     "/egitim-videolari/:path*",
+    "/mesaj-ayarlari/:path*",
     // (P193 §5) Yoneticinin tesis ayarlari ekrani. `/settings` PLATFORM
     // yuzeyinde kaldi; bu TESIS yuzeyindedir ve ayrica korunmali —
     // `middleware.test.ts` eksigi yakaladi.
