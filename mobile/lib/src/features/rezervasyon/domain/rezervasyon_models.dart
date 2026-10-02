@@ -11,6 +11,8 @@
 /// yonetim tumu / sakin kendi dairesi; saha rolleri erisemez.
 library;
 
+import '../../../core/ui/gorsel_secici.dart' show GorselSecim;
+
 /// Slotun neden rezerve EDILEMEDIGI (wire kodunun kimlik aynasi).
 enum SlotSebep { dolu, gecti, cokErken, gunluk }
 
@@ -46,11 +48,17 @@ class OrtakAlan {
     this.kapanis = '23:59',
     this.slotDakika = 60,
     this.aciklama,
+    this.fotoKey,
+    this.fotoUrl,
   });
 
   final String id;
   final String ad;
   final String? aciklama;
+
+  /// (P251 §5b) Istege bagli gorsel; `fotoUrl` kisa omurlu imzali adres.
+  final String? fotoKey;
+  final String? fotoUrl;
 
   /// false = kaldirilmis (soft-delete; rezerve edilemez — yalniz yonetim gorur).
   final bool aktif;
@@ -72,6 +80,8 @@ class OrtakAlan {
         acilis: json['acilis'] as String? ?? '00:00',
         kapanis: json['kapanis'] as String? ?? '23:59',
         slotDakika: (json['slot_dakika'] as num?)?.toInt() ?? 60,
+        fotoKey: json['foto_key'] as String?,
+        fotoUrl: json['foto_url'] as String?,
         createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
             DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
       );
@@ -277,6 +287,7 @@ class OrtakAlanDraft {
     this.acilis,
     this.kapanis,
     this.slotDakika,
+    this.gorsel,
   });
 
   final String ad;
@@ -290,6 +301,9 @@ class OrtakAlanDraft {
   final String? kapanis;
   final int? slotDakika;
 
+  /// (P251 §5b) Gorsel secimi; null = dokunulmadi.
+  final GorselSecim? gorsel;
+
   Map<String, dynamic> toJson() => {
         'ad': ad,
         if (aciklama != null && aciklama!.isNotEmpty) 'aciklama': aciklama,
@@ -297,5 +311,11 @@ class OrtakAlanDraft {
         if (acilis != null) 'acilis': acilis,
         if (kapanis != null) 'kapanis': kapanis,
         if (slotDakika != null) 'slot_dakika': slotDakika,
-      };
+      }..addAll(_gorselAlani());
+
+  Map<String, dynamic> _gorselAlani() {
+    final m = <String, dynamic>{};
+    gorsel?.govdeye(m);
+    return m;
+  }
 }

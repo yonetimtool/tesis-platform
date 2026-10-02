@@ -4280,5 +4280,6 @@
   "panikKaynakGercek": "Gerçek alarmlar",
   "panikKaynakTatbikat": "Tatbikatlar",
   "panikKaynakHepsi": "Gerçek ve tatbikat",
-  "panikRozetTatbikat": "Tatbikat"
+  "panikRozetTatbikat": "Tatbikat",
+  "rezGorselBekleyin": "Görsel henüz yükleniyor — bitmesini bekleyin veya kaldırın."
 }

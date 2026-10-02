@@ -2326,6 +2326,8 @@ class OrtakAlan(Base):
     aktif: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")
     )
+    #: (P251 §5b, goc 0165) Istege bagli gorsel — `/uploads/presign` anahtari.
+    foto_key: Mapped[str | None] = mapped_column(Text, nullable=True)
     # MUSAITLIK: her gun [acilis, kapanis) araligi, slot_dakika slot uzunlugu.
     # Varsayilan tum-gun (saat girilmemis alan da rezerve edilebilir).
     acilis = mapped_column(Time, nullable=False, server_default=text("'00:00'"))

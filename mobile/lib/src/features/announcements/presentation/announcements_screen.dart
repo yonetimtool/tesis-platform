@@ -8,6 +8,7 @@ import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/icerik_ceviri.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/ui/icerik_gorseli.dart';
 import '../../../core/ui/ceviri_notu.dart';
 // imagePickerProvider YENIDEN kullanilir (kopya yok) — gorev foto akisiyla
 // ayni saglayici (testlerde tek noktadan override edilir).
@@ -16,7 +17,6 @@ import '../../tasks/presentation/task_complete_controller.dart'
 import '../data/announcement_api.dart';
 import '../domain/announcement_models.dart';
 import 'announcements_controller.dart';
-import '../../../core/ui/gorsel_cozme.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 import '../../../core/ui/bos_durum.dart';
 import '../../anket/presentation/anket_form.dart' show rolAdiKisa;
@@ -215,7 +215,15 @@ class _AnnouncementCardState extends ConsumerState<_AnnouncementCard> {
             ),
             if (a.fotoUrl != null) ...[
               const SizedBox(height: 8),
-              _AnnouncementPhoto(url: a.fotoUrl!),
+              // (P251 §5c) ORTAK BILESEN. Mobil duyuru karti metnin
+              // TAMAMINI gosterir (ayri ayrinti ekrani yok), yani kart
+              // ayrinti gorevindedir: BUYUK boy; dokununca tam ekran.
+              // Yuklenemeyen gorsel artik kirik satir birakmaz.
+              IcerikGorseli(
+                url: a.fotoUrl,
+                boy: IcerikGorseliBoy.buyuk,
+                tur: IcerikTuru.duyuru,
+              ),
             ],
             const SizedBox(height: 8),
             Text(
@@ -286,96 +294,6 @@ class _AnnouncementCardState extends ConsumerState<_AnnouncementCard> {
         ).showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
       }
     }
-  }
-}
-
-/// Duyuru gorseli: kartta onizleme; dokununca tam ekran (InteractiveViewer).
-/// URL kisa omurlu presigned GET — yuklenemezse sessizce kirik-gorsel satiri.
-class _AnnouncementPhoto extends StatelessWidget {
-  const _AnnouncementPhoto({required this.url});
-
-  final String url;
-
-  @override
-  Widget build(BuildContext context) {
-    // Klavyeyle de acilabilmeli (tur 33) — `InkWell` kendi `Focus`unu kurar.
-    // Fotograf ekran okuyucuda ADSIZDI (tur 34): "resim, dugme" diye
-    // okunuyordu. Etiket DOKUNULABILIR dugumle birlesmeli —
-    // `MergeSemantics` olmadan ayri bir alt dugumde kalir.
-    return MergeSemantics(
-      child: Semantics(
-        label: context.l10n.ortakFotografiBuyut,
-        child: InkWell(
-          onTap: () => _openFullScreen(context),
-          borderRadius: BorderRadius.circular(8),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(
-              url,
-              // Etiketsiz gorsel ekran okuyucuda HIC duyurulmaz (tur 34).
-              semanticLabel: context.l10n.ortakFotograf,
-              height: 160,
-              width: double.infinity,
-              cacheHeight: cozmeSiniri(context, 160),
-              fit: BoxFit.cover,
-              loadingBuilder: (context, child, progress) => progress == null
-                  ? child
-                  : const SizedBox(
-                      height: 160,
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
-              errorBuilder: (context, _, _) => Container(
-                height: 48,
-                // YON-DUYARLI: Arapca'da saga hizalanir.
-                alignment: AlignmentDirectional.centerStart,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                child: Row(
-                  children: [
-                    const Icon(Icons.broken_image_outlined, size: 20),
-                    const SizedBox(width: 8),
-                    // Dar ekranda (320 dp) satira sigmiyor — sar.
-                    Expanded(child: Text(context.l10n.talepGorselYuklenemedi)),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _openFullScreen(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (routeContext) => Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(backgroundColor: Colors.black),
-          body: Center(
-            child: InteractiveViewer(
-              maxScale: 5,
-              child: Image.network(
-                url,
-                // Etiketsiz gorsel ekran okuyucuda HIC duyurulmaz (tur 34).
-                semanticLabel: context.l10n.ortakFotograf,
-                // TAM EKRAN + yakinlastirma: sinir ekran genisliginin IKI
-                // KATI. 4000 px'lik ham fotografi cozmek yerine 2x zoom'a
-                // kadar net kalan bir sinir (tur 61).
-                cacheWidth: cozmeSiniri(
-                  routeContext,
-                  MediaQuery.sizeOf(routeContext).width * 2,
-                ),
-                errorBuilder: (_, _, _) => Text(
-                  routeContext.l10n.talepGorselYuklenemedi,
-                  style: const TextStyle(color: Colors.white),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }
 

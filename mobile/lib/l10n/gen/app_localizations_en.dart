@@ -8677,4 +8677,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get panikRozetTatbikat => 'Drill';
+
+  @override
+  String get rezGorselBekleyin =>
+      'The image is still uploading — wait for it to finish or remove it.';
 }

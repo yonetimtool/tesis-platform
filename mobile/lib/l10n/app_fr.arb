@@ -2912,5 +2912,6 @@
   "panikKaynakGercek": "Alertes réelles",
   "panikKaynakTatbikat": "Exercices",
   "panikKaynakHepsi": "Réelles et exercices",
-  "panikRozetTatbikat": "Exercice"
+  "panikRozetTatbikat": "Exercice",
+  "rezGorselBekleyin": "L'image est encore en cours d'envoi — attendez la fin ou retirez-la."
 }

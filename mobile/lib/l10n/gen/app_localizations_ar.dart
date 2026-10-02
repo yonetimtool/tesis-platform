@@ -8719,4 +8719,8 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get panikRozetTatbikat => 'تدريب';
+
+  @override
+  String get rezGorselBekleyin =>
+      'لا تزال الصورة قيد الرفع — انتظر حتى تنتهي أو أزلها.';
 }

@@ -8690,4 +8690,8 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get panikRozetTatbikat => 'Übung';
+
+  @override
+  String get rezGorselBekleyin =>
+      'Das Bild wird noch hochgeladen — warten Sie oder entfernen Sie es.';
 }

@@ -37,13 +37,22 @@ import {
 } from "@/components/ui";
 import type { Kolon } from "@/components/ui";
 import { useToast } from "@/components/Toast";
+import { IcerikGorseli } from "@/components/gorsel/icerik-gorseli";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import { tarihBicimi } from "@/lib/tarih";
 
-type Alan = { id: string; ad: string; aktif: boolean; slot_dakika?: number };
+type Alan = {
+  id: string;
+  ad: string;
+  aktif: boolean;
+  slot_dakika?: number;
+  /** (P251 §5c) Secilen alanin gorseli ve aciklamasi formda BUYUK gorunur. */
+  aciklama?: string | null;
+  foto_url?: string | null;
+};
 type Rezervasyon = {
   id: string;
   alan_ad: string | null;
@@ -328,6 +337,25 @@ export default function RezervasyonlarimPage() {
   )}
 </AlanSarmal>
         </div>
+        {(() => {
+          const secili = alanlar.find((a) => a.id === alanId);
+          if (!secili) return null;
+          return (
+            <div className="space-y-2" data-test="rezervasyon-alan-ayrinti">
+              <IcerikGorseli
+                url={secili.foto_url}
+                alt={t("gorselAlt", { baslik: secili.ad })}
+                boy="buyuk"
+                tur="alan"
+              />
+              {secili.aciklama ? (
+                <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+                  {secili.aciklama}
+                </p>
+              ) : null}
+            </div>
+          );
+        })()}
         <HataDurumu mesaj={formHata} />
         </div>
       </Modal>

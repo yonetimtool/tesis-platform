@@ -22,6 +22,7 @@ from ..crud_helpers import is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, OrtakAlan, Rezervasyon, Tenant, Unit
+from ..storage import presign_get
 from ..schemas import (
     AlanSlotResponse,
     OrtakAlanCreate,
@@ -38,6 +39,24 @@ _READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi", "resi
 
 # Alan yonetimi (pasifler dahil tum listeyi gorme) yonetim rolleri.
 _MANAGEMENT_ROLES = ("admin", "yonetici")
+
+
+def _validate_foto_key(foto_key: str | None, tenant_id: uuid.UUID) -> None:
+    """(P251 §5b) Anahtar kendi tesisinin alaninda olmali (duyuru/etkinlik/
+    site kurali ile ayni IDOR korumasi)."""
+    if foto_key is not None and not foto_key.startswith(f"{tenant_id}/"):
+        raise APIError(422, "invalid_foto_key", "foto_key_alan_disi")
+
+
+def _out(obj: OrtakAlan) -> OrtakAlanOut:
+    out = OrtakAlanOut.model_validate(obj)
+    if obj.foto_key:
+        try:
+            out.foto_url = presign_get(obj.foto_key)
+        except APIError:
+            # Depo yapilandirilmamissa okuma kirilmasin.
+            out.foto_url = None
+    return out
 
 
 @router.get("", response_model=OrtakAlanListResponse)
@@ -60,7 +79,7 @@ async def list_areas(
     ).scalars().all()
     return OrtakAlanListResponse(
         meta={"limit": limit, "offset": offset, "total": total},
-        items=list(rows),
+        items=[_out(r) for r in rows],
     )
 
 
@@ -69,7 +88,8 @@ async def create_area(
     body: OrtakAlanCreate,
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_MANAGER),
-) -> OrtakAlan:
+) -> OrtakAlanOut:
+    _validate_foto_key(body.foto_key, user.tenant_id)
     obj = OrtakAlan(
         tenant_id=user.tenant_id,
         ad=body.ad,
@@ -77,6 +97,7 @@ async def create_area(
         acilis=body.acilis,
         kapanis=body.kapanis,
         slot_dakika=body.slot_dakika,
+        foto_key=body.foto_key,
     )
     db.add(obj)
     try:
@@ -86,7 +107,7 @@ async def create_area(
             raise APIError(409, "conflict", "ortak_alan_adi_zaten_var")
         raise translate_integrity(exc)
     await db.refresh(obj)
-    return obj
+    return _out(obj)
 
 
 @router.patch("/{area_id}", response_model=OrtakAlanOut)
@@ -95,13 +116,15 @@ async def update_area(
     body: OrtakAlanUpdate,
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_MANAGER),
-) -> OrtakAlan:
+) -> OrtakAlanOut:
     obj = (
         await db.execute(select(OrtakAlan).where(OrtakAlan.id == area_id))
     ).scalar_one_or_none()
     if obj is None:
         raise APIError(404, "not_found", "kayit_bulunamadi")
     payload = body.model_dump(exclude_unset=True)
+    if "foto_key" in payload:
+        _validate_foto_key(payload["foto_key"], user.tenant_id)
     for k, v in payload.items():
         setattr(obj, k, v)
     # Kismi saat guncellemesi (yalniz biri verildi) mevcut deger ile tutarli
@@ -115,7 +138,7 @@ async def update_area(
             raise APIError(409, "conflict", "ortak_alan_adi_zaten_var")
         raise translate_integrity(exc)
     await db.refresh(obj)
-    return obj
+    return _out(obj)
 
 
 # ------------------------------- slotlar ------------------------------------ #

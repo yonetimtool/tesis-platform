@@ -8674,4 +8674,8 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get panikRozetTatbikat => 'Simulacro';
+
+  @override
+  String get rezGorselBekleyin =>
+      'La imagen aún se está subiendo: espere a que termine o quítela.';
 }

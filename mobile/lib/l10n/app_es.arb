@@ -2912,5 +2912,6 @@
   "panikKaynakGercek": "Alarmas reales",
   "panikKaynakTatbikat": "Simulacros",
   "panikKaynakHepsi": "Reales y simulacros",
-  "panikRozetTatbikat": "Simulacro"
+  "panikRozetTatbikat": "Simulacro",
+  "rezGorselBekleyin": "La imagen aún se está subiendo: espere a que termine o quítela."
 }

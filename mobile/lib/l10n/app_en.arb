@@ -2912,5 +2912,6 @@
   "panikKaynakGercek": "Real alarms",
   "panikKaynakTatbikat": "Drills",
   "panikKaynakHepsi": "Real and drills",
-  "panikRozetTatbikat": "Drill"
+  "panikRozetTatbikat": "Drill",
+  "rezGorselBekleyin": "The image is still uploading — wait for it to finish or remove it."
 }

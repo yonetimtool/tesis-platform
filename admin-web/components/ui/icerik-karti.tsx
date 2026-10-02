@@ -31,7 +31,7 @@
  */
 import type { ReactNode } from "react";
 
-import { Foto } from "@/components/Foto";
+import { IcerikGorseli } from "@/components/gorsel/icerik-gorseli";
 
 import { Kart } from "./yuzey";
 
@@ -59,13 +59,9 @@ export function IcerikKarti({
 }) {
   return (
     <Kart className="space-y-2">
-      {fotoUrl ? (
-        <Foto
-          src={fotoUrl}
-          alt={fotoAlt}
-          className="aspect-[16/9] w-full rounded-lg object-cover"
-        />
-      ) : null}
+      {/* (P251 §5c/d) ORTAK GORSEL: yoksa ya da yuklenemezse HIC cizilmez
+          (eskiden yuklenemeyen gorsel kesik kenarli bir kutu birakiyordu). */}
+      <IcerikGorseli url={fotoUrl} alt={fotoAlt} boy="buyuk" tur="duyuru" />
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)", fontWeight: 600 }}>
           {baslik}

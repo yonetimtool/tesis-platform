@@ -8762,4 +8762,8 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get panikRozetTatbikat => 'Учения';
+
+  @override
+  String get rezGorselBekleyin =>
+      'Изображение ещё загружается — дождитесь окончания или удалите его.';
 }

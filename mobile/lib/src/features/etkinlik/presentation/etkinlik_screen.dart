@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/i18n/icerik_ceviri.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/ui/icerik_gorseli.dart';
 import '../../../core/ui/ceviri_notu.dart';
 import '../../../core/error/api_exception.dart';
 // Foto akisi GOREV KANITI ile ayni: ayni picker saglayicisi, ayni presign uc.
@@ -17,7 +18,6 @@ import 'etk_etiket.dart';
 import 'etkinlik_controller.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/theme/home_tokens.dart';
-import '../../../core/ui/gorsel_cozme.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 
 /// "Etkinlikler" — etkinlik + RSVP (auth.md §4 kesin kurali, UX aynasi):
@@ -269,9 +269,17 @@ class _EtkinlikCard extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.celebration_outlined, size: 20),
-                  const SizedBox(width: 6),
+                  // (P251 §5c) LISTEDE KUCUK GORSEL — ortak bilesen; gorsel
+                  // yoksa etkinlik ikonlu sakin kutu (eski kucuk ikonun yeri).
+                  IcerikGorseli(
+                    url: e.fotoUrl,
+                    boy: IcerikGorseliBoy.kucuk,
+                    tur: IcerikTuru.etkinlik,
+                    kucukBoyut: 48,
+                  ),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       e.baslik,
@@ -292,10 +300,6 @@ class _EtkinlikCard extends ConsumerWidget {
               Text(e.aciklama, maxLines: 2, overflow: TextOverflow.ellipsis),
               // Kirpik onizleme: yalniz rozet (gecis detayda).
               CeviriRozeti(ceviri: e.ceviri),
-              if (e.fotoUrl != null) ...[
-                const SizedBox(height: 8),
-                _EtkinlikGorseli(url: e.fotoUrl!, yukseklik: 120),
-              ],
               const SizedBox(height: 8),
               _SayacRow(etkinlik: e),
               if (canRsvp && !e.gecmis) ...[
@@ -507,7 +511,12 @@ void _showDetail(
                   ],
                   if (e.fotoUrl != null) ...[
                     const SizedBox(height: 12),
-                    _EtkinlikGorseli(url: e.fotoUrl!, yukseklik: 180),
+                    // (P251 §5c) AYRINTIDA BUYUK — ortak bilesen.
+                    IcerikGorseli(
+                      url: e.fotoUrl,
+                      boy: IcerikGorseliBoy.buyuk,
+                      tur: IcerikTuru.etkinlik,
+                    ),
                   ],
                   const SizedBox(height: 8),
                   Text(
@@ -996,7 +1005,11 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
                   ),
               ] else if (_mevcutFotoUrl != null) ...[
                 const SizedBox(height: 8),
-                _EtkinlikGorseli(url: _mevcutFotoUrl!, yukseklik: 120),
+                IcerikGorseli(
+                  url: _mevcutFotoUrl,
+                  boy: IcerikGorseliBoy.buyuk,
+                  tur: IcerikTuru.etkinlik,
+                ),
               ],
               if (_photoError != null) ...[
                 const SizedBox(height: 4),
@@ -1073,66 +1086,6 @@ class _EtkinlikFormState extends ConsumerState<_EtkinlikForm> {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Etkinlik gorseli — kisa omurlu presigned GET URL; yuklenemezse SESSIZCE
-/// yer tutucu (kart/detay bozulmaz). Dokunma tam ekran gorunum acar.
-class _EtkinlikGorseli extends StatelessWidget {
-  const _EtkinlikGorseli({required this.url, required this.yukseklik});
-
-  final String url;
-  final double yukseklik;
-
-  @override
-  Widget build(BuildContext context) {
-    final yerTutucu = Container(
-      height: yukseklik,
-      width: double.infinity,
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      child: const Center(child: Icon(Icons.image_outlined)),
-    );
-    // Klavyeyle de acilabilmeli (tur 33).
-    // Fotograf ekran okuyucuda ADSIZDI (tur 34): dokunulabilir dugumun
-    // etiketi yoktu. `MergeSemantics` gorselin etiketini o dugumle
-    // birlestirir.
-    return MergeSemantics(
-      child: Semantics(
-        label: context.l10n.ortakFotografiBuyut,
-        child: InkWell(
-          onTap: () => showDialog<void>(
-            context: context,
-            builder: (_) => Dialog(
-              insetPadding: const EdgeInsets.all(12),
-              child: InteractiveViewer(
-                child: Image.network(
-                  url,
-                  // TAM EKRAN + yakinlastirma: ekran genisliginin IKI KATI.
-                  cacheWidth: cozmeSiniri(
-                    context,
-                    MediaQuery.sizeOf(context).width * 2,
-                  ),
-                  errorBuilder: (_, _, _) => yerTutucu,
-                ),
-              ),
-            ),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(
-              url,
-              // Etiketsiz gorsel ekran okuyucuda HIC duyurulmaz (tur 34).
-              semanticLabel: context.l10n.ortakFotograf,
-              height: yukseklik,
-              width: double.infinity,
-              cacheHeight: cozmeSiniri(context, yukseklik),
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => yerTutucu,
-            ),
           ),
         ),
       ),

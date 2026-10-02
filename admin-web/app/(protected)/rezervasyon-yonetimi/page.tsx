@@ -34,6 +34,13 @@ import {
   Rozet,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
+import {
+  GorselSecici,
+  gorselEngeli,
+  gorselGovdeye,
+  useGorselSecimi,
+} from "@/components/gorsel/gorsel-secici";
+import { IcerikGorseli } from "@/components/gorsel/icerik-gorseli";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
@@ -49,6 +56,9 @@ type OrtakAlan = {
   acilis: string;
   kapanis: string;
   slot_dakika: number;
+  /** (P251 §5b) Istege bagli gorsel. */
+  foto_key?: string | null;
+  foto_url?: string | null;
 };
 type Rezervasyon = {
   id: string;
@@ -101,6 +111,9 @@ const SEKME_REZ = "rezervasyonlar" as const;
 
 type AlanTaslak = {
   id: string | null;
+  /** Duzenlenen alanin mevcut gorseli (secicide gosterilir). */
+  foto_url?: string | null;
+  foto_key?: string | null;
   ad: string;
   aciklama: string;
   acilis: string;
@@ -185,6 +198,7 @@ function AlanlarSekmesi() {
   const [taslak, setTaslak] = useState<AlanTaslak | null>(null);
   const [formHata, setFormHata] = useState<string | null>(null);
   const [gonderiyor, setGonderiyor] = useState(false);
+  const gorsel = useGorselSecimi();
   const alanlar = data?.items ?? [];
 
   async function kaydet() {
@@ -193,16 +207,22 @@ function AlanlarSekmesi() {
       setFormHata(t("rezervasyonAlanZorunlu"));
       return;
     }
+    const engel = gorselEngeli(gorsel.durum);
+    if (engel) {
+      setFormHata(t(engel));
+      return;
+    }
     setFormHata(null);
     setGonderiyor(true);
     try {
-      const govde = {
+      const govde: Record<string, unknown> = {
         ad: taslak.ad.trim(),
         aciklama: taslak.aciklama.trim() || null,
         acilis: taslak.acilis,
         kapanis: taslak.kapanis,
         slot_dakika: Number(taslak.slot_dakika) || 60,
       };
+      gorselGovdeye(gorsel.durum, govde);
       if (taslak.id) {
         await apiSend(`/api/common-areas/${taslak.id}`, "PATCH", govde);
         toast.success(t("rezYonAlanGuncellendi"));
@@ -211,6 +231,7 @@ function AlanlarSekmesi() {
         toast.success(t("rezYonAlanOlusturuldu"));
       }
       setTaslak(null);
+      gorsel.sifirla();
       void mutate();
     } catch (e) {
       // SUNUCU metni aynen: ad çakışması / saat tutarsızlığı gerekçesini en
@@ -234,7 +255,7 @@ function AlanlarSekmesi() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Dugme tur="birincil" boy="kucuk" onClick={() => { setFormHata(null); setTaslak({ ...BOS_TASLAK }); }}>
+        <Dugme tur="birincil" boy="kucuk" onClick={() => { setFormHata(null); gorsel.sifirla(); setTaslak({ ...BOS_TASLAK }); }}>
           {t("rezYonYeniAlan")}
         </Dugme>
       </div>
@@ -248,8 +269,16 @@ function AlanlarSekmesi() {
       <div className="space-y-3">
         {alanlar.map((a) => (
           <Kart key={a.id} className="space-y-1">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{a.ad}</h3>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-3">
+                <IcerikGorseli
+                  url={a.foto_url}
+                  alt={t("gorselAlt", { baslik: a.ad })}
+                  boy="kucuk"
+                  tur="alan"
+                />
+                <h3 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{a.ad}</h3>
+              </div>
               {/* (P245) ELLE KURULMUS ROZET -> PAYLASILAN `Rozet`.
                   OLCULEN KUSUR: zemin `--yz-success-edge` (#159946),
                   metin `--yz-success-ink` (#107736) — yesil uzerine
@@ -270,8 +299,10 @@ function AlanlarSekmesi() {
             <div className="flex gap-2 pt-1">
               <Dugme boy="kucuk" onClick={() => {
                 setFormHata(null);
+                gorsel.sifirla();
                 setTaslak({
-                  id: a.id, ad: a.ad, aciklama: a.aciklama ?? "",
+                  id: a.id, foto_url: a.foto_url, foto_key: a.foto_key,
+                  ad: a.ad, aciklama: a.aciklama ?? "",
                   acilis: a.acilis, kapanis: a.kapanis, slot_dakika: String(a.slot_dakika),
                 });
               }}>
@@ -335,6 +366,15 @@ function AlanlarSekmesi() {
                   onChange={(e) => setTaslak({ ...taslak, aciklama: e.target.value })} />
               )}
             </AlanSarmal>
+            {/* (P251 §5b) Istege bagli alan gorseli. */}
+            <GorselSecici
+              durum={gorsel.durum}
+              setDurum={gorsel.setDurum}
+              mevcutUrl={taslak.foto_url}
+              mevcutVar={Boolean(taslak.foto_key)}
+              tur="alan"
+              devreDisi={gonderiyor}
+            />
             <HataDurumu mesaj={formHata} />
           </div>
         ) : null}

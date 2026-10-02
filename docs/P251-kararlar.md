@@ -94,3 +94,77 @@ ikinci alarm yayından sonra iptal edildi (yanlış alarm). Ardından
 * **Test:** `p251_tek_sos_test.dart` — tek "SOS" metni, simge yok,
   ekran okuyucuda "Acil durum" (SOS değil), boyut ≥ 48×48, dokununca
   `/panik`.
+
+# §5 — GÖRSELLER: ETKİNLİK, DUYURU, REZERVASYON ALANI
+
+## (a) Ölçüm: mobilden eklenen etkinlik görseli web'de neden yok
+
+Mobilin akışı betikle sürüldü (`/uploads/presign` → depoya PUT →
+`POST /events` `foto_key` ile), ardından web gerçek Chromium'da açıldı.
+Adaylar tek tek elendi:
+
+* **Sunucu yanıtı:** `GET /events` ve tekil uç `foto_url` döndürüyor;
+  imzalı adres geçerli (dev'de 200, `image/png`). → aday değil.
+* **İmzalı adresin süresi:** liste her açılışta taze adres üretiyor. →
+  aday değil.
+* **CSP `img-src`:** P250 politikası `img-src`'i bilerek kısıtlamıyor;
+  tarayıcı konsolunda CSP ihlali yok. → aday değil.
+* **Web yanıtı okumuyor — KÖK NEDEN.** Yönetici etkinlikleri web'de
+  yalnız **Etkinlik yönetimi** sayfasında görüyor ve o sayfanın türü
+  `foto_url` alanını **hiç tanımlamıyordu**; görsel çizilmiyordu, form
+  da görsel kabul etmiyordu. Görselli kart yalnız sakin görünümündeki
+  sayfadaydı. Ölçüm: sayfada kayıt görünüyor, `<img>` sayısı 0, depoya
+  hiç istek yok. Düzeltmeden sonra: aynı kayıt küçük resimle görünüyor,
+  depodan 200.
+
+## Kararlar
+
+* **Ortak bileşen (web + mobil):** `IcerikGorseli` iki boy:
+  * **küçük** (listede, 64 px web / 48–56 dp mobil),
+  * **büyük** (ayrıntıda, 16:9; mobilde dokununca tam ekran +
+    yakınlaştırma).
+* **(d) Görsel yoksa:** küçükte içerik türünü söyleyen sakin bir **ikon
+  kutusu** (duyuru / takvim / bina) — liste hizası bozulmaz; büyükte
+  **hiçbir şey** çizilmez. Görsel yüklenemezse de aynı. Eski davranış
+  (web'de kesik kenarlı "Görsel görüntülenemedi" kutusu, mobilde
+  "Görsel yüklenemedi" satırı) kaldırıldı: istege bağlı görseli
+  olmayan her kayıt "kırık" gibi görünüyordu.
+* **Ortak seçici (web + mobil):** `GorselSecici` — seç/çek → presign →
+  depoya PUT → `foto_key`; kaldır → `null`; dokunulmadıysa alan hiç
+  gönderilmez (sunucu mevcudu korur); yükleme sürerken/düşmüşken kayıt
+  engellenir. Duyuru ve site kuralında kopyalanmış mantığın ortak hali;
+  etkinlik yönetimi (web) ve rezervasyon alanı (web + mobil) bunu
+  kullanıyor. Mevcut duyuru/etkinlik formlarının çalışan seçicilerine
+  dokunulmadı.
+* **(b) Rezervasyon alanı görseli:** göç **0165** (`ortak_alan.foto_key`),
+  oluştur/düzenle'de `foto_key`, okumada imzalı `foto_url`. Anahtar kendi
+  tesisinin alanında olmalı (duyuru/etkinlik/site kuralıyla aynı IDOR
+  koruması, 422).
+* **(c) Nerede görünüyor:**
+
+| İçerik | Web listesi | Web ayrıntısı | Mobil listesi | Mobil ayrıntısı |
+|---|---|---|---|---|
+| Duyuru | küçük (tıklayınca ayrıntı) | büyük (ayrıntı penceresi) | büyük* | — |
+| Etkinlik | küçük (yönetim) / büyük kart (sakin görünümü) | büyük (düzenleme formu) | küçük | büyük (ayrıntı sayfası) |
+| Rezervasyon alanı | küçük (yönetim) | büyük (rezervasyon formunda seçilen alan) | küçük | büyük (alan ve slotlar) |
+
+  \* Mobil duyuru kartı metnin tamamını gösterir ve ayrı bir ayrıntı
+  ekranı yoktur; kart ayrıntı görevinde olduğu için büyük boy kullanıldı.
+
+## Testler
+
+* Sunucu `test_p251_alan_gorsel.py` (2): anahtarla oluştur → listede
+  `foto_url` (sakin de görür), PATCH null kaldırır; başka tesisin
+  anahtarı 422; görselsiz alan `foto_url=null`. Rezervasyon testleri
+  (44) yeşil.
+* Web `p251-gorseller.dom.test.ts` (4): gösterim (yoksa/hata → ikon,
+  büyük hiç), etkinlik yönetiminde mobilden gelen görsel, web'den görsel
+  yükle → `foto_key` POST, alan görselini kaldır → `foto_key: null`.
+* Mobil `p251_gorseller_test.dart` (4): gösterim, yüklenemeyen görsel,
+  seçici → anahtar, model/taslak (yeni/kaldır/dokunulmadı).
+* **Davranış değişikliğiyle güncellenen 2 mobil test:** kırık görselde
+  "Görsel yüklenemedi" satırı bekliyorlardı; artık görselin hiç
+  çizilmediğini ölçüyorlar (320 dp taşma ölçümü korunuyor).
+* Gerçek tarayıcı: etkinlik yönetiminde görsel küçük resim olarak
+  göründü, görselsiz kayıtlarda ikon kutusu.
+

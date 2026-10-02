@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/ui/gorsel_secici.dart';
+import '../../../core/ui/icerik_gorseli.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../core/error/api_exception.dart';
 import '../domain/rezervasyon_models.dart';
@@ -543,10 +545,17 @@ class _AreaList extends ConsumerWidget {
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
-            leading: Icon(
-              alan.aktif ? Icons.meeting_room_outlined : Icons.block,
-              color: alan.aktif ? null : Colors.grey,
-            ),
+            // (P251 §5c) LISTEDE KUCUK GORSEL (yoksa alan ikonlu kutu).
+            // Pasif alanin isareti korunur: yonetim neyin kapali oldugunu
+            // ilk bakista gormeli.
+            leading: alan.aktif
+                ? IcerikGorseli(
+                    url: alan.fotoUrl,
+                    boy: IcerikGorseliBoy.kucuk,
+                    tur: IcerikTuru.alan,
+                    kucukBoyut: 48,
+                  )
+                : const Icon(Icons.block, color: Colors.grey),
             title: Text(alan.ad),
             subtitle: Text(_altBaslik(context.l10n, alan, manage)),
             // manage: dokun → duzenle formu (yonetim). slots: dokun → slot
@@ -624,6 +633,8 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
   int _slot = 60;
   bool _busy = false;
   String? _hata;
+  // (P251 §5b) Istege bagli alan gorseli.
+  GorselSecim _gorsel = const GorselSecim();
 
   static const _slotSecenekleri = [30, 45, 60, 90, 120];
 
@@ -689,6 +700,10 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
       setState(() => _hata = _l10n.rezKapanisSonra);
       return;
     }
+    if (_gorsel.bekliyor) {
+      setState(() => _hata = _l10n.rezGorselBekleyin);
+      return;
+    }
     setState(() {
       _busy = true;
       _hata = null;
@@ -700,6 +715,7 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
         acilis: _hhmm(_acilis),
         kapanis: _hhmm(_kapanis),
         slotDakika: _slot,
+        gorsel: _gorsel,
       );
       final controller = ref.read(rezervasyonControllerProvider.notifier);
       if (_duzenle) {
@@ -822,6 +838,14 @@ class _AreaFormState extends ConsumerState<_AreaForm> {
                 ],
                 onChanged:
                     _busy ? null : (v) => setState(() => _slot = v ?? _slot),
+              ),
+              // (P251 §5b) ISTEGE BAGLI GORSEL — ortak secici.
+              const SizedBox(height: 12),
+              GorselSecici(
+                mevcutUrl: widget.alan?.fotoUrl,
+                tur: IcerikTuru.alan,
+                devreDisi: _busy,
+                onDegisti: (g) => setState(() => _gorsel = g),
               ),
               if (_hata != null) ...[
                 const SizedBox(height: 8),
@@ -998,6 +1022,15 @@ class _AmenitySlotsSheetState extends ConsumerState<_AmenitySlotsSheet> {
             const SizedBox(height: 4),
             Text(context.l10n.rezMusait(musaitlikOzeti(context.l10n, widget.alan)),
                 style: Theme.of(context).textTheme.bodySmall),
+            // (P251 §5c) AYRINTIDA BUYUK — gorsel yoksa hic cizilmez.
+            if (widget.alan.fotoUrl != null) ...[
+              const SizedBox(height: 8),
+              IcerikGorseli(
+                url: widget.alan.fotoUrl,
+                boy: IcerikGorseliBoy.buyuk,
+                tur: IcerikTuru.alan,
+              ),
+            ],
             const SizedBox(height: 12),
             OutlinedButton.icon(
               icon: const Icon(Icons.calendar_today_outlined, size: 18),

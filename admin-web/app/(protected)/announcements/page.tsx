@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import useSWR from "swr";
 
 import { Foto } from "@/components/Foto";
+import { IcerikGorseli } from "@/components/gorsel/icerik-gorseli";
 import { Alan, AlanSarmal, BosDurum, CokSatir, Dugme, HataDurumu, IskeletMetin, Kart, Modal, Pager, Rozet, Secim, useOnay } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -440,13 +441,13 @@ export default function AnnouncementsPage() {
         genislikSinifi="max-w-2xl"
       >
         <div className="space-y-3">
-          {detay?.foto_url && (
-            <Foto
-              src={detay.foto_url}
-              alt={t("gorselAlt", { baslik: detay.baslik })}
-              className="max-h-[55vh] w-full object-contain"
-            />
-          )}
+          {/* (P251 §5c) AYRINTIDA BUYUK — ortak bilesen. */}
+          <IcerikGorseli
+            url={detay?.foto_url}
+            alt={t("gorselAlt", { baslik: detay?.baslik ?? "" })}
+            boy="buyuk"
+            tur="duyuru"
+          />
           <p
             className="whitespace-pre-wrap"
             style={{ fontSize: "var(--yz-fs-body)", color: "var(--yz-text)" }}
@@ -464,43 +465,26 @@ export default function AnnouncementsPage() {
           <li key={a.id}>
             <Kart>
             <div className="flex flex-wrap items-start justify-between gap-4">
+              {/* (P251 §5c) LISTEDE KUCUK GORSEL — tiklayinca ayrinti
+                  (P162 §7.2: ham dosyaya degil, baslik + metinle birlikte
+                  detay penceresine). Gorsel yoksa sakin bir ikon kutusu. */}
+              <button
+                type="button"
+                onClick={() => setDetay(a)}
+                aria-label={t("duyuruDetayAc", { baslik: a.baslik })}
+                className="shrink-0"
+              >
+                <IcerikGorseli
+                  url={a.foto_url}
+                  alt={t("gorselAlt", { baslik: a.baslik })}
+                  boy="kucuk"
+                  tur="duyuru"
+                />
+              </button>
               <div className="min-w-0 flex-1">
                 <h3 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{a.baslik}</h3>
                 <p className="mt-1 whitespace-pre-wrap" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>{a.govde}</p>
-                {a.foto_url && (
-                  // (P162 §7.2) GORSELE TIKLAYINCA DETAY MODALI acilir —
-                  // ham dosya yeni sekmede DEGIL.
-                  //
-                  // OLCULEN KUSUR: fotograf `<a href={foto_url}>` idi;
-                  // tiklayinca kullanici uygulamadan CIKIP bir depolama
-                  // URL'sine dusuyordu. Orada duyurunun basligi da
-                  // aciklamasi da YOKTU — yalnizca bir resim. Yaziya
-                  // tiklayinca gorulen bilginin tamami, resme tiklayinca
-                  // KAYBOLUYORDU.
-                  //
-                  // Presigned GET URL kisa omurlu — liste her
-                  // yenilendiginde taze gelir.
-                  <button
-                    type="button"
-                    onClick={() => setDetay(a)}
-                    aria-label={t("duyuruDetayAc", { baslik: a.baslik })}
-                    className="mt-2 block w-fit"
-                  >
-                    <div
-                      className="overflow-hidden"
-                      style={{
-                        borderRadius: "var(--yz-radius-btn)",
-                        border: "1px solid var(--yz-border)",
-                      }}
-                    >
-                      <Foto
-                        src={a.foto_url}
-                        alt={t("gorselAlt", { baslik: a.baslik })}
-                        className="h-40 w-full object-cover"
-                      />
-                    </div>
-                  </button>
-                )}
+
                 <p className="mt-2" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
 {/* (P162 §7.3) DUYURAN ADI YERINE ROL.
                   Duyuru TESIS YONETIMI adina yapilir; hangi calisanin

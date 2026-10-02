@@ -3257,6 +3257,8 @@ class OrtakAlanCreate(BaseModel):
     acilis: time = _ACILIS_VARSAYILAN
     kapanis: time = _KAPANIS_VARSAYILAN
     slot_dakika: int = Field(_SLOT_VARSAYILAN, gt=0, le=1440)
+    #: (P251 §5b) Istege bagli gorsel (presign anahtari).
+    foto_key: str | None = Field(None, max_length=_G.DOSYA_ANAHTARI)
 
     @model_validator(mode="after")
     def _saat(self) -> "OrtakAlanCreate":
@@ -3273,6 +3275,8 @@ class OrtakAlanUpdate(BaseModel):
     acilis: time | None = None
     kapanis: time | None = None
     slot_dakika: int | None = Field(None, gt=0, le=1440)
+    #: (P251 §5b) Yeni anahtar -> degisir; `null` -> gorsel kaldirilir.
+    foto_key: str | None = Field(None, max_length=_G.DOSYA_ANAHTARI)
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "OrtakAlanUpdate":
@@ -3300,6 +3304,9 @@ class OrtakAlanOut(BaseModel):
     kapanis: str
     slot_dakika: int
     created_at: datetime
+    #: (P251 §5b) Kisa omurlu imzali GET adresi (gorsel yoksa None).
+    foto_key: str | None = None
+    foto_url: str | None = None
 
     @field_validator("acilis", "kapanis", mode="before")
     @classmethod

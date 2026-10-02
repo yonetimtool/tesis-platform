@@ -474,9 +474,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Görsel yüklenemedi'), findsOneWidget);
+    // (P251 §5d) Kirik gorsel artik HIC cizilmez (eskiden "Görsel
+    // yüklenemedi" satiri vardi ve 320 dp'de tasiyordu). Olculen ayni:
+    // dar ekranda tasma yok.
+    expect(find.text('Görsel yüklenemedi'), findsNothing);
     expect(tester.takeException(), isNull,
-        reason: 'kirik gorsel satiri 320 dp sigmali');
+        reason: 'kirik gorsel 320 dp tasmamali');
   });
 
   // Dar ekran (320 dp): en uzun ceviriler + yardimci metinler.

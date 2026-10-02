@@ -39,6 +39,13 @@ import {
   Modal,
   useOnay,
 } from "@/components/ui";
+import {
+  GorselSecici,
+  gorselEngeli,
+  gorselGovdeye,
+  useGorselSecimi,
+} from "@/components/gorsel/gorsel-secici";
+import { IcerikGorseli } from "@/components/gorsel/icerik-gorseli";
 import { alanliHataMetni, apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
@@ -51,6 +58,9 @@ interface Etkinlik {
   tarih: string;
   bitis_zamani?: string | null;
   konum: string | null;
+  /** (P251 §5a) Mobilden eklenen gorsel webde HIC okunmuyordu. */
+  foto_key?: string | null;
+  foto_url?: string | null;
 }
 
 const UC = "/api/events?limit=100&offset=0";
@@ -89,11 +99,13 @@ export default function EtkinlikYonetimPage() {
   const [form, setForm] = useState(BOS_FORM);
   const [formHata, setFormHata] = useState<string | null>(null);
   const [mesgul, setMesgul] = useState(false);
+  const gorsel = useGorselSecimi();
 
   function yeniAc() {
     setDuzenlenen(null);
     setForm(BOS_FORM);
     setFormHata(null);
+    gorsel.sifirla();
     setAcik(true);
   }
 
@@ -107,11 +119,17 @@ export default function EtkinlikYonetimPage() {
       konum: e.konum ?? "",
     });
     setFormHata(null);
+    gorsel.sifirla();
     setAcik(true);
   }
 
   async function kaydet(ev: React.FormEvent) {
     ev.preventDefault();
+    const engel = gorselEngeli(gorsel.durum);
+    if (engel) {
+      setFormHata(t(engel));
+      return;
+    }
     setMesgul(true);
     setFormHata(null);
     try {
@@ -120,7 +138,7 @@ export default function EtkinlikYonetimPage() {
         setFormHata(t("etkinlikTarihGerekli"));
         return;
       }
-      const govde = {
+      const govde: Record<string, unknown> = {
         baslik: form.baslik,
         aciklama: form.aciklama,
         tarih,
@@ -129,9 +147,11 @@ export default function EtkinlikYonetimPage() {
         bitis_zamani: utcyeCevir(form.bitis),
         konum: form.konum.trim() || null,
       };
+      gorselGovdeye(gorsel.durum, govde);
       if (duzenlenen) await apiSend(`/api/events/${duzenlenen.id}`, "PATCH", govde);
       else await apiSend("/api/events", "POST", govde);
       setAcik(false);
+      gorsel.sifirla();
       mutate();
       toast.success(t("ortakKaydedildi"));
     } catch (err) {
@@ -247,6 +267,15 @@ export default function EtkinlikYonetimPage() {
               />
             )}
           </AlanSarmal>
+          {/* (P251 §5) Istege bagli gorsel — mobil ile ayni presign akisi. */}
+          <GorselSecici
+            durum={gorsel.durum}
+            setDurum={gorsel.setDurum}
+            mevcutUrl={duzenlenen?.foto_url}
+            mevcutVar={Boolean(duzenlenen?.foto_key)}
+            tur="etkinlik"
+            devreDisi={mesgul}
+          />
           <HataDurumu mesaj={formHata} />
         </form>
       </Modal>
@@ -265,7 +294,15 @@ export default function EtkinlikYonetimPage() {
           <li key={e.id}>
             <Kart className="space-y-2">
               <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0">
+                <div className="flex min-w-0 items-start gap-3">
+                  {/* (P251 §5c) LISTEDE KUCUK, ayrintida (duzenleme) BUYUK. */}
+                  <IcerikGorseli
+                    url={e.foto_url}
+                    alt={t("gorselAlt", { baslik: e.baslik })}
+                    boy="kucuk"
+                    tur="etkinlik"
+                  />
+                  <div className="min-w-0">
                   <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
                     {e.baslik}
                   </h2>
@@ -273,6 +310,7 @@ export default function EtkinlikYonetimPage() {
                     {tarihSaatUzun(e.tarih)}
                     {e.konum ? ` · ${e.konum}` : ""}
                   </p>
+                  </div>
                 </div>
                 <div className="flex shrink-0 gap-2">
                   <Dugme boy="kucuk" onClick={() => duzenleAc(e)}>

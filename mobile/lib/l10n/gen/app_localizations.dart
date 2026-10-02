@@ -15040,6 +15040,12 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Tatbikat'**
   String get panikRozetTatbikat;
+
+  /// No description provided for @rezGorselBekleyin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görsel henüz yükleniyor — bitmesini bekleyin veya kaldırın.'**
+  String get rezGorselBekleyin;
 }
 
 class _AppLocalizationsDelegate

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/src/core/ui/icerik_gorseli.dart';
 import 'package:mobile/src/features/announcements/data/announcement_api.dart';
 import 'package:mobile/src/features/announcements/domain/announcement_models.dart';
 import 'package:mobile/src/features/announcements/presentation/announcements_screen.dart';
@@ -85,13 +86,13 @@ void main() {
         items: [_a(fotoUrl: 'http://minio.local/x.jpg?X-Amz-Signature=s')],
       ));
       await tester.pumpAndSettle();
-      // Test ortaminda ag yok — Image.network errorBuilder'a duser; onemli
-      // olan gorsel alaninin CIZILMESI ve cokme olmamasi.
-      expect(
-        find.text('Görsel yüklenemedi').evaluate().isNotEmpty ||
-            find.byType(Image).evaluate().isNotEmpty,
-        isTrue,
-      );
+      // (P251 §5c) Gorsel ORTAK bilesenle cizilir. Test ortaminda ag yok:
+      // Image.network hata verir ve (P251 §5d) kirik gorsel HIC cizilmez —
+      // "Görsel yüklenemedi" satiri kalkti. Olculen: bilesen yerlesti,
+      // hata sonrasi kaybolur, cokme yok.
+      expect(find.byType(IcerikGorseli), findsOneWidget);
+      expect(find.text('Görsel yüklenemedi'), findsNothing);
+      expect(find.byKey(const Key('icerik-gorseli-buyuk')), findsNothing);
       expect(tester.takeException(), isNull);
     });
   });

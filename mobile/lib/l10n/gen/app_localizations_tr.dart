@@ -8481,4 +8481,8 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get panikRozetTatbikat => 'Tatbikat';
+
+  @override
+  String get rezGorselBekleyin =>
+      'Görsel henüz yükleniyor — bitmesini bekleyin veya kaldırın.';
 }
