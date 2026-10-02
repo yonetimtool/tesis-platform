@@ -154,9 +154,14 @@ def test_yonetici_hosgeldin_metni_TESIS_ID_ve_GIRIS_BAGLANTISI_icerir():
     bilinclidir ve iki test bu farki karsilikli kilitler.
     """
     from app.config import settings
-    from app.routers.kayit import _yonetici_hosgeldin_metni
+    from app.hosgeldin_eposta import hosgeldin_eposta
 
-    govde = _yonetici_hosgeldin_metni("Oltu Sitesi", "OLTU-260821")
+    # (P250 §3) Duz metin "Tesis ID'niz" e-postasinin yerini kurumsal hos
+    # geldiniz e-postasi aldi; AYNI garantiler onun duz metin govdesinde.
+    _, govde, _ = hosgeldin_eposta(
+        dil="tr", rol="yonetici", tesis_ad="Oltu Sitesi", ad="Ayse", yil=2026,
+        tesis_kodu="OLTU-260821", web_url=settings.portal_base_url.rstrip("/"),
+    )
     assert "OLTU-260821" in govde, govde
     assert settings.portal_base_url.rstrip("/") in govde, govde
     # Magaza baglantisi YAPILANDIRILMISSA metinde olmali; bos ise

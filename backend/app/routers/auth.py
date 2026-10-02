@@ -13,11 +13,13 @@ import secrets
 
 import jwt
 import redis.asyncio as aioredis
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Header, Response
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import func, or_, select, text
 
+from ..hata_metinleri import istek_dili
+from .. import hosgeldin
 from ..audit import Action, record_audit
 from ..config import settings
 from ..db import SessionLocal, set_tenant
@@ -493,6 +495,7 @@ async def _login_phone_govde(
 async def set_password(
     body: SetPasswordRequest,
     redis: aioredis.Redis = Depends(get_redis),
+    accept_language: str | None = Header(None),
 ) -> TokenPair:
     """Ilk giristeki zorunlu parola belirleme (setup_token ile).
 
@@ -531,6 +534,10 @@ async def set_password(
                 session, action=Action.PASSWORD_SET, tenant_id=claims["tenant_id"],
                 actor_user_id=user.id, actor_rol=user.role,
                 resource_type="app_user", resource_id=user.id,
+            )
+            # (P250 §3) Kayit TAMAMLANDI: hos geldiniz e-postasi (bir kez).
+            await hosgeldin.bir_kez_gonder(
+                session, user, dil=istek_dili(accept_language)
             )
 
     return await _issue_token_pair(redis, user)

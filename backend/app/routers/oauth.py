@@ -74,6 +74,7 @@ from fastapi import APIRouter, Depends, Form, Header, Query, Request, Response
 from fastapi.responses import RedirectResponse
 from sqlalchemy import func, select, text
 
+from ..hata_metinleri import istek_dili
 from .. import girdi_siniri as _G
 from ..audit import Action, record_audit
 from ..config import settings
@@ -995,6 +996,7 @@ async def _rol_tamamla_baglan(
     user: AppUser,
     tenant_id,
     eposta: str,
+    dil: str = "tr",
 ) -> TokenPair:
     """UYGUN kisiyi baglar: kimlik + `eposta_dogrulandi` + uyelik + oturum.
 
@@ -1041,6 +1043,10 @@ async def _rol_tamamla_baglan(
         meta={"method": f"oauth_tamamla:{kimlik['saglayici']}"},
     )
     await session.flush()
+    # (P250 §3) Kayit TAMAMLANDI: hos geldiniz e-postasi (bir kez).
+    from .. import hosgeldin
+
+    await hosgeldin.bir_kez_gonder(session, user, dil=dil)
     return await _issue_token_pair(redis, user)
 
 
@@ -1048,6 +1054,7 @@ async def _rol_tamamla_baglan(
 async def rol_tamamla(
     body: OauthRolTamamlaRequest,
     redis: aioredis.Redis = Depends(get_redis),
+    accept_language: str | None = Header(None),
 ) -> OauthRolTamamlaResponse:
     """(P184) SSO kimligini bir ROL hesabina baglar — SMS'siz.
 
@@ -1148,6 +1155,7 @@ async def rol_tamamla(
                 user=user,
                 tenant_id=tenant_id,
                 eposta=eposta,
+                dil=istek_dili(accept_language),
             )
     return OauthRolTamamlaResponse(durum="giris", jetonlar=cift)
 
@@ -1156,6 +1164,7 @@ async def rol_tamamla(
 async def rol_tamamla_dogrula(
     body: OauthRolTamamlaDogrulaRequest,
     redis: aioredis.Redis = Depends(get_redis),
+    accept_language: str | None = Header(None),
 ) -> OauthRolTamamlaResponse:
     """(P184) `email_verified=false` yolunun 2. adimi: e-posta OTP + baglama.
 
@@ -1231,6 +1240,7 @@ async def rol_tamamla_dogrula(
                 user=user,
                 tenant_id=tenant_id,
                 eposta=eposta,
+                dil=istek_dili(accept_language),
             )
     return OauthRolTamamlaResponse(durum="giris", jetonlar=cift)
 

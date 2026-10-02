@@ -18,7 +18,7 @@ import uuid
 from datetime import datetime, timezone
 
 import redis.asyncio as aioredis
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header
 from fastapi.responses import HTMLResponse
 from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -34,6 +34,8 @@ from ..davet import (
 from ..db import SessionLocal, set_tenant
 from ..deps import get_redis, get_tenant_db, require_role
 from ..errors import APIError
+from .. import hosgeldin
+from ..hata_metinleri import istek_dili
 from ..kisi_adi import guncelle as kisi_adi_guncelle
 from ..models import AppUser, Davet
 from ..schemas import (
@@ -190,6 +192,7 @@ def _eposta_kanitlandi(user: AppUser) -> None:
 async def davet_parola(
     body: DavetParolaRequest,
     redis: aioredis.Redis = Depends(get_redis),
+    accept_language: str | None = Header(None),
 ) -> TokenPair:
     """Davetle gelen kullanici PAROLA belirler; oturum acilir.
 
@@ -228,6 +231,10 @@ async def davet_parola(
                 meta={"method": "davet_parola"},
             )
             await session.flush()
+            # (P250 §3) Kayit TAMAMLANDI: hos geldiniz e-postasi (bir kez).
+            await hosgeldin.bir_kez_gonder(
+                session, user, dil=istek_dili(accept_language)
+            )
 
     return await _issue_token_pair(redis, user)
 
@@ -236,6 +243,7 @@ async def davet_parola(
 async def davet_sosyal(
     body: DavetSosyalRequest,
     redis: aioredis.Redis = Depends(get_redis),
+    accept_language: str | None = Header(None),
 ) -> TokenPair:
     """Davetle gelen kullanici SOSYAL hesabini baglar; oturum acilir.
 
@@ -280,6 +288,10 @@ async def davet_sosyal(
                 meta={"method": f"davet_sosyal:{kimlik['saglayici']}"},
             )
             await session.flush()
+            # (P250 §3) Kayit TAMAMLANDI: hos geldiniz e-postasi (bir kez).
+            await hosgeldin.bir_kez_gonder(
+                session, user, dil=istek_dili(accept_language)
+            )
             return await _issue_token_pair(redis, user)
 
 

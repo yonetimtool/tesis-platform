@@ -302,6 +302,114 @@ e-postası gitmez (`eposta_kapali`). Kişi yine kodunu uygulamada görür.
 
 ---
 
+# §3 — HOŞ GELDİNİZ E-POSTASI
+
+## Ne zaman gider: kayıt tamamlanınca, bir kez
+
+"Kayıt tamamlandı" beş yerde oluyor. Hepsi aynı yardımcıyı
+(`hosgeldin.bir_kez_gonder`) **aynı işlemde** çağırır:
+
+| Tamamlama | Uç |
+|---|---|
+| E-posta / telefonla rol kaydı (son adım: parola) | `POST /auth/set-password` |
+| Davetle gelen kişi, parola | `POST /davet/parola` |
+| Davetle gelen kişi, sosyal giriş | `POST /davet/sosyal` |
+| SSO ile rol kaydı (doğrudan ve OTP'li iki yol) | `oauth._rol_tamamla_baglan` |
+| Yeni tesis açan yönetici (e-posta yolu ve sosyal yol) | `kayit.yonetici_tesis`, `kayit.tesis_olustur` |
+
+Yöneticinin kişiyi **eklemesi** kayıt değildir. E-posta, kişi kaydını
+kendisi tamamlayınca gider; testte ölçüldü.
+
+**Bir kez:** `app_user.hosgeldin_at` (göç 0162). Gönderim
+`UPDATE … WHERE hosgeldin_at IS NULL RETURNING` ile yapılır.
+
+* Aynı anda gelen iki tamamlama isteği (çift tık) yalnız **bir** e-posta
+  üretir.
+* Davetin yeniden kullanılması ya da rol değişimi işareti silmez; testte
+  ölçüldü.
+* **Parola sıfırlama bu yollardan değil.** `sifre/dogrula-ve-ayarla`
+  hoş geldiniz göndermez.
+
+**Mevcut hesaplara gitmez:** göç, kaydını zaten tamamlamış her hesabı
+(parolası kurulmuş ya da sosyal kimliği bağlı) "karşılanmış" sayar.
+Davet bekleyen, henüz tamamlanmamış hesaplar NULL kalır ve
+tamamladıklarında e-postayı alır.
+
+**Çoklu tesis:** işaret hesap satırı başına, yani tesis üyeliği başına.
+İkinci bir tesise katılan kişi o tesis için de hoş geldiniz alır, çünkü
+yeni tesiste ayrı bir rol ve ayrı modüller söz konusu. "Tekrar kayıt"
+(aynı tesis, aynı hesap) e-posta üretmez.
+
+**Kaydı düşürmez:** gönderim savepoint içinde. Şablon, dil ya da
+sağlayıcı hatası parolayı ve oturumu geri aldırmaz. Sağlayıcı başarısızsa
+satır kuyruğa düşer ve yeniden denenir (§2'deki kuyruk, HTML korunur).
+
+## İçerik: role göre
+
+| Rol | Anlatılanlar |
+|---|---|
+| Sakin | aidat, ödemeler ve kişisel ödeme kodu; duyuru ve anket; arıza/talep; rezervasyon; ziyaretçi onayı; acil durum çağrısı |
+| Güvenlik / güvenlik amiri | ziyaretçi ve araç kaydı ile daire onayı; devriye ve kontrol noktaları; vardiya; acil çağrı takibi; kargo; daireye sesli mesaj |
+| Tesis görevlisi | görev ve iş emirleri (fotoğrafla kapatma); talepler; bakım planı; sayaç okuma; vardiya ve mesai |
+| Yönetici / admin | kurulum sihirbazı (videolu, §4); aidat ve finans; duyuru, anket, SMS/e-posta; personel, vardiya, devriye; otomasyon (§7, §9); raporlar |
+| Denetçi | finans kayıtları, raporlar, karar defteri |
+
+**Her rolde ortak:**
+
+* mağaza düğmeleri (Google Play, App Store),
+* "İstek ve önerileriniz için: destek@yonetiyor.com",
+* 7 dil,
+* §2'deki kurumsal kabuk (logo, koyu mod, Arapçada sağdan sola).
+
+**Yalnız yönetim rollerinde:** web paneli adresi. Yeni tesis açan
+yöneticide ayrıca Tesis ID çipi. Sakin, güvenlik ve görevliye web
+adresi gösterilmez, çünkü o roller mobil-yalnız (P179, P248).
+
+**Yönetici kaydındaki eski e-postanın yerini aldı:** yeni tesis açan
+yöneticiye düz metin, yalnız Türkçe bir "Tesis ID'niz" e-postası
+gidiyordu. O fonksiyonun kendi notunda "HTML şablonu geldiğinde değişecek
+yer burası" yazıyordu. İçeriği (Tesis ID, web girişi, mağaza
+bağlantıları) yeni e-postada; eski fonksiyonun testi yeni şablona
+taşındı ve aynı garantileri ölçüyor.
+
+**Dil:**
+
+* önce kişinin cihaz dili,
+* cihaz yoksa kaydı tamamlayan isteğin dili (`Accept-Language`); kişi
+  kendi kaydını yaptığı için bu kendi dilidir,
+* o da yoksa Türkçe.
+
+## Parite
+
+E-posta sunucu tarafında üretiliyor. Web (`/kayit`, `/davet`) ve mobil
+(kayıt, davet ekranları) aynı tamamlama uçlarını çağırıyor, dolayısıyla
+iki yüzeyden tamamlanan kayıt aynı e-postayı tetikliyor. Arayüz
+değişikliği gerekmedi.
+
+## Testler
+
+* `test_p250_hosgeldin.py`:
+  * şablon her rol × 7 dilde destek satırını, mağaza bağlantılarını ve
+    kişinin adını taşıyor,
+  * web adresi ve Tesis ID yalnız yönetim rollerinde,
+  * Arapçada sağdan sola,
+  * içerik dört rolde birbirinden farklı,
+  * gerçek akış: kişi eklenince e-posta gitmiyor; davetle kayıt
+    tamamlanınca İngilizce e-posta tam bir kez gidiyor; ikinci deneme ve
+    rol değişimi yeni e-posta üretmiyor,
+  * geri doldurma kontrolü.
+* Mevcut `test_p177_sms_ve_ileti` (yönetici e-postası Tesis ID ve web
+  girişini içerir) yeni şablona taşındı.
+
+## ÖLÇÜLEMEDİ
+
+* Yönetici yeni tesis yolları (`yonetici-tesis`, `tesis-olustur`) dev'de
+  `YENI_KAYIT_AKISI` kapalı olduğu için canlı sürülemedi. Aynı yardımcıyı
+  aynı biçimde çağırıyorlar.
+* Gerçek posta kutusunda görünüm (§2 ile aynı not).
+
+---
+
 # §5 — GİRİŞ EKRANI E-POSTA SINIRI
 
 ## Ölçüm (değişiklikten önce)

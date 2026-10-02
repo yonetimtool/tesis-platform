@@ -82,6 +82,8 @@ from ..errors import APIError
 from ..gunlukleme import maskele_kimlik
 from ..gonderim import saglayici as kanal_saglayicisi, tenant_ayari
 from ..hiz_siniri import kod_istegi_say
+from .. import hosgeldin
+from ..hata_metinleri import istek_dili
 from ..kisi_adi import ad_bicimle, soyad_bicimle, tam_ad
 from ..models import AppUser, KayitOnayKuyrugu, OauthKimlik, Tenant, TesisUyelik
 from ..roller import kayit_beyani_eslesir
@@ -140,6 +142,7 @@ _HIZ_KAPSAMI = "tesis_olustur"
 async def tesis_olustur(
     body: TesisOlusturRequest,
     redis: aioredis.Redis = Depends(get_redis),
+    accept_language: str | None = Header(None),
 ) -> TesisOlusturResponse:
     """Tesisi acar, ilk yoneticiyi yazar ve OTURUM ACAR.
 
@@ -320,6 +323,12 @@ async def tesis_olustur(
             if kimlik and kimlik.get("eposta"):
                 user.email = str(kimlik["eposta"]).strip().lower()
                 user.eposta_dogrulandi = bool(kimlik.get("email_verified"))
+            # (P250 §3) Tesisi acan yoneticiye HOS GELDINIZ (bir kez).
+            await session.flush()
+            await hosgeldin.bir_kez_gonder(
+                session, user, dil=istek_dili(accept_language),
+                tesis_kodu=kayit_kodu,
+            )
 
     # Jeton uretimi transaction DISINDA — depodaki oteki giris yollariyla
     # ayni desen (`_issue_token_pair` Redis'e yazar).
@@ -574,6 +583,7 @@ async def yonetici_dogrula(body: YoneticiDogrulaRequest) -> YoneticiDogrulaRespo
 async def yonetici_tesis(
     body: YoneticiTesisRequest,
     redis: aioredis.Redis = Depends(get_redis),
+    accept_language: str | None = Header(None),
 ) -> TesisOlusturResponse:
     """MEVCUT tesis mekanizmasiyla tesisi acar ve oturumu ACAR.
 
@@ -706,47 +716,19 @@ async def yonetici_tesis(
                 resource_id=user_id,
                 meta={"method": "yeni_kayit_akisi:eposta"},
             )
-
-    _eposta_gonder(
-        None,
-        satir.eposta,
-        f"{body.tesis_ad.strip()} — Tesis ID’niz",
-        _yonetici_hosgeldin_metni(body.tesis_ad.strip(), kayit_kodu),
-    )
+            # (P250 §3) HOS GELDINIZ — kurumsal, 7 dil, bir kez. Eski duz
+            # metin "Tesis ID'niz" e-postasinin YERINI aldi (onun docstring'i
+            # "HTML sablonu geldiginde degisecek yer burasi" diyordu): Tesis
+            # ID, web paneli adresi ve magaza baglantilari bu e-postada.
+            await hosgeldin.bir_kez_gonder(
+                session, user, dil=istek_dili(accept_language),
+                tesis_kodu=kayit_kodu,
+            )
 
     cift = await _issue_token_pair(redis, user)
     return TesisOlusturResponse(
         tesis_ad=body.tesis_ad.strip(), tesis_kodu=kayit_kodu, jetonlar=cift
     )
-
-
-def _yonetici_hosgeldin_metni(tesis_ad: str, tesis_kodu: str) -> str:
-    """(§4) Yoneticiye giden e-posta — SADE ve ISLEVSEL.
-
-    Sartname: "Bu turda e-posta SADE ve islevsel olsun. Kurumsal HTML
-    sablonlari ayri bir turda gelecek, o yuzden sablonu TEK YERDEN
-    degistirilebilir tut, tasarima vakit harcama."
-
-    Bu yuzden duz metin ve TEK FONKSIYON. HTML sablonu geldiginde
-    degisecek yer burasidir, cagiran yerler degil.
-
-    ICERIK (§4): magaza baglantilari + web giris adresi + Tesis ID.
-    Magaza baglantisi YAPILANDIRILMISSA eklenir; bos bir App Store
-    id'siyle kirik baglanti gondermek hic gondermemekten kotudur.
-    """
-    satirlar = [
-        f"{tesis_ad} için Yönetiyor hesabınız hazır.",
-        "",
-        f"Tesis ID: {tesis_kodu}",
-        "Bu kodu sitenizdeki kişilerle paylaşacaksınız.",
-        "",
-        f"Web'den giriş: {settings.portal_base_url.rstrip('/')}",
-    ]
-    if settings.play_store_url:
-        satirlar.append(f"Android uygulaması: {settings.play_store_url}")
-    if settings.app_store_url:
-        satirlar.append(f"iOS uygulaması: {settings.app_store_url}")
-    return "\n".join(satirlar)
 
 
 # -------------------------------------------------------------------------- #
