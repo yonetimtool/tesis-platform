@@ -12795,7 +12795,7 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "409":
-          description: Benzersizlik ihlali (ayni ad/kod/plaka)
+          description: Benzersizlik ihlali; (P251 §8) `maas_karti_zaten_bagli` — hesaba ikinci maas karti baglanamaz
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "422": { $ref: "#/components/responses/ValidationError" }
@@ -14332,7 +14332,12 @@ paths:
         - $ref: "#/components/parameters/Offset"
         - name: role
           in: query
-          schema: { $ref: "#/components/schemas/UserRole" }
+          description: (P251 §8) Tekrarlanabilir (`?role=security&role=tesis_gorevlisi`); Kisiler sekmeleri.
+          schema:
+            type: array
+            items: { $ref: "#/components/schemas/UserRole" }
+          style: form
+          explode: true
         - name: is_active
           in: query
           schema: { type: boolean }
@@ -17421,12 +17426,12 @@ components:
         soyad: { type: string, maxLength: 100, nullable: true, description: "(P250 §1) Soyad. Sunucuda opsiyonel (eski mobil surumler); istemcide zorunlu. Ad kelime basi buyuk, soyad tamami buyuk bicimlenir (Turkce harf kurali)." }
     DavetDurumOut:
       type: object
-      required: [user_id, ad, rol, telefon, son_gecerlilik]
+      required: [user_id, ad, rol, son_gecerlilik]
       properties:
         user_id:         { type: string, format: uuid }
         ad:              { type: string }
         rol:             { type: string }
-        telefon:         { type: string }
+        telefon:         { type: string, nullable: true }
         daire_no:        { type: string, nullable: true }
         son_kanal:       { type: string, nullable: true }
         son_durum:       { type: string, nullable: true }

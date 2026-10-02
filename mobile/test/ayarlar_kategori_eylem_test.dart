@@ -30,6 +30,7 @@ import 'package:mobile/src/features/tasks/domain/task_category_models.dart';
 import 'package:mobile/src/features/tasks/presentation/task_categories_screen.dart';
 import 'package:mobile/src/features/tenant/data/tenant_api.dart';
 import 'package:mobile/src/features/tenant/domain/tenant_models.dart';
+import 'package:mobile/src/features/tenant/presentation/tesis_ayarlari_screen.dart';
 
 import 'helpers/l10n_test_app.dart';
 import 'helpers/push_test_fakes.dart';
@@ -48,6 +49,17 @@ class _SahteTenantApi extends TenantApi {
     gonderilenAdlar.add(ad);
     if (hata != null) throw hata!;
     return TenantSettings(tenantId: 't-1', ad: ad);
+  }
+
+  /// (P251 §8) Tesis ayarlari ekrani YALNIZ degisen alanlari gonderir.
+  final gonderilenler = <Map<String, Object?>>[];
+
+  @override
+  Future<TenantSettings> guncelle(Map<String, Object?> degisen) async {
+    gonderilenler.add(degisen);
+    if (degisen['ad'] is String) gonderilenAdlar.add(degisen['ad']! as String);
+    if (hata != null) throw hata!;
+    return TenantSettings(tenantId: 't-1', ad: (degisen['ad'] as String?) ?? 'Acme Plaza');
   }
 }
 
@@ -92,6 +104,14 @@ Widget _ayarlar({
   child: l10nApp(const SettingsScreen(), locale: const Locale('tr')),
 );
 
+/// (P251 §8) Tesis adi Ayarlar'dan Yonetim › Tesis ayarlari ekranina tasindi.
+Widget _tesisAyarlari(_SahteTenantApi tenant) => ProviderScope(
+  overrides: [tenantApiProvider.overrideWithValue(tenant)],
+  child: l10nApp(const TesisAyarlariScreen(), locale: const Locale('tr')),
+);
+const _adAlani = Key('tesis-ayar-ad');
+const _kaydet = Key('tesis-ayar-kaydet');
+
 /// Bildirim kanal tercihi cagrilarini kaydeden sahte API.
 class _SahteBildirimApi extends BildirimTercihApi {
   _SahteBildirimApi(this._t) : super(Dio());
@@ -134,30 +154,17 @@ Widget _kategoriler(_SahteKategoriApi api) => ProviderScope(
 
 void main() {
   group('Ayarlar — rol kapilari', () {
-    testWidgets('YONETICI: tesis adi karti ve kamera yonetimi GORUNUR', (
-      tester,
-    ) async {
-      await tester.pumpWidget(_ayarlar(rol: UserRole.yonetici));
-      await tester.pumpAndSettle();
-      expect(find.byType(TextField), findsWidgets, reason: 'tesis adi alani');
-      expect(find.byIcon(Icons.videocam_outlined), findsOneWidget);
-    });
-
-    testWidgets('SAKIN: tesis adi ve kamera yonetimi GIZLI', (tester) async {
-      await tester.pumpWidget(_ayarlar(rol: UserRole.resident));
-      await tester.pumpAndSettle();
-      expect(find.byIcon(Icons.videocam_outlined), findsNothing,
-          reason: 'kamera yonetimi yalniz admin/yonetici');
-      expect(find.byType(TextField), findsNothing,
-          reason: 'tesis adini yalniz yonetici degistirir');
-    });
-
-    testWidgets('ADMIN: kamera yonetimi VAR, tesis adi YOK', (tester) async {
-      await tester.pumpWidget(_ayarlar(rol: UserRole.admin));
-      await tester.pumpAndSettle();
-      expect(find.byIcon(Icons.videocam_outlined), findsOneWidget);
-      expect(find.byType(TextField), findsNothing);
-    });
+    // (P251 §8) MENU PARITESI: tesis adi Yonetim › Tesis ayarlari'na,
+    // canli kameralar Guvenlik › Kameralar'a tasindi. Ayarlar kisinin
+    // KENDI tercihleridir; siteye ait ayar ve kamera girisi burada YOK.
+    for (final rol in [UserRole.yonetici, UserRole.admin, UserRole.resident]) {
+      testWidgets('$rol: Ayarlar ekraninda tesis adi ve kamera girisi YOK', (tester) async {
+        await tester.pumpWidget(_ayarlar(rol: rol));
+        await tester.pumpAndSettle();
+        expect(find.byIcon(Icons.videocam_outlined), findsNothing);
+        expect(find.byType(TextField), findsNothing);
+      });
+    }
   });
 
   group('Ayarlar — dil ve tema', () {
@@ -204,36 +211,49 @@ void main() {
     });
   });
 
-  group('Ayarlar — tesis adi kaydetme', () {
-    testWidgets('BASARI: ad gonderilir ve onay mesaji cizilir', (tester) async {
+  group('Tesis ayarlari — kaydetme (P251 §8; eski Ayarlar tesis adi karti)', () {
+    testWidgets('BASARI: yalniz degisen alan gonderilir, onay mesaji cizilir', (tester) async {
       final api = _SahteTenantApi();
-      await tester.pumpWidget(_ayarlar(tenant: api));
+      await tester.pumpWidget(_tesisAyarlari(api));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField).first, 'Yeni Tesis');
+      await tester.enterText(find.byKey(_adAlani), 'Yeni Tesis');
       await tester.pump();
-      await tester.tap(find.byType(FilledButton).first);
+      await tester.tap(find.byKey(_kaydet));
       await tester.pumpAndSettle();
-      expect(api.gonderilenAdlar, ['Yeni Tesis']);
+      expect(api.gonderilenler, [
+        {'ad': 'Yeni Tesis'},
+      ]);
       expect(find.byType(SnackBar), findsOneWidget);
+    });
+
+    testWidgets('ADRES alani da gonderilir (web ile ayni alanlar)', (tester) async {
+      final api = _SahteTenantApi();
+      await tester.pumpWidget(_tesisAyarlari(api));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const Key('tesis-ayar-adres')), 'Örnek Mah. No:5');
+      await tester.pump();
+      await tester.tap(find.byKey(_kaydet));
+      await tester.pumpAndSettle();
+      expect(api.gonderilenler, [
+        {'adres': 'Örnek Mah. No:5'},
+      ]);
     });
 
     testWidgets('BOS AD: istek ATILMAZ', (tester) async {
       final api = _SahteTenantApi();
-      await tester.pumpWidget(_ayarlar(tenant: api));
+      await tester.pumpWidget(_tesisAyarlari(api));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField).first, '   ');
+      await tester.enterText(find.byKey(_adAlani), '   ');
       await tester.pump();
-      final dugme = find.byType(FilledButton).first;
+      final dugme = find.byKey(_kaydet);
       if (tester.widget<FilledButton>(dugme).onPressed != null) {
         await tester.tap(dugme);
         await tester.pumpAndSettle();
       }
-      expect(api.gonderilenAdlar, isEmpty, reason: 'bos ad gonderilmemeli');
+      expect(api.gonderilenler, isEmpty, reason: 'bos ad gonderilmemeli');
     });
 
-    testWidgets('API HATASI: sunucu metni SnackBar ile gosterilir', (
-      tester,
-    ) async {
+    testWidgets('API HATASI: sunucu metni SnackBar ile gosterilir', (tester) async {
       final api = _SahteTenantApi(
         hata: const ApiException(
           code: 'validation_error',
@@ -241,22 +261,22 @@ void main() {
           statusCode: 422,
         ),
       );
-      await tester.pumpWidget(_ayarlar(tenant: api));
+      await tester.pumpWidget(_tesisAyarlari(api));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField).first, 'Ab');
+      await tester.enterText(find.byKey(_adAlani), 'Ab');
       await tester.pump();
-      await tester.tap(find.byType(FilledButton).first);
+      await tester.tap(find.byKey(_kaydet));
       await tester.pumpAndSettle();
       expect(find.text('Ad cok kisa'), findsOneWidget);
     });
 
     testWidgets('BEKLENMEYEN hata: genel mesaj, cokme YOK', (tester) async {
       final api = _SahteTenantApi(hata: StateError('bozuk'));
-      await tester.pumpWidget(_ayarlar(tenant: api));
+      await tester.pumpWidget(_tesisAyarlari(api));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField).first, 'Bir Ad');
+      await tester.enterText(find.byKey(_adAlani), 'Bir Ad');
       await tester.pump();
-      await tester.tap(find.byType(FilledButton).first);
+      await tester.tap(find.byKey(_kaydet));
       await tester.pumpAndSettle();
       expect(find.byType(SnackBar), findsOneWidget);
       expect(tester.takeException(), isNull);

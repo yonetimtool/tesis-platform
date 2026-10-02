@@ -203,7 +203,8 @@ void main() {
     for (final rol in UserRole.values) {
       final menu = homeMenuForRole(rol);
       final beklenen = rol == UserRole.yonetici;
-      expect(menu.contains(HomeMenuEntry.davetler), beklenen, reason: '$rol');
+      // (P251 §8) Davetler artik Kisiler ekraninin SEKMESI; menude Kisiler.
+      expect(menu.contains(HomeMenuEntry.davetler), isFalse, reason: '$rol');
       expect(menu.contains(HomeMenuEntry.gurultuUyarilari), beklenen,
           reason: '$rol');
     }

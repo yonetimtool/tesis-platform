@@ -292,7 +292,7 @@ void main() {
     for (final (locale, baslik, bos) in [
       (
         const Locale('tr'),
-        'YÖNETİCİ İLETİŞİM',
+        'YÖNETİMLE İLETİŞİM',
         'Yönetici iletişim bilgisi tanımlı değil.'
       ),
       (

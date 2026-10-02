@@ -30,7 +30,7 @@ yonetici	guvenlik	/notifications	-	Bildirimler	yapisal	Mobilde bildirimler her e
 yonetici	tesis	/units	-	Daireler	yapisal	Mobilde daire listesi Bina yapısı ekranının içindedir (blok → daire); ayrı liste ekranı yok.
 yonetici	tesis	/tasks	taskTracking	Görevler	ayni	-
 yonetici	tesis	/bakim	bakim	Bakım takibi	ayni	-
-yonetici	tesis	/assets	assets	Demirbaş	ayni	-
+yonetici	tesis	/assets	-	Demirbaş	yalniz_web	Mobil Demirbaş ekranı saha personelinin NFC zimmet aracıdır (okut, zimmetine al, bırak); demirbaş kaydı, etiketleme ve envanter listesi web'de. Yönetici menüsüne zimmet aracı koymak saha kanıtı üretmeyen role saha işi vermek olurdu.
 yonetici	tesis	/schematic	sikayetHaritasi	Şikayet Haritası	ayni	-
 yonetici	tesis	/rezervasyon-yonetimi	rezervasyon	Rezervasyon	ayni	-
 yonetici	tesis	/dis-hizmetler	disHizmet	Dış hizmetler	ayni	-
@@ -75,7 +75,7 @@ yonetici	yonetim	/kvkk	-	KVKK tercihlerim	yapisal	Kişisel izin tercihi; mobilde
 yonetici	yonetim	-	bilgisayardan	Bilgisayardan yapılanlar	yalniz_mobil	Yalnız web'de kalan işlemlerin listesi ve app.yonetiyor.com bağlantısı; web'de karşılığı o sayfaların kendisi.
 sakin	finans	/aidatim	myDues	Aidatım	ayni	-
 sakin	iletisim	/duyurular	announcements	Duyurular	ayni	-
-sakin	iletisim	/taleplerim	complaints	Talep / Arıza	ayni	-
+sakin	iletisim	/taleplerim	-	Talep / Arıza	yapisal	Mobilde sakinin talep bildirme yolu ana ekrandaki "Bildir" düğmesi, takibi ızgaradaki Talep / Arıza karosudur; menüye üçüncü bir kapı açmak P145 kararıyla kaldırıldı.
 sakin	tesis	/rezervasyonlarim	rezervasyon	Rezervasyon	ayni	-
 sakin	iletisim	/etkinlikler	etkinlik	Etkinlikler	ayni	-
 sakin	iletisim	/kurallar	siteKurallari	Site kuralları	ayni	-

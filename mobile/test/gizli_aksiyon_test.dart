@@ -44,12 +44,14 @@ class _BosCheckpointApi extends CheckpointApi {
 
 void main() {
   group('(P166 §10) MENUDE ETIKETLI GIRIS', () {
-    test('GOREV KATEGORILERI artik menude (yonetici + admin)', () {
+    test('GOREV KATEGORILERI menuden erisilir (yonetici + admin)', () {
       // Once yalniz "Gorev yonetimi"nin sag ustundeki etiketsiz ikondu.
+      // (P251 §8) Artik TANIMLAR merkezinin girisi (web'de de tek
+      // "Tanimlar" girisinin sekmesi); menude Tanimlar var.
       for (final rol in [UserRole.yonetici, UserRole.admin]) {
         expect(
           homeMenuForRole(rol),
-          contains(HomeMenuEntry.taskCategories),
+          contains(HomeMenuEntry.tanimlar),
           reason: '$rol',
         );
       }

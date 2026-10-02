@@ -1,0 +1,10 @@
+# (P251 §8) Menu GRUP basliklari — web ve mobil AYNI (Turkce).
+# Kilitler: admin-web/tests/p251-menu-paritesi.test.ts, mobile/test/p251_menu_paritesi_test.dart
+grup	ad
+guvenlik	Güvenlik
+tesis	Tesis
+finans	Finans
+iletisim	İletişim
+kisiler	Kişiler
+tanimlar	Tanımlar
+yonetim	Yönetim

@@ -123,6 +123,11 @@ const BIRINCIL_UC: Record<string, string> = {
   "/raporlar": "GET /raporlar/katalog",
   "/transparency": "GET /transparency",
   "/users": "GET /users",
+  // (P251 §8) Sekmeli catilar: ilk sekmenin ucu.
+  "/kisiler": "GET /users",
+  "/devriye": "GET /patrol-windows",
+  "/goruntuleme-izni": "POST /unit-access-request",
+  "/finans/maas-kartlari": "GET /personel-kayitlari",
   // (P220 §4) Sakinler sayfasinin BIRINCIL ucu — `/users` DEGIL.
   // Sayfa acilinca ana listeyi getiren cagri budur ve rol kapisi
   // sunucudaki `_YONETIM` ile ayni.
@@ -359,20 +364,17 @@ describe("bilinmeyen rol / rota", () => {
     expect(rotaRoldeGorunur("/audit", "resident")).toBe(false);
   });
 
-  it("(P154) /olaylar YONETICIYE GORUNMEZ — yazma ucu ona kapali", () => {
-    // KOK NEDEN, tahmin degil olcum: violations.py'de _READER yoneticiyi
-    // iceriyor (liste aciliyor) ama _WRITER icermiyor; sayfanin "Olay
-    // bildir" dugmesi POST yapiyor ve yonetici 403 aliyor. Kerem'in
-    // karari sayfayi yoneticiden kaldirmak yonunde.
-    //
-    // BU KILIT NE ICIN: rol listesi bir gun "yonetim de gorsun" diye geri
-    // eklenirse, ayni 403 sessizce geri gelir. Test onu yazan kisiye
-    // once _WRITER'i acmasi gerektigini hatirlatir.
+  it("(P251 §8) /olaylar yoneticiye SALT OKUMA — yazma dugmesi ona cizilmez", () => {
+    // P154 sayfayi yoneticiden kaldirmisti: "Olay bildir" dugmesi POST
+    // yapiyor ve yonetici 403 aliyordu (_WRITER = admin, security).
+    // P251 §8 menu paritesi (mobil yonetici ayni listeyi okuyor) P154
+    // kaydinda yazili ALTERNATIFI uyguladi: liste acik, dugme yalniz
+    // yazabilen rolde (bkz. `guvenlik-ekranlari` dom testi).
     expect(rotaRoldeGorunur("/olaylar", "admin")).toBe(true);
-    expect(rotaRoldeGorunur("/olaylar", "yonetici")).toBe(false);
-    // `security` bu ucu MOBILDEN kullanir; `app.*` yuzeyinde zaten yok.
+    expect(rotaRoldeGorunur("/olaylar", "yonetici")).toBe(true);
     expect(rotaRoldeGorunur("/olaylar", "security")).toBe(false);
   });
+
 
   it("SINIFLANDIRILMAMIS rota menuye girmez", () => {
     expect(rotaRoldeGorunur("/bilinmeyen", "admin")).toBe(false);

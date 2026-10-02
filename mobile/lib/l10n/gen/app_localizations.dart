@@ -147,7 +147,7 @@ abstract class AppLocalizations {
   /// No description provided for @bolumSiteKurallari.
   ///
   /// In tr, this message translates to:
-  /// **'Site Kuralları'**
+  /// **'Site kuralları'**
   String get bolumSiteKurallari;
 
   /// No description provided for @bolumEtkinlikler.
@@ -189,13 +189,13 @@ abstract class AppLocalizations {
   /// No description provided for @kartAracPlaka.
   ///
   /// In tr, this message translates to:
-  /// **'Araç Plaka'**
+  /// **'Otopark ve araç geçişleri'**
   String get kartAracPlaka;
 
   /// No description provided for @kartIhlaller.
   ///
   /// In tr, this message translates to:
-  /// **'İhlaller'**
+  /// **'Olaylar ve ihlaller'**
   String get kartIhlaller;
 
   /// No description provided for @kartGorevlerim.
@@ -717,7 +717,7 @@ abstract class AppLocalizations {
   /// No description provided for @modulDevriyeTakibi.
   ///
   /// In tr, this message translates to:
-  /// **'Devriye Takibi'**
+  /// **'Devriye'**
   String get modulDevriyeTakibi;
 
   /// No description provided for @modulGorevlerim.
@@ -729,7 +729,7 @@ abstract class AppLocalizations {
   /// No description provided for @modulGorevYonetimi.
   ///
   /// In tr, this message translates to:
-  /// **'Görev Yönetimi'**
+  /// **'Görevler'**
   String get modulGorevYonetimi;
 
   /// No description provided for @modulDemirbas.
@@ -807,7 +807,7 @@ abstract class AppLocalizations {
   /// No description provided for @modulGoruntulemeIzni.
   ///
   /// In tr, this message translates to:
-  /// **'Görüntüleme İzni'**
+  /// **'Görüntüleme izni'**
   String get modulGoruntulemeIzni;
 
   /// No description provided for @modulRezervasyon.
@@ -825,13 +825,13 @@ abstract class AppLocalizations {
   /// No description provided for @modulSiteKurallari.
   ///
   /// In tr, this message translates to:
-  /// **'Site Kuralları'**
+  /// **'Site kuralları'**
   String get modulSiteKurallari;
 
   /// No description provided for @modulDisHizmetler.
   ///
   /// In tr, this message translates to:
-  /// **'Dış Hizmetler'**
+  /// **'Dış hizmetler'**
   String get modulDisHizmetler;
 
   /// No description provided for @modulEntegrasyonlar.
@@ -855,7 +855,7 @@ abstract class AppLocalizations {
   /// No description provided for @modulBinaYapisi.
   ///
   /// In tr, this message translates to:
-  /// **'Bina Yapısı'**
+  /// **'Bina yapısı'**
   String get modulBinaYapisi;
 
   /// No description provided for @modulSikayetHaritasi.
@@ -5258,7 +5258,7 @@ abstract class AppLocalizations {
   /// No description provided for @kuralBaslik.
   ///
   /// In tr, this message translates to:
-  /// **'Site Kuralları'**
+  /// **'Site kuralları'**
   String get kuralBaslik;
 
   /// No description provided for @kuralYeni.
@@ -7010,7 +7010,7 @@ abstract class AppLocalizations {
   /// No description provided for @raporBaslik.
   ///
   /// In tr, this message translates to:
-  /// **'Aylık raporlar'**
+  /// **'Raporlar'**
   String get raporBaslik;
 
   /// No description provided for @raporOncekiAy.
@@ -7652,7 +7652,7 @@ abstract class AppLocalizations {
   /// No description provided for @yonIletisimBaslik.
   ///
   /// In tr, this message translates to:
-  /// **'Yönetici İletişim'**
+  /// **'Yönetimle iletişim'**
   String get yonIletisimBaslik;
 
   /// No description provided for @yonIletisimAlinamadi.
@@ -7964,13 +7964,13 @@ abstract class AppLocalizations {
   /// Ana ekran karosu — agregat otopark doluluk
   ///
   /// In tr, this message translates to:
-  /// **'Otopark'**
+  /// **'Otopark ve araç geçişleri'**
   String get modulOtopark;
 
   /// Ana ekran karosu — arac/park ihlalleri
   ///
   /// In tr, this message translates to:
-  /// **'İhlaller'**
+  /// **'Olaylar ve ihlaller'**
   String get modulIhlaller;
 
   /// No description provided for @aracSuzgecTumu.
@@ -9842,7 +9842,7 @@ abstract class AppLocalizations {
   /// No description provided for @kurulumBaslik.
   ///
   /// In tr, this message translates to:
-  /// **'Kurulum Sihirbazı'**
+  /// **'Kurulum sihirbazı'**
   String get kurulumBaslik;
 
   /// No description provided for @kurulumAlt.
@@ -10076,7 +10076,7 @@ abstract class AppLocalizations {
   /// No description provided for @modulDokumanlar.
   ///
   /// In tr, this message translates to:
-  /// **'Site Dokümanları'**
+  /// **'Dokümanlar'**
   String get modulDokumanlar;
 
   /// No description provided for @dokumanBaslik.
@@ -10634,7 +10634,7 @@ abstract class AppLocalizations {
   /// No description provided for @finansTahsilatBaslik.
   ///
   /// In tr, this message translates to:
-  /// **'Tahsilat'**
+  /// **'Tahsilatlar'**
   String get finansTahsilatBaslik;
 
   /// No description provided for @finansKisiGerekli.
@@ -10706,7 +10706,7 @@ abstract class AppLocalizations {
   /// No description provided for @finansGiderBaslik.
   ///
   /// In tr, this message translates to:
-  /// **'Gider kaydı'**
+  /// **'Giderler'**
   String get finansGiderBaslik;
 
   /// No description provided for @finansGiderKaydedildi.
@@ -15082,6 +15082,234 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Aşağı taşı'**
   String get izgaraAsagiTasi;
+
+  /// No description provided for @kabukGrupKisiler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kişiler'**
+  String get kabukGrupKisiler;
+
+  /// No description provided for @kabukGrupYonetim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetim'**
+  String get kabukGrupYonetim;
+
+  /// No description provided for @modulKisiler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kişiler'**
+  String get modulKisiler;
+
+  /// No description provided for @modulKameralar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kameralar'**
+  String get modulKameralar;
+
+  /// No description provided for @modulTanimlar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tanımlar'**
+  String get modulTanimlar;
+
+  /// No description provided for @modulTesisAyarlari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis ayarları'**
+  String get modulTesisAyarlari;
+
+  /// No description provided for @modulOtomasyon.
+  ///
+  /// In tr, this message translates to:
+  /// **'Otomasyon'**
+  String get modulOtomasyon;
+
+  /// No description provided for @modulBilgisayardan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bilgisayardan yapılanlar'**
+  String get modulBilgisayardan;
+
+  /// No description provided for @kisilerSekmeSakinler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakinler'**
+  String get kisilerSekmeSakinler;
+
+  /// No description provided for @kisilerSekmePersonel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Personel'**
+  String get kisilerSekmePersonel;
+
+  /// No description provided for @kisilerSekmeYoneticiler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yöneticiler ve denetçiler'**
+  String get kisilerSekmeYoneticiler;
+
+  /// No description provided for @kisilerSekmeDavetler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Davetler'**
+  String get kisilerSekmeDavetler;
+
+  /// No description provided for @yoneticiListeBos.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu tesiste başka yönetici ya da denetçi yok.'**
+  String get yoneticiListeBos;
+
+  /// No description provided for @yoneticiEkle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetici / denetçi ekle'**
+  String get yoneticiEkle;
+
+  /// No description provided for @yoneticiEklendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesap açıldı; davet e-postası gönderildi.'**
+  String get yoneticiEklendi;
+
+  /// No description provided for @tanimlarWebNotu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kasalar, gelir/gider tanımları, firmalar, sayaçlar, araç kayıtları ve muhasebe ayarları bilgisayardan yönetilir.'**
+  String get tanimlarWebNotu;
+
+  /// No description provided for @bilgisayardanAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu işlemler geniş tablo ve önizleme ister; {adres} adresinden yapılır.'**
+  String bilgisayardanAciklama(String adres);
+
+  /// No description provided for @webAidat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aidat'**
+  String get webAidat;
+
+  /// No description provided for @webBorclandirmalar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Borçlandırmalar'**
+  String get webBorclandirmalar;
+
+  /// No description provided for @webGelirler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gelirler'**
+  String get webGelirler;
+
+  /// No description provided for @webVirman.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesaplar arası virman'**
+  String get webVirman;
+
+  /// No description provided for @webIade.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ödeme iadesi'**
+  String get webIade;
+
+  /// No description provided for @webAcilis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açılış fişleri'**
+  String get webAcilis;
+
+  /// No description provided for @webBanka.
+  ///
+  /// In tr, this message translates to:
+  /// **'Banka Entegrasyonu'**
+  String get webBanka;
+
+  /// No description provided for @webMesai.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fazla mesai'**
+  String get webMesai;
+
+  /// No description provided for @webMaasKartlari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Maaş kartları'**
+  String get webMaasKartlari;
+
+  /// No description provided for @webIcra.
+  ///
+  /// In tr, this message translates to:
+  /// **'İcra dosyaları'**
+  String get webIcra;
+
+  /// No description provided for @webMesajlar.
+  ///
+  /// In tr, this message translates to:
+  /// **'SMS/E-Posta Yönetimi'**
+  String get webMesajlar;
+
+  /// No description provided for @webIceAktarim.
+  ///
+  /// In tr, this message translates to:
+  /// **'İçe aktarım'**
+  String get webIceAktarim;
+
+  /// No description provided for @webKararDefteri.
+  ///
+  /// In tr, this message translates to:
+  /// **'Karar Defteri'**
+  String get webKararDefteri;
+
+  /// No description provided for @tesisAyarAdres.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açık adres'**
+  String get tesisAyarAdres;
+
+  /// No description provided for @tesisAyarIlce.
+  ///
+  /// In tr, this message translates to:
+  /// **'İlçe'**
+  String get tesisAyarIlce;
+
+  /// No description provided for @tesisAyarIl.
+  ///
+  /// In tr, this message translates to:
+  /// **'İl'**
+  String get tesisAyarIl;
+
+  /// No description provided for @tesisAyarPostaKodu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Posta kodu'**
+  String get tesisAyarPostaKodu;
+
+  /// No description provided for @tesisAyarKaydedildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis ayarları kaydedildi.'**
+  String get tesisAyarKaydedildi;
+
+  /// No description provided for @tesisAyarWebNotu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Konum (harita), otopark kapasitesi ve eşik ayarları bilgisayardan yapılır.'**
+  String get tesisAyarWebNotu;
+
+  /// No description provided for @yoneticiListeBosAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetici ya da denetçi eklemek için sağ alttaki düğmeyi kullanın; hesap açılır ve davet e-postası gider.'**
+  String get yoneticiListeBosAlt;
+
+  /// No description provided for @webDemirbas.
+  ///
+  /// In tr, this message translates to:
+  /// **'Demirbaş'**
+  String get webDemirbas;
 }
 
 class _AppLocalizationsDelegate

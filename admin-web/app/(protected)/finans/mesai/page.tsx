@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import useSWR from "swr";
 
@@ -309,7 +310,13 @@ export default function MesaiSayfasi() {
                     yazmak, yoneticiye "mesai yok" demenin sessiz ve
                     yanlis yoluydu. */}
                 {k.ucret_tanimsiz ? (
-                  <Rozet durum="uyari">{t("mesaiUcretTanimsiz")}</Rozet>
+                  // (P251 §8) Ucret hesaba BAGLI maas kartindan okunur.
+                  // Uyari nereye gidilecegini de soyler: kart ya yok ya
+                  // da hesaba bagli degil — ikisi de Kisiler › Personel'de
+                  // tek tikla cozulur.
+                  <Link href="/kisiler?sekme=personel" className="underline-offset-2 hover:underline">
+                    <Rozet durum="uyari">{t("mesaiUcretTanimsiz")}</Rozet>
+                  </Link>
                 ) : k.gidere_yazildi ? (
                   <Rozet durum="olumlu">{t("mesaiYazilmis")}</Rozet>
                 ) : (

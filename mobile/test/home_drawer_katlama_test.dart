@@ -54,7 +54,6 @@ Widget _cekmece(BellekDepo depo) => _kapsam(
 );
 
 /// Bir bolumun basligi (dugme gorevi goren satir).
-Finder _baslik(String metin) => find.text(metin);
 
 void main() {
   testWidgets('BOLUM BASLIKLARI cizilir ve ogeler altinda durur', (
@@ -73,7 +72,7 @@ void main() {
     expect(gruplar.length, greaterThan(1));
     for (final g in gruplar.keys) {
       expect(
-        _baslik(_ad(tester, g)),
+        find.byKey(Key('menu-grup-${g.name}')),
         findsOneWidget,
         reason: '${g.name} basligi cizilmedi',
       );
@@ -97,7 +96,7 @@ void main() {
 
     expect(find.text(modulAdi), findsOneWidget);
 
-    await tester.tap(_baslik(_ad(tester, grup)));
+    await tester.tap(find.byKey(Key('menu-grup-${grup.name}')));
     await tester.pumpAndSettle();
 
     // "Gorunmez ama odaklanilabilir" satir, ekran okuyucuyla gezinmenin en
@@ -121,7 +120,7 @@ void main() {
     final grup = gruplar.keys.first;
     final modulAdi = _modulAdi(tester, gruplar[grup]!.first);
 
-    await tester.tap(_baslik(_ad(tester, grup)));
+    await tester.tap(find.byKey(Key('menu-grup-${grup.name}')));
     await tester.pumpAndSettle();
     expect(find.text(modulAdi), findsNothing);
 
@@ -197,9 +196,6 @@ void main() {
 // Etiketler AGACTAN okunur (sabit Turkce yazmak, dil degisince testi
 // yalancilastirirdi).
 // --------------------------------------------------------------------------
-String _ad(WidgetTester tester, HomeMenuGrup g) =>
-    homeMenuGrupBasligi(_l10n(tester), g);
-
 String _modulAdi(WidgetTester tester, HomeMenuEntry e) =>
     moduleBaslik(_l10n(tester), e);
 

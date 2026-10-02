@@ -25,7 +25,9 @@ void main() {
   test('menude TUR/EKIP/ZIYARETCI var; SAKIN ve KARGO YOK', () {
     final menu = homeMenuForRole(amir);
     expect(menu, contains(HomeMenuEntry.patrol));
-    expect(menu, contains(HomeMenuEntry.personel));
+    // (P251 §8) Personel artik Kisiler'in sekmesi; amir yalniz o sekmeyi
+    // gorur (bkz. `kisilerSekmeleri`).
+    expect(menu, contains(HomeMenuEntry.kisiler));
     // (P231 §3) ZIYARETCI ACILDI: kaydi kapidaki gorevli girer, amirin
     // isi onu DENETLEMEK. Yazma yetkisi verilmedi.
     expect(menu, contains(HomeMenuEntry.visitors));

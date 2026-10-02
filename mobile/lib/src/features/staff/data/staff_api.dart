@@ -76,6 +76,26 @@ class StaffApi {
     }
   }
 
+  /// (P251 §8) Kisiler › Yoneticiler ve denetciler sekmesi.
+  /// Sunucu cagiranin gorebildigi rollerle KESISTIRIR (P231).
+  Future<List<StaffMember>> yonetimListesi() async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/users',
+        // Diger listelerle ayni: tek sayfa, suzme istemcide (liste
+        // bicimi kodlamasina bagli kalmamak icin rol parametresi yok).
+        queryParameters: {'limit': 200},
+      );
+      final items = (res.data!['items'] as List).cast<Map<String, dynamic>>();
+      return items
+          .map(StaffMember.fromJson)
+          .where((s) => s.role == 'yonetici' || s.role == 'denetci')
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   /// (P205 §2.4) VARDIYA ATANABILIR TUM personel — saha rolleriyle
   /// SINIRLI DEGIL. `getFieldStaff` yalniz `security` +
   /// `tesis_gorevlisi` doner; vardiya guvenlik amirine de yazilabilir
@@ -218,6 +238,11 @@ class StaffApi {
 
 final staffApiProvider =
     Provider<StaffApi>((ref) => StaffApi(ref.watch(dioProvider)));
+
+/// (P251 §8) Yoneticiler ve denetciler (Kisiler sekmesi).
+final yonetimListesiProvider = FutureProvider.autoDispose<List<StaffMember>>(
+  (ref) => ref.watch(staffApiProvider).yonetimListesi(),
+);
 
 final fieldStaffProvider = FutureProvider.autoDispose<List<StaffMember>>(
   (ref) async {

@@ -121,7 +121,7 @@ describe("app.* menusu role gore", () => {
     tesisKonagi();
     ciz(Kabuk("denetci"));
     const adlar = menuAdlari();
-    expect(adlar).toContain("Rapor motoru");
+    expect(adlar).toContain("Raporlar");
     // (P167 §1.7) "Profilim" ARTIK KENAR CUBUGUNDA DEGIL — sag ust
     // kullanici menusune tasindi. Sayfa kaybolmadi, YERI degisti; bu
     // yuzden burada YOKLUGU olculuyor, gorunurlugu ise asagidaki
@@ -129,15 +129,15 @@ describe("app.* menusu role gore", () => {
     expect(adlar).not.toContain("Profilim");
     expect(adlar).not.toContain("Finans");
     expect(adlar).not.toContain("Tahakkuk");
-    expect(adlar).not.toContain("Kullanıcılar");
+    expect(adlar).not.toContain("Kişiler");
   });
 
   it("YONETICI: yonetim seti var, sakinin kendi kayitlari YOK", () => {
     tesisKonagi();
     ciz(Kabuk("yonetici"));
     const adlar = menuAdlari();
-    expect(adlar).toContain("Kullanıcılar");
-    expect(adlar).toContain("Finans");
+    expect(adlar).toContain("Kişiler");
+    expect(adlar).toContain("Finansal özet");
     expect(adlar).toContain("Kameralar");
     expect(adlar).not.toContain("Aidatım");
     // (P223 §3) ARTIK MENUDE: uc yoneticiye ACILDI (`_OPERATOR`e eklendi)
@@ -145,7 +145,7 @@ describe("app.* menusu role gore", () => {
     // duzeltebilen kimse kalmiyordu. Menude gostermemek, yapabildigi bir
     // isi bulamamasi olurdu. Uc geri daraltilirsa `rol-menusu.test.ts`
     // (koddan uretilen matrisle karsilastiran kilit) DUSER.
-    expect(adlar).toContain("Araç geçişleri");
+    expect(adlar).toContain("Otopark ve araç geçişleri");
   });
 
   it("LOGO hedefi ROLE gore — denetci panoya yollanmaz", () => {
@@ -174,8 +174,8 @@ describe("app.* menusu role gore", () => {
     tesisKonagi();
     fetchSahtele({ "/api/me": { role: "denetci" } });
     ciz(Kabuk(null));
-    await waitFor(() => expect(menuAdlari()).toContain("Rapor motoru"));
-    expect(menuAdlari()).not.toContain("Kullanıcılar");
+    await waitFor(() => expect(menuAdlari()).toContain("Raporlar"));
+    expect(menuAdlari()).not.toContain("Kişiler");
   });
 
   it("ROL BILINIYORSA menu AGA HIC SORMADAN dogru cizilir", () => {
@@ -192,7 +192,7 @@ describe("app.* menusu role gore", () => {
     globalThis.fetch = (() => new Promise(() => {})) as unknown as typeof fetch;
     ciz(Kabuk("yonetici"));
     const adlar = menuAdlari();
-    expect(adlar).toContain("Kullanıcılar");
+    expect(adlar).toContain("Kişiler");
     expect(adlar).toContain("Kameralar");
   });
 

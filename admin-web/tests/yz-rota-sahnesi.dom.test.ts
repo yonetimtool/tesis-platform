@@ -16,8 +16,8 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import CheckpointsPage from "@/app/(protected)/checkpoints/page";
-import PatrolPlansPage from "@/app/(protected)/patrol-plans/page";
+import CheckpointsPage from "@/components/devriye/noktalar";
+import PatrolPlansPage from "@/components/devriye/planlar";
 import { alarmHaritasi, noktaDurumu } from "@/lib/rota-durumu";
 import type { AlarmGrubu } from "@/lib/types";
 

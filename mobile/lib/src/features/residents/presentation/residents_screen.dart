@@ -29,7 +29,11 @@ import '../../../core/ui/telefon_alani_widget.dart';
 /// bilmiyorsa (cogu zaman bilmiyor — "B blokta 4. kattaki") listeyi
 /// tepeden tarayacakti. Gruplama ve blok aramasi o adimi kaldiriyor.
 class ResidentsScreen extends ConsumerStatefulWidget {
-  const ResidentsScreen({super.key});
+  const ResidentsScreen({super.key, this.gomulu = false});
+
+  /// (P251 §8) Kisiler ekraninin SEKMESI olarak cizilir: ust cubugu
+  /// Kisiler verir, bu ekran yalniz govdeyi (ve kendi "Ekle" dugmesini).
+  final bool gomulu;
 
   @override
   ConsumerState<ResidentsScreen> createState() => _ResidentsScreenState();
@@ -64,9 +68,11 @@ class _ResidentsScreenState extends ConsumerState<ResidentsScreen> {
     final suzgec = ref.watch(sakinSuzgeciProvider);
     final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(baslikBuyuk(l10n.sakinBaslik, context.dilKodu)),
-      ),
+      appBar: widget.gomulu
+          ? null
+          : AppBar(
+              title: Text(baslikBuyuk(l10n.sakinBaslik, context.dilKodu)),
+            ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openAddSheet(context, ref),
         icon: const Icon(Icons.person_add_alt_1),

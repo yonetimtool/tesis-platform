@@ -34,8 +34,9 @@ describe("(P166 §2) sayfa aramasi calisiyor", () => {
     expect(hrefler("tesis", "yonetici", "aidat")).toContain("/dues");
   });
 
-  it("'devriye' Devriye Planlari'ni bulur", () => {
-    expect(hrefler("tesis", "yonetici", "devriye")).toContain("/patrol-plans");
+  it("'devriye' Devriye sayfasini bulur", () => {
+    // (P251 §8) NFC noktalari, planlar ve takip TEK sayfanin sekmeleri.
+    expect(hrefler("tesis", "yonetici", "devriye")).toContain("/devriye");
   });
 
   it("AKSANSIZ yazim da bulur ('guvenlik' -> 'Güvenlik')", () => {

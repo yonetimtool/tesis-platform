@@ -67,7 +67,7 @@ function yorumsuz(kaynak: string): string {
  */
 const SAYFA_ICI_KALIR = new Set([
   "(protected)/reports/dues/page.tsx",
-  "(protected)/reports/patrols/page.tsx",
+  "components/devriye/takip.tsx",
   "(protected)/reports/tasks/page.tsx",
   "(protected)/settings/page.tsx",
   // ESKI `Modal` bileseninin KENDISI: kirli-kapatma onayini tarayicinin

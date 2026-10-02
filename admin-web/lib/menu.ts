@@ -60,6 +60,9 @@ export type GrupId =
   // korumak olurdu; icra da (§1.4) para dosyasinin yaninda aranir.
   | "finans"
   | "iletisim"
+  // (P251 §8) KISILER — sakinler, personel, yoneticiler ve davetler TEK
+  // girisin sekmeleri. Mobilde de ayni grup ve ayni ad.
+  | "kisiler"
   | "tanimlar"
   | "yonetim"
   | "platform"
@@ -152,6 +155,7 @@ export const GRUP_ANAHTARI: Record<GrupId, SozlukAnahtari> = {
   tesis: "kabukGrupTesis",
   finans: "kabukGrupFinans",
   iletisim: "kabukGrupIletisim",
+  kisiler: "kabukGrupKisiler",
   tanimlar: "kabukGrupTanimlar",
   yonetim: "kabukGrupYonetim",
   platform: "kabukGrupPlatform",
@@ -172,6 +176,7 @@ export const GRUP_IKONU: Record<GrupId, IconName> = {
   tesis: "building",
   finans: "money",
   iletisim: "chat",
+  kisiler: "users",
   tanimlar: "box",
   yonetim: "gear",
   platform: "hub",
@@ -199,6 +204,7 @@ const GRUP_SIRASI: readonly GrupId[] = [
   "tesis",
   "finans",
   "iletisim",
+  "kisiler",
   "tanimlar",
   "yonetim",
   "platform",
@@ -215,15 +221,18 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/dashboard", anahtar: "kabukOzet", icon: "grid", grup: "ozet" },
 
   // --- GUVENLIK: gunluk saha akisi --------------------------------------
-  { href: "/olaylar", anahtar: "kabukOlaylar", icon: "alert", grup: "guvenlik" },
+  { href: "/olaylar", anahtar: "kabukOlaylar", icon: "gavel", grup: "guvenlik" },
   // (P240 §1) Acil durum cagrilari — takip ekrani.
   { href: "/panik", anahtar: "kabukPanik", icon: "alert", grup: "guvenlik" },
   // (P240 §3) Akilli ev — AYRI SEKME (entegrasyon sayfasinin alti degil):
   // yonetici burada gunluk is yapar, entegrasyon sayfasi kurulum icindir.
-  { href: "/akilli-ev", anahtar: "kabukAkilliEv", icon: "hub", grup: "guvenlik" },
+  //
+  // (P251 §8) TESIS grubuna tasindi (asagida): binanin ve dairelerin
+  // cihazlari, sakin de kullanir. Mobilde de Tesis — tek grup.
   // (P241 §1) Bakim takibi — TESIS grubunda: binanin kendisiyle ilgili
   // (asansor, kazan, jenerator), guvenlik olayi degil.
   { href: "/bakim", anahtar: "kabukBakim", icon: "cube", grup: "tesis" },
+  { href: "/akilli-ev", anahtar: "kabukAkilliEv", icon: "hub", grup: "tesis" },
   { href: "/notifications", anahtar: "kabukBildirimler", icon: "bell", grup: "guvenlik" },
   { href: "/kameralar", anahtar: "kabukKameralar", icon: "camera", grup: "guvenlik" },
   { href: "/kamera-kayitlari", anahtar: "kabukKameraKayitlari", icon: "kayit", grup: "guvenlik" },
@@ -243,11 +252,15 @@ const OGELER: readonly MenuOgesi[] = [
   // ama ayri satir: birlestirmek, gunluk kullanilan plani haftada bir
   // dokunulan sablon ekraninin icine gommekti.
   { href: "/vardiya-plani", anahtar: "kabukVardiyaPlani", icon: "calendar", grup: "guvenlik" },
-  { href: "/checkpoints", anahtar: "kabukNfcNoktalari", icon: "nfc", grup: "guvenlik" },
-  { href: "/patrol-plans", anahtar: "kabukDevriyePlanlari", icon: "route", grup: "guvenlik" },
+  // (P251 §8) DEVRIYE TEK SAYFA: takip · NFC noktalari · planlar sekmeleri.
+  // Eski iki satir (NFC noktalari, Devriye planlari) ve menude olmayan
+  // takip raporu bu sayfanin sekmeleri oldu; eski adresler yonlenir.
+  { href: "/devriye", anahtar: "kabukDevriye", icon: "route", grup: "guvenlik" },
   { href: "/ziyaretciler", anahtar: "kabukZiyaretciler", icon: "visitor", grup: "guvenlik" },
   { href: "/kargolar", anahtar: "kabukKargolar", icon: "package", grup: "guvenlik" },
   { href: "/arac-gecisleri", anahtar: "kabukAracGecisleri", icon: "car", grup: "guvenlik" },
+  // (P251 §8) GORUNTULEME IZNI — mobilde vardi, web'de yoktu.
+  { href: "/goruntuleme-izni", anahtar: "kabukGoruntulemeIzni", icon: "eye", grup: "guvenlik" },
 
   // --- TESIS: binanin kendisi -------------------------------------------
   { href: "/units", anahtar: "kabukDaireler", icon: "home", grup: "tesis" },
@@ -260,10 +273,10 @@ const OGELER: readonly MenuOgesi[] = [
   // biri yoneticinin OZEL defteri (tesise bagli), oteki KAMU pazar yeri.
   // Ayni girise koymak yoneticiden kendi defterini almak olurdu.
   { href: "/yerel-isletmeler", anahtar: "dukkanYerelIsletmeler", icon: "storefront", grup: "tesis" },
-  { href: "/etkinlikler", anahtar: "kabukEtkinlikler", icon: "calendar", grup: "tesis" },
+  { href: "/etkinlikler", anahtar: "kabukEtkinlikler", icon: "calendar", grup: "iletisim" },
   { href: "/rezervasyonlarim", anahtar: "kabukRezervasyon", icon: "ticket", grup: "tesis" },
   { href: "/rezervasyon-yonetimi", anahtar: "kabukRezervasyonYonetimi", icon: "clock", grup: "tesis" },
-  { href: "/kurallar", anahtar: "kabukKurallar", icon: "gavel", grup: "tesis" },
+  { href: "/kurallar", anahtar: "kabukKurallar", icon: "gavel", grup: "iletisim" },
 
   // --- FINANS: para -----------------------------------------------------
   // (P154 / Asama 7.1) Brief'in FINANS listesi: Borclandirmalar ·
@@ -303,6 +316,9 @@ const OGELER: readonly MenuOgesi[] = [
   // GIDERDIR (P192 tek defter). Vardiya bolumune koymak, parayi
   // operasyonun icine gizlemek olurdu.
   { href: "/finans/mesai", anahtar: "kabukMesai", icon: "clock", grup: "finans" },
+  // (P251 §8) MAAS KARTLARI — Tanimlar › "Personel"di. Bir giderin
+  // tanimidir; "Personel" adi mobilde saha HESABI demekti.
+  { href: "/finans/maas-kartlari", anahtar: "finansMaasKartlari", icon: "users", grup: "finans" },
   // (P192 §5) BORCLULAR: yaslandirma + tahsilat gostergesi + toplu islem.
   // Ucu ayni sayfada cunku yaslandirma bir SORU sorar, toplu islem
   // onun CEVABINI uygular.
@@ -315,10 +331,12 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/icra", anahtar: "kabukIcra", icon: "gavel", grup: "finans" },
   // (P111) Sayac okuma tanimlardan beslenir, ciktisi bir tahakkuktur.
   { href: "/sayac-okuma", anahtar: "kabukSayacOkuma", icon: "gauge", grup: "finans" },
-  { href: "/reports/dues", anahtar: "kabukRaporlar", icon: "chart", grup: "finans" },
-  // (P40) 12 raporluk katalog; `/reports/dues` tek raporluk eski sayfadir
-  // ve ikisi YAN YANA durur ki eski baglantilar kirilmasin.
+  // (P40) 12 raporluk katalog. (P251 §8) TEK "Raporlar" satiri: eski tek
+  // raporluk `/reports/dues` menuden cikti (adresi calisir, katalogda da
+  // var); iki "rapor" satiri mobildeki tek "Raporlar" ile ayrisiyordu.
   { href: "/raporlar", anahtar: "kabukRaporMotoru", icon: "report", grup: "finans" },
+  // (P251 §8) SEFFAFLIK — Yonetim'den Finans'a: anonim aylik finans ozeti.
+  { href: "/transparency", anahtar: "kabukSeffaflik", icon: "eye", grup: "finans" },
 
   // --- PLATFORM: yalniz `panel.*` ---------------------------------------
   { href: "/tenants", anahtar: "kabukTesisler", icon: "building", grup: "platform" },
@@ -379,8 +397,9 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/taleplerim", anahtar: "kabukTaleplerim", icon: "ticket", grup: "iletisim" },
   { href: "/anketler", anahtar: "kabukAnketler", icon: "survey", grup: "iletisim" },
   { href: "/yonetim-iletisim", anahtar: "kabukYonetimIletisim", icon: "handshake", grup: "iletisim" },
-  // (P155 §7) Davet gonderim durumu — kisiye kayit bagi gonderildi mi.
-  { href: "/davetler", anahtar: "kabukDavetler", icon: "invite", grup: "iletisim" },
+  // (P155 §7) Davetler — (P251 §8) Kisiler sayfasinin sekmesi oldu.
+  // (P251 §8) GURULTU UYARILARI — Yonetim'den Iletisim'e (mobille ayni).
+  { href: "/gurultu-uyarilari", anahtar: "kabukGurultuUyarilari", icon: "bell", grup: "iletisim" },
   { href: "/support", anahtar: "kabukDestek", icon: "help", grup: "iletisim" },
 
   // --- YONETIM: kurulum + hesap verebilirlik -----------------------------
@@ -421,7 +440,11 @@ const OGELER: readonly MenuOgesi[] = [
   // (`TANIM_SEKMELERI`, bkz. `sayfaAra`).
   { href: "/tanimlar", anahtar: "kabukTanimlar", icon: "list", grup: "tanimlar" },
 
-  { href: "/users", anahtar: "kabukKullanicilar", icon: "users", grup: "yonetim" },
+  // --- KISILER: TEK GIRIS (P251 §8) -------------------------------------
+  // Kullanicilar, Sakinler ve Davetler AYNI kaydin (`app_user`) uc
+  // gorunumuydu; artik `/kisiler`in sekmeleri. Eski adresler yonlenir.
+  { href: "/kisiler", anahtar: "kabukKisiler", icon: "users", grup: "kisiler" },
+
   // (P220 §4) SAKINLER — `/users`TAN AYRI ve bu KASITLI.
   //
   // `/users` "kimin hesabi var ve rolu ne" (tum roller), bu sayfa "KIM
@@ -430,14 +453,17 @@ const OGELER: readonly MenuOgesi[] = [
   //
   // Adlar ayrimi TASIYOR: "Kullanicilar" = hesaplar, "Sakinler" = daire
   // sakinleri. Ayni ikonu paylasmiyorlar ki menude ayirt edilsinler.
-  { href: "/residents", anahtar: "kabukSakinler", icon: "home", grup: "yonetim" },
+  // (P251 §8) `/residents` -> Kisiler › Sakinler (bloklara gore gorunum).
   // (P193 §5) Tesis ayarlari — YONETIM grubunda, `/settings` (platform)
   // ile karismasin diye ayri ad ve ayri ikon.
   { href: "/tesis-ayarlari", anahtar: "kabukTesisAyarlari", icon: "building", grup: "yonetim" },
   // (E2E 2026-09) Entegrasyonlar + diyafon + baglanti sagligi — tesis
   // kurulumu, platform isi degil (bkz. yuzey.ts). `hub` bu grupta tek.
   { href: "/integrations", anahtar: "kabukEntegrasyonlar", icon: "hub", grup: "yonetim" },
-  { href: "/transparency", anahtar: "kabukSeffaflik", icon: "eye", grup: "yonetim" },
+  // (P251 §8) KURULUM SIHIRBAZI — alt cubuktan Yonetim grubuna (mobille
+  // ayni grup). Alt cubukta tek basina durmasi P167 §1.8 kararidir; P251
+  // menu paritesi "ayni is, ayni grup" ilkesiyle onu gruba aldi.
+  { href: "/kurulum", anahtar: "kurulumBaslik", icon: "check", grup: "yonetim" },
   // (P167 §6.1) "YONETISIM" BASLIGI KALDIRILDI ve icindeki dort bolum
   // KENDI SATIRLARINA cikti. Eski hâlde tek bir satirin arkasinda karar
   // defteri, dokuman arsivi, KVKK metni ve gurultu uyarilari duruyordu —
@@ -445,7 +471,7 @@ const OGELER: readonly MenuOgesi[] = [
   // bir SOYUTLAMADIR; kullanici "karar defteri"ni arar.
   { href: "/karar-defteri", anahtar: "kabukKararDefteri", icon: "gavel", grup: "yonetim" },
   { href: "/dokumanlar", anahtar: "kabukDokumanlar", icon: "folder", grup: "yonetim" },
-  { href: "/gurultu-uyarilari", anahtar: "kabukGurultuUyarilari", icon: "bell", grup: "yonetim" },
+
   { href: "/audit", anahtar: "kabukDenetimKaydi", icon: "scan", grup: "yonetim" },
   // (P41) Yetki matrisi denetimin yaninda.
   { href: "/yetki", anahtar: "kabukYetki", icon: "shield", grup: "yonetim" },
@@ -468,7 +494,6 @@ export const TANIM_SEKMELERI: readonly MenuOgesi[] = [
   { href: "/tanimlar", sorgu: "defter=gelir-gider-tanimlari", anahtar: "tanimGelirGiderTanimlari", icon: "list", grup: "tanimlar" },
   { href: "/tanimlar", sorgu: "defter=firmalar", anahtar: "tanimFirmalar", icon: "building", grup: "tanimlar" },
   { href: "/tanimlar", sorgu: "defter=gorev-kategorileri", anahtar: "tanimGorevKategorileri", icon: "tag", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=personel-kayitlari", anahtar: "tanimPersonel", icon: "users", grup: "tanimlar" },
   { href: "/tanimlar", sorgu: "defter=arac-kayitlari", anahtar: "tanimAraclar", icon: "car", grup: "tanimlar" },
   { href: "/tanimlar", sorgu: "defter=sayaclar-ana", anahtar: "tanimSayaclar", icon: "gauge", grup: "tanimlar" },
   { href: "/tanimlar", sorgu: "defter=sayaclar-bolum", anahtar: "tanimSayaclarBolum", icon: "submeter", grup: "tanimlar" },
@@ -500,22 +525,13 @@ export const PROFIL_OGESI: MenuOgesi = {
 };
 
 /**
- * (P167 §1.8) KURULUM SIHIRBAZI — bolum ogesi DEGIL, alt cubugun ust satiri.
+ * (P167 §1.8) KURULUM SIHIRBAZI — (P251 §8) artik YONETIM grubunda.
  *
- * Tanimlar bolumunun icindeydi ve orada bir DEFTER gibi gorunuyordu; oysa
- * sihirbaz bir kayit turu degil, o kayitlari sirayla dolduran bir AKIS.
- * Alt cubukta tam genislikte tek satir olarak durur: ne bir bolume ait
- * gorunur ne de tema/cikis ile ayni onem duzeyine iner.
- *
- * `PROFIL_OGESI` ile ayni desen — arama onu hâlâ bulur, rol kapisi hâlâ
- * `ROTA_ROLLERI`den gelir.
+ * P167 onu alt cubuga almisti (bir defter sanilmasin diye). P251 menu
+ * paritesi "ayni is, ayni grup" dedi: mobilde de Yonetim'de. Ogenin
+ * kendisi `OGELER`de; bu sabit geriye uyum ve gorunurluk sorusu icin.
  */
-export const KURULUM_OGESI: MenuOgesi = {
-  href: "/kurulum",
-  anahtar: "kurulumBaslik",
-  icon: "check",
-  grup: "tanimlar",
-};
+export const KURULUM_OGESI: MenuOgesi = OGELER.find((o) => o.href === "/kurulum")!;
 
 export interface MenuGrubu {
   id: GrupId;
@@ -704,7 +720,7 @@ export function sayfaAra(
   // kullaniciyi "menude yok, o hâlde yok" sonucuna gotururdu.
   // (P251 §7) Tanimlar sekmeleri de ayni sekilde: menude tek satir,
   // aramada her sekme kendi adiyla ve kendi derin baglantisiyla.
-  for (const oge of [PROFIL_OGESI, KURULUM_OGESI, ...TANIM_SEKMELERI]) {
+  for (const oge of [PROFIL_OGESI, ...TANIM_SEKMELERI]) {
     if (ogeGorunur(oge, yuzey, rol)) {
       kume.push({ oge, grupAnahtari: GRUP_ANAHTARI[oge.grup] });
     }

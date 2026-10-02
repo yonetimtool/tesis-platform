@@ -1,4 +1,4 @@
-  14,  16  358x28  YÖNETİCİ İLETİŞİM
+  14,  16  358x28  YÖNETİMLE İLETİŞİM
   92,  36  210x24  Mehmet Yilmaz
  120,  36  185x20  +905550000000
  166,  78  197x20  Yöneticiyi Ara

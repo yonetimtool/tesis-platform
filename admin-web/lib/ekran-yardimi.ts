@@ -21,6 +21,9 @@ export const EKRAN_YARDIMI: Record<string, SozlukAnahtari> = {
   "/dashboard": "yardimDashboard",
   "/kurulum": "yardimKurulum",
   "/users": "yardimUsers",
+  // (P251 §8) Sekmeli catilar: ilk sekmenin yardim metni (eski sayfalarinki).
+  "/kisiler": "yardimUsers",
+  "/devriye": "yardimPatrolPlans",
   // (E2E 2026-09) Sakinler ekrani hesap ACMAZ; Kullanicilar metni
   // ("kisiyi eklediginizde davet gider") burada yanlisti.
   "/residents": "yardimResidents",

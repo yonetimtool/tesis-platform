@@ -130,8 +130,8 @@ describe("korumali duzen", () => {
     cerezler.set(ACCESS_COOKIE, jwt({ role: "denetci" }));
     await cizDuzen();
     // `/api/me` yaniti gelmeden, tek cizimde dogru menu.
-    expect(menuAdlari()).toContain("Rapor motoru");
-    expect(menuAdlari()).not.toContain("Kullanıcılar");
+    expect(menuAdlari()).toContain("Raporlar");
+    expect(menuAdlari()).not.toContain("Kişiler");
   });
 
   it("CEREZ YOKSA menu bos baslar (sizinti yok)", async () => {

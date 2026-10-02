@@ -572,7 +572,7 @@ Web sakin modu (P247) başlıksız tek bölümdür; grup mobilde ölçülür.
 |---|---|---|---|---|
 | Finans | Aidatım (`/aidatim`) | Aidatım (`myDues`) | ✓ aynı |  |
 | İletişim | Duyurular (`/duyurular`) | Duyurular (`announcements`) | ✓ aynı |  |
-| İletişim | Talep / Arıza (`/taleplerim`) | Talep / Arıza (`complaints`) | ✓ aynı |  |
+| İletişim | Talep / Arıza (`/taleplerim`) | — | menü dışı (yapısal) | Mobilde sakinin talep bildirme yolu ana ekrandaki "Bildir" düğmesi, takibi ızgaradaki Talep / Arıza karosudur; menüye üçüncü bir kapı açmak P145 kararıyla kaldırıldı. |
 | Tesis | Rezervasyon (`/rezervasyonlarim`) | Rezervasyon (`rezervasyon`) | ✓ aynı |  |
 | İletişim | Etkinlikler (`/etkinlikler`) | Etkinlikler (`etkinlik`) | ✓ aynı |  |
 | İletişim | Site kuralları (`/kurallar`) | Site kuralları (`siteKurallari`) | ✓ aynı |  |
@@ -673,3 +673,98 @@ açılmaya devam eder.
   `yalniz_web` satırlarının tamamını içerir.
 * Gerekçesiz farklı satır tablonun kendisinde reddedilir (`ayni` dışındaki
   her satırda gerekçe zorunlu).
+
+## Uygulama (§8)
+
+### Web
+
+* **Menü** (`lib/menu.ts`) tablodaki gibi düzenlendi:
+  * yeni **Kişiler** grubu;
+  * Akıllı ev → Tesis; Şeffaflık → Finans; Gürültü uyarıları → İletişim;
+  * Kurulum sihirbazı alt çubuktan → Yönetim;
+  * `/reports/dues` menüden çıktı, "Rapor motoru" adı "Raporlar" oldu.
+* **`/kisiler`**: sekmeli tek sayfa (Sakinler · Personel · Yöneticiler ve denetçiler · Davetler). Sekme adreste (`?sekme=`).
+  * Sakinler sekmesinde "Liste / Bloklara göre" görünümü var (P220'nin "kim nerede oturuyor" ekranı korundu).
+  * Her sekme aynı liste bileşenini bir rol kapsamıyla çizer. "Ekle" o sekmenin rolleriyle açılır.
+  * `/users` artık birden çok rolle süzülebiliyor (`?role=a&role=b`). Tek değer gönderen eski çağrılar aynen çalışıyor.
+  * Sekme içindeki sayfa başlığı `h2` olarak çizilir (`GomuluSayfa`); sayfada tek `h1` kalır.
+* **`/devriye`**: Takip · NFC noktaları · Planlar sekmeleri. Eski `/checkpoints`, `/patrol-plans`, `/reports/patrols` adresleri buraya yönlenir. Devriye bildirimleri artık Takip sekmesini açar.
+* **`/olaylar`** ("Olaylar ve ihlaller") yöneticiye açıldı, salt okuma.
+  * "Olay bildir" düğmesi yalnız yazabilen rolde (admin, güvenlik) çizilir.
+  * P154'te sayfa bu düğmenin yöneticiye verdiği 403 yüzünden kaldırılmıştı. O kayıtta yazılı olan alternatif uygulandı.
+* **`/goruntuleme-izni`** (yeni): tek daire ya da toplu izin isteği, durum tablosu, onaylı dairede ziyaretçi veya kargo kayıtları.
+  * İzin tek seferlik olduğu için okumadan önce uyarı onaylatılır.
+  * Ziyaretçi ya da kargodan yalnız biri seçilir; mobil ekranla aynı kural.
+* **"Otopark ve araç geçişleri"**: sayfanın üstüne otopark doluluğu (dolu / kapasite, yüzde) eklendi. Mobil "Otopark" ekranının okuduğu `/parking/occupancy` ucunu kullanır.
+* **`/finans/maas-kartlari`** (Tanımlar › "Personel"in yerine).
+  * Forma isteğe bağlı **"Uygulama hesabı"** alanı eklendi. Hesap seçilince boş ad ve e-posta alanları hesaptan dolar.
+  * Kişiler › Personel satırında kartın durumu görünür:
+    * kart yoksa **"Maaş kartı oluştur"**: hesabın bilgileriyle dolu ve hesaba bağlı bir kart oluşturur, ardından kartı düzenleme formunda açar;
+    * kart varsa **"Maaş kartı"**: kartı açar.
+  * Fazla mesai ekranındaki "ücret tanımsız" rozeti Kişiler › Personel'e bağlanır.
+  * Sunucu bir hesaba ikinci maaş kartının bağlanmasını reddeder: 409 `maas_karti_zaten_bagli`.
+* **Kurulum sihirbazının "personel" adımı** artık saha personeli **hesabını** sayar (güvenlik, tesis görevlisi, amir); maaş kartını saymaz. Bu bir davranış değişikliğidir.
+
+### Mobil
+
+* **Menü** (`home_menu.dart`) tablodaki gruplar ve adlarla düzenlendi. Yeni `kisiler` ve `yonetim` grupları eklendi.
+  * Site kuralları ve Etkinlikler → İletişim; Entegrasyonlar ve Kurulum → Yönetim.
+* **Kişiler** ekranı role göre sekmeli. Saha personeli, sakinler ve davetler ekranları sekme içinde üst çubuksuz çizilir.
+  * Yeni **"Yöneticiler ve denetçiler"** sekmesi: liste ve ekleme formu. Mobilde bu hesaplar hiç açılamıyordu.
+  * Güvenlik amiri yalnız Personel sekmesini görür; sekme şeridi çizilmez.
+  * Eski `/personel`, `/sakinler`, `/davetler` adresleri ilgili sekmeye yönlenir.
+* **Yeni girişler:**
+  * Kameralar (Güvenlik; Ayarlar'daki kopyası kalktı);
+  * Otomasyon (Finans; Borçlular'daki kısayol durur);
+  * Tanımlar merkezi: Daire tipleri, Görev kategorileri ve web'de kalan defterlerin notu;
+  * Tesis ayarları: ad + adres, ilçe, il, posta kodu; yalnız değişen alan gönderilir. Ayarlar'daki tesis adı kartı buraya taşındı;
+  * Dokümanlar (yönetici);
+  * Bilgisayardan yapılanlar.
+* **Diyafon** menüden kalktı; Entegrasyonlar ekranının içinden açılıyor (web ile aynı).
+* **Ayarlar'daki kurulum kartı** yalnız hatırlatıcı ayarı olarak kaldı; sihirbazın kendisi menüde.
+* **Güvenlik amiri** menüsüne Devriye eklendi. Okuma her modda açık; yazma güvenlik moduna bağlı (`require_guvenlik_yazma`).
+
+### Önceki kararlardan dönülenler (gerekçeli)
+
+| Önceki karar | Şimdi | Gerekçe |
+|---|---|---|
+| P154: `/olaylar` yöneticiye kapalı | yöneticiye salt okuma | Mobil yönetici aynı listeyi okuyor. P154 kaydındaki alternatif ("yazmayı gizle, okumayı bırak") uygulandı. |
+| P167 §1.8: Kurulum sihirbazı alt çubukta | Yönetim grubunda | "Aynı iş, aynı grup" ilkesi; mobilde Yönetim'de. |
+| P167 §1.6 / §7: Tanımlar'da "Personel" | Finans › Maas kartları | Onaylı öneri; "Personel" adı mobilde hesap anlamına geliyordu. |
+| P139: mobil Ayarlar'da tesis adı ve kameralar | Yönetim › Tesis ayarları, Güvenlik › Kameralar | Ayarlar kişisel tercihtir. |
+
+### Korunanlar
+
+* **Mobil yönetici menüsünde Demirbaş yok.** Mobil ekran saha personelinin NFC zimmet aracı. Tabloda "yalnız web"; mobilde "Bilgisayardan yapılanlar" listesinde.
+* **P145** korundu: sakinin mobil menüsünde Talep / Arıza yok (bildirim ana ekrandaki düğmeden, takip ızgara karosundan). Tabloda "menü dışı".
+* **Web sakin modunda yalnız-mobil kalan sakin işleri** (ziyaretçi, kargo, akıllı ev, anketler…) tabloda gerekçeleriyle duruyor. Sakin modu, yöneticinin kendi dairesi için kısa yoldur.
+
+### Ölçülemedi
+
+* Mobil ekranlar emülatörde sürülmedi (ortamda emülatör yok); doğrulama widget testleriyle.
+* Görüntüleme izni web akışında sakinin onayı yalnız mobilden verilebiliyor. Uçtan uca akış (web istek → mobil onay → web okuma) sunucu testleri ve iki yüzeyin ayrı testleriyle ölçüldü, tek oturumda sürülmedi.
+
+### Gerçek tarayıcı sürüşü (Chromium, yönetici)
+
+* **Eski adresler:**
+  * `/users` → `/kisiler?sekme=personel`; `?rol=resident` → sakinler.
+  * `/residents` → sakinler; `/davetler` → davetler.
+  * `/checkpoints` → noktalar; `/patrol-plans` → planlar; `/reports/patrols` → takip.
+  * `/tanimlar?defter=personel-kayitlari` → `/finans/maas-kartlari`.
+  * Hepsi ölçüldü.
+* **Kişiler:**
+  * Dört sekme var; adresteki sekme seçili açılıyor; tek `h1`.
+  * Personel satırlarında "Maaş kartı oluştur" ya da "Maaş kartı" görünüyor.
+  * Sekme değişince adres de değişiyor.
+* **Maaş kartları:** "Yeni kayıt" › "Uygulama hesabı" seçilince ad ve e-posta hesaptan doldu.
+* **Olaylar ve ihlaller:** yöneticiye açılıyor, "Olay bildir" düğmesi yok.
+* **Otopark doluluğu:** "3 · Doluluk %2 · 120 yer".
+* **Grup başlıkları:** Güvenlik · Tesis · Finans · İletişim · Kişiler · Tanımlar · Yönetim (mobille aynı).
+
+### Sürüşte bulunan ve düzeltilen kusurlar
+
+* **Davetler listesi 500 veriyordu** (P251'den önce de vardı). Telefon P212'den beri isteğe bağlı, ama `DavetDurumOut.telefon` zorunluydu. Telefonsuz tek bir davetli bütün listeyi düşürüyordu. Şema ve OpenAPI düzeltildi, gerileme testi eklendi.
+* **Olaylar sayfasının başlığı "Olaylar"dı**, menüde "Olaylar ve ihlaller". Başlık menüdeki adla eşitlendi (P142 kuralı: karo/menü adı, gittiği ekranın adıyla aynı).
+* **"120 yerin %2'i dolu":** Türkçe ek sayıya bağlıdır ve yanlış çıkıyordu. Ek gerektirmeyen bir cümle kullanıldı: "Doluluk %2 · 120 yer".
+* **Finans grup başlığı:** web "Finansal İşlemler", mobil "Finans" idi; ikisi de "Finans" yapıldı. Grup başlıkları da kilide alındı (`contracts/menu-gruplari.tsv`).
+* **Uzun çeviriler:** "Otopark ve araç geçişleri"nin Almanca, Fransızca ve İspanyolca karşılıkları mobil ızgara karosunda üç satıra taşıyordu (P229 kilidi). Bu dillerde kısa karşılık kullanıldı; kilit yalnız Türkçe adı karşılaştırır.

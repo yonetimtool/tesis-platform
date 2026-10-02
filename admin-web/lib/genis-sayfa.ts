@@ -9,6 +9,10 @@
 // ONEK eslesmesi: `/finans` -> `/finans/tahsilatlar` de genis.
 export const GENIS_ROTALAR: readonly string[] = [
   "/units",
+  // (P251 §8) Kisiler / Devriye sekmeli tablo sayfalari.
+  "/kisiler",
+  "/devriye",
+  "/goruntuleme-izni",
   "/users",
   "/residents",
   "/tasks",

@@ -63,7 +63,9 @@ describe("(P167 §6.1) Yonetisim basligi kaldirildi", () => {
   it("TESISTE KALAN UCU YONETIM grubunda ve ayni rolde", () => {
     for (const [ad, rota] of Object.entries(TESISTE_KALANLAR)) {
       const oge = MENU.find((o) => o.href === rota)!;
-      expect(oge.grup, ad).toBe("yonetim");
+      // (P251 §8) Gurultu uyarilari ILETISIM grubuna gecti (mobille ayni
+      // grup — menu paritesi); digerleri Yonetim'de kaldi.
+      expect(oge.grup, ad).toBe(ad === "gurultuUyarilari" ? "iletisim" : "yonetim");
       // Eski `/yonetisim` admin+yonetici idi; bolunme YETKI DEGISTIRMEZ.
       // Bolerken yanlislikla genisletmek, KVKK metnini yayinlama
       // yetkisini baska bir role acmak olurdu.

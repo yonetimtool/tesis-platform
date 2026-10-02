@@ -150,7 +150,7 @@ describe("(P214) /checkpoints — modal acikken form GORUNUR", () => {
     const { screen, waitFor } = await import("@testing-library/react");
     const userEvent = (await import("@testing-library/user-event")).default;
     const { ciz, fetchSahtele } = await import("./yardimci");
-    const CheckpointsPage = (await import("@/app/(protected)/checkpoints/page"))
+    const CheckpointsPage = (await import("@/components/devriye/noktalar"))
       .default;
 
     fetchSahtele({

@@ -74,7 +74,7 @@ describe("(P244 §6) arac gecisleri", () => {
     taklit(137);
     ciz(AracPage);
     await waitFor(() => expect(kanca("ozet-seridi")).not.toBeNull());
-    for (const etiket of ["Bugünkü giriş", "Şu an içeride", "Listelenen kayıt"]) {
+    for (const etiket of ["Bugünkü giriş", "Otopark doluluğu", "Listelenen kayıt"]) {
       const kart = screen.getByText(etiket).closest("div")!.parentElement!;
       expect(kart.textContent, etiket).toContain("137");
       // Gorunen liste 2 kayitli; kart onu YAZMAMALI.

@@ -61,7 +61,6 @@ from ..models import (
     GelirGiderTanim,
     Kasa,
     OrtakAlan,
-    PersonelKayit,
     SayacAna,
     TaskCategory,
     Tenant,
@@ -215,7 +214,18 @@ ADIMLAR: tuple[_Adim, ...] = (
     # oradan cikar. Once sakinleri girip sonra "e-postam calismiyormus"
     # demek, davetleri tek tek yeniden gondermek demektir.
     _Adim("eposta", zorunlu=True, olcu=_eposta_hazir),
-    _Adim("personel", _say(PersonelKayit)),
+    # (P251 §8) PERSONEL = SAHA PERSONELI HESABI, maas karti DEGIL.
+    #
+    # OLCULEN KUSUR: adim maas kartini (`PersonelKayit`) sayiyordu ama mobil
+    # sihirbaz bu adimi HESAP ekranina yonlendiriyordu — mobilde personel
+    # eklemek adimi HIC tamamlamiyordu. Web'de ise "Personel" adli tanim
+    # (maas karti) acilip hesap acilmadan adim kapaniyordu. Sitede is
+    # goren kisi (guvenlik, tesis gorevlisi, amir) bir HESAPTIR; maas
+    # karti istege bagli bir finans kaydidir (Finans › Maas kartlari).
+    _Adim(
+        "personel",
+        _say(AppUser, AppUser.role.in_(("security", "tesis_gorevlisi", "guvenlik_amiri"))),
+    ),
     # "Gorev alanlari" = gorev KATEGORILERI (P153: sabit tip enum'u
     # kaldirildi, tip artik yonetici-tanimli kategoridir).
     _Adim("gorev_alani", _say(TaskCategory)),

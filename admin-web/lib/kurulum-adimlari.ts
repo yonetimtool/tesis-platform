@@ -71,7 +71,8 @@ export const KURULUM_HEDEFLERI: Record<string, KurulumHedefi> = {
   sakin: {
     etiket: "kurulumSakin",
     aciklama: "kurulumSakinAlt",
-    rota: "/users",
+    // (P251 §8) Kisiler › Sakinler (eski `/users` yonlenir).
+    rota: "/kisiler?sekme=sakinler",
     engel: "kurulumEngelSakin",
   },
   // (P193 §2) E-POSTA — davetlerin gittigi TEK kanal (SMS varsayilan
@@ -86,7 +87,10 @@ export const KURULUM_HEDEFLERI: Record<string, KurulumHedefi> = {
   personel: {
     etiket: "kurulumPersonel",
     aciklama: "kurulumPersonelAlt",
-    rota: "/tanimlar?defter=personel-kayitlari",
+    // (P251 §8) ADIM ARTIK HESABI SAYAR (saha personeli). Eskiden maas
+    // kartini sayiyordu; mobil ise hesap ekranina yonlendiriyordu ve
+    // mobilde personel eklemek adimi HIC tamamlamiyordu.
+    rota: "/kisiler?sekme=personel",
     engel: "kurulumEngelPersonel",
   },
   gorev_alani: {
@@ -104,7 +108,7 @@ export const KURULUM_HEDEFLERI: Record<string, KurulumHedefi> = {
   nfc_noktasi: {
     etiket: "kurulumNfc",
     aciklama: "kurulumNfcAlt",
-    rota: "/checkpoints",
+    rota: "/devriye?sekme=noktalar",
     engel: "kurulumEngelNfc",
   },
   // (P233 §1) KONUM — hava durumu ve bolgesel analiz icin.

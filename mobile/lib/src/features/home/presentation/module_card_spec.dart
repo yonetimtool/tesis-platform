@@ -295,6 +295,25 @@ ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
           icon: Icons.video_library_outlined,
           accent: _navy,
           route: AppRoutes.kameraKayitlari);
+    // (P251 §8) Menu paritesi ile eklenen girisler.
+    case HomeMenuEntry.kameralar:
+      return const ModuleCardSpec(
+          icon: Icons.videocam_outlined, accent: _navy, route: AppRoutes.kameralar);
+    case HomeMenuEntry.kisiler:
+      return const ModuleCardSpec(
+          icon: Icons.groups_outlined, accent: _navy, route: AppRoutes.kisiler);
+    case HomeMenuEntry.tanimlar:
+      return const ModuleCardSpec(
+          icon: Icons.list_alt_outlined, accent: _navy, route: AppRoutes.tanimlar);
+    case HomeMenuEntry.tesisAyarlari:
+      return const ModuleCardSpec(
+          icon: Icons.apartment_outlined, accent: _navy, route: AppRoutes.tesisAyarlari);
+    case HomeMenuEntry.otomasyon:
+      return const ModuleCardSpec(
+          icon: Icons.auto_mode_outlined, accent: _navy, route: AppRoutes.otomasyon);
+    case HomeMenuEntry.bilgisayardan:
+      return const ModuleCardSpec(
+          icon: Icons.desktop_windows_outlined, accent: _navy, route: AppRoutes.bilgisayardan);
     case HomeMenuEntry.akilliEv:
       return const ModuleCardSpec(
           icon: Icons.home_outlined,

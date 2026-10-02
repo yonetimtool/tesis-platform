@@ -9440,7 +9440,10 @@ class DavetDurumOut(BaseModel):
     user_id: uuid.UUID
     ad: str
     rol: str
-    telefon: str
+    #: (P251) Telefon P212-ek §2'den beri OPSIYONEL; zorunlu sema, telefonsuz
+    #: tek bir davetli yuzunden TUM listeyi 500'e dusuruyordu (tarayicida
+    #: olculdu: Kisiler › Davetler).
+    telefon: str | None = None
     daire_no: str | None = None
     son_kanal: str | None = None
     son_durum: str | None = None

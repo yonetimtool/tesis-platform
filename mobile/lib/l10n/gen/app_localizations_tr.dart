@@ -27,7 +27,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get bolumDuyurular => 'Duyurular';
 
   @override
-  String get bolumSiteKurallari => 'Site Kuralları';
+  String get bolumSiteKurallari => 'Site kuralları';
 
   @override
   String get bolumEtkinlikler => 'Etkinlikler';
@@ -48,10 +48,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get kartZiyaretci => 'Ziyaretçi';
 
   @override
-  String get kartAracPlaka => 'Araç Plaka';
+  String get kartAracPlaka => 'Otopark ve araç geçişleri';
 
   @override
-  String get kartIhlaller => 'İhlaller';
+  String get kartIhlaller => 'Olaylar ve ihlaller';
 
   @override
   String get kartGorevlerim => 'Görevlerim';
@@ -346,13 +346,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get modulTurlarim => 'Turlarım';
 
   @override
-  String get modulDevriyeTakibi => 'Devriye Takibi';
+  String get modulDevriyeTakibi => 'Devriye';
 
   @override
   String get modulGorevlerim => 'Görevlerim';
 
   @override
-  String get modulGorevYonetimi => 'Görev Yönetimi';
+  String get modulGorevYonetimi => 'Görevler';
 
   @override
   String get modulDemirbas => 'Demirbaş';
@@ -391,7 +391,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get modulKargo => 'Kargo';
 
   @override
-  String get modulGoruntulemeIzni => 'Görüntüleme İzni';
+  String get modulGoruntulemeIzni => 'Görüntüleme izni';
 
   @override
   String get modulRezervasyon => 'Rezervasyon';
@@ -400,10 +400,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get modulEtkinlikler => 'Etkinlikler';
 
   @override
-  String get modulSiteKurallari => 'Site Kuralları';
+  String get modulSiteKurallari => 'Site kuralları';
 
   @override
-  String get modulDisHizmetler => 'Dış Hizmetler';
+  String get modulDisHizmetler => 'Dış hizmetler';
 
   @override
   String get modulEntegrasyonlar => 'Entegrasyonlar';
@@ -415,7 +415,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get modulSakinler => 'Site Sakinleri';
 
   @override
-  String get modulBinaYapisi => 'Bina Yapısı';
+  String get modulBinaYapisi => 'Bina yapısı';
 
   @override
   String get modulSikayetHaritasi => 'Şikayet Haritası';
@@ -2993,7 +2993,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get kuralBaslik => 'Site Kuralları';
+  String get kuralBaslik => 'Site kuralları';
 
   @override
   String get kuralYeni => 'Yeni kural';
@@ -3961,7 +3961,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get ziyaretKaydetVeBildir => 'Kaydet ve bildir';
 
   @override
-  String get raporBaslik => 'Aylık raporlar';
+  String get raporBaslik => 'Raporlar';
 
   @override
   String get raporOncekiAy => 'Önceki ay';
@@ -4330,7 +4330,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gunTipiHerGun => 'Her gün';
 
   @override
-  String get yonIletisimBaslik => 'Yönetici İletişim';
+  String get yonIletisimBaslik => 'Yönetimle iletişim';
 
   @override
   String get yonIletisimAlinamadi => 'Yönetici bilgileri alınamadı.';
@@ -4506,10 +4506,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get modulAracGecis => 'Araç Geçişleri';
 
   @override
-  String get modulOtopark => 'Otopark';
+  String get modulOtopark => 'Otopark ve araç geçişleri';
 
   @override
-  String get modulIhlaller => 'İhlaller';
+  String get modulIhlaller => 'Olaylar ve ihlaller';
 
   @override
   String get aracSuzgecTumu => 'Tümü';
@@ -5563,7 +5563,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get kurulumBaslik => 'Kurulum Sihirbazı';
+  String get kurulumBaslik => 'Kurulum sihirbazı';
 
   @override
   String get kurulumAlt =>
@@ -5693,7 +5693,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get ortakDahaFazlaSecenek => 'Daha fazla seçenek';
 
   @override
-  String get modulDokumanlar => 'Site Dokümanları';
+  String get modulDokumanlar => 'Dokümanlar';
 
   @override
   String get dokumanBaslik => 'Site Dokümanları';
@@ -6004,7 +6004,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get finansTahsilatBaslik => 'Tahsilat';
+  String get finansTahsilatBaslik => 'Tahsilatlar';
 
   @override
   String get finansKisiGerekli => 'Kişi seçin.';
@@ -6043,7 +6043,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get finansGiderBaslik => 'Gider kaydı';
+  String get finansGiderBaslik => 'Giderler';
 
   @override
   String get finansGiderKaydedildi => 'Gider kaydedildi.';
@@ -8504,4 +8504,123 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get izgaraAsagiTasi => 'Aşağı taşı';
+
+  @override
+  String get kabukGrupKisiler => 'Kişiler';
+
+  @override
+  String get kabukGrupYonetim => 'Yönetim';
+
+  @override
+  String get modulKisiler => 'Kişiler';
+
+  @override
+  String get modulKameralar => 'Kameralar';
+
+  @override
+  String get modulTanimlar => 'Tanımlar';
+
+  @override
+  String get modulTesisAyarlari => 'Tesis ayarları';
+
+  @override
+  String get modulOtomasyon => 'Otomasyon';
+
+  @override
+  String get modulBilgisayardan => 'Bilgisayardan yapılanlar';
+
+  @override
+  String get kisilerSekmeSakinler => 'Sakinler';
+
+  @override
+  String get kisilerSekmePersonel => 'Personel';
+
+  @override
+  String get kisilerSekmeYoneticiler => 'Yöneticiler ve denetçiler';
+
+  @override
+  String get kisilerSekmeDavetler => 'Davetler';
+
+  @override
+  String get yoneticiListeBos => 'Bu tesiste başka yönetici ya da denetçi yok.';
+
+  @override
+  String get yoneticiEkle => 'Yönetici / denetçi ekle';
+
+  @override
+  String get yoneticiEklendi => 'Hesap açıldı; davet e-postası gönderildi.';
+
+  @override
+  String get tanimlarWebNotu =>
+      'Kasalar, gelir/gider tanımları, firmalar, sayaçlar, araç kayıtları ve muhasebe ayarları bilgisayardan yönetilir.';
+
+  @override
+  String bilgisayardanAciklama(String adres) {
+    return 'Bu işlemler geniş tablo ve önizleme ister; $adres adresinden yapılır.';
+  }
+
+  @override
+  String get webAidat => 'Aidat';
+
+  @override
+  String get webBorclandirmalar => 'Borçlandırmalar';
+
+  @override
+  String get webGelirler => 'Gelirler';
+
+  @override
+  String get webVirman => 'Hesaplar arası virman';
+
+  @override
+  String get webIade => 'Ödeme iadesi';
+
+  @override
+  String get webAcilis => 'Açılış fişleri';
+
+  @override
+  String get webBanka => 'Banka Entegrasyonu';
+
+  @override
+  String get webMesai => 'Fazla mesai';
+
+  @override
+  String get webMaasKartlari => 'Maaş kartları';
+
+  @override
+  String get webIcra => 'İcra dosyaları';
+
+  @override
+  String get webMesajlar => 'SMS/E-Posta Yönetimi';
+
+  @override
+  String get webIceAktarim => 'İçe aktarım';
+
+  @override
+  String get webKararDefteri => 'Karar Defteri';
+
+  @override
+  String get tesisAyarAdres => 'Açık adres';
+
+  @override
+  String get tesisAyarIlce => 'İlçe';
+
+  @override
+  String get tesisAyarIl => 'İl';
+
+  @override
+  String get tesisAyarPostaKodu => 'Posta kodu';
+
+  @override
+  String get tesisAyarKaydedildi => 'Tesis ayarları kaydedildi.';
+
+  @override
+  String get tesisAyarWebNotu =>
+      'Konum (harita), otopark kapasitesi ve eşik ayarları bilgisayardan yapılır.';
+
+  @override
+  String get yoneticiListeBosAlt =>
+      'Yönetici ya da denetçi eklemek için sağ alttaki düğmeyi kullanın; hesap açılır ve davet e-postası gider.';
+
+  @override
+  String get webDemirbas => 'Demirbaş';
 }

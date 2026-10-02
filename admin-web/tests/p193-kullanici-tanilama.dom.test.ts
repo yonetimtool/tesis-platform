@@ -10,7 +10,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import UsersPage from "@/app/(protected)/users/page";
+import UsersPage from "@/components/kisiler/kullanici-listesi";
 
 import { ciz, fetchSahtele } from "./yardimci";
 

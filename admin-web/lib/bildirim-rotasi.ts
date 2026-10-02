@@ -20,10 +20,10 @@
  */
 export const BILDIRIM_ROTALARI: Record<string, string> = {
   // Devriye alarmlari.
-  kacirilan_tur: "/patrol-plans",
-  eksik_checkpoint: "/patrol-plans",
-  gecikmis_okutma: "/patrol-plans",
-  uzak_okutma: "/patrol-plans",
+  kacirilan_tur: "/devriye?sekme=takip",
+  eksik_checkpoint: "/devriye?sekme=takip",
+  gecikmis_okutma: "/devriye?sekme=takip",
+  uzak_okutma: "/devriye?sekme=takip",
   // Talep akisi.
   talep_is_emri: "/complaints",
   talep_cozuldu: "/complaints",

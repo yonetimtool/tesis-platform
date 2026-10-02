@@ -146,10 +146,11 @@ void main() {
 
     // Izgaranin referans kartlari.
     for (final baslik in [
-      'Görev Yönetimi',
+      // (P251 §8) Adlar web ile birlesti (menu paritesi).
+      'Görevler',
       'Finansal özet',
-      'Otopark',
-      'İhlaller',
+      'Otopark ve araç geçişleri',
+      'Olaylar ve ihlaller',
       'Şikayet Haritası',
     ]) {
       expect(find.text(baslik), findsOneWidget, reason: baslik);
@@ -160,15 +161,14 @@ void main() {
     // hala "Vardiya Durumu" — bolum basligi karo degil, P144 disinda.
     expect(find.text('Vardiya planı'), findsOneWidget); // izgara karosu
     expect(find.text('Vardiya Durumu'), findsOneWidget); // bolum basligi
-    // Ayni ayrisma "Raporlar"da: karo "Aylık raporlar" (/reports),
-    // "Raporlar" ise alt-bar sekmesi.
-    expect(find.text('Aylık raporlar'), findsOneWidget); // izgara karosu
-    expect(find.text('Raporlar'), findsOneWidget); // alt-bar sekmesi
+    // (P251 §8) Karo ("Aylık raporlar" idi) ve alt-bar sekmesi AYNI
+    // ekrana (/reports) gider; ad web ile birlesti: ikisi de "Raporlar".
+    expect(find.text('Raporlar'), findsNWidgets(2)); // karo + alt-bar sekmesi
 
     final sira = [
-      // (P144) Izgaranin ilk karosu artik "Görev Yönetimi" (gittigi ekranin
+      // (P144) Izgaranin ilk karosu artik "Görevler" (P251 §8 ad birlesmesi; once "Görev Yönetimi") (gittigi ekranin
       // basligi); bolum SIRASI olcumunun capasi olarak o kullaniliyor.
-      for (final baslik in ['Görev Yönetimi', 'Hızlı Özet', 'Son Hareketler'])
+      for (final baslik in ['Görevler', 'Hızlı Özet', 'Son Hareketler'])
         tester.getTopLeft(find.text(baslik).first).dy
     ];
     expect(sira[0] < sira[1], isTrue);
@@ -257,7 +257,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('Hızlı Özet'), findsOneWidget);
-    expect(find.text('Görev Yönetimi'), findsOneWidget); // kartlar duruyor
+    expect(find.text('Görevler'), findsOneWidget); // kartlar duruyor
     // Uydurma deger YOK: hata → '—'.
     expect(find.text('₺248.750'), findsNothing);
     expect(find.text('—'), findsWidgets);

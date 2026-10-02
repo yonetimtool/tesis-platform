@@ -70,12 +70,13 @@ describe("(P167 §1.2) ACILISTA TUM ANA BASLIKLAR KAPALI", () => {
     // (P167 §1.3) OZET bir bolum degil, bagimsiz ust sekme — kapali
     // baslik kurali onu KAPSAMAZ ve ilk bakista gorunur olmali.
     expect(h).toContain("/dashboard");
-    // (P167 §1.8) Kurulum sihirbazi alt cubukta, bolum disinda.
-    expect(h).toContain("/kurulum");
+    // (P251 §8) Kurulum sihirbazi artik YONETIM grubunda (mobille ayni);
+    // kapali baslik kurali onu da kapsar.
+    expect(h).not.toContain("/kurulum");
     // Bolum ogelerinin HICBIRI yok: kullanici hangi basligi acacagini
     // secene kadar menu yedi satirlik bir icindekiler tablosudur.
     expect(h).not.toContain("/dues");
-    expect(h).not.toContain("/users");
+    expect(h).not.toContain("/kisiler");
     expect(h).not.toContain("/announcements");
     expect(h).not.toContain("/units");
   });
@@ -113,7 +114,7 @@ describe("(P167 §1.2) ACILISTA TUM ANA BASLIKLAR KAPALI", () => {
       JSON.stringify({ acik: ["guvenlik", "finans", "yonetim", "tanimlar"] }),
     );
     ciz(Kabuk());
-    expect(menuHrefleri()).not.toContain("/users");
+    expect(menuHrefleri()).not.toContain("/kisiler");
     expect(menuHrefleri()).not.toContain("/dues");
   });
 });
@@ -139,11 +140,11 @@ describe("(P133.1) bolum acma/kapama", () => {
   });
 
   it("GEZINME aktif bolumu ACAR (kullanici acmamis olsa bile)", () => {
-    // Kullanici hicbir bolum acmadi ama komut paletinden Kullanicilar
+    // Kullanici hicbir bolum acmadi ama komut paletinden Kisiler
     // sayfasina gitti; hedef sayfada menude KENDI satirini gormeli.
-    yol.simdiki = "/users";
+    yol.simdiki = "/kisiler";
     ciz(Kabuk());
-    expect(menuHrefleri()).toContain("/users");
+    expect(menuHrefleri()).toContain("/kisiler");
   });
 
   it("BOZUK KAYIT menuyu kirmaz", () => {
@@ -151,7 +152,7 @@ describe("(P133.1) bolum acma/kapama", () => {
     ciz(Kabuk());
     // Varsayilana dusulur: hepsi kapali, bagimsiz sekme yerinde.
     expect(menuHrefleri()).toContain("/dashboard");
-    expect(menuHrefleri()).not.toContain("/users");
+    expect(menuHrefleri()).not.toContain("/kisiler");
   });
 
   it("DEPOLAMA YAZILAMAZSA (gizli sekme) menu yine calisir", () => {

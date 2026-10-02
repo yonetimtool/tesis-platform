@@ -21,7 +21,7 @@
 import { screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import UsersPage from "@/app/(protected)/users/page";
+import UsersPage from "@/components/kisiler/kullanici-listesi";
 
 import { cagrilanUrller, ciz, fetchSahtele } from "./yardimci";
 

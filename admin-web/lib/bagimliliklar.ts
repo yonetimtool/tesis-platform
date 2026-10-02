@@ -77,7 +77,9 @@ export const BAGIMLILIKLAR = {
   nfcNoktasi: {
     mesaj: "bagimlilikNfc",
     eylem: "bagimlilikNfcEylem",
-    rota: "/checkpoints",
+    // (P251 §8) Devriye sayfasinin NFC noktalari sekmesi.
+    rota: "/devriye",
+    sorgu: "sekme=noktalar",
   },
   mesajSablonu: {
     mesaj: "bagimlilikSablon",

@@ -39,6 +39,21 @@ class TenantApi {
     }
   }
 
+  /// (P251 §8) `PATCH /tenant/settings` — YALNIZ degisen alanlar
+  /// (web tesis ayarlari ekrani ile ayni sozlesme: dokunulmayan alan
+  /// gonderilmez). Bos metin `null` olarak gider (alani temizler).
+  Future<TenantSettings> guncelle(Map<String, Object?> degisen) async {
+    try {
+      final res = await _dio.patch<Map<String, dynamic>>(
+        '/tenant/settings',
+        data: degisen,
+      );
+      return TenantSettings.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   /// `PATCH /tenant/settings` — yonetici tesis adini degistirir (yalniz `ad`;
   /// baska alan gonderilirse backend 403 doner). slug DEGISMEZ.
   Future<TenantSettings> updateAd(String ad) async {

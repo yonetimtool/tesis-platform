@@ -177,7 +177,7 @@ void main() {
       // 2) Izgara Arapca basliklarla cizildi
       expect(find.byType(HizliErisimIzgarasi), findsOneWidget);
       expect(find.text('مهامي'), findsWidgets); // Görevlerim
-      expect(find.text('المركبات'), findsWidgets); // Araç Plaka
+      expect(find.text('الموقف ومرور المركبات'), findsWidgets); // Otopark ve araç geçişleri
 
       // 3) Akis satiri: baslik ARAPCA (tur 15 — eskiden sunucudan TR gelir
       //    ve Arapca ekranda "Araç Girişi" yazardi), plaka LTR dizi olarak

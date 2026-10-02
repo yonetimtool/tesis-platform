@@ -22,13 +22,11 @@ import { YonetioLogo } from "@/components/YonetioLogo";
 import { useRol } from "@/lib/rol-kullan";
 import { KullaniciMenusu } from "@/components/KullaniciMenusu";
 import {
-  kurulumGorunur,
   menuGruplari,
   ogeAktif,
   ogeBaglantisi,
   rotaninGrubu,
   GRUP_IKONU,
-  KURULUM_OGESI,
   type GrupId,
   type IconName,
   type MenuGrubu,
@@ -556,7 +554,6 @@ function SidebarBody({
   // olarak goster" demek, sakine yonetim menusunu cizmek olurdu.
   // (P133.1) Kume AYNI kaldi; degisen sey BOLUMLENMESI.
   const gruplar = menuGruplari(yuzey, rol);
-  const kurulumVar = kurulumGorunur(yuzey, rol);
 
   // (P167 §1.2) VARSAYILAN: HEPSI KAPALI.
   //
@@ -711,30 +708,13 @@ function SidebarBody({
             SITEYE ait ekranlarin listesi; kullanicinin KENDI kaydi ise
             avatarin ardinda, herkesin aradigi yerde. */}
 
-        {/* (P167 §1.8) ALT CUBUK IKI SATIR:
-              [ Kurulum sihirbazi ]      <- tam genislik
-              [ Tema ] [ Cikis ]         <- ikiye bolunmus
-            Sihirbaz ustte ve tam genislikte cunku bir AKIS: yeni yonetici
-            icin en onemli tek dugme. Tema ve cikis ise gunluk kucuk
-            islemler — ayni satiri paylasmalari onlari dogru agirliga
-            indiriyor ve alt cubugu iki satirda tutuyor. */}
-        {/* DAR MODDA DA CIZILIR (yalnizca ikon): sihirbaz bir YOLDUR, tema
-            gibi bir kisayol degil — 68px'e sigdirilamadigi icin
-            kaldirilmasi, kurulumunu bitirmemis yoneticiyi yolsuz
-            birakirdi. */}
+        {/* (P251 §8) KURULUM SIHIRBAZI alt cubuktan Yonetim grubuna tasindi
+            (mobille ayni grup — menu paritesi). Alt cubukta site karti,
+            tema ve cikis kaldi. */}
         {/* (P244 §2) SITE KARTI — referansta kenar cubugunun DIBINDE.
             "Hangi sitedeyim" sorusunun yaniti artik menuyu acmadan
             gorunuyor; coklu uyelikte gecis de buradan yapiliyor. */}
         <TesisKarti dar={dar} />
-        {kurulumVar && (
-          <MenuSatiri
-            oge={KURULUM_OGESI}
-            aktif={ogeAktif(KURULUM_OGESI, pathname, sorgu)}
-            onNavigate={onNavigate}
-            dar={dar}
-            ikonlu
-          />
-        )}
         {/* (P140.4) DIL SECICI BURADAN KALDIRILDI — sag uste tasindi.
             Iki yerde birden durmasi, "hangisi gecerli?" sorusunu ureten
             bir tekrardir. Tema anahtari burada KALIR: o bir gorunum

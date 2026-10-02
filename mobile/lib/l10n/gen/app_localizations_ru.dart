@@ -48,10 +48,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get kartZiyaretci => 'Посетители';
 
   @override
-  String get kartAracPlaka => 'Автомобили';
+  String get kartAracPlaka => 'Парковка и проезды';
 
   @override
-  String get kartIhlaller => 'Нарушения';
+  String get kartIhlaller => 'Инциденты и нарушения';
 
   @override
   String get kartGorevlerim => 'Мои задачи';
@@ -442,13 +442,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get modulTurlarim => 'Мои обходы';
 
   @override
-  String get modulDevriyeTakibi => 'Контроль обходов';
+  String get modulDevriyeTakibi => 'Обход';
 
   @override
   String get modulGorevlerim => 'Мои задачи';
 
   @override
-  String get modulGorevYonetimi => 'Управление задачами';
+  String get modulGorevYonetimi => 'Задачи';
 
   @override
   String get modulDemirbas => 'Инвентарь';
@@ -4192,7 +4192,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get ziyaretKaydetVeBildir => 'Сохранить и уведомить';
 
   @override
-  String get raporBaslik => 'Месячные отчёты';
+  String get raporBaslik => 'Отчёты';
 
   @override
   String get raporOncekiAy => 'Предыдущий месяц';
@@ -4769,10 +4769,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get modulAracGecis => 'Проезды автомобилей';
 
   @override
-  String get modulOtopark => 'Парковка';
+  String get modulOtopark => 'Парковка и проезды';
 
   @override
-  String get modulIhlaller => 'Нарушения';
+  String get modulIhlaller => 'Инциденты и нарушения';
 
   @override
   String get aracSuzgecTumu => 'Все';
@@ -5962,7 +5962,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get ortakDahaFazlaSecenek => 'Другие параметры';
 
   @override
-  String get modulDokumanlar => 'Документы объекта';
+  String get modulDokumanlar => 'Документы';
 
   @override
   String get dokumanBaslik => 'Документы объекта';
@@ -6274,7 +6274,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get finansTahsilatBaslik => 'Приём оплаты';
+  String get finansTahsilatBaslik => 'Поступления';
 
   @override
   String get finansKisiGerekli => 'Выберите человека.';
@@ -6313,7 +6313,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get finansGiderBaslik => 'Запись расхода';
+  String get finansGiderBaslik => 'Расходы';
 
   @override
   String get finansGiderKaydedildi => 'Расход записан.';
@@ -8785,4 +8785,124 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get izgaraAsagiTasi => 'Переместить вниз';
+
+  @override
+  String get kabukGrupKisiler => 'Люди';
+
+  @override
+  String get kabukGrupYonetim => 'Управление';
+
+  @override
+  String get modulKisiler => 'Люди';
+
+  @override
+  String get modulKameralar => 'Камеры';
+
+  @override
+  String get modulTanimlar => 'Справочники';
+
+  @override
+  String get modulTesisAyarlari => 'Настройки объекта';
+
+  @override
+  String get modulOtomasyon => 'Автоматизация';
+
+  @override
+  String get modulBilgisayardan => 'Делается на компьютере';
+
+  @override
+  String get kisilerSekmeSakinler => 'Жильцы';
+
+  @override
+  String get kisilerSekmePersonel => 'Персонал';
+
+  @override
+  String get kisilerSekmeYoneticiler => 'Управляющие и аудиторы';
+
+  @override
+  String get kisilerSekmeDavetler => 'Приглашения';
+
+  @override
+  String get yoneticiListeBos => 'Других управляющих или аудиторов нет.';
+
+  @override
+  String get yoneticiEkle => 'Добавить управляющего / аудитора';
+
+  @override
+  String get yoneticiEklendi =>
+      'Учётная запись создана; приглашение отправлено.';
+
+  @override
+  String get tanimlarWebNotu =>
+      'Кассы, статьи доходов/расходов, компании, счётчики, автомобили и бухгалтерские настройки ведутся на компьютере.';
+
+  @override
+  String bilgisayardanAciklama(String adres) {
+    return 'Для этого нужны широкие таблицы и предпросмотр; используйте $adres.';
+  }
+
+  @override
+  String get webAidat => 'Взносы';
+
+  @override
+  String get webBorclandirmalar => 'Начисления';
+
+  @override
+  String get webGelirler => 'Доходы';
+
+  @override
+  String get webVirman => 'Переводы между счетами';
+
+  @override
+  String get webIade => 'Возвраты';
+
+  @override
+  String get webAcilis => 'Вступительные проводки';
+
+  @override
+  String get webBanka => 'Интеграция с банком';
+
+  @override
+  String get webMesai => 'Сверхурочные';
+
+  @override
+  String get webMaasKartlari => 'Зарплатные карточки';
+
+  @override
+  String get webIcra => 'Исполнительные дела';
+
+  @override
+  String get webMesajlar => 'SMS / e-mail';
+
+  @override
+  String get webIceAktarim => 'Импорт';
+
+  @override
+  String get webKararDefteri => 'Книга решений';
+
+  @override
+  String get tesisAyarAdres => 'Адрес';
+
+  @override
+  String get tesisAyarIlce => 'Район';
+
+  @override
+  String get tesisAyarIl => 'Провинция';
+
+  @override
+  String get tesisAyarPostaKodu => 'Почтовый индекс';
+
+  @override
+  String get tesisAyarKaydedildi => 'Настройки объекта сохранены.';
+
+  @override
+  String get tesisAyarWebNotu =>
+      'Местоположение (карта), вместимость парковки и пороги задаются на компьютере.';
+
+  @override
+  String get yoneticiListeBosAlt =>
+      'Чтобы добавить управляющего или аудитора, нажмите кнопку справа внизу; учётная запись создаётся, приглашение отправляется.';
+
+  @override
+  String get webDemirbas => 'Инвентарь';
 }

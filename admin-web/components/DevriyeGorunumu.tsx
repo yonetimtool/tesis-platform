@@ -29,7 +29,7 @@ export function DevriyeGorunumu({
   const dolu = (cevre * yuzde) / 100;
 
   return (
-    <Link href="/patrol-plans" className="block rounded-kart">
+    <Link href="/devriye?sekme=takip" className="block rounded-kart">
       <div className="flex items-center gap-4 p-1">
         {/* İlerleme halkası; merkezde yüzde metni (bilgi yalnız renkte değil). */}
         <div className="relative shrink-0" style={{ width: 84, height: 84 }}>

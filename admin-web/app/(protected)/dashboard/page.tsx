@@ -1202,7 +1202,7 @@ export default function DashboardPage() {
                   durum="bilgi"
                   ikon={<OzetIkonu yol={IKON_TUR} />}
                   altBilgi={t("panoKpiTurAlt", { n: tamamlanan })}
-                  href="/patrol-plans"
+                  href="/devriye?sekme=takip"
                 />
               </>
             )}

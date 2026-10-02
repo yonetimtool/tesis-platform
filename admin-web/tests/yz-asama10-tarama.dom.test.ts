@@ -94,8 +94,8 @@ const SAYFALAR: { yol: string; yukle: () => Promise<{ default: React.ComponentTy
   // yonlendirme bileseni cizilemez (`redirect()` render sirasinda
   // firlatir). Sablon yonetiminin kendisi `vardiya-nokta.dom.test`te
   // `SablonBolumu` uzerinden olculuyor.
-  { yol: "/checkpoints", yukle: () => import("@/app/(protected)/checkpoints/page") },
-  { yol: "/patrol-plans", yukle: () => import("@/app/(protected)/patrol-plans/page") },
+  { yol: "/checkpoints", yukle: () => import("@/components/devriye/noktalar") },
+  { yol: "/patrol-plans", yukle: () => import("@/components/devriye/planlar") },
   { yol: "/ziyaretciler", yukle: () => import("@/app/(protected)/ziyaretciler/page") },
   { yol: "/kargolar", yukle: () => import("@/app/(protected)/kargolar/page") },
   { yol: "/arac-gecisleri", yukle: () => import("@/app/(protected)/arac-gecisleri/page") },
@@ -113,7 +113,7 @@ const SAYFALAR: { yol: string; yukle: () => Promise<{ default: React.ComponentTy
   { yol: "/finans", yukle: () => import("@/app/(protected)/finans/page") },
   { yol: "/sayac-okuma", yukle: () => import("@/app/(protected)/sayac-okuma/page") },
   { yol: "/reports/dues", yukle: () => import("@/app/(protected)/reports/dues/page") },
-  { yol: "/reports/patrols", yukle: () => import("@/app/(protected)/reports/patrols/page") },
+  { yol: "/reports/patrols", yukle: () => import("@/components/devriye/takip") },
   { yol: "/reports/tasks", yukle: () => import("@/app/(protected)/reports/tasks/page") },
   { yol: "/raporlar", yukle: () => import("@/app/(protected)/raporlar/page") },
   { yol: "/icra", yukle: () => import("@/app/(protected)/icra/page") },
@@ -127,13 +127,13 @@ const SAYFALAR: { yol: string; yukle: () => Promise<{ default: React.ComponentTy
   { yol: "/taleplerim", yukle: () => import("@/app/(protected)/taleplerim/page") },
   { yol: "/anketler", yukle: () => import("@/app/(protected)/anketler/page") },
   { yol: "/yonetim-iletisim", yukle: () => import("@/app/(protected)/yonetim-iletisim/page") },
-  { yol: "/davetler", yukle: () => import("@/app/(protected)/davetler/page") },
+  { yol: "/davetler", yukle: () => import("@/components/kisiler/davet-listesi") },
   { yol: "/support", yukle: () => import("@/app/(protected)/support/page") },
   { yol: "/kurulum", yukle: () => import("@/app/(protected)/kurulum/page") },
   { yol: "/ice-aktarim", yukle: () => import("@/app/(protected)/ice-aktarim/page") },
   { yol: "/building-editor", yukle: () => import("@/app/(protected)/building-editor/page") },
   { yol: "/tanimlar", yukle: () => import("@/app/(protected)/tanimlar/page") },
-  { yol: "/users", yukle: () => import("@/app/(protected)/users/page") },
+  { yol: "/users", yukle: () => import("@/components/kisiler/kullanici-listesi") },
   { yol: "/transparency", yukle: () => import("@/app/(protected)/transparency/page") },
   // (P167 §6.1) "/yonetisim" DORDE BOLUNDU; tarama dordunu de kapsar
   // ki "basligi kaldirdim ama bolumu unuttum" sinifi yakalansin.

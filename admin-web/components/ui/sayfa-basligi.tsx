@@ -28,7 +28,20 @@
 // bantta ust cubuga portallanir). Bu bilesen onunla YARISMAZ: dar bantta
 // eylemler basligin yaninda kalir, genis bantta sayfa isterse yuvayi
 // kullanir. Karar sayfanin.
-import type { ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
+
+/**
+ * (P251 §8) GOMULU SAYFA — sekmeli bir catinin (Kisiler, Devriye) icinde
+ * cizilen sayfa. Catinin kendi `h1`i vardir; icerdeki sayfanin basligi
+ * `h2` olur ki sayfada TEK ana baslik kalsin (ekran okuyucu baslik
+ * gezintisi "iki sayfa ust uste" duymasin). Sayfa bileseni degismez:
+ * ayni bilesen tek basina da, sekme icinde de dogru duzeyde cizilir.
+ */
+const GomuluBaglam = createContext(false);
+
+export function GomuluSayfa({ children }: { children: ReactNode }) {
+  return <GomuluBaglam.Provider value>{children}</GomuluBaglam.Provider>;
+}
 
 export function SayfaBasligi({
   baslik,
@@ -47,21 +60,23 @@ export function SayfaBasligi({
   /** Basligin ALTINDA: filtre cubugu, sekmeler. */
   altCubuk?: ReactNode;
 }) {
+  const gomulu = useContext(GomuluBaglam);
+  const Baslik = gomulu ? "h2" : "h1";
   return (
-    <div className="mb-6">
+    <div className={gomulu ? "mb-4" : "mb-6"}>
       {ustBilgi ? <div className="mb-2">{ustBilgi}</div> : null}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1
+          <Baslik
             style={{
-              fontSize: "var(--yz-fs-h1)",
+              fontSize: gomulu ? "var(--yz-fs-h3)" : "var(--yz-fs-h1)",
               lineHeight: "var(--yz-lh-tight)",
               color: "var(--yz-text)",
               fontWeight: 600,
             }}
           >
             {baslik}
-          </h1>
+          </Baslik>
           {aciklama ? (
             <p
               className="mt-1 max-w-2xl"

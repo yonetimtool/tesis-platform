@@ -290,6 +290,21 @@ enum HomeMenuEntry {
   /// `security` (amir OLMAYAN gorevli) BILEREK YOK: gecmis kayit geriye
   /// donuk gozetimdir, kapidaki gorevlinin isi degildir (sunucu 403).
   kameraKayitlari,
+  // (P251 §8) MENU PARITESI — web ile ayni is, ayni grup, ayni ad.
+  // `contracts/menu-paritesi.tsv` tek kaynak; kilit
+  // `test/p251_menu_paritesi_test.dart`.
+  /// Canli kameralar — eskiden yalniz Ayarlar'dan aciliyordu.
+  kameralar,
+  /// Kisiler TEK GIRIS: sakinler · personel · yoneticiler · davetler.
+  kisiler,
+  /// Tanimlar merkezi: daire tipleri, gorev kategorileri (+ web notu).
+  tanimlar,
+  /// Tesis ayarlari (ad + adres). Ayarlar'daki tesis adi karti buraya tasindi.
+  tesisAyarlari,
+  /// Otomasyon kurallari — Borclular icindeki kisayol da kalir.
+  otomasyon,
+  /// Yalniz web'de kalan islemlerin listesi + adres.
+  bilgisayardan,
 }
 
 List<HomeMenuEntry> homeMenuForRole(UserRole role) {
@@ -311,17 +326,17 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.patrol,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
-        HomeMenuEntry.daireTanimlari,
+        HomeMenuEntry.tanimlar,
         HomeMenuEntry.otopark,
         HomeMenuEntry.ihlaller,
         // (P240 §1) Acil durum cagrilari — TAKIP.
         HomeMenuEntry.panikTakip,
         // (P248 §1-kamera) Gecmis kamera kaydi.
+        HomeMenuEntry.kameralar,
         HomeMenuEntry.kameraKayitlari,
         HomeMenuEntry.vardiyalar,
-        // (P166 §10 / §8.2) Gorev kategorileri ve kurulum sihirbazi —
-        // ikisi de yonetim isidir ve admin yonetici duzenini gorur.
-        HomeMenuEntry.taskCategories,
+        // (P166 §10 / §8.2) Kurulum sihirbazi — yonetim isi. (P251 §8)
+        // Gorev kategorileri Tanimlar merkezinde.
         HomeMenuEntry.kurulum,
         HomeMenuEntry.outbox,
       ];
@@ -335,7 +350,14 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.complaints,
         HomeMenuEntry.patrol,
-        HomeMenuEntry.personel,
+        // (P251 §8) DEVRIYE: amir takibi, NFC noktalarini ve planlari
+        // gorur; yazma guvenlik moduna baglidir (dis sirkette amir yazar,
+        // sunucu `require_guvenlik_yazma`). Guvenlik gorevlisinde YOK:
+        // o yalniz kendi turunu ("Turlarim") gorur.
+        HomeMenuEntry.patrolTracking,
+        // (P251 §8) KISILER — amir icin TEK sekme: Personel (yalniz
+        // guvenlik personeli; sunucu P231 suzgeci).
+        HomeMenuEntry.kisiler,
         // (P231 §3) ZIYARETCI ve GOREV girisleri EKLENDI.
         //
         // ZIYARETCI: amir OKUR, kaydetmez — kaydi kapidaki gorevli girer
@@ -445,28 +467,34 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.financialSummary,
         HomeMenuEntry.transparency,
         HomeMenuEntry.reports,
-        HomeMenuEntry.personel,
-        HomeMenuEntry.sakinler,
-        // (E2E 2026-09, MOBIL-10) Davet durumu sakinlerin YANINDA: sakin
-        // eklenince davet otomatik gider, sonucu burada izlenir.
-        HomeMenuEntry.davetler,
+        // (P251 §8) Otomasyon kendi girisinde (web Finans › Otomasyon).
+        HomeMenuEntry.otomasyon,
+        // (P251 §8) KISILER TEK GIRIS — Saha personeli, Site sakinleri ve
+        // Davetler ayri satirlardi; artik Kisiler ekraninin sekmeleri.
+        HomeMenuEntry.kisiler,
         // (E2E 2026-09, MOBIL-10) Gurultu uyarilari — iletisim grubu.
         HomeMenuEntry.gurultuUyarilari,
+        // (P251 §8) Entegrasyonlar diyafonu ICINDE tasir (web ile ayni);
+        // ayri "Diyafon" satiri kalkti, ekran entegrasyonlardan acilir.
         HomeMenuEntry.integrations,
-        // (P240 §2) Diyafon — dis sistem baglantisi, ayni kutuda.
-        HomeMenuEntry.diyafon,
         // (P240 §3) Akilli ev — ortak alan cihazlari + senaryolarin sonucu.
         HomeMenuEntry.akilliEv,
         // (P241 §1) Periyodik bakim — binanin kendisi.
         HomeMenuEntry.bakim,
         HomeMenuEntry.binaDuzenleme,
-        HomeMenuEntry.daireTanimlari,
-        HomeMenuEntry.taskCategories,
+        // (P251 §8) Daire tipleri ve gorev kategorileri TANIMLAR merkezinde
+        // (web'de de tek "Tanimlar" girisinin sekmeleri).
+        HomeMenuEntry.tanimlar,
+        HomeMenuEntry.tesisAyarlari,
         HomeMenuEntry.kurulum,
+        HomeMenuEntry.dokumanlar,
+        HomeMenuEntry.bilgisayardan,
         HomeMenuEntry.otopark,
         HomeMenuEntry.ihlaller,
         // (P240 §1) Acil durum cagrilari — TAKIP.
         HomeMenuEntry.panikTakip,
+        // (P251 §8) Canli kameralar — web Guvenlik › Kameralar ikizi.
+        HomeMenuEntry.kameralar,
         // (P248 §1-kamera) Gecmis kamera kaydi (web ikizi kamera-kayitlari).
         HomeMenuEntry.kameraKayitlari,
         HomeMenuEntry.vardiyalar,
@@ -579,6 +607,12 @@ String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
       HomeMenuEntry.davetler => l10n.modulDavetler,
       HomeMenuEntry.gurultuUyarilari => l10n.modulGurultuUyarilari,
       HomeMenuEntry.kameraKayitlari => l10n.modulKameraKayitlari,
+      HomeMenuEntry.kameralar => l10n.modulKameralar,
+      HomeMenuEntry.kisiler => l10n.modulKisiler,
+      HomeMenuEntry.tanimlar => l10n.modulTanimlar,
+      HomeMenuEntry.tesisAyarlari => l10n.modulTesisAyarlari,
+      HomeMenuEntry.otomasyon => l10n.modulOtomasyon,
+      HomeMenuEntry.bilgisayardan => l10n.modulBilgisayardan,
     };
 
 // ===========================================================================
@@ -612,13 +646,22 @@ enum HomeMenuGrup {
   /// Siteye seslenme + sakinden gelen.
   iletisim,
 
-  /// Kurulum kayitlari — blok, daire tipleri, personel, sakinler.
+  /// (P251 §8) Sakinler · personel · yoneticiler · davetler (tek giris).
+  kisiler,
+
+  /// Kurulum kayitlari — bina yapisi, daire tipleri, gorev kategorileri.
   tanimlar,
+
+  /// (P251 §8) Tesis ayarlari, entegrasyonlar, kurulum, dokumanlar.
+  yonetim,
 }
 
 /// Girisin bolumu. Switch EKSIKSIZ (default yok): yeni bir giris eklenince
 /// derleyici burayi da doldurmaya zorlar — bir modulun sessizce gruba
 /// dusmemesi (ve menuden kaybolmasi) boyle onlenir.
+// (P251 §8) GRUPLAR WEB ILE AYNI — `contracts/menu-paritesi.tsv`.
+// Bir girisin grubu degisirse `test/p251_menu_paritesi_test.dart` duser;
+// fark bilincliyse tabloya GEREKCESIYLE yazilir.
 HomeMenuGrup homeMenuGrubu(HomeMenuEntry e) => switch (e) {
   HomeMenuEntry.patrol ||
   HomeMenuEntry.patrolTracking ||
@@ -631,18 +674,24 @@ HomeMenuGrup homeMenuGrubu(HomeMenuEntry e) => switch (e) {
   HomeMenuEntry.ihlaller ||
   HomeMenuEntry.aracGecis ||
   HomeMenuEntry.plakaOlaylari ||
-  HomeMenuEntry.otopark => HomeMenuGrup.guvenlik,
+  HomeMenuEntry.otopark ||
+  // Guvenlik grubunda: acil durum bir GUVENLIK olayidir, iletisim degil.
+  HomeMenuEntry.panikTakip ||
+  // (P248 §1-kamera) Gecmis kayit ve (P251) canli izleme GUVENLIK isidir.
+  HomeMenuEntry.kameraKayitlari ||
+  HomeMenuEntry.kameralar => HomeMenuGrup.guvenlik,
   HomeMenuEntry.tasks ||
   HomeMenuEntry.taskTracking ||
   HomeMenuEntry.assets ||
   HomeMenuEntry.rezervasyon ||
-  HomeMenuEntry.etkinlik ||
-  HomeMenuEntry.siteKurallari ||
-  HomeMenuEntry.dokumanlar ||
   HomeMenuEntry.disHizmet ||
-      HomeMenuEntry.yerelIsletmeler ||
+  HomeMenuEntry.yerelIsletmeler ||
   HomeMenuEntry.sikayetHaritasi ||
-  HomeMenuEntry.sikayetlerim => HomeMenuGrup.tesis,
+  HomeMenuEntry.sikayetlerim ||
+  // Akilli ev: sakin icin gunluk eylem ekrani (isigi yak), yonetici icin
+  // ortak alan kontrolu — BINANIN KENDISI. (P251 §8) Web'de de Tesis.
+  HomeMenuEntry.akilliEv ||
+  HomeMenuEntry.bakim => HomeMenuGrup.tesis,
   HomeMenuEntry.tahsilat ||
   HomeMenuEntry.gider ||
   HomeMenuEntry.borclular ||
@@ -652,32 +701,32 @@ HomeMenuGrup homeMenuGrubu(HomeMenuEntry e) => switch (e) {
   HomeMenuEntry.financialSummary ||
   HomeMenuEntry.transparency ||
   HomeMenuEntry.siteBudget ||
+  HomeMenuEntry.otomasyon ||
   HomeMenuEntry.myDues => HomeMenuGrup.finans,
   HomeMenuEntry.announcements ||
   HomeMenuEntry.complaints ||
   HomeMenuEntry.anketler ||
   HomeMenuEntry.gurultuUyarilari ||
+  // (P251 §8) Site kurallari ve etkinlikler sakine YAYINLANAN icerik —
+  // web'de Iletisim'de; mobilde Tesis'teydi.
+  HomeMenuEntry.siteKurallari ||
+  HomeMenuEntry.etkinlik ||
   HomeMenuEntry.yoneticiIletisim => HomeMenuGrup.iletisim,
-  // Davet, sakin/personel kaydinin devami: tanimlar.
-  HomeMenuEntry.davetler => HomeMenuGrup.tanimlar,
-  // Guvenlik grubunda: acil durum bir GUVENLIK olayidir, iletisim degil.
-  HomeMenuEntry.panikTakip => HomeMenuGrup.guvenlik,
-  // (P248 §1-kamera) Gecmis kayit bir GUVENLIK isidir (web menude de
-  // kamera-kayitlari guvenlik bolumunde).
-  HomeMenuEntry.kameraKayitlari => HomeMenuGrup.guvenlik,
+  HomeMenuEntry.kisiler ||
+  // Eski girisler Kisiler'in sekmeleri; kalan rotalari yonlenir.
   HomeMenuEntry.personel ||
   HomeMenuEntry.sakinler ||
+  HomeMenuEntry.davetler => HomeMenuGrup.kisiler,
   HomeMenuEntry.binaDuzenleme ||
+  HomeMenuEntry.tanimlar ||
   HomeMenuEntry.daireTanimlari ||
-  HomeMenuEntry.taskCategories ||
-  HomeMenuEntry.kurulum ||
+  HomeMenuEntry.taskCategories => HomeMenuGrup.tanimlar,
+  HomeMenuEntry.tesisAyarlari ||
+  HomeMenuEntry.integrations ||
   HomeMenuEntry.diyafon ||
-  HomeMenuEntry.integrations => HomeMenuGrup.tanimlar,
-  // Akilli ev TANIMLAR grubunda DEGIL: sakin icin gunluk bir eylem
-  // ekranidir (isigi yak), yonetici icin de ortak alan kontrolu —
-  // yani BINANIN KENDISI.
-  HomeMenuEntry.akilliEv => HomeMenuGrup.tesis,
-  HomeMenuEntry.bakim => HomeMenuGrup.tesis,
+  HomeMenuEntry.kurulum ||
+  HomeMenuEntry.dokumanlar ||
+  HomeMenuEntry.bilgisayardan => HomeMenuGrup.yonetim,
 };
 
 /// Rolun menusu, BOLUMLENMIS. Bos bolum DONMEZ.
@@ -702,5 +751,7 @@ String homeMenuGrupBasligi(AppLocalizations l10n, HomeMenuGrup g) =>
       HomeMenuGrup.tesis => l10n.kabukGrupTesis,
       HomeMenuGrup.finans => l10n.kabukGrupFinans,
       HomeMenuGrup.iletisim => l10n.kabukGrupIletisim,
+      HomeMenuGrup.kisiler => l10n.kabukGrupKisiler,
       HomeMenuGrup.tanimlar => l10n.kabukGrupTanimlar,
+      HomeMenuGrup.yonetim => l10n.kabukGrupYonetim,
     };

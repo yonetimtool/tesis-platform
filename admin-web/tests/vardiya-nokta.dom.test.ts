@@ -9,7 +9,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import CheckpointsPage from "@/app/(protected)/checkpoints/page";
+import CheckpointsPage from "@/components/devriye/noktalar";
 import NotificationsPage from "@/app/(protected)/notifications/page";
 // (P232 §A) SAYFA BILESENE DONUSTU. `/shifts` artik yalnizca
 // `/vardiya-plani`ya yonlendiriyor; sablon yonetimi oradaki "Vardiya

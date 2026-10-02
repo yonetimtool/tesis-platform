@@ -109,7 +109,7 @@ describe("Olaylar", () => {
   };
 
   it("KAYNAK `manuel` SABIT gonderilir — kullaniciya sectirilmez", async () => {
-    const c = taklit({ "/api/violations": { items: [] } });
+    const c = taklit({ "/api/me": { role: "admin" }, "/api/violations": { items: [] } });
     ciz(OlaylarPage);
     // (P161) Form artik MODALDA.
     await userEvent.click(await screen.findByRole("button", { name: "Yeni olay bildir" }));
@@ -136,7 +136,7 @@ describe("Olaylar", () => {
   });
 
   it("KONU olmadan gonderilmez", async () => {
-    const c = taklit({ "/api/violations": { items: [] } });
+    const c = taklit({ "/api/me": { role: "admin" }, "/api/violations": { items: [] } });
     ciz(OlaylarPage);
     // (P161) Form artik MODALDA.
     await userEvent.click(await screen.findByRole("button", { name: "Yeni olay bildir" }));
@@ -148,13 +148,22 @@ describe("Olaylar", () => {
   });
 
   it("kaynak ve durum CEVRILMIS gosterilir", async () => {
-    taklit({ "/api/violations": { items: [OLAY] } });
+    taklit({ "/api/me": { role: "admin" }, "/api/violations": { items: [OLAY] } });
     ciz(OlaylarPage);
     expect(await screen.findByText("Kapı açık kalmış")).toBeInTheDocument();
     expect(screen.getByText(/Elle bildirim/)).toBeInTheDocument();
     // (P245) "Yeni" artik durum SUZGECININ seceneginde de geciyor;
     // kapsamsiz sorgu iddiayi secenekle de karsilardi. Satirdan okunur.
     expect(screen.getByRole("cell", { name: "Yeni" })).toBeInTheDocument();
+  });
+
+  it("(P251 §8) YONETICI listeyi okur ama 'Yeni olay bildir' GORMEZ", async () => {
+    // Sunucu yazmayi yalniz admin/security'ye acar (`violations.py`
+    // _WRITER); P154'te bu dugme yoneticiye 403 veriyordu.
+    taklit({ "/api/me": { role: "yonetici" }, "/api/violations": { items: [OLAY] } });
+    ciz(OlaylarPage);
+    expect(await screen.findByText("Kapı açık kalmış")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Yeni olay bildir" })).toBeNull();
   });
 });
 

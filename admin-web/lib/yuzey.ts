@@ -133,6 +133,14 @@ export const TESIS_ROTALARI = [
   "/raporlar",
   "/transparency",
   "/users",
+  // (P251 §8) Kisiler (sekmeli: sakinler, personel, yoneticiler, davetler)
+  // ve Devriye (takip, noktalar, planlar) tek sayfalar; eski rotalar
+  // bunlara yonlenir. Goruntuleme izni web'e eklendi; maas kartlari
+  // Tanimlar'dan Finans'a tasindi.
+  "/kisiler",
+  "/devriye",
+  "/goruntuleme-izni",
+  "/finans/maas-kartlari",
   // (P220 §4) SAKINLER — TESIS rotasi, `/users` gibi.
   //
   // Bir tesisin daire sakinleri listesi; platformlar-arasi bir gorunum
@@ -464,6 +472,11 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   // (P129) Seffaflik panosu zaten anonim ozet; denetci OKUR.
   "/transparency": ["admin", "yonetici", "denetci"],
   "/users": ["admin", "yonetici"],
+  "/kisiler": ["admin", "yonetici"],
+  "/devriye": ["admin", "yonetici"],
+  // (P251 §8) `unit_access.py` _REQUESTER = admin, yonetici.
+  "/goruntuleme-izni": ["admin", "yonetici"],
+  "/finans/maas-kartlari": ["admin", "yonetici"],
   // Sunucudaki `_YONETIM` ile AYNI kume (`GET /residents`). Ayrisirlarsa
   // ya yetkisiz kullaniciya menude gorunen bir sayfa gosterilir ya da
   // yetkili kullanicidan gizlenir.
@@ -561,7 +574,12 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   //
   // `security` bu ucu GERCEKTEN kullaniyor (mobil olay bildirimi), bu
   // yuzden uc kaldirilmadi — yalniz web rota gorunurlugu daraldi.
-  "/olaylar": ["admin"],
+  //
+  // (P251 §8) ALTERNATIF UYGULANDI: menu paritesi (mobil yonetici ayni
+  // listeyi "Olaylar ve ihlaller" adiyla okuyor) yoneticinin web'de de
+  // gormesini istedi. Yazma dugmesi artik yalniz yazabilen rolde
+  // cizildigi icin P154'teki 403 akisi kapanmis durumda.
+  "/olaylar": ["admin", "yonetici"],
 
   // --- PARK EDILDI (P129) — SAKIN / GUVENLIK / SAHA ----------------------
   // Sayfalar SILINMEDI: dosyalari duruyor, testleri kosuyor. `app.*`

@@ -349,13 +349,13 @@ void main() {
         '${ayAdi(simdi.month, dil)} ${simdi.year}';
 
     for (final (locale, baslik, bolum, ay) in [
-      (const Locale('tr'), 'AYLIK RAPORLAR', 'Görev tamamlama',
+      (const Locale('tr'), 'RAPORLAR', 'Görev tamamlama',
           beklenenAy('tr')),
-      (const Locale('en'), 'MONTHLY REPORTS', 'Task completion',
+      (const Locale('en'), 'REPORTS', 'Task completion',
           beklenenAy('en')),
       (
         const Locale('fr'),
-        'RAPPORTS MENSUELS',
+        'RAPPORTS',
         'Achèvement des tâches',
         beklenenAy('fr')
       ),

@@ -12,7 +12,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import CheckpointsPage from "@/app/(protected)/checkpoints/page";
+import CheckpointsPage from "@/components/devriye/noktalar";
 import UnitsPage from "@/app/(protected)/units/page";
 
 import { ciz, fetchSahtele } from "./yardimci";

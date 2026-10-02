@@ -10,7 +10,18 @@ class TenantSettings {
     required this.ad,
     this.kurulumTamamlandi = true,
     this.demoMod = false,
+    this.adres,
+    this.ilce,
+    this.il,
+    this.postaKodu,
   });
+
+  /// (P251 §8) Tesis adresi — mobil Tesis ayarlari ekrani duzenler
+  /// (web `/tesis-ayarlari` ile ayni alanlar; sunucu yoneticiye acik).
+  final String? adres;
+  final String? ilce;
+  final String? il;
+  final String? postaKodu;
 
   final String tenantId;
   final String ad;
@@ -34,5 +45,9 @@ class TenantSettings {
         // Alan yoksa KAPALI: eski/bilinmeyen bir sunucuda demo dugmesini
         // cizmek, olmayan bir uca dokunduran olu bir dugme olurdu.
         demoMod: json['demo_mod'] as bool? ?? false,
+        adres: json['adres'] as String?,
+        ilce: json['ilce'] as String?,
+        il: json['il'] as String?,
+        postaKodu: json['posta_kodu'] as String?,
       );
 }

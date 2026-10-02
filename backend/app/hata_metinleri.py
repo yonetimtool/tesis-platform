@@ -1001,6 +1001,15 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Votre session a pris fin. Veuillez vous reconnecter.",
         "es": "Su sesión ha finalizado. Inicie sesión de nuevo.",
     },
+    "maas_karti_zaten_bagli": {
+        "tr": "Bu hesabın zaten bir maaş kartı var; mevcut kartı düzenleyin.",
+        "en": "This account already has a payroll card; edit the existing card.",
+        "ar": "لهذا الحساب بطاقة راتب بالفعل؛ عدّل البطاقة الحالية.",
+        "ru": "У этой учётной записи уже есть зарплатная карточка; измените существующую.",
+        "de": "Dieses Konto hat bereits eine Gehaltskarte; bearbeiten Sie die vorhandene.",
+        "fr": "Ce compte a déjà une fiche de paie ; modifiez la fiche existante.",
+        "es": "Esta cuenta ya tiene una ficha salarial; edite la existente.",
+    },
     "kullanici_bulunamadi_veya_pasif": {
         "tr": "Kullanıcı bulunamadı veya pasif.",
         "en": "The user was not found or is inactive.",

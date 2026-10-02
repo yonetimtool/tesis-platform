@@ -10,8 +10,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const qs = new URLSearchParams();
   qs.set("limit", sp.get("limit") ?? "20");
   qs.set("offset", sp.get("offset") ?? "0");
-  const role = sp.get("role");
-  if (role) qs.set("role", role);
+  // (P251 §8) Tekrarlanabilir: Kisiler sekmeleri birden cok rol ister.
+  for (const role of sp.getAll("role")) if (role) qs.append("role", role);
   const isActive = sp.get("is_active");
   if (isActive === "true" || isActive === "false") qs.set("is_active", isActive);
   const q = sp.get("q");

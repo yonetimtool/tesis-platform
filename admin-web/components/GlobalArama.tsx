@@ -34,7 +34,7 @@ interface Vurus {
 
 /** Kaynak -> (etiket anahtari, gidilecek rota). */
 const HEDEF: Record<string, { etiket: SozlukAnahtari; rota: string }> = {
-  kisi: { etiket: "kabukKullanicilar", rota: "/users" },
+  kisi: { etiket: "kabukKisiler", rota: "/kisiler" },
   daire: { etiket: "kabukDaireler", rota: "/units" },
   blok: { etiket: "kabukBinaDuzenleme", rota: "/building-editor" },
   // (P251 §7) Firma kaydi dogrudan Firmalar sekmesini acar.

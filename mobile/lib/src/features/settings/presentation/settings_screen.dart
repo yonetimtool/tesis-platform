@@ -19,7 +19,6 @@ import '../../kvkk/presentation/kvkk_onay_screen.dart'
     show PazarlamaAnahtarlari;
 import '../../auth/domain/user_role.dart';
 import '../../kurulum/presentation/kurulum_hatirlatici.dart';
-import '../../tenant/data/tenant_api.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/theme/home_tokens.dart';
 import '../../../core/ui/merkez_diyalog.dart';
@@ -48,30 +47,13 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Tesis adini YALNIZ yonetici degistirir (backend RBAC zorlar).
-          if (role == UserRole.yonetici) ...[
-            Text(l10n.ayarlarTesis,
-                style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            const _TesisAdiKarti(),
-            const SizedBox(height: 24),
-          ],
-          // Kamera yonetimi — admin/yonetici (WP-F). security ana ekran
-          // seridinden erisir; buradaki giris YONETIM icindir.
+          // (P251 §8) TESIS ADI KARTI ve KAMERALAR GIRISI BURADAN KALKTI.
+          // Tesis adi siteye ait bir ayardir: menude Yonetim › Tesis
+          // ayarlari (ad + adres). Kameralar menude Guvenlik › Kameralar
+          // (web ile ayni grup). Ayarlar kisinin KENDI tercihleridir.
           if (role == UserRole.admin || role == UserRole.yonetici) ...[
             Text(l10n.ayarlarYonetim,
                 style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.videocam_outlined),
-                title: Text(l10n.ayarlarKameralar),
-                subtitle: Text(l10n.ayarlarKameralarAlt),
-                // RTL: chevron Directionality ile kendiliginden aynalanir.
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.push(AppRoutes.kameralar),
-              ),
-            ),
             const SizedBox(height: 8),
             // (P166 §8.2) KURULUM SIHIRBAZI — ayarlardan erisim.
             //
@@ -79,23 +61,24 @@ class SettingsScreen extends ConsumerWidget {
             // Iki ayri sey sunuluyor: SIHIRBAZI ACMAK (dokun) ve ILK
             // GIRISTEKI HATIRLATICIYI GERI GETIRMEK (yenile ikonu). Biri
             // kullaniciyi bir kez goturur, oteki hatirlatmayi surdurur.
+            //
+            // (P251 §8) SIHIRBAZIN KENDISI menude (Yonetim › Kurulum
+            // sihirbazi); burada yalniz HATIRLATICI ayari kaldi — o bir
+            // TERCIH, menude yeri yok. Iki giris "hangisi" sorusu uretiyordu.
             Card(
               child: ListTile(
+                key: const Key('ayarlar-kurulum-hatirlatici'),
                 leading: const Icon(Icons.checklist_outlined),
-                title: Text(l10n.kurulumBaslik),
+                title: Text(l10n.kurulumHatirlaticiBaslik),
                 subtitle: Text(l10n.kurulumAlt),
-                trailing: IconButton(
-                  icon: const Icon(Icons.refresh),
-                  tooltip: l10n.kurulumHatirlaticiBaslik,
-                  onPressed: () async {
-                    await kurulumHatirlaticiyiAc(ref);
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(l10n.kurulumHatirlaticiBaslik)),
-                    );
-                  },
-                ),
-                onTap: () => context.push(AppRoutes.kurulum),
+                trailing: const Icon(Icons.refresh),
+                onTap: () async {
+                  await kurulumHatirlaticiyiAc(ref);
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(l10n.kurulumHatirlaticiBaslik)),
+                  );
+                },
               ),
             ),
             const SizedBox(height: 24),
@@ -339,124 +322,6 @@ class _DilKarti extends ConsumerWidget {
     );
   }
 }
-
-/// Tesis adi karti (yonetici) — `PATCH /tenant/settings {ad}`. Kaydedince
-/// [tenantSettingsProvider] tazelenir → ana ekran app-bar'i guncellenir.
-/// slug DEGISMEZ.
-class _TesisAdiKarti extends ConsumerStatefulWidget {
-  const _TesisAdiKarti();
-
-  @override
-  ConsumerState<_TesisAdiKarti> createState() => _TesisAdiKartiState();
-}
-
-class _TesisAdiKartiState extends ConsumerState<_TesisAdiKarti> {
-  /// Sunucu-tarafi yer tutucu — kullaniciya gosterilmez, alan bos baslar.
-  static const _placeholder = '(Kurulum bekliyor)';
-
-  late final TextEditingController _adCtrl = TextEditingController(
-    text: () {
-      final ad = ref.read(tenantSettingsProvider).value?.ad ?? '';
-      return ad == _placeholder ? '' : ad;
-    }(),
-  );
-  bool _submitting = false;
-
-  @override
-  void dispose() {
-    _adCtrl.dispose();
-    super.dispose();
-  }
-
-  AppLocalizations get _l10n => AppLocalizations.of(context);
-
-  Future<void> _kaydet() async {
-    FocusScope.of(context).unfocus();
-    final ad = _adCtrl.text.trim();
-    if (ad.isEmpty) return;
-    setState(() => _submitting = true);
-    try {
-      await ref.read(tenantApiProvider).updateAd(ad);
-      ref.invalidate(tenantSettingsProvider);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_l10n.tesisAdiGuncellendi)),
-        );
-      }
-    } on ApiException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(apiHataMetni(_l10n, e))));
-      }
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_l10n.ortakBeklenmeyenHata)),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _submitting = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.ayarlarTesisAdi,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Text(
-              l10n.tesisAdiAciklama,
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _adCtrl,
-              inputFormatters: GirdiSiniri.sinir(GirdiSiniri.baslik), // sunucu: TenantSettingsUpdate.ad
-              enabled: !_submitting,
-              textInputAction: TextInputAction.done,
-              textCapitalization: TextCapitalization.words,
-              onChanged: (_) => setState(() {}),
-              onSubmitted: (_) => _kaydet(),
-              decoration: InputDecoration(
-                hintText: l10n.tesisAdiIpucu,
-                prefixIcon: const Icon(Icons.business_outlined),
-                border: const OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Align(
-              // YON-DUYARLI: Arapca'da sola hizalanir.
-              alignment: AlignmentDirectional.centerEnd,
-              child: FilledButton(
-                onPressed: (_submitting || _adCtrl.text.trim().isEmpty)
-                    ? null
-                    : _kaydet,
-                child: _submitting
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2.5),
-                      )
-                    : Text(l10n.ortakKaydet),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 
 /// (P36) Pazarlama izinleri + aydinlatma metnine erisim.
 ///

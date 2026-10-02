@@ -162,6 +162,11 @@ export default function AracGecisleriPage() {
     [t],
   );
 
+  const { data: doluluk } = useSWR<{ kapasite: number | null; dolu: number; oran: number | null }>(
+    "/api/parking/occupancy",
+    jsonFetcher,
+  );
+
   return (
     <div>
       <SayfaBasligi baslik={t("aracBaslik")} aciklama={t("aracOtomatikNot")} />
@@ -173,12 +178,19 @@ export default function AracGecisleriPage() {
           ikon={<Ikon yol={IKON_ARAC} />}
           durum="bilgi"
         />
+        {/* (P251 §8) OTOPARK DOLULUGU — "Otopark" (mobil) ile "Arac
+            gecisleri" (web) AYNI modul: doluluk acik gecislerden sayilir.
+            Kapasite tanimsizsa uydurma yuzde yok (sunucu `oran: null`). */}
         <OzetKarti
-          etiket={t("aracOzetIceride")}
-          deger={String(iceride?.meta?.total ?? 0)}
+          etiket={t("aracOzetDoluluk")}
+          deger={String(doluluk?.dolu ?? iceride?.meta?.total ?? 0)}
           ikon={<Ikon yol={IKON_ICERI} />}
           durum="olumlu"
-          altBilgi={t("aracOzetIcerideAlt")}
+          altBilgi={
+            doluluk?.oran != null && doluluk.kapasite
+              ? t("aracDolulukOran", { oran: doluluk.oran, kapasite: doluluk.kapasite })
+              : t("aracDolulukKapasiteYok")
+          }
         />
         <OzetKarti
           etiket={t("aracOzetToplam")}

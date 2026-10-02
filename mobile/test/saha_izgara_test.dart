@@ -84,8 +84,8 @@ void main() {
       'Vardiya planı',
       'Kargo',
       'Ziyaretçiler', // (P144) kanonik ad = /visitors ekraninin basligi
-      'Araç Plaka',
-      'İhlaller',
+      'Otopark ve araç geçişleri',
+      'Olaylar ve ihlaller',
       'Görevlerim',
       'Demirbaş',
       'Turlarım',
@@ -115,10 +115,10 @@ void main() {
     expect(find.text('3 Zimmetli'), findsOneWidget);
     expect(find.text('5 Açık'), findsOneWidget); // Talep / Arıza
     expect(find.text('2 Yaklaşan'), findsOneWidget); // Etkinlikler
-    expect(find.text('Site Kuralları'), findsOneWidget);
+    expect(find.text('Site kuralları'), findsOneWidget);
 
     // KVKK: bu rolun 403 aldigi uclarin kartlari HIC yok.
-    for (final yasak in ['Kargo', 'Ziyaretçi', 'Araç Plaka', 'İhlaller']) {
+    for (final yasak in ['Kargo', 'Ziyaretçi', 'Otopark ve araç geçişleri', 'Olaylar ve ihlaller']) {
       expect(find.text(yasak), findsNothing, reason: yasak);
     }
     expect(tester.takeException(), isNull);

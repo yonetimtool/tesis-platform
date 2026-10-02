@@ -36,7 +36,8 @@ void main() {
       // Gorunurluk UYDURULMADI: kartlarinin bugun cizildigi rollerden
       // turedi (otopark -> `_yoneticiErisim`; vardiya -> `_gorevliErisim`
       // + `_tesisGorevlisiErisim` + `_yoneticiErisim`).
-        HomeMenuEntry.daireTanimlari,
+        // (P251 §8) Daire tipleri + gorev kategorileri TANIMLAR merkezinde.
+        HomeMenuEntry.tanimlar,
         HomeMenuEntry.otopark,
         // (P139.5) `ihlaller` yuzeye cikarildi: rotasi ZATEN vardi, MODUL
         // GIRISI yoktu — kart izgaradan dustugunde kullanici GERI
@@ -44,12 +45,11 @@ void main() {
         HomeMenuEntry.ihlaller,
         // (P240 §1) Acil durum cagrilari — TAKIP.
         HomeMenuEntry.panikTakip,
+        // (P251 §8) Canli kameralar — web Guvenlik › Kameralar ikizi.
+        HomeMenuEntry.kameralar,
         // (P248 §1-kamera) Gecmis kamera kaydi.
         HomeMenuEntry.kameraKayitlari,
         HomeMenuEntry.vardiyalar,
-        // (P166 §10) Gorev kategorileri: ekran VARDI, girisi yalniz
-        // "Gorev yonetimi"nin sag ustundeki etiketsiz ikondu.
-        HomeMenuEntry.taskCategories,
         // (P166 §8.2) Kurulum sihirbazi — mobilde ilk kez.
         HomeMenuEntry.kurulum,
         HomeMenuEntry.outbox,
@@ -169,32 +169,34 @@ void main() {
           HomeMenuEntry.financialSummary,
           HomeMenuEntry.transparency,
           HomeMenuEntry.reports,
-          HomeMenuEntry.personel,
-          HomeMenuEntry.sakinler,
-          // (E2E 2026-09, MOBIL-10) Web ikizi: davetler + gurultu uyarilari.
-          HomeMenuEntry.davetler,
+          // (P251 §8) MENU PARITESI (contracts/menu-paritesi.tsv):
+          // Otomasyon kendi girisinde; Kisiler TEK giris (personel,
+          // sakinler, davetler sekme); diyafon Entegrasyonlar'in icinde;
+          // daire tipleri + gorev kategorileri Tanimlar merkezinde; Tesis
+          // ayarlari, Dokumanlar ve "Bilgisayardan yapilanlar" Yonetim'de;
+          // canli Kameralar Guvenlik'te.
+          HomeMenuEntry.otomasyon,
+          HomeMenuEntry.kisiler,
           HomeMenuEntry.gurultuUyarilari,
           HomeMenuEntry.integrations,
-          // (P240 §2) Diyafon — dis sistem baglantisi.
-          HomeMenuEntry.diyafon,
           // (P240 §3) Akilli ev — ortak alan cihazlari.
           HomeMenuEntry.akilliEv,
           // (P241 §1) Periyodik bakim takibi.
           HomeMenuEntry.bakim,
           HomeMenuEntry.binaDuzenleme,
-          // (P26) Bagimsiz Bolum Tanimlari — yonetim kurulum adimi.
-          HomeMenuEntry.daireTanimlari,
-          // (P166 §10) Gorev kategorileri: ekran VARDI, girisi yalniz
-          // "Gorev yonetimi"nin sag ustundeki etiketsiz ikondu.
-          HomeMenuEntry.taskCategories,
+          HomeMenuEntry.tanimlar,
+          HomeMenuEntry.tesisAyarlari,
           // (P166 §8.2) Kurulum sihirbazi — mobilde ilk kez.
           HomeMenuEntry.kurulum,
+          HomeMenuEntry.dokumanlar,
+          HomeMenuEntry.bilgisayardan,
           // (P139.3) Yuzeye cikarildi (rotalari zaten vardi); gorunurluk
           // kartlarinin cizildigi rolden turedi — bkz. admin blogu.
           HomeMenuEntry.otopark,
           HomeMenuEntry.ihlaller,
           // (P240 §1) Acil durum cagrilari — TAKIP.
           HomeMenuEntry.panikTakip,
+          HomeMenuEntry.kameralar,
           // (P248 §1-kamera) Gecmis kamera kaydi.
           HomeMenuEntry.kameraKayitlari,
           HomeMenuEntry.vardiyalar,

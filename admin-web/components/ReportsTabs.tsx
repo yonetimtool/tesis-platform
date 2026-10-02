@@ -7,7 +7,7 @@ import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
 const TABS: { href: string; anahtar: SozlukAnahtari }[] = [
   { href: "/reports/dues", anahtar: "raporAidatTahsilat" },
-  { href: "/reports/patrols", anahtar: "raporTurGecmisi" },
+  { href: "/devriye?sekme=takip", anahtar: "raporTurGecmisi" },
   { href: "/reports/tasks", anahtar: "raporGorevGecmisi" },
 ];
 

@@ -87,17 +87,19 @@ void main() {
 
       for (final baslik in [
         'Vardiya planı',
-        'Görev Yönetimi',
+        // (P251 §8) Adlar web ile birlesti (menu paritesi).
+        'Görevler',
         'Finansal özet',
-        'Otopark',
-        'İhlaller',
+        'Otopark ve araç geçişleri',
+        'Olaylar ve ihlaller',
         // (P142) AD BIRLESTIRME (Kerem onayi): "karo adi ile gittigi
         // ekranin adi ayni olacak". `/complaints`e giden karolarin hepsi
         // ekranin kendi adini ("Talep / Arıza") kullanir; "Sikayetler"
         // adli karo BINA SEMASINA gidiyordu, adi da o oldu.
         'Talep / Arıza',
         'Şikayet Haritası',
-        'Aylık raporlar',
+        // (P251 §8) "Aylık raporlar" -> "Raporlar" (web ile ayni ad).
+        'Raporlar',
       ]) {
         expect(find.text(baslik), findsOneWidget, reason: baslik);
       }

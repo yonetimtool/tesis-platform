@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/akis_hatasi.dart';
@@ -8,6 +9,7 @@ import '../../../core/i18n/l10n.dart';
 import '../data/integration_api.dart';
 import '../domain/integration_models.dart';
 import '../../../core/ui/merkez_diyalog.dart';
+import '../../../routing/app_router.dart';
 import 'integrations_controller.dart';
 
 /// Entegrasyon yonetim ekrani (C1b) — YONETICI (mobil). Liste + ekle/duzenle/
@@ -39,6 +41,19 @@ class IntegrationsScreen extends ConsumerWidget {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
                 children: [
+                  // (P251 §8) DIYAFON BURADAN acilir (web'de de entegrasyonlar
+                  // sayfasinin icinde). Menudeki ayri "Diyafon" satiri kalkti:
+                  // ayni dis-sistem baglantisi iki yerden acilmasin.
+                  Card(
+                    child: ListTile(
+                      key: const Key('entegrasyon-diyafon'),
+                      leading: const Icon(Icons.doorbell_outlined),
+                      title: Text(l10n.diyafonBaslik),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.push(AppRoutes.diyafon),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   if (hata != null)
                     Card(
                       color: Colors.red.withValues(alpha: 0.08),

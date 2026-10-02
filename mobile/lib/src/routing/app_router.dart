@@ -53,8 +53,13 @@ import '../features/egitim/presentation/kurulum_videolari_screen.dart';
 import '../features/etkinlik/presentation/etkinlik_screen.dart';
 import '../features/patrol/presentation/patrol_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
-import '../features/residents/presentation/residents_screen.dart';
 import '../features/checkpoints/presentation/checkpoints_screen.dart';
+import '../features/bilgisayardan/presentation/bilgisayardan_screen.dart';
+import '../features/kisiler/domain/kisiler_sekmeleri.dart';
+import '../features/kisiler/presentation/kisiler_screen.dart';
+import '../features/otomasyon/presentation/otomasyon_kurallari_screen.dart';
+import '../features/tanimlar/presentation/tanimlar_screen.dart';
+import '../features/tenant/presentation/tesis_ayarlari_screen.dart';
 import '../features/patrol/presentation/patrol_plans_screen.dart';
 import '../features/patrol/presentation/patrol_tracking_screen.dart';
 import '../features/reports/presentation/reports_screen.dart';
@@ -66,7 +71,6 @@ import '../features/anket/presentation/anket_screen.dart';
 import '../features/kvkk/presentation/kvkk_metin_screen.dart';
 import '../features/kurulum/presentation/kurulum_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
-import '../features/staff/presentation/staff_screen.dart';
 import '../features/dis_hizmet/presentation/dis_hizmet_screen.dart';
 import '../features/dukkan/presentation/dukkan_arama_screen.dart';
 import '../features/dukkan/presentation/dukkan_bildirim_screen.dart';
@@ -94,7 +98,6 @@ import '../features/dokumanlar/presentation/dokuman_screen.dart';
 import '../features/kvkk/presentation/yasal_metinler_screen.dart';
 import 'splash_screen.dart';
 import '../features/arama/presentation/arama_screen.dart';
-import '../features/davetler/presentation/davetler_screen.dart';
 import '../features/gurultu/presentation/gurultu_uyarilari_screen.dart';
 
 class AppRoutes {
@@ -243,6 +246,12 @@ class AppRoutes {
   static const gurultuUyarilari = '/gurultu-uyarilari';
   /// (P248 §1-kamera) Gecmis kamera kaydi (NVR) — amir/yonetici/admin.
   static const kameraKayitlari = '/kamera-kayitlari';
+  // (P251 §8) Menu paritesi — web ile ayni adresler.
+  static const kisiler = '/kisiler';
+  static const tanimlar = '/tanimlar';
+  static const tesisAyarlari = '/tesis-ayarlari';
+  static const otomasyon = '/otomasyon';
+  static const bilgisayardan = '/bilgisayardan';
 }
 
 /// (P217) `routeForPushData` KALDIRILDI — yerine `push_yonlendirme.dart`.
@@ -678,8 +687,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       // (E2E 2026-09, MOBIL-10) Davetler + gurultu uyarilari (yonetici).
       GoRoute(
+        // (P251 §8) Eski adres -> Kisiler › Davetler (bildirim/derin
+        // baglanti bozulmasin).
         path: AppRoutes.davetler,
-        builder: (context, state) => const DavetlerScreen(),
+        redirect: (context, state) => '${AppRoutes.kisiler}?sekme=davetler',
       ),
       GoRoute(
         path: AppRoutes.gurultuUyarilari,
@@ -713,12 +724,36 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ProfileScreen(),
       ),
       GoRoute(
+        // (P251 §8) Eski adresler -> Kisiler sekmeleri.
         path: AppRoutes.personel,
-        builder: (context, state) => const StaffScreen(),
+        redirect: (context, state) => '${AppRoutes.kisiler}?sekme=personel',
       ),
       GoRoute(
         path: AppRoutes.sakinler,
-        builder: (context, state) => const ResidentsScreen(),
+        redirect: (context, state) => '${AppRoutes.kisiler}?sekme=sakinler',
+      ),
+      // (P251 §8) MENU PARITESI — web ile ayni adresler ve gruplar.
+      GoRoute(
+        path: AppRoutes.kisiler,
+        builder: (context, state) => KisilerScreen(
+          ilkSekme: kisilerSekmesiCoz(state.uri.queryParameters['sekme']),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.tanimlar,
+        builder: (context, state) => const TanimlarScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.tesisAyarlari,
+        builder: (context, state) => const TesisAyarlariScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.otomasyon,
+        builder: (context, state) => const OtomasyonKurallariScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.bilgisayardan,
+        builder: (context, state) => const BilgisayardanScreen(),
       ),
     ],
     redirect: (context, state) {

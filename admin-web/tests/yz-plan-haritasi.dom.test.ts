@@ -18,7 +18,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import CheckpointsPage from "@/app/(protected)/checkpoints/page";
+import CheckpointsPage from "@/components/devriye/noktalar";
 import SchematicPage from "@/app/(protected)/schematic/page";
 
 import { ciz } from "./yardimci";

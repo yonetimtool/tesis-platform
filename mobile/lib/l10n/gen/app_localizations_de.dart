@@ -48,10 +48,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get kartZiyaretci => 'Besucher';
 
   @override
-  String get kartAracPlaka => 'Fahrzeuge';
+  String get kartAracPlaka => 'Parken & Fahrzeuge';
 
   @override
-  String get kartIhlaller => 'Verstöße';
+  String get kartIhlaller => 'Vorfälle und Verstöße';
 
   @override
   String get kartGorevlerim => 'Meine Aufgaben';
@@ -347,13 +347,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get modulTurlarim => 'Meine Rundgänge';
 
   @override
-  String get modulDevriyeTakibi => 'Rundgang-Verfolgung';
+  String get modulDevriyeTakibi => 'Rundgang';
 
   @override
   String get modulGorevlerim => 'Meine Aufgaben';
 
   @override
-  String get modulGorevYonetimi => 'Aufgabenverwaltung';
+  String get modulGorevYonetimi => 'Aufgaben';
 
   @override
   String get modulDemirbas => 'Inventar';
@@ -4093,7 +4093,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get ziyaretKaydetVeBildir => 'Speichern + benachrichtigen';
 
   @override
-  String get raporBaslik => 'Monatsberichte';
+  String get raporBaslik => 'Berichte';
 
   @override
   String get raporOncekiAy => 'Vormonat';
@@ -4670,10 +4670,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get modulAracGecis => 'Fahrzeugdurchfahrten';
 
   @override
-  String get modulOtopark => 'Parkplatz';
+  String get modulOtopark => 'Parken & Fahrzeuge';
 
   @override
-  String get modulIhlaller => 'Verstöße';
+  String get modulIhlaller => 'Vorfälle und Verstöße';
 
   @override
   String get aracSuzgecTumu => 'Alle';
@@ -5870,7 +5870,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get ortakDahaFazlaSecenek => 'Weitere Optionen';
 
   @override
-  String get modulDokumanlar => 'Objektdokumente';
+  String get modulDokumanlar => 'Dokumente';
 
   @override
   String get dokumanBaslik => 'Objektdokumente';
@@ -6187,7 +6187,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get finansTahsilatBaslik => 'Kassierung';
+  String get finansTahsilatBaslik => 'Einnahmen';
 
   @override
   String get finansKisiGerekli => 'Wählen Sie eine Person.';
@@ -6226,7 +6226,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get finansGiderBaslik => 'Ausgabe erfassen';
+  String get finansGiderBaslik => 'Ausgaben';
 
   @override
   String get finansGiderKaydedildi => 'Ausgabe erfasst.';
@@ -8714,4 +8714,125 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get izgaraAsagiTasi => 'Nach unten verschieben';
+
+  @override
+  String get kabukGrupKisiler => 'Personen';
+
+  @override
+  String get kabukGrupYonetim => 'Verwaltung';
+
+  @override
+  String get modulKisiler => 'Personen';
+
+  @override
+  String get modulKameralar => 'Kameras';
+
+  @override
+  String get modulTanimlar => 'Stammdaten';
+
+  @override
+  String get modulTesisAyarlari => 'Anlageneinstellungen';
+
+  @override
+  String get modulOtomasyon => 'Automatisierung';
+
+  @override
+  String get modulBilgisayardan => 'Am Computer erledigen';
+
+  @override
+  String get kisilerSekmeSakinler => 'Bewohner';
+
+  @override
+  String get kisilerSekmePersonel => 'Personal';
+
+  @override
+  String get kisilerSekmeYoneticiler => 'Verwalter und Prüfer';
+
+  @override
+  String get kisilerSekmeDavetler => 'Einladungen';
+
+  @override
+  String get yoneticiListeBos =>
+      'Keine weiteren Verwalter oder Prüfer in dieser Anlage.';
+
+  @override
+  String get yoneticiEkle => 'Verwalter / Prüfer hinzufügen';
+
+  @override
+  String get yoneticiEklendi =>
+      'Konto angelegt; Einladung per E-Mail gesendet.';
+
+  @override
+  String get tanimlarWebNotu =>
+      'Kassen, Einnahme-/Ausgabedefinitionen, Firmen, Zähler, Fahrzeuge und Buchhaltungseinstellungen werden am Computer verwaltet.';
+
+  @override
+  String bilgisayardanAciklama(String adres) {
+    return 'Diese benötigen breite Tabellen und Vorschauen; nutzen Sie $adres.';
+  }
+
+  @override
+  String get webAidat => 'Hausgeld';
+
+  @override
+  String get webBorclandirmalar => 'Belastungen';
+
+  @override
+  String get webGelirler => 'Einnahmen';
+
+  @override
+  String get webVirman => 'Umbuchungen';
+
+  @override
+  String get webIade => 'Rückerstattungen';
+
+  @override
+  String get webAcilis => 'Eröffnungsbuchungen';
+
+  @override
+  String get webBanka => 'Bankanbindung';
+
+  @override
+  String get webMesai => 'Überstunden';
+
+  @override
+  String get webMaasKartlari => 'Gehaltskarten';
+
+  @override
+  String get webIcra => 'Vollstreckungsakten';
+
+  @override
+  String get webMesajlar => 'SMS / E-Mail';
+
+  @override
+  String get webIceAktarim => 'Import';
+
+  @override
+  String get webKararDefteri => 'Beschlussbuch';
+
+  @override
+  String get tesisAyarAdres => 'Adresse';
+
+  @override
+  String get tesisAyarIlce => 'Bezirk';
+
+  @override
+  String get tesisAyarIl => 'Provinz';
+
+  @override
+  String get tesisAyarPostaKodu => 'Postleitzahl';
+
+  @override
+  String get tesisAyarKaydedildi => 'Anlageneinstellungen gespeichert.';
+
+  @override
+  String get tesisAyarWebNotu =>
+      'Standort (Karte), Parkkapazität und Schwellenwerte werden am Computer eingestellt.';
+
+  @override
+  String get yoneticiListeBosAlt =>
+      'Fügen Sie über die Schaltfläche unten rechts Verwalter oder Prüfer hinzu; das Konto wird angelegt und eine Einladung gesendet.';
+
+  @override
+  String get webDemirbas => 'Inventar';
 }

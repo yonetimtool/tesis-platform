@@ -521,6 +521,25 @@ async def _personel_adlarla(
     ]
 
 
+async def _tek_kart(
+    db: AsyncSession, app_user_id: uuid.UUID | None, *, haric: uuid.UUID | None
+) -> None:
+    """(P251 §8) Bir HESABA en cok bir maas karti baglanir.
+
+    Fazla mesai ucreti hesabin BAGLI kartindan okunur (`routers/mesai.py`);
+    iki kart ayni hesaba bagliysa hangisinin ucretinin kullanilacagi
+    belirsizlesir ve ayni kisi iki kez yazilmis olur — kaldirmak istenen
+    tam da buydu. 409: istemci mevcut karta yonlendirir.
+    """
+    if app_user_id is None:
+        return
+    q = select(PersonelKayit.id).where(PersonelKayit.app_user_id == app_user_id)
+    if haric is not None:
+        q = q.where(PersonelKayit.id != haric)
+    if (await db.execute(q.limit(1))).scalar_one_or_none() is not None:
+        raise APIError(409, "conflict", "maas_karti_zaten_bagli")
+
+
 @router.get("/personel-kayitlari", response_model=PersonelKayitListResponse)
 async def list_personel(
     aktif: bool | None = Query(None),
@@ -546,6 +565,7 @@ async def create_personel(
     user: AppUser = Depends(_YONETIM),
 ) -> PersonelKayitOut:
     await _referans_dogrula(db, AppUser, body.app_user_id, "kullanici_bulunamadi_veya_pasif")
+    await _tek_kart(db, body.app_user_id, haric=None)
     veri = body.model_dump()
     veri["ad"] = veri["ad"].strip()
     if veri.get("email") is not None:
@@ -574,6 +594,7 @@ async def update_personel(
     if veri.get("email") is not None:
         veri["email"] = str(veri["email"])
     await _referans_dogrula(db, AppUser, veri.get("app_user_id"), "kullanici_bulunamadi_veya_pasif")
+    await _tek_kart(db, veri.get("app_user_id"), haric=obj.id)
     await _uygula(obj, veri)
     # BIRLESIK kural: tarihlerden yalniz biri gonderilmis olabilir.
     if (

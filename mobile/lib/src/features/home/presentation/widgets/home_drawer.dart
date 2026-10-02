@@ -124,6 +124,10 @@ class HomeDrawer extends ConsumerWidget {
                       button: true,
                       expanded: !kapali.contains(girdi.key),
                       child: InkWell(
+                        // (P251 §8) Bolum adi ile icindeki tek oge ayni
+                        // olabilir ("Kisiler" › "Kisiler", web'de de
+                        // "Tanimlar"); baslik ANAHTARLA ayirt edilir.
+                        key: Key('menu-grup-${girdi.key.name}'),
                         onTap: () => ref
                             .read(menuBolumTercihiProvider.notifier)
                             .cevir(girdi.key),

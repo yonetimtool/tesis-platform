@@ -16,7 +16,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import AssetsPage from "@/app/(protected)/assets/page";
 import DashboardPage from "@/app/(protected)/dashboard/page";
-import PatrolsReportPage from "@/app/(protected)/reports/patrols/page";
+import PatrolsReportPage from "@/components/devriye/takip";
 
 import { ciz, fetchSahtele } from "./yardimci";
 

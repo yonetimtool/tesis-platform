@@ -17,7 +17,11 @@ import '../data/davet_yonetim_api.dart';
 /// SAGLAYICI YOKKEN: tesis kodu kopyalanip elle iletilir (web ile ayni
 /// yedek yol).
 class DavetlerScreen extends ConsumerStatefulWidget {
-  const DavetlerScreen({super.key});
+  const DavetlerScreen({super.key, this.gomulu = false});
+
+  /// (P251 §8) Kisiler ekraninin SEKMESI olarak cizilir: ust cubugu
+  /// Kisiler verir, bu ekran yalniz govdeyi (ve kendi "Ekle" dugmesini).
+  final bool gomulu;
 
   @override
   ConsumerState<DavetlerScreen> createState() => _DavetlerScreenState();
@@ -49,7 +53,10 @@ class _DavetlerScreenState extends ConsumerState<DavetlerScreen> {
     final l10n = context.l10n;
     final async = ref.watch(davetListesiProvider);
     return Scaffold(
-      appBar: AppBar(
+      // Gomuluyken yenileme asagi cekmeyle (RefreshIndicator) kalir.
+      appBar: widget.gomulu
+          ? null
+          : AppBar(
         title: Text(baslikBuyuk(l10n.modulDavetler, context.dilKodu)),
         actions: [
           IconButton(

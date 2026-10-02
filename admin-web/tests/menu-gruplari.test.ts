@@ -119,7 +119,8 @@ describe("(P133.1) acilista hangi bolum acik", () => {
     // basliksiz cizer — kullanici acisindan bir bolum DEGIL, tek satir.
     expect(rotaninGrubu("/dashboard")).toBe("ozet");
     expect(rotaninGrubu("/dues")).toBe("finans");
-    expect(rotaninGrubu("/users")).toBe("yonetim");
+    // (P251 §8) Kisiler kendi grubunda; eski `/users` yonlenir.
+    expect(rotaninGrubu("/kisiler")).toBe("kisiler");
     expect(rotaninGrubu("/announcements")).toBe("iletisim");
     expect(rotaninGrubu("/units")).toBe("tesis");
   });
@@ -128,7 +129,7 @@ describe("(P133.1) acilista hangi bolum acik", () => {
     // `/tenants/abc` menude yoktur ama `/tenants`in bolumu acilmali;
     // yoksa detay sayfasinda menu kullaniciyi bulundugu yerden koparirdi.
     expect(rotaninGrubu("/tenants/9f2a")).toBe("platform");
-    expect(rotaninGrubu("/reports/dues")).toBe("finans");
+    expect(rotaninGrubu("/finans/maas-kartlari")).toBe("finans");
   });
 
   it("BILINMEYEN rota null doner (kabuk ilk bolume duser)", () => {
@@ -161,7 +162,7 @@ describe("(P166 §1) TAM LISTE — gizli menu katmani yok", () => {
     expect(gorunen.sort()).toEqual(tumu.sort());
     // Eskiden katli olan bolumlerin ogeleri de ICINDE (bu testin asil
     // amaci): kullanicilar, tanimlar, duyurular, finans hareketleri.
-    expect(gorunen).toContain("/users");
+    expect(gorunen).toContain("/kisiler");
     // (P251 §7) Tanimlar TEK satir; sekmeler sayfanin icinde.
     expect(gorunen).toContain("/tanimlar");
     expect(gorunen).toContain("/announcements");
@@ -239,7 +240,7 @@ describe("(P167 §1) MENU MIMARISI", () => {
       "defter=gelir-gider-tanimlari",
       "defter=firmalar",
       "defter=gorev-kategorileri",
-      "defter=personel-kayitlari",
+      // (P251 §8) personel-kayitlari -> Finans › Maas kartlari.
       "defter=arac-kayitlari",
       "defter=sayaclar-ana",
       "defter=sayaclar-bolum",
@@ -256,9 +257,11 @@ describe("(P167 §1) MENU MIMARISI", () => {
     expect(ogeAktif(oge, "/tanimlar", null)).toBe(true);
   });
 
-  it("§1.8 KURULUM SIHIRBAZI bolum ogesi DEGIL (alt cubukta)", () => {
-    expect(baglantilar()).not.toContain("/kurulum");
-    expect(rotaninGrubu("/kurulum")).toBeNull();
+  it("(P251 §8) KURULUM SIHIRBAZI Yonetim grubunda (alt cubuktan tasindi)", () => {
+    // P167 §1.8 onu alt cubuga almisti; P251 menu paritesi (mobilde de
+    // Yonetim) "ayni is, ayni grup" ilkesiyle gruba aldi.
+    expect(baglantilar()).toContain("/kurulum");
+    expect(rotaninGrubu("/kurulum")).toBe("yonetim");
     // Ama hâlâ bir SAYFA: rol kapisi ve gorunurluk sorulabilir olmali.
     expect(kurulumGorunur("tesis", "yonetici")).toBe(true);
     expect(kurulumGorunur("tesis", "denetci")).toBe(false);

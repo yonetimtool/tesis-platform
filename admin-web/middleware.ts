@@ -241,6 +241,10 @@ export const config = {
     "/sayac-okuma/:path*",
     "/dues/:path*",
     "/users/:path*",
+    // (P251 §8) Kisiler / Devriye / Goruntuleme izni.
+    "/kisiler/:path*",
+    "/devriye/:path*",
+    "/goruntuleme-izni/:path*",
     // (P220 §4) Sakinler sayfasi — KORUMALI. Matcher'a eklemeyi
     // unutmak, sayfayi kimliksiz erisime acardi (P193 dersi).
     "/residents/:path*",

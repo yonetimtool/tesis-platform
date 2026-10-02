@@ -90,7 +90,7 @@ const I_SAYAC = "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 12l4-4";
 const I_FIRMA = "M3 21h18M5 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M15 21v-9h4v9M9 7h2M9 11h2M9 15h2";
 
 export const PALET_HEDEF: Record<string, PaletHedef> = {
-  kisi: { etiket: "kabukKullanicilar", rota: "/users", ikon: I_KISI },
+  kisi: { etiket: "kabukKisiler", rota: "/kisiler", ikon: I_KISI },
   daire: { etiket: "kabukDaireler", rota: "/units", ikon: I_BINA },
   blok: { etiket: "kabukBinaDuzenleme", rota: "/building-editor", ikon: I_BINA },
   firma: { etiket: "kabukTanimlar", rota: "/tanimlar", ikon: I_FIRMA },
@@ -101,9 +101,9 @@ export const PALET_HEDEF: Record<string, PaletHedef> = {
   demirbas: { etiket: "kabukDemirbas", rota: "/assets", ikon: I_KUTU },
   etkinlik: { etiket: "kabukEtkinlikler", rota: "/etkinlikler", ikon: I_TAKVIM },
   arac: { etiket: "kabukAraclar", rota: "/tanimlar", ikon: I_ARAC },
-  nokta: { etiket: "kabukNfcNoktalari", rota: "/checkpoints", ikon: I_NOKTA },
+  nokta: { etiket: "kabukNfcNoktalari", rota: "/devriye?sekme=noktalar", ikon: I_NOKTA },
   kamera: { etiket: "kabukKameralar", rota: "/kameralar", ikon: I_KAMERA },
-  plan: { etiket: "kabukDevriyePlanlari", rota: "/patrol-plans", ikon: I_ROTA },
+  plan: { etiket: "kabukDevriyePlanlari", rota: "/devriye?sekme=planlar", ikon: I_ROTA },
   vardiya: { etiket: "kabukVardiyalar", rota: "/shifts", ikon: I_SAAT },
   icra: { etiket: "kabukIcra", rota: "/icra", ikon: I_DOSYA },
   sayac: { etiket: "kabukSayaclar", rota: "/tanimlar", ikon: I_SAYAC },

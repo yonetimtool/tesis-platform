@@ -30,6 +30,7 @@ import {
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
+import { useRol } from "@/lib/rol-kullan";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
@@ -74,8 +75,12 @@ function kaynakAnahtari(kaynak: string): SozlukAnahtari {
   return "olayDurumBilinmiyor";
 }
 
+/** `violations.py` _WRITER ile ayni kume (yazma sunucuda da zorlanir). */
+const OLAY_YAZABILEN: readonly string[] = ["admin", "security"];
+
 export default function OlaylarPage() {
   const t = useT();
+  const yazabilir = OLAY_YAZABILEN.includes(useRol(null) ?? "");
   const toast = useToast();
   // (P245) DURUM SUZGECI — SUNUCUDA.
   //
@@ -203,7 +208,12 @@ export default function OlaylarPage() {
       <SayfaBasligi
         baslik={t("olayBaslik")}
         eylem={
-          <Dugme
+          // (P251 §8) YONETICI OKUR, BILDIRMEZ. P154'te sayfa yoneticiden
+          // tumden kaldirilmisti cunku bu dugme ona 403 veriyordu
+          // (`violations.py` _WRITER = admin, security). Kayitta yazili
+          // alternatif uygulandi: liste yoneticiye ACIK, yazma dugmesi
+          // yalniz yazabilen rolde. Mobilde de yonetici ayni listeyi okur.
+          !yazabilir ? null : <Dugme
             tur="birincil"
             boy="kucuk"
             onClick={() => {

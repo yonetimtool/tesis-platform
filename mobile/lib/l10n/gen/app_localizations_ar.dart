@@ -48,10 +48,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get kartZiyaretci => 'الزوار';
 
   @override
-  String get kartAracPlaka => 'المركبات';
+  String get kartAracPlaka => 'الموقف ومرور المركبات';
 
   @override
-  String get kartIhlaller => 'المخالفات';
+  String get kartIhlaller => 'الحوادث والمخالفات';
 
   @override
   String get kartGorevlerim => 'مهامي';
@@ -466,13 +466,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get modulTurlarim => 'دورياتي';
 
   @override
-  String get modulDevriyeTakibi => 'متابعة الدوريات';
+  String get modulDevriyeTakibi => 'الدوريات';
 
   @override
   String get modulGorevlerim => 'مهامي';
 
   @override
-  String get modulGorevYonetimi => 'إدارة المهام';
+  String get modulGorevYonetimi => 'المهام';
 
   @override
   String get modulDemirbas => 'العهدة';
@@ -4192,7 +4192,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get ziyaretKaydetVeBildir => 'احفظ وأبلغ الساكن';
 
   @override
-  String get raporBaslik => 'التقارير الشهرية';
+  String get raporBaslik => 'التقارير';
 
   @override
   String get raporOncekiAy => 'الشهر السابق';
@@ -4773,10 +4773,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get modulAracGecis => 'مرور المركبات';
 
   @override
-  String get modulOtopark => 'مواقف السيارات';
+  String get modulOtopark => 'الموقف ومرور المركبات';
 
   @override
-  String get modulIhlaller => 'المخالفات';
+  String get modulIhlaller => 'الحوادث والمخالفات';
 
   @override
   String get aracSuzgecTumu => 'الكل';
@@ -5948,7 +5948,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get ortakDahaFazlaSecenek => 'خيارات إضافية';
 
   @override
-  String get modulDokumanlar => 'مستندات المجمع';
+  String get modulDokumanlar => 'المستندات';
 
   @override
   String get dokumanBaslik => 'مستندات المجمع';
@@ -6257,7 +6257,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get finansTahsilatBaslik => 'التحصيل';
+  String get finansTahsilatBaslik => 'التحصيلات';
 
   @override
   String get finansKisiGerekli => 'اختر شخصًا.';
@@ -6296,7 +6296,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get finansGiderBaslik => 'تسجيل مصروف';
+  String get finansGiderBaslik => 'المصروفات';
 
   @override
   String get finansGiderKaydedildi => 'تم تسجيل المصروف.';
@@ -8742,4 +8742,124 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get izgaraAsagiTasi => 'نقل لأسفل';
+
+  @override
+  String get kabukGrupKisiler => 'الأشخاص';
+
+  @override
+  String get kabukGrupYonetim => 'الإدارة';
+
+  @override
+  String get modulKisiler => 'الأشخاص';
+
+  @override
+  String get modulKameralar => 'الكاميرات';
+
+  @override
+  String get modulTanimlar => 'التعريفات';
+
+  @override
+  String get modulTesisAyarlari => 'إعدادات المنشأة';
+
+  @override
+  String get modulOtomasyon => 'الأتمتة';
+
+  @override
+  String get modulBilgisayardan => 'تتم من الحاسوب';
+
+  @override
+  String get kisilerSekmeSakinler => 'السكان';
+
+  @override
+  String get kisilerSekmePersonel => 'الموظفون';
+
+  @override
+  String get kisilerSekmeYoneticiler => 'المديرون والمدققون';
+
+  @override
+  String get kisilerSekmeDavetler => 'الدعوات';
+
+  @override
+  String get yoneticiListeBos =>
+      'لا يوجد مديرون أو مدققون آخرون في هذه المنشأة.';
+
+  @override
+  String get yoneticiEkle => 'إضافة مدير / مدقق';
+
+  @override
+  String get yoneticiEklendi => 'تم إنشاء الحساب وأُرسلت رسالة الدعوة.';
+
+  @override
+  String get tanimlarWebNotu =>
+      'تُدار الصناديق وتعريفات الإيرادات/المصروفات والشركات والعدادات والمركبات وإعدادات المحاسبة من الحاسوب.';
+
+  @override
+  String bilgisayardanAciklama(String adres) {
+    return 'تحتاج هذه العمليات إلى جداول ومعاينات واسعة؛ استخدم $adres.';
+  }
+
+  @override
+  String get webAidat => 'الرسوم';
+
+  @override
+  String get webBorclandirmalar => 'القيود المدينة';
+
+  @override
+  String get webGelirler => 'الإيرادات';
+
+  @override
+  String get webVirman => 'التحويل بين الحسابات';
+
+  @override
+  String get webIade => 'استرداد المدفوعات';
+
+  @override
+  String get webAcilis => 'قيود الافتتاح';
+
+  @override
+  String get webBanka => 'تكامل البنك';
+
+  @override
+  String get webMesai => 'العمل الإضافي';
+
+  @override
+  String get webMaasKartlari => 'بطاقات الرواتب';
+
+  @override
+  String get webIcra => 'ملفات التنفيذ';
+
+  @override
+  String get webMesajlar => 'الرسائل القصيرة / البريد';
+
+  @override
+  String get webIceAktarim => 'الاستيراد';
+
+  @override
+  String get webKararDefteri => 'سجل القرارات';
+
+  @override
+  String get tesisAyarAdres => 'العنوان';
+
+  @override
+  String get tesisAyarIlce => 'المنطقة';
+
+  @override
+  String get tesisAyarIl => 'المحافظة';
+
+  @override
+  String get tesisAyarPostaKodu => 'الرمز البريدي';
+
+  @override
+  String get tesisAyarKaydedildi => 'تم حفظ إعدادات المنشأة.';
+
+  @override
+  String get tesisAyarWebNotu =>
+      'يُضبط الموقع (الخريطة) وسعة الموقف والعتبات من الحاسوب.';
+
+  @override
+  String get yoneticiListeBosAlt =>
+      'استخدم الزر في الأسفل لإضافة مدير أو مدقق؛ يُنشأ الحساب وتُرسل رسالة دعوة.';
+
+  @override
+  String get webDemirbas => 'سجل الأصول';
 }

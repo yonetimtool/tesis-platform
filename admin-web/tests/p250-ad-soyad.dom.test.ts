@@ -8,7 +8,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import Sayfa from "@/app/(protected)/users/page";
+import Sayfa from "@/components/kisiler/kullanici-listesi";
 import { tr } from "@/lib/i18n/sozluk/tr";
 import { adAyir, adBicimle, soyadBicimle, tamAd, trBuyuk, trKucuk } from "@/lib/kisi-adi";
 

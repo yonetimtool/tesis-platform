@@ -197,7 +197,10 @@ async def list_users(
     # -> 422). Tavan ve istemci artik uyumlu.
     limit: int = Query(50, ge=1, le=1000),
     offset: int = Query(0, ge=0),
-    role: UserRoleLiteral | None = Query(None),
+    # (P251 §8) TEKRARLANABILIR: `?role=security&role=tesis_gorevlisi`.
+    # Kisiler sayfasinin Personel sekmesi uc saha rolunu TEK listede
+    # ister; tek deger gonderen eski cagiranlar degismeden calisir.
+    role: list[UserRoleLiteral] | None = Query(None),
     is_active: bool | None = Query(None),
     q: str | None = Query(None, max_length=_G.ARAMA),
     db: AsyncSession = Depends(get_tenant_db),
@@ -220,10 +223,10 @@ async def list_users(
         # gonderen bir amir BOS liste alir — 403 degil, cunku "boyle bir
         # rol yok" ile "gormene izin yok" ayrimini sizdirmanin anlami
         # yok ve liste ucu zaten kume donduruyor.
-        if role is not None and role not in gorunur:
+        if role and not set(role) & set(gorunur):
             where.append(AppUser.role.in_(()))
-    if role is not None:
-        where.append(AppUser.role == role)
+    if role:
+        where.append(AppUser.role.in_(tuple(role)))
     if is_active is not None:
         where.append(AppUser.is_active == is_active)
     if q:

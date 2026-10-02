@@ -26,16 +26,22 @@ import '../../../core/ui/telefon_alani_widget.dart';
 /// hesaplarini listeler ve ekler. yonetici backend'de YALNIZ saha personeli
 /// acabilir; parola bossa hesap PAROLASIZ acilir ve otomatik davet gonderilir.
 class StaffScreen extends ConsumerWidget {
-  const StaffScreen({super.key});
+  const StaffScreen({super.key, this.gomulu = false});
+
+  /// (P251 §8) Kisiler ekraninin SEKMESI olarak cizilir: ust cubugu
+  /// Kisiler verir, bu ekran yalniz govdeyi (ve kendi "Ekle" dugmesini).
+  final bool gomulu;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final staffAsync = ref.watch(fieldStaffProvider);
     final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(baslikBuyuk(l10n.modulPersonel, context.dilKodu)),
-      ),
+      appBar: gomulu
+          ? null
+          : AppBar(
+              title: Text(baslikBuyuk(l10n.modulPersonel, context.dilKodu)),
+            ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openAddSheet(context, ref),
         icon: const Icon(Icons.person_add_alt_1),

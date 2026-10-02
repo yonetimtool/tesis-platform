@@ -48,10 +48,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get kartZiyaretci => 'Visitors';
 
   @override
-  String get kartAracPlaka => 'Vehicles';
+  String get kartAracPlaka => 'Parking and vehicles';
 
   @override
-  String get kartIhlaller => 'Violations';
+  String get kartIhlaller => 'Incidents and violations';
 
   @override
   String get kartGorevlerim => 'My tasks';
@@ -419,13 +419,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get modulTurlarim => 'My patrols';
 
   @override
-  String get modulDevriyeTakibi => 'Patrol tracking';
+  String get modulDevriyeTakibi => 'Patrol';
 
   @override
   String get modulGorevlerim => 'My tasks';
 
   @override
-  String get modulGorevYonetimi => 'Task management';
+  String get modulGorevYonetimi => 'Tasks';
 
   @override
   String get modulDemirbas => 'Assets';
@@ -4123,7 +4123,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ziyaretKaydetVeBildir => 'Save and notify';
 
   @override
-  String get raporBaslik => 'Monthly reports';
+  String get raporBaslik => 'Reports';
 
   @override
   String get raporOncekiAy => 'Previous month';
@@ -4693,10 +4693,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get modulAracGecis => 'Vehicle passes';
 
   @override
-  String get modulOtopark => 'Parking';
+  String get modulOtopark => 'Parking and vehicles';
 
   @override
-  String get modulIhlaller => 'Violations';
+  String get modulIhlaller => 'Incidents and violations';
 
   @override
   String get aracSuzgecTumu => 'All';
@@ -5884,7 +5884,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ortakDahaFazlaSecenek => 'More options';
 
   @override
-  String get modulDokumanlar => 'Site Documents';
+  String get modulDokumanlar => 'Documents';
 
   @override
   String get dokumanBaslik => 'Site Documents';
@@ -6195,7 +6195,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get finansTahsilatBaslik => 'Collection';
+  String get finansTahsilatBaslik => 'Collections';
 
   @override
   String get finansKisiGerekli => 'Select a person.';
@@ -6234,7 +6234,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get finansGiderBaslik => 'Expense entry';
+  String get finansGiderBaslik => 'Expenses';
 
   @override
   String get finansGiderKaydedildi => 'Expense recorded.';
@@ -8699,4 +8699,124 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get izgaraAsagiTasi => 'Move down';
+
+  @override
+  String get kabukGrupKisiler => 'People';
+
+  @override
+  String get kabukGrupYonetim => 'Administration';
+
+  @override
+  String get modulKisiler => 'People';
+
+  @override
+  String get modulKameralar => 'Cameras';
+
+  @override
+  String get modulTanimlar => 'Definitions';
+
+  @override
+  String get modulTesisAyarlari => 'Facility settings';
+
+  @override
+  String get modulOtomasyon => 'Automation';
+
+  @override
+  String get modulBilgisayardan => 'Done on a computer';
+
+  @override
+  String get kisilerSekmeSakinler => 'Residents';
+
+  @override
+  String get kisilerSekmePersonel => 'Staff';
+
+  @override
+  String get kisilerSekmeYoneticiler => 'Managers and auditors';
+
+  @override
+  String get kisilerSekmeDavetler => 'Invitations';
+
+  @override
+  String get yoneticiListeBos =>
+      'No other managers or auditors in this facility.';
+
+  @override
+  String get yoneticiEkle => 'Add manager / auditor';
+
+  @override
+  String get yoneticiEklendi => 'Account created; invitation e-mail sent.';
+
+  @override
+  String get tanimlarWebNotu =>
+      'Cash accounts, income/expense definitions, companies, meters, vehicle records and accounting settings are managed on a computer.';
+
+  @override
+  String bilgisayardanAciklama(String adres) {
+    return 'These need wide tables and previews; use $adres.';
+  }
+
+  @override
+  String get webAidat => 'Dues';
+
+  @override
+  String get webBorclandirmalar => 'Charges';
+
+  @override
+  String get webGelirler => 'Income';
+
+  @override
+  String get webVirman => 'Transfers between accounts';
+
+  @override
+  String get webIade => 'Payment refunds';
+
+  @override
+  String get webAcilis => 'Opening entries';
+
+  @override
+  String get webBanka => 'Bank integration';
+
+  @override
+  String get webMesai => 'Overtime';
+
+  @override
+  String get webMaasKartlari => 'Payroll cards';
+
+  @override
+  String get webIcra => 'Enforcement files';
+
+  @override
+  String get webMesajlar => 'SMS / e-mail';
+
+  @override
+  String get webIceAktarim => 'Import';
+
+  @override
+  String get webKararDefteri => 'Decision book';
+
+  @override
+  String get tesisAyarAdres => 'Street address';
+
+  @override
+  String get tesisAyarIlce => 'District';
+
+  @override
+  String get tesisAyarIl => 'Province';
+
+  @override
+  String get tesisAyarPostaKodu => 'Postal code';
+
+  @override
+  String get tesisAyarKaydedildi => 'Facility settings saved.';
+
+  @override
+  String get tesisAyarWebNotu =>
+      'Location (map), parking capacity and thresholds are set on a computer.';
+
+  @override
+  String get yoneticiListeBosAlt =>
+      'Use the button at the bottom right to add a manager or auditor; the account is created and an invitation e-mail is sent.';
+
+  @override
+  String get webDemirbas => 'Asset register';
 }
