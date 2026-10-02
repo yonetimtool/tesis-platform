@@ -491,3 +491,185 @@ Web Özet kısayolları (`widgetlar`) **web sayfalarıdır** ve en çok 6 tanedi
   * hesaptan okuma; cihaz kaydının taşınması; çevrimdışı bekleme;
   * düzenleme ekranının aynı kayda yazması.
 * Kilit kayıtları: openapi, `uc-guvenlik.tsv` (kendi), `rol-matrisi.txt`, IDOR istisnaları, denetçi salt-okuma istisnası (kişinin kendi görünümü).
+
+
+# §8 — Menü yapısı (ONAYLANDI, düzeltmelerle)
+
+Onaylanan: (1) Kişiler tek giriş + sekmeler, (2) maaş kartları Finans'a,
+(3) Devriye tek sayfa, (4) yalnız-web listesi. Kullanıcının düzeltmeleri
+aşağıdaki tabloya işlendi; tablo **uygulamadan önce** yazıldı.
+
+## Yan yana tablo — yönetici (web tesis yüzeyi ↔ mobil yönetici)
+
+Kaynak: `contracts/menu-paritesi.tsv` (tek kaynak; iki kilit de onu okur).
+Grup sırası iki yüzeyde aynı: **Güvenlik · Tesis · Finans · İletişim ·
+Kişiler · Tanımlar · Yönetim** (web'de en üstte Özet).
+
+| Grup | Web adı | Mobil adı | Aynı mı | Gerekçe (farklıysa) |
+|---|---|---|---|---|
+| Özet | Özet (`/dashboard`) | — | menü dışı (yapısal) | Mobilde Özet ayrı bir menü öğesi değil, uygulamanın ana ekranının kendisi. |
+| Güvenlik | Acil durum çağrıları (`/panik`) | Acil durum çağrıları (`panikTakip`) | ✓ aynı |  |
+| Güvenlik | Kameralar (`/kameralar`) | Kameralar (`kameralar`) | ✓ aynı |  |
+| Güvenlik | Kamera Kayıtları (`/kamera-kayitlari`) | Kamera Kayıtları (`kameraKayitlari`) | ✓ aynı |  |
+| Güvenlik | Devriye (`/devriye`) | Devriye (`patrolTracking`) | ✓ aynı |  |
+| Güvenlik | Vardiya planı (`/vardiya-plani`) | Vardiya planı (`vardiyalar`) | ✓ aynı |  |
+| Güvenlik | Otopark ve araç geçişleri (`/arac-gecisleri`) | Otopark ve araç geçişleri (`otopark`) | ✓ aynı |  |
+| Güvenlik | Olaylar ve ihlaller (`/olaylar`) | Olaylar ve ihlaller (`ihlaller`) | ✓ aynı |  |
+| Güvenlik | Görüntüleme izni (`/goruntuleme-izni`) | Görüntüleme izni (`unitAccess`) | ✓ aynı |  |
+| Güvenlik | Bildirimler (`/notifications`) | — | menü dışı (yapısal) | Mobilde bildirimler her ekranın üst çubuğundaki zil simgesinden açılır; menüye ikinci giriş koymak aynı ekrana iki yol olurdu. |
+| Tesis | Daireler (`/units`) | — | menü dışı (yapısal) | Mobilde daire listesi Bina yapısı ekranının içindedir (blok → daire); ayrı liste ekranı yok. |
+| Tesis | Görevler (`/tasks`) | Görevler (`taskTracking`) | ✓ aynı |  |
+| Tesis | Bakım takibi (`/bakim`) | Bakım takibi (`bakim`) | ✓ aynı |  |
+| Tesis | Demirbaş (`/assets`) | Demirbaş (`assets`) | ✓ aynı |  |
+| Tesis | Şikayet Haritası (`/schematic`) | Şikayet Haritası (`sikayetHaritasi`) | ✓ aynı |  |
+| Tesis | Rezervasyon (`/rezervasyon-yonetimi`) | Rezervasyon (`rezervasyon`) | ✓ aynı |  |
+| Tesis | Dış hizmetler (`/dis-hizmetler`) | Dış hizmetler (`disHizmet`) | ✓ aynı |  |
+| Tesis | Yerel işletmeler (`/yerel-isletmeler`) | Yerel işletmeler (`yerelIsletmeler`) | ✓ aynı |  |
+| Tesis | Akıllı ev (`/akilli-ev`) | Akıllı ev (`akilliEv`) | ✓ aynı |  |
+| Finans | Finansal özet (`/finans`) | Finansal özet (`financialSummary`) | ✓ aynı |  |
+| Finans | Tahsilatlar (`/finans/tahsilatlar`) | Tahsilatlar (`tahsilat`) | ✓ aynı |  |
+| Finans | Giderler (`/finans/giderler`) | Giderler (`gider`) | ✓ aynı |  |
+| Finans | Borçlular (`/finans/borclular`) | Borçlular (`borclular`) | ✓ aynı |  |
+| Finans | Otomasyon (`/finans/otomasyon`) | Otomasyon (`otomasyon`) | ✓ aynı |  |
+| Finans | Bütçe (`/finans/butce`) | Bütçe (`budget`) | ✓ aynı |  |
+| Finans | Sayaç okuma (`/sayac-okuma`) | Sayaç okuma (`sayacOkuma`) | ✓ aynı |  |
+| Finans | Raporlar (`/raporlar`) | Raporlar (`reports`) | ✓ aynı |  |
+| Finans | Şeffaflık (`/transparency`) | Şeffaflık (`transparency`) | ✓ aynı |  |
+| Finans | Aidat (`/dues`) | — | yalnız web | Toplu aidat tahakkuku daire başına önizleme ve dağıtım seçimi ister; geniş tablo telefonda doğrulanamaz. Mobilde aidat planı Otomasyon'dan kurulur. |
+| Finans | Borçlandırmalar (`/finans/borclandirmalar`) | — | yalnız web | Tek ve toplu borçlandırma aynı geniş önizleme tablosunu kullanır (Aidat ile aynı gerekçe). |
+| Finans | Gelirler (`/finans/gelirler`) | — | yalnız web | Aidat dışı gelir kaydı kasa, kalem ve belge seçimi ister ve seyrek yapılır; mobilde günlük iş tahsilat ve gider kaydıdır. |
+| Finans | Hesaplar arası virman (`/finans/virman`) | — | yalnız web | İki kasa arasında para taşır; yanlış girişin düzeltmesi ters kayıt ister. Muhasebe defteri işidir. |
+| Finans | Ödeme iadesi (`/finans/iade`) | — | yalnız web | İade bir tahsilatın ters kaydıdır; özgün kaydı defterde bulup eşleştirmek geniş ekran ister. |
+| Finans | Açılış fişleri (`/finans/acilis`) | — | yalnız web | Kurulumda bir kez girilen devir bakiyeleri; çok satırlı fiş. |
+| Finans | Banka Entegrasyonu (`/finans/banka`) | — | yalnız web | Ekstre dosyası yükleme ve satır satır eşleştirme (P191). |
+| Finans | Fazla mesai (`/finans/mesai`) | — | yalnız web | Haftalık hesap tablosu ve gider olarak işleme; kişi × hafta matrisi telefonda okunmaz. |
+| Finans | Maaş kartları (`/finans/maas-kartlari`) | — | yalnız web | Ücret, giriş/çıkış tarihi ve kimlik bilgisi içeren kayıt; personel hesabı mobilde Kişiler'de açılır, maaş kartı ona bilgisayardan bağlanır. |
+| Finans | İcra dosyaları (`/icra`) | — | yalnız web | Hukuki dosya: belge, safha ve tutar geçmişi. |
+| İletişim | Duyurular (`/announcements`) | Duyurular (`announcements`) | ✓ aynı |  |
+| İletişim | Site kuralları (`/site-kurallari`) | Site kuralları (`siteKurallari`) | ✓ aynı |  |
+| İletişim | Etkinlikler (`/etkinlik-yonetimi`) | Etkinlikler (`etkinlik`) | ✓ aynı |  |
+| İletişim | Anketler (`/anketler`) | Anketler (`anketler`) | ✓ aynı |  |
+| İletişim | Talep / Arıza (`/complaints`) | Talep / Arıza (`complaints`) | ✓ aynı |  |
+| İletişim | Gürültü uyarıları (`/gurultu-uyarilari`) | Gürültü uyarıları (`gurultuUyarilari`) | ✓ aynı |  |
+| İletişim | SMS/E-Posta Yönetimi (`/mesajlar`) | — | yalnız web | Toplu SMS ve e-posta ücretlidir ve geri alınamaz; alıcı süzgeci ve gönderim önizlemesi geniş ekranda doğrulanır. |
+| Kişiler | Kişiler (`/kisiler`) | Kişiler (`kisiler`) | ✓ aynı |  |
+| Tanımlar | Bina yapısı (`/building-editor`) | Bina yapısı (`binaDuzenleme`) | ✓ aynı |  |
+| Tanımlar | Tanımlar (`/tanimlar`) | Tanımlar (`tanimlar`) | ✓ aynı |  |
+| Tanımlar | İçe aktarım (`/ice-aktarim`) | — | yalnız web | Excel ile yüzlerce satırın önizlemesi ve hata düzeltmesi telefonda yapılamaz (P204). |
+| Yönetim | Tesis ayarları (`/tesis-ayarlari`) | Tesis ayarları (`tesisAyarlari`) | ✓ aynı |  |
+| Yönetim | Entegrasyonlar (`/integrations`) | Entegrasyonlar (`integrations`) | ✓ aynı |  |
+| Yönetim | Kurulum sihirbazı (`/kurulum`) | Kurulum sihirbazı (`kurulum`) | ✓ aynı |  |
+| Yönetim | Dokümanlar (`/dokumanlar`) | Dokümanlar (`dokumanlar`) | ✓ aynı |  |
+| Yönetim | Karar Defteri (`/karar-defteri`) | — | yalnız web | Resmî karar kaydı: madde metni, oy dağılımı ve ek belge düzenlemesi; yayımlanan karar sakine Dokümanlar'dan ulaşır. |
+| Yönetim | KVKK tercihlerim (`/kvkk`) | — | menü dışı (yapısal) | Kişisel izin tercihi; mobilde Profil › Ayarlar'da durur (hesaba ait, siteye ait değil). |
+| Yönetim | — | Bilgisayardan yapılanlar (`bilgisayardan`) | yalnız mobil | Yalnız web'de kalan işlemlerin listesi ve app.yonetiyor.com bağlantısı; web'de karşılığı o sayfaların kendisi. |
+
+## Yan yana tablo — sakin (web sakin modu ↔ mobil sakin)
+
+Web sakin modu (P247) başlıksız tek bölümdür; grup mobilde ölçülür.
+
+| Grup | Web adı | Mobil adı | Aynı mı | Gerekçe (farklıysa) |
+|---|---|---|---|---|
+| Finans | Aidatım (`/aidatim`) | Aidatım (`myDues`) | ✓ aynı |  |
+| İletişim | Duyurular (`/duyurular`) | Duyurular (`announcements`) | ✓ aynı |  |
+| İletişim | Talep / Arıza (`/taleplerim`) | Talep / Arıza (`complaints`) | ✓ aynı |  |
+| Tesis | Rezervasyon (`/rezervasyonlarim`) | Rezervasyon (`rezervasyon`) | ✓ aynı |  |
+| İletişim | Etkinlikler (`/etkinlikler`) | Etkinlikler (`etkinlik`) | ✓ aynı |  |
+| İletişim | Site kuralları (`/kurallar`) | Site kuralları (`siteKurallari`) | ✓ aynı |  |
+| İletişim | Yönetimle iletişim (`/yonetim-iletisim`) | Yönetimle iletişim (`yoneticiIletisim`) | ✓ aynı |  |
+| Güvenlik | Bildirimler (`/notifications`) | — | menü dışı (yapısal) | Mobilde üst çubuktaki zil simgesi (yönetici satırıyla aynı gerekçe). |
+| Güvenlik | — | Ziyaretçiler (`visitors`) | yalnız mobil | Ziyaretçi kaydı kapıda anlık onay bildirimiyle çalışır; web sakin modu (P247) yöneticinin kendi dairesi için kısa yoldur, kapı akışı telefondadır. |
+| Güvenlik | — | Kargo (`kargo`) | yalnız mobil | Kargo teslim bildirimi ve teslim alma onayı telefonda (ziyaretçi ile aynı gerekçe). |
+| Güvenlik | — | Görüntüleme izni (`unitAccess`) | yalnız mobil | Sakinin onay/ret kararı anlık bildirimden açılır; yöneticinin isteği web'de de var (yönetici satırı). |
+| Tesis | — | Şikayet Haritası (`sikayetHaritasi`) | yalnız mobil | Sakin kendi dairesinin şikayet durumunu görür; web sakin modu yöneticidir ve haritanın tamamını yönetici menüsünde zaten görür. |
+| Tesis | — | Dış hizmetler (`disHizmet`) | yalnız mobil | Yönetici web'de aynı rehberi yönetici menüsünde (Tesis) yönetir; sakin modunda ikinci kopya gerekmez. |
+| Tesis | — | Yerel işletmeler (`yerelIsletmeler`) | yalnız mobil | Dış hizmetler ile aynı gerekçe. |
+| Tesis | — | Akıllı ev (`akilliEv`) | yalnız mobil | Cihaz komutu (kapı, ışık) telefondan verilir; yönetici web'de tüm cihazları yönetici menüsünde görür. |
+| Finans | — | Site Bütçesi (`siteBudget`) | yalnız mobil | Yönetici web'de bütçenin kendisini (Finans › Bütçe) yönetir; sakine gösterilen özet onun salt okunur hâlidir. |
+| Finans | — | Şeffaflık (`transparency`) | yalnız mobil | Yönetici web'de Şeffaflık'ı Finans grubunda yayımlar; sakin modunda ikinci kopya gerekmez. |
+| İletişim | — | Anketler (`anketler`) | yalnız mobil | Yönetici web'de anketi açar ve sonuçları görür; oy verme sakinin telefonundan. |
+| Yönetim | — | Dokümanlar (`dokumanlar`) | yalnız mobil | Yönetici web'de Dokümanlar'ı yönetir; sakin modunda ikinci kopya gerekmez. |
+
+Güvenlik amiri, güvenlik görevlisi ve tesis görevlisinin web yüzeyi yok
+(P129, P248: saha rolleri mobil-yalnız); karşılaştırma bu yüzden iki çift
+üzerinden yapılır.
+
+## Kullanıcının düzelttiği ilke ihlalleri — karar
+
+| Konu | Önce | Karar |
+|---|---|---|
+| Akıllı ev | web Güvenlik / mobil Tesis | **Tesis** (iki yüzey). Binanın ve dairelerin cihazları; sakin de kullanır. Güvenlik grubu güvenlik operasyonudur. |
+| Şeffaflık | web Yönetim / mobil Finans | **Finans** (iki yüzey). Anonim aylık finans özetidir. |
+| Araç geçişleri / Otopark | iki ad, iki ekran | **Tek modül, tek ad: "Otopark ve araç geçişleri".** Aynı veri: geçiş kayıtları (ANPR) ve onlardan sayılan doluluk. Web sayfasının üstüne doluluk özeti eklendi; mobil ekran doluluğu gösterir ve yetkili role geçiş listesini açar. Güvenlik amirinin "Araç plaka" girişi de aynı adı alır. |
+| Talepler / Talep / Arıza | iki ad | **"Talep / Arıza"** (web yönetici + sakin modu, mobil). |
+| Rezervasyon yönetimi / Rezervasyon | iki ad | **"Rezervasyon"**. Sakinin sayfası da aynı adı taşır (web "Rezervasyonlarım" → "Rezervasyon"). |
+| Mobil Güvenlik'te Kameralar | yok (yalnız Ayarlar'da) | **Eklendi.** Mobil canlı izleme ekranı vardı ama yalnız Ayarlar'dan açılıyordu; Güvenlik grubuna taşındı, Ayarlar'daki kopya kalktı. |
+| Web'de İhlaller | `/olaylar` vardı, yalnız admin'e açıktı | **Web'de var, yöneticiye açıldı.** Aynı modül (`/violations`): ad iki yüzeyde **"Olaylar ve ihlaller"**. Sunucu kuralı değişmedi: yönetici okur ve izler, kaydı güvenlik/admin açar. |
+| Web'de Görüntüleme izni | yok | **Web'e eklendi** (`/goruntuleme-izni`): yönetici tek daire / toplu izin ister, durumu izler, onaylanan dairenin kayıtlarını bir kez görür. Sakinin onay/ret kararı mobilde kalır (anlık bildirim). |
+| Kişiler | — | Sekmeler role göre: güvenlik amiri yalnız **Personel** sekmesini ve yalnız güvenlik personelini görür (P231); sakin modunda Kişiler görünmez. |
+| Devriye | — | Sekmeler role göre: güvenlik görevlisi yalnız **takibi** (kendi turları) görür; NFC noktaları ve planlar yönetim ve amir içindir. |
+
+Diğer ad birleştirmeleri (ilke gereği): "Bloklar" → **Bina yapısı**;
+"Rapor motoru" → **Raporlar** (eski tek raporluk `/reports/dues` menüden
+çıktı, adresi çalışır); "Finans" → **Finansal özet**; "Görev yönetimi" →
+**Görevler**; "Tahsilat" → **Tahsilatlar**; "Gider kaydı" → **Giderler**;
+"Aylık raporlar" → **Raporlar**; "Devriye takibi" → **Devriye**;
+"Yönetici iletişim" / "Yönetim iletişim" → **Yönetimle iletişim**;
+"Doküman yönetimi" / "Site dokümanları" → **Dokümanlar**.
+
+## Maaş kartı ↔ personel hesabı ↔ fazla mesai (değerlendirme)
+
+Ölçüm:
+* Sunucuda bağ **zaten var**: `personel_kayit.app_user_id` (isteğe bağlı;
+  hesap silinirse kart durur — bordro geçmişi kimliğe bağlı olmamalı).
+* Fazla mesai (P203/P214) **saatleri hesaptan** (vardiya/mola kayıtları
+  `app_user`a bağlı) alır, **ücreti maaş kartından** alır: `app/routers/
+  mesai.py` kişiyi `PersonelKayit.app_user_id` üzerinden bulur. Bağ yoksa
+  kişi "ücret tanımsız" görünür ve mesai tutarı hesaplanmaz.
+* **Kusur:** web formunda bağ alanı **yoktu**. Yani yönetici kartı hesaba
+  bağlayamıyor, mesai ekranı ücret bulamıyordu; aynı kişiyi iki kez
+  (hesap + kart) yazmak zorundaydı.
+
+Karar: **ikisi ayrı kayıt kalır, isteğe bağlı bağlanır.**
+* Ayrı kalma gerekçesi: her personelin hesabı yoktur (temizlik, bahçıvan)
+  ve her hesap personel değildir; kartta TC, ücret, giriş/çıkış tarihi
+  gibi hesapta olmaması gereken bilgiler durur.
+* Maaş kartı formuna **"Uygulama hesabı"** seçimi eklendi (saha personeli
+  hesapları). Seçilince ad, telefon ve e-posta hesaptan **doldurulur**, tekrar
+  yazılmaz.
+* Kişiler › Personel'de her satırda maaş kartı durumu ve **"Maaş kartı
+  oluştur"** eylemi (bağlı ve dolu açılır). Fazla mesai ekranında "ücret
+  tanımsız" satırından da aynı yere gidilir.
+* Kurulum sihirbazının "personel" adımı artık **hesabı** (saha personeli)
+  sayar; maaş kartı isteğe bağlı finans adımıdır.
+
+## Eski adresler ve derin bağlantılar
+
+| Eski (web) | Yeni |
+|---|---|
+| `/users` | `/kisiler?sekme=personel` (`?rol=resident` → `sekme=sakinler`) |
+| `/residents` | `/kisiler?sekme=sakinler` |
+| `/davetler` | `/kisiler?sekme=davetler` |
+| `/checkpoints` | `/devriye?sekme=noktalar` |
+| `/patrol-plans` | `/devriye?sekme=planlar` |
+| `/reports/patrols` | `/devriye?sekme=takip` |
+| `/tanimlar?defter=personel-kayitlari` | `/finans/maas-kartlari` |
+
+Mobil: `/personel`, `/sakinler`, `/davetler` → Kişiler ekranının ilgili
+sekmesi; `/patrol-plans`, `/checkpoints` adresleri aynen çalışır.
+Bildirim yönlendirmeleri (web `lib/bildirim-rotasi.ts`, mobil push
+yönlendirmesi) yeni adreslere güncellendi; eski adresler de yönlendirmeyle
+açılmaya devam eder.
+
+## Kilit
+
+`contracts/menu-paritesi.tsv` + iki test:
+* `admin-web/tests/p251-menu-paritesi.test.ts`: web yönetici menüsü ve
+  sakin modu tablodaki satırlarla **birebir** (grup + Türkçe ad); tabloda
+  olmayan web öğesi, ya da tabloda web'i olan ama menüde olmayan satır
+  düşer.
+* `mobile/test/p251_menu_paritesi_test.dart`: aynısı mobil yönetici ve
+  sakin menüsü için; ayrıca "Bilgisayardan yapılanlar" listesi tablodaki
+  `yalniz_web` satırlarının tamamını içerir.
+* Gerekçesiz farklı satır tablonun kendisinde reddedilir (`ayni` dışındaki
+  her satırda gerekçe zorunlu).

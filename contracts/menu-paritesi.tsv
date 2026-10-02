@@ -1,0 +1,94 @@
+# (P251 §8) WEB <-> MOBIL MENU PARITESI — TEK KAYNAK.
+#
+# Iki kilit bu dosyayi okur:
+#   admin-web/tests/p251-menu-paritesi.test.ts   (lib/menu.ts)
+#   mobile/test/p251_menu_paritesi_test.dart      (home_menu.dart)
+# Bir yuzey grubunu ya da adini degistirirse, ya da tabloda olmayan bir
+# oge eklerse kendi kilidi duser. Ad karsilastirmasi TURKCE metinle.
+#
+# kapsam : yonetici (web tesis yuzeyi yonetici <-> mobil yonetici)
+#          sakin    (web sakin modu P247 <-> mobil sakin)
+# grup   : ozet guvenlik tesis finans iletisim kisiler tanimlar yonetim
+#          (sakin kapsaminda web tek basliksiz bolumdur; grup mobilde olculur)
+# web    : rota (sorgusuz) ya da -
+# mobil  : HomeMenuEntry adi ya da -
+# durum  : ayni | yalniz_web | yalniz_mobil | yapisal
+#          yalniz_web  -> mobilde "Bilgisayardan yapilanlar" listesinde
+#          yapisal     -> is iki yuzeyde de var, menude olmamasi bilincli
+# gerekce: ayni disindaki her satirda ZORUNLU.
+kapsam	grup	web	mobil	ad	durum	gerekce
+yonetici	ozet	/dashboard	-	Özet	yapisal	Mobilde Özet ayrı bir menü öğesi değil, uygulamanın ana ekranının kendisi.
+yonetici	guvenlik	/panik	panikTakip	Acil durum çağrıları	ayni	-
+yonetici	guvenlik	/kameralar	kameralar	Kameralar	ayni	-
+yonetici	guvenlik	/kamera-kayitlari	kameraKayitlari	Kamera Kayıtları	ayni	-
+yonetici	guvenlik	/devriye	patrolTracking	Devriye	ayni	-
+yonetici	guvenlik	/vardiya-plani	vardiyalar	Vardiya planı	ayni	-
+yonetici	guvenlik	/arac-gecisleri	otopark	Otopark ve araç geçişleri	ayni	-
+yonetici	guvenlik	/olaylar	ihlaller	Olaylar ve ihlaller	ayni	-
+yonetici	guvenlik	/goruntuleme-izni	unitAccess	Görüntüleme izni	ayni	-
+yonetici	guvenlik	/notifications	-	Bildirimler	yapisal	Mobilde bildirimler her ekranın üst çubuğundaki zil simgesinden açılır; menüye ikinci giriş koymak aynı ekrana iki yol olurdu.
+yonetici	tesis	/units	-	Daireler	yapisal	Mobilde daire listesi Bina yapısı ekranının içindedir (blok → daire); ayrı liste ekranı yok.
+yonetici	tesis	/tasks	taskTracking	Görevler	ayni	-
+yonetici	tesis	/bakim	bakim	Bakım takibi	ayni	-
+yonetici	tesis	/assets	assets	Demirbaş	ayni	-
+yonetici	tesis	/schematic	sikayetHaritasi	Şikayet Haritası	ayni	-
+yonetici	tesis	/rezervasyon-yonetimi	rezervasyon	Rezervasyon	ayni	-
+yonetici	tesis	/dis-hizmetler	disHizmet	Dış hizmetler	ayni	-
+yonetici	tesis	/yerel-isletmeler	yerelIsletmeler	Yerel işletmeler	ayni	-
+yonetici	tesis	/akilli-ev	akilliEv	Akıllı ev	ayni	-
+yonetici	finans	/finans	financialSummary	Finansal özet	ayni	-
+yonetici	finans	/finans/tahsilatlar	tahsilat	Tahsilatlar	ayni	-
+yonetici	finans	/finans/giderler	gider	Giderler	ayni	-
+yonetici	finans	/finans/borclular	borclular	Borçlular	ayni	-
+yonetici	finans	/finans/otomasyon	otomasyon	Otomasyon	ayni	-
+yonetici	finans	/finans/butce	budget	Bütçe	ayni	-
+yonetici	finans	/sayac-okuma	sayacOkuma	Sayaç okuma	ayni	-
+yonetici	finans	/raporlar	reports	Raporlar	ayni	-
+yonetici	finans	/transparency	transparency	Şeffaflık	ayni	-
+yonetici	finans	/dues	-	Aidat	yalniz_web	Toplu aidat tahakkuku daire başına önizleme ve dağıtım seçimi ister; geniş tablo telefonda doğrulanamaz. Mobilde aidat planı Otomasyon'dan kurulur.
+yonetici	finans	/finans/borclandirmalar	-	Borçlandırmalar	yalniz_web	Tek ve toplu borçlandırma aynı geniş önizleme tablosunu kullanır (Aidat ile aynı gerekçe).
+yonetici	finans	/finans/gelirler	-	Gelirler	yalniz_web	Aidat dışı gelir kaydı kasa, kalem ve belge seçimi ister ve seyrek yapılır; mobilde günlük iş tahsilat ve gider kaydıdır.
+yonetici	finans	/finans/virman	-	Hesaplar arası virman	yalniz_web	İki kasa arasında para taşır; yanlış girişin düzeltmesi ters kayıt ister. Muhasebe defteri işidir.
+yonetici	finans	/finans/iade	-	Ödeme iadesi	yalniz_web	İade bir tahsilatın ters kaydıdır; özgün kaydı defterde bulup eşleştirmek geniş ekran ister.
+yonetici	finans	/finans/acilis	-	Açılış fişleri	yalniz_web	Kurulumda bir kez girilen devir bakiyeleri; çok satırlı fiş.
+yonetici	finans	/finans/banka	-	Banka Entegrasyonu	yalniz_web	Ekstre dosyası yükleme ve satır satır eşleştirme (P191).
+yonetici	finans	/finans/mesai	-	Fazla mesai	yalniz_web	Haftalık hesap tablosu ve gider olarak işleme; kişi × hafta matrisi telefonda okunmaz.
+yonetici	finans	/finans/maas-kartlari	-	Maaş kartları	yalniz_web	Ücret, giriş/çıkış tarihi ve kimlik bilgisi içeren kayıt; personel hesabı mobilde Kişiler'de açılır, maaş kartı ona bilgisayardan bağlanır.
+yonetici	finans	/icra	-	İcra dosyaları	yalniz_web	Hukuki dosya: belge, safha ve tutar geçmişi.
+yonetici	iletisim	/announcements	announcements	Duyurular	ayni	-
+yonetici	iletisim	/site-kurallari	siteKurallari	Site kuralları	ayni	-
+yonetici	iletisim	/etkinlik-yonetimi	etkinlik	Etkinlikler	ayni	-
+yonetici	iletisim	/anketler	anketler	Anketler	ayni	-
+yonetici	iletisim	/complaints	complaints	Talep / Arıza	ayni	-
+yonetici	iletisim	/gurultu-uyarilari	gurultuUyarilari	Gürültü uyarıları	ayni	-
+yonetici	iletisim	/mesajlar	-	SMS/E-Posta Yönetimi	yalniz_web	Toplu SMS ve e-posta ücretlidir ve geri alınamaz; alıcı süzgeci ve gönderim önizlemesi geniş ekranda doğrulanır.
+yonetici	kisiler	/kisiler	kisiler	Kişiler	ayni	-
+yonetici	tanimlar	/building-editor	binaDuzenleme	Bina yapısı	ayni	-
+yonetici	tanimlar	/tanimlar	tanimlar	Tanımlar	ayni	-
+yonetici	tanimlar	/ice-aktarim	-	İçe aktarım	yalniz_web	Excel ile yüzlerce satırın önizlemesi ve hata düzeltmesi telefonda yapılamaz (P204).
+yonetici	yonetim	/tesis-ayarlari	tesisAyarlari	Tesis ayarları	ayni	-
+yonetici	yonetim	/integrations	integrations	Entegrasyonlar	ayni	-
+yonetici	yonetim	/kurulum	kurulum	Kurulum sihirbazı	ayni	-
+yonetici	yonetim	/dokumanlar	dokumanlar	Dokümanlar	ayni	-
+yonetici	yonetim	/karar-defteri	-	Karar Defteri	yalniz_web	Resmî karar kaydı: madde metni, oy dağılımı ve ek belge düzenlemesi; yayımlanan karar sakine Dokümanlar'dan ulaşır.
+yonetici	yonetim	/kvkk	-	KVKK tercihlerim	yapisal	Kişisel izin tercihi; mobilde Profil › Ayarlar'da durur (hesaba ait, siteye ait değil).
+yonetici	yonetim	-	bilgisayardan	Bilgisayardan yapılanlar	yalniz_mobil	Yalnız web'de kalan işlemlerin listesi ve app.yonetiyor.com bağlantısı; web'de karşılığı o sayfaların kendisi.
+sakin	finans	/aidatim	myDues	Aidatım	ayni	-
+sakin	iletisim	/duyurular	announcements	Duyurular	ayni	-
+sakin	iletisim	/taleplerim	complaints	Talep / Arıza	ayni	-
+sakin	tesis	/rezervasyonlarim	rezervasyon	Rezervasyon	ayni	-
+sakin	iletisim	/etkinlikler	etkinlik	Etkinlikler	ayni	-
+sakin	iletisim	/kurallar	siteKurallari	Site kuralları	ayni	-
+sakin	iletisim	/yonetim-iletisim	yoneticiIletisim	Yönetimle iletişim	ayni	-
+sakin	guvenlik	/notifications	-	Bildirimler	yapisal	Mobilde üst çubuktaki zil simgesi (yönetici satırıyla aynı gerekçe).
+sakin	guvenlik	-	visitors	Ziyaretçiler	yalniz_mobil	Ziyaretçi kaydı kapıda anlık onay bildirimiyle çalışır; web sakin modu (P247) yöneticinin kendi dairesi için kısa yoldur, kapı akışı telefondadır.
+sakin	guvenlik	-	kargo	Kargo	yalniz_mobil	Kargo teslim bildirimi ve teslim alma onayı telefonda (ziyaretçi ile aynı gerekçe).
+sakin	guvenlik	-	unitAccess	Görüntüleme izni	yalniz_mobil	Sakinin onay/ret kararı anlık bildirimden açılır; yöneticinin isteği web'de de var (yönetici satırı).
+sakin	tesis	-	sikayetHaritasi	Şikayet Haritası	yalniz_mobil	Sakin kendi dairesinin şikayet durumunu görür; web sakin modu yöneticidir ve haritanın tamamını yönetici menüsünde zaten görür.
+sakin	tesis	-	disHizmet	Dış hizmetler	yalniz_mobil	Yönetici web'de aynı rehberi yönetici menüsünde (Tesis) yönetir; sakin modunda ikinci kopya gerekmez.
+sakin	tesis	-	yerelIsletmeler	Yerel işletmeler	yalniz_mobil	Dış hizmetler ile aynı gerekçe.
+sakin	tesis	-	akilliEv	Akıllı ev	yalniz_mobil	Cihaz komutu (kapı, ışık) telefondan verilir; yönetici web'de tüm cihazları yönetici menüsünde görür.
+sakin	finans	-	siteBudget	Site Bütçesi	yalniz_mobil	Yönetici web'de bütçenin kendisini (Finans › Bütçe) yönetir; sakine gösterilen özet onun salt okunur hâlidir.
+sakin	finans	-	transparency	Şeffaflık	yalniz_mobil	Yönetici web'de Şeffaflık'ı Finans grubunda yayımlar; sakin modunda ikinci kopya gerekmez.
+sakin	iletisim	-	anketler	Anketler	yalniz_mobil	Yönetici web'de anketi açar ve sonuçları görür; oy verme sakinin telefonundan.
+sakin	yonetim	-	dokumanlar	Dokümanlar	yalniz_mobil	Yönetici web'de Dokümanlar'ı yönetir; sakin modunda ikinci kopya gerekmez.
