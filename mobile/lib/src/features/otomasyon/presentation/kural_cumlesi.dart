@@ -69,6 +69,15 @@ String gecikmeCumlesi(AppLocalizations l10n, GecikmeKurali g) =>
                 : '${g.yuzde}',
           );
 
+/// (P252 §2) Odeme gunu basina bir cumle; personel yoksa ne yapilacagi.
+String maasCumlesi(AppLocalizations l10n, String dil, MaasKurali m) =>
+    m.gruplar.isEmpty
+        ? l10n.otoKuralMaasYok
+        : m.gruplar
+            .map((g) => l10n.otoKuralMaasCumle(
+                  '${g.gun}', '${g.adet}', tlIsaretli(g.toplamKurus, dil)))
+            .join(' ');
+
 String sonCalismaCumlesi(AppLocalizations l10n, String dil, SonCalisma? s) {
   if (s == null) return l10n.otoKuralSonYok;
   final z = tarihSaatBicimi(s.zaman, dil);
@@ -79,6 +88,8 @@ String sonCalismaCumlesi(AppLocalizations l10n, String dil, SonCalisma? s) {
     'duzenli_gider' => l10n.otoKuralSonGider(z),
     'borc_hatirlatma' => l10n.otoKuralSonHatirlatma(z, '${s.adet}'),
     'gecikme_faizi' => l10n.otoKuralSonGecikme(z, '${s.adet}', tutar),
+    // (P252 §2)
+    'maas' => l10n.otoKuralSonMaas(z, '${s.adet}', tutar),
     _ => l10n.otoKuralSonYok,
   };
 }

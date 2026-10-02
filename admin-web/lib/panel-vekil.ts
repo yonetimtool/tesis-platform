@@ -68,6 +68,8 @@ export const OKUMA: Record<string, string> = {
   // (P250 §9) Kural basina son calisma + "bugun calissaydi" onizlemesi.
   "otomasyon-son-calismalar": "/otomasyon/son-calismalar",
   "hatirlatma-onizleme": "/hatirlatma-ayari/onizleme",
+  // (P252 §2) Maas otomasyonu: ayar + odeme gunu gruplari + onay bekleyenler.
+  "maas-ayari": "/otomasyon/maas-ayari",
   // --- (P192 §5) yonetici gostergeleri ---
   yaslandirma: "/finans/yaslandirma",
   "tahsilat-gostergesi": "/finans/tahsilat-gostergesi",
@@ -126,6 +128,10 @@ export const YAZMA: Record<string, string> = {
   "duzenli-giderler": "/duzenli-giderler",
   // (P250 §9) Sihirbaz onizlemesi — KAYDETMEZ (POST cunku govde plan).
   "aidat-plani-onizleme": "/aidat-planlari/onizleme",
+  // (P252 §2) Maas: kok PATCH ayari yazar; "simdi calistir" ve toplu onay.
+  "maas-ayari": "/otomasyon/maas-ayari",
+  "maaslar-calistir": "/otomasyon/maaslar/calistir",
+  "maaslar-onayla": "/otomasyon/maaslar/onayla",
   // --- (P192 §5.3) borclulara toplu islem ---
   "borclulara-hatirlat": "/finans/borclulara/hatirlat",
   "borclulara-faiz-affi": "/finans/borclulara/faiz-affi",

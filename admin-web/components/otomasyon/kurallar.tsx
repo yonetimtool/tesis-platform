@@ -37,18 +37,20 @@ import { jsonFetcher } from "@/lib/fetcher";
 import { useI18n } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk/tipler";
 import { ISTEMCI_SINIR, SINIR } from "@/lib/girdi-siniri";
-import { kurusToTL, tlToKurus } from "@/lib/money";
+import { kurusToTL, kurusToTLSade, tlToKurus } from "@/lib/money";
 import {
   PAYLASIM,
   SIKLIK,
   gecikmeCumlesi,
   giderCumlesi,
   hatirlatmaCumlesi,
+  maasCumlesi,
   planCumlesi,
   sonCalismaCumlesi,
   type GecikmeKurali,
   type GiderKurali,
   type HatirlatmaKurali,
+  type MaasKurali,
   type PlanKurali,
   type SonCalisma,
 } from "@/lib/otomasyon-cumle";
@@ -63,6 +65,9 @@ const UC = {
   hatirlatmaOnizleme: "/api/panel/hatirlatma-onizleme",
   gecikmeOnizleme: "/api/panel/gecikme-faizi-onizleme",
   planOnizleme: "/api/panel/aidat-plani-onizleme",
+  maas: "/api/panel/maas-ayari",
+  maasCalistir: "/api/panel/maaslar-calistir",
+  maasOnayla: "/api/panel/maaslar-onayla",
 } as const;
 
 interface Onizleme {
@@ -181,6 +186,8 @@ export function KurallarKarti() {
   const gecikme = useSWR<GecikmeKurali>(UC.gecikme, jsonFetcher);
   const son = useSWR<{ items: SonCalisma[] }>(UC.son, jsonFetcher);
   const hOniz = useSWR<Onizleme>(UC.hatirlatmaOnizleme, jsonFetcher);
+  // (P252 §2) Maas otomasyonu — denetciye 403 (ucret bilgisi): satir cizilmez.
+  const maas = useSWR<MaasKurali>(UC.maas, jsonFetcher);
   const gOniz = useSWR<{ items: { fark_kurus: number }[]; toplam_fark_kurus: number }>(
     UC.gecikmeOnizleme,
     jsonFetcher,
@@ -196,7 +203,7 @@ export function KurallarKarti() {
       // Hatirlatma ayrintilari karti ayni kaydi okur: genel tazeleme.
       await Promise.all([
         planlar.mutate(), giderler.mutate(), hatirlatma.mutate(), gecikme.mutate(),
-        hOniz.mutate(), gOniz.mutate(), genelTazele(UC.hatirlatma),
+        hOniz.mutate(), gOniz.mutate(), maas.mutate(), son.mutate(), genelTazele(UC.hatirlatma),
       ]);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("ortakHataOlustu"));
@@ -211,6 +218,20 @@ export function KurallarKarti() {
       tehlikeli: true,
     });
     if (tamam) await yaz(yol, "DELETE");
+  }
+
+  async function maaslariCalistir() {
+    try {
+      const r = await apiSend<{ yazilan: number; toplam_kurus: number }>(UC.maasCalistir, "POST", {});
+      if (r.yazilan > 0) {
+        toast.success(t("otoKuralMaasCalisti", { adet: r.yazilan, tutar: kurusToTL(r.toplam_kurus) }));
+      } else {
+        toast.info(t("otoKuralMaasYazilacakYok"));
+      }
+      await Promise.all([maas.mutate(), son.mutate()]);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("ortakHataOlustu"));
+    }
   }
 
   const gecikmeAdet = (gOniz.data?.items ?? []).filter((i) => i.fark_kurus > 0).length;
@@ -304,7 +325,41 @@ export function KurallarKarti() {
             onAnahtar={(acik) => void yaz(UC.gecikme, "PATCH", { gecikme_uygula: acik })}
           />
         ) : null}
+        {maas.data ? (
+          <KuralSatiri
+            id="maas"
+            cumle={maasCumlesi(maas.data, t)}
+            aktif={maas.data.aktif}
+            son={sonCalismaCumlesi(sonlar.get("maas"), t, zaman)}
+            onAnahtar={(acik) => void yaz(UC.maas, "PATCH", { aktif: acik })}
+            eylemler={
+              <>
+                <label className="flex items-center gap-2" style={{ fontSize: "var(--yz-fs-sm)" }}
+                  title={t("otoKuralMaasOtomatikIpucu")}>
+                  <input
+                    type="checkbox"
+                    data-test="maas-otomatik-onay"
+                    checked={maas.data.otomatik_onay}
+                    onChange={(e) => void yaz(UC.maas, "PATCH", { otomatik_onay: e.target.checked })}
+                  />
+                  {t("otoKuralMaasOtomatik")}
+                </label>
+                <Dugme tur="ikincil" boy="kucuk" data-test="maas-calistir"
+                  disabled={!maas.data.aktif || maas.data.gruplar.length === 0}
+                  onClick={() => void maaslariCalistir()}>
+                  {t("otoKuralMaasCalistir")}
+                </Dugme>
+              </>
+            }
+          />
+        ) : null}
       </ul>
+      {maas.data && maas.data.onay_bekleyenler.length > 0 ? (
+        <MaasOnayBekleyenler
+          satirlar={maas.data.onay_bekleyenler}
+          onDegisti={() => void maas.mutate()}
+        />
+      ) : null}
       {bos ? (
         <p className="mt-2" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
           {t("otoKuralYok")}
@@ -318,6 +373,103 @@ export function KurallarKarti() {
       ) : null}
       {diyalog}
     </Kart>
+  );
+}
+
+// ------------------------ (P252 §2) MAAS ONAYI ---------------------------- #
+/** Onay bekleyen maaslar: satir basina (tutar duzeltilebilir) ve toplu onay.
+ *
+ * Kismi ay maasi oranla hesaplanir ve HER ZAMAN onay bekler; yonetici
+ * tutari burada duzeltip onaylar. Onay ayari kapaliyken yazilan tam ay
+ * maaslari da burada toplanir ve tek tikla onaylanir. */
+function MaasOnayBekleyenler({
+  satirlar,
+  onDegisti,
+}: {
+  satirlar: MaasKurali["onay_bekleyenler"];
+  onDegisti: () => void;
+}) {
+  const { t, dil } = useI18n();
+  const toast = useToast();
+  const [tutarlar, setTutarlar] = useState<Record<string, string>>({});
+  const [mesgul, setMesgul] = useState(false);
+
+  async function tekOnay(id: string, varsayilan: number) {
+    const metin = tutarlar[id];
+    const kurus = metin === undefined || metin.trim() === "" ? varsayilan : tlToKurus(metin);
+    if (kurus === null || kurus <= 0) {
+      toast.error(t("calismaUcretGecersiz"));
+      return;
+    }
+    setMesgul(true);
+    try {
+      await apiSend(`/api/panel/finans-hareketler/${id}/onayla`, "POST",
+        kurus === varsayilan ? {} : { tutar_kurus: kurus });
+      toast.success(t("otoMaasOnaylandi", { adet: 1 }));
+      onDegisti();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("ortakHataOlustu"));
+    } finally {
+      setMesgul(false);
+    }
+  }
+
+  async function topluOnay() {
+    setMesgul(true);
+    try {
+      const r = await apiSend<{ onaylanan: number }>(UC.maasOnayla, "POST", {
+        ids: satirlar.map((s) => s.id),
+      });
+      toast.success(t("otoMaasOnaylandi", { adet: r.onaylanan }));
+      onDegisti();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("ortakHataOlustu"));
+    } finally {
+      setMesgul(false);
+    }
+  }
+
+  return (
+    <div className="mt-3 rounded-lg p-3" data-test="maas-onay-bekleyenler"
+      style={{ background: "var(--yz-surface-2)" }}>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 style={{ fontSize: "var(--yz-fs-sm)", fontWeight: 600, color: "var(--yz-text)" }}>
+            {t("otoMaasOnayBaslik")}
+          </h3>
+          <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{t("otoMaasOnayAlt")}</p>
+        </div>
+        <Dugme tur="birincil" boy="kucuk" disabled={mesgul} data-test="maas-toplu-onay"
+          onClick={() => void topluOnay()}>
+          {t("otoMaasTumunuOnayla", { adet: satirlar.length })}
+        </Dugme>
+      </div>
+      <ul className="divide-y">
+        {satirlar.map((s) => (
+          <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 py-2"
+            data-test={`maas-bekleyen-${s.id}`}>
+            <span style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>
+              {s.aciklama}
+              <span className="ml-2" style={{ color: "var(--yz-text-2)" }}>{saltTarihBicimi(s.tarih, dil)}</span>
+            </span>
+            <span className="flex items-center gap-2">
+              <Alan
+                aria-label={t("finansSutunTutar")}
+                className="w-32"
+                inputMode="decimal"
+                maxLength={ISTEMCI_SINIR.SAYI}
+                disabled={mesgul}
+                value={tutarlar[s.id] ?? kurusToTLSade(s.tutar_kurus)}
+                onChange={(e) => setTutarlar({ ...tutarlar, [s.id]: e.target.value })}
+              />
+              <Dugme boy="kucuk" disabled={mesgul} onClick={() => void tekOnay(s.id, s.tutar_kurus)}>
+                {t("otoMaasOnayla")}
+              </Dugme>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

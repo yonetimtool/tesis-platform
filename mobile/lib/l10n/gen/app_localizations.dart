@@ -15466,6 +15466,84 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Seçilmedi'**
   String get calismaGunSecilmedi;
+
+  /// No description provided for @otoKuralMaasCumle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Her ayın {gun}. günü {adet} personelin maaşı (toplam {tutar}) gidere yazılır.'**
+  String otoKuralMaasCumle(String gun, String adet, String tutar);
+
+  /// No description provided for @otoKuralMaasYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Maaşı ve ödeme günü girilmiş personel yok. Kişiler › Personel\'den ekleyin.'**
+  String get otoKuralMaasYok;
+
+  /// No description provided for @otoKuralMaasOtomatik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Maaş giderleri onaylı yazılsın'**
+  String get otoKuralMaasOtomatik;
+
+  /// No description provided for @otoKuralMaasOtomatikIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapalıysa maaş giderleri onay bekler. İşe giriş veya çıkış ayının (kısmi ay) maaşı her zaman onay bekler.'**
+  String get otoKuralMaasOtomatikIpucu;
+
+  /// No description provided for @otoKuralMaasCalistir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şimdi çalıştır'**
+  String get otoKuralMaasCalistir;
+
+  /// No description provided for @otoKuralMaasCalisti.
+  ///
+  /// In tr, this message translates to:
+  /// **'{adet} maaş gideri yazıldı (toplam {tutar}).'**
+  String otoKuralMaasCalisti(String adet, String tutar);
+
+  /// No description provided for @otoKuralMaasYazilacakYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yazılacak maaş yok: bu dönemin maaşları zaten yazılmış ya da ödeme günü gelmedi.'**
+  String get otoKuralMaasYazilacakYok;
+
+  /// No description provided for @otoKuralSonMaas.
+  ///
+  /// In tr, this message translates to:
+  /// **'Son çalışma {zaman}: {adet} personelin maaşı gidere yazıldı (toplam {tutar}).'**
+  String otoKuralSonMaas(String zaman, String adet, String tutar);
+
+  /// No description provided for @otoMaasOnayBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Onay bekleyen maaşlar'**
+  String get otoMaasOnayBaslik;
+
+  /// No description provided for @otoMaasOnayAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kısmi ayın tutarı oranla hesaplandı; onaylamadan önce düzeltebilirsiniz.'**
+  String get otoMaasOnayAlt;
+
+  /// No description provided for @otoMaasTumunuOnayla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tümünü onayla ({adet})'**
+  String otoMaasTumunuOnayla(String adet);
+
+  /// No description provided for @otoMaasOnayla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Onayla'**
+  String get otoMaasOnayla;
+
+  /// No description provided for @otoMaasOnaylandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'{adet} maaş onaylandı.'**
+  String otoMaasOnaylandi(String adet);
 }
 
 class _AppLocalizationsDelegate

@@ -8902,4 +8902,57 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get calismaGunSecilmedi => 'Sin definir';
+
+  @override
+  String otoKuralMaasCumle(String gun, String adet, String tutar) {
+    return 'El día $gun de cada mes, los salarios de $adet empleados (total $tutar) se registran como gasto.';
+  }
+
+  @override
+  String get otoKuralMaasYok =>
+      'No hay empleados con salario y día de pago. Añádalos en Personas › Personal.';
+
+  @override
+  String get otoKuralMaasOtomatik => 'Registrar salarios como aprobados';
+
+  @override
+  String get otoKuralMaasOtomatikIpucu =>
+      'Si está desactivado, los salarios esperan aprobación. Un mes parcial (alta o baja) siempre espera.';
+
+  @override
+  String get otoKuralMaasCalistir => 'Ejecutar ahora';
+
+  @override
+  String otoKuralMaasCalisti(String adet, String tutar) {
+    return '$adet salarios registrados (total $tutar).';
+  }
+
+  @override
+  String get otoKuralMaasYazilacakYok =>
+      'Nada que registrar: ya registrados o aún no es el día de pago.';
+
+  @override
+  String otoKuralSonMaas(String zaman, String adet, String tutar) {
+    return 'Última ejecución $zaman: $adet salarios registrados (total $tutar).';
+  }
+
+  @override
+  String get otoMaasOnayBaslik => 'Salarios pendientes';
+
+  @override
+  String get otoMaasOnayAlt =>
+      'Los importes parciales son prorrateados; puede corregirlos antes de aprobar.';
+
+  @override
+  String otoMaasTumunuOnayla(String adet) {
+    return 'Aprobar todo ($adet)';
+  }
+
+  @override
+  String get otoMaasOnayla => 'Aprobar';
+
+  @override
+  String otoMaasOnaylandi(String adet) {
+    return '$adet salarios aprobados.';
+  }
 }

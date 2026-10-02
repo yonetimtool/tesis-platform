@@ -414,6 +414,7 @@ GET    /otomasyon-gunlugu                                   IZIN   IZIN   RED   
 GET    /otomasyon/maas-ayari                                IZIN   IZIN   RED    RED    RED    RED    RED   
 PATCH  /otomasyon/maas-ayari                                IZIN   IZIN   RED    RED    RED    RED    RED   
 POST   /otomasyon/maaslar/calistir                          IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /otomasyon/maaslar/onayla                            IZIN   IZIN   RED    RED    RED    RED    RED   
 GET    /otomasyon/son-calismalar                            IZIN   IZIN   RED    RED    RED    RED    IZIN  
 GET    /ozellikler                                          IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 GET    /panik                                               IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   RED   

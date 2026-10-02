@@ -2983,5 +2983,18 @@
   "calismaOnayBekliyor": "En attente",
   "calismaOdemeYok": "Aucun paiement.",
   "calismaKartYok": "Aucune donnée d'emploi.",
-  "calismaGunSecilmedi": "Non défini"
+  "calismaGunSecilmedi": "Non défini",
+  "otoKuralMaasCumle": "Le {gun} de chaque mois, les salaires de {adet} employés (total {tutar}) sont passés en dépenses.",
+  "otoKuralMaasYok": "Aucun employé avec salaire et jour de paie. Ajoutez-les dans Personnes › Personnel.",
+  "otoKuralMaasOtomatik": "Passer les salaires comme approuvés",
+  "otoKuralMaasOtomatikIpucu": "Si désactivé, les salaires attendent une approbation. Un mois partiel (entrée ou sortie) attend toujours.",
+  "otoKuralMaasCalistir": "Exécuter",
+  "otoKuralMaasCalisti": "{adet} salaires passés (total {tutar}).",
+  "otoKuralMaasYazilacakYok": "Rien à passer : déjà passés ou jour de paie non atteint.",
+  "otoKuralSonMaas": "Dernière exécution {zaman} : {adet} salaires passés (total {tutar}).",
+  "otoMaasOnayBaslik": "Salaires en attente",
+  "otoMaasOnayAlt": "Les montants partiels sont proratisés ; corrigez-les avant d'approuver.",
+  "otoMaasTumunuOnayla": "Tout approuver ({adet})",
+  "otoMaasOnayla": "Approuver",
+  "otoMaasOnaylandi": "{adet} salaires approuvés."
 }

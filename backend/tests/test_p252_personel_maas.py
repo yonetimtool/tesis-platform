@@ -224,3 +224,74 @@ def test_cikistan_sonra_gider_YOK_ve_otomatik_onay_kapali(client, world, owner_c
     ayar = client.get("/otomasyon/maas-ayari", headers=y).json()
     assert ayar["otomatik_onay"] is False and ayar["personel_sayisi"] >= 2
     client.patch("/otomasyon/maas-ayari", headers=y, json={"otomatik_onay": True})
+
+
+def test_onay_bekleyen_maaslar_LISTEDE_ve_TOPLU_onay_KASAYA_girer(client, world, owner_conn):
+    """(P252 §2) Ayar kapaliyken yazilan maaslar ayar ucunda listelenir ve
+    tek tikla onaylanir; ikinci onay (iki sekme) hata vermez, bir sey de
+    yapmaz. Amir toplu onaylayamaz."""
+    y = _h(client, world["slug_a"], world["yonetici_a"])
+    kasa = _kasa(client, y)
+    client.patch("/otomasyon/maas-ayari", headers=y, json={"otomatik_onay": False})
+    try:
+        u, _ = _personel(client, y, kasa_id=kasa, maas_kurus=1_800_000)
+        kart = _kart(client, y, u["id"])
+        client.post("/otomasyon/maaslar/calistir", headers=y)
+    finally:
+        client.patch("/otomasyon/maas-ayari", headers=y, json={"otomatik_onay": True})
+    ayar = client.get("/otomasyon/maas-ayari", headers=y).json()
+    bizim = [b for b in ayar["onay_bekleyenler"] if b["aciklama"].startswith(kart["ad"])]
+    assert len(bizim) == 1 and bizim[0]["tutar_kurus"] == 1_800_000
+    a = _h(client, world["slug_a"], world["amir_a"])
+    assert client.post("/otomasyon/maaslar/onayla", headers=a,
+                       json={"ids": [bizim[0]["id"]]}).status_code == 403
+    r = client.post("/otomasyon/maaslar/onayla", headers=y, json={"ids": [bizim[0]["id"]]})
+    assert r.status_code == 200, r.text
+    assert r.json() == {"onaylanan": 1, "toplam_kurus": 1_800_000}
+    (_, durum, *_), = _maas_giderleri(owner_conn, kart["id"])
+    assert durum == "odendi"
+    r2 = client.post("/otomasyon/maaslar/onayla", headers=y, json={"ids": [bizim[0]["id"]]})
+    assert r2.json()["onaylanan"] == 0
+
+
+def test_kismi_ay_TUTARI_DUZELTILEREK_onaylanir(client, world, owner_conn):
+    """(P252 §2) Hesaplanmis (kismi) tutar onayda duzeltilir; denetimde eski
+    tutar kalir. Onaylanmis satirin tutari degistirilemez (409)."""
+    bugun = date.today()
+    if bugun.day == 1:
+        return
+    y = _h(client, world["slug_a"], world["yonetici_a"])
+    kasa = _kasa(client, y)
+    u, _ = _personel(client, y, kasa_id=kasa, maas_kurus=3_000_000, giris=bugun)
+    kart = _kart(client, y, u["id"])
+    client.post("/otomasyon/maaslar/calistir", headers=y)
+    bekleyen = [b for b in client.get("/otomasyon/maas-ayari", headers=y).json()["onay_bekleyenler"]
+                if b["aciklama"].startswith(kart["ad"])]
+    hid = bekleyen[0]["id"]
+    r = client.post(f"/finans/hareketler/{hid}/onayla", headers=y, json={"tutar_kurus": 1_234_500})
+    assert r.status_code == 200, r.text
+    (tutar, durum, *_), = _maas_giderleri(owner_conn, kart["id"])
+    assert tutar == 1_234_500 and durum == "odendi"
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "SELECT meta FROM audit_log WHERE resource_id=%s AND action='finans_hareket_onay'",
+            (hid,),
+        )
+        meta = cur.fetchone()[0]
+    assert meta["eski_tutar_kurus"] != 1_234_500 and meta["tutar_kurus"] == 1_234_500
+    r2 = client.post(f"/finans/hareketler/{hid}/onayla", headers=y, json={"tutar_kurus": 1})
+    assert r2.status_code == 409
+
+
+def test_maas_GUNLUGU_otomasyon_gunlugunde_OKUNUR(client, world):
+    """(P252 §2) Maas kosumu gunluge `tur='maas'` yazar ve gunluk listesi
+    bu satirla 500 VERMEZ (yanit semasindaki tur listesi eksikti)."""
+    y = _h(client, world["slug_a"], world["yonetici_a"])
+    kasa = _kasa(client, y)
+    _personel(client, y, kasa_id=kasa)
+    client.post("/otomasyon/maaslar/calistir", headers=y)
+    r = client.get("/otomasyon-gunlugu", headers=y, params={"tur": "maas", "limit": 5})
+    assert r.status_code == 200, r.text
+    assert r.json()["items"] and r.json()["items"][0]["tur"] == "maas"
+    son = client.get("/otomasyon/son-calismalar", headers=y).json()["items"]
+    assert any(s["kural"] == "maas" for s in son)

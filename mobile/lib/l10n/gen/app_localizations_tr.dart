@@ -8705,4 +8705,57 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get calismaGunSecilmedi => 'Seçilmedi';
+
+  @override
+  String otoKuralMaasCumle(String gun, String adet, String tutar) {
+    return 'Her ayın $gun. günü $adet personelin maaşı (toplam $tutar) gidere yazılır.';
+  }
+
+  @override
+  String get otoKuralMaasYok =>
+      'Maaşı ve ödeme günü girilmiş personel yok. Kişiler › Personel\'den ekleyin.';
+
+  @override
+  String get otoKuralMaasOtomatik => 'Maaş giderleri onaylı yazılsın';
+
+  @override
+  String get otoKuralMaasOtomatikIpucu =>
+      'Kapalıysa maaş giderleri onay bekler. İşe giriş veya çıkış ayının (kısmi ay) maaşı her zaman onay bekler.';
+
+  @override
+  String get otoKuralMaasCalistir => 'Şimdi çalıştır';
+
+  @override
+  String otoKuralMaasCalisti(String adet, String tutar) {
+    return '$adet maaş gideri yazıldı (toplam $tutar).';
+  }
+
+  @override
+  String get otoKuralMaasYazilacakYok =>
+      'Yazılacak maaş yok: bu dönemin maaşları zaten yazılmış ya da ödeme günü gelmedi.';
+
+  @override
+  String otoKuralSonMaas(String zaman, String adet, String tutar) {
+    return 'Son çalışma $zaman: $adet personelin maaşı gidere yazıldı (toplam $tutar).';
+  }
+
+  @override
+  String get otoMaasOnayBaslik => 'Onay bekleyen maaşlar';
+
+  @override
+  String get otoMaasOnayAlt =>
+      'Kısmi ayın tutarı oranla hesaplandı; onaylamadan önce düzeltebilirsiniz.';
+
+  @override
+  String otoMaasTumunuOnayla(String adet) {
+    return 'Tümünü onayla ($adet)';
+  }
+
+  @override
+  String get otoMaasOnayla => 'Onayla';
+
+  @override
+  String otoMaasOnaylandi(String adet) {
+    return '$adet maaş onaylandı.';
+  }
 }

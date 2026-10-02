@@ -2983,5 +2983,18 @@
   "calismaOnayBekliyor": "Pending approval",
   "calismaOdemeYok": "No payments yet.",
   "calismaKartYok": "No employment details recorded.",
-  "calismaGunSecilmedi": "Not set"
+  "calismaGunSecilmedi": "Not set",
+  "otoKuralMaasCumle": "On day {gun} of every month, salaries of {adet} staff (total {tutar}) are posted as expenses.",
+  "otoKuralMaasYok": "No staff with a salary and payment day. Add them under People › Staff.",
+  "otoKuralMaasOtomatik": "Post salary expenses as approved",
+  "otoKuralMaasOtomatikIpucu": "If off, salary expenses await approval. A partial month (joining or leaving month) always awaits approval.",
+  "otoKuralMaasCalistir": "Run now",
+  "otoKuralMaasCalisti": "{adet} salary expenses posted (total {tutar}).",
+  "otoKuralMaasYazilacakYok": "Nothing to post: this period's salaries are already posted or the payment day hasn't come.",
+  "otoKuralSonMaas": "Last run {zaman}: {adet} salaries posted (total {tutar}).",
+  "otoMaasOnayBaslik": "Salaries awaiting approval",
+  "otoMaasOnayAlt": "Partial-month amounts are prorated; you can correct them before approving.",
+  "otoMaasTumunuOnayla": "Approve all ({adet})",
+  "otoMaasOnayla": "Approve",
+  "otoMaasOnaylandi": "{adet} salaries approved."
 }

@@ -13,7 +13,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
+import '../../../core/girdi_siniri.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/para.dart';
 import '../data/hatirlatma_api.dart';
 import '../data/otomasyon_api.dart';
 import 'hatirlatma_cumlesi.dart';
@@ -34,6 +36,7 @@ class OtomasyonKurallariScreen extends ConsumerWidget {
     ref.invalidate(sonCalismalarProvider);
     ref.invalidate(hatirlatmaOnizlemeProvider);
     ref.invalidate(gecikmeOnizlemeProvider);
+    ref.invalidate(maasKuraliProvider);
   }
 
   Future<void> _yap(
@@ -77,6 +80,24 @@ class OtomasyonKurallariScreen extends ConsumerWidget {
     if (tamam == true && context.mounted) await _yap(context, ref, is_);
   }
 
+  Future<void> _maaslariCalistir(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final (yazilan, toplam) =
+          await ref.read(otomasyonApiProvider).maaslariCalistir();
+      messenger.showSnackBar(SnackBar(
+        content: Text(yazilan > 0
+            ? l10n.otoKuralMaasCalisti('$yazilan', tlIsaretli(toplam, dil))
+            : l10n.otoKuralMaasYazilacakYok),
+      ));
+      _tazele(ref);
+    } on ApiException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
@@ -88,6 +109,7 @@ class OtomasyonKurallariScreen extends ConsumerWidget {
     final sonlar = ref.watch(sonCalismalarProvider).value ?? const {};
     final hOniz = ref.watch(hatirlatmaOnizlemeProvider).value;
     final gOniz = ref.watch(gecikmeOnizlemeProvider).value;
+    final maas = ref.watch(maasKuraliProvider).value;
 
     final kartlar = <Widget>[];
     for (final p in planlar.value ?? const <PlanKurali>[]) {
@@ -202,6 +224,41 @@ class OtomasyonKurallariScreen extends ConsumerWidget {
         ),
       );
     }
+    // (P252 §2) Maas otomasyonu — yalniz yonetime (403 -> null -> cizilmez).
+    if (maas != null) {
+      kartlar.add(
+        _KuralKarti(
+          id: 'maas',
+          cumle: maasCumlesi(l10n, dil, maas),
+          son: sonCalismaCumlesi(l10n, dil, sonlar['maas']),
+          aktif: maas.aktif,
+          onAnahtar: (v) =>
+              _yap(context, ref, (a) => a.maasAyariYaz({'aktif': v})),
+          eylemler: [
+            TextButton(
+              key: const Key('maas-calistir'),
+              onPressed: !maas.aktif || maas.gruplar.isEmpty
+                  ? null
+                  : () => _maaslariCalistir(context, ref),
+              child: Text(l10n.otoKuralMaasCalistir),
+            ),
+          ],
+          alt: SwitchListTile(
+            key: const Key('maas-otomatik-onay'),
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            title: Text(l10n.otoKuralMaasOtomatik),
+            subtitle: Text(l10n.otoKuralMaasOtomatikIpucu),
+            value: maas.otomatikOnay,
+            onChanged: (v) =>
+                _yap(context, ref, (a) => a.maasAyariYaz({'otomatik_onay': v})),
+          ),
+        ),
+      );
+      if (maas.onayBekleyenler.isNotEmpty) {
+        kartlar.add(_MaasOnayKarti(maas: maas, onDegisti: () => _tazele(ref)));
+      }
+    }
 
     final yukleniyor = planlar.isLoading || giderler.isLoading;
     final hata = planlar.hasError || giderler.hasError;
@@ -256,6 +313,7 @@ class _KuralKarti extends StatelessWidget {
     required this.onAnahtar,
     this.ek,
     this.eylemler = const [],
+    this.alt,
   });
 
   final String id;
@@ -265,6 +323,9 @@ class _KuralKarti extends StatelessWidget {
   final bool aktif;
   final ValueChanged<bool> onAnahtar;
   final List<Widget> eylemler;
+
+  /// (P252) Kurala ozgu ek ayar (maas: otomatik onay).
+  final Widget? alt;
 
   @override
   Widget build(BuildContext context) {
@@ -311,6 +372,128 @@ class _KuralKarti extends StatelessWidget {
                 Text(aktif ? l10n.otoKuralAcik : l10n.otoKuralKapali),
                 ...eylemler,
               ],
+            ),
+            ?alt,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// (P252 §2) Onay bekleyen maaslar — satir basina tutar duzeltilerek onay
+/// ya da tek tikla toplu onay (web `MaasOnayBekleyenler` ikizi).
+class _MaasOnayKarti extends ConsumerStatefulWidget {
+  const _MaasOnayKarti({required this.maas, required this.onDegisti});
+
+  final MaasKurali maas;
+  final VoidCallback onDegisti;
+
+  @override
+  ConsumerState<_MaasOnayKarti> createState() => _MaasOnayKartiState();
+}
+
+class _MaasOnayKartiState extends ConsumerState<_MaasOnayKarti> {
+  final _tutarlar = <String, TextEditingController>{};
+  bool _mesgul = false;
+
+  TextEditingController _ktrl(String id, int kurus) =>
+      _tutarlar.putIfAbsent(id, () => TextEditingController(text: tlTutar(kurus)));
+
+  @override
+  void dispose() {
+    for (final c in _tutarlar.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _calis(Future<int> Function(OtomasyonApi api) is_) async {
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _mesgul = true);
+    try {
+      final adet = await is_(ref.read(otomasyonApiProvider));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.otoMaasOnaylandi('$adet'))));
+      widget.onDegisti();
+    } on ApiException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
+    } finally {
+      if (mounted) setState(() => _mesgul = false);
+    }
+  }
+
+  Future<void> _tekOnay(String id, int varsayilan) async {
+    final l10n = context.l10n;
+    final kurus = tlMetniniKurusaCevir(_ktrl(id, varsayilan).text);
+    if (kurus == null || kurus <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.calismaUcretGecersiz)),
+      );
+      return;
+    }
+    await _calis((a) async {
+      await a.hareketOnayla(id, tutarKurus: kurus == varsayilan ? null : kurus);
+      return 1;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
+    final tema = Theme.of(context).textTheme;
+    final satirlar = widget.maas.onayBekleyenler;
+    return Card(
+      key: const Key('maas-onay-bekleyenler'),
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l10n.otoMaasOnayBaslik, style: tema.titleSmall),
+            Text(l10n.otoMaasOnayAlt, style: tema.bodySmall),
+            for (final b in satirlar)
+              Padding(
+                key: Key('maas-bekleyen-${b.id}'),
+                padding: const EdgeInsets.only(top: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${b.aciklama} · ${tarihBicimi(b.tarih, dil)}',
+                        style: tema.bodySmall,
+                      ),
+                    ),
+                    SizedBox(
+                      width: 110,
+                      child: TextField(
+                        key: Key('maas-tutar-${b.id}'),
+                        controller: _ktrl(b.id, b.tutarKurus),
+                        enabled: !_mesgul,
+                        inputFormatters: GirdiSiniri.sinir(GirdiSiniri.tutar),
+                        keyboardType:
+                            const TextInputType.numberWithOptions(decimal: true),
+                        decoration: const InputDecoration(isDense: true),
+                      ),
+                    ),
+                    TextButton(
+                      key: Key('maas-onayla-${b.id}'),
+                      onPressed: _mesgul ? null : () => _tekOnay(b.id, b.tutarKurus),
+                      child: Text(l10n.otoMaasOnayla),
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 8),
+            FilledButton(
+              key: const Key('maas-toplu-onay'),
+              onPressed: _mesgul
+                  ? null
+                  : () => _calis(
+                      (a) => a.maaslariOnayla([for (final b in satirlar) b.id])),
+              child: Text(l10n.otoMaasTumunuOnayla('${satirlar.length}')),
             ),
           ],
         ),

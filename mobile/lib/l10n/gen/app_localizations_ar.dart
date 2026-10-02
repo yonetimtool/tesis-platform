@@ -8944,4 +8944,57 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get calismaGunSecilmedi => 'غير محدد';
+
+  @override
+  String otoKuralMaasCumle(String gun, String adet, String tutar) {
+    return 'في اليوم $gun من كل شهر تُسجَّل رواتب $adet موظفين (المجموع $tutar) كمصروفات.';
+  }
+
+  @override
+  String get otoKuralMaasYok =>
+      'لا يوجد موظفون بأجر ويوم دفع. أضفهم من الأشخاص › الموظفون.';
+
+  @override
+  String get otoKuralMaasOtomatik => 'تسجيل الرواتب كمعتمدة';
+
+  @override
+  String get otoKuralMaasOtomatikIpucu =>
+      'إذا أوقف، تنتظر الرواتب الموافقة. الشهر الجزئي (شهر التعيين أو المغادرة) ينتظر دائمًا.';
+
+  @override
+  String get otoKuralMaasCalistir => 'تشغيل الآن';
+
+  @override
+  String otoKuralMaasCalisti(String adet, String tutar) {
+    return 'سُجِّل $adet من الرواتب (المجموع $tutar).';
+  }
+
+  @override
+  String get otoKuralMaasYazilacakYok =>
+      'لا شيء للتسجيل: سُجّلت بالفعل أو لم يحن يوم الدفع.';
+
+  @override
+  String otoKuralSonMaas(String zaman, String adet, String tutar) {
+    return 'آخر تشغيل $zaman: سُجِّل $adet من الرواتب (المجموع $tutar).';
+  }
+
+  @override
+  String get otoMaasOnayBaslik => 'رواتب بانتظار الموافقة';
+
+  @override
+  String get otoMaasOnayAlt =>
+      'مبالغ الشهر الجزئي محسوبة بالتناسب؛ يمكنك تصحيحها قبل الموافقة.';
+
+  @override
+  String otoMaasTumunuOnayla(String adet) {
+    return 'الموافقة على الكل ($adet)';
+  }
+
+  @override
+  String get otoMaasOnayla => 'موافقة';
+
+  @override
+  String otoMaasOnaylandi(String adet) {
+    return 'تمت الموافقة على $adet من الرواتب.';
+  }
 }

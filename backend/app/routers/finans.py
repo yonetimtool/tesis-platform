@@ -885,14 +885,19 @@ async def hareket_onayla(
     """Onay bekleyen hareketi ONAYLA — o an gerceklesmis sayilir."""
     obj = await get_or_404(db, FinansalHareket, hareket_id)
     await _onay_oncesi(db, obj)
+    meta: dict = {"tip": obj.tip, "tutar_kurus": obj.tutar_kurus}
+    if body.tutar_kurus is not None and body.tutar_kurus != obj.tutar_kurus:
+        # (P252 §2) Hesaplanmis tutari (kismi ay) duzelterek onay.
+        meta["eski_tutar_kurus"] = obj.tutar_kurus
+        meta["tutar_kurus"] = body.tutar_kurus
+        obj.tutar_kurus = body.tutar_kurus
     obj.durum = "odendi"
     if body.aciklama:
         obj.aciklama = body.aciklama
     await db.flush()
     await audit_user(
         db, user, Action.FINANS_HAREKET_ONAY, resource_type="finansal_hareket",
-        resource_id=obj.id,
-        meta={"tip": obj.tip, "tutar_kurus": obj.tutar_kurus},
+        resource_id=obj.id, meta=meta,
     )
     return (await _adlarla(db, [obj]))[0]
 

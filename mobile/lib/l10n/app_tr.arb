@@ -4371,5 +4371,68 @@
   "calismaOnayBekliyor": "Onay bekliyor",
   "calismaOdemeYok": "Henüz ödeme yok.",
   "calismaKartYok": "Çalışma bilgisi girilmemiş.",
-  "calismaGunSecilmedi": "Seçilmedi"
+  "calismaGunSecilmedi": "Seçilmedi",
+  "otoKuralMaasCumle": "Her ayın {gun}. günü {adet} personelin maaşı (toplam {tutar}) gidere yazılır.",
+  "@otoKuralMaasCumle": {
+    "placeholders": {
+      "gun": {
+        "type": "String"
+      },
+      "adet": {
+        "type": "String"
+      },
+      "tutar": {
+        "type": "String"
+      }
+    }
+  },
+  "otoKuralMaasYok": "Maaşı ve ödeme günü girilmiş personel yok. Kişiler › Personel'den ekleyin.",
+  "otoKuralMaasOtomatik": "Maaş giderleri onaylı yazılsın",
+  "otoKuralMaasOtomatikIpucu": "Kapalıysa maaş giderleri onay bekler. İşe giriş veya çıkış ayının (kısmi ay) maaşı her zaman onay bekler.",
+  "otoKuralMaasCalistir": "Şimdi çalıştır",
+  "otoKuralMaasCalisti": "{adet} maaş gideri yazıldı (toplam {tutar}).",
+  "@otoKuralMaasCalisti": {
+    "placeholders": {
+      "adet": {
+        "type": "String"
+      },
+      "tutar": {
+        "type": "String"
+      }
+    }
+  },
+  "otoKuralMaasYazilacakYok": "Yazılacak maaş yok: bu dönemin maaşları zaten yazılmış ya da ödeme günü gelmedi.",
+  "otoKuralSonMaas": "Son çalışma {zaman}: {adet} personelin maaşı gidere yazıldı (toplam {tutar}).",
+  "@otoKuralSonMaas": {
+    "placeholders": {
+      "zaman": {
+        "type": "String"
+      },
+      "adet": {
+        "type": "String"
+      },
+      "tutar": {
+        "type": "String"
+      }
+    }
+  },
+  "otoMaasOnayBaslik": "Onay bekleyen maaşlar",
+  "otoMaasOnayAlt": "Kısmi ayın tutarı oranla hesaplandı; onaylamadan önce düzeltebilirsiniz.",
+  "otoMaasTumunuOnayla": "Tümünü onayla ({adet})",
+  "@otoMaasTumunuOnayla": {
+    "placeholders": {
+      "adet": {
+        "type": "String"
+      }
+    }
+  },
+  "otoMaasOnayla": "Onayla",
+  "otoMaasOnaylandi": "{adet} maaş onaylandı.",
+  "@otoMaasOnaylandi": {
+    "placeholders": {
+      "adet": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -147,6 +147,46 @@ class GecikmeOnizleme {
   final int toplamKurus;
 }
 
+/// (P252 §2) Maas otomasyonu — `GET /otomasyon/maas-ayari`.
+class MaasKurali {
+  const MaasKurali({
+    required this.aktif,
+    required this.otomatikOnay,
+    required this.gruplar,
+    required this.onayBekleyenler,
+  });
+  final bool aktif;
+  final bool otomatikOnay;
+
+  /// Odeme gunu -> (personel sayisi, aylik toplam kurus).
+  final List<({int gun, int adet, int toplamKurus})> gruplar;
+  final List<({String id, DateTime tarih, String aciklama, int tutarKurus})>
+      onayBekleyenler;
+
+  factory MaasKurali.fromJson(Map<String, dynamic> j) => MaasKurali(
+    aktif: (j['aktif'] as bool?) ?? false,
+    otomatikOnay: (j['otomatik_onay'] as bool?) ?? true,
+    gruplar: [
+      for (final g in ((j['gruplar'] as List?) ?? const []).whereType<Map>())
+        (
+          gun: (g['odeme_gunu'] as num).toInt(),
+          adet: (g['personel_sayisi'] as num).toInt(),
+          toplamKurus: (g['aylik_toplam_kurus'] as num).toInt(),
+        ),
+    ],
+    onayBekleyenler: [
+      for (final b
+          in ((j['onay_bekleyenler'] as List?) ?? const []).whereType<Map>())
+        (
+          id: b['id'] as String,
+          tarih: DateTime.parse(b['tarih'] as String),
+          aciklama: (b['aciklama'] as String?) ?? '',
+          tutarKurus: (b['tutar_kurus'] as num).toInt(),
+        ),
+    ],
+  );
+}
+
 class OtomasyonApi {
   OtomasyonApi(this._dio);
   final Dio _dio;
@@ -242,6 +282,39 @@ class OtomasyonApi {
       _sar(() => _dio.delete<void>('/aidat-planlari/$id'));
   Future<void> giderSil(String id) =>
       _sar(() => _dio.delete<void>('/duzenli-giderler/$id'));
+
+  // ------------------------------ (P252 §2) maas ----------------------------- #
+  Future<MaasKurali> maasAyari() => _sar(() async {
+    final r = await _dio.get<Map<String, dynamic>>('/otomasyon/maas-ayari');
+    return MaasKurali.fromJson(r.data ?? const {});
+  });
+  Future<void> maasAyariYaz(Map<String, dynamic> govde) => _sar(
+    () => _dio.patch<void>('/otomasyon/maas-ayari', data: govde),
+  );
+
+  /// Gunluk gorevle AYNI islev. `(yazilan, toplamKurus)`.
+  Future<(int, int)> maaslariCalistir() => _sar(() async {
+    final r = await _dio.post<Map<String, dynamic>>('/otomasyon/maaslar/calistir');
+    return (
+      (r.data?['yazilan'] as num?)?.toInt() ?? 0,
+      (r.data?['toplam_kurus'] as num?)?.toInt() ?? 0,
+    );
+  });
+  Future<int> maaslariOnayla(List<String> ids) => _sar(() async {
+    final r = await _dio.post<Map<String, dynamic>>(
+      '/otomasyon/maaslar/onayla',
+      data: {'ids': ids},
+    );
+    return (r.data?['onaylanan'] as num?)?.toInt() ?? 0;
+  });
+
+  /// Tek satir onayi; [tutarKurus] verilirse tutar DUZELTILEREK onaylanir.
+  Future<void> hareketOnayla(String id, {int? tutarKurus}) => _sar(
+    () => _dio.post<void>(
+      '/finans/hareketler/$id/onayla',
+      data: {'tutar_kurus': ?tutarKurus},
+    ),
+  );
 }
 
 final otomasyonApiProvider = Provider<OtomasyonApi>(
@@ -263,6 +336,17 @@ final sonCalismalarProvider =
 final hatirlatmaOnizlemeProvider = FutureProvider.autoDispose<KuralOnizleme>(
   (ref) => ref.watch(otomasyonApiProvider).hatirlatmaOnizleme(),
 );
+/// (P252 §2) Ucret bilgisi: yalniz yonetime. Yetkisiz (403) ise `null` —
+/// satir hic cizilmez (hata gostermek, gorulmemesi gereken bir kuralin
+/// varligini ilan etmekti).
+final maasKuraliProvider = FutureProvider.autoDispose<MaasKurali?>((ref) async {
+  try {
+    return await ref.watch(otomasyonApiProvider).maasAyari();
+  } on ApiException catch (e) {
+    if (e.statusCode == 403) return null;
+    rethrow;
+  }
+});
 final gecikmeOnizlemeProvider = FutureProvider.autoDispose<GecikmeOnizleme>(
   (ref) => ref.watch(otomasyonApiProvider).gecikmeOnizleme(),
 );

@@ -50,6 +50,11 @@ const HARITA: Record<string, unknown> = {
   },
   "/api/tanimlar/gelir-gider-tanimlari": { items: [{ id: "t1", ad: "Aidat" }] },
   "/api/panel/kasalar": { items: [{ id: "k1", ad: "Banka", kod: "B" }] },
+  // (P252 §2) Maas kurali — personelsiz tesis.
+  "/api/panel/maas-ayari": {
+    aktif: true, otomatik_onay: true, gruplar: [], personel_sayisi: 0,
+    aylik_toplam_kurus: 0, onay_bekleyenler: [],
+  },
 };
 
 function taklit() {

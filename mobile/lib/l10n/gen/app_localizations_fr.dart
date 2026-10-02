@@ -8917,4 +8917,57 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get calismaGunSecilmedi => 'Non défini';
+
+  @override
+  String otoKuralMaasCumle(String gun, String adet, String tutar) {
+    return 'Le $gun de chaque mois, les salaires de $adet employés (total $tutar) sont passés en dépenses.';
+  }
+
+  @override
+  String get otoKuralMaasYok =>
+      'Aucun employé avec salaire et jour de paie. Ajoutez-les dans Personnes › Personnel.';
+
+  @override
+  String get otoKuralMaasOtomatik => 'Passer les salaires comme approuvés';
+
+  @override
+  String get otoKuralMaasOtomatikIpucu =>
+      'Si désactivé, les salaires attendent une approbation. Un mois partiel (entrée ou sortie) attend toujours.';
+
+  @override
+  String get otoKuralMaasCalistir => 'Exécuter';
+
+  @override
+  String otoKuralMaasCalisti(String adet, String tutar) {
+    return '$adet salaires passés (total $tutar).';
+  }
+
+  @override
+  String get otoKuralMaasYazilacakYok =>
+      'Rien à passer : déjà passés ou jour de paie non atteint.';
+
+  @override
+  String otoKuralSonMaas(String zaman, String adet, String tutar) {
+    return 'Dernière exécution $zaman : $adet salaires passés (total $tutar).';
+  }
+
+  @override
+  String get otoMaasOnayBaslik => 'Salaires en attente';
+
+  @override
+  String get otoMaasOnayAlt =>
+      'Les montants partiels sont proratisés ; corrigez-les avant d\'approuver.';
+
+  @override
+  String otoMaasTumunuOnayla(String adet) {
+    return 'Tout approuver ($adet)';
+  }
+
+  @override
+  String get otoMaasOnayla => 'Approuver';
+
+  @override
+  String otoMaasOnaylandi(String adet) {
+    return '$adet salaires approuvés.';
+  }
 }

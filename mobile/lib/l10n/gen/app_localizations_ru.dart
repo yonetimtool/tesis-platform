@@ -8987,4 +8987,57 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get calismaGunSecilmedi => 'Не задано';
+
+  @override
+  String otoKuralMaasCumle(String gun, String adet, String tutar) {
+    return '$gun-го числа каждого месяца зарплаты $adet сотрудников (всего $tutar) записываются в расходы.';
+  }
+
+  @override
+  String get otoKuralMaasYok =>
+      'Нет сотрудников с зарплатой и днём выплаты. Добавьте их в Люди › Персонал.';
+
+  @override
+  String get otoKuralMaasOtomatik => 'Записывать зарплаты как утверждённые';
+
+  @override
+  String get otoKuralMaasOtomatikIpucu =>
+      'Если выключено, зарплаты ждут утверждения. Неполный месяц (приём или увольнение) всегда ждёт.';
+
+  @override
+  String get otoKuralMaasCalistir => 'Запустить';
+
+  @override
+  String otoKuralMaasCalisti(String adet, String tutar) {
+    return 'Записано зарплат: $adet (всего $tutar).';
+  }
+
+  @override
+  String get otoKuralMaasYazilacakYok =>
+      'Нечего записывать: уже записано или день выплаты не наступил.';
+
+  @override
+  String otoKuralSonMaas(String zaman, String adet, String tutar) {
+    return 'Последний запуск $zaman: записано зарплат $adet (всего $tutar).';
+  }
+
+  @override
+  String get otoMaasOnayBaslik => 'Зарплаты на утверждении';
+
+  @override
+  String get otoMaasOnayAlt =>
+      'Суммы за неполный месяц рассчитаны пропорционально; их можно исправить.';
+
+  @override
+  String otoMaasTumunuOnayla(String adet) {
+    return 'Утвердить все ($adet)';
+  }
+
+  @override
+  String get otoMaasOnayla => 'Утвердить';
+
+  @override
+  String otoMaasOnaylandi(String adet) {
+    return 'Утверждено зарплат: $adet.';
+  }
 }

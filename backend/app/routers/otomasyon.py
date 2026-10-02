@@ -34,6 +34,9 @@ from ..models import (
 from ..schemas import (
     MaasAyariGuncelle,
     MaasAyariOut,
+    MaasOnayBekleyen,
+    MaasTopluOnayIstek,
+    MaasTopluOnaySonucu,
     MaasCalistirmaSonucu,
     MaasKuralGrubu,
     AidatPlaniCreate,
@@ -454,7 +457,26 @@ async def _maas_ayari(db: AsyncSession, tenant_id: uuid.UUID) -> MaasAyariOut:
         MaasKuralGrubu(odeme_gunu=g, personel_sayisi=n, aylik_toplam_kurus=int(t or 0))
         for g, n, t in satirlar
     ]
+    from .. import defter
+    from ..models import FinansalHareket
+
+    bekleyen = (
+        await db.execute(
+            select(FinansalHareket)
+            .where(
+                FinansalHareket.idempotency_key.like("maas:%"),
+                FinansalHareket.durum == "onay_bekliyor",
+                FinansalHareket.id.notin_(defter.iptal_edilmis()),
+            )
+            .order_by(FinansalHareket.tarih, FinansalHareket.aciklama)
+            .limit(500)
+        )
+    ).scalars().all()
     return MaasAyariOut(
+        onay_bekleyenler=[
+            MaasOnayBekleyen(id=h.id, tarih=h.tarih, aciklama=h.aciklama, tutar_kurus=h.tutar_kurus)
+            for h in bekleyen
+        ],
         aktif=tesis.maas_otomasyonu_aktif,
         otomatik_onay=tesis.maas_otomatik_onay,
         gruplar=gruplar,
@@ -518,6 +540,44 @@ async def maaslari_simdi_calistir(
         onay_bekleyen=sonuc.get("onay_bekleyen", 0),
         donemler=sonuc.get("donemler") or {},
     )
+
+
+@router.post("/otomasyon/maaslar/onayla", response_model=MaasTopluOnaySonucu)
+async def maaslari_toplu_onayla(
+    body: MaasTopluOnayIstek,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YONETIM),
+) -> MaasTopluOnaySonucu:
+    """(P252 §2) Onay bekleyen maas giderlerini TEK TIKLA onayla.
+
+    Yalniz otomasyonun yazdigi maas satirlari (`maas:` anahtari) ve yalniz
+    hala onay bekleyenler; iptal edilmis ya da zaten onaylanmis satir
+    sessizce atlanir (iki sekmeden basilan ikinci onay hata vermez).
+    Tutar duzeltmesi tek satir onayinda (`/finans/hareketler/{id}/onayla`).
+    """
+    from .. import defter
+    from ..models import FinansalHareket
+
+    satirlar = (
+        await db.execute(
+            select(FinansalHareket).where(
+                FinansalHareket.id.in_(body.ids),
+                FinansalHareket.idempotency_key.like("maas:%"),
+                FinansalHareket.durum == "onay_bekliyor",
+                FinansalHareket.id.notin_(defter.iptal_edilmis()),
+            )
+        )
+    ).scalars().all()
+    toplam = 0
+    for h in satirlar:
+        h.durum = "odendi"
+        toplam += h.tutar_kurus
+        await audit_user(
+            db, user, Action.FINANS_HAREKET_ONAY, resource_type="finansal_hareket",
+            resource_id=h.id, meta={"tip": h.tip, "tutar_kurus": h.tutar_kurus, "toplu": True},
+        )
+    await db.flush()
+    return MaasTopluOnaySonucu(onaylanan=len(satirlar), toplam_kurus=toplam)
 
 
 @router.get("/otomasyon/son-calismalar", response_model=KuralSonCalismaListesi)

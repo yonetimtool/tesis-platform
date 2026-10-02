@@ -125,6 +125,7 @@ const TUR_ETIKET: Record<string, SozlukAnahtari> = {
   duzenli_gider: "otoTurDuzenliGider",
   gecikme_faizi: "otoTurGecikmeFaizi",
   aylik_ozet: "otoTurAylikOzet",
+  maas: "otoTurMaas",
 };
 
 /** `YYYY-MM` — icinde bulunulan ay (erteleme varsayilani). */

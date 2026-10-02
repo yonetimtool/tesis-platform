@@ -12358,6 +12358,28 @@ paths:
               schema: { $ref: "#/components/schemas/MaasCalistirmaSonucu" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+  /otomasyon/maaslar/onayla:
+    post:
+      tags: [otomasyon]
+      summary: (P252 §2) Onay bekleyen maas giderlerini toplu onayla
+      description: |
+        Yalniz otomasyonun yazdigi maas satirlari ve yalniz hala onay
+        bekleyenler; digerleri sessizce atlanir (ikinci onay `onaylanan 0`).
+        Tutar duzeltmesi tek satir onayinda (`/finans/hareketler/{id}/onayla`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MaasTopluOnayIstek" }
+      responses:
+        "200":
+          description: Sonuc
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MaasTopluOnaySonucu" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /otomasyon/son-calismalar:
     get:
       tags: [otomasyon]
@@ -12388,7 +12410,7 @@ paths:
           schema:
             type: string
             enum: [aidat_tahakkuk, aidat_onizleme, borc_hatirlatma,
-                   duzenli_gider, gecikme_faizi, aylik_ozet]
+                   duzenli_gider, gecikme_faizi, aylik_ozet, maas]
       responses:
         "200":
           description: Gunluk
@@ -24033,7 +24055,7 @@ components:
         tur:
           type: string
           enum: [aidat_tahakkuk, aidat_onizleme, borc_hatirlatma,
-                 duzenli_gider, gecikme_faizi, aylik_ozet]
+                 duzenli_gider, gecikme_faizi, aylik_ozet, maas]
         calisma_zamani: { type: string, format: date-time }
         donem: { type: string, nullable: true }
         adet: { type: integer }
@@ -24113,6 +24135,12 @@ components:
       type: object
       properties:
         aciklama: { type: string, nullable: true, maxLength: 500 }
+        tutar_kurus:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 1
+          description: (P252 §2) Yalniz onayda — onay bekleyen satirin tutari duzeltilerek onaylanir.
     TahsilatCreate:
       type: object
       required: [kasa_id, tutar_kurus]
@@ -24780,6 +24808,26 @@ components:
         gruplar: { type: array, items: { $ref: "#/components/schemas/MaasKuralGrubu" } }
         personel_sayisi: { type: integer }
         aylik_toplam_kurus: { type: integer, format: int64 }
+        onay_bekleyenler: { type: array, items: { $ref: "#/components/schemas/MaasOnayBekleyen" } }
+    MaasOnayBekleyen:
+      type: object
+      required: [id, tarih, tutar_kurus]
+      properties:
+        id: { type: string, format: uuid }
+        tarih: { type: string, format: date }
+        aciklama: { type: string, nullable: true }
+        tutar_kurus: { type: integer, format: int64 }
+    MaasTopluOnayIstek:
+      type: object
+      required: [ids]
+      properties:
+        ids: { type: array, minItems: 1, maxItems: 500, items: { type: string, format: uuid } }
+    MaasTopluOnaySonucu:
+      type: object
+      required: [onaylanan, toplam_kurus]
+      properties:
+        onaylanan: { type: integer }
+        toplam_kurus: { type: integer, format: int64 }
     MaasAyariGuncelle:
       type: object
       properties:

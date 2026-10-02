@@ -124,6 +124,31 @@ export function hatirlatmaCumlesi(a: HatirlatmaKurali, t: Ceviri, dil: string): 
     : ana;
 }
 
+/** (P252 §2) Maas otomasyonunun durumu — `GET /otomasyon/maas-ayari`. */
+export interface MaasKurali {
+  aktif: boolean;
+  otomatik_onay: boolean;
+  gruplar: { odeme_gunu: number; personel_sayisi: number; aylik_toplam_kurus: number }[];
+  personel_sayisi: number;
+  aylik_toplam_kurus: number;
+  onay_bekleyenler: { id: string; tarih: string; aciklama: string | null; tutar_kurus: number }[];
+}
+
+/** "Her ayin 5. gunu 3 personelin maasi (toplam 75.000 ₺) gidere yazilir."
+ *  Odeme gunu basina bir cumle; personel yoksa ne yapilacagini soyler. */
+export function maasCumlesi(m: MaasKurali, t: Ceviri): string {
+  if (m.gruplar.length === 0) return t("otoKuralMaasYok");
+  return m.gruplar
+    .map((g) =>
+      t("otoKuralMaasCumle", {
+        gun: g.odeme_gunu,
+        adet: g.personel_sayisi,
+        tutar: kurusToTL(g.aylik_toplam_kurus),
+      }),
+    )
+    .join(" ");
+}
+
 export function gecikmeCumlesi(g: GecikmeKurali, t: Ceviri): string {
   if (!g.gecikme_uygula || g.gecikme_aylik_yuzde <= 0) return t("otoKuralGecikmeKapali");
   return t("otoKuralGecikmeCumle", { oran: g.gecikme_aylik_yuzde });
@@ -148,6 +173,9 @@ export function sonCalismaCumlesi(
       return t("otoKuralSonHatirlatma", { zaman: z, adet: s.adet });
     case "gecikme_faizi":
       return t("otoKuralSonGecikme", { zaman: z, adet: s.adet, tutar });
+    // (P252 §2) Maas otomasyonu.
+    case "maas":
+      return t("otoKuralSonMaas", { zaman: z, adet: s.adet, tutar });
     default:
       return t("otoKuralSonYok");
   }

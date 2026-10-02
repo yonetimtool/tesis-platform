@@ -7239,6 +7239,9 @@ GiderPeriyot = Literal["aylik", "uc_aylik", "alti_aylik", "yillik"]
 OtomasyonTuru = Literal[
     "aidat_tahakkuk", "aidat_onizleme", "borc_hatirlatma",
     "duzenli_gider", "gecikme_faizi", "aylik_ozet",
+    # (P252) Aylik personel maaslari — eksik olsaydi maas gunlugu yazildiktan
+    # sonra `/otomasyon-gunlugu` yaniti dogrulamada 500 verirdi.
+    "maas",
 ]
 
 
@@ -7356,6 +7359,15 @@ class MaasKuralGrubu(BaseModel):
     aylik_toplam_kurus: int
 
 
+class MaasOnayBekleyen(BaseModel):
+    """(P252 §2) Onay bekleyen maas gideri (kismi ay ya da onay ayari kapali)."""
+
+    id: uuid.UUID
+    tarih: date
+    aciklama: str | None = None
+    tutar_kurus: int
+
+
 class MaasAyariOut(BaseModel):
     """(P252 §2) Maas otomasyonu — tesis ayari + kural ozeti."""
 
@@ -7364,6 +7376,16 @@ class MaasAyariOut(BaseModel):
     gruplar: list[MaasKuralGrubu]
     personel_sayisi: int
     aylik_toplam_kurus: int
+    onay_bekleyenler: list[MaasOnayBekleyen] = []
+
+
+class MaasTopluOnayIstek(BaseModel):
+    ids: list[uuid.UUID] = Field(..., min_length=1, max_length=500)
+
+
+class MaasTopluOnaySonucu(BaseModel):
+    onaylanan: int
+    toplam_kurus: int
 
 
 class MaasAyariGuncelle(BaseModel):
@@ -7683,6 +7705,10 @@ class HareketOnayIstek(BaseModel):
     """
 
     aciklama: str | None = Field(None, max_length=500)
+    #: (P252 §2) YALNIZ ONAYDA: onay bekleyen satirin tutari duzeltilerek
+    #: onaylanir (kismi ay maasi gibi hesaplanmis tutarlar). Satir henuz
+    #: kasaya girmedigi icin duzeltme ters kayit gerektirmez.
+    tutar_kurus: int | None = Field(None, gt=0, le=KURUS_UST_SINIR)
 
 
 class KasaBakiye(BaseModel):

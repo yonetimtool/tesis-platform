@@ -416,6 +416,7 @@ GET	/otomasyon-gunlugu	zorunlu	tesis	-	-	-	-	-		dar
 GET	/otomasyon/maas-ayari	zorunlu	tesis	-	-	-	-	-		-
 PATCH	/otomasyon/maas-ayari	zorunlu	tesis	-	-	ozel	-	-		-
 POST	/otomasyon/maaslar/calistir	zorunlu	tesis	-	-	genel	-	-		-
+POST	/otomasyon/maaslar/onayla	zorunlu	tesis	-	-	ozel	-	-		-
 GET	/otomasyon/son-calismalar	zorunlu	tesis	-	-	-	-	-		-
 GET	/ozellikler	kamu	platform	-	-	-	-	-	herkese acik yapilandirma; kisisel veri yok	-
 GET	/panik	zorunlu	tesis	-	-	-	olusturan_telefon	-		dar

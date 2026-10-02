@@ -8918,4 +8918,57 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get calismaGunSecilmedi => 'Nicht gesetzt';
+
+  @override
+  String otoKuralMaasCumle(String gun, String adet, String tutar) {
+    return 'Am $gun. jedes Monats werden die Gehälter von $adet Mitarbeitenden (gesamt $tutar) als Ausgabe gebucht.';
+  }
+
+  @override
+  String get otoKuralMaasYok =>
+      'Keine Mitarbeitenden mit Gehalt und Zahltag. Unter Personen › Personal hinzufügen.';
+
+  @override
+  String get otoKuralMaasOtomatik => 'Gehaltsausgaben als freigegeben buchen';
+
+  @override
+  String get otoKuralMaasOtomatikIpucu =>
+      'Wenn aus, warten Gehälter auf Freigabe. Ein Teilmonat (Eintritts- oder Austrittsmonat) wartet immer auf Freigabe.';
+
+  @override
+  String get otoKuralMaasCalistir => 'Jetzt ausführen';
+
+  @override
+  String otoKuralMaasCalisti(String adet, String tutar) {
+    return '$adet Gehaltsausgaben gebucht (gesamt $tutar).';
+  }
+
+  @override
+  String get otoKuralMaasYazilacakYok =>
+      'Nichts zu buchen: bereits gebucht oder Zahltag noch nicht erreicht.';
+
+  @override
+  String otoKuralSonMaas(String zaman, String adet, String tutar) {
+    return 'Letzte Ausführung $zaman: $adet Gehälter gebucht (gesamt $tutar).';
+  }
+
+  @override
+  String get otoMaasOnayBaslik => 'Gehälter zur Freigabe';
+
+  @override
+  String get otoMaasOnayAlt =>
+      'Teilmonatsbeträge sind anteilig berechnet; vor der Freigabe korrigierbar.';
+
+  @override
+  String otoMaasTumunuOnayla(String adet) {
+    return 'Alle freigeben ($adet)';
+  }
+
+  @override
+  String get otoMaasOnayla => 'Freigeben';
+
+  @override
+  String otoMaasOnaylandi(String adet) {
+    return '$adet Gehälter freigegeben.';
+  }
 }

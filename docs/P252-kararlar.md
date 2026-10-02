@@ -146,6 +146,31 @@
     (sistem kodlu tanım) olur ve kişiye bağlanır.
   * Personel detayında maaş ile mesai aynı ödeme geçmişinde görünür.
 
+#### §2 uygulama notları
+
+* **Kural satırı** (web Finans › Otomasyon, mobil Otomasyon kuralları):
+  * ödeme günü başına cümle; aç/kapat;
+  * "Maaş giderleri onaylı yazılsın" ayarı;
+  * "Şimdi çalıştır": günlük görevle aynı işlev. İkinci basışta "yazılacak
+    maaş yok" der, hata vermez.
+  * son çalışma cümlesi.
+* **Onay bekleyen maaşlar:**
+  * Satır başına tutar düzeltilerek onay. `POST /finans/hareketler/{id}/onayla`
+    yeni `tutar_kurus` alır; denetim kaydında eski tutar kalır. Onaylanmış
+    satır değiştirilemez (409).
+  * Toplu onay: `POST /otomasyon/maaslar/onayla`. Yalnız `maas:` anahtarlı
+    ve hâlâ bekleyen satırlar onaylanır; ikinci onay 0 döner.
+* **Yetki:** maaş ayarı ucu yönetim dışına 403 verir. Mobilde 403 alınırsa
+  satır hiç çizilmez; hata gösterilmez, çünkü hata görülmemesi gereken bir
+  kuralın varlığını ilan eder.
+* **Fazla mesai:** "gidere yaz" artık sistem kodlu "Fazla mesai" kalemine
+  yazar ve gideri kişinin maaş kartına bağlar.
+* **Yakalanan hata:** yanıt şemasındaki otomasyon türü listesinde `maas`
+  yoktu. Maaş günlüğü yazıldıktan sonra `/otomasyon-gunlugu` 500 verirdi.
+  Test ile kilitlendi.
+* **Bildirim:** `maas_yazildi` web'de `/finans/giderler`e, mobilde Gider
+  ekranına gider.
+
 ### §3 — Detay, kasa, finans özeti, şeffaflık
 
 * **Personel detayı** (web `/kisiler/personel/<id>`, mobil Kişiler ›

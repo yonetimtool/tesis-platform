@@ -2983,5 +2983,18 @@
   "calismaOnayBekliyor": "بانتظار الموافقة",
   "calismaOdemeYok": "لا مدفوعات بعد.",
   "calismaKartYok": "لم تُسجَّل بيانات العمل.",
-  "calismaGunSecilmedi": "غير محدد"
+  "calismaGunSecilmedi": "غير محدد",
+  "otoKuralMaasCumle": "في اليوم {gun} من كل شهر تُسجَّل رواتب {adet} موظفين (المجموع {tutar}) كمصروفات.",
+  "otoKuralMaasYok": "لا يوجد موظفون بأجر ويوم دفع. أضفهم من الأشخاص › الموظفون.",
+  "otoKuralMaasOtomatik": "تسجيل الرواتب كمعتمدة",
+  "otoKuralMaasOtomatikIpucu": "إذا أوقف، تنتظر الرواتب الموافقة. الشهر الجزئي (شهر التعيين أو المغادرة) ينتظر دائمًا.",
+  "otoKuralMaasCalistir": "تشغيل الآن",
+  "otoKuralMaasCalisti": "سُجِّل {adet} من الرواتب (المجموع {tutar}).",
+  "otoKuralMaasYazilacakYok": "لا شيء للتسجيل: سُجّلت بالفعل أو لم يحن يوم الدفع.",
+  "otoKuralSonMaas": "آخر تشغيل {zaman}: سُجِّل {adet} من الرواتب (المجموع {tutar}).",
+  "otoMaasOnayBaslik": "رواتب بانتظار الموافقة",
+  "otoMaasOnayAlt": "مبالغ الشهر الجزئي محسوبة بالتناسب؛ يمكنك تصحيحها قبل الموافقة.",
+  "otoMaasTumunuOnayla": "الموافقة على الكل ({adet})",
+  "otoMaasOnayla": "موافقة",
+  "otoMaasOnaylandi": "تمت الموافقة على {adet} من الرواتب."
 }
