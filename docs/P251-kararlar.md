@@ -338,3 +338,57 @@ Adaylar tek tek elendi:
   (pencere açılır, açık/dolmuş ayrı, Esc kapatır); mobil
   `building_schematic_test` (ayrı başlık, sıra). Mevcut harita testleri
   (134) yeşil; çift başlık testi pencere başlığına göre güncellendi.
+
+# §4 — TABLOLAR: OKUNABİLİRLİK
+
+## Ölçüm
+
+* Başlık stili üç yerde elle yazılmıştı: ilkel `Th` (`TabloBasligi`
+  12 px, ikincil renk, normal kalınlık, harf aralıklı), `VeriTablosu`
+  başlık hücresi (aynısı) ve finans satır tablosu (12 px, üçüncül renk).
+  Gerçek tarayıcıda: 12 px, `font-weight: 500`, gri.
+* İçerik `max-w-7xl` (1280 px) ile sınırlı: 1920 px ekranda kenar
+  çubuğundan sonra iki yanda ~190 px boşluk; çok sütunlu tablolar
+  (içe aktarım, kullanıcılar, finans) yatayda kaydırılıyordu.
+* İçe aktarım sayfası 1440 px'te sayfayı yatayda 290 px taşırıyordu.
+  **Kök neden:** §1'de `Th`'ye eklediğim görünmez ekran okuyucu etiketi
+  (`sr-only`, mutlak konumlu) konumlanmış bir atası olmadığı için tablonun
+  kaydırma kabından kaçıp gövdeye göre yerleşiyordu. Bu benim §1
+  gerilemem; `Th` artık `relative` (etiket hücreye bağlı). Düzeltmeden
+  sonra 4 sayfada `scrollWidth == innerWidth`.
+
+## Kararlar
+
+* **Tek kaynak:** `tasarim-sistemi.css` → `.yz-tablo-baslik`: **kalın
+  (600)**, `--yz-fs-sm` (Standart 13 px, **Büyük modda 16 px** — mod ile
+  birlikte büyür), **ana metin rengi** (P160'ta ölçülmüş AA token; yeni
+  renk icat edilmedi), harf aralığı yok, başlık satır kırmaz. `Th`,
+  `VeriTablosu` başlığı ve finans satır tablosu bu sınıfı taşır;
+  `TabloBasligi` artık yazı stili dayatmıyor (yalnız zemin).
+* **Genişlik:** tablo ağırlıklı sayfalar (`lib/genis-sayfa.ts` listesi:
+  daireler, kullanıcılar, sakinler, görevler, finans/*, aidat, raporlar,
+  tanımlar, içe aktarım, acil durum, gönderim günlüğü, denetim, tesisler,
+  demirbaş, araç geçişleri, davetler, talepler, bakım, vardiya) **1680
+  px**'e kadar genişler. Özet, formlar ve okuma sayfaları P244/P245
+  düzeninde (1280 px) kalır: uzun metin satırları geniş ekranda
+  okunmaz olurdu. Ana alan `min-w-0`: geniş tablo ana alanı itmez,
+  kendi kaydırma kabında kalır.
+* **Gözden geçirilen, değiştirilmeyen:** satır yüksekliği (P244
+  yoğunluk ayarı), sayısal sütunlar zaten sağa hizalı ve
+  `tabular-nums`, satır üzerine gelince vurgu zaten var (yalnız
+  `hover: hover` cihazlarda). Uzun metin: tablo kendi kabında yatay
+  kayar; kelime ortasından bölmek (`overflow-wrap: anywhere`) dar
+  sütunlardaki kısa kelimeleri de böleceği için eklenmedi.
+* **Mobil:** tablolar yalnız web'de (mobil kart listeleri kullanıyor);
+  bu bölümde mobil değişiklik yok.
+* Vardiya döngüsü penceresindeki önizleme ızgarası gerekçeli istisna
+  (pencere içinde sıkışık matris; büyük punto pencereyi taşırırdı).
+
+## Kilit ve ölçüm
+
+* `tests/p251-tablo-baslik.test.ts` (kaynak taraması): CSS sınıfı
+  değerleri; `Th` ve `VeriTablosu` sınıfı taşıyor; `TabloBasligi` yazı
+  stili dayatmıyor; `components/ui` dışında ham `<th>` yazan her dosya
+  sınıfı taşıyor ya da gerekçeli istisnada.
+* Gerçek Chromium (1920 px): geniş sayfalarda ana alan 1664 px, özette
+  1280 px; başlık 13 px / 600 / ana metin rengi.

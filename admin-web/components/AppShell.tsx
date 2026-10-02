@@ -3,6 +3,8 @@
 import { motion, MotionConfig } from "framer-motion";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
+import { genisSayfaMi } from "@/lib/genis-sayfa";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { DilSecici } from "@/components/DilSecici";
@@ -32,7 +34,12 @@ import {
   type MenuGrubu,
   type MenuOgesi,
 } from "@/lib/menu";
+
 import { kokRotaRol, type Yuzey } from "@/lib/yuzey";
+
+// (P251 §4) Icerik genisligi siniflari — UCLUDE DIZE YAZILMAZ (`sabit-metin`).
+const GENIS_SINIF = "max-w-[1680px]";
+const DAR_SINIF = "max-w-7xl";
 
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const SEFFAF = "transparent";
@@ -798,6 +805,7 @@ export function AppShell({
   const cekmeceRef = useRef<HTMLElement | null>(null);
   const pathname = usePathname();
   const t = useT();
+  const genis = genisSayfaMi(pathname);
 
   // (P160) KENAR CUBUGU DAR MI — kalici tercih.
   //
@@ -1102,7 +1110,10 @@ export function AppShell({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
-            className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8 lg:pt-4"
+            // (P251 §4) Tablo agirlikli sayfalar daha genis (`lib/genis-sayfa`).
+            // `min-w-0`: genis bir tablo ana alani ITMESIN; tablo kendi
+            // kaydirma kabinda kalsin (ice aktarimda sayfa yatayda tasiyordu).
+            className={`mx-auto min-w-0 ${genis ? GENIS_SINIF : DAR_SINIF} px-4 py-6 sm:px-6 lg:px-8 lg:py-8 lg:pt-4`}
           >
             {children}
           </motion.main>
@@ -1112,7 +1123,7 @@ export function AppShell({
               Hukuki baglantilar zaten `/gizlilik` ve `/kosullar`
               adreslerinde yasiyor; burada yalniz onlara yol veriliyor. */}
           <footer
-            className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 pb-8 pt-2 sm:px-6 lg:px-8"
+            className={`mx-auto flex ${genis ? GENIS_SINIF : DAR_SINIF} flex-wrap items-center justify-between gap-2 px-4 pb-8 pt-2 sm:px-6 lg:px-8`}
             style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}
           >
             <span>

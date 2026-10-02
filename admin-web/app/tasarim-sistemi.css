@@ -528,6 +528,27 @@
     background: var(--yz-surface-2);
   }
 }
+/* ====================================================================
+   (P251 §4) TABLO BASLIGI — TEK KAYNAK
+   ====================================================================
+   Sutun basliklari uc yerde ELLE yazilmisti (`Th` ilkeli, `VeriTablosu`
+   baslik hucresi, finans satir tablosu): 12 px, ikincil renk, normal
+   kalinlik — "kucuk ve soluk". Artik hepsi bu sinifi tasir:
+     * 13 px -> `--yz-fs-sm` (Buyuk modda 16 px; mod ile birlikte buyur),
+     * KALIN (600) ve ANA METIN rengi (yuksek kontrast; AA renk tokeni
+       zaten olculmus, yeni renk icat edilmedi),
+     * harf araligi kalkti (buyuk harfsiz metinde okunurlugu dusuruyordu),
+     * uzun baslik SARMAZ, hucre genisler; tablo kendi kaydirma kabinda.
+   Kilit: tests/p251-tablo-baslik.test.ts (kaynak taramasi). */
+.yz-tablo-baslik {
+  font-size: var(--yz-fs-sm);
+  font-weight: 600;
+  color: var(--yz-text);
+  letter-spacing: normal;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
 /* TIKLANABILIR SATIR: imlec + odak halkasi. Odak halkasi `td`ye degil
    SATIRA cizilir — hucreye cizilse tek bir hucrenin etrafinda belirir ve
    klavye kullanicisi hangi KAYITTA oldugunu goremezdi. */

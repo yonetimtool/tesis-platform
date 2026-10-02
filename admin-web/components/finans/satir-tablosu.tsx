@@ -105,8 +105,8 @@ export function SatirTablosu<T extends SatirTabani>({
                 <th
                   key={i}
                   scope="col"
-                  className="px-1 pb-1 text-start"
-                  style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}
+                  // (P251 §4) Ortak baslik stili.
+                  className="yz-tablo-baslik px-1 pb-1 text-start"
                 >
                   {b}
                 </th>

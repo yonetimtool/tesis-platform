@@ -632,6 +632,9 @@ const ARIA_ARTAN = "ascending";
 const ARIA_AZALAN = "descending";
 const ARIA_YOK = "none";
 
+/** (P251 §4) Tum tablo basliklarinin ortak sinifi (tasarim-sistemi.css). */
+const BASLIK_SINIFI = "yz-tablo-baslik";
+
 function BaslikHucresi<T>({
   hucreSinifi,
   kolon,
@@ -655,6 +658,8 @@ function BaslikHucresi<T>({
       // yazmak ekran okuyucuya "hepsi sirali" dedirtir.
       aria-sort={aktif ? (yon === YON_ARTAN ? ARIA_ARTAN : ARIA_AZALAN) : ARIA_YOK}
       className={[
+        // (P251 §4) Ortak baslik stili — `Th` ile ayni sinif.
+        BASLIK_SINIFI,
         hucreSinifi,
         BASLIK_HIZA,
         kolon.sayisal ? "text-end" : "",
@@ -663,9 +668,6 @@ function BaslikHucresi<T>({
         .filter(Boolean)
         .join(" ")}
       style={{
-        fontSize: "var(--yz-fs-xs)",
-        letterSpacing: "var(--yz-tracking-label)",
-        color: "var(--yz-text-2)",
         background: "var(--yz-surface-2)",
       }}
     >

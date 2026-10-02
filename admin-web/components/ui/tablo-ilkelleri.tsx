@@ -159,11 +159,10 @@ export function TabloBasligi({
   return (
     <thead
       className={`text-start ${className}`}
+      // (P251 §4) Yazi boyu/rengi/kalinligi BURADA DEGIL: `Th` ortak
+      // `yz-tablo-baslik` sinifini tasir (tek kaynak).
       style={{
         background: zeminsiz ? undefined : "var(--yz-surface-2)",
-        color: "var(--yz-text-2)",
-        fontSize: "var(--yz-fs-xs)",
-        letterSpacing: "var(--yz-tracking-label)",
       }}
     >
       <tr>{children}</tr>
@@ -215,7 +214,11 @@ export function Th({
   return (
     <th
       colSpan={colSpan}
-      className={`${_sinif(dolgusuz, sik)} font-medium ${h} ${className}`}
+      // `relative`: gorunmez etiket (`sr-only`, mutlak konumlu) baslik
+      // hucresine baglansin. Olculdu (P251 §4): konumlanmis ata yokken
+      // GOVDEYE gore yerlesiyor, tablonun kaydirma kabindan kacip sayfayi
+      // yatayda 290 px tasiriyordu (ice aktarim, 1440 px).
+      className={`yz-tablo-baslik relative ${_sinif(dolgusuz, sik)} ${h} ${className}`}
     >
       {children ?? (etiket ? <span className="sr-only">{etiket}</span> : null)}
     </th>
