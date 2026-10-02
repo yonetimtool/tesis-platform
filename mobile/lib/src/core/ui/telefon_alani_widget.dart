@@ -26,6 +26,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../girdi_siniri.dart';
 import '../i18n/l10n.dart';
 import 'merkez_diyalog.dart';
 import 'telefon_alani.dart';
@@ -294,6 +295,11 @@ class _TelefonAlaniState extends State<TelefonAlani> {
                 widget.onGonder == null ? null : (_) => widget.onGonder!(),
             // Biçimlendirici ÜLKEYİ ALIR: sınır ülkeye göre değişir.
             inputFormatters: [
+              // (P250 §5) Kimlik kipinde e-posta sınırı: 254 (RFC 5321,
+              // sunucu `LoginRequest.kimlik`). Telefon modunda numara zaten
+              // ülkenin uzunluğuyla sınırlı; bu sınır ona hiç ulaşmaz.
+              if (widget.kimlik)
+                LengthLimitingTextInputFormatter(GirdiSiniri.eposta),
               if (widget.kimlik)
                 _KimlikBicimlendirici(
                   ulke: _ulke,

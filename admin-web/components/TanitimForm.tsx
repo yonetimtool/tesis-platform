@@ -118,7 +118,7 @@ export function TanitimForm() {
         <input
           name="email"
           type="email"
-          maxLength={EPOSTA_SINIR + 2}
+          maxLength={EPOSTA_SINIR}
           className={alan}
         />
       </label>

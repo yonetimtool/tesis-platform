@@ -97,7 +97,7 @@ export function EpostaAlani({
           // SINIR SESSIZ DEGIL: `maxLength` fazlasini yutar ama kullanici
           // 254'e zaten pratikte hic ulasmaz; ulasirsa `cokUzun` hatasi
           // once gorunur (dogrulama kirpilmamis degeri okur).
-          maxLength={EPOSTA_SINIR + 2}
+          maxLength={EPOSTA_SINIR}
           disabled={disabled}
           readOnly={readOnly}
           autoFocus={autoFocus}

@@ -31,6 +31,7 @@ import { useId, useState } from "react";
 
 import { UlkeSecici } from "@/components/UlkeSecici";
 import { Alan, AlanSarmal } from "@/components/ui";
+import { EPOSTA_SINIR } from "@/lib/eposta";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import {
@@ -306,7 +307,7 @@ export function TelefonAlani({
           onPaste={onPaste}
           onBlur={() => setDokunuldu(true)}
           // Kimlik modunda sinir e-postaya gore (RFC 5321: 254).
-          maxLength={kimlik && !telefonModu ? 254 : EN_COK_KARAKTER}
+          maxLength={kimlik && !telefonModu ? EPOSTA_SINIR : EN_COK_KARAKTER}
           placeholder={placeholder ?? t("telefonYerTutucu")}
           disabled={disabled}
           autoFocus={autoFocus}

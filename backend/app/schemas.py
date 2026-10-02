@@ -138,6 +138,13 @@ KURUS_UST_SINIR = 10**13
 #: "1900-01" tahakkuk olarak yazilabiliyordu.
 DONEM_DESENI = r"^20\d{2}-(0[1-9]|1[0-2])$"
 
+#: (P250 §5) Giris ailesindeki e-posta alanlarinin AÇIK siniri: 254 (RFC 5321).
+#: `EmailStr` (email-validator) toplam uzunlugu zaten 254'te keser; sinir
+#: burada YAZILI dursun diye tekrar edilir — dogrulayici kutuphanesi
+#: degisirse giris uclari sinirsiz kalmasin.
+GirisEposta = Annotated[EmailStr, Field(max_length=_G.EPOSTA)]
+
+
 class LoginRequest(BaseModel):
     """(P205 §1) TEK KIMLIK ALANI — e-posta VEYA telefon.
 
@@ -154,8 +161,8 @@ class LoginRequest(BaseModel):
     tenant_slug: str | None = Field(None, max_length=_G.SLUG, examples=["acme-plaza"])
     #: E-posta ya da telefon. Eski istemciler `email` gonderiyordu;
     #: dogrulayici ikisini de kabul eder (bkz. `_kimlik_birlestir`).
-    kimlik: str | None = Field(None, min_length=1, max_length=254)
-    email: EmailStr | None = None
+    kimlik: str | None = Field(None, min_length=1, max_length=_G.EPOSTA)
+    email: GirisEposta | None = None
     #: (P248 §3a) GIRIS parolasi GIZLI (500) — yeni parola sinirindan
     #: (PAROLA=128) GENIS: onceden sinirsiz kurulmus uzun bir parola
     #: sahibini disarida birakmamak icin.
@@ -2016,12 +2023,12 @@ class EpostaKodIstek(BaseModel):
     """
 
     tenant_slug: str | None = Field(None, min_length=1, max_length=100)
-    eposta: EmailStr
+    eposta: GirisEposta
 
 
 class EpostaKodDogrulaIstek(BaseModel):
     tenant_slug: str | None = Field(None, min_length=1, max_length=100)
-    eposta: EmailStr
+    eposta: GirisEposta
     kod: str = Field(min_length=4, max_length=12)
 
 
@@ -2029,12 +2036,12 @@ class EpostaKodDogrulaIstek(BaseModel):
 # `EpostaKodIstek` ile AYNI kimlik (tenant + e-posta); ayrı amaç/hız-sınırı.
 class SifreKodIstek(BaseModel):
     tenant_slug: str = Field(min_length=1, max_length=100)
-    eposta: EmailStr
+    eposta: GirisEposta
 
 
 class SifreSifirlaIstek(BaseModel):
     tenant_slug: str = Field(min_length=1, max_length=100)
-    eposta: EmailStr
+    eposta: GirisEposta
     kod: str = Field(min_length=4, max_length=12)
     yeni_parola: str = Field(..., min_length=8, max_length=_G.PAROLA)
 

@@ -33,7 +33,6 @@ import {
 } from "@/components/giris/kabuk";
 import { EPOSTA_SINIR } from "@/lib/eposta";
 import { useT } from "@/lib/i18n/kullan";
-import { SINIR } from "@/lib/girdi-siniri";
 
 const UC_ISTE = "/api/auth/sifre/kod-iste";
 const UC_AYARLA = "/api/auth/sifre/dogrula-ve-ayarla";
@@ -176,7 +175,7 @@ function SifirlamaFormu() {
             <span className={girisEtiketSinifi} style={girisEtiketStili}>
               {t("girisTesisSlug")}
             </span>
-            <input maxLength={SINIR.EPOSTA}
+            <input maxLength={100 /* sunucu: SifreKodIstek.tenant_slug */}
               className={`${girisAlanSinifi} giris-alan${tesisHata ? " giris-titre" : ""}`}
               style={girisAlanStili(!!tesisHata)}
               value={tesis}
@@ -205,7 +204,7 @@ function SifirlamaFormu() {
               className={`${girisAlanSinifi} giris-alan${epostaHata ? " giris-titre" : ""}`}
               style={girisAlanStili(!!epostaHata)}
               type="email"
-              maxLength={EPOSTA_SINIR + 2}
+              maxLength={EPOSTA_SINIR}
               value={eposta}
               onChange={(e) => {
                 setEposta(e.target.value);

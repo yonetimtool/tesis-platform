@@ -70,7 +70,7 @@ class _EpostaAlaniState extends State<EpostaAlani> {
         // 254'e pratikte hiç ulaşmaz; ulaşırsa `cokUzun` hatası önce
         // görünür (doğrulama kırpılmamış değeri okur). Sayaç GİZLİ —
         // 254/254 sayacı her e-posta alanının altında gürültüdür.
-        maxLength: kEpostaSinir + 2,
+        maxLength: kEpostaSinir,
         buildCounter: (_, {required currentLength, required isFocused, maxLength}) =>
             null,
         onChanged: (_) => setState(() {}),
