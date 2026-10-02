@@ -131,7 +131,11 @@ Future<void> _gorselleriYukle(WidgetTester tester) async {
     // cozuldukten SONRA dene.
     await tester.pump(const Duration(milliseconds: 50));
     final resimler = tester.allWidgets.whereType<RawImage>();
-    if (resimler.isEmpty || resimler.any((r) => r.image != null)) {
+    // (P250) HEPSI cozulmeli: biri cozulup digeri hala yuklenirken
+    // (gosterge donerken) oturmayi denemek ayni sonsuz animasyona takilir.
+    // Tam suitte `bina_complaints_i18n_test` FOTOGRAFLI surusu iki kosumda
+    // ust uste bu yuzden dustu; tek basina geciyordu.
+    if (resimler.isEmpty || resimler.every((r) => r.image != null)) {
       await tester.pumpAndSettle();
       return;
     }

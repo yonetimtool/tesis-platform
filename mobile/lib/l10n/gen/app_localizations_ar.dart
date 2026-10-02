@@ -8408,4 +8408,262 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get otoEpostaGecmisiBos => 'لم تُرسل رسائل تذكير بعد.';
+
+  @override
+  String get otoKurallarBaslik => 'القواعد';
+
+  @override
+  String get otoKurallarAlt =>
+      'مهام ينفذها النظام نيابةً عنك بانتظام. يمكنك تشغيل كل قاعدة أو إيقافها.';
+
+  @override
+  String get otoKuralYeni => 'قاعدة جديدة';
+
+  @override
+  String get otoKuralYok => 'لا توجد قواعد بعد. ابدأ بـ«قاعدة جديدة».';
+
+  @override
+  String get otoKuralAcik => 'مفعّلة';
+
+  @override
+  String get otoKuralKapali => 'متوقفة';
+
+  @override
+  String otoKuralAnahtar(String cumle) {
+    return 'تشغيل/إيقاف القاعدة: $cumle';
+  }
+
+  @override
+  String get otoKuralAyarla => 'ضبط';
+
+  @override
+  String get otoKuralBuAyAtla => 'تخطي هذا الشهر';
+
+  @override
+  String get otoKuralBuAyAtlanacak => 'سيتم تخطي هذا الشهر.';
+
+  @override
+  String get otoKuralSilOnay =>
+      'هل تريد حذف هذه القاعدة؟ تبقى السجلات التي أُنشئت سابقًا.';
+
+  @override
+  String otoKuralPlanCumle(String gun, String tutar, String ad, String vade) {
+    return 'في اليوم $gun من كل شهر يُسجَّل على جميع الوحدات مبلغ «$ad» قدره $tutar لكل وحدة؛ ويستحق الدفع بعد $vade يومًا.';
+  }
+
+  @override
+  String otoKuralPlanCumleToplam(
+    String gun,
+    String tutar,
+    String ad,
+    String paylasim,
+    String vade,
+  ) {
+    return 'في اليوم $gun من كل شهر يُسجَّل على جميع الوحدات مبلغ «$ad» إجماليه $tutar، $paylasim؛ ويستحق الدفع بعد $vade يومًا.';
+  }
+
+  @override
+  String get otoKuralPaylasimEsit => 'مقسومًا بالتساوي';
+
+  @override
+  String get otoKuralPaylasimArsa => 'مقسومًا حسب حصة الأرض';
+
+  @override
+  String get otoKuralPaylasimMetrekare => 'مقسومًا حسب المساحة';
+
+  @override
+  String otoKuralGiderCumle(
+    String siklik,
+    String ad,
+    String tutar,
+    String onay,
+    String tarih,
+  ) {
+    return '$siklik يُنشأ سجل دفع بقيمة $tutar لـ«$ad» ($onay). التالي: $tarih.';
+  }
+
+  @override
+  String get otoKuralGiderOnayBekler => 'أنت توافق على الدفع';
+
+  @override
+  String get otoKuralGiderOtomatik => 'يُعدّ مدفوعًا';
+
+  @override
+  String get otoKuralSiklikAylik => 'كل شهر';
+
+  @override
+  String get otoKuralSiklikUcAylik => 'كل ثلاثة أشهر';
+
+  @override
+  String get otoKuralSiklikAltiAylik => 'كل ستة أشهر';
+
+  @override
+  String get otoKuralSiklikYillik => 'مرة في السنة';
+
+  @override
+  String otoKuralGecikmeCumle(String oran) {
+    return 'تُضاف فائدة تأخير بنسبة $oran% شهريًا على المبالغ المتأخرة.';
+  }
+
+  @override
+  String get otoKuralGecikmeKapali => 'لا تُضاف فائدة تأخير.';
+
+  @override
+  String get otoKuralSonYok => 'لم تعمل بعد.';
+
+  @override
+  String otoKuralSonPlan(String zaman, String adet, String tutar) {
+    return 'آخر تشغيل $zaman: سُجّل إجمالي $tutar على $adet وحدة.';
+  }
+
+  @override
+  String otoKuralSonErtelendi(String zaman) {
+    return 'آخر تشغيل $zaman: تم تخطي هذا الشهر.';
+  }
+
+  @override
+  String otoKuralSonGider(String zaman) {
+    return 'آخر تشغيل $zaman: أُنشئ سجل الدفع.';
+  }
+
+  @override
+  String otoKuralSonHatirlatma(String zaman, String adet) {
+    return 'آخر تشغيل $zaman: أُرسل تذكير إلى $adet شخصًا.';
+  }
+
+  @override
+  String otoKuralSonGecikme(String zaman, String adet, String tutar) {
+    return 'آخر تشغيل $zaman: أُضيفت فائدة $tutar إلى $adet مبلغ.';
+  }
+
+  @override
+  String otoKuralBugunPlan(String adet, String tutar) {
+    return 'لو عملت هذه القاعدة اليوم لسُجّل إجمالي $tutar على $adet وحدة.';
+  }
+
+  @override
+  String otoKuralBugunAtlanan(String adet) {
+    return 'سيتم تخطي $adet وحدة لتعذّر تحديد مبلغها.';
+  }
+
+  @override
+  String otoKuralBugunHatirlatma(String adet) {
+    return 'لو عملت هذه القاعدة اليوم لذهب تذكير إلى $adet شخصًا.';
+  }
+
+  @override
+  String otoKuralBugunGecikme(String adet, String tutar) {
+    return 'لو عملت هذه القاعدة اليوم لأُضيفت فائدة $tutar إلى $adet مبلغ.';
+  }
+
+  @override
+  String otoKuralBugunGider(String tutar, String tarih) {
+    return 'كل تشغيل يُنشئ سجل دفع بقيمة $tutar؛ أول تشغيل في $tarih.';
+  }
+
+  @override
+  String otoKuralIlkCalisma(String tarih) {
+    return 'إذا حفظتها فستعمل أول مرة في $tarih.';
+  }
+
+  @override
+  String otoSihirbazAdim(String n, String toplam) {
+    return 'الخطوة $n من $toplam';
+  }
+
+  @override
+  String get otoSihirbazNeZaman => 'متى؟';
+
+  @override
+  String get otoSihirbazKime => 'لمن؟';
+
+  @override
+  String get otoSihirbazNe => 'ماذا يحدث؟';
+
+  @override
+  String get otoSihirbazOnizleme => 'معاينة';
+
+  @override
+  String get otoSihirbazAyinGunu => 'أي يوم من الشهر؟';
+
+  @override
+  String get otoSihirbazGunIpucu => 'من 1 إلى 28 — أيام موجودة في كل شهر.';
+
+  @override
+  String get otoSihirbazIlkTarih => 'التاريخ الأول';
+
+  @override
+  String get otoSihirbazKimeDaireler => 'تسجيل مبلغ على جميع الوحدات';
+
+  @override
+  String get otoSihirbazKimeDairelerAlt => 'مثل الرسوم: مبلغ تدفعه كل وحدة.';
+
+  @override
+  String get otoSihirbazKimeGider => 'إنشاء دفعة باسم المنشأة';
+
+  @override
+  String get otoSihirbazKimeGiderAlt =>
+      'دفعات منتظمة مثل راتب البواب أو شركة التنظيف.';
+
+  @override
+  String get otoSihirbazYalnizAylik =>
+      'التسجيل على الوحدات متاح فقط مع «كل شهر».';
+
+  @override
+  String get otoSihirbazPaylasim => 'كيف يُقسَّم المبلغ؟';
+
+  @override
+  String get otoSihirbazPaylasimDaire => 'المبلغ نفسه لكل وحدة';
+
+  @override
+  String get otoSihirbazPaylasimEsit => 'تقسيم الإجمالي بالتساوي';
+
+  @override
+  String get otoSihirbazPaylasimArsa => 'تقسيم الإجمالي حسب حصة الأرض';
+
+  @override
+  String get otoSihirbazPaylasimMetrekare => 'تقسيم الإجمالي حسب المساحة';
+
+  @override
+  String get otoSihirbazAd => 'اسم القاعدة';
+
+  @override
+  String get otoSihirbazAdOrnek => 'مثال: الرسوم الشهرية، راتب البواب';
+
+  @override
+  String get otoSihirbazKalem => 'أي بند؟';
+
+  @override
+  String get otoSihirbazTutar => 'المبلغ (₺)';
+
+  @override
+  String get otoSihirbazTutarDaire => 'المبلغ لكل وحدة (₺)';
+
+  @override
+  String get otoSihirbazTutarToplam => 'المبلغ الإجمالي (₺)';
+
+  @override
+  String get otoSihirbazVade => 'يستحق الدفع بعد كم يومًا من التسجيل؟';
+
+  @override
+  String get otoSihirbazKasa => 'من أي صندوق؟';
+
+  @override
+  String get otoSihirbazOtomatikOnay =>
+      'اعتبار السجل مدفوعًا (دون انتظار موافقتي)';
+
+  @override
+  String get otoSihirbazIleri => 'التالي';
+
+  @override
+  String get otoSihirbazGeri => 'رجوع';
+
+  @override
+  String get otoSihirbazKaydet => 'حفظ القاعدة';
+
+  @override
+  String get otoSihirbazEksik => 'أكمل هذه الخطوة.';
+
+  @override
+  String get otoKurallarEkranBaslik => 'قواعد الأتمتة';
 }

@@ -393,33 +393,30 @@ async def aidat_planlari_isle(
 # --------------------------------------------------------------------------- #
 #                     4.2  OTOMATIK BORC HATIRLATMA                            #
 # --------------------------------------------------------------------------- #
-async def borc_hatirlatmalari(
-    db: AsyncSession, tenant_id: uuid.UUID, bugun: date
-) -> dict:
-    """Vadesi yaklasan/gecen borclar icin hatirlatma gonderir.
+async def hatirlatma_hedefleri(
+    db: AsyncSession,
+    *,
+    vade_oncesi_gun: int,
+    kademeler: list[int],
+    bugun: date,
+) -> tuple[str, dict[uuid.UUID, tuple[int, date]], dict[uuid.UUID, set[str]], int]:
+    """BUGUN kime hatirlatma gider — YAZMA YOK.
 
-    ODEYENE GITMEZ: aday kumesi "kalan > 0" olan borclardir; kalan,
-    defterdeki tahsilat etkisinden hesaplanir (P192 §1'in tek tanimi).
-    Tahakkuk listesinden gitmek, odemis sakini de rahatsiz ederdi.
+    (P250 §9) Gonderim ile onizleme ("bu kural bugun calissaydi ...")
+    AYNI hesabi kullanir: iki ayri sorgu bir gun ayrisir ve onizleme
+    gercekte gitmeyecek bir sayiyi gosterirdi.
 
-    GUNDE BIR KEZ: `son_calisma` damgasi. Gorev gunde on kez kossa da
-    sakinin telefonu on kez otmez.
+    Doner: (durum, kisi -> (kalan kurus, en erken vade), kisi -> donemler,
+    kurala uyan alicisi olmayan borc sayisi). `durum` "var" degilse
+    gonderilecek kimse yoktur.
     """
-    ayar = (
-        await db.execute(select(HatirlatmaAyari))
-    ).scalar_one_or_none()
-    if ayar is None or not ayar.aktif:
-        return {"gonderilen": 0, "durum": "kapali"}
-    if ayar.son_calisma == bugun:
-        return {"gonderilen": 0, "durum": "bugun_calisti"}
-
     # Hangi gunler hatirlatilir: vade oncesi tek gun + vade sonrasi
     # kademeler. Kume olarak tutulur; ayni gune iki kural denk gelirse
     # sakine iki bildirim gitmemeli.
     hedef_gunler: set[int] = set()
-    if ayar.vade_oncesi_gun:
-        hedef_gunler.add(-int(ayar.vade_oncesi_gun))
-    hedef_gunler.update(int(k) for k in (ayar.kademeler or []) if k >= 0)
+    if vade_oncesi_gun:
+        hedef_gunler.add(-int(vade_oncesi_gun))
+    hedef_gunler.update(int(k) for k in (kademeler or []) if k >= 0)
 
     borclar = (
         await db.execute(
@@ -435,14 +432,12 @@ async def borc_hatirlatmalari(
         if (bugun - b.son_odeme_tarihi).days in hedef_gunler
     ]
     if not ilgili:
-        ayar.son_calisma = bugun
-        return {"gonderilen": 0, "durum": "hedef_yok"}
+        return "hedef_yok", {}, {}, 0
 
     odenen = await defter.tahakkuk_odenen(db, [b.id for b in ilgili])
     acik = [b for b in ilgili if b.tutar_kurus - odenen.get(b.id, 0) > 0]
     if not acik:
-        ayar.son_calisma = bugun
-        return {"gonderilen": 0, "durum": "acik_borc_yok"}
+        return "acik_borc_yok", {}, {}, 0
 
     # (P250 §7) KIM ODER KURALI — daireye yazilmis (hedefsiz) borc.
     #
@@ -506,6 +501,37 @@ async def borc_hatirlatmalari(
                 else borc.son_odeme_tarihi,
             )
             kisi_donemleri.setdefault(user_id, set()).add(borc.donem)
+
+    return "var", kisi, kisi_donemleri, alicisiz
+
+
+async def borc_hatirlatmalari(
+    db: AsyncSession, tenant_id: uuid.UUID, bugun: date
+) -> dict:
+    """Vadesi yaklasan/gecen borclar icin hatirlatma gonderir.
+
+    ODEYENE GITMEZ: aday kumesi "kalan > 0" olan borclardir; kalan,
+    defterdeki tahsilat etkisinden hesaplanir (P192 §1'in tek tanimi).
+    Tahakkuk listesinden gitmek, odemis sakini de rahatsiz ederdi.
+
+    GUNDE BIR KEZ: `son_calisma` damgasi. Gorev gunde on kez kossa da
+    sakinin telefonu on kez otmez.
+    """
+    ayar = (
+        await db.execute(select(HatirlatmaAyari))
+    ).scalar_one_or_none()
+    if ayar is None or not ayar.aktif:
+        return {"gonderilen": 0, "durum": "kapali"}
+    if ayar.son_calisma == bugun:
+        return {"gonderilen": 0, "durum": "bugun_calisti"}
+
+    durum, kisi, kisi_donemleri, alicisiz = await hatirlatma_hedefleri(
+        db, vade_oncesi_gun=ayar.vade_oncesi_gun, kademeler=ayar.kademeler or [],
+        bugun=bugun,
+    )
+    if durum != "var":
+        ayar.son_calisma = bugun
+        return {"gonderilen": 0, "durum": durum}
 
     for user_id, (kalan, vade) in kisi.items():
         # (E2E 2026-09, BILDIRIM-14) Turkce tutar ve gun.ay.yil tarih —
@@ -653,6 +679,7 @@ async def duzenli_giderleri_isle(
     yonetim = await _yonetim_idleri(db)
     yazilan = 0
     toplam = 0
+    islenen_giderler: list[str] = []
     for gider in giderler:
         kasa_id = await defter.kasa_coz(db, tenant_id, gider.kasa_id)
         hareket = FinansalHareket(
@@ -692,6 +719,7 @@ async def duzenli_giderleri_isle(
 
         yazilan += 1
         toplam += gider.tutar_kurus
+        islenen_giderler.append(str(gider.id))
         if not gider.otomatik_onay:
             params = {"ad": gider.ad, "tutar": _tl(gider.tutar_kurus)}
             _bildir(
@@ -709,6 +737,8 @@ async def duzenli_giderleri_isle(
         await _gunluk_yaz(
             db, tenant_id=tenant_id, tur="duzenli_gider",
             donem=donem_metni(bugun), adet=yazilan, tutar_kurus=toplam,
+            # (P250 §9) Kural basina "son calisma" icin.
+            sonuc={"giderler": islenen_giderler},
         )
     return {"yazilan": yazilan, "toplam_kurus": toplam}
 

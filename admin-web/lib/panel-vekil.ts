@@ -66,6 +66,9 @@ export const OKUMA: Record<string, string> = {
   "hatirlatma-ayari": "/hatirlatma-ayari",
   "duzenli-giderler": "/duzenli-giderler",
   "otomasyon-gunlugu": "/otomasyon-gunlugu",
+  // (P250 §9) Kural basina son calisma + "bugun calissaydi" onizlemesi.
+  "otomasyon-son-calismalar": "/otomasyon/son-calismalar",
+  "hatirlatma-onizleme": "/hatirlatma-ayari/onizleme",
   // --- (P192 §5) yonetici gostergeleri ---
   yaslandirma: "/finans/yaslandirma",
   "tahsilat-gostergesi": "/finans/tahsilat-gostergesi",
@@ -122,6 +125,8 @@ export const YAZMA: Record<string, string> = {
   "aidat-planlari": "/aidat-planlari",
   "hatirlatma-ayari": "/hatirlatma-ayari",
   "duzenli-giderler": "/duzenli-giderler",
+  // (P250 §9) Sihirbaz onizlemesi — KAYDETMEZ (POST cunku govde plan).
+  "aidat-plani-onizleme": "/aidat-planlari/onizleme",
   // --- (P192 §5.3) borclulara toplu islem ---
   "borclulara-hatirlat": "/finans/borclulara/hatirlat",
   "borclulara-faiz-affi": "/finans/borclulara/faiz-affi",

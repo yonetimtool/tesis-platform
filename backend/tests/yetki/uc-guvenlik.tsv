@@ -4,6 +4,7 @@ GET	/activity	zorunlu	tesis	-	-	-	-	-		dar
 GET	/admin/overview	zorunlu	tesis	-	-	-	-	-		-
 GET	/aidat-planlari	zorunlu	tesis	-	-	-	-	-		-
 POST	/aidat-planlari	zorunlu	tesis	-	-	ozel	-	-		dar
+POST	/aidat-planlari/onizleme	zorunlu	tesis	-	-	genel	-	-		dar
 DELETE	/aidat-planlari/{plan_id}	zorunlu	tesis	rol	-	ozel	-	-		-
 PATCH	/aidat-planlari/{plan_id}	zorunlu	tesis	rol	-	ozel	-	-		dar
 POST	/aidat-planlari/{plan_id}/ertele	zorunlu	tesis	rol	-	ozel	-	-		dar
@@ -306,6 +307,7 @@ DELETE	/gelir-gider-tanimlari/{tanim_id}	zorunlu	tesis	rol	-	ozel	-	-		-
 PATCH	/gelir-gider-tanimlari/{tanim_id}	zorunlu	tesis	rol	-	ozel	-	-		dar
 GET	/hatirlatma-ayari	zorunlu	tesis	-	-	-	eposta	-		-
 PATCH	/hatirlatma-ayari	zorunlu	tesis	-	-	ozel	eposta	-		dar
+GET	/hatirlatma-ayari/onizleme	zorunlu	tesis	-	-	-	-	-		-
 GET	/hatirlatmalar	zorunlu	tesis	-	-	-	-	-		-
 POST	/hatirlatmalar	zorunlu	tesis	-	-	ozel	-	-		dar
 DELETE	/hatirlatmalar/{hatirlatma_id}	zorunlu	tesis	rol	-	ozel	-	-		-
@@ -408,6 +410,7 @@ POST	/notifications/toplu-sil	zorunlu	tesis	-	-	ozel	-	-		-
 POST	/notifications/tumunu-okundu	zorunlu	tesis	-	-	haric	-	-	kisinin kendi arayuz tercihi / okundu isareti — bilgi degeri yok (silme ozel denetimli)	-
 PATCH	/notifications/{notification_id}	zorunlu	tesis	hedef	-	haric	-	-	kisinin kendi arayuz tercihi / okundu isareti — bilgi degeri yok (silme ozel denetimli)	-
 GET	/otomasyon-gunlugu	zorunlu	tesis	-	-	-	-	-		dar
+GET	/otomasyon/son-calismalar	zorunlu	tesis	-	-	-	-	-		-
 GET	/ozellikler	kamu	platform	-	-	-	-	-	herkese acik yapilandirma; kisisel veri yok	-
 GET	/panik	zorunlu	tesis	-	-	-	olusturan_telefon	-		dar
 POST	/panik	zorunlu	tesis	-	-	ozel	olusturan_telefon	-		dar

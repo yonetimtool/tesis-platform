@@ -12046,6 +12046,24 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "422": { $ref: "#/components/responses/ValidationError" }
+  /aidat-planlari/onizleme:
+    post:
+      tags: [otomasyon]
+      summary: Kural onizlemesi — "bugun calissaydi" (KAYDETMEZ)
+      description: |
+        **(P250 §9)** Govde `AidatPlaniCreate`. Gorevin kullandigi ayni
+        plan hesabiyla kac daireye toplam ne kadar borc yazilacagini,
+        atlanacak daire sayisini ve kaydedilirse ilk calisma gununu
+        doner. Hicbir sey yazilmaz.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "200": { description: Onizleme (adet, toplam_kurus, atlanan, donem, ilk_tarih) }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /aidat-planlari:
     get:
       tags: [otomasyon]
@@ -12141,6 +12159,16 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/AidatPlani" }
         "409": { $ref: "#/components/responses/Conflict" }
+  /hatirlatma-ayari/onizleme:
+    get:
+      tags: [otomasyon]
+      summary: Hatirlatma onizlemesi — bugun kac kisiye giderdi
+      description: |
+        **(P250 §9)** Kayitli ayarla, gonderimin kullandigi ayni hedef
+        hesabi. Kural kapaliyken de hesaplanir. Gonderim yapilmaz.
+      responses:
+        "200": { description: Onizleme (adet, toplam_kurus, atlanan) }
+        "403": { $ref: "#/components/responses/Forbidden" }
   /hatirlatma-ayari:
     get:
       tags: [otomasyon]
@@ -12232,6 +12260,16 @@ paths:
       summary: "(P192 §4.5) Tekrar KURALINI sil — yazilmis giderler kalir"
       responses:
         "204": { description: Silindi }
+  /otomasyon/son-calismalar:
+    get:
+      tags: [otomasyon]
+      summary: Kural basina son calisma ve sonucu
+      description: |
+        **(P250 §9)** `kural`: plan / duzenli gider kimligi ya da tekil
+        kurallar icin `borc_hatirlatma`, `gecikme_faizi`. Son 400 gun.
+      responses:
+        "200": { description: Liste }
+        "403": { $ref: "#/components/responses/Forbidden" }
   /otomasyon-gunlugu:
     get:
       tags: [otomasyon]

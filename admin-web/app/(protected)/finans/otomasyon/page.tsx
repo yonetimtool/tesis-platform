@@ -36,7 +36,8 @@ import {
   VeriTablosu,
   type Kolon,
 } from "@/components/ui";
-import { useGelirGiderTanimlari, useKasalar } from "@/components/finans/ortak";
+import { KurallarKarti } from "@/components/otomasyon/kurallar";
+import { hatirlatmaCumlesi } from "@/lib/otomasyon-cumle";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useI18n, useT } from "@/lib/i18n/kullan";
@@ -135,225 +136,7 @@ function bugunISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-// ------------------------------- PLANLAR ---------------------------------- #
-function PlanModal({
-  acik, onKapat, onKaydedildi,
-}: { acik: boolean; onKapat: () => void; onKaydedildi: () => void }) {
-  const t = useT();
-  const toast = useToast();
-  const tanimlar = useGelirGiderTanimlari();
-  const [ad, setAd] = useState("");
-  const [tanimId, setTanimId] = useState("");
-  const [tutar, setTutar] = useState("");
-  const [gun, setGun] = useState("1");
-  const [vade, setVade] = useState("15");
-  const [onizleme, setOnizleme] = useState("3");
-  const [hata, setHata] = useState<string | null>(null);
-  const [mesgul, setMesgul] = useState(false);
-
-  async function kaydet() {
-    const kurus = tlToKurus(tutar);
-    if (!ad.trim() || !tanimId || !kurus || kurus <= 0) {
-      setHata(t("finansTutarGerekli"));
-      return;
-    }
-    setHata(null);
-    setMesgul(true);
-    try {
-      await apiSend("/api/panel/aidat-planlari", "POST", {
-        ad: ad.trim(),
-        gelir_gider_tanim_id: tanimId,
-        tutar_kurus: kurus,
-        tahakkuk_gunu: Number(gun),
-        vade_gun: Number(vade),
-        onizleme_gun: Number(onizleme),
-      });
-      toast.success(t("finansKaydedildi"));
-      setAd(""); setTutar("");
-      onKaydedildi();
-      onKapat();
-    } catch (e) {
-      setHata(e instanceof Error ? e.message : t("ortakHataOlustu"));
-    } finally {
-      setMesgul(false);
-    }
-  }
-
-  return (
-    <Modal
-      acik={acik}
-      baslik={t("otoPlanYeni")}
-      onKapat={onKapat}
-      eylemler={
-        <span className="flex gap-2">
-          <Dugme tur="ikincil" onClick={onKapat}>{t("ortakIptal")}</Dugme>
-          <Dugme tur="birincil" disabled={mesgul} onClick={() => void kaydet()}>
-            {mesgul ? t("ortakKaydediliyor") : t("ortakKaydet")}
-          </Dugme>
-        </span>
-      }
-    >
-      <div className="grid gap-3">
-        <AlanSarmal etiket={t("otoPlanAd")} zorunlu>
-          {(b) => <Alan maxLength={SINIR.AD /* sunucu: AidatPlaniCreate.ad / DuzenliGiderCreate.ad */} {...b} value={ad} onChange={(e) => setAd(e.target.value)} />}
-        </AlanSarmal>
-        <AlanSarmal etiket={t("finansSutunTur")} zorunlu>
-          {(b) => (
-            <Secim {...b} value={tanimId} onChange={(e) => setTanimId(e.target.value)}>
-              <option value="">{t("finansTurSec")}</option>
-              {tanimlar.map((g) => <option key={g.id} value={g.id}>{g.ad}</option>)}
-            </Secim>
-          )}
-        </AlanSarmal>
-        <AlanSarmal etiket={t("finansAlanTutar")} zorunlu>
-          {(b) => (
-            <Alan maxLength={ISTEMCI_SINIR.SAYI} {...b} value={tutar} inputMode="decimal"
-              onChange={(e) => setTutar(e.target.value)} />
-          )}
-        </AlanSarmal>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <AlanSarmal etiket={t("otoTahakkukGunu")}>
-            {(b) => (
-              <Alan {...b} type="number" min={1} max={28} value={gun}
-                onChange={(e) => setGun(e.target.value)} />
-            )}
-          </AlanSarmal>
-          <AlanSarmal etiket={t("otoVadeGun")}>
-            {(b) => (
-              <Alan {...b} type="number" min={0} max={90} value={vade}
-                onChange={(e) => setVade(e.target.value)} />
-            )}
-          </AlanSarmal>
-          <AlanSarmal etiket={t("otoOnizlemeGun")}>
-            {(b) => (
-              <Alan {...b} type="number" min={0} max={28} value={onizleme}
-                onChange={(e) => setOnizleme(e.target.value)} />
-            )}
-          </AlanSarmal>
-        </div>
-        <HataDurumu mesaj={hata} />
-      </div>
-    </Modal>
-  );
-}
-
-function PlanlarKarti() {
-  const t = useT();
-  const toast = useToast();
-  const [modal, setModal] = useState(false);
-  const { data, error, isLoading, mutate } = useSWR<{ items: Plan[] }>(
-    "/api/panel/aidat-planlari", jsonFetcher);
-
-  async function eylem(yol: string, metot: "POST" | "DELETE", govde?: unknown) {
-    try {
-      await apiSend(yol, metot, govde);
-      await mutate();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("ortakHataOlustu"));
-    }
-  }
-
-  const kolonlar: Kolon<Plan>[] = [
-    { id: "ad", baslik: t("otoPlanAd"), hucre: (p) => p.ad },
-    { id: "tutar", baslik: t("finansSutunTutar"), sayisal: true,
-      hucre: (p) => (
-        <span className="tabular-nums">
-          {kurusToTL(p.tutar_kurus ?? p.toplam_tutar_kurus ?? 0)}
-        </span>
-      ) },
-    { id: "gun", baslik: t("otoTahakkukGunu"), hucre: (p) => String(p.tahakkuk_gunu) },
-    { id: "sonDonem", baslik: t("otoSonDonem"), hucre: (p) => p.son_donem ?? YOK },
-    { id: "aktif", baslik: t("otoAktif"),
-      // (P244 §7b) DUZ METIN -> DURUM ROZETI.
-      // "Evet/Hayır" bir DURUM degil, bir yanit. Kural listesinde
-      // aranan sey "hangileri calisiyor" ve goz bunu bir rozetten
-      // metin okumadan tarar. ROZET METIN TASIR: renk tek tasiyici
-      // degil.
-      //
-      // ROZET TIKLANABILIR DEGIL ve bu OLCULMUS bir karar: referansta
-      // burada bir anahtar (toggle) var, ama kurali yerinde acip
-      // kapatacak bir yazma ucu YOK — `PATCH` yalniz kuralin tamamini
-      // duzenleme akisindan geciyor. Tiklaninca hicbir sey yapmayan
-      // bir anahtar cizmek, kullaniciyi bir kez aldatirdi.
-      hucre: (p) => (
-        <Rozet durum={p.aktif ? "olumlu" : "notr"}>
-          {p.aktif ? t("otoDurumAktif") : t("otoDurumPasif")}
-        </Rozet>
-      ) },
-    { id: "eylem", baslik: "", hucre: (p) => (
-      <span className="flex gap-2">
-        <Dugme tur="ikincil" boy="kucuk"
-          onClick={() => void eylem(
-            `/api/panel/aidat-planlari/${p.id}/ertele`, "POST", { donem: buAy() },
-          )}
-        >
-          {t("otoErtele")}
-        </Dugme>
-        <Dugme tur="ikincil" boy="kucuk"
-          onClick={() => void eylem(`/api/panel/aidat-planlari/${p.id}`, "DELETE")}
-        >
-          {t("ortakSil")}
-        </Dugme>
-      </span>
-    ) },
-  ];
-
-  return (
-    <Kart>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
-            {t("otoPlanlar")}
-          </h2>
-          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-            {t("otoPlanAciklama")}
-          </p>
-        </div>
-        <Dugme tur="birincil" boy="kucuk" onClick={() => setModal(true)}>
-          {t("otoPlanYeni")}
-        </Dugme>
-      </div>
-      <VeriTablosu
-        kolonlar={kolonlar}
-        satirlar={data?.items ?? []}
-        satirId={(p) => p.id}
-        yukleniyor={isLoading}
-        bosBaslik={t("otoKayitYok")}
-        hata={error ? t("ortakHataOlustu") : null}
-        onTekrar={() => void mutate()}
-      />
-      <PlanModal
-        acik={modal}
-        onKapat={() => setModal(false)}
-        onKaydedildi={() => void mutate()}
-      />
-    </Kart>
-  );
-}
-
 // ----------------------------- HATIRLATMA --------------------------------- #
-/**
- * (P250 §7) Hatirlatma ayarinin DUZ CUMLESI — "son odeme gununden 3, 10 ve
- * 30 gun sonra ... (bildirim + e-posta)". Ayarin KENDISINDEN kurulur:
- * duz ayar alanlari duzensiz eski kademeleri ({3,10,30}) temsil
- * edemeyebilir; cumle gercek kademeleri soyler.
- */
-function hatirlatmaCumlesi(
-  a: Ayar,
-  t: ReturnType<typeof useT>,
-  dil: string,
-): string {
-  if (!a.aktif || a.kademeler.length === 0) return t("otoHatirlatmaKapali");
-  const gunler = new Intl.ListFormat(dil, { type: "conjunction" }).format(
-    a.kademeler.map(String),
-  );
-  const kanal = a.eposta ? t("otoKanalBildirimEposta") : t("otoKanalBildirim");
-  const ana = t("otoHatirlatmaCumle", { gunler, kanal });
-  return a.vade_oncesi_gun > 0
-    ? `${ana} ${t("otoHatirlatmaVadeOncesiCumle", { gun: a.vade_oncesi_gun })}`
-    : ana;
-}
-
 function HatirlatmaKarti() {
   const t = useT();
   const { dil } = useI18n();
@@ -404,6 +187,7 @@ function HatirlatmaKarti() {
   }
 
   return (
+    <div id="hatirlatma-ayrinti">
     <Kart>
       <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
         {t("otoHatirlatma")}
@@ -484,6 +268,7 @@ function HatirlatmaKarti() {
         )}
       </AlanSarmal>
     </Kart>
+    </div>
   );
 }
 
@@ -525,173 +310,6 @@ function HatirlatmaEpostalariKarti() {
           ))}
         </ul>
       )}
-    </Kart>
-  );
-}
-
-// --------------------------- DUZENLI GIDERLER ------------------------------ #
-function GiderModal({
-  acik, onKapat, onKaydedildi,
-}: { acik: boolean; onKapat: () => void; onKaydedildi: () => void }) {
-  const t = useT();
-  const toast = useToast();
-  const kasalar = useKasalar();
-  const [ad, setAd] = useState("");
-  const [tutar, setTutar] = useState("");
-  const [periyot, setPeriyot] = useState<string>("aylik");
-  const [tarih, setTarih] = useState(bugunISO());
-  const [kasaId, setKasaId] = useState("");
-  const [otomatik, setOtomatik] = useState(false);
-  const [hata, setHata] = useState<string | null>(null);
-  const [mesgul, setMesgul] = useState(false);
-
-  async function kaydet() {
-    const kurus = tlToKurus(tutar);
-    if (!ad.trim() || !kurus || kurus <= 0) {
-      setHata(t("finansTutarGerekli"));
-      return;
-    }
-    setHata(null);
-    setMesgul(true);
-    try {
-      await apiSend("/api/panel/duzenli-giderler", "POST", {
-        ad: ad.trim(),
-        tutar_kurus: kurus,
-        periyot,
-        sonraki_tarih: tarih,
-        kasa_id: kasaId || null,
-        otomatik_onay: otomatik,
-      });
-      toast.success(t("finansKaydedildi"));
-      setAd(""); setTutar("");
-      onKaydedildi();
-      onKapat();
-    } catch (e) {
-      setHata(e instanceof Error ? e.message : t("ortakHataOlustu"));
-    } finally {
-      setMesgul(false);
-    }
-  }
-
-  return (
-    <Modal
-      acik={acik}
-      baslik={t("otoGiderYeni")}
-      onKapat={onKapat}
-      eylemler={
-        <span className="flex gap-2">
-          <Dugme tur="ikincil" onClick={onKapat}>{t("ortakIptal")}</Dugme>
-          <Dugme tur="birincil" disabled={mesgul} onClick={() => void kaydet()}>
-            {mesgul ? t("ortakKaydediliyor") : t("ortakKaydet")}
-          </Dugme>
-        </span>
-      }
-    >
-      <div className="grid gap-3">
-        <AlanSarmal etiket={t("otoPlanAd")} zorunlu>
-          {(b) => <Alan maxLength={SINIR.AD /* sunucu: AidatPlaniCreate.ad / DuzenliGiderCreate.ad */} {...b} value={ad} onChange={(e) => setAd(e.target.value)} />}
-        </AlanSarmal>
-        <AlanSarmal etiket={t("finansAlanTutar")} zorunlu>
-          {(b) => (
-            <Alan maxLength={ISTEMCI_SINIR.SAYI} {...b} value={tutar} inputMode="decimal"
-              onChange={(e) => setTutar(e.target.value)} />
-          )}
-        </AlanSarmal>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <AlanSarmal etiket={t("otoPeriyot")}>
-            {(b) => (
-              <Secim {...b} value={periyot} onChange={(e) => setPeriyot(e.target.value)}>
-                {PERIYOTLAR.map((p) => (
-                  <option key={p} value={p}>{t(PERIYOT_ETIKET[p])}</option>
-                ))}
-              </Secim>
-            )}
-          </AlanSarmal>
-          <AlanSarmal etiket={t("otoSonrakiTarih")}>
-            {(b) => (
-              <Alan {...b} type="date" value={tarih}
-                onChange={(e) => setTarih(e.target.value)} />
-            )}
-          </AlanSarmal>
-        </div>
-        <AlanSarmal etiket={t("finansKasa")}>
-          {(b) => (
-            <Secim {...b} value={kasaId} onChange={(e) => setKasaId(e.target.value)}>
-              <option value="">{YOK}</option>
-              {kasalar.map((k) => <option key={k.id} value={k.id}>{k.ad}</option>)}
-            </Secim>
-          )}
-        </AlanSarmal>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={otomatik}
-            onChange={(e) => setOtomatik(e.target.checked)} />
-          {t("otoOtomatikOnay")}
-        </label>
-        <HataDurumu mesaj={hata} />
-      </div>
-    </Modal>
-  );
-}
-
-function GiderlerKarti() {
-  const t = useT();
-  const toast = useToast();
-  const [modal, setModal] = useState(false);
-  const { data, error, isLoading, mutate } = useSWR<{ items: Gider[] }>(
-    "/api/panel/duzenli-giderler", jsonFetcher);
-
-  const kolonlar: Kolon<Gider>[] = [
-    { id: "ad", baslik: t("otoPlanAd"), hucre: (g) => g.ad },
-    { id: "tutar", baslik: t("finansSutunTutar"), sayisal: true,
-      hucre: (g) => <span className="tabular-nums">{kurusToTL(g.tutar_kurus)}</span> },
-    { id: "periyot", baslik: t("otoPeriyot"),
-      hucre: (g) => t(periyotEtiketi(g.periyot)) },
-    { id: "tarih", baslik: t("otoSonrakiTarih"), hucre: (g) => g.sonraki_tarih },
-    { id: "eylem", baslik: "", hucre: (g) => (
-      <Dugme tur="ikincil" boy="kucuk"
-        onClick={async () => {
-          try {
-            await apiSend(`/api/panel/duzenli-giderler/${g.id}`, "DELETE");
-            await mutate();
-          } catch (e) {
-            toast.error(e instanceof Error ? e.message : t("ortakHataOlustu"));
-          }
-        }}
-      >
-        {t("ortakSil")}
-      </Dugme>
-    ) },
-  ];
-
-  return (
-    <Kart>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
-            {t("otoDuzenliGiderler")}
-          </h2>
-          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-            {t("otoDuzenliAciklama")}
-          </p>
-        </div>
-        <Dugme tur="birincil" boy="kucuk" onClick={() => setModal(true)}>
-          {t("otoGiderYeni")}
-        </Dugme>
-      </div>
-      <VeriTablosu
-        kolonlar={kolonlar}
-        satirlar={data?.items ?? []}
-        satirId={(g) => g.id}
-        yukleniyor={isLoading}
-        bosBaslik={t("otoKayitYok")}
-        hata={error ? t("ortakHataOlustu") : null}
-        onTekrar={() => void mutate()}
-      />
-      <GiderModal
-        acik={modal}
-        onKapat={() => setModal(false)}
-        onKaydedildi={() => void mutate()}
-      />
     </Kart>
   );
 }
@@ -815,11 +433,12 @@ export default function OtomasyonPage() {
         baslik={t("finansOtomasyon")}
         aciklama={t("otoSayfaAlt")}
       />
-      <PlanlarKarti />
+      {/* (P250 §9) Her kural duz cumle + ac/kapat + son calisma; yeni
+          kural sihirbazla. Eski plan/gider TABLOLARI bunun yerine gecti. */}
+      <KurallarKarti />
       <HatirlatmaKarti />
       <HatirlatmaGecmisiKarti />
       <HatirlatmaEpostalariKarti />
-      <GiderlerKarti />
       <GunlukKarti />
     </div>
   );

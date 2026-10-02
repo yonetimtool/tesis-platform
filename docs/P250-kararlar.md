@@ -946,3 +946,146 @@ düzeltecek bilgi de (sağlayıcı hesabı) zaten platformdaydı.
   "yapılandırılmadı" döner (doğru davranış).
 * Çevirilerin anadil kontrolü (de/fr/es/ar/ru): metinler tarafımdan
   yazıldı, anadili konuşan biri okumadı.
+
+# §9 — OTOMASYON EKRANI: DÜZ DİL, SİHİRBAZ, ÖNİZLEME
+
+## Önce ölçüm: ekran bugün ne gösteriyordu
+
+* Web `/finans/otomasyon`: aidat planları ve düzenli giderler **tablo**
+  ("Tahakkuk günü", "Periyot", "Son dönem", "Aktif" sütunları). Kuralın
+  ne yaptığını yönetici sütunları birleştirerek çıkarıyordu.
+* Kuralı yerinde aç/kapat **yoktu** (rozet tıklanmıyordu; P244 notu
+  "yazma ucu yok" diyordu — oysa `PATCH /aidat-planlari/{id}` ve
+  `PATCH /duzenli-giderler/{id}` `aktif` alanını zaten kabul ediyordu).
+* "En son ne zaman çalıştı, ne yaptı": yalnız genel otomasyon günlüğünde
+  vardı, kurala bağlı değildi. Düzenli gider günlüğe kural kimliği
+  yazmıyordu.
+* Önizleme yoktu: plan kaydedilince ilk çalışmada ne olacağı ancak
+  çalıştıktan sonra görülüyordu.
+* Mobilde otomasyon ekranı yoktu (yalnız §7'nin hatırlatma ekranı).
+
+## Ne yapıldı
+
+### Her kural tek cümle
+
+* Aidat planı: "Her ayın 1. günü tüm dairelere daire başına 1.200,00 ₺
+  “Aidat” borcu yazılır; son ödeme günü 10 gün sonradır." Paylaşımlı
+  planda "… toplam 9.000,00 ₺ … arsa payına göre bölünerek …".
+* Düzenli ödeme: "Her ay “Kapıcı maaşı” için 15.000,00 ₺ ödeme kaydı
+  açılır (ödemeyi siz onaylarsınız). Sıradaki: 05.11.2026."
+* Hatırlatma: §7'nin cümlesi (aynı fonksiyon, web'de `lib/otomasyon-
+  cumle.ts`'e taşındı).
+* Gecikme faizi: "Son ödeme günü geçen borçlara her ay %5 gecikme faizi
+  eklenir." / "Gecikme faizi eklenmez."
+* Ekranda "tahakkuk", "kademe", "periyot", "dağıtım" geçmiyor (web ve
+  mobil testleri liste metninde bu kelimeleri arıyor).
+
+### Aç/kapat
+
+* Her kuralın yanında anahtar: plan / ödeme kuralı kendi kaydına
+  `PATCH {aktif}`, hatırlatma `PATCH /hatirlatma-ayari {aktif}`, gecikme
+  faizi `PATCH /borclandirma/gecikme-ayari {gecikme_uygula}`. Silmeden
+  durdurmak için.
+
+### Son çalışma ve sonucu
+
+* Yeni uç `GET /otomasyon/son-calismalar`: kural başına en son çalışma
+  (zaman, adet, tutar, durum). Aidat planı satırı günlükte zaten `plan`
+  kimliğini taşıyordu; düzenli gider artık `giderler` listesini yazıyor
+  (göç yok, JSON alan).
+* **P250 öncesi düzenli gider çalışmaları kurala bağlanamaz** (kimlik
+  yazılmamıştı): o kural için "Henüz çalışmadı" görünür, bir sonraki
+  çalışmadan itibaren doğru gösterir. Tahmin edip uydurmak yerine bu
+  seçildi.
+* Cümleler: "Son çalışma 01.10.2026 06:00: 47 daireye toplam 56.400,00 ₺
+  borç yazıldı." / "… bu ay atlandı." / "… 12 kişiye hatırlatma
+  gönderildi."
+
+### "Bugün çalışsaydı"
+
+* **Sihirbazda (yeni plan):** `POST /aidat-planlari/onizleme` —
+  kaydedilmemiş planı, otomatik ve elle toplu borçlandırmanın kullandığı
+  **aynı çekirdekle** (`toplu_plan`) hesaplar: "Bu kural bugün
+  çalışsaydı 47 daireye toplam 56.400,00 ₺ borç yazılırdı." Tutarı
+  belirlenemeyen daire sayısı ayrıca söylenir; "Kaydederseniz ilk kez
+  … tarihinde çalışır." Hiçbir şey yazılmaz (testte borç ve plan
+  sayısı ölçülüyor). Test, sayının elle toplu borçlandırma önizlemesiyle
+  aynı olduğunu da ölçüyor.
+* **Hatırlatma kuralı:** `GET /hatirlatma-ayari/onizleme` — gönderim
+  kodundan **ayrılan** `hatirlatma_hedefleri` fonksiyonu (gönderim de
+  artık onu çağırıyor), yazma yapmaz. Kural kapalıyken de hesaplanır.
+  Test, önizlemedeki kişi sayısının hemen ardından yapılan gerçek
+  gönderimle **aynı** olduğunu ölçüyor.
+* **Gecikme faizi:** mevcut `GET /borclandirma/gecikme-faizi/onizleme`.
+* Ödeme kuralı için sunucu önizlemesi gerekmiyor (tek kayıt, tutarı
+  belli): "Her çalıştığında 15.000,00 ₺ ödeme kaydı açar; ilk kez …".
+
+### Sihirbaz: ne zaman → kime → ne yapılsın → önizleme
+
+1. **Ne zaman?** Her ay / üç ayda bir / altı ayda bir / yılda bir. Her
+   ayda "ayın kaçında" (1–28), diğerlerinde ilk tarih.
+2. **Kime?** "Tüm dairelere borç yaz" ya da "Site adına ödeme kaydı aç".
+   Borç yazma yalnız "Her ay"da seçilebilir (plan ayın bir gününde
+   çalışır; diğer sıklıkta seçenek kapalı ve nedeni yazıyor). Borçta
+   paylaşım: her daireye aynı / eşit / arsa payı / metrekare.
+3. **Ne yapılsın?** Ad, (borçta) kalem, tutar, son ödeme kaç gün sonra;
+   (ödemede) kasa ve "ödenmiş sayılsın".
+4. **Önizleme:** cümle + bugün çalışsaydı + ilk çalışma → Kaydet.
+
+Eksik adımda ilerlenmez ("Bu adımı tamamlayın.").
+
+### Hatırlatma tek kayıt
+
+* Kurallar listesindeki hatırlatma anahtarı ve "Ayarla" (web'de aynı
+  sayfadaki ayrıntı kartı, mobilde §7 ekranı) ile mobil/web hepsi aynı
+  `hatirlatma_ayari` kaydını yazar. İkinci bir depolama yok.
+
+## Web / mobil
+
+* **Web:** `/finans/otomasyon` üstte "Kurallar" kartı (cümle + anahtar +
+  son çalışma + bugün + "Bu ayı atla" / Sil / Ayarla) ve "Yeni kural"
+  sihirbazı. Eski plan ve gider **tabloları ve form modalları
+  kaldırıldı** (kuralların yerine geçti). Hatırlatma ayrıntı kartı,
+  hatırlatma geçmişi, e-posta geçmişi ve otomasyon günlüğü duruyor.
+* **Mobil:** yeni "Otomasyon kuralları" ekranı (aynı kartlar, anahtarlar,
+  son çalışma, bugün) + dört adımlı sihirbaz ekranı (aynı uçlar). Giriş:
+  Borçlular ekranındaki satır — önce doğrudan hatırlatma ekranını
+  açıyordu, artık kurallar ekranını açıyor; hatırlatma oradan "Ayarla".
+* Silme iki yüzeyde onay sorar ("Daha önce yazılan kayıtlar silinmez").
+
+## Testler
+
+* Sunucu `test_p250_otomasyon_kurallari.py` (4): plan önizlemesi yazmaz,
+  toplu önizlemeyle aynı sayı, ilk çalışma günü; gelir kalemi 422 ve
+  sakin 403; hatırlatma önizlemesi = gerçek gönderim; son çalışma kural
+  başına (plan + düzenli gider + hatırlatma).
+* Web `p250-otomasyon-kurallar.dom.test.ts` (5): cümleler + son + bugün +
+  teknik terim yok; anahtar doğru kayda; sihirbaz borç akışı (önizleme
+  gövdesi, metin, kaydetmeden yazma yok, kaydet); aylık değilse borç
+  kapalı + ödeme kuralı gövdesi; yardımcılar.
+* Mobil `p250_otomasyon_kurallari_test.dart` (5): aynı ölçümler.
+* Mevcut P192 otomasyon testleri (hatırlatma gönderimi yeniden
+  düzenlendiği için) yeşil.
+
+## Testte bulunan kusurlar
+
+* Düzenli gider günlüğüne kural kimliğini yazan satır ilk düzenlemede
+  uygulanmamıştı; "son çalışma kural başına" testi düzenli gideri
+  bulamayınca yakaladı, düzeltildi.
+* Son çalışma yanıtındaki alan önce `anahtar` adındaydı; uç güvenlik
+  kilidi bunu gizli anahtar sanıp "hassas" işaretledi. Yanıltıcı
+  olmasın diye alan `kural` oldu (web + mobil + sözleşme).
+* Tam backend takımı §1'den kalan bir gerilemeyi yakaladı: kullanıcı
+  düzenlemesinde `ad` alanı denetim kaydının alan listesinden
+  düşüyordu (ayrı commit `fix(P250 §1)`).
+
+## ÖLÇÜLEMEDİ
+
+* `test_rapor_kuyruk.py` dosyasının son testine iliştirilen oturum sonu
+  temizliği (tesis silme) worker'ın aynı anda işlediği rapor işleriyle
+  veritabanı kilitlenmesine düşüyor (tek başına da tekrarlandı). Rapor
+  kodu P250'de değişmedi; koda değil ortama (canlı worker + tesis
+  silme yarışı) bağlı. Ayrıca ele alınmalı.
+* Gerçek gecelik çalışma (Celery beat 03:00 UTC) bu turda tetiklenmedi;
+  fonksiyonlar testte doğrudan çağrıldı. **worker + beat yeniden
+  derlenmeli** (düzenli gider günlüğü artık kural kimliği yazıyor).

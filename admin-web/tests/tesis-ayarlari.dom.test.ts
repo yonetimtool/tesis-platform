@@ -108,6 +108,9 @@ describe("(P193 §5) tesis ayarları ekranı", () => {
     // (P219 §1) "Güvenliğe eskalasyon eşiği" -> "Kaçıncı uyarıda
     // güvenliğe bildirilsin". Deger de anlamiyla hizalandi (goc 0111).
     const alan = await screen.findByLabelText(/Kaçıncı uyarıda güvenliğe/);
+    // (P250) Sunucu degeri forma DUSMEDEN temizlenirse deger sonradan
+    // gelip yazilanla birlesiyordu ("2" + "3" = 23; tam takimda bir kez).
+    await waitFor(() => expect((alan as HTMLInputElement).value).not.toBe(""));
     const k = userEvent.setup();
     await k.clear(alan);
     await k.type(alan, "3");

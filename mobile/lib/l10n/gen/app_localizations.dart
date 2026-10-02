@@ -14512,6 +14512,432 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Henüz hatırlatma e-postası gönderilmedi.'**
   String get otoEpostaGecmisiBos;
+
+  /// No description provided for @otoKurallarBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kurallar'**
+  String get otoKurallarBaslik;
+
+  /// No description provided for @otoKurallarAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sistemin sizin yerinize düzenli yaptığı işler. Her kuralı açıp kapatabilirsiniz.'**
+  String get otoKurallarAlt;
+
+  /// No description provided for @otoKuralYeni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni kural'**
+  String get otoKuralYeni;
+
+  /// No description provided for @otoKuralYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz kural yok. “Yeni kural” ile başlayın.'**
+  String get otoKuralYok;
+
+  /// No description provided for @otoKuralAcik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açık'**
+  String get otoKuralAcik;
+
+  /// No description provided for @otoKuralKapali.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapalı'**
+  String get otoKuralKapali;
+
+  /// No description provided for @otoKuralAnahtar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kuralı aç/kapat: {cumle}'**
+  String otoKuralAnahtar(String cumle);
+
+  /// No description provided for @otoKuralAyarla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ayarla'**
+  String get otoKuralAyarla;
+
+  /// No description provided for @otoKuralBuAyAtla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu ayı atla'**
+  String get otoKuralBuAyAtla;
+
+  /// No description provided for @otoKuralBuAyAtlanacak.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu ay atlanacak.'**
+  String get otoKuralBuAyAtlanacak;
+
+  /// No description provided for @otoKuralSilOnay.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu kural silinsin mi? Daha önce yazılan kayıtlar silinmez.'**
+  String get otoKuralSilOnay;
+
+  /// No description provided for @otoKuralPlanCumle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Her ayın {gun}. günü tüm dairelere daire başına {tutar} “{ad}” borcu yazılır; son ödeme günü {vade} gün sonradır.'**
+  String otoKuralPlanCumle(String gun, String tutar, String ad, String vade);
+
+  /// No description provided for @otoKuralPlanCumleToplam.
+  ///
+  /// In tr, this message translates to:
+  /// **'Her ayın {gun}. günü toplam {tutar} “{ad}” borcu tüm dairelere {paylasim} yazılır; son ödeme günü {vade} gün sonradır.'**
+  String otoKuralPlanCumleToplam(
+    String gun,
+    String tutar,
+    String ad,
+    String paylasim,
+    String vade,
+  );
+
+  /// No description provided for @otoKuralPaylasimEsit.
+  ///
+  /// In tr, this message translates to:
+  /// **'eşit bölünerek'**
+  String get otoKuralPaylasimEsit;
+
+  /// No description provided for @otoKuralPaylasimArsa.
+  ///
+  /// In tr, this message translates to:
+  /// **'arsa payına göre bölünerek'**
+  String get otoKuralPaylasimArsa;
+
+  /// No description provided for @otoKuralPaylasimMetrekare.
+  ///
+  /// In tr, this message translates to:
+  /// **'metrekareye göre bölünerek'**
+  String get otoKuralPaylasimMetrekare;
+
+  /// No description provided for @otoKuralGiderCumle.
+  ///
+  /// In tr, this message translates to:
+  /// **'{siklik} “{ad}” için {tutar} ödeme kaydı açılır ({onay}). Sıradaki: {tarih}.'**
+  String otoKuralGiderCumle(
+    String siklik,
+    String ad,
+    String tutar,
+    String onay,
+    String tarih,
+  );
+
+  /// No description provided for @otoKuralGiderOnayBekler.
+  ///
+  /// In tr, this message translates to:
+  /// **'ödemeyi siz onaylarsınız'**
+  String get otoKuralGiderOnayBekler;
+
+  /// No description provided for @otoKuralGiderOtomatik.
+  ///
+  /// In tr, this message translates to:
+  /// **'ödenmiş sayılır'**
+  String get otoKuralGiderOtomatik;
+
+  /// No description provided for @otoKuralSiklikAylik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Her ay'**
+  String get otoKuralSiklikAylik;
+
+  /// No description provided for @otoKuralSiklikUcAylik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Üç ayda bir'**
+  String get otoKuralSiklikUcAylik;
+
+  /// No description provided for @otoKuralSiklikAltiAylik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Altı ayda bir'**
+  String get otoKuralSiklikAltiAylik;
+
+  /// No description provided for @otoKuralSiklikYillik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yılda bir'**
+  String get otoKuralSiklikYillik;
+
+  /// No description provided for @otoKuralGecikmeCumle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Son ödeme günü geçen borçlara her ay %{oran} gecikme faizi eklenir.'**
+  String otoKuralGecikmeCumle(String oran);
+
+  /// No description provided for @otoKuralGecikmeKapali.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gecikme faizi eklenmez.'**
+  String get otoKuralGecikmeKapali;
+
+  /// No description provided for @otoKuralSonYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz çalışmadı.'**
+  String get otoKuralSonYok;
+
+  /// No description provided for @otoKuralSonPlan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Son çalışma {zaman}: {adet} daireye toplam {tutar} borç yazıldı.'**
+  String otoKuralSonPlan(String zaman, String adet, String tutar);
+
+  /// No description provided for @otoKuralSonErtelendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Son çalışma {zaman}: bu ay atlandı.'**
+  String otoKuralSonErtelendi(String zaman);
+
+  /// No description provided for @otoKuralSonGider.
+  ///
+  /// In tr, this message translates to:
+  /// **'Son çalışma {zaman}: ödeme kaydı açıldı.'**
+  String otoKuralSonGider(String zaman);
+
+  /// No description provided for @otoKuralSonHatirlatma.
+  ///
+  /// In tr, this message translates to:
+  /// **'Son çalışma {zaman}: {adet} kişiye hatırlatma gönderildi.'**
+  String otoKuralSonHatirlatma(String zaman, String adet);
+
+  /// No description provided for @otoKuralSonGecikme.
+  ///
+  /// In tr, this message translates to:
+  /// **'Son çalışma {zaman}: {adet} borca toplam {tutar} faiz eklendi.'**
+  String otoKuralSonGecikme(String zaman, String adet, String tutar);
+
+  /// No description provided for @otoKuralBugunPlan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu kural bugün çalışsaydı {adet} daireye toplam {tutar} borç yazılırdı.'**
+  String otoKuralBugunPlan(String adet, String tutar);
+
+  /// No description provided for @otoKuralBugunAtlanan.
+  ///
+  /// In tr, this message translates to:
+  /// **'{adet} dairenin tutarı belirlenemediği için atlanırdı.'**
+  String otoKuralBugunAtlanan(String adet);
+
+  /// No description provided for @otoKuralBugunHatirlatma.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu kural bugün çalışsaydı {adet} kişiye hatırlatma giderdi.'**
+  String otoKuralBugunHatirlatma(String adet);
+
+  /// No description provided for @otoKuralBugunGecikme.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu kural bugün çalışsaydı {adet} borca toplam {tutar} faiz eklenirdi.'**
+  String otoKuralBugunGecikme(String adet, String tutar);
+
+  /// No description provided for @otoKuralBugunGider.
+  ///
+  /// In tr, this message translates to:
+  /// **'Her çalıştığında {tutar} ödeme kaydı açar; ilk kez {tarih} tarihinde çalışır.'**
+  String otoKuralBugunGider(String tutar, String tarih);
+
+  /// No description provided for @otoKuralIlkCalisma.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaydederseniz ilk kez {tarih} tarihinde çalışır.'**
+  String otoKuralIlkCalisma(String tarih);
+
+  /// No description provided for @otoSihirbazAdim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Adım {n} / {toplam}'**
+  String otoSihirbazAdim(String n, String toplam);
+
+  /// No description provided for @otoSihirbazNeZaman.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ne zaman?'**
+  String get otoSihirbazNeZaman;
+
+  /// No description provided for @otoSihirbazKime.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kime?'**
+  String get otoSihirbazKime;
+
+  /// No description provided for @otoSihirbazNe.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ne yapılsın?'**
+  String get otoSihirbazNe;
+
+  /// No description provided for @otoSihirbazOnizleme.
+  ///
+  /// In tr, this message translates to:
+  /// **'Önizleme'**
+  String get otoSihirbazOnizleme;
+
+  /// No description provided for @otoSihirbazAyinGunu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ayın kaçında?'**
+  String get otoSihirbazAyinGunu;
+
+  /// No description provided for @otoSihirbazGunIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'1 ile 28 arası — her ayda bulunan günler.'**
+  String get otoSihirbazGunIpucu;
+
+  /// No description provided for @otoSihirbazIlkTarih.
+  ///
+  /// In tr, this message translates to:
+  /// **'İlk tarih'**
+  String get otoSihirbazIlkTarih;
+
+  /// No description provided for @otoSihirbazKimeDaireler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tüm dairelere borç yaz'**
+  String get otoSihirbazKimeDaireler;
+
+  /// No description provided for @otoSihirbazKimeDairelerAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aidat gibi, her dairenin ödeyeceği tutar.'**
+  String get otoSihirbazKimeDairelerAlt;
+
+  /// No description provided for @otoSihirbazKimeGider.
+  ///
+  /// In tr, this message translates to:
+  /// **'Site adına ödeme kaydı aç'**
+  String get otoSihirbazKimeGider;
+
+  /// No description provided for @otoSihirbazKimeGiderAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapıcı maaşı, temizlik firması gibi düzenli ödemeler.'**
+  String get otoSihirbazKimeGiderAlt;
+
+  /// No description provided for @otoSihirbazYalnizAylik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dairelere borç yazma yalnız “Her ay” seçildiğinde kullanılabilir.'**
+  String get otoSihirbazYalnizAylik;
+
+  /// No description provided for @otoSihirbazPaylasim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tutar nasıl paylaşılsın?'**
+  String get otoSihirbazPaylasim;
+
+  /// No description provided for @otoSihirbazPaylasimDaire.
+  ///
+  /// In tr, this message translates to:
+  /// **'Her daireye aynı tutar'**
+  String get otoSihirbazPaylasimDaire;
+
+  /// No description provided for @otoSihirbazPaylasimEsit.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplam tutarı eşit böl'**
+  String get otoSihirbazPaylasimEsit;
+
+  /// No description provided for @otoSihirbazPaylasimArsa.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplam tutarı arsa payına göre böl'**
+  String get otoSihirbazPaylasimArsa;
+
+  /// No description provided for @otoSihirbazPaylasimMetrekare.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplam tutarı metrekareye göre böl'**
+  String get otoSihirbazPaylasimMetrekare;
+
+  /// No description provided for @otoSihirbazAd.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kuralın adı'**
+  String get otoSihirbazAd;
+
+  /// No description provided for @otoSihirbazAdOrnek.
+  ///
+  /// In tr, this message translates to:
+  /// **'Örn. Aylık aidat, Kapıcı maaşı'**
+  String get otoSihirbazAdOrnek;
+
+  /// No description provided for @otoSihirbazKalem.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hangi kalem?'**
+  String get otoSihirbazKalem;
+
+  /// No description provided for @otoSihirbazTutar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tutar (₺)'**
+  String get otoSihirbazTutar;
+
+  /// No description provided for @otoSihirbazTutarDaire.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire başına tutar (₺)'**
+  String get otoSihirbazTutarDaire;
+
+  /// No description provided for @otoSihirbazTutarToplam.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplam tutar (₺)'**
+  String get otoSihirbazTutarToplam;
+
+  /// No description provided for @otoSihirbazVade.
+  ///
+  /// In tr, this message translates to:
+  /// **'Son ödeme günü, borç yazıldıktan kaç gün sonra?'**
+  String get otoSihirbazVade;
+
+  /// No description provided for @otoSihirbazKasa.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hangi kasadan?'**
+  String get otoSihirbazKasa;
+
+  /// No description provided for @otoSihirbazOtomatikOnay.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıt ödenmiş sayılsın (onayımı beklemesin)'**
+  String get otoSihirbazOtomatikOnay;
+
+  /// No description provided for @otoSihirbazIleri.
+  ///
+  /// In tr, this message translates to:
+  /// **'İleri'**
+  String get otoSihirbazIleri;
+
+  /// No description provided for @otoSihirbazGeri.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geri'**
+  String get otoSihirbazGeri;
+
+  /// No description provided for @otoSihirbazKaydet.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kuralı kaydet'**
+  String get otoSihirbazKaydet;
+
+  /// No description provided for @otoSihirbazEksik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu adımı tamamlayın.'**
+  String get otoSihirbazEksik;
+
+  /// No description provided for @otoKurallarEkranBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Otomasyon kuralları'**
+  String get otoKurallarEkranBaslik;
 }
 
 class _AppLocalizationsDelegate

@@ -8359,4 +8359,266 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get otoEpostaGecmisiBos =>
       'Aún no se han enviado correos de recordatorio.';
+
+  @override
+  String get otoKurallarBaslik => 'Reglas';
+
+  @override
+  String get otoKurallarAlt =>
+      'Tareas que el sistema hace por usted de forma periódica. Puede activar o desactivar cada regla.';
+
+  @override
+  String get otoKuralYeni => 'Nueva regla';
+
+  @override
+  String get otoKuralYok => 'Aún no hay reglas. Empiece con «Nueva regla».';
+
+  @override
+  String get otoKuralAcik => 'Activada';
+
+  @override
+  String get otoKuralKapali => 'Desactivada';
+
+  @override
+  String otoKuralAnahtar(String cumle) {
+    return 'Activar/desactivar la regla: $cumle';
+  }
+
+  @override
+  String get otoKuralAyarla => 'Ajustar';
+
+  @override
+  String get otoKuralBuAyAtla => 'Omitir este mes';
+
+  @override
+  String get otoKuralBuAyAtlanacak => 'Este mes se omitirá.';
+
+  @override
+  String get otoKuralSilOnay =>
+      '¿Eliminar esta regla? Los registros ya creados se conservan.';
+
+  @override
+  String otoKuralPlanCumle(String gun, String tutar, String ad, String vade) {
+    return 'El día $gun de cada mes se carga a todas las viviendas «$ad» por $tutar por vivienda; vence $vade días después.';
+  }
+
+  @override
+  String otoKuralPlanCumleToplam(
+    String gun,
+    String tutar,
+    String ad,
+    String paylasim,
+    String vade,
+  ) {
+    return 'El día $gun de cada mes se carga «$ad» por un total de $tutar a todas las viviendas, $paylasim; vence $vade días después.';
+  }
+
+  @override
+  String get otoKuralPaylasimEsit => 'a partes iguales';
+
+  @override
+  String get otoKuralPaylasimArsa => 'según la cuota de participación';
+
+  @override
+  String get otoKuralPaylasimMetrekare => 'según los metros cuadrados';
+
+  @override
+  String otoKuralGiderCumle(
+    String siklik,
+    String ad,
+    String tutar,
+    String onay,
+    String tarih,
+  ) {
+    return '$siklik se crea un registro de pago de $tutar para «$ad» ($onay). Próximo: $tarih.';
+  }
+
+  @override
+  String get otoKuralGiderOnayBekler => 'usted aprueba el pago';
+
+  @override
+  String get otoKuralGiderOtomatik => 'se da por pagado';
+
+  @override
+  String get otoKuralSiklikAylik => 'Cada mes';
+
+  @override
+  String get otoKuralSiklikUcAylik => 'Cada tres meses';
+
+  @override
+  String get otoKuralSiklikAltiAylik => 'Cada seis meses';
+
+  @override
+  String get otoKuralSiklikYillik => 'Una vez al año';
+
+  @override
+  String otoKuralGecikmeCumle(String oran) {
+    return 'Los cargos vencidos reciben un $oran % de interés de demora cada mes.';
+  }
+
+  @override
+  String get otoKuralGecikmeKapali => 'No se añade interés de demora.';
+
+  @override
+  String get otoKuralSonYok => 'Aún no se ha ejecutado.';
+
+  @override
+  String otoKuralSonPlan(String zaman, String adet, String tutar) {
+    return 'Última ejecución $zaman: $tutar en total cargados a $adet viviendas.';
+  }
+
+  @override
+  String otoKuralSonErtelendi(String zaman) {
+    return 'Última ejecución $zaman: este mes se omitió.';
+  }
+
+  @override
+  String otoKuralSonGider(String zaman) {
+    return 'Última ejecución $zaman: registro de pago creado.';
+  }
+
+  @override
+  String otoKuralSonHatirlatma(String zaman, String adet) {
+    return 'Última ejecución $zaman: recordatorio enviado a $adet personas.';
+  }
+
+  @override
+  String otoKuralSonGecikme(String zaman, String adet, String tutar) {
+    return 'Última ejecución $zaman: $tutar de interés en $adet cargos.';
+  }
+
+  @override
+  String otoKuralBugunPlan(String adet, String tutar) {
+    return 'Si esta regla se ejecutara hoy, se cargarían $tutar en total a $adet viviendas.';
+  }
+
+  @override
+  String otoKuralBugunAtlanan(String adet) {
+    return 'Se omitirían $adet viviendas porque no se puede determinar su importe.';
+  }
+
+  @override
+  String otoKuralBugunHatirlatma(String adet) {
+    return 'Si esta regla se ejecutara hoy, se enviaría un recordatorio a $adet personas.';
+  }
+
+  @override
+  String otoKuralBugunGecikme(String adet, String tutar) {
+    return 'Si esta regla se ejecutara hoy, se añadirían $tutar de interés a $adet cargos.';
+  }
+
+  @override
+  String otoKuralBugunGider(String tutar, String tarih) {
+    return 'Cada ejecución crea un registro de pago de $tutar; la primera es el $tarih.';
+  }
+
+  @override
+  String otoKuralIlkCalisma(String tarih) {
+    return 'Si la guarda, se ejecutará por primera vez el $tarih.';
+  }
+
+  @override
+  String otoSihirbazAdim(String n, String toplam) {
+    return 'Paso $n de $toplam';
+  }
+
+  @override
+  String get otoSihirbazNeZaman => '¿Cuándo?';
+
+  @override
+  String get otoSihirbazKime => '¿Para quién?';
+
+  @override
+  String get otoSihirbazNe => '¿Qué debe hacerse?';
+
+  @override
+  String get otoSihirbazOnizleme => 'Vista previa';
+
+  @override
+  String get otoSihirbazAyinGunu => '¿Qué día del mes?';
+
+  @override
+  String get otoSihirbazGunIpucu =>
+      'Del 1 al 28: días que existen en todos los meses.';
+
+  @override
+  String get otoSihirbazIlkTarih => 'Primera fecha';
+
+  @override
+  String get otoSihirbazKimeDaireler => 'Cargar a todas las viviendas';
+
+  @override
+  String get otoSihirbazKimeDairelerAlt =>
+      'Como la cuota: un importe que paga cada vivienda.';
+
+  @override
+  String get otoSihirbazKimeGider => 'Crear un pago de la comunidad';
+
+  @override
+  String get otoSihirbazKimeGiderAlt =>
+      'Pagos periódicos como el sueldo del conserje o la empresa de limpieza.';
+
+  @override
+  String get otoSihirbazYalnizAylik =>
+      'Cargar a las viviendas solo es posible con «Cada mes».';
+
+  @override
+  String get otoSihirbazPaylasim => '¿Cómo se reparte el importe?';
+
+  @override
+  String get otoSihirbazPaylasimDaire => 'Mismo importe por vivienda';
+
+  @override
+  String get otoSihirbazPaylasimEsit => 'Repartir el total a partes iguales';
+
+  @override
+  String get otoSihirbazPaylasimArsa =>
+      'Repartir el total según la cuota de participación';
+
+  @override
+  String get otoSihirbazPaylasimMetrekare =>
+      'Repartir el total según los metros cuadrados';
+
+  @override
+  String get otoSihirbazAd => 'Nombre de la regla';
+
+  @override
+  String get otoSihirbazAdOrnek => 'P. ej. Cuota mensual, Sueldo del conserje';
+
+  @override
+  String get otoSihirbazKalem => '¿Qué concepto?';
+
+  @override
+  String get otoSihirbazTutar => 'Importe (₺)';
+
+  @override
+  String get otoSihirbazTutarDaire => 'Importe por vivienda (₺)';
+
+  @override
+  String get otoSihirbazTutarToplam => 'Importe total (₺)';
+
+  @override
+  String get otoSihirbazVade => '¿Cuántos días después del cargo vence?';
+
+  @override
+  String get otoSihirbazKasa => '¿Desde qué caja?';
+
+  @override
+  String get otoSihirbazOtomatikOnay =>
+      'Dar el registro por pagado (sin esperar mi aprobación)';
+
+  @override
+  String get otoSihirbazIleri => 'Siguiente';
+
+  @override
+  String get otoSihirbazGeri => 'Atrás';
+
+  @override
+  String get otoSihirbazKaydet => 'Guardar regla';
+
+  @override
+  String get otoSihirbazEksik => 'Complete este paso.';
+
+  @override
+  String get otoKurallarEkranBaslik => 'Reglas de automatización';
 }

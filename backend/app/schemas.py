@@ -7209,6 +7209,38 @@ class AidatPlaniCreate(AidatPlaniBase):
     pass
 
 
+class KuralOnizleme(BaseModel):
+    """(P250 §9) "Bu kural BUGUN calissaydi ..." — yazma yapilmaz.
+
+    `adet`: borc yazilacak daire / hatirlatma gidecek kisi sayisi.
+    `atlanan`: kurala girip yazilamayacak daire (or. tutari belirsiz).
+    `ilk_tarih`: kaydedilirse ilk calisacagi gun (plan icin).
+    """
+    adet: int
+    toplam_kurus: int
+    atlanan: int = 0
+    donem: str | None = None
+    ilk_tarih: date | None = None
+
+
+class KuralSonCalisma(BaseModel):
+    """(P250 §9) Bir kuralin EN SON calismasi ve sonucu.
+
+    `kural`: plan / gider kimligi ya da tekil kurallar icin tur adi
+    (`borc_hatirlatma`, `gecikme_faizi`).
+    """
+    kural: str
+    tur: str
+    zaman: datetime
+    adet: int
+    tutar_kurus: int
+    durum: str | None = None
+
+
+class KuralSonCalismaListesi(BaseModel):
+    items: list[KuralSonCalisma]
+
+
 class AidatPlaniUpdate(BaseModel):
     """Kismi guncelleme. Tutar/dagitim tutarliligi SUNUCUDA yeniden
     dogrulanir (CHECK kisiti da ayni kurali zorluyor)."""

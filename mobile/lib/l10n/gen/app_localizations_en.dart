@@ -8365,4 +8365,263 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get otoEpostaGecmisiBos => 'No reminder emails sent yet.';
+
+  @override
+  String get otoKurallarBaslik => 'Rules';
+
+  @override
+  String get otoKurallarAlt =>
+      'Tasks the system does for you on a schedule. You can switch each rule on or off.';
+
+  @override
+  String get otoKuralYeni => 'New rule';
+
+  @override
+  String get otoKuralYok => 'No rules yet. Start with “New rule”.';
+
+  @override
+  String get otoKuralAcik => 'On';
+
+  @override
+  String get otoKuralKapali => 'Off';
+
+  @override
+  String otoKuralAnahtar(String cumle) {
+    return 'Switch rule on/off: $cumle';
+  }
+
+  @override
+  String get otoKuralAyarla => 'Adjust';
+
+  @override
+  String get otoKuralBuAyAtla => 'Skip this month';
+
+  @override
+  String get otoKuralBuAyAtlanacak => 'This month will be skipped.';
+
+  @override
+  String get otoKuralSilOnay =>
+      'Delete this rule? Records already created are kept.';
+
+  @override
+  String otoKuralPlanCumle(String gun, String tutar, String ad, String vade) {
+    return 'On day $gun of every month, a “$ad” charge of $tutar per unit is added to all units; payment is due $vade days later.';
+  }
+
+  @override
+  String otoKuralPlanCumleToplam(
+    String gun,
+    String tutar,
+    String ad,
+    String paylasim,
+    String vade,
+  ) {
+    return 'On day $gun of every month, a total “$ad” charge of $tutar is added to all units, $paylasim; payment is due $vade days later.';
+  }
+
+  @override
+  String get otoKuralPaylasimEsit => 'split equally';
+
+  @override
+  String get otoKuralPaylasimArsa => 'split by land share';
+
+  @override
+  String get otoKuralPaylasimMetrekare => 'split by floor area';
+
+  @override
+  String otoKuralGiderCumle(
+    String siklik,
+    String ad,
+    String tutar,
+    String onay,
+    String tarih,
+  ) {
+    return '$siklik, a $tutar payment record is created for “$ad” ($onay). Next: $tarih.';
+  }
+
+  @override
+  String get otoKuralGiderOnayBekler => 'you approve the payment';
+
+  @override
+  String get otoKuralGiderOtomatik => 'marked as paid';
+
+  @override
+  String get otoKuralSiklikAylik => 'Every month';
+
+  @override
+  String get otoKuralSiklikUcAylik => 'Every three months';
+
+  @override
+  String get otoKuralSiklikAltiAylik => 'Every six months';
+
+  @override
+  String get otoKuralSiklikYillik => 'Once a year';
+
+  @override
+  String otoKuralGecikmeCumle(String oran) {
+    return 'Overdue charges get $oran% late interest every month.';
+  }
+
+  @override
+  String get otoKuralGecikmeKapali => 'No late interest is added.';
+
+  @override
+  String get otoKuralSonYok => 'Has not run yet.';
+
+  @override
+  String otoKuralSonPlan(String zaman, String adet, String tutar) {
+    return 'Last run $zaman: $tutar in total charged to $adet units.';
+  }
+
+  @override
+  String otoKuralSonErtelendi(String zaman) {
+    return 'Last run $zaman: this month was skipped.';
+  }
+
+  @override
+  String otoKuralSonGider(String zaman) {
+    return 'Last run $zaman: payment record created.';
+  }
+
+  @override
+  String otoKuralSonHatirlatma(String zaman, String adet) {
+    return 'Last run $zaman: reminder sent to $adet people.';
+  }
+
+  @override
+  String otoKuralSonGecikme(String zaman, String adet, String tutar) {
+    return 'Last run $zaman: $tutar interest added to $adet charges.';
+  }
+
+  @override
+  String otoKuralBugunPlan(String adet, String tutar) {
+    return 'If this rule ran today, $tutar in total would be charged to $adet units.';
+  }
+
+  @override
+  String otoKuralBugunAtlanan(String adet) {
+    return '$adet units would be skipped because their amount could not be determined.';
+  }
+
+  @override
+  String otoKuralBugunHatirlatma(String adet) {
+    return 'If this rule ran today, a reminder would go to $adet people.';
+  }
+
+  @override
+  String otoKuralBugunGecikme(String adet, String tutar) {
+    return 'If this rule ran today, $tutar interest would be added to $adet charges.';
+  }
+
+  @override
+  String otoKuralBugunGider(String tutar, String tarih) {
+    return 'Each run creates a $tutar payment record; the first run is on $tarih.';
+  }
+
+  @override
+  String otoKuralIlkCalisma(String tarih) {
+    return 'If you save it, it first runs on $tarih.';
+  }
+
+  @override
+  String otoSihirbazAdim(String n, String toplam) {
+    return 'Step $n of $toplam';
+  }
+
+  @override
+  String get otoSihirbazNeZaman => 'When?';
+
+  @override
+  String get otoSihirbazKime => 'For whom?';
+
+  @override
+  String get otoSihirbazNe => 'What should happen?';
+
+  @override
+  String get otoSihirbazOnizleme => 'Preview';
+
+  @override
+  String get otoSihirbazAyinGunu => 'Which day of the month?';
+
+  @override
+  String get otoSihirbazGunIpucu => '1 to 28 — days that exist in every month.';
+
+  @override
+  String get otoSihirbazIlkTarih => 'First date';
+
+  @override
+  String get otoSihirbazKimeDaireler => 'Charge all units';
+
+  @override
+  String get otoSihirbazKimeDairelerAlt =>
+      'Like dues: an amount each unit pays.';
+
+  @override
+  String get otoSihirbazKimeGider => 'Create a payment for the site';
+
+  @override
+  String get otoSihirbazKimeGiderAlt =>
+      'Regular payments such as the caretaker\'s salary or a cleaning company.';
+
+  @override
+  String get otoSihirbazYalnizAylik =>
+      'Charging units is only available with “Every month”.';
+
+  @override
+  String get otoSihirbazPaylasim => 'How should the amount be shared?';
+
+  @override
+  String get otoSihirbazPaylasimDaire => 'Same amount for each unit';
+
+  @override
+  String get otoSihirbazPaylasimEsit => 'Split the total equally';
+
+  @override
+  String get otoSihirbazPaylasimArsa => 'Split the total by land share';
+
+  @override
+  String get otoSihirbazPaylasimMetrekare => 'Split the total by floor area';
+
+  @override
+  String get otoSihirbazAd => 'Rule name';
+
+  @override
+  String get otoSihirbazAdOrnek => 'E.g. Monthly dues, Caretaker salary';
+
+  @override
+  String get otoSihirbazKalem => 'Which item?';
+
+  @override
+  String get otoSihirbazTutar => 'Amount (₺)';
+
+  @override
+  String get otoSihirbazTutarDaire => 'Amount per unit (₺)';
+
+  @override
+  String get otoSihirbazTutarToplam => 'Total amount (₺)';
+
+  @override
+  String get otoSihirbazVade => 'Payment due how many days after the charge?';
+
+  @override
+  String get otoSihirbazKasa => 'From which cash account?';
+
+  @override
+  String get otoSihirbazOtomatikOnay =>
+      'Mark the record as paid (don\'t wait for my approval)';
+
+  @override
+  String get otoSihirbazIleri => 'Next';
+
+  @override
+  String get otoSihirbazGeri => 'Back';
+
+  @override
+  String get otoSihirbazKaydet => 'Save rule';
+
+  @override
+  String get otoSihirbazEksik => 'Please complete this step.';
+
+  @override
+  String get otoKurallarEkranBaslik => 'Automation rules';
 }

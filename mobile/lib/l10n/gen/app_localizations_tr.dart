@@ -8167,4 +8167,265 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get otoEpostaGecmisiBos => 'Henüz hatırlatma e-postası gönderilmedi.';
+
+  @override
+  String get otoKurallarBaslik => 'Kurallar';
+
+  @override
+  String get otoKurallarAlt =>
+      'Sistemin sizin yerinize düzenli yaptığı işler. Her kuralı açıp kapatabilirsiniz.';
+
+  @override
+  String get otoKuralYeni => 'Yeni kural';
+
+  @override
+  String get otoKuralYok => 'Henüz kural yok. “Yeni kural” ile başlayın.';
+
+  @override
+  String get otoKuralAcik => 'Açık';
+
+  @override
+  String get otoKuralKapali => 'Kapalı';
+
+  @override
+  String otoKuralAnahtar(String cumle) {
+    return 'Kuralı aç/kapat: $cumle';
+  }
+
+  @override
+  String get otoKuralAyarla => 'Ayarla';
+
+  @override
+  String get otoKuralBuAyAtla => 'Bu ayı atla';
+
+  @override
+  String get otoKuralBuAyAtlanacak => 'Bu ay atlanacak.';
+
+  @override
+  String get otoKuralSilOnay =>
+      'Bu kural silinsin mi? Daha önce yazılan kayıtlar silinmez.';
+
+  @override
+  String otoKuralPlanCumle(String gun, String tutar, String ad, String vade) {
+    return 'Her ayın $gun. günü tüm dairelere daire başına $tutar “$ad” borcu yazılır; son ödeme günü $vade gün sonradır.';
+  }
+
+  @override
+  String otoKuralPlanCumleToplam(
+    String gun,
+    String tutar,
+    String ad,
+    String paylasim,
+    String vade,
+  ) {
+    return 'Her ayın $gun. günü toplam $tutar “$ad” borcu tüm dairelere $paylasim yazılır; son ödeme günü $vade gün sonradır.';
+  }
+
+  @override
+  String get otoKuralPaylasimEsit => 'eşit bölünerek';
+
+  @override
+  String get otoKuralPaylasimArsa => 'arsa payına göre bölünerek';
+
+  @override
+  String get otoKuralPaylasimMetrekare => 'metrekareye göre bölünerek';
+
+  @override
+  String otoKuralGiderCumle(
+    String siklik,
+    String ad,
+    String tutar,
+    String onay,
+    String tarih,
+  ) {
+    return '$siklik “$ad” için $tutar ödeme kaydı açılır ($onay). Sıradaki: $tarih.';
+  }
+
+  @override
+  String get otoKuralGiderOnayBekler => 'ödemeyi siz onaylarsınız';
+
+  @override
+  String get otoKuralGiderOtomatik => 'ödenmiş sayılır';
+
+  @override
+  String get otoKuralSiklikAylik => 'Her ay';
+
+  @override
+  String get otoKuralSiklikUcAylik => 'Üç ayda bir';
+
+  @override
+  String get otoKuralSiklikAltiAylik => 'Altı ayda bir';
+
+  @override
+  String get otoKuralSiklikYillik => 'Yılda bir';
+
+  @override
+  String otoKuralGecikmeCumle(String oran) {
+    return 'Son ödeme günü geçen borçlara her ay %$oran gecikme faizi eklenir.';
+  }
+
+  @override
+  String get otoKuralGecikmeKapali => 'Gecikme faizi eklenmez.';
+
+  @override
+  String get otoKuralSonYok => 'Henüz çalışmadı.';
+
+  @override
+  String otoKuralSonPlan(String zaman, String adet, String tutar) {
+    return 'Son çalışma $zaman: $adet daireye toplam $tutar borç yazıldı.';
+  }
+
+  @override
+  String otoKuralSonErtelendi(String zaman) {
+    return 'Son çalışma $zaman: bu ay atlandı.';
+  }
+
+  @override
+  String otoKuralSonGider(String zaman) {
+    return 'Son çalışma $zaman: ödeme kaydı açıldı.';
+  }
+
+  @override
+  String otoKuralSonHatirlatma(String zaman, String adet) {
+    return 'Son çalışma $zaman: $adet kişiye hatırlatma gönderildi.';
+  }
+
+  @override
+  String otoKuralSonGecikme(String zaman, String adet, String tutar) {
+    return 'Son çalışma $zaman: $adet borca toplam $tutar faiz eklendi.';
+  }
+
+  @override
+  String otoKuralBugunPlan(String adet, String tutar) {
+    return 'Bu kural bugün çalışsaydı $adet daireye toplam $tutar borç yazılırdı.';
+  }
+
+  @override
+  String otoKuralBugunAtlanan(String adet) {
+    return '$adet dairenin tutarı belirlenemediği için atlanırdı.';
+  }
+
+  @override
+  String otoKuralBugunHatirlatma(String adet) {
+    return 'Bu kural bugün çalışsaydı $adet kişiye hatırlatma giderdi.';
+  }
+
+  @override
+  String otoKuralBugunGecikme(String adet, String tutar) {
+    return 'Bu kural bugün çalışsaydı $adet borca toplam $tutar faiz eklenirdi.';
+  }
+
+  @override
+  String otoKuralBugunGider(String tutar, String tarih) {
+    return 'Her çalıştığında $tutar ödeme kaydı açar; ilk kez $tarih tarihinde çalışır.';
+  }
+
+  @override
+  String otoKuralIlkCalisma(String tarih) {
+    return 'Kaydederseniz ilk kez $tarih tarihinde çalışır.';
+  }
+
+  @override
+  String otoSihirbazAdim(String n, String toplam) {
+    return 'Adım $n / $toplam';
+  }
+
+  @override
+  String get otoSihirbazNeZaman => 'Ne zaman?';
+
+  @override
+  String get otoSihirbazKime => 'Kime?';
+
+  @override
+  String get otoSihirbazNe => 'Ne yapılsın?';
+
+  @override
+  String get otoSihirbazOnizleme => 'Önizleme';
+
+  @override
+  String get otoSihirbazAyinGunu => 'Ayın kaçında?';
+
+  @override
+  String get otoSihirbazGunIpucu => '1 ile 28 arası — her ayda bulunan günler.';
+
+  @override
+  String get otoSihirbazIlkTarih => 'İlk tarih';
+
+  @override
+  String get otoSihirbazKimeDaireler => 'Tüm dairelere borç yaz';
+
+  @override
+  String get otoSihirbazKimeDairelerAlt =>
+      'Aidat gibi, her dairenin ödeyeceği tutar.';
+
+  @override
+  String get otoSihirbazKimeGider => 'Site adına ödeme kaydı aç';
+
+  @override
+  String get otoSihirbazKimeGiderAlt =>
+      'Kapıcı maaşı, temizlik firması gibi düzenli ödemeler.';
+
+  @override
+  String get otoSihirbazYalnizAylik =>
+      'Dairelere borç yazma yalnız “Her ay” seçildiğinde kullanılabilir.';
+
+  @override
+  String get otoSihirbazPaylasim => 'Tutar nasıl paylaşılsın?';
+
+  @override
+  String get otoSihirbazPaylasimDaire => 'Her daireye aynı tutar';
+
+  @override
+  String get otoSihirbazPaylasimEsit => 'Toplam tutarı eşit böl';
+
+  @override
+  String get otoSihirbazPaylasimArsa => 'Toplam tutarı arsa payına göre böl';
+
+  @override
+  String get otoSihirbazPaylasimMetrekare =>
+      'Toplam tutarı metrekareye göre böl';
+
+  @override
+  String get otoSihirbazAd => 'Kuralın adı';
+
+  @override
+  String get otoSihirbazAdOrnek => 'Örn. Aylık aidat, Kapıcı maaşı';
+
+  @override
+  String get otoSihirbazKalem => 'Hangi kalem?';
+
+  @override
+  String get otoSihirbazTutar => 'Tutar (₺)';
+
+  @override
+  String get otoSihirbazTutarDaire => 'Daire başına tutar (₺)';
+
+  @override
+  String get otoSihirbazTutarToplam => 'Toplam tutar (₺)';
+
+  @override
+  String get otoSihirbazVade =>
+      'Son ödeme günü, borç yazıldıktan kaç gün sonra?';
+
+  @override
+  String get otoSihirbazKasa => 'Hangi kasadan?';
+
+  @override
+  String get otoSihirbazOtomatikOnay =>
+      'Kayıt ödenmiş sayılsın (onayımı beklemesin)';
+
+  @override
+  String get otoSihirbazIleri => 'İleri';
+
+  @override
+  String get otoSihirbazGeri => 'Geri';
+
+  @override
+  String get otoSihirbazKaydet => 'Kuralı kaydet';
+
+  @override
+  String get otoSihirbazEksik => 'Bu adımı tamamlayın.';
+
+  @override
+  String get otoKurallarEkranBaslik => 'Otomasyon kuralları';
 }

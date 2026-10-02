@@ -24,7 +24,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/i18n/l10n.dart';
-import '../../otomasyon/presentation/otomatik_hatirlatma_screen.dart';
+import '../../otomasyon/presentation/otomasyon_kurallari_screen.dart';
 import '../data/finans_api.dart';
 import '../domain/finans_models.dart';
 import 'tahsilat_screen.dart' show borclularProvider;
@@ -86,17 +86,18 @@ class _BorclularScreenState extends ConsumerState<BorclularScreen> {
               .toList();
           return Column(
             children: [
-              // (P250 §7) OTOMATIK HATIRLATMA — web otomasyon kartinin
-              // mobil karsiligi (ayni ayar kaydi).
+              // (P250 §9) OTOMASYON KURALLARI — web otomasyon ekraninin
+              // mobil karsiligi. Hatirlatma (§7) bu ekranda bir kural;
+              // "Ayarla" ayrintili hatirlatma ekranini acar (ayni kayit).
               ListTile(
-                key: const Key('borclular-otomatik-hatirlatma'),
+                key: const Key('borclular-otomasyon-kurallari'),
                 dense: true,
-                leading: const Icon(Icons.notifications_active_outlined),
-                title: Text(l10n.otoHatirlatma),
+                leading: const Icon(Icons.auto_mode_outlined),
+                title: Text(l10n.otoKurallarEkranBaslik),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
-                    builder: (_) => const OtomatikHatirlatmaScreen(),
+                    builder: (_) => const OtomasyonKurallariScreen(),
                   ),
                 ),
               ),

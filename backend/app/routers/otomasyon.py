@@ -43,6 +43,9 @@ from ..schemas import (
     DuzenliGiderUpdate,
     HatirlatmaAyariOut,
     HatirlatmaAyariUpdate,
+    KuralOnizleme,
+    KuralSonCalisma,
+    KuralSonCalismaListesi,
     OtomasyonGunlukListResponse,
     OtomasyonGunlukOut,
 )
@@ -67,6 +70,51 @@ async def _tanim_dogrula(db: AsyncSession, tanim_id: uuid.UUID) -> None:
     if obj.tip == "gelir":
         # Bir GELIR kalemi BORCLANDIRILMAZ; tahsil edilir.
         raise APIError(422, "validation_error", "gelir_kalemi_borclandirilmaz")
+
+
+@router.post("/aidat-planlari/onizleme", response_model=KuralOnizleme)
+async def plan_onizleme(
+    body: AidatPlaniCreate,
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_YONETIM),
+) -> KuralOnizleme:
+    """(P250 §9) KAYDETMEDEN: "bu kural bugun calissaydi N daireye X TL
+    borc yazilirdi". Gorevin kullandigi AYNI plan hesabi (`toplu_plan`)
+    kullanilir; onizleme ile gercek yazim ayrisamaz. Hicbir sey yazilmaz.
+    """
+    from datetime import date as _date
+
+    from .. import otomasyon as oto
+    from ..toplu_tahakkuk import toplu_plan
+
+    await _tanim_dogrula(db, body.gelir_gider_tanim_id)
+    tanim = (
+        await db.execute(
+            select(GelirGiderTanim).where(GelirGiderTanim.id == body.gelir_gider_tanim_id)
+        )
+    ).scalar_one()
+    bugun = _date.today()
+    donem = oto.donem_metni(bugun)
+    # Gecici plan: ORM nesnesi DEGIL (oturuma karisma ihtimali bile
+    # olmasin); `_plan_istegi` yalniz alanlari okur.
+    from types import SimpleNamespace
+
+    plan = SimpleNamespace(**body.model_dump())
+    vade = oto.tahakkuk_tarihi(donem, plan.tahakkuk_gunu)
+    satirlar = await toplu_plan(db, oto._plan_istegi(plan, donem, vade), tanim)
+    yazilacak = [s for s in satirlar if s.tutar_kurus and not s.atlama_nedeni]
+    # Ilk calisma: yeni plan bu ayin gunu GECMISSE bu gece, degilse o gun.
+    ilk = (
+        bugun if bugun.day >= plan.tahakkuk_gunu
+        else oto.tahakkuk_tarihi(donem, plan.tahakkuk_gunu)
+    )
+    return KuralOnizleme(
+        adet=len(yazilacak),
+        toplam_kurus=sum(s.tutar_kurus or 0 for s in yazilacak),
+        atlanan=len(satirlar) - len(yazilacak),
+        donem=donem,
+        ilk_tarih=ilk,
+    )
 
 
 @router.get("/aidat-planlari", response_model=AidatPlaniListResponse)
@@ -216,6 +264,33 @@ async def hatirlatma_ayari(
     return await _ayar(db, user.tenant_id)
 
 
+@router.get("/hatirlatma-ayari/onizleme", response_model=KuralOnizleme)
+async def hatirlatma_onizleme(
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_OKUR),
+) -> KuralOnizleme:
+    """(P250 §9) "Bu kural bugun calissaydi N kisiye hatirlatma giderdi".
+
+    Kayitli ayarla, gonderimin kullandigi AYNI hedef hesabi
+    (`hatirlatma_hedefleri`). Kural KAPALIYKEN de hesaplanir: yonetici
+    acmadan once ne olacagini gorebilmeli. Hicbir sey gonderilmez.
+    """
+    from datetime import date as _date
+
+    from .. import otomasyon as oto
+
+    ayar = await _ayar(db, user.tenant_id)
+    _, kisi, _, alicisiz = await oto.hatirlatma_hedefleri(
+        db, vade_oncesi_gun=ayar.vade_oncesi_gun, kademeler=ayar.kademeler or [],
+        bugun=_date.today(),
+    )
+    return KuralOnizleme(
+        adet=len(kisi),
+        toplam_kurus=sum(k for k, _ in kisi.values()),
+        atlanan=alicisiz,
+    )
+
+
 @router.patch("/hatirlatma-ayari", response_model=HatirlatmaAyariOut)
 async def hatirlatma_ayari_guncelle(
     body: HatirlatmaAyariUpdate,
@@ -347,6 +422,59 @@ async def gider_sil(
         resource_id=gider_id, meta={"ad": obj.ad},
     )
     return Response(status_code=204)
+
+
+# ============================ KURAL SON CALISMA ============================= #
+#: Tekil kurallarin (tesis basina bir tane) gunluk turleri.
+_TEKIL_KURALLAR = ("borc_hatirlatma", "gecikme_faizi")
+
+
+@router.get("/otomasyon/son-calismalar", response_model=KuralSonCalismaListesi)
+async def son_calismalar(
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_OKUR),
+) -> KuralSonCalismaListesi:
+    """(P250 §9) Her kuralin EN SON calismasi ve sonucu — kural basina.
+
+    Gunluk satiri kurali `sonuc` icinde tasir: aidat plani `plan`,
+    duzenli gider `giderler` (P250 oncesi satirlarda yok; o giderin son
+    calismasi bilinmiyor diye GOSTERILMEZ, uydurulmaz). Son 400 gun.
+    """
+    from datetime import datetime, timedelta, timezone
+
+    esik = datetime.now(timezone.utc) - timedelta(days=400)
+    rows = (
+        await db.execute(
+            select(OtomasyonGunlugu)
+            .where(
+                OtomasyonGunlugu.calisma_zamani >= esik,
+                OtomasyonGunlugu.tur.in_(
+                    ("aidat_tahakkuk", "duzenli_gider", *_TEKIL_KURALLAR)
+                ),
+            )
+            .order_by(OtomasyonGunlugu.calisma_zamani.desc(), OtomasyonGunlugu.id.desc())
+            .limit(2000)
+        )
+    ).scalars().all()
+    gorulen: dict[str, KuralSonCalisma] = {}
+    for r in rows:
+        sonuc = r.sonuc or {}
+        if r.tur == "aidat_tahakkuk":
+            anahtarlar = [sonuc["plan"]] if sonuc.get("plan") else []
+        elif r.tur == "duzenli_gider":
+            anahtarlar = list(sonuc.get("giderler") or [])
+        else:
+            anahtarlar = [r.tur]
+        for a in anahtarlar:
+            if a in gorulen:
+                continue
+            gorulen[a] = KuralSonCalisma(
+                kural=a, tur=r.tur, zaman=r.calisma_zamani,
+                adet=r.adet if r.tur != "duzenli_gider" else 1,
+                tutar_kurus=r.tutar_kurus if r.tur != "duzenli_gider" else 0,
+                durum=sonuc.get("durum"),
+            )
+    return KuralSonCalismaListesi(items=list(gorulen.values()))
 
 
 # =========================== OTOMASYON GUNLUGU ============================== #

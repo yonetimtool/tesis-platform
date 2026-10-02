@@ -8448,4 +8448,265 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get otoEpostaGecmisiBos => 'Писем-напоминаний пока не было.';
+
+  @override
+  String get otoKurallarBaslik => 'Правила';
+
+  @override
+  String get otoKurallarAlt =>
+      'Задачи, которые система регулярно выполняет за вас. Каждое правило можно включить или выключить.';
+
+  @override
+  String get otoKuralYeni => 'Новое правило';
+
+  @override
+  String get otoKuralYok => 'Правил пока нет. Начните с «Новое правило».';
+
+  @override
+  String get otoKuralAcik => 'Вкл.';
+
+  @override
+  String get otoKuralKapali => 'Выкл.';
+
+  @override
+  String otoKuralAnahtar(String cumle) {
+    return 'Включить/выключить правило: $cumle';
+  }
+
+  @override
+  String get otoKuralAyarla => 'Настроить';
+
+  @override
+  String get otoKuralBuAyAtla => 'Пропустить этот месяц';
+
+  @override
+  String get otoKuralBuAyAtlanacak => 'Этот месяц будет пропущен.';
+
+  @override
+  String get otoKuralSilOnay =>
+      'Удалить это правило? Уже созданные записи сохранятся.';
+
+  @override
+  String otoKuralPlanCumle(String gun, String tutar, String ad, String vade) {
+    return 'Каждый месяц $gun-го числа всем квартирам начисляется «$ad» по $tutar на квартиру; срок оплаты — через $vade дн.';
+  }
+
+  @override
+  String otoKuralPlanCumleToplam(
+    String gun,
+    String tutar,
+    String ad,
+    String paylasim,
+    String vade,
+  ) {
+    return 'Каждый месяц $gun-го числа всем квартирам начисляется «$ad» на общую сумму $tutar, $paylasim; срок оплаты — через $vade дн.';
+  }
+
+  @override
+  String get otoKuralPaylasimEsit => 'поровну';
+
+  @override
+  String get otoKuralPaylasimArsa => 'по доле в участке';
+
+  @override
+  String get otoKuralPaylasimMetrekare => 'по площади';
+
+  @override
+  String otoKuralGiderCumle(
+    String siklik,
+    String ad,
+    String tutar,
+    String onay,
+    String tarih,
+  ) {
+    return '$siklik создаётся запись платежа на $tutar за «$ad» ($onay). Следующая: $tarih.';
+  }
+
+  @override
+  String get otoKuralGiderOnayBekler => 'платёж подтверждаете вы';
+
+  @override
+  String get otoKuralGiderOtomatik => 'считается оплаченной';
+
+  @override
+  String get otoKuralSiklikAylik => 'Каждый месяц';
+
+  @override
+  String get otoKuralSiklikUcAylik => 'Раз в три месяца';
+
+  @override
+  String get otoKuralSiklikAltiAylik => 'Раз в полгода';
+
+  @override
+  String get otoKuralSiklikYillik => 'Раз в год';
+
+  @override
+  String otoKuralGecikmeCumle(String oran) {
+    return 'На просроченные начисления каждый месяц добавляются пени $oran%.';
+  }
+
+  @override
+  String get otoKuralGecikmeKapali => 'Пени не начисляются.';
+
+  @override
+  String get otoKuralSonYok => 'Ещё не запускалось.';
+
+  @override
+  String otoKuralSonPlan(String zaman, String adet, String tutar) {
+    return 'Последний запуск $zaman: начислено $tutar на $adet кв.';
+  }
+
+  @override
+  String otoKuralSonErtelendi(String zaman) {
+    return 'Последний запуск $zaman: этот месяц пропущен.';
+  }
+
+  @override
+  String otoKuralSonGider(String zaman) {
+    return 'Последний запуск $zaman: создана запись платежа.';
+  }
+
+  @override
+  String otoKuralSonHatirlatma(String zaman, String adet) {
+    return 'Последний запуск $zaman: напоминание отправлено $adet чел.';
+  }
+
+  @override
+  String otoKuralSonGecikme(String zaman, String adet, String tutar) {
+    return 'Последний запуск $zaman: пени $tutar на $adet начисл.';
+  }
+
+  @override
+  String otoKuralBugunPlan(String adet, String tutar) {
+    return 'Если бы правило сработало сегодня, на $adet кв. было бы начислено всего $tutar.';
+  }
+
+  @override
+  String otoKuralBugunAtlanan(String adet) {
+    return '$adet кв. были бы пропущены: сумму определить нельзя.';
+  }
+
+  @override
+  String otoKuralBugunHatirlatma(String adet) {
+    return 'Если бы правило сработало сегодня, напоминание получили бы $adet чел.';
+  }
+
+  @override
+  String otoKuralBugunGecikme(String adet, String tutar) {
+    return 'Если бы правило сработало сегодня, к $adet начисл. добавились бы пени $tutar.';
+  }
+
+  @override
+  String otoKuralBugunGider(String tutar, String tarih) {
+    return 'Каждый запуск создаёт запись платежа на $tutar; первый запуск — $tarih.';
+  }
+
+  @override
+  String otoKuralIlkCalisma(String tarih) {
+    return 'После сохранения первый запуск — $tarih.';
+  }
+
+  @override
+  String otoSihirbazAdim(String n, String toplam) {
+    return 'Шаг $n из $toplam';
+  }
+
+  @override
+  String get otoSihirbazNeZaman => 'Когда?';
+
+  @override
+  String get otoSihirbazKime => 'Для кого?';
+
+  @override
+  String get otoSihirbazNe => 'Что сделать?';
+
+  @override
+  String get otoSihirbazOnizleme => 'Предпросмотр';
+
+  @override
+  String get otoSihirbazAyinGunu => 'Какого числа?';
+
+  @override
+  String get otoSihirbazGunIpucu =>
+      'С 1 по 28 — дни, которые есть в каждом месяце.';
+
+  @override
+  String get otoSihirbazIlkTarih => 'Первая дата';
+
+  @override
+  String get otoSihirbazKimeDaireler => 'Начислить всем квартирам';
+
+  @override
+  String get otoSihirbazKimeDairelerAlt =>
+      'Как взнос: сумма, которую платит каждая квартира.';
+
+  @override
+  String get otoSihirbazKimeGider => 'Создать платёж от имени объекта';
+
+  @override
+  String get otoSihirbazKimeGiderAlt =>
+      'Регулярные платежи: зарплата дворника, клининговая компания.';
+
+  @override
+  String get otoSihirbazYalnizAylik =>
+      'Начисление квартирам доступно только при «Каждый месяц».';
+
+  @override
+  String get otoSihirbazPaylasim => 'Как распределить сумму?';
+
+  @override
+  String get otoSihirbazPaylasimDaire => 'Одинаковая сумма на квартиру';
+
+  @override
+  String get otoSihirbazPaylasimEsit => 'Разделить итог поровну';
+
+  @override
+  String get otoSihirbazPaylasimArsa => 'Разделить итог по доле в участке';
+
+  @override
+  String get otoSihirbazPaylasimMetrekare => 'Разделить итог по площади';
+
+  @override
+  String get otoSihirbazAd => 'Название правила';
+
+  @override
+  String get otoSihirbazAdOrnek => 'Напр. Ежемесячный взнос, Зарплата дворника';
+
+  @override
+  String get otoSihirbazKalem => 'Какая статья?';
+
+  @override
+  String get otoSihirbazTutar => 'Сумма (₺)';
+
+  @override
+  String get otoSihirbazTutarDaire => 'Сумма на квартиру (₺)';
+
+  @override
+  String get otoSihirbazTutarToplam => 'Общая сумма (₺)';
+
+  @override
+  String get otoSihirbazVade =>
+      'Через сколько дней после начисления срок оплаты?';
+
+  @override
+  String get otoSihirbazKasa => 'Из какой кассы?';
+
+  @override
+  String get otoSihirbazOtomatikOnay =>
+      'Считать запись оплаченной (не ждать моего подтверждения)';
+
+  @override
+  String get otoSihirbazIleri => 'Далее';
+
+  @override
+  String get otoSihirbazGeri => 'Назад';
+
+  @override
+  String get otoSihirbazKaydet => 'Сохранить правило';
+
+  @override
+  String get otoSihirbazEksik => 'Завершите этот шаг.';
+
+  @override
+  String get otoKurallarEkranBaslik => 'Правила автоматизации';
 }
