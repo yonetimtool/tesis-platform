@@ -71,6 +71,7 @@ from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..hata_metinleri import hata_metni, istek_dili
 from ..davet import davet_olustur_ve_gonder
+from ..kisi_adi import ad_bicimle, soyad_bicimle, tam_ad, tr_kucuk
 from ..models import (
     AppUser,
     AracKayit,
@@ -321,8 +322,9 @@ async def _daire_sakini(
     sessizce yarim kisi yaratmak, sahiplenilemeyen bir hesap birakirdi.
     """
     ad = _metin(d, "sakin_ad")
+    soyad = _metin(d, "sakin_soyad")
     eposta = _metin(d, "sakin_eposta")
-    if not ad and not eposta:
+    if not ad and not soyad and not eposta:
         return
     if not eposta:
         # E-POSTA KIMLIKTIR (P197) ve davetin TEK kanalidir.
@@ -330,6 +332,9 @@ async def _daire_sakini(
         return
     if not ad:
         b.hata(satir_no, "sakin_ad", "zorunlu_alan_eksik")
+        return
+    if not soyad:
+        b.hata(satir_no, "sakin_soyad", "zorunlu_alan_eksik")
         return
     # KISI TURUNUN KENDISI CAGRILIYOR: ad/e-posta dogrulama, davet
     # gonderimi, rol esleme ve daire bagi ORADA yazili. Ikinci bir kopya,
@@ -339,6 +344,7 @@ async def _daire_sakini(
         satir_no,
         {
             "ad": ad,
+            "soyad": soyad,
             "eposta": eposta,
             "telefon": _metin(d, "sakin_telefon"),
             "blok": _metin(d, "blok"),
@@ -364,6 +370,15 @@ async def _uygula_kisi(
     if not ad:
         b.hata(satir_no, "ad", "zorunlu_alan_eksik")
         return
+    # (P250 §1) SOYAD AYRI SUTUN VE ZORUNLU. Bicim tekil eklemeyle AYNI
+    # (`kisi_adi`): ad kelime basi buyuk, soyad tamami buyuk, Turkce harf
+    # kuraliyla. Mevcut kisiye DOKUNULMAZ (asagida `var` yolu yazmaz).
+    soyad_ham = _metin(d, "soyad")
+    if not soyad_ham:
+        b.hata(satir_no, "soyad", "zorunlu_alan_eksik")
+        return
+    soyad = soyad_bicimle(soyad_ham)
+    ad = tam_ad(ad_bicimle(ad), soyad)
 
     # (P234 §2) TELEFON OPSIYONEL — gerekce tur tanimindaki notta.
     # Doldurulduysa BICIMI dogrulanir: sessizce bozuk numara yazmak,
@@ -461,7 +476,10 @@ async def _uygula_kisi(
         # Idempotent yeniden yukleme (ayni ad; daire verildiyse o daireye
         # zaten bagli) ATLANIR ve sebebiyle listelenir; geri kalani
         # HATADIR — dosyadaki kisi yazilmadi ve yazilamaz.
-        ayni_ad = (var.ad or "").strip().casefold() == ad.strip().casefold()
+        # (P250 §1) Turkce kucuk harfle ve tek bosluga indirgenmis karsilastirma:
+        # P250 oncesi "Ali Veli" ile yeni bicimli "Ali VELİ" AYNI kisidir
+        # (`casefold` "İ"yi "i̇" yapip ikisini farkli sayardi).
+        ayni_ad = tr_kucuk(" ".join((var.ad or "").split())) == tr_kucuk(" ".join(ad.split()))
         bagli = True
         if daire_no:
             sorgu = (
@@ -545,7 +563,8 @@ async def _uygula_kisi(
         return
 
     kisi = AppUser(
-        tenant_id=b.user.tenant_id, ad=ad, telefon=telefon, email=eposta,
+        tenant_id=b.user.tenant_id, ad=ad, soyad=soyad, telefon=telefon,
+        email=eposta,
         role="resident", password_set=False,
         password_hash="!",  # parola BELIRLENMEMIS (gecici kod akisi)
     )
@@ -748,7 +767,8 @@ TURLER: dict[str, _Tur] = {
             #
             # BOS BIRAKILABILIR: bos daire de bir gercektir ve o satir
             # yalniz daireyi yaratir.
-            _Alan("sakin_ad", ornek="Ali Veli"),
+            _Alan("sakin_ad", ornek="Ali"),
+            _Alan("sakin_soyad", ornek="VELİ"),
             _Alan("sakin_eposta", ornek="ali@ornek.com"),
             _Alan("sakin_telefon", ornek="+905321112233"),
             _Alan("rol_tipi", ornek="malik | kiraci | malik_oturan"),
@@ -759,7 +779,9 @@ TURLER: dict[str, _Tur] = {
     "kisi": _Tur(
         "kisi",
         (
-            _Alan("ad", zorunlu=True, ornek="Ali Veli"),
+            _Alan("ad", zorunlu=True, ornek="Ali"),
+            # (P250 §1) Soyad ayri ve zorunlu.
+            _Alan("soyad", zorunlu=True, ornek="VELİ"),
             # =============================================================
             # (P234 §2) TELEFON ZORUNLULUGU KALDIRILDI — OLCULEN CELISKI
             # =============================================================

@@ -433,7 +433,10 @@ export type UserRole =
 // (riza bayragi) yonetim gorunurlugu icin doner.
 export interface UserRow {
   id: string;
+  /** TAM gorunen ad ("Mehmet Ali YILMAZ"). */
   ad: string;
+  /** (P250 §1) Soyad; P250 oncesi kayitta null. */
+  soyad?: string | null;
   email: string;
   aranabilir?: boolean;
   role: string;

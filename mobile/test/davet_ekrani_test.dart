@@ -41,9 +41,11 @@ class _SahteRepo implements AuthRepository {
   Future<void> davetParola({
     required String jeton,
     String? ad,
+    String? soyad,
     required String newPassword,
   }) async {
-    davetParolaCagrilari.add({'jeton': jeton, 'ad': ad, 'parola': newPassword});
+    davetParolaCagrilari.add(
+        {'jeton': jeton, 'ad': ad, 'soyad': soyad, 'parola': newPassword});
   }
 
   @override
@@ -51,6 +53,7 @@ class _SahteRepo implements AuthRepository {
     required String jeton,
     required String baglamaJetonu,
     String? ad,
+    String? soyad,
   }) async {}
 
   @override
@@ -115,7 +118,9 @@ void main() {
     expect(repo.davetParolaCagrilari.single['jeton'], 'davet-jeton-1');
     expect(repo.davetParolaCagrilari.single['parola'], 'DavetParola1!');
     // Ad DAIREDEN turetilen on-doldurma ile gitti (kullanici degistirebilir).
-    expect(repo.davetParolaCagrilari.single['ad'], 'A-12 sakini');
+    // (P250 §1) Tek ad iki alana bolunur (son kelime soyad), Turkce kural.
+    expect(repo.davetParolaCagrilari.single['ad'], 'A-12');
+    expect(repo.davetParolaCagrilari.single['soyad'], 'SAK\u0130N\u0130');
   });
 
   testWidgets('yonetici daveti: daire SATIRI YOK', (tester) async {

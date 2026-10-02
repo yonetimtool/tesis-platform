@@ -64,11 +64,14 @@ import {
 } from "@/lib/profil-bolumleri";
 import { useSorguSecimi } from "@/lib/sorgu-secimi";
 import { tarihSaatBicimi } from "@/lib/tarih";
+import { adAyir, adBicimle, soyadBicimle } from "@/lib/kisi-adi";
+import { AdSoyadAlanlari } from "@/components/AdSoyadAlanlari";
 import { telefonGiris, telefonNormalle } from "@/lib/telefon";
 
 type Profil = {
   id: string;
   ad: string;
+  soyad?: string | null;
   email: string | null;
   eposta_dogrulandi: boolean;
   telefon: string | null;
@@ -185,6 +188,8 @@ function HesapBilgileri({
   const dosyaRef = useRef<HTMLInputElement>(null);
 
   const [ad, setAd] = useState("");
+  // (P250 §1) Soyad ayri ve zorunlu.
+  const [soyad, setSoyad] = useState("");
   const [adHatasi, setAdHatasi] = useState<string | null>(null);
   const [telefon, setTelefon] = useState("");
   const [telefonHatasiMetni, setTelefonHatasiMetni] = useState<string | null>(null);
@@ -205,7 +210,9 @@ function HesapBilgileri({
   // SWR yeniden dogrulamasi yazdigini EZMESIN.
   useEffect(() => {
     if (!profil) return;
-    setAd(profil.ad);
+    const parca = adAyir(profil.ad, profil.soyad);
+    setAd(parca.ad);
+    setSoyad(parca.soyad);
     setTelefon(telefonGiris(profil.telefon ?? ""));
     setEposta(profil.email ?? "");
     setKodBekleniyor(false);
@@ -220,8 +227,8 @@ function HesapBilgileri({
     // (P166 §9) HATA ALANIN YANINA yazilir, sayfanin ustundeki kutuya
     // DEGIL: ikisi birden cizilirse kullanici ayni cumleyi iki yerde
     // okur ve ikinci bir sorun oldugunu sanir.
-    if (!ad.trim()) {
-      setAdHatasi(t("profilAdZorunlu"));
+    if (!adBicimle(ad) || !soyadBicimle(soyad)) {
+      setAdHatasi(t("kisiAdZorunlu"));
       return;
     }
     const telHata = telefonHataMetni(telefon, false, t);
@@ -242,7 +249,8 @@ function HesapBilgileri({
     setKaydediyor(true);
     try {
       await apiSend("/api/me/contact", "PATCH", {
-        ad: ad.trim(),
+        ad: adBicimle(ad),
+        soyad: soyadBicimle(soyad),
         // Sunucuya NORMALLESTIRILMIS gider (P123); bossa acik null → kaldir.
         telefon: telefonNormalle(telefon) || null,
         aranabilir,
@@ -405,20 +413,21 @@ function HesapBilgileri({
         </section>
 
         <section className="grid gap-4 sm:max-w-md">
-          <AlanSarmal etiket={t("profilAd")} hata={adHatasi} zorunlu>
-            {(baglar) => (
-              <Alan maxLength={120 /* sunucu: MeContactUpdate.ad */}
-                {...baglar}
-                value={ad}
-                hatali={Boolean(adHatasi)}
-                autoComplete="name"
-                onChange={(e) => {
-                  setAd(e.target.value);
-                  setAdHatasi(null);
-                }}
-              />
-            )}
-          </AlanSarmal>
+          <AdSoyadAlanlari
+            ad={ad}
+            soyad={soyad}
+            onAd={(v) => {
+              setAd(v);
+              setAdHatasi(null);
+            }}
+            onSoyad={(v) => {
+              setSoyad(v);
+              setAdHatasi(null);
+            }}
+            adSinir={120 /* sunucu: MeContactUpdate.ad */}
+            kanca="profil"
+            adHata={adHatasi}
+          />
 
           {/* (P184-ek duzeltme §1) E-POSTA = AD/TELEFONLA AYNI KALIP: dogrudan
               duzenlenebilir kutu + ortak Kaydet. Ayri "degistir" bagi/ekrani/

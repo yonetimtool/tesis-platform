@@ -7,7 +7,9 @@ import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/kisi_adi.dart';
 import '../../../core/startup/acilis_tercihleri.dart';
+import '../../../core/ui/ad_soyad_alanlari.dart';
 import '../../../core/ui/telefon_alani.dart';
 import '../../../core/ui/eposta_alani_widget.dart';
 import '../../../core/ui/telefon_alani_widget.dart';
@@ -91,6 +93,8 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
   final _kodFormKey = GlobalKey<FormState>();
 
   final _adCtrl = TextEditingController();
+  // (P250 §1) Soyad ayri ve zorunlu.
+  final _soyadCtrl = TextEditingController();
   final _epostaCtrl = TextEditingController();
   final _telefonCtrl = TextEditingController();
   final _parolaCtrl = TextEditingController();
@@ -127,6 +131,7 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
   @override
   void dispose() {
     _adCtrl.dispose();
+    _soyadCtrl.dispose();
     _epostaCtrl.dispose();
     _telefonCtrl.dispose();
     _parolaCtrl.dispose();
@@ -218,7 +223,8 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
             rol: _rol.kimlik,
             tesisKodu: _tesisKoduCtrl.text.trim(),
             eposta: _epostaCtrl.text.trim(),
-            ad: _adCtrl.text.trim(),
+            ad: adBicimle(_adCtrl.text),
+            soyad: soyadBicimle(_soyadCtrl.text),
             telefon: _telefonCtrl.text.trim().isEmpty ? null : _telefon,
           );
       if (!mounted) return;
@@ -556,20 +562,14 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 16),
-          TextFormField(
-            controller: _adCtrl,
-            key: const Key('kayit-ad'),
-            inputFormatters: GirdiSiniri.sinir(120), // sunucu: RolEpostaBaslaRequest.ad
-            enabled: !_bekliyor,
-            textInputAction: TextInputAction.next,
-            textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              labelText: l10n.kayitAdSoyad,
-              prefixIcon: const Icon(Icons.person_outline),
-              border: const OutlineInputBorder(),
-            ),
-            validator: (v) =>
-                (v ?? '').trim().length < 2 ? l10n.kayitAdGerekli : null,
+          // (P250 §1) Ad ve soyad AYRI, ikisi de zorunlu; yazarken
+          // Turkce harf kuraliyla bicimlenir.
+          AdSoyadAlanlari(
+            adKtrl: _adCtrl,
+            soyadKtrl: _soyadCtrl,
+            etkin: !_bekliyor,
+            adSinir: 120, // sunucu: RolEpostaBaslaRequest.ad
+            anahtarOneki: 'kayit',
           ),
           const SizedBox(height: 16),
           // E-POSTA ZORUNLU: dogrulama kanali budur.

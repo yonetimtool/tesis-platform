@@ -5,6 +5,8 @@ import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/kisi_adi.dart';
+import '../../../core/ui/ad_soyad_alanlari.dart';
 import '../../../core/validators/password_rule.dart';
 import '../../auth/data/token_storage.dart';
 import '../../auth/domain/user_role.dart';
@@ -38,7 +40,9 @@ class ProfileScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorState(
           // Sunucu metni varsa o gosterilir (SERVER-LOCALIZED siniri).
-          message: e is ApiException ? apiHataMetni(l10n, e) : l10n.profilYuklenemedi,
+          message: e is ApiException
+              ? apiHataMetni(l10n, e)
+              : l10n.profilYuklenemedi,
           onRetry: () => ref.invalidate(profileProvider),
         ),
         data: (profile) => ListView(
@@ -57,6 +61,8 @@ class ProfileScreen extends ConsumerWidget {
             const _PasswordCard(),
             const SizedBox(height: 16),
             _ContactCard(
+              initialAd: profile.ad,
+              initialSoyad: profile.soyad,
               initialTelefon: profile.telefon ?? '',
               initialAranabilir: profile.aranabilir,
             ),
@@ -82,17 +88,24 @@ class _Header extends StatelessWidget {
         CircleAvatar(
           radius: 28,
           backgroundColor: scheme.primaryContainer,
-          child: Icon(Icons.person_outline,
-              size: 32, color: scheme.onPrimaryContainer),
+          child: Icon(
+            Icons.person_outline,
+            size: 32,
+            color: scheme.onPrimaryContainer,
+          ),
         ),
         const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(profile.ad,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w700)),
+              Text(
+                profile.ad,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               const SizedBox(height: 2),
               Text(roleLabel, style: TextStyle(color: scheme.onSurfaceVariant)),
               const SizedBox(height: 2),
@@ -134,7 +147,9 @@ class _AvatarCardState extends ConsumerState<_AvatarCard> {
     final l10n = _l10n;
     setState(() => _busy = true);
     try {
-      final file = await ref.read(imagePickerProvider).pickImage(
+      final file = await ref
+          .read(imagePickerProvider)
+          .pickImage(
             source: source,
             maxWidth: 800, // profil fotosu — kucuk yeter
             imageQuality: 80,
@@ -158,7 +173,8 @@ class _AvatarCardState extends ConsumerState<_AvatarCard> {
         SnackBar(content: Text(l10n.profilFotoGuncellendi)),
       );
     } on ApiException catch (e) {
-      if (mounted) messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
+      if (mounted)
+        messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     } catch (e) {
       if (mounted) {
         messenger.showSnackBar(
@@ -183,7 +199,8 @@ class _AvatarCardState extends ConsumerState<_AvatarCard> {
         SnackBar(content: Text(l10n.profilFotoKaldirildi)),
       );
     } on ApiException catch (e) {
-      if (mounted) messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
+      if (mounted)
+        messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -240,8 +257,10 @@ class _AvatarCardState extends ConsumerState<_AvatarCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(l10n.profilFotoBaslik,
-                      style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    l10n.profilFotoBaslik,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -254,8 +273,9 @@ class _AvatarCardState extends ConsumerState<_AvatarCard> {
                             ? const SizedBox(
                                 height: 16,
                                 width: 16,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2.5),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                ),
                               )
                             : const Icon(Icons.add_a_photo_outlined, size: 18),
                         label: Text(l10n.profilFotoSec),
@@ -337,7 +357,9 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
     final l10n = context.l10n;
     setState(() => _submitting = true);
     try {
-      final jetonlar = await ref.read(profileApiProvider).changePassword(
+      final jetonlar = await ref
+          .read(profileApiProvider)
+          .changePassword(
             currentPassword: _currentCtrl.text,
             newPassword: _newCtrl.text,
           );
@@ -370,12 +392,16 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(l10n.profilParolaDegistir,
-                  style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                l10n.profilParolaDegistir,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _currentCtrl,
-                inputFormatters: GirdiSiniri.sinir(200), // sunucu: PasswordChangeRequest.current_password
+                inputFormatters: GirdiSiniri.sinir(
+                  200,
+                ), // sunucu: PasswordChangeRequest.current_password
                 enabled: !_submitting,
                 obscureText: _obscure,
                 decoration: InputDecoration(
@@ -387,20 +413,23 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
                     tooltip: _obscure
                         ? l10n.ortakParolayiGoster
                         : l10n.ortakParolayiGizle,
-                    icon: Icon(_obscure
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined),
+                    icon: Icon(
+                      _obscure
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                    ),
                     onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                 ),
-                validator: (v) => (v ?? '').isEmpty
-                    ? l10n.profilMevcutParolaZorunlu
-                    : null,
+                validator: (v) =>
+                    (v ?? '').isEmpty ? l10n.profilMevcutParolaZorunlu : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _newCtrl,
-                inputFormatters: GirdiSiniri.sinir(GirdiSiniri.parola), // sunucu: PasswordChangeRequest.new_password
+                inputFormatters: GirdiSiniri.sinir(
+                  GirdiSiniri.parola,
+                ), // sunucu: PasswordChangeRequest.new_password
                 enabled: !_submitting,
                 obscureText: _obscure,
                 decoration: InputDecoration(
@@ -432,8 +461,9 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: _submitting ? null : _submit,
-                style:
-                    FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                ),
                 child: _submitting
                     ? const SizedBox(
                         height: 20,
@@ -454,10 +484,14 @@ class _PasswordCardState extends ConsumerState<_PasswordCard> {
 /// degisince kaydedilir; kayit sonrasi profil tazelenir.
 class _ContactCard extends ConsumerStatefulWidget {
   const _ContactCard({
+    required this.initialAd,
+    this.initialSoyad,
     required this.initialTelefon,
     required this.initialAranabilir,
   });
 
+  final String initialAd;
+  final String? initialSoyad;
   final String initialTelefon;
   final bool initialAranabilir;
 
@@ -466,24 +500,43 @@ class _ContactCard extends ConsumerStatefulWidget {
 }
 
 class _ContactCardState extends ConsumerState<_ContactCard> {
-  late final TextEditingController _telefonCtrl =
-      TextEditingController(text: widget.initialTelefon);
+  final _formKey = GlobalKey<FormState>();
+  // (P250 §1) AD + SOYAD MOBILDE DE DUZENLENIR — web profil ekraniyla
+  // parite. Eskiden mobilde ad salt-okunurdu. Eski kayitta soyad
+  // bilinmez: son kelime ONERILIR (kayit ancak kaydedilince degisir).
+  late final _parca = adAyir(widget.initialAd, widget.initialSoyad);
+  late final TextEditingController _adCtrl = TextEditingController(
+    text: _parca.ad,
+  );
+  late final TextEditingController _soyadCtrl = TextEditingController(
+    text: _parca.soyad,
+  );
+  late final TextEditingController _telefonCtrl = TextEditingController(
+    text: widget.initialTelefon,
+  );
   late bool _aranabilir = widget.initialAranabilir;
   bool _submitting = false;
 
   @override
   void dispose() {
+    _adCtrl.dispose();
+    _soyadCtrl.dispose();
     _telefonCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
+    if (!_formKey.currentState!.validate()) return;
     final messenger = ScaffoldMessenger.of(context);
     final l10n = context.l10n;
     setState(() => _submitting = true);
     try {
-      await ref.read(profileApiProvider).updateContact(
+      await ref
+          .read(profileApiProvider)
+          .updateContact(
+            ad: adBicimle(_adCtrl.text),
+            soyad: soyadBicimle(_soyadCtrl.text),
             telefon: telefonNormalle(_telefonCtrl.text),
             aranabilir: _aranabilir,
           );
@@ -506,41 +559,56 @@ class _ContactCardState extends ConsumerState<_ContactCard> {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(l10n.etiketIletisim,
-                style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 12),
-            TelefonAlani(
-              ktrl: _telefonCtrl,
-              etiket: l10n.profilTelefon,
-              ipucu: l10n.profilTelefonIpucu,
-              etkin: !_submitting,
-              zorunlu: false,
-            ),
-            SwitchListTile(
-              value: _aranabilir,
-              onChanged:
-                  _submitting ? null : (v) => setState(() => _aranabilir = v),
-              title: Text(l10n.profilAranabilir),
-              subtitle: Text(l10n.profilAranabilirAlt),
-              contentPadding: EdgeInsets.zero,
-            ),
-            const SizedBox(height: 8),
-            FilledButton(
-              onPressed: _submitting ? null : _submit,
-              style:
-                  FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-              child: _submitting
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2.5),
-                    )
-                  : Text(l10n.profilIletisimKaydet),
-            ),
-          ],
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                l10n.etiketIletisim,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 12),
+              AdSoyadAlanlari(
+                adKtrl: _adCtrl,
+                soyadKtrl: _soyadCtrl,
+                etkin: !_submitting,
+                adSinir: 120, // sunucu: MeContactUpdate.ad
+                anahtarOneki: 'profil',
+              ),
+              const SizedBox(height: 12),
+              TelefonAlani(
+                ktrl: _telefonCtrl,
+                etiket: l10n.profilTelefon,
+                ipucu: l10n.profilTelefonIpucu,
+                etkin: !_submitting,
+                zorunlu: false,
+              ),
+              SwitchListTile(
+                value: _aranabilir,
+                onChanged: _submitting
+                    ? null
+                    : (v) => setState(() => _aranabilir = v),
+                title: Text(l10n.profilAranabilir),
+                subtitle: Text(l10n.profilAranabilirAlt),
+                contentPadding: EdgeInsets.zero,
+              ),
+              const SizedBox(height: 8),
+              FilledButton(
+                onPressed: _submitting ? null : _submit,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                ),
+                child: _submitting
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2.5),
+                      )
+                    : Text(l10n.profilIletisimKaydet),
+              ),
+            ],
+          ),
         ),
       ),
     );

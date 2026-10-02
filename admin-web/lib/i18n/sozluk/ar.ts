@@ -3698,4 +3698,7 @@ export const ar: Sozluk = {
   bildirimTipZiyaretciOnayIstegi: "طلب موافقة على زائر",
   bildirimTipZiyaretciOnayYaniti: "رد الموافقة على زائر",
   bildirimTipSesliMesaj: "رسالة صوتية من الأمن",
+  kisiAd: "الاسم الأول",
+  kisiSoyad: "اسم العائلة",
+  kisiAdZorunlu: "الاسم الأول واسم العائلة مطلوبان.",
 };

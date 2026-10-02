@@ -94,7 +94,10 @@ describe("Profilim", () => {
     // (`PATCH /me/contact`) `ad` alanini bu turda kabul ediyor.
     fetchTaklidi(PROFIL);
     ciz(ProfilPage);
-    expect(await screen.findByDisplayValue("Ayşe Yılmaz")).toBeInTheDocument();
+    // (P250 §1) Ad ve soyad AYRI alan; soyad bilinmeyen eski kayitta son
+    // kelime soyad olarak ONERILIR.
+    expect(await screen.findByDisplayValue("Ayşe")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Yılmaz")).toBeInTheDocument();
     // (P184-ek düzeltme §1) E-posta ad/telefonla AYNI: düzenlenebilir INPUT.
     expect(screen.getByDisplayValue("ayse@ornek.com")).toBeInTheDocument();
   });
@@ -128,11 +131,12 @@ describe("Profilim", () => {
     // orada bos deger "numarayi kaldir" demektir.
     const cagrilar = fetchTaklidi(PROFIL);
     ciz(ProfilPage);
-    const adAlani = await screen.findByDisplayValue("Ayşe Yılmaz");
+    const adAlani = await screen.findByDisplayValue("Ayşe");
     await userEvent.clear(adAlani);
     await userEvent.click(screen.getByRole("button", { name: /Kaydet/i }));
+    // (P250 §1) Ad ve soyad zorunlu — ortak metin.
     expect(
-      await screen.findByText(/Ad soyad boş bırakılamaz/i),
+      await screen.findByText(/Ad ve soyad zorunludur/i),
     ).toBeInTheDocument();
     expect(cagrilar.find((c) => c.method === "PATCH")).toBeUndefined();
   });

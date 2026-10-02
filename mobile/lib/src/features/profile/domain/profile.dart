@@ -3,6 +3,7 @@
 class Profile {
   const Profile({
     required this.ad,
+    this.soyad,
     this.email,
     required this.role,
     this.telefon,
@@ -11,7 +12,11 @@ class Profile {
     this.turGoruldu = false,
   });
 
+  /// TAM gorunen ad.
   final String ad;
+
+  /// (P250 §1) Soyad; P250 oncesi kayitta null.
+  final String? soyad;
   final String? email;
   final String role;
   final String? telefon;
@@ -30,6 +35,7 @@ class Profile {
 
   factory Profile.fromJson(Map<String, dynamic> json) => Profile(
         ad: json['ad'] as String,
+        soyad: json['soyad'] as String?,
         email: json['email'] as String?,
         role: json['role'] as String,
         telefon: json['telefon'] as String?,

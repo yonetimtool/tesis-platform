@@ -248,11 +248,20 @@ function ornekSatirlari(tur: Tur): string[][] {
   if (tur.kod !== "kisi") return [temel];
   const rolIdx = tur.alanlar.findIndex((a) => a.kod === "rol_tipi");
   const adIdx = tur.alanlar.findIndex((a) => a.kod === "ad");
+  // (P250 §1) Soyad AYRI sutun ve zorunlu.
+  const soyadIdx = tur.alanlar.findIndex((a) => a.kod === "soyad");
   const epostaIdx = tur.alanlar.findIndex((a) => a.kod === "eposta");
   const daireIdx = tur.alanlar.findIndex((a) => a.kod === "daire_no");
-  const kur = (ad: string, eposta: string, daire: string, rol: string) => {
+  const kur = (
+    ad: string,
+    soyad: string,
+    eposta: string,
+    daire: string,
+    rol: string,
+  ) => {
     const r = [...temel];
     if (adIdx >= 0) r[adIdx] = ad;
+    if (soyadIdx >= 0) r[soyadIdx] = soyad;
     if (epostaIdx >= 0) r[epostaIdx] = eposta;
     if (daireIdx >= 0) r[daireIdx] = daire;
     if (rolIdx >= 0) r[rolIdx] = rol;
@@ -264,9 +273,9 @@ function ornekSatirlari(tur: Tur): string[][] {
   // cevrilmemis arayuz metnidir). Ornegin bilgi tasiyan yani zaten
   // `rol_tipi` sutunu; ad alani yalnizca satiri doldurur.
   return [
-    kur("Ali Veli", "ali@ornek.com", "A-1", "malik"),
-    kur("Veli Ali", "veli@ornek.com", "A-2", "kiraci"),
-    kur("Ayse Demir", "ayse@ornek.com", "B-3", "malik_oturan"),
+    kur("Ali", "VELI", "ali@ornek.com", "A-1", "malik"),
+    kur("Veli", "ALI", "veli@ornek.com", "A-2", "kiraci"),
+    kur("Ayse", "DEMIR", "ayse@ornek.com", "B-3", "malik_oturan"),
   ];
 }
 

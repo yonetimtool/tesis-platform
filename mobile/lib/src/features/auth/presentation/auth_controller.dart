@@ -284,13 +284,14 @@ class AuthController extends Notifier<AuthState> {
   Future<void> davetParolaTamamla({
     required String jeton,
     String? ad,
+    String? soyad,
     required String newPassword,
   }) async {
     state = state.copyWith(
       submitting: true, errorMessage: null, hataKimligi: null);
     try {
       await ref.read(authRepositoryProvider).davetParola(
-            jeton: jeton, ad: ad, newPassword: newPassword);
+            jeton: jeton, ad: ad, soyad: soyad, newPassword: newPassword);
       state = state.copyWith(
         status: AuthStatus.authenticated, submitting: false);
     } on ApiException catch (e) {
@@ -306,6 +307,7 @@ class AuthController extends Notifier<AuthState> {
   Future<void> davetSosyalTamamla({
     required String jeton,
     String? ad,
+    String? soyad,
   }) async {
     final baglama = state.oauthBaglamaJetonu;
     if (baglama == null) return;
@@ -313,7 +315,7 @@ class AuthController extends Notifier<AuthState> {
       submitting: true, errorMessage: null, hataKimligi: null);
     try {
       await ref.read(authRepositoryProvider).davetSosyal(
-            jeton: jeton, baglamaJetonu: baglama, ad: ad);
+            jeton: jeton, baglamaJetonu: baglama, ad: ad, soyad: soyad);
       state = state.copyWith(
         status: AuthStatus.authenticated,
         submitting: false,

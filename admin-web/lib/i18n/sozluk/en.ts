@@ -3698,4 +3698,7 @@ export const en: Sozluk = {
   bildirimTipZiyaretciOnayIstegi: "Visitor approval request",
   bildirimTipZiyaretciOnayYaniti: "Visitor approval answer",
   bildirimTipSesliMesaj: "Voice message from security",
+  kisiAd: "First name",
+  kisiSoyad: "Last name",
+  kisiAdZorunlu: "First and last name are required.",
 };

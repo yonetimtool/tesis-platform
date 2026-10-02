@@ -36,6 +36,7 @@ from ..telefon_kodu import (
     kodu_dogrula,
 )
 from ..hesap_silme import hesabi_sil_veya_anonimlestir, son_admin_mi
+from ..kisi_adi import guncelle as kisi_adi_guncelle
 from ..models import AppUser, AuditLog, Checkpoint, UserDevice
 from ..schemas import (
     RolGecisIstek,
@@ -705,12 +706,14 @@ async def update_my_contact(
     dogrulama akisi olmadan degistirilmesi hesabi kaybettirebilir.
     """
     data = body.model_dump(exclude_unset=True)
+    alanlar = list(data.keys())
+    kisi_adi_guncelle(user, data)  # (P250 §1) ad/soyad birlikte
     for key, value in data.items():
         setattr(user, key, value)
     user.updated_at = func.now()
     await audit_user(
         db, user, Action.USER_CONTACT_UPDATE, resource_type="app_user",
-        resource_id=user.id, meta={"self": True, "fields": list(data.keys())},
+        resource_id=user.id, meta={"self": True, "fields": alanlar},
     )
     return _profile_out(user)
 

@@ -4084,5 +4084,13 @@
   "ayarYonetimArayabilir": "Yönetim beni bu numaradan arayabilir",
   "@ayarYonetimArayabilir": {"description": "(P249 §3) Guvenlikten daireye ulasma"},
   "ayarYonetimArayabilirAlt": "Güvenlik dairenize başka yolla ulaşamazsa sizi arayabilir. Numaranız hiçbir listede görünmez; her arama kayda geçer.",
-  "@ayarYonetimArayabilirAlt": {"description": "(P249 §3) Guvenlikten daireye ulasma"}
+  "@ayarYonetimArayabilirAlt": {"description": "(P249 §3) Guvenlikten daireye ulasma"},
+  "kisiAd": "Ad",
+  "kisiSoyad": "Soyad",
+  "kisiAdZorunlu": "Ad ve soyad zorunludur.",
+  "@odemeKoduSecimEtiketi": {"placeholders": {"ad": {"type": "String"}}},
+  "@odemeKoduSecilenlereGonder": {"placeholders": {"n": {"type": "String"}}},
+  "@odemeKoduEpostaGonderEtiketi": {"placeholders": {"ad": {"type": "String"}}},
+  "@odemeKoduKuyruga": {"placeholders": {"n": {"type": "String"}}},
+  "@odemeKoduAtlandi": {"placeholders": {"n": {"type": "String"}}}
 }

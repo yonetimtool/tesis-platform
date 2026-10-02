@@ -8098,4 +8098,13 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get ayarYonetimArayabilirAlt =>
       'Der Sicherheitsdienst darf Sie anrufen, wenn er Ihre Wohnung anders nicht erreicht. Ihre Nummer erscheint in keiner Liste; jeder Anruf wird protokolliert.';
+
+  @override
+  String get kisiAd => 'Vorname';
+
+  @override
+  String get kisiSoyad => 'Nachname';
+
+  @override
+  String get kisiAdZorunlu => 'Vor- und Nachname sind erforderlich.';
 }

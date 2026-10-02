@@ -145,6 +145,37 @@ DONEM_DESENI = r"^20\d{2}-(0[1-9]|1[0-2])$"
 GirisEposta = Annotated[EmailStr, Field(max_length=_G.EPOSTA)]
 
 
+class AdSoyadGirdisi(BaseModel):
+    """(P250 §1) Ad + soyad alani olan HER girdinin ortak bicimi.
+
+    Ad: kelime basi buyuk ("mehmet ali" -> "Mehmet Ali"); soyad: tamami
+    buyuk ("yilmaz" -> "YILMAZ"). Turkce harf kurali `kisi_adi`nda.
+    Istemci yazarken de bicimler; sunucu ASIL kuraldir (eski istemci,
+    API'yi dogrudan cagiran, Excel).
+
+    SOYAD SUNUCUDA OPSIYONEL — bilerek: magazadaki 1.8.0 ve oncesi mobil
+    surumler `ad`a tam adi yazip soyadsiz gonderiyor. Sunucu zorunlu
+    tutsaydi bu surumlerde kayit ve personel ekleme guncellemeye kadar
+    422 alirdi. Yeni istemcilerde (web, mobil 1.9.0+) iki alan da
+    ZORUNLU; soyadsiz gelen ad tam ad sayilir ve kelime basi bicimlenir.
+    """
+
+    @model_validator(mode="after")
+    def _ad_soyad_bicimle(self):
+        from .kisi_adi import ad_bicimle, soyad_bicimle
+
+        ad = getattr(self, "ad", None)
+        if isinstance(ad, str):
+            bicimli = ad_bicimle(ad)
+            if not bicimli:
+                raise ValueError("ad_bos_olamaz")
+            self.ad = bicimli
+        soyad = getattr(self, "soyad", None)
+        if isinstance(soyad, str):
+            self.soyad = soyad_bicimle(soyad) or None
+        return self
+
+
 class LoginRequest(BaseModel):
     """(P205 §1) TEK KIMLIK ALANI — e-posta VEYA telefon.
 
@@ -319,6 +350,8 @@ class UserOut(BaseModel):
     id: uuid.UUID
     tenant_id: uuid.UUID
     ad: str
+    #: (P250 §1) Soyad (P250 oncesi kayitta NULL); `ad` TAM addir.
+    soyad: str | None = None
     email: str | None = None  # resident'ta opsiyonel
     # (P181 Bölüm 1) E-posta doğrulandı mı? Arayüz "beklemede" durumunu ve
     # reset/OTP uygunluğunu buna göre gösterir.
@@ -409,6 +442,8 @@ class UserAdminOut(BaseModel):
 
     id: uuid.UUID
     ad: str
+    #: (P250 §1) Soyad (P250 oncesi kayitta NULL); `ad` TAM addir.
+    soyad: str | None = None
     email: str | None = None  # resident'ta opsiyonel
     telefon: str | None = None
     aranabilir: bool = False
@@ -481,6 +516,8 @@ class UserAdminListItem(BaseModel):
 
     id: uuid.UUID
     ad: str
+    #: (P250 §1) Soyad (P250 oncesi kayitta NULL); `ad` TAM addir.
+    soyad: str | None = None
     email: str | None = None
     aranabilir: bool = False
     role: str
@@ -506,7 +543,7 @@ class AcilabilirRollerOut(BaseModel):
     roller: list[UserRoleLiteral]
 
 
-class UserCreate(BaseModel):
+class UserCreate(AdSoyadGirdisi):
     # Telefon global benzersiz iletisim anahtaridir (E.164 normalize). email
     # (P185) artik ZORUNLUDUR: dogrulama/bildirim kanalidir (yine de giris
     # anahtari DEGIL — giris telefonla).
@@ -519,6 +556,8 @@ class UserCreate(BaseModel):
     # karakterlik ad 201 ile kaydedildi ve /tasks sayfasini 90.000 px'e
     # tasirdi. Personel adi zaten 150 ile sinirli — ayni sinir.
     ad: str = Field(..., min_length=1, max_length=150)
+    #: (P250 §1) Soyad; sunucuda opsiyonel (eski mobil surumler), istemcide zorunlu.
+    soyad: str | None = Field(None, max_length=_G.AD)
     # =====================================================================
     # (P212-ek §2) TELEFON ARTIK OPSIYONEL — COKLU TESISIN ONUNDEKI ENGEL
     # =====================================================================
@@ -584,6 +623,8 @@ class UserCreatedOut(BaseModel):
 
     id: uuid.UUID
     ad: str
+    #: (P250 §1) Soyad (P250 oncesi kayitta NULL); `ad` TAM addir.
+    soyad: str | None = None
     email: str | None = None
     telefon: str | None = None
     aranabilir: bool = False
@@ -601,10 +642,12 @@ class UserCreatedOut(BaseModel):
     davet: "DavetGonderimSonucu | None" = None
 
 
-class UserUpdate(BaseModel):
+class UserUpdate(AdSoyadGirdisi):
     # (P97) telefon E.164 NORMALIZE EDILIR — asagidaki dogrulayiciya bak.
     # (E2E 2026-09, ARAYUZ-6) Olusturmayla ayni ust sinir.
     ad: str | None = Field(None, min_length=1, max_length=150)
+    #: (P250 §1) Soyad; sunucuda opsiyonel (eski mobil surumler), istemcide zorunlu.
+    soyad: str | None = Field(None, max_length=_G.AD)
     email: EmailStr | None = None
     telefon: str | None = Field(None, max_length=_G.TELEFON_HAM)
     aranabilir: bool | None = None
@@ -714,7 +757,7 @@ class UserContactUpdate(BaseModel):
         return self
 
 
-class MeContactUpdate(UserContactUpdate):
+class MeContactUpdate(UserContactUpdate, AdSoyadGirdisi):
     """(P167 §1.7) Self-servis iletisim + GORUNEN AD.
 
     NEDEN `UserContactUpdate`E EKLENMEDI DE TUREDI: o sema yonetim ucunu
@@ -732,6 +775,8 @@ class MeContactUpdate(UserContactUpdate):
     """
 
     ad: str | None = Field(None, min_length=1, max_length=120)
+    #: (P250 §1) Soyad; sunucuda opsiyonel (eski mobil surumler), istemcide zorunlu.
+    soyad: str | None = Field(None, max_length=_G.AD)
 
     @field_validator("ad")
     @classmethod
@@ -754,6 +799,8 @@ class MeProfileOut(BaseModel):
 
     id: uuid.UUID
     ad: str
+    #: (P250 §1) Soyad (P250 oncesi kayitta NULL); `ad` TAM addir.
+    soyad: str | None = None
     email: str | None = None  # resident'ta opsiyonel
     eposta_dogrulandi: bool = False  # (P181 Bölüm 1)
     telefon: str | None = None
@@ -2081,7 +2128,7 @@ KayitRolu = Literal[
 # ==================== (P155r2 / §3) YONETICI SELF-SIGNUP =================== #
 
 
-class TesisOlusturRequest(BaseModel):
+class TesisOlusturRequest(AdSoyadGirdisi):
     """Yonetici tesisini UYGULAMADAN acar — admin paneli adimi YOK.
 
     IKI YONTEMDEN BIRI ZORUNLU (`parola` ya da `baglama_jetonu`), IKISI
@@ -2095,6 +2142,8 @@ class TesisOlusturRequest(BaseModel):
 
     tesis_ad: str = Field(min_length=2, max_length=120, examples=["Oltu Sitesi"])
     ad: str = Field(min_length=2, max_length=120, examples=["Ayse Yilmaz"])
+    #: (P250 §1) Soyad; sunucuda opsiyonel (eski mobil surumler), istemcide zorunlu.
+    soyad: str | None = Field(None, max_length=_G.AD)
     #: (P187) TELEFON OPSIYONEL. Bu uc pratikte SOSYAL (SSO) "yeni tesis" yolu
     #: icindir; SSO kimligi telefon vermez ve yonetici zaten SSO ile girer —
     #: telefon giris anahtari DEGILDIR. P185'te akis yeniden kurulurken telefon
@@ -3489,7 +3538,7 @@ class SiteKuraliListResponse(BaseModel):
 
 
 # ---------------------------- dis hizmetler -------------------------------- #
-class DisHizmetCreate(BaseModel):
+class DisHizmetCreate(AdSoyadGirdisi):
     """Guvenilir esnaf/hizmet kisisi — yonetici ekler. tur: Cilingir/Elektrik/..."""
 
     tur: str = Field(..., min_length=1, max_length=_G.AD, examples=["Çilingir"])
@@ -3499,7 +3548,7 @@ class DisHizmetCreate(BaseModel):
     aciklama: str | None = Field(None, max_length=1000)
 
 
-class DisHizmetUpdate(BaseModel):
+class DisHizmetUpdate(AdSoyadGirdisi):
     """Kismi guncelleme — verilmeyen alan degismez; en az bir alan gerekir."""
 
     tur: str | None = Field(None, min_length=1, max_length=_G.AD)
@@ -4413,7 +4462,7 @@ class YoneticiIletisimOut(BaseModel):
 
 # Admin (platform) tesis olusturma/listeleme (cross-tenant) + yonetici ilk-giris
 # adlandirma (onboarding, Model A).
-class YoneticiCreate(BaseModel):
+class YoneticiCreate(AdSoyadGirdisi):
     """Tenant olusturmada TEK bir yonetici satiri.
 
     (P197) E-POSTA ARTIK ZORUNLU. Eski not "e-posta alinmaz, mobil giris
@@ -4429,6 +4478,8 @@ class YoneticiCreate(BaseModel):
     """
 
     ad: str = Field(..., min_length=2, max_length=120, examples=["Ayse Yilmaz"])
+    #: (P250 §1) Soyad; sunucuda opsiyonel (eski mobil surumler), istemcide zorunlu.
+    soyad: str | None = Field(None, max_length=_G.AD)
     #: (E2E 2026-09) `telefon` de kabul edilir: platformun diger tum uclari
     #: (`/users`, `/residents`) `telefon` diyor; yalniz bu uc `phone`
     #: istiyordu ve ayni aliskanlikla yazilan istek 422 aliyordu.
@@ -4572,10 +4623,12 @@ class TenantAdminUpdate(BaseModel):
     ad: str = Field(..., min_length=2, max_length=120)
 
 
-class TenantYoneticiUpdate(BaseModel):
+class TenantYoneticiUpdate(AdSoyadGirdisi):
     """Yonetici ad/telefon/aktiflik guncelleme (kismi; verilmeyen alan degismez)."""
 
     ad: str | None = Field(None, min_length=2, max_length=120)
+    #: (P250 §1) Soyad; sunucuda opsiyonel (eski mobil surumler), istemcide zorunlu.
+    soyad: str | None = Field(None, max_length=_G.AD)
     phone: str | None = Field(None, min_length=1, max_length=_G.TELEFON_HAM)
     is_active: bool | None = None
 
@@ -4600,7 +4653,7 @@ class TenantYoneticiListResponse(BaseModel):
     items: list[TenantYoneticiListItem]
 
 
-class TenantYoneticiAdd(BaseModel):
+class TenantYoneticiAdd(AdSoyadGirdisi):
     """Var olan bir tesise SONRADAN yonetici ekleme.
 
     `password` YOK — `YoneticiCreate`ten kasitli fark: tesis kurulumunda admin
@@ -4610,6 +4663,8 @@ class TenantYoneticiAdd(BaseModel):
     """
 
     ad: str = Field(..., min_length=2, max_length=120, examples=["Ayse Yilmaz"])
+    #: (P250 §1) Soyad; sunucuda opsiyonel (eski mobil surumler), istemcide zorunlu.
+    soyad: str | None = Field(None, max_length=_G.AD)
     phone: str = Field(..., min_length=1, max_length=_G.TELEFON_HAM,
                        examples=["+905321112203"])
     #: (P197) ZORUNLU — gecici kod bu adrese gider ve `app_user.email`
@@ -4984,7 +5039,7 @@ class ResidentAssign(BaseModel):
 
 
 # ------------------- sakin olusturma (yonetici, gecici kod) ---------------- #
-class ResidentCreate(BaseModel):
+class ResidentCreate(AdSoyadGirdisi):
     """Yonetici daire + sakin hesabini tek adimda acar; gecici kod uretilir.
 
     telefon global benzersiz LOGIN anahtaridir (E.164 normalize); sakin
@@ -5007,6 +5062,8 @@ class ResidentCreate(BaseModel):
     blok: str | None = Field(None, max_length=_G.BLOK)
     # (E2E 2026-09, ARAYUZ-6) Kullanici adiyla ayni ust sinir (150).
     ad: str | None = Field(None, min_length=1, max_length=150)
+    #: (P250 §1) Soyad; sunucuda opsiyonel (eski mobil surumler), istemcide zorunlu.
+    soyad: str | None = Field(None, max_length=_G.AD)
     telefon: str = Field(..., min_length=1, max_length=_G.TELEFON_HAM,
                          examples=["+905321112203"])
     #: (P197) ZORUNLU OLDU. Eski not "sakinde opsiyonel" diyordu; o kural
@@ -5057,6 +5114,8 @@ class ResidentCreatedOut(BaseModel):
 class ResidentListItem(BaseModel):
     user_id: uuid.UUID
     ad: str
+    #: (P250 §1) Soyad (P250 oncesi kayitta NULL); `ad` TAM addir.
+    soyad: str | None = None
     unit_no: str | None = None  # aktif daire(ler); coklu ise virgulle birlesir
     #: (P220 §4) AKTIF DAIRELERIN BLOK ADLARI — gruplama ve arama icin.
     #:
@@ -5080,7 +5139,7 @@ class ResidentListResponse(BaseModel):
 
 # Sakin duzenleme (PATCH /residents/{id}) — en az bir alan. telefon normalize +
 # global benzersiz. Numara bos birakmak = degismez (exclude_unset).
-class ResidentUpdate(BaseModel):
+class ResidentUpdate(AdSoyadGirdisi):
     """Sakin duzenleme (P23b).
 
     KURAL: olusturmada girilebilen HER ALAN sonradan da duzenlenebilir.
@@ -5100,6 +5159,8 @@ class ResidentUpdate(BaseModel):
 
     # (E2E 2026-09, ARAYUZ-6) Olusturmayla ayni ust sinir.
     ad: str | None = Field(None, min_length=1, max_length=150)
+    #: (P250 §1) Soyad; sunucuda opsiyonel (eski mobil surumler), istemcide zorunlu.
+    soyad: str | None = Field(None, max_length=_G.AD)
     telefon: str | None = Field(None, min_length=1, max_length=_G.TELEFON_HAM)
     #: `None` = "gonderilmedi" (degistirme). ACIKCA `null` gondermek de
     #: ayni anlama gelir — TEMIZLEME ARTIK YOK (bkz. docstring).
@@ -9165,11 +9226,13 @@ class DavetCozResponse(BaseModel):
     tesis_ad: str
     rol: str
     ad: str
+    #: (P250 §1) Soyad (P250 oncesi kayitta NULL); `ad` TAM addir.
+    soyad: str | None = None
     telefon_maskeli: str
     daire_no: str | None = None  # yalniz sakinde dolu
 
 
-class DavetParolaRequest(BaseModel):
+class DavetParolaRequest(AdSoyadGirdisi):
     """Davetle gelen kullanici PAROLA yontemi secti.
 
     `ad` opsiyonel: sosyal olmayan yolda kullanici adini duzeltebilir
@@ -9177,6 +9240,8 @@ class DavetParolaRequest(BaseModel):
 
     jeton: str = Field(..., min_length=8, max_length=128)
     ad: str | None = Field(None, min_length=1, max_length=120)
+    #: (P250 §1) Soyad; sunucuda opsiyonel (eski mobil surumler), istemcide zorunlu.
+    soyad: str | None = Field(None, max_length=_G.AD)
     new_password: str = Field(..., min_length=8, max_length=_G.PAROLA)
 
     @field_validator("new_password")
@@ -9185,7 +9250,7 @@ class DavetParolaRequest(BaseModel):
         return validate_password_strength(v)
 
 
-class DavetSosyalRequest(BaseModel):
+class DavetSosyalRequest(AdSoyadGirdisi):
     """Davetle gelen kullanici SOSYAL yontem secti; saglayici akisi bitti.
 
     SMS YOK (sartname §7): davet jetonu, yoneticinin bu kisiyi ekledigi
@@ -9195,6 +9260,8 @@ class DavetSosyalRequest(BaseModel):
     jeton: str = Field(..., min_length=8, max_length=128)
     baglama_jetonu: str = Field(..., max_length=_G.JETON)
     ad: str | None = Field(None, min_length=1, max_length=120)
+    #: (P250 §1) Soyad; sunucuda opsiyonel (eski mobil surumler), istemcide zorunlu.
+    soyad: str | None = Field(None, max_length=_G.AD)
 
 
 class DavetDurumOut(BaseModel):
@@ -9244,7 +9311,7 @@ UserCreatedOut.model_rebuild()
 # ETKILENMEZ — o uclar bu bayragi OKUMAZ bile.
 
 
-class YoneticiBasvuruRequest(BaseModel):
+class YoneticiBasvuruRequest(AdSoyadGirdisi):
     """Tanitim sitesindeki yonetici kayit formunun 1. adimi.
 
     TESIS ADI BURADA ISTENMEZ ve bu bilincli: tesis ancak e-posta
@@ -9320,7 +9387,7 @@ class YoneticiTesisRequest(BaseModel):
     tesis_ad: str = Field(min_length=2, max_length=120, examples=["Oltu Sitesi"])
 
 
-class RolEpostaBaslaRequest(BaseModel):
+class RolEpostaBaslaRequest(AdSoyadGirdisi):
     """(§6) Sakin/guvenlik/gorevli kaydinin 1. adimi — E-POSTA ile.
 
     TELEFONLU KARDESI (`RolKayitBaslaRequest`) DURUYOR ve degistirilmedi.
@@ -9334,6 +9401,8 @@ class RolEpostaBaslaRequest(BaseModel):
     #: Yalniz bilgi amacli: kuyruga dusen bir denemede yonetici kimin
     #: denedigini gorsun diye. Dogrulamada KULLANILMAZ.
     ad: str | None = Field(default=None, max_length=120)
+    #: (P250 §1) Soyad; sunucuda opsiyonel (eski mobil surumler), istemcide zorunlu.
+    soyad: str | None = Field(None, max_length=_G.AD)
     telefon: str | None = Field(default=None, max_length=32)
 
 

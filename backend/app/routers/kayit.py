@@ -82,6 +82,7 @@ from ..errors import APIError
 from ..gunlukleme import maskele_kimlik
 from ..gonderim import saglayici as kanal_saglayicisi, tenant_ayari
 from ..hiz_siniri import kod_istegi_say
+from ..kisi_adi import ad_bicimle, soyad_bicimle, tam_ad
 from ..models import AppUser, KayitOnayKuyrugu, OauthKimlik, Tenant, TesisUyelik
 from ..roller import kayit_beyani_eslesir
 from ..schemas import (
@@ -218,7 +219,9 @@ async def tesis_olustur(
             if not eposta:
                 raise APIError(422, "validation_error", "eposta_gerekli")
             yonetici = {
-                "ad": body.ad.strip(),
+                # (P250 §1) Bicim semada; tam ad + ayri soyad.
+                "ad": tam_ad(body.ad, body.soyad),
+                "soyad": body.soyad,
                 "telefon": telefon,
                 "eposta": eposta,
                 "password_hash": hash_password(body.parola) if body.parola else None,
@@ -620,7 +623,10 @@ async def yonetici_tesis(
                 raise _TELEFON_KAYITLI
 
             yonetici = {
-                "ad": f"{satir.ad} {satir.soyad}".strip(),
+                # (P250 §1) Basvuru satiri P250 oncesinden kalmis olabilir:
+                # bicim burada da uygulanir.
+                "ad": tam_ad(ad_bicimle(satir.ad), soyad_bicimle(satir.soyad) or None),
+                "soyad": soyad_bicimle(satir.soyad) or None,
                 "telefon": satir.telefon,
                 "eposta": satir.eposta,
                 "password_hash": satir.parola_hash,
@@ -841,7 +847,7 @@ async def rol_eposta_basla(
                     tenant_id=tenant_id,
                     eposta=eposta,
                     rol=body.rol,
-                    ad=body.ad,
+                    ad=tam_ad(body.ad, body.soyad) if body.ad else None,
                     telefon=body.telefon,
                     sebep=sebep,
                 )

@@ -2744,5 +2744,8 @@
   "ziyaretciOnaySoru": "{ad} sagt, Sie erwarten ihn/sie. Freigeben?",
   "ziyaretciOnayIsteSecenek": "Bewohner um Freigabe bitten (3 Min.)",
   "ayarYonetimArayabilir": "Die Verwaltung darf mich unter dieser Nummer anrufen",
-  "ayarYonetimArayabilirAlt": "Der Sicherheitsdienst darf Sie anrufen, wenn er Ihre Wohnung anders nicht erreicht. Ihre Nummer erscheint in keiner Liste; jeder Anruf wird protokolliert."
+  "ayarYonetimArayabilirAlt": "Der Sicherheitsdienst darf Sie anrufen, wenn er Ihre Wohnung anders nicht erreicht. Ihre Nummer erscheint in keiner Liste; jeder Anruf wird protokolliert.",
+  "kisiAd": "Vorname",
+  "kisiSoyad": "Nachname",
+  "kisiAdZorunlu": "Vor- und Nachname sind erforderlich."
 }

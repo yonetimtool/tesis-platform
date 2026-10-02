@@ -22,6 +22,12 @@ def _giris(client, slug, cred):
 
 
 def _satir(no, **degerler):
+    # (P250 §1) Soyad ayri ve zorunlu sutun: test satirlari ad verdiyse
+    # soyadi da tamamlar (acikca verilmediyse).
+    if "ad" in degerler:
+        degerler.setdefault("soyad", "Test")
+    if "sakin_ad" in degerler:
+        degerler.setdefault("sakin_soyad", "Test")
     return {"satir_no": no, "degerler": degerler}
 
 
@@ -373,7 +379,8 @@ def test_P193_kisi_EPOSTA_zorunlu_alan_olarak_BILDIRILIYOR(client, world):
     h = _giris(client, world["slug_a"], world["yonetici_a"])
     turler = {t["kod"]: t for t in client.get("/ice-aktarim/turler", headers=h).json()}
     zorunlular = {a["kod"] for a in turler["kisi"]["alanlar"] if a["zorunlu"]}
-    assert zorunlular == {"ad", "eposta"}
+    # (P250 §1) Soyad ayri ve zorunlu sutun.
+    assert zorunlular == {"ad", "soyad", "eposta"}
 
 
 def test_P193_kisi_aktariminda_DAVET_SAYILIYOR(client, world):

@@ -8172,4 +8172,13 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get ayarYonetimArayabilirAlt =>
       'Охрана может позвонить вам, если не сможет связаться с квартирой иначе. Ваш номер не показывается в списках; каждый звонок фиксируется.';
+
+  @override
+  String get kisiAd => 'Имя';
+
+  @override
+  String get kisiSoyad => 'Фамилия';
+
+  @override
+  String get kisiAdZorunlu => 'Имя и фамилия обязательны.';
 }

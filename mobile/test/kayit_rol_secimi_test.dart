@@ -39,6 +39,7 @@ class _SahteAuthApi extends AuthApi {
     required String tesisKodu,
     required String eposta,
     String? ad,
+    String? soyad,
     String? telefon,
   }) async {
     baslaCagrilari.add({
@@ -46,6 +47,7 @@ class _SahteAuthApi extends AuthApi {
       'tesis_kodu': tesisKodu,
       'eposta': eposta,
       'ad': ad,
+      'soyad': soyad,
       'telefon': telefon,
     });
     return 'Oltu Sitesi';
@@ -177,6 +179,8 @@ Future<void> _bilgilereGit(
   await tester.tap(find.byKey(const Key('kayit-yontem-parola')));
   await tester.pumpAndSettle();
   await tester.enterText(find.byKey(const Key('kayit-ad')), ad);
+  // (P250 §1) Soyad ayri ve zorunlu.
+  await tester.enterText(find.byKey(const Key('kayit-soyad')), 'Test');
   await tester.enterText(find.byKey(const Key('kayit-eposta')), eposta);
   // (P233 §3) TELEFON IKI KUTU: once ULKE secilir, sonra ulusal numara.
   // Ulke secilmeden numara "ulkeYok" hatasi verir ve form ILERLEMEZ —
@@ -243,6 +247,8 @@ void main() {
     await tester.tap(find.byKey(const Key('kayit-yontem-parola')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('kayit-ad')), 'Ayse');
+    // (P250 §1) Soyad ayri ve zorunlu.
+    await tester.enterText(find.byKey(const Key('kayit-soyad')), 'Test');
     // E-posta BOS.
     await tester.enterText(find.byKey(const Key('kayit-parola')), 'Parola123!');
     await tester.tap(find.byKey(const Key('kayit-bilgi-gonder')));

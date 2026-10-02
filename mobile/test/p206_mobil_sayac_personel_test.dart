@@ -128,9 +128,11 @@ void main() {
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextFormField).at(0), 'Yeni Gorevli');
+    // (P250 §1) Ad ve soyad AYRI alan; telefon kutusu ucuncu sirada.
+    await tester.enterText(find.byKey(const Key('personel-ad')), 'Yeni');
+    await tester.enterText(find.byKey(const Key('personel-soyad')), 'Gorevli');
     await _ulkeyiTRSec(tester);
-    await tester.enterText(find.byType(TextFormField).at(1), '5321112203');
+    await tester.enterText(find.byType(TextFormField).at(2), '5321112203');
     await tester.enterText(
         find.byKey(const Key('personel-eposta')), 'gorevli@ornek.com');
     await tester.tap(find.byType(FilledButton).last);
@@ -148,9 +150,11 @@ void main() {
     final tel = await _sur(tester, const StaffScreen());
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextFormField).at(0), 'Yeni Gorevli');
+    // (P250 §1) Ad ve soyad AYRI alan; telefon kutusu ucuncu sirada.
+    await tester.enterText(find.byKey(const Key('personel-ad')), 'Yeni');
+    await tester.enterText(find.byKey(const Key('personel-soyad')), 'Gorevli');
     await _ulkeyiTRSec(tester);
-    await tester.enterText(find.byType(TextFormField).at(1), '5321112203');
+    await tester.enterText(find.byType(TextFormField).at(2), '5321112203');
     await tester.tap(find.byType(FilledButton).last);
     await tester.pumpAndSettle();
 

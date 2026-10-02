@@ -64,6 +64,8 @@ it("TELEFON BOS: kayit ENGELLENMEZ ve govdede `null` gider", async () => {
 
   // Dar sorgu SART: /Ad/i birden cok etiketi buluyor ("Ad", "Aranabilir"...).
   await k.type(screen.getByLabelText(new RegExp(`^${tr.ortakAd}\\s*\\*?$`)), "Coklu Kisi");
+  // (P250 §1) Soyad ayri ve zorunlu.
+  await k.type(screen.getByLabelText(new RegExp(`^${tr.kisiSoyad}\\s*\\*?$`)), "Test");
   await k.type(
     screen.getByLabelText(new RegExp(tr.kullaniciEposta, "i")),
     "coklu@ornek.com",
@@ -88,6 +90,8 @@ it("TELEFON VERILIRSE normallestirilmis gider (gerileme yok)", async () => {
   await formuAc(k);
 
   await k.type(screen.getByLabelText(new RegExp(`^${tr.ortakAd}\\s*\\*?$`)), "Numarali");
+  // (P250 §1) Soyad ayri ve zorunlu.
+  await k.type(screen.getByLabelText(new RegExp(`^${tr.kisiSoyad}\\s*\\*?$`)), "Test");
   await k.type(
     screen.getByLabelText(new RegExp(tr.kullaniciEposta, "i")),
     "numarali@ornek.com",

@@ -18,7 +18,13 @@ void main() {
               .asByteData()));
     await yukleyici.load();
   });
-  test('OLCUM: dugme etiketleri kac satira sariyor', () {
+  // (P250) OLCUM BETIGI, KILIT DEGIL: girdisi `/tmp`deki elle uretilmis
+  // bir liste. Dosya yoksa (temiz makine, CI) ATLANIR — yoksa tam takim
+  // koddan bagimsiz olarak kirmizi kaliyordu.
+  final girdiVar = File('/tmp/dugme_anahtarlari.txt').existsSync();
+  test('OLCUM: dugme etiketleri kac satira sariyor', skip: girdiVar
+      ? false
+      : '/tmp/dugme_anahtarlari.txt yok (olcum betigi)', () {
     final anahtarlar = File('/tmp/dugme_anahtarlari.txt').readAsLinesSync()
         .where((e) => e.trim().isNotEmpty).toSet();
     final diller = <String, Map<String, String>>{};

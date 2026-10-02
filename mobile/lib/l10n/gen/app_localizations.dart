@@ -14020,6 +14020,24 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Güvenlik dairenize başka yolla ulaşamazsa sizi arayabilir. Numaranız hiçbir listede görünmez; her arama kayda geçer.'**
   String get ayarYonetimArayabilirAlt;
+
+  /// No description provided for @kisiAd.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ad'**
+  String get kisiAd;
+
+  /// No description provided for @kisiSoyad.
+  ///
+  /// In tr, this message translates to:
+  /// **'Soyad'**
+  String get kisiSoyad;
+
+  /// No description provided for @kisiAdZorunlu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ad ve soyad zorunludur.'**
+  String get kisiAdZorunlu;
 }
 
 class _AppLocalizationsDelegate

@@ -3698,4 +3698,7 @@ export const de: Sozluk = {
   bildirimTipZiyaretciOnayIstegi: "Besucher-Freigabeanfrage",
   bildirimTipZiyaretciOnayYaniti: "Antwort auf Besucherfreigabe",
   bildirimTipSesliMesaj: "Sprachnachricht vom Sicherheitsdienst",
+  kisiAd: "Vorname",
+  kisiSoyad: "Nachname",
+  kisiAdZorunlu: "Vor- und Nachname sind erforderlich.",
 };

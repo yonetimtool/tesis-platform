@@ -121,6 +121,7 @@ async def _anonimlestir(db: AsyncSession, hedef: AppUser) -> None:
     await db.execute(sa_delete(UserDevice).where(UserDevice.user_id == hedef.id))
 
     hedef.ad = ANONYMIZED_NAME
+    hedef.soyad = None  # (P250 §1) soyad da kisisel veri
     # (P197) E-POSTA "NULL" YERINE SENTETIK ADRES.
     #
     # `app_user.email` NOT NULL oldu (goc 0089) — `None` yazmak

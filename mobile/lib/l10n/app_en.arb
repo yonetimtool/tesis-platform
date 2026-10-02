@@ -2744,5 +2744,8 @@
   "ziyaretciOnaySoru": "{ad} says you are expecting them. Do you approve?",
   "ziyaretciOnayIsteSecenek": "Ask residents for approval (3 min)",
   "ayarYonetimArayabilir": "Management may call me on this number",
-  "ayarYonetimArayabilirAlt": "Security may call you if they cannot reach your unit otherwise. Your number appears in no list; every call is logged."
+  "ayarYonetimArayabilirAlt": "Security may call you if they cannot reach your unit otherwise. Your number appears in no list; every call is logged.",
+  "kisiAd": "First name",
+  "kisiSoyad": "Last name",
+  "kisiAdZorunlu": "First and last name are required."
 }

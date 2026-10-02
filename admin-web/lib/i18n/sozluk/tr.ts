@@ -3775,4 +3775,7 @@ export const tr = {
   bildirimTipZiyaretciOnayIstegi: "Ziyaretçi onay talebi",
   bildirimTipZiyaretciOnayYaniti: "Ziyaretçi onay yanıtı",
   bildirimTipSesliMesaj: "Güvenlikten sesli mesaj",
+  kisiAd: "Ad",
+  kisiSoyad: "Soyad",
+  kisiAdZorunlu: "Ad ve soyad zorunludur.",
 } as const;

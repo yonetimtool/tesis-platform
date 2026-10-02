@@ -7892,4 +7892,13 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get ayarYonetimArayabilirAlt =>
       'Güvenlik dairenize başka yolla ulaşamazsa sizi arayabilir. Numaranız hiçbir listede görünmez; her arama kayda geçer.';
+
+  @override
+  String get kisiAd => 'Ad';
+
+  @override
+  String get kisiSoyad => 'Soyad';
+
+  @override
+  String get kisiAdZorunlu => 'Ad ve soyad zorunludur.';
 }

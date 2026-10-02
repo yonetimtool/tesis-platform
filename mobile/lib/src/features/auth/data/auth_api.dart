@@ -343,6 +343,7 @@ class AuthApi {
     required String tesisKodu,
     required String eposta,
     String? ad,
+    String? soyad,
     String? telefon,
   }) async {
     try {
@@ -353,6 +354,8 @@ class AuthApi {
           'tesis_kodu': tesisKodu,
           'eposta': eposta,
           if (ad != null && ad.isNotEmpty) 'ad': ad,
+          // (P250 §1) Soyad ayri alan.
+          if (soyad != null && soyad.isNotEmpty) 'soyad': soyad,
           if (telefon != null && telefon.isNotEmpty) 'telefon': telefon,
         },
       );
@@ -645,6 +648,7 @@ class AuthApi {
         tesisAd: d['tesis_ad'] as String,
         rol: d['rol'] as String,
         ad: d['ad'] as String,
+        soyad: d['soyad'] as String?,
         telefonMaskeli: d['telefon_maskeli'] as String,
         daireNo: d['daire_no'] as String?,
       );
@@ -658,6 +662,7 @@ class AuthApi {
   Future<TokenPair> davetParola({
     required String jeton,
     String? ad,
+    String? soyad,
     required String newPassword,
   }) async {
     try {
@@ -666,6 +671,8 @@ class AuthApi {
         data: {
           'jeton': jeton,
           if (ad != null && ad.isNotEmpty) 'ad': ad,
+          // (P250 §1) Soyad ayri alan.
+          if (soyad != null && soyad.isNotEmpty) 'soyad': soyad,
           'new_password': newPassword,
         },
       );
@@ -681,6 +688,7 @@ class AuthApi {
     required String jeton,
     required String baglamaJetonu,
     String? ad,
+    String? soyad,
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
@@ -689,6 +697,7 @@ class AuthApi {
           'jeton': jeton,
           'baglama_jetonu': baglamaJetonu,
           if (ad != null && ad.isNotEmpty) 'ad': ad,
+          if (soyad != null && soyad.isNotEmpty) 'soyad': soyad,
         },
       );
       return TokenPair.fromJson(res.data!);
@@ -706,11 +715,15 @@ class DavetCozum {
     required this.ad,
     required this.telefonMaskeli,
     this.daireNo,
+    this.soyad,
   });
 
   final String tesisAd;
   final String rol;
+  /// TAM ad (yoneticinin yazdigi).
   final String ad;
+  /// (P250 §1) Soyad; P250 oncesi kayitta null.
+  final String? soyad;
   final String telefonMaskeli;
   final String? daireNo;
 }

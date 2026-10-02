@@ -198,8 +198,11 @@ describe("(P198) Google ile yonetici kaydi — uctan uca", () => {
 
     // Bilgiler adimindan devam eder ve ad ON-DOLUDUR.
     const adAlani = await kancaBekle("kayit-ad");
-    expect(adAlani).toHaveValue("Ayse Yonetici");
+    // (P250 §1) Saglayicinin tek adi iki alana bolunur: son kelime soyad.
+    expect(adAlani).toHaveValue("Ayse");
+    expect(kanca("kayit-soyad")).toHaveValue("YONET\u0130C\u0130");
 
+    await userEvent.clear(kanca("kayit-soyad"));
     await userEvent.type(kanca("kayit-soyad"), "Yilmaz");
     await userEvent.type(
       kanca("kayit-eposta"), "ayse@ornek.com");
@@ -223,6 +226,7 @@ describe("(P198) Google ile yonetici kaydi — uctan uca", () => {
     ciz(KayitSayfasi);
 
     await kancaBekle("kayit-ad");
+    await userEvent.clear(kanca("kayit-soyad"));
     await userEvent.type(kanca("kayit-soyad"), "Yilmaz");
     await userEvent.type(kanca("kayit-eposta"), "ayse@ornek.com");
     await telefonGir("5321112233");
@@ -251,6 +255,7 @@ describe("(P198) Google ile yonetici kaydi — uctan uca", () => {
     ciz(KayitSayfasi);
 
     await kancaBekle("kayit-ad");
+    await userEvent.clear(kanca("kayit-soyad"));
     await userEvent.type(kanca("kayit-soyad"), "Yilmaz");
     await userEvent.type(kanca("kayit-eposta"), "ayse@ornek.com");
     await telefonGir("5321112233");

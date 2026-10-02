@@ -23,6 +23,7 @@ from ..db import SessionLocal, set_tenant
 from ..deps import require_role
 from ..errors import APIError
 from ..audit import Action, audit_user
+from ..kisi_adi import tam_ad
 from ..models import AppUser
 from ..tr_arama import like_icerir, like_icerir_bos_degilse
 from ..schemas import (
@@ -120,6 +121,19 @@ async def _yoneticilere_davet(
             _log.exception("yonetici daveti gonderilemedi user=%s", uid)
 
 
+
+async def _soyad_yaz(session, tenant_id, user_id, soyad: str | None) -> None:
+    """(P250 §1) Yoneticinin ayri soyadi. `add_tenant_yonetici` /
+    `update_tenant_yonetici` imzalari soyad almiyor (degistirmek eski
+    imzayi dusurmeyi gerektirirdi); tam ad fonksiyonla, soyad burada
+    tesis baglaminda yazilir. Soyadsiz istek (eski istemci) sutunu bosaltir:
+    `ad` artik tam ad ve soyadla celismemeli."""
+    await set_tenant(session, tenant_id)
+    await session.execute(
+        text("UPDATE app_user SET soyad = :s WHERE id = :u"),
+        {"s": soyad, "u": user_id},
+    )
+
 @router.post("", response_model=TenantAdminCreatedOut, status_code=201)
 async def create_tenant(
     body: TenantAdminCreate,
@@ -140,14 +154,16 @@ async def create_tenant(
             raise APIError(422, "validation_error", "telefon_gecersiz")
         if y.password is not None:
             hazir.append({
-                "ad": y.ad, "telefon": phone, "eposta": str(y.email),
+                "ad": tam_ad(y.ad, y.soyad), "soyad": y.soyad,
+                "telefon": phone, "eposta": str(y.email),
                 "password_hash": hash_password(y.password),
                 "temp_code_hash": None, "password_set": True, "temp_code": None,
             })
         else:
             code = generate_temp_code()
             hazir.append({
-                "ad": y.ad, "telefon": phone, "eposta": str(y.email),
+                "ad": tam_ad(y.ad, y.soyad), "soyad": y.soyad,
+                "telefon": phone, "eposta": str(y.email),
                 "password_hash": None,
                 "temp_code_hash": hash_password(code), "password_set": False,
                 "temp_code": code,
@@ -164,8 +180,8 @@ async def create_tenant(
         # (P197) `eposta` DA GIDIYOR: fonksiyon artik `app_user.email`i
         # yaziyor ve sutun NOT NULL (goc 0089).
         {k: h[k] for k in
-         ("ad", "telefon", "eposta", "password_hash", "temp_code_hash",
-          "password_set")}
+         ("ad", "soyad", "telefon", "eposta", "password_hash",
+          "temp_code_hash", "password_set")}
         for h in hazir
     ]
 
@@ -429,7 +445,8 @@ async def update_yonetici(
                         {
                             "tid": tenant_id,
                             "uid": row.yonetici_id,
-                            "ad": body.ad,
+                            # (P250 §1) Tam ad; soyad asagida ayrica.
+                            "ad": tam_ad(body.ad, body.soyad) if body.ad else None,
                             "tel": phone,
                             "act": body.is_active,
                         },
@@ -439,6 +456,8 @@ async def update_yonetici(
                 raise APIError(409, "conflict", "telefon_zaten_kayitli")
             if updated is None:
                 raise APIError(404, "not_found", "tesiste_yonetici_yok")
+            if body.ad:
+                await _soyad_yaz(session, tenant_id, row.yonetici_id, body.soyad)
             row = await _detail_or_404(session, tenant_id)
     return _to_detail(row)
 
@@ -553,7 +572,7 @@ async def add_yonetici(
                         ),
                         {
                             "tid": tenant_id,
-                            "ad": body.ad,
+                            "ad": tam_ad(body.ad, body.soyad),
                             "tel": phone,
                             "tch": hash_password(temp_code),
                             # (P197) E-POSTA ZORUNLU — bkz. `YoneticiCreate`.
@@ -568,6 +587,7 @@ async def add_yonetici(
             # `tenant` RLS altinda: baglam kurulmadan sorgu bos
             # `app.current_tenant_id`'yi uuid'e cevirmeye calisip patlar.
             await set_tenant(session, tenant_id)
+            await _soyad_yaz(session, tenant_id, new_id, body.soyad)
             tesis_ad = (
                 await session.execute(
                     text("SELECT ad FROM tenant WHERE id = :t"), {"t": tenant_id}
@@ -575,7 +595,9 @@ async def add_yonetici(
             ).scalar_one_or_none() or ""
     # (E2E 2026-09) Eklenen yoneticiye de davet gider (bkz. create_tenant).
     await _yoneticilere_davet(tenant_id, [new_id], tesis_ad)
-    return TenantYoneticiAddedOut(user_id=new_id, ad=body.ad, temp_code=temp_code)
+    return TenantYoneticiAddedOut(
+        user_id=new_id, ad=tam_ad(body.ad, body.soyad), temp_code=temp_code
+    )
 
 
 @router.delete("/{tenant_id}/yoneticiler/{user_id}", status_code=204)

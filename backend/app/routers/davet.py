@@ -34,6 +34,7 @@ from ..davet import (
 from ..db import SessionLocal, set_tenant
 from ..deps import get_redis, get_tenant_db, require_role
 from ..errors import APIError
+from ..kisi_adi import guncelle as kisi_adi_guncelle
 from ..models import AppUser, Davet
 from ..schemas import (
     DavetCozRequest,
@@ -70,6 +71,14 @@ _VAZGEC_SAYFA = (
     "<h2 style='color:#102060'>Yönetiyor</h2>{govde}</body></html>"
 )
 
+
+
+def _ad_govdesi(body) -> dict:
+    """Davet tamamlamada gelen ad/soyad: soyad yoksa (eski istemci) ad tam ad."""
+    govde = {"ad": body.ad}
+    if body.soyad:
+        govde["soyad"] = body.soyad
+    return govde
 
 @router.post("/vazgec/{jeton}", response_class=HTMLResponse)
 async def davet_eposta_vazgec(jeton: str) -> HTMLResponse:
@@ -201,7 +210,8 @@ async def davet_parola(
             user.password_set = True
             user.temp_code_hash = None
             if body.ad:
-                user.ad = body.ad.strip()
+                # (P250 §1) Bicim semada; ad + soyad birlikte yazilir.
+                kisi_adi_guncelle(user, _ad_govdesi(body))
 
             davet = (
                 await session.execute(
@@ -252,7 +262,8 @@ async def davet_sosyal(
             # sayilir (kimlik baglandi). `password_set` FALSE kalir — bu
             # kasitli: kullanici parola YOLUYLA giremez, yalniz saglayiciyla.
             if body.ad:
-                user.ad = body.ad.strip()
+                # (P250 §1) Bicim semada; ad + soyad birlikte yazilir.
+                kisi_adi_guncelle(user, _ad_govdesi(body))
 
             davet = (
                 await session.execute(

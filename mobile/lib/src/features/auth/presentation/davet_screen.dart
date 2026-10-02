@@ -4,6 +4,8 @@ import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/kisi_adi.dart';
+import '../../../core/ui/ad_soyad_alanlari.dart';
 import '../../../core/validators/password_rule.dart';
 import '../data/auth_api.dart';
 import 'auth_controller.dart';
@@ -32,6 +34,8 @@ enum _Durum { yukleniyor, gecerli, gecersiz, parola }
 class _DavetScreenState extends ConsumerState<DavetScreen> {
   final _parolaFormKey = GlobalKey<FormState>();
   final _adCtrl = TextEditingController();
+  // (P250 §1) Soyad ayri ve zorunlu.
+  final _soyadCtrl = TextEditingController();
   final _parolaCtrl = TextEditingController();
 
   _Durum _durum = _Durum.yukleniyor;
@@ -49,6 +53,7 @@ class _DavetScreenState extends ConsumerState<DavetScreen> {
   @override
   void dispose() {
     _adCtrl.dispose();
+    _soyadCtrl.dispose();
     _parolaCtrl.dispose();
     super.dispose();
   }
@@ -59,7 +64,10 @@ class _DavetScreenState extends ConsumerState<DavetScreen> {
       if (!mounted) return;
       setState(() {
         _cozum = c;
-        _adCtrl.text = c.ad;
+        // (P250 §1) Yoneticinin yazdigi tam ad iki alana ONERILIR.
+        final parca = adAyir(c.ad, c.soyad);
+        _adCtrl.text = parca.ad;
+        _soyadCtrl.text = parca.soyad;
         _durum = _Durum.gecerli;
       });
     } on ApiException catch (e) {
@@ -75,7 +83,8 @@ class _DavetScreenState extends ConsumerState<DavetScreen> {
     if (!_parolaFormKey.currentState!.validate()) return;
     await ref.read(authControllerProvider.notifier).davetParolaTamamla(
           jeton: widget.jeton,
-          ad: _adCtrl.text.trim(),
+          ad: adBicimle(_adCtrl.text),
+          soyad: soyadBicimle(_soyadCtrl.text),
           newPassword: _parolaCtrl.text,
         );
     if (!mounted) return;
@@ -105,7 +114,8 @@ class _DavetScreenState extends ConsumerState<DavetScreen> {
     }
     await denetleyici.davetSosyalTamamla(
       jeton: widget.jeton,
-      ad: _adCtrl.text.trim().isEmpty ? null : _adCtrl.text.trim(),
+      ad: _adCtrl.text.trim().isEmpty ? null : adBicimle(_adCtrl.text),
+      soyad: _soyadCtrl.text.trim().isEmpty ? null : soyadBicimle(_soyadCtrl.text),
     );
     if (!mounted) return;
     final son = ref.read(authControllerProvider);
@@ -215,15 +225,12 @@ class _DavetScreenState extends ConsumerState<DavetScreen> {
           Text(l10n.parolaBelirleBaslik,
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 16),
-          TextFormField(
-            controller: _adCtrl,
-            inputFormatters: GirdiSiniri.sinir(120), // sunucu: DavetParolaRequest.ad
-            enabled: !bekliyor,
-            textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              labelText: l10n.ortakAdSoyad,
-              border: const OutlineInputBorder(),
-            ),
+          AdSoyadAlanlari(
+            adKtrl: _adCtrl,
+            soyadKtrl: _soyadCtrl,
+            etkin: !bekliyor,
+            adSinir: 120, // sunucu: DavetParolaRequest.ad
+            anahtarOneki: 'davet',
           ),
           const SizedBox(height: 16),
           TextFormField(

@@ -17,12 +17,16 @@
  529,  88  250x16  Yeni parola (tekrar)
  595,  75  240x20  Parolayı güncelle
  685,  36  318x24  İletişim
- 716,  52  133x16  Ülke kodu
- 735, 132  24x24  U+E098
- 737,  52  64x20  Seçin
- 737, 188  24x24  U+F290
- 737, 228  110x24  örn. +905551112233
- 741, 228  110x16  Telefon
- 785,  36  242x24  Aranabilir
- 809,  36  242x100  Yetkili roller (rıza gerektiren arama) numaranıza ulaşabilir
- 939,  82  226x20  İletişimi kaydet
+ 716,  52  33x16  Ad
+ 737,  48  24x24  U+EEB8
+ 784,  52  83x16  Soyad
+ 805,  48  24x24  U+EEB8
+ 852,  52  133x16  Ülke kodu
+ 871, 132  24x24  U+E098
+ 873,  52  64x20  Seçin
+ 873, 188  24x24  U+F290
+ 873, 228  110x24  örn. +905551112233
+ 877, 228  110x16  Telefon
+ 921,  36  242x24  Aranabilir
+ 945,  36  242x100  Yetkili roller (rıza gerektiren arama) numaranıza ulaşabilir
+1075,  82  226x20  İletişimi kaydet

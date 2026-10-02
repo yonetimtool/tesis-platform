@@ -37,6 +37,8 @@ import { ParolaAlani } from "@/components/ParolaAlani";
 import { EpostaAlani } from "@/components/EpostaAlani";
 import { TelefonAlani, telefonHataMetni } from "@/components/TelefonAlani";
 import { useT } from "@/lib/i18n/kullan";
+import { adBicimle, soyadBicimle } from "@/lib/kisi-adi";
+import { AdSoyadAlanlari } from "@/components/AdSoyadAlanlari";
 import { ApiHatasi } from "@/lib/client";
 import { tarihSaatUzun } from "@/lib/tarih";
 import { telefonNormalle } from "@/lib/telefon";
@@ -76,6 +78,8 @@ interface YoneticiForm {
    *  baglanan bir parola yoneticisi ciddi bir kusurdur. */
   anahtar: string;
   ad: string;
+  /** (P250 §1) Soyad ayri ve zorunlu. */
+  soyad: string;
   phone: string;
   /** (P197) ZORUNLU — davetin gidecegi TEK kanal. */
   email: string;
@@ -84,7 +88,7 @@ interface YoneticiForm {
 let _sayac = 0;
 function bosYonetici(): YoneticiForm {
   _sayac += 1;
-  return { anahtar: `y${_sayac}`, ad: "", phone: "", email: "", password: "" };
+  return { anahtar: `y${_sayac}`, ad: "", soyad: "", phone: "", email: "", password: "" };
 }
 interface FormState {
   ad: string;
@@ -227,7 +231,8 @@ export default function TenantsPage() {
     try {
       const body: TenantAdminCreate = {
         yoneticiler: form.yoneticiler.map((y) => ({
-          ad: y.ad,
+          ad: adBicimle(y.ad),
+          soyad: soyadBicimle(y.soyad),
           // Sunucuya NORMALLESTIRILMIS gider (telefon GLOBAL BENZERSIZ).
           phone: telefonNormalle(y.phone),
           // (P197) E-POSTA ZORUNLU: sunucu e-postasiz yonetici KABUL ETMEZ
@@ -451,14 +456,16 @@ export default function TenantsPage() {
                   )}
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <AlanSarmal etiket={t("tesisAdSoyad")}>
-  {(b) => (
-    <Alan maxLength={120 /* sunucu: YoneticiCreate.ad */} {...b} value={y.ad}
-                      onChange={(e) => setYonetici(i, { ad: e.target.value })}
-                      required
-                      minLength={2} />
-  )}
-</AlanSarmal>
+                  <div className="sm:col-span-2">
+                    <AdSoyadAlanlari
+                      ad={y.ad}
+                      soyad={y.soyad}
+                      onAd={(ad) => setYonetici(i, { ad })}
+                      onSoyad={(soyad) => setYonetici(i, { soyad })}
+                      adSinir={120 /* sunucu: YoneticiCreate.ad */}
+                      kanca={`tesis-yonetici-${i}`}
+                    />
+                  </div>
                   <TelefonAlani
                     etiket={t("kullaniciTelefon")}
                     ipucu={t("tesisTelefonIpucu")}

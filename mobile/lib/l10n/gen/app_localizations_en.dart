@@ -8089,4 +8089,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get ayarYonetimArayabilirAlt =>
       'Security may call you if they cannot reach your unit otherwise. Your number appears in no list; every call is logged.';
+
+  @override
+  String get kisiAd => 'First name';
+
+  @override
+  String get kisiSoyad => 'Last name';
+
+  @override
+  String get kisiAdZorunlu => 'First and last name are required.';
 }

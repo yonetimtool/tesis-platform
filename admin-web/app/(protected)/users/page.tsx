@@ -28,7 +28,9 @@ import {
 import { alanliHataMetni, apiSend } from "@/lib/client";
 import type { UnitList } from "@/lib/types";
 import { jsonFetcher } from "@/lib/fetcher";
+import { AdSoyadAlanlari } from "@/components/AdSoyadAlanlari";
 import { EpostaAlani } from "@/components/EpostaAlani";
+import { adAyir, adBicimle, soyadBicimle } from "@/lib/kisi-adi";
 import { TelefonAlani } from "@/components/TelefonAlani";
 import { useT } from "@/lib/i18n/kullan";
 import { ROLE_OPTIONS as ROLES, rolAdi } from "@/lib/roles";
@@ -77,7 +79,9 @@ const VARSAYILAN_ROL: UserRole = "security";
 const ROL_DENETCI = "denetci";
 
 interface FormState {
+  // (P250 §1) Ad ve soyad AYRI alan, ikisi de zorunlu.
   ad: string;
+  soyad: string;
   email: string;
   telefon: string;
   aranabilir: boolean;
@@ -88,6 +92,7 @@ interface FormState {
 }
 const EMPTY: FormState = {
   ad: "",
+  soyad: "",
   email: "",
   telefon: "",
   aranabilir: false,
@@ -311,7 +316,8 @@ export default function UsersPage() {
     setEditingId(u.id);
     // Numara listede DONMEZ (KVKK); tek-kayit detayindan cekilir.
     setForm({
-      ad: u.ad,
+      // (P250 §1) Eski kayitta soyad bilinmez: son kelime ONERILIR.
+      ...adAyir(u.ad, u.soyad),
       email: u.email,
       telefon: "",
       aranabilir: u.aranabilir ?? false,
@@ -369,12 +375,21 @@ export default function UsersPage() {
     e.preventDefault();
     setSaving(true);
     setFormErr(null);
+    // (P250 §1) Ad ve soyad zorunlu; son bicim (kirpma + tek bosluk).
+    const ad = adBicimle(form.ad);
+    const soyad = soyadBicimle(form.soyad);
+    if (!ad || !soyad) {
+      setFormErr(t("kisiAdZorunlu"));
+      setSaving(false);
+      return;
+    }
     try {
       if (editingId) {
         // (P186-ek2) PAROLA YOK: yonetici bir kullanicinin parolasini
         // degistiremez. Kullanici kendi parolasini kendi degistirir.
         const body: Record<string, unknown> = {
-          ad: form.ad,
+          ad,
+          soyad,
           email: form.email || null,
           telefon: telefonNormalle(form.telefon) || null,
           aranabilir: form.aranabilir,
@@ -419,7 +434,8 @@ export default function UsersPage() {
           return;
         }
         const body: Record<string, unknown> = {
-          ad: form.ad,
+          ad,
+          soyad,
           // (P212-ek §2) TELEFON ARTIK OPSIYONEL — ve bu coklu tesisin
           // onundeki engeldi. Telefon PLATFORM GENELINDE benzersiz;
           // zorunlu oldugu surece ayni kisi IKINCI bir tesise ancak
@@ -837,16 +853,14 @@ export default function UsersPage() {
             </AlanSarmal>
           )}
 
-          <AlanSarmal etiket={t("ortakAd")} zorunlu>
-            {(b) => (
-              <Alan maxLength={150 /* sunucu: UserCreate.ad */}
-                {...b}
-                value={form.ad}
-                onChange={(e) => setForm({ ...form, ad: e.target.value })}
-                required
-              />
-            )}
-          </AlanSarmal>
+          <AdSoyadAlanlari
+            ad={form.ad}
+            soyad={form.soyad}
+            onAd={(ad) => setForm({ ...form, ad })}
+            onSoyad={(soyad) => setForm({ ...form, soyad })}
+            adSinir={150 /* sunucu: UserCreate.ad */}
+            kanca="kullanici"
+          />
 
           {/* (P185 §3/§4 · P186 §2.2) E-POSTA ZORUNLU: dogrulama + bildirim
               kanali. TAMAMLANMIS hesapta SALT-OKUNUR: e-posta giris kimligidir,

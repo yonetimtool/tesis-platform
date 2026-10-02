@@ -94,7 +94,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Güvenlik Amiri').last);
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextFormField).at(0), 'Kemal Amir');
+    await tester.enterText(find.byKey(const Key('personel-ad')), 'Kemal');
+    // (P250 §1) Soyad ayri ve zorunlu.
+    await tester.enterText(find.byKey(const Key('personel-soyad')), 'Amir');
     await tester.enterText(
         find.byKey(const Key('personel-eposta')), 'amir@ornek.com');
     await tester.tap(find.byType(FilledButton).last);

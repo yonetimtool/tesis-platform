@@ -3,10 +3,11 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/kisi_adi.dart';
+import '../../../core/ui/ad_soyad_alanlari.dart';
 import '../../../core/ui/bos_durum.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../../auth/domain/user_role.dart';
@@ -185,6 +186,8 @@ class _AddStaffSheet extends ConsumerStatefulWidget {
 class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
   final _formKey = GlobalKey<FormState>();
   final _adCtrl = TextEditingController();
+  // (P250 §1) Soyad ayri ve zorunlu.
+  final _soyadCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   // (P206 §4.2) E-POSTA ZORUNLU (P197): davet, dogrulama kodu ve parola
   // sifirlama YALNIZ buradan gidiyor — e-postasiz acilan hesap
@@ -212,7 +215,10 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
     super.initState();
     final e = widget.existing;
     if (e != null) {
-      _adCtrl.text = e.ad;
+      // (P250 §1) Eski kayitta soyad bilinmez: son kelime ONERILIR.
+      final parca = adAyir(e.ad, e.soyad);
+      _adCtrl.text = parca.ad;
+      _soyadCtrl.text = parca.soyad;
       _role = e.role;
       _mevcutUrl = e.avatarUrl;
     }
@@ -292,6 +298,7 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
   @override
   void dispose() {
     _adCtrl.dispose();
+    _soyadCtrl.dispose();
     _phoneCtrl.dispose();
     _epostaCtrl.dispose();
     super.dispose();
@@ -309,7 +316,8 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
       if (_isEdit) {
         await api.updateStaff(
               widget.existing!.id,
-              ad: _adCtrl.text.trim(),
+              ad: adBicimle(_adCtrl.text),
+              soyad: soyadBicimle(_soyadCtrl.text),
               role: _role,
               telefon: telefonNormalle(_phoneCtrl.text),
             );
@@ -325,7 +333,8 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
         return;
       }
       final createdId = await api.addStaff(
-            ad: _adCtrl.text.trim(),
+            ad: adBicimle(_adCtrl.text),
+            soyad: soyadBicimle(_soyadCtrl.text),
             telefon: telefonNormalle(_phoneCtrl.text),
             email: _epostaCtrl.text.trim(),
             role: _role,
@@ -350,7 +359,9 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final bottom = MediaQuery.of(context).viewInsets.bottom;
-    return Padding(
+    // (P250 §1) Ad + soyad iki alan oldu: kucuk ekranda / diyalogda govde
+    // KAYDIRILIR (yoksa form tasar).
+    return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(16, 16, 16, bottom + 16),
       child: Form(
         key: _formKey,
@@ -418,17 +429,12 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
                   : (s) => setState(() => _role = s.first),
             ),
             const SizedBox(height: 12),
-            TextFormField(
-              controller: _adCtrl,
-              inputFormatters: GirdiSiniri.sinir(150), // sunucu: UserCreate.ad
-              enabled: !_submitting,
-              decoration: InputDecoration(
-                labelText: l10n.ortakAdSoyad,
-                prefixIcon: const Icon(Icons.person_outline),
-                border: const OutlineInputBorder(),
-              ),
-              validator: (v) =>
-                  (v?.trim() ?? '').length < 2 ? l10n.butAdZorunlu : null,
+            AdSoyadAlanlari(
+              adKtrl: _adCtrl,
+              soyadKtrl: _soyadCtrl,
+              etkin: !_submitting,
+              adSinir: 150, // sunucu: UserCreate.ad
+              anahtarOneki: 'personel',
             ),
             const SizedBox(height: 12),
             TelefonAlani(

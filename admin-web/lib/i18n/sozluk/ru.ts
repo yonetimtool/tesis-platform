@@ -3698,4 +3698,7 @@ export const ru: Sozluk = {
   bildirimTipZiyaretciOnayIstegi: "Запрос подтверждения посетителя",
   bildirimTipZiyaretciOnayYaniti: "Ответ на запрос посетителя",
   bildirimTipSesliMesaj: "Голосовое сообщение от охраны",
+  kisiAd: "Имя",
+  kisiSoyad: "Фамилия",
+  kisiAdZorunlu: "Имя и фамилия обязательны.",
 };

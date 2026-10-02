@@ -8097,4 +8097,13 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get ayarYonetimArayabilirAlt =>
       'La sécurité peut vous appeler si elle ne peut pas joindre votre logement autrement. Votre numéro n’apparaît dans aucune liste ; chaque appel est journalisé.';
+
+  @override
+  String get kisiAd => 'Prénom';
+
+  @override
+  String get kisiSoyad => 'Nom de famille';
+
+  @override
+  String get kisiAdZorunlu => 'Le prénom et le nom sont obligatoires.';
 }

@@ -20,10 +20,14 @@ class StaffMember {
     required this.role,
     required this.isActive,
     this.avatarUrl,
+    this.soyad,
   });
 
   final String id;
+  /// TAM gorunen ad.
   final String ad;
+  /// (P250 §1) Soyad; P250 oncesi kayitta null.
+  final String? soyad;
   final String role;
   final bool isActive;
 
@@ -33,6 +37,7 @@ class StaffMember {
   factory StaffMember.fromJson(Map<String, dynamic> json) => StaffMember(
         id: json['id'] as String,
         ad: json['ad'] as String,
+        soyad: json['soyad'] as String?,
         role: json['role'] as String,
         isActive: (json['is_active'] as bool?) ?? true,
         avatarUrl: json['avatar_url'] as String?,
@@ -113,12 +118,15 @@ class StaffApi {
   /// bir numarayla eklenebiliyordu (telefon global benzersiz).
   Future<String> addStaff({
     required String ad,
+    String? soyad,
     String? telefon,
     required String email,
     required String role,
   }) async {
     final data = <String, dynamic>{
       'ad': ad,
+      // (P250 §1) Soyad ayri alan.
+      if (soyad != null && soyad.isNotEmpty) 'soyad': soyad,
       if (telefon != null && telefon.trim().isNotEmpty) 'telefon': telefon,
       'email': email,
       'role': role,
@@ -177,10 +185,15 @@ class StaffApi {
   Future<void> updateStaff(
     String id, {
     required String ad,
+    String? soyad,
     required String role,
     String? telefon,
   }) async {
-    final data = <String, dynamic>{'ad': ad, 'role': role};
+    final data = <String, dynamic>{
+      'ad': ad,
+      if (soyad != null && soyad.isNotEmpty) 'soyad': soyad,
+      'role': role,
+    };
     if (telefon != null && telefon.isNotEmpty) data['telefon'] = telefon;
     try {
       await _dio.patch<Map<String, dynamic>>('/users/$id', data: data);

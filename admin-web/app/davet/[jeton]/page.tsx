@@ -27,6 +27,7 @@ import { ParolaAlani } from "@/components/ParolaAlani";
 import { SosyalGiris } from "@/components/SosyalGiris";
 import { YonetioLogo } from "@/components/YonetioLogo";
 import { useT } from "@/lib/i18n/kullan";
+import { adAyir, adBicimle, soyadBicimle } from "@/lib/kisi-adi";
 import { APP_STORE_URL, PLAY_URL, platformSez } from "@/lib/magaza";
 
 /** Rol kimliginden cevrilebilir etiket anahtari (dinamik `t()` anahtari
@@ -45,6 +46,7 @@ interface Cozum {
   tesis_ad: string;
   rol: string;
   ad: string;
+  soyad?: string | null;
   telefon_maskeli: string;
   daire_no: string | null;
 }
@@ -62,6 +64,8 @@ export default function DavetSayfasi() {
   const [cozum, setCozum] = useState<Cozum | null>(null);
   const [hataKodu, setHataKodu] = useState<string | null>(null);
   const [ad, setAd] = useState("");
+  // (P250 §1) Soyad ayri ve zorunlu.
+  const [soyad, setSoyad] = useState("");
   const [parola, setParola] = useState("");
   const [parola2, setParola2] = useState("");
   const [hata, setHata] = useState<string | null>(null);
@@ -88,7 +92,10 @@ export default function DavetSayfasi() {
           return;
         }
         setCozum(veri as Cozum);
-        setAd((veri as Cozum).ad ?? "");
+        // (P250 §1) Yoneticinin yazdigi tam ad iki alana ONERILIR.
+        const parca = adAyir((veri as Cozum).ad ?? "", (veri as Cozum).soyad);
+        setAd(parca.ad);
+        setSoyad(parca.soyad);
         setDurum("gecerli");
       } catch {
         if (!iptal) {
@@ -108,13 +115,22 @@ export default function DavetSayfasi() {
       setHata(t("kayitParolaUyusmuyor"));
       return;
     }
+    if (!adBicimle(ad) || !soyadBicimle(soyad)) {
+      setHata(t("kisiAdZorunlu"));
+      return;
+    }
     setBekliyor(true);
     setHata(null);
     try {
       const r = await fetch(UC_PAROLA, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jeton, ad: ad.trim() || undefined, new_password: parola }),
+        body: JSON.stringify({
+          jeton,
+          ad: adBicimle(ad),
+          soyad: soyadBicimle(soyad),
+          new_password: parola,
+        }),
       });
       if (!r.ok) {
         const veri = (await r.json().catch(() => null)) as
@@ -227,12 +243,25 @@ export default function DavetSayfasi() {
           <h1 className="text-xl font-semibold">{t("kayitParolaBaslik")}</h1>
           <ErrorBox message={hata} />
           <label className="block">
-            <span className="text-sm font-medium">{t("tesisAdSoyad")}</span>
+            <span className="text-sm font-medium">{t("kisiAd")}</span>
             <input maxLength={120 /* sunucu: DavetParolaRequest.ad */}
               className={`${inputCls} mt-1`}
+              data-test="davet-ad"
               value={ad}
-              onChange={(e) => setAd(e.target.value)}
-              autoComplete="name"
+              onChange={(e) => setAd(adBicimle(e.target.value, true))}
+              autoComplete="given-name"
+              required
+            />
+          </label>
+          <label className="block">
+            <span className="text-sm font-medium">{t("kisiSoyad")}</span>
+            <input maxLength={100 /* sunucu: DavetParolaRequest.soyad */}
+              className={`${inputCls} mt-1`}
+              data-test="davet-soyad"
+              value={soyad}
+              onChange={(e) => setSoyad(soyadBicimle(e.target.value, true))}
+              autoComplete="family-name"
+              required
             />
           </label>
           <label className="block">

@@ -8134,4 +8134,13 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get ayarYonetimArayabilirAlt =>
       'يمكن للأمن الاتصال بك إذا تعذّر الوصول إلى وحدتك بطريقة أخرى. لا يظهر رقمك في أي قائمة، ويُسجَّل كل اتصال.';
+
+  @override
+  String get kisiAd => 'الاسم الأول';
+
+  @override
+  String get kisiSoyad => 'اسم العائلة';
+
+  @override
+  String get kisiAdZorunlu => 'الاسم الأول واسم العائلة مطلوبان.';
 }

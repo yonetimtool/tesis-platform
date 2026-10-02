@@ -17060,6 +17060,7 @@ components:
         tesis_ad:        { type: string, example: "Oltu Sitesi" }
         rol:             { type: string, example: "resident" }
         ad:              { type: string }
+        soyad: { type: string, nullable: true, description: "(P250 §1) Soyad (P250 oncesi kayitta null). `ad` TAM gorunen addir." }
         telefon_maskeli: { type: string, example: "+9053***203" }
         daire_no:        { type: string, nullable: true }
     DavetParolaRequest:
@@ -17068,6 +17069,7 @@ components:
       properties:
         jeton:        { type: string, minLength: 8, maxLength: 128 }
         ad:           { type: string, nullable: true, minLength: 1, maxLength: 120 }
+        soyad: { type: string, maxLength: 100, nullable: true, description: "(P250 §1) Soyad. Sunucuda opsiyonel (eski mobil surumler); istemcide zorunlu. Ad kelime basi buyuk, soyad tamami buyuk bicimlenir (Turkce harf kurali)." }
         new_password: { type: string, minLength: 8 }
     DavetSosyalRequest:
       type: object
@@ -17076,6 +17078,7 @@ components:
         jeton:          { type: string, minLength: 8, maxLength: 128 }
         baglama_jetonu: { type: string }
         ad:             { type: string, nullable: true, minLength: 1, maxLength: 120 }
+        soyad: { type: string, maxLength: 100, nullable: true, description: "(P250 §1) Soyad. Sunucuda opsiyonel (eski mobil surumler); istemcide zorunlu. Ad kelime basi buyuk, soyad tamami buyuk bicimlenir (Turkce harf kurali)." }
     DavetDurumOut:
       type: object
       required: [user_id, ad, rol, telefon, son_gecerlilik]
@@ -17323,6 +17326,7 @@ components:
       properties:
         id: { type: string, format: uuid }
         ad: { type: string }
+        soyad: { type: string, nullable: true, description: "(P250 §1) Soyad (P250 oncesi kayitta null). `ad` TAM gorunen addir." }
         email:
           type: string
           format: email
@@ -17413,6 +17417,7 @@ components:
       properties:
         id: { type: string, format: uuid }
         ad: { type: string }
+        soyad: { type: string, nullable: true, description: "(P250 §1) Soyad (P250 oncesi kayitta null). `ad` TAM gorunen addir." }
         email: { type: string, format: email, nullable: true }
         aranabilir: { type: boolean }
         role: { $ref: "#/components/schemas/UserRole" }
@@ -17437,6 +17442,7 @@ components:
       required: [ad, telefon, email, role]
       properties:
         ad: { type: string, maxLength: 150 }
+        soyad: { type: string, maxLength: 100, nullable: true, description: "(P250 §1) Soyad. Sunucuda opsiyonel (eski mobil surumler); istemcide zorunlu. Ad kelime basi buyuk, soyad tamami buyuk bicimlenir (Turkce harf kurali)." }
         telefon:
           type: string
           description: GLOBAL benzersiz giris anahtari (E.164 normalize)
@@ -17468,6 +17474,7 @@ components:
       properties:
         id: { type: string, format: uuid }
         ad: { type: string }
+        soyad: { type: string, nullable: true, description: "(P250 §1) Soyad (P250 oncesi kayitta null). `ad` TAM gorunen addir." }
         email: { type: string, nullable: true }
         telefon: { type: string, nullable: true }
         aranabilir: { type: boolean }
@@ -17482,6 +17489,7 @@ components:
         degistiremez; kullanici kendi `PATCH /me/password` yolunu kullanir.
       properties:
         ad: { type: string, maxLength: 150 }
+        soyad: { type: string, maxLength: 100, nullable: true, description: "(P250 §1) Soyad. Sunucuda opsiyonel (eski mobil surumler); istemcide zorunlu. Ad kelime basi buyuk, soyad tamami buyuk bicimlenir (Turkce harf kurali)." }
         email: { type: string, format: email }
         telefon: { type: string, nullable: true }
         aranabilir: { type: boolean }
@@ -17520,6 +17528,7 @@ components:
         telefon: { type: string, nullable: true, maxLength: 40 }
         aranabilir: { type: boolean }
         ad: { type: string, minLength: 1, maxLength: 120 }
+        soyad: { type: string, maxLength: 100, nullable: true, description: "(P250 §1) Soyad. Sunucuda opsiyonel (eski mobil surumler); istemcide zorunlu. Ad kelime basi buyuk, soyad tamami buyuk bicimlenir (Turkce harf kurali)." }
     HesapSilmeIstek:
       type: object
       required: [current_password]
@@ -17553,6 +17562,7 @@ components:
       properties:
         id: { type: string, format: uuid }
         ad: { type: string }
+        soyad: { type: string, nullable: true, description: "(P250 §1) Soyad (P250 oncesi kayitta null). `ad` TAM gorunen addir." }
         email: { type: string, nullable: true }
         telefon: { type: string, nullable: true }
         aranabilir: { type: boolean }
@@ -18126,6 +18136,7 @@ components:
       required: [ad, phone]
       properties:
         ad: { type: string, minLength: 2, maxLength: 120, example: "Ayse Yilmaz" }
+        soyad: { type: string, maxLength: 100, nullable: true, description: "(P250 §1) Soyad. Sunucuda opsiyonel (eski mobil surumler); istemcide zorunlu. Ad kelime basi buyuk, soyad tamami buyuk bicimlenir (Turkce harf kurali)." }
         phone: { type: string, minLength: 1, example: "+905321112203" }
         password: { type: string, format: password, minLength: 8, nullable: true }
     TenantAdminCreate:
@@ -18252,6 +18263,7 @@ components:
       description: Kismi guncelleme — verilmeyen alan degismez.
       properties:
         ad: { type: string, minLength: 2, maxLength: 120 }
+        soyad: { type: string, maxLength: 100, nullable: true, description: "(P250 §1) Soyad. Sunucuda opsiyonel (eski mobil surumler); istemcide zorunlu. Ad kelime basi buyuk, soyad tamami buyuk bicimlenir (Turkce harf kurali)." }
         phone: { type: string, minLength: 1, example: "+905321112203" }
         is_active: { type: boolean }
     TenantYoneticiResetOut:
@@ -18292,6 +18304,7 @@ components:
       required: [ad, phone]
       properties:
         ad: { type: string, minLength: 2, maxLength: 120, example: "Ayse Yilmaz" }
+        soyad: { type: string, maxLength: 100, nullable: true, description: "(P250 §1) Soyad. Sunucuda opsiyonel (eski mobil surumler); istemcide zorunlu. Ad kelime basi buyuk, soyad tamami buyuk bicimlenir (Turkce harf kurali)." }
         phone: { type: string, minLength: 1, example: "+905321112203" }
     TenantYoneticiAddedOut:
       type: object
@@ -18325,6 +18338,7 @@ components:
       properties:
         tesis_ad: { type: string, minLength: 2, maxLength: 120, example: "Oltu Sitesi" }
         ad:       { type: string, minLength: 2, maxLength: 120, example: "Ayse Yilmaz" }
+        soyad: { type: string, maxLength: 100, nullable: true, description: "(P250 §1) Soyad. Sunucuda opsiyonel (eski mobil surumler); istemcide zorunlu. Ad kelime basi buyuk, soyad tamami buyuk bicimlenir (Turkce harf kurali)." }
         telefon:  { type: string, minLength: 5, maxLength: 32, nullable: true, example: "+905321112203" }
         parola:
           type: string
@@ -18432,6 +18446,7 @@ components:
             (security <-> guvenlik_amiri) eslesir, rol HER ZAMAN listedeki
             hesaptan gelir — beyan yetki vermez.
         ad:      { type: string, maxLength: 120, nullable: true }
+        soyad: { type: string, maxLength: 100, nullable: true, description: "(P250 §1) Soyad. Sunucuda opsiyonel (eski mobil surumler); istemcide zorunlu. Ad kelime basi buyuk, soyad tamami buyuk bicimlenir (Turkce harf kurali)." }
         telefon: { type: string, maxLength: 32, nullable: true }
     RolEpostaBaslaResponse:
       type: object
@@ -19634,6 +19649,7 @@ components:
           nullable: true
           description: Yalniz YENI acilan daireye islenir
         ad: { type: string, maxLength: 150, example: "Ayse Yilmaz" }
+        soyad: { type: string, maxLength: 100, nullable: true, description: "(P250 §1) Soyad. Sunucuda opsiyonel (eski mobil surumler); istemcide zorunlu. Ad kelime basi buyuk, soyad tamami buyuk bicimlenir (Turkce harf kurali)." }
         telefon:
           type: string
           description: GLOBAL benzersiz giris anahtari (E.164 normalize)
@@ -19665,6 +19681,7 @@ components:
       properties:
         user_id: { type: string, format: uuid }
         ad: { type: string }
+        soyad: { type: string, nullable: true, description: "(P250 §1) Soyad (P250 oncesi kayitta null). `ad` TAM gorunen addir." }
         unit_no:
           type: string
           nullable: true
@@ -19696,6 +19713,7 @@ components:
       minProperties: 1
       properties:
         ad: { type: string, minLength: 1 }
+        soyad: { type: string, maxLength: 100, nullable: true, description: "(P250 §1) Soyad. Sunucuda opsiyonel (eski mobil surumler); istemcide zorunlu. Ad kelime basi buyuk, soyad tamami buyuk bicimlenir (Turkce harf kurali)." }
         telefon: { type: string, minLength: 1, example: "+905321112203" }
         email:
           type: string

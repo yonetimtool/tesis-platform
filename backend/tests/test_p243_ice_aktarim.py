@@ -46,7 +46,7 @@ def test_KISI_SATIRI_ARACI_DA_YARATIR(client, world):
     ek = uuid.uuid4().hex[:6]
     plaka = f"34AB{ek[:3].upper()}"
     _aktar(client, h, "kisi", [{
-        "ad": "Ali Veli", "eposta": f"ali-{ek}@ornek.com", "plaka": plaka,
+        "ad": "Ali Veli", "soyad": "Test", "eposta": f"ali-{ek}@ornek.com", "plaka": plaka,
         "arac_marka": "Fiat", "arac_model": "Egea",
     }], dogrula=False)
     # ARAC KAYDININ KENDI LISTE UCU YOK (ANPR tarafinda yasiyor);
@@ -60,7 +60,7 @@ def test_PLAKA_BOS_OLABILIR_aracsiz_kisi_OLAGAN(client, world):
     h = _h(client, world["slug_a"], world["yonetici_a"])
     ek = uuid.uuid4().hex[:6]
     sonuc = _aktar(client, h, "kisi", [
-        {"ad": "Veli", "eposta": f"veli-{ek}@ornek.com"},
+        {"ad": "Veli", "soyad": "Test", "eposta": f"veli-{ek}@ornek.com"},
     ], dogrula=True)
     assert sonuc["hatali"] == 0, sonuc["hatalar"]
     assert sonuc["olusan"] == 1
@@ -74,7 +74,7 @@ def test_DAIRE_SATIRI_SAKINI_DA_YARATIR(client, world):
     eposta = f"sakin-{ek}@ornek.com"
     sonuc = _aktar(client, h, "daire", [{
         "blok": "Z", "daire_no": daire,
-        "sakin_ad": "Ayşe Yılmaz", "sakin_eposta": eposta,
+        "sakin_ad": "Ayşe Yılmaz", "sakin_soyad": "Test", "sakin_eposta": eposta,
         "rol_tipi": "malik",
     }], dogrula=False)
     print("SONUC:", sonuc)
@@ -116,7 +116,7 @@ def test_ONIZLEME_HICBIR_SEY_YAZMAZ(client, world):
     daire = f"W-{ek}"
     _aktar(client, h, "daire", [{
         "blok": "W", "daire_no": daire,
-        "sakin_ad": "Onizleme Kisi", "sakin_eposta": f"onz-{ek}@ornek.com",
+        "sakin_ad": "Onizleme Kisi", "sakin_soyad": "Test", "sakin_eposta": f"onz-{ek}@ornek.com",
     }], dogrula=True)
     daireler = client.get("/units", headers=h, params={"limit": 200}).json()["items"]
     assert all(u["no"] != daire for u in daireler), "onizleme YAZMAMALI"

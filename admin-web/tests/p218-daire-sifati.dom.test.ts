@@ -71,9 +71,12 @@ async function kullaniciEkle(sifat?: string) {
     Array.from(sc.querySelectorAll("option")).some((o) => o.value === "resident"));
   await k.selectOptions(rol!, "resident");
 
-  await k.type(ic.getAllByRole("textbox")[0], "Test Kişi");
-  const eposta = ic.getAllByRole("textbox").find((a) => a.getAttribute("type") === "email")
-    ?? ic.getAllByRole("textbox")[1];
+  await k.type(ic.getAllByRole("textbox")[0], "Test");
+  // (P250 §1) Soyad ayri ve zorunlu alan (ikinci kutu).
+  await k.type(ic.getAllByRole("textbox")[1], "Kişi");
+  const eposta = ic.getAllByRole("textbox").find(
+    (a) => a.getAttribute("type") === "email" || a.getAttribute("inputmode") === "email",
+  )!;
   await k.type(eposta, "p218@ornek.com");
 
   const daire = await waitFor(() => {

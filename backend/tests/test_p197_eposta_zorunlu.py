@@ -185,7 +185,7 @@ def test_ICE_AKTARIM_epostasiz_satir_REDDEDER(client, world):
     r = client.post("/ice-aktarim/kisi", headers=yon, json={
         "yalniz_dogrula": True,
         "satirlar": [{"satir_no": 2, "degerler": {
-            "ad": "Epostasiz", "telefon": _tel()}}],
+            "ad": "Epostasiz", "soyad": "Test", "telefon": _tel()}}],
     })
     assert r.status_code == 201, r.text
     govde = r.json()

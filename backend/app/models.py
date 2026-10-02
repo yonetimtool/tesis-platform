@@ -663,7 +663,11 @@ class AppUser(Base):
         ForeignKey("tenant.id", ondelete="CASCADE"),
         nullable=False,
     )
+    #: TAM GORUNEN AD ("Mehmet Ali YILMAZ"). (P250 §1) Soyad AYRICA
+    #: `soyad`ta; ikisi `kisi_adi.tam_ad` ile birlikte yazilir.
     ad: Mapped[str] = mapped_column(Text, nullable=False)
+    #: (P250 §1, goc 0160) Yalniz soyad, BUYUK HARF. P250 oncesi kayitlarda NULL.
+    soyad: Mapped[str | None] = mapped_column(Text, nullable=True)
     #: (P197, goc 0089) ZORUNLU — HER ROLDE. Eski not "resident icin
     #: opsiyonel" diyordu; o kural SAHIPLENILEMEZ hesap uretiyordu: davet,
     #: dogrulama kodu ve parola sifirlama YALNIZ e-postadan gidiyor (SMS

@@ -249,6 +249,8 @@ void main() {
     await tester.tap(find.byKey(const Key('kayit-yontem-parola')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('kayit-ad')), 'Ayse Sakin');
+    // (P250 §1) Soyad ayri ve zorunlu.
+    await tester.enterText(find.byKey(const Key('kayit-soyad')), 'Test');
     await tester.enterText(
         find.byKey(const Key('kayit-eposta')), 'ayse@ornek.com');
     // (P233 §3) Once ULKE secilir: secilmeden numara "ulkeYok" verir ve

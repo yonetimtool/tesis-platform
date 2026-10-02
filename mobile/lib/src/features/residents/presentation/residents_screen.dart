@@ -6,6 +6,8 @@ import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/kisi_adi.dart';
+import '../../../core/ui/ad_soyad_alanlari.dart';
 import '../../../core/ui/bos_durum.dart';
 import '../data/residents_api.dart';
 import '../../../core/error/akis_hatasi.dart';
@@ -376,9 +378,13 @@ class _EditResidentSheet extends ConsumerStatefulWidget {
 
 class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _adCtrl = TextEditingController(
-    text: widget.member.ad,
-  );
+  // (P250 §1) Ad ve soyad AYRI; eski kayitta soyad bilinmez, son kelime
+  // ONERILIR (kayit ancak kaydedilince degisir).
+  late final _parca = adAyir(widget.member.ad, widget.member.soyad);
+  late final TextEditingController _adCtrl =
+      TextEditingController(text: _parca.ad);
+  late final TextEditingController _soyadCtrl =
+      TextEditingController(text: _parca.soyad);
   final _phoneCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
 
@@ -406,6 +412,7 @@ class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
   @override
   void dispose() {
     _adCtrl.dispose();
+    _soyadCtrl.dispose();
     _phoneCtrl.dispose();
     _emailCtrl.dispose();
     super.dispose();
@@ -423,7 +430,8 @@ class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
           .read(residentsApiProvider)
           .updateResident(
             widget.member.userId,
-            ad: _adCtrl.text.trim(),
+            ad: adBicimle(_adCtrl.text),
+            soyad: soyadBicimle(_soyadCtrl.text),
             telefon: telefonNormalle(_phoneCtrl.text),
             email: _emailCtrl.text.trim(),
             emailTemizle: _emailTemizle,
@@ -444,7 +452,9 @@ class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final bottom = MediaQuery.of(context).viewInsets.bottom;
-    return Padding(
+    // (P250 §1) Ad + soyad iki alan oldu: kucuk ekranda / diyalogda govde
+    // KAYDIRILIR (yoksa form tasar).
+    return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(16, 16, 16, bottom + 16),
       child: Form(
         key: _formKey,
@@ -457,17 +467,12 @@ class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
-            TextFormField(
-              controller: _adCtrl,
-              inputFormatters: GirdiSiniri.sinir(150), // sunucu: ResidentCreate.ad
-              enabled: !_submitting,
-              decoration: InputDecoration(
-                labelText: l10n.ortakAdSoyad,
-                prefixIcon: const Icon(Icons.person_outline),
-                border: const OutlineInputBorder(),
-              ),
-              validator: (v) =>
-                  (v?.trim() ?? '').length < 2 ? l10n.butAdZorunlu : null,
+            AdSoyadAlanlari(
+              adKtrl: _adCtrl,
+              soyadKtrl: _soyadCtrl,
+              etkin: !_submitting,
+              adSinir: 150, // sunucu: ResidentUpdate.ad
+              anahtarOneki: 'sakin-duzenle',
             ),
             const SizedBox(height: 12),
             TelefonAlani(
@@ -571,15 +576,20 @@ class _AddResidentSheet extends ConsumerStatefulWidget {
 /// buna dayaniyor).
 ///
 /// KALKAN IKI ALAN VE NEDENLERI:
-///  * AD SOYAD — yonetici numarayi bilir, adi cogu zaman bilmez. Ad artik
-///    opsiyonel (`ResidentCreate`); verilmezse sunucu daireden turetilen
-///    gecici bir ad yazar ve kisi kaydolunca profilinden duzeltir.
+///  * AD SOYAD — (P250 §1 ile GERI ALINDI: ad ve soyad zorunlu, asagiya
+///    bakin.)
 ///  * PAROLA — brief'te sakinin parolasini YONETICI belirlemiyor;
 ///    kullanici kendi kayit akisinda (rol -> tesis ID -> telefon ->
 ///    yontem) seciyor. Yoneticinin parola koymasi, o akisin "hesabi
 ///    SAHIPLENME" adimini bastan tuketirdi.
 class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
   final _formKey = GlobalKey<FormState>();
+  // (P250 §1) AD + SOYAD GERI GELDI VE ZORUNLU. P154'te ad opsiyoneldi
+  // ("yonetici adi cogu zaman bilmez") ve sunucu "A-12 sakini" yaziyordu.
+  // P250 karari: yeni kullanici ad ve soyadla eklenir; web'deki kullanici
+  // ekleme formuyla AYNI kural (parite).
+  final _adCtrl = TextEditingController();
+  final _soyadCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   // (E2E 2026-09) Davet e-postadan gider; sunucu e-postayi ZORUNLU tutar.
   final _emailCtrl = TextEditingController();
@@ -595,6 +605,8 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
 
   @override
   void dispose() {
+    _adCtrl.dispose();
+    _soyadCtrl.dispose();
     _phoneCtrl.dispose();
     _emailCtrl.dispose();
     _unitCtrl.dispose();
@@ -613,6 +625,8 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
       await ref
           .read(residentsApiProvider)
           .addResident(
+            ad: adBicimle(_adCtrl.text),
+            soyad: soyadBicimle(_soyadCtrl.text),
             telefon: telefonNormalle(_phoneCtrl.text),
             email: _emailCtrl.text,
             unitNo: _unitCtrl.text.trim(),
@@ -632,7 +646,9 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final bottom = MediaQuery.of(context).viewInsets.bottom;
-    return Padding(
+    // (P250 §1) Ad + soyad iki alan oldu: kucuk ekranda / diyalogda govde
+    // KAYDIRILIR (yoksa form tasar).
+    return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(16, 16, 16, bottom + 16),
       child: Form(
         key: _formKey,
@@ -643,6 +659,14 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
             Text(
               l10n.sakinEkle,
               style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            AdSoyadAlanlari(
+              adKtrl: _adCtrl,
+              soyadKtrl: _soyadCtrl,
+              etkin: !_submitting,
+              adSinir: 150, // sunucu: ResidentCreate.ad
+              anahtarOneki: 'sakin-ekle',
             ),
             const SizedBox(height: 12),
             TelefonAlani(

@@ -3698,4 +3698,7 @@ export const fr: Sozluk = {
   bildirimTipZiyaretciOnayIstegi: "Demande de validation visiteur",
   bildirimTipZiyaretciOnayYaniti: "Réponse de validation visiteur",
   bildirimTipSesliMesaj: "Message vocal de la sécurité",
+  kisiAd: "Prénom",
+  kisiSoyad: "Nom de famille",
+  kisiAdZorunlu: "Le prénom et le nom sont obligatoires.",
 };

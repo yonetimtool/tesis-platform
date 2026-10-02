@@ -28,6 +28,7 @@ from ..toplu_tahakkuk import oturuyor_coz
 from ..tr_arama import LIKE_KACIS, tr_kalip, tr_katla_sql
 from ..hata_metinleri import istek_dili
 from ..hesap_silme import hesabi_sil_veya_anonimlestir
+from ..kisi_adi import guncelle as kisi_adi_guncelle, tam_ad
 from ..models import AppUser, Unit, UnitResident
 from ..schemas import (
     DavetGonderimSonucu,
@@ -157,7 +158,9 @@ async def create_resident(
         # Ad verilmediyse DAIREDEN turetilen gecici ad — gerekcesi
         # `ResidentCreate` docstring'inde (sutunu global nullable yapmak
         # brief'in dokunmadigi her ekrani ilgilendirirdi).
-        ad=body.ad or f"{unit.no} sakini",
+        # (P250 §1) Ad verildiyse tam gorunen ad + ayri soyad.
+        ad=tam_ad(body.ad, body.soyad) if body.ad else f"{unit.no} sakini",
+        soyad=body.soyad if body.ad else None,
         # (P197) ZORUNLU: sema `EmailStr` (opsiyonel degil).
         email=str(body.email),
         telefon=body.telefon,
@@ -318,6 +321,7 @@ async def list_residents(
             select(
                 AppUser.id,
                 AppUser.ad,
+                AppUser.soyad,
                 AppUser.is_active,
                 func.string_agg(Unit.no, ", ").label("unit_no"),
                 # DISTINCT: iki dairesi ayni blokta olan sakinde blok
@@ -327,14 +331,14 @@ async def list_residents(
             .outerjoin(UnitResident, aktif_bag)
             .outerjoin(Unit, Unit.id == UnitResident.unit_id)
             .where(*kosullar)
-            .group_by(AppUser.id, AppUser.ad, AppUser.is_active)
+            .group_by(AppUser.id, AppUser.ad, AppUser.soyad, AppUser.is_active)
             .order_by(AppUser.ad)
         )
     ).all()
     return ResidentListResponse(
         items=[
             ResidentListItem(
-                user_id=r.id, ad=r.ad, unit_no=r.unit_no, blok=r.blok,
+                user_id=r.id, ad=r.ad, soyad=r.soyad, unit_no=r.unit_no, blok=r.blok,
                 is_active=r.is_active,
             )
             for r in rows
@@ -412,6 +416,7 @@ async def update_resident(
                 bag.oturuyor = oturuyor
             elif rol_tipi is not _ATLA and rol_tipi == "kiraci":
                 bag.oturuyor = True
+    kisi_adi_guncelle(resident, alanlar)  # (P250 §1) ad/soyad birlikte
     for key, value in alanlar.items():
         setattr(resident, key, value)
     resident.updated_at = func.now()

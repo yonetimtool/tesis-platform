@@ -27,6 +27,12 @@ def _giris(client, slug, cred):
 
 
 def _satir(no, **degerler):
+    # (P250 §1) Soyad ayri ve zorunlu sutun: test satirlari ad verdiyse
+    # soyadi da tamamlar (acikca verilmediyse).
+    if "ad" in degerler:
+        degerler.setdefault("soyad", "Test")
+    if "sakin_ad" in degerler:
+        degerler.setdefault("sakin_soyad", "Test")
     return {"satir_no": no, "degerler": degerler}
 
 

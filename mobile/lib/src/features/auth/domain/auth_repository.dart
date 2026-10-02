@@ -45,6 +45,7 @@ abstract interface class AuthRepository {
   Future<void> davetParola({
     required String jeton,
     String? ad,
+    String? soyad,
     required String newPassword,
   });
 
@@ -54,6 +55,7 @@ abstract interface class AuthRepository {
     required String jeton,
     required String baglamaJetonu,
     String? ad,
+    String? soyad,
   });
 
   /// (P155r2 §3) Yonetici tesisini acar ve OTURUM ACILIR.

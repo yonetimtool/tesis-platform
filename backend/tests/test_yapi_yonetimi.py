@@ -317,10 +317,10 @@ def test_EXCELDE_AYNI_DAIREYE_IKI_SATIR_ILKI_KAZANIR(client, yon):
     # olctugu sey AYNI DAIREYE IKI SATIR kurali; e-posta eklenerek o kural
     # yeniden gorunur kilindi.
     r = client.post("/ice-aktarim/kisi", headers=yon, json={"satirlar": [
-        {"satir_no": 1, "degerler": {"ad": "Birinci", "telefon": t1,
+        {"satir_no": 1, "degerler": {"ad": "Birinci", "soyad": "Test", "telefon": t1,
                                      "eposta": f"b{t1[-8:]}@ornek.com",
                                      "daire_no": u["no"]}},
-        {"satir_no": 2, "degerler": {"ad": "Ikinci", "telefon": t2,
+        {"satir_no": 2, "degerler": {"ad": "Ikinci", "soyad": "Test", "telefon": t2,
                                      "eposta": f"i{t2[-8:]}@ornek.com",
                                      "daire_no": u["no"]}},
     ]})
@@ -496,10 +496,10 @@ def test_EXCELDE_FARKLI_ROL_IKI_SATIR_IKISI_de_gecer(client, yon):
 
     # (P193 §1) EPOSTA ZORUNLU — bkz. yukaridaki not.
     r = client.post("/ice-aktarim/kisi", headers=yon, json={"satirlar": [
-        {"satir_no": 1, "degerler": {"ad": "Malik", "telefon": t1,
+        {"satir_no": 1, "degerler": {"ad": "Malik", "soyad": "Test", "telefon": t1,
                                      "eposta": f"m{t1[-8:]}@ornek.com",
                                      "daire_no": u["no"], "rol_tipi": "malik"}},
-        {"satir_no": 2, "degerler": {"ad": "Kiraci", "telefon": t2,
+        {"satir_no": 2, "degerler": {"ad": "Kiraci", "soyad": "Test", "telefon": t2,
                                      "eposta": f"k{t2[-8:]}@ornek.com",
                                      "daire_no": u["no"], "rol_tipi": "kiraci"}},
     ]})

@@ -21,6 +21,7 @@ from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..hata_metinleri import istek_dili
 from ..hesap_silme import hesabi_sil_veya_anonimlestir
+from ..kisi_adi import guncelle as kisi_adi_guncelle, tam_ad
 from ..models import AppUser, Davet, Tenant, Unit, UnitResident, UserDevice
 from ..roller import gorunur_roller, yonetilebilir
 from ..tr_arama import LIKE_KACIS, like_icerir
@@ -393,7 +394,9 @@ async def create_user(
     # yalniz DAVET yoluyladir (asagida her zaman gonderilir).
     obj = AppUser(
         tenant_id=user.tenant_id,
-        ad=body.ad,
+        # (P250 §1) Tam gorunen ad + ayri soyad; bicim semada uygulandi.
+        ad=tam_ad(body.ad, body.soyad),
+        soyad=body.soyad,
         # (P197) ZORUNLU: sema `EmailStr` (P186'dan beri) — kosul kalintiydi.
         email=str(body.email),
         telefon=body.telefon,
@@ -444,6 +447,7 @@ async def create_user(
     return UserCreatedOut(
         id=obj.id,
         ad=obj.ad,
+        soyad=obj.soyad,
         email=obj.email,
         telefon=obj.telefon,
         aranabilir=obj.aranabilir,
@@ -494,6 +498,7 @@ async def update_user(
     if eposta_degisti and obj.password_set:
         raise _EPOSTA_TAMAMLANAN
 
+    kisi_adi_guncelle(obj, data)  # (P250 §1) ad/soyad birlikte
     for key, value in data.items():
         setattr(obj, key, value)
     obj.updated_at = func.now()

@@ -8079,4 +8079,13 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get ayarYonetimArayabilirAlt =>
       'Seguridad puede llamarle si no logra contactar su vivienda de otro modo. Su número no aparece en ninguna lista; cada llamada queda registrada.';
+
+  @override
+  String get kisiAd => 'Nombre';
+
+  @override
+  String get kisiSoyad => 'Apellidos';
+
+  @override
+  String get kisiAdZorunlu => 'El nombre y los apellidos son obligatorios.';
 }

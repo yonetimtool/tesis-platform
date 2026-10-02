@@ -2744,5 +2744,8 @@
   "ziyaretciOnaySoru": "{ad} dice que usted le espera. ¿Lo aprueba?",
   "ziyaretciOnayIsteSecenek": "Pedir aprobación a residentes (3 min)",
   "ayarYonetimArayabilir": "La administración puede llamarme a este número",
-  "ayarYonetimArayabilirAlt": "Seguridad puede llamarle si no logra contactar su vivienda de otro modo. Su número no aparece en ninguna lista; cada llamada queda registrada."
+  "ayarYonetimArayabilirAlt": "Seguridad puede llamarle si no logra contactar su vivienda de otro modo. Su número no aparece en ninguna lista; cada llamada queda registrada.",
+  "kisiAd": "Nombre",
+  "kisiSoyad": "Apellidos",
+  "kisiAdZorunlu": "El nombre y los apellidos son obligatorios."
 }

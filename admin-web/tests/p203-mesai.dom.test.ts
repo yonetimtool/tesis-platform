@@ -129,9 +129,12 @@ it("GIDERE YAZ dogru uca, YALNIZ YAZILABILIR kisilerle gider", async () => {
     expect(cagrilar.some((c) => c.url === "/api/mesai/gidere-yaz")).toBe(true),
   );
   const post = cagrilar.find((c) => c.url === "/api/mesai/gidere-yaz")!;
+  // (P250) AY SABIT YAZILMAZ: sayfa BUGUNUN ayini acar. Test Eylul'de
+  // `ay: 9` diye yazilmisti ve 1 Ekim'de kendiliginden kirildi.
+  const bugun = new Date();
   expect(post.govde).toEqual({
-    yil: 2026,
-    ay: 9,
+    yil: bugun.getFullYear(),
+    ay: bugun.getMonth() + 1,
     // Ucreti tanimsiz (u-2) ve zaten yazilmis (u-3) DISARIDA.
     satirlar: [{ user_id: "u-1" }],
   });

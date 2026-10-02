@@ -75,10 +75,11 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> davetParola({
     required String jeton,
     String? ad,
+    String? soyad,
     required String newPassword,
   }) async {
     final tokens = await api.davetParola(
-      jeton: jeton, ad: ad, newPassword: newPassword,
+      jeton: jeton, ad: ad, soyad: soyad, newPassword: newPassword,
     );
     await storage.save(tokens);
     // Davet yolunda "beni hatirla" akisi YOK: kullanici bir bagdan geldi,
@@ -91,9 +92,10 @@ class AuthRepositoryImpl implements AuthRepository {
     required String jeton,
     required String baglamaJetonu,
     String? ad,
+    String? soyad,
   }) async {
     final tokens = await api.davetSosyal(
-      jeton: jeton, baglamaJetonu: baglamaJetonu, ad: ad,
+      jeton: jeton, baglamaJetonu: baglamaJetonu, ad: ad, soyad: soyad,
     );
     await storage.save(tokens);
     await storage.clearCredentials();

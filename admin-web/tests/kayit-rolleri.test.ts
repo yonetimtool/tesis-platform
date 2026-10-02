@@ -92,7 +92,8 @@ describe("(P185) kayit akisinda sira ve yontem secimi", () => {
 
   it("saglayicidan DONUSTE ad soyad ON-DOLDURULUR", () => {
     expect(KAYNAK).toContain("kayitSosyalSonucOku");
-    expect(KAYNAK).toContain("if (s.ad) setAd(s.ad)");
+    // (P250 §1) Tek ad iki alana bolunur (son kelime soyad).
+    expect(KAYNAK).toContain("const parca = adAyir(s.ad, null);");
   });
 });
 

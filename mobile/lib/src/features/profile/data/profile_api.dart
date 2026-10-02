@@ -99,8 +99,16 @@ class ProfileApi {
   }
 
   /// `PATCH /me/contact` — kendi telefon + arama rizasi (en az bir alan).
-  Future<Profile> updateContact({String? telefon, bool? aranabilir}) async {
+  /// (P250 §1) Ad + soyad da buradan (web profil ekraniyla parite).
+  Future<Profile> updateContact({
+    String? ad,
+    String? soyad,
+    String? telefon,
+    bool? aranabilir,
+  }) async {
     final data = <String, dynamic>{};
+    if (ad != null && ad.isNotEmpty) data['ad'] = ad;
+    if (soyad != null && soyad.isNotEmpty) data['soyad'] = soyad;
     if (telefon != null) data['telefon'] = telefon;
     if (aranabilir != null) data['aranabilir'] = aranabilir;
     try {

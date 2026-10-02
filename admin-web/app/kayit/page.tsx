@@ -19,6 +19,7 @@ import { TelefonAlani, telefonHataMetni } from "@/components/TelefonAlani";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import { telefonNormalle } from "@/lib/telefon";
+import { adAyir, adBicimle, soyadBicimle } from "@/lib/kisi-adi";
 import { SINIR } from "@/lib/girdi-siniri";
 
 /* (P233 §3) YEREL TELEFON ALANI KALDIRILDI.
@@ -311,7 +312,12 @@ export default function KayitSayfasi() {
     setBaglamaJetonu(s.baglamaJetonu);
     // Saglayicidan gelen ad soyad forma OTOMATIK DOLAR; kullanici
     // duzeltebilir. Apple ad vermez -> alan bos kalir.
-    if (s.ad) setAd(s.ad);
+    // (P250 §1) Saglayici TEK ad verir: son kelime soyad ONERILIR.
+    if (s.ad) {
+      const parca = adAyir(s.ad, null);
+      setAd(adBicimle(parca.ad));
+      setSoyad(soyadBicimle(parca.soyad));
+    }
     // (P222 §2) E-POSTA DA DOLAR — ve SALT OKUNUR olur (asagida).
     if (s.eposta) setEposta(s.eposta);
     setSosyalRelay(Boolean(s.relay));
@@ -405,7 +411,8 @@ export default function KayitSayfasi() {
           // Saglayici e-postayi dogruladi -> OTP yok, oturum hemen acilir.
           const y = (await gonder(UC_TESIS, {
             tesis_ad: tesisAdi.trim(),
-            ad: ad.trim(),
+            ad: adBicimle(ad),
+            soyad: soyadBicimle(soyad),
             baglama_jetonu: baglamaJetonu,
           })) as { tesis_ad?: string; tesis_kodu?: string };
           setTesisAd(y.tesis_ad ?? tesisAdi.trim());
@@ -417,8 +424,8 @@ export default function KayitSayfasi() {
         // e-postaya kod gider; TESIS ADI kod dogrulandiktan SONRA (yonetici-
         // tesis) gonderilir. Adi simdiden saklariz.
         await gonder(UC_YONETICI_BASVURU, {
-          ad: ad.trim(),
-          soyad: soyad.trim(),
+          ad: adBicimle(ad),
+          soyad: soyadBicimle(soyad),
           eposta: eposta.trim(),
           telefon: telefonNormalle(telefon),
           parola,
@@ -456,7 +463,8 @@ export default function KayitSayfasi() {
         tesis_kodu: tesisKodu.trim(),
         eposta: eposta.trim(),
         rol,
-        ad: ad.trim(),
+        ad: adBicimle(ad),
+        soyad: soyadBicimle(soyad),
         telefon: telefonNormalle(telefon),
       })) as { tesis_ad: string };
       setTesisAd(y.tesis_ad);
@@ -705,7 +713,8 @@ export default function KayitSayfasi() {
             <input maxLength={SINIR.AD /* sunucu: YoneticiBasvuruRequest.ad */}
               className={`${inputCls} mt-1`}
               value={ad}
-              onChange={(e) => setAd(e.target.value)}
+              // (P250 §1) Yazarken bicim: kelime basi buyuk (Turkce kural).
+              onChange={(e) => setAd(adBicimle(e.target.value, true))}
               required
               minLength={2}
               autoFocus
@@ -718,7 +727,8 @@ export default function KayitSayfasi() {
             <input maxLength={SINIR.AD /* sunucu: YoneticiBasvuruRequest.soyad */}
               className={`${inputCls} mt-1`}
               value={soyad}
-              onChange={(e) => setSoyad(e.target.value)}
+              // (P250 §1) Soyad tamami buyuk (Turkce kural).
+              onChange={(e) => setSoyad(soyadBicimle(e.target.value, true))}
               required
               minLength={2}
               autoComplete="family-name"

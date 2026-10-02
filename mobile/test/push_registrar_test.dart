@@ -189,6 +189,7 @@ class _FakeAuthRepository implements AuthRepository {
   Future<void> davetParola({
     required String jeton,
     String? ad,
+    String? soyad,
     required String newPassword,
   }) async {}
 
@@ -197,6 +198,7 @@ class _FakeAuthRepository implements AuthRepository {
     required String jeton,
     required String baglamaJetonu,
     String? ad,
+    String? soyad,
   }) async {}
 
   @override

@@ -2744,5 +2744,8 @@
   "ziyaretciOnaySoru": "{ad} dit que vous l’attendez. Validez-vous ?",
   "ziyaretciOnayIsteSecenek": "Demander la validation aux résidents (3 min)",
   "ayarYonetimArayabilir": "La gestion peut m’appeler à ce numéro",
-  "ayarYonetimArayabilirAlt": "La sécurité peut vous appeler si elle ne peut pas joindre votre logement autrement. Votre numéro n’apparaît dans aucune liste ; chaque appel est journalisé."
+  "ayarYonetimArayabilirAlt": "La sécurité peut vous appeler si elle ne peut pas joindre votre logement autrement. Votre numéro n’apparaît dans aucune liste ; chaque appel est journalisé.",
+  "kisiAd": "Prénom",
+  "kisiSoyad": "Nom de famille",
+  "kisiAdZorunlu": "Le prénom et le nom sont obligatoires."
 }

@@ -12,10 +12,14 @@ class ResidentMember {
     this.unitNo,
     this.blok,
     required this.isActive,
+    this.soyad,
   });
 
   final String userId;
+  /// TAM gorunen ad.
   final String ad;
+  /// (P250 §1) Soyad; P250 oncesi kayitta null.
+  final String? soyad;
   final String? unitNo;
 
   /// (P220 §4) AKTIF DAIRELERIN BLOK ADLARI — gruplama icin.
@@ -34,6 +38,7 @@ class ResidentMember {
   factory ResidentMember.fromJson(Map<String, dynamic> json) => ResidentMember(
     userId: json['user_id'] as String,
     ad: json['ad'] as String,
+    soyad: json['soyad'] as String?,
     unitNo: json['unit_no'] as String?,
     blok: json['blok'] as String?,
     isActive: (json['is_active'] as bool?) ?? true,
@@ -89,12 +94,17 @@ class ResidentsApi {
   /// zorunlu ve davet YALNIZ e-postadan gidiyor. Mobil govde e-postasizdi,
   /// her ekleme 422 donuyordu (sakin mobilden HIC eklenemiyordu).
   Future<void> addResident({
+    String? ad,
+    String? soyad,
     required String telefon,
     required String email,
     required String unitNo,
     String? blok,
   }) async {
     final data = <String, dynamic>{
+      // (P250 §1) Ad ve soyad ayri.
+      if (ad != null && ad.isNotEmpty) 'ad': ad,
+      if (soyad != null && soyad.isNotEmpty) 'soyad': soyad,
       'telefon': telefon,
       'email': email.trim(),
       'unit_no': unitNo,
@@ -117,6 +127,7 @@ class ResidentsApi {
   Future<void> updateResident(
     String userId, {
     String? ad,
+    String? soyad,
     String? telefon,
     String? email,
     bool emailTemizle = false,
@@ -127,6 +138,7 @@ class ResidentsApi {
   }) async {
     final data = <String, dynamic>{};
     if (ad != null && ad.isNotEmpty) data['ad'] = ad;
+    if (soyad != null && soyad.isNotEmpty) data['soyad'] = soyad;
     if (telefon != null && telefon.isNotEmpty) data['telefon'] = telefon;
     if (emailTemizle) {
       data['email'] = null;

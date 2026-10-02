@@ -20,6 +20,9 @@ import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import type { TenantSilmeOzeti } from "@/lib/types";
 import { TelefonAlani } from "@/components/TelefonAlani";
+import { AdSoyadAlanlari } from "@/components/AdSoyadAlanlari";
+import { EpostaAlani } from "@/components/EpostaAlani";
+import { adAyir, adBicimle, soyadBicimle } from "@/lib/kisi-adi";
 import { useT } from "@/lib/i18n/kullan";
 import { tarihSaatUzun } from "@/lib/tarih";
 import { telefonNormalle } from "@/lib/telefon";
@@ -84,6 +87,8 @@ export default function TenantDetailPage() {
 
   const [editing, setEditing] = useState(false);
   const [ad, setAd] = useState("");
+  // (P250 §1) Soyad ayri ve zorunlu.
+  const [soyad, setSoyad] = useState("");
   const [telefon, setTelefon] = useState("");
   const [formErr, setFormErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -114,6 +119,10 @@ export default function TenantDetailPage() {
   );
   const [ekleAcik, setEkleAcik] = useState(false);
   const [yeniAd, setYeniAd] = useState("");
+  const [yeniSoyad, setYeniSoyad] = useState("");
+  // (P250) E-POSTA ZORUNLU (P197, `TenantYoneticiAdd.email`) ama bu form
+  // onu HIC gondermiyordu: her ekleme 422 aliyordu.
+  const [yeniEposta, setYeniEposta] = useState("");
   const [yeniTel, setYeniTel] = useState("");
   const [yeniHata, setYeniHata] = useState<string | null>(null);
   const [ekliyor, setEkliyor] = useState(false);
@@ -128,7 +137,12 @@ export default function TenantDetailPage() {
       const r = await apiSend<{ ad: string; temp_code: string }>(
         `/api/tenants/${id}/yoneticiler`,
         "POST",
-        { ad: yeniAd.trim(), phone: telefonNormalle(yeniTel) ?? yeniTel.trim() },
+        {
+          ad: adBicimle(yeniAd),
+          soyad: soyadBicimle(yeniSoyad),
+          email: yeniEposta.trim(),
+          phone: telefonNormalle(yeniTel) ?? yeniTel.trim(),
+        },
       );
       // Kod BIR KEZ doner; kapanabilen bir bildirim yerine onay gerektiren
       // bir kutu: kullanici kodu kopyalamadan ekrani birakirsa geri
@@ -136,6 +150,8 @@ export default function TenantDetailPage() {
       window.alert(t("tesisYeniYoneticiKodu", { ad: r.ad, kod: r.temp_code }));
       setEkleAcik(false);
       setYeniAd("");
+      setYeniSoyad("");
+      setYeniEposta("");
       setYeniTel("");
       yonYenile();
       mutate();
@@ -191,7 +207,9 @@ export default function TenantDetailPage() {
 
   function openEdit() {
     if (!y) return;
-    setAd(y.ad);
+    const parca = adAyir(y.ad, null);
+    setAd(parca.ad);
+    setSoyad(parca.soyad);
     setTelefon(y.telefon ?? "");
     setFormErr(null);
     setEditing(true);
@@ -202,7 +220,10 @@ export default function TenantDetailPage() {
     setSaving(true);
     setFormErr(null);
     try {
-      const body: Record<string, unknown> = { ad };
+      const body: Record<string, unknown> = {
+        ad: adBicimle(ad),
+        soyad: soyadBicimle(soyad),
+      };
       if (telefonNormalle(telefon)) body.phone = telefonNormalle(telefon);
       await apiSend(`/api/tenants/${id}/yonetici`, "PATCH", body);
       setEditing(false);
@@ -440,15 +461,16 @@ export default function TenantDetailPage() {
             >
               <form id="yonetici-duzenle" onSubmit={saveEdit} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <AlanSarmal etiket={t("ortakAd")}>
-  {(b) => (
-    <Alan {...b} value={ad}
-                      maxLength={120 /* sunucu: TenantYoneticiUpdate.ad */}
-                      onChange={(e) => setAd(e.target.value)}
-                      required
-                      minLength={2} />
-  )}
-</AlanSarmal>
+                  <div className="sm:col-span-2">
+                    <AdSoyadAlanlari
+                      ad={ad}
+                      soyad={soyad}
+                      onAd={setAd}
+                      onSoyad={setSoyad}
+                      adSinir={120 /* sunucu: TenantYoneticiUpdate.ad */}
+                      kanca="tesis-yonetici-duzenle"
+                    />
+                  </div>
                   <TelefonAlani
                     etiket={t("kullaniciTelefon")}
                     ipucu={t("tesisGlobalBenzersiz")}
@@ -546,16 +568,24 @@ export default function TenantDetailPage() {
               <form id="yonetici-ekle" onSubmit={yoneticiEkle} className="space-y-4">
                 <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{t("tesisYoneticiEkleAciklama")}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <AlanSarmal etiket={t("ortakAd")}>
-  {(b) => (
-    <Alan {...b} value={yeniAd}
-                      onChange={(e) => setYeniAd(e.target.value)}
-                      required
-                      minLength={2}
-                      maxLength={120}
-                      autoFocus />
-  )}
-</AlanSarmal>
+                  <div className="sm:col-span-2">
+                    <AdSoyadAlanlari
+                      ad={yeniAd}
+                      soyad={yeniSoyad}
+                      onAd={setYeniAd}
+                      onSoyad={setYeniSoyad}
+                      adSinir={120 /* sunucu: TenantYoneticiAdd.ad */}
+                      kanca="tesis-yonetici-ekle"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <EpostaAlani
+                      etiket={t("kullaniciEposta")}
+                      deger={yeniEposta}
+                      onDegisti={setYeniEposta}
+                      zorunlu
+                    />
+                  </div>
                   <TelefonAlani
                     etiket={t("kullaniciTelefon")}
                     ipucu={t("tesisGlobalBenzersiz")}
