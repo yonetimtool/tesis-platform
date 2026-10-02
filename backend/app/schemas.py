@@ -621,6 +621,9 @@ class UserCreate(AdSoyadGirdisi):
     # verirdi.
     gorev_baslangic: date | None = None
     gorev_bitis: date | None = None
+    #: (P252 §1) PERSONEL EKLERKEN "Calisma bilgileri" — verilirse hesap ve
+    #: maas karti AYNI islemde olusur ve baglanir. Yalniz admin/yonetici.
+    calisma: "PersonelCalisma | None" = None
 
     @model_validator(mode="after")
     def _pencere_tutarli(self) -> "UserCreate":
@@ -674,6 +677,8 @@ class UserCreatedOut(BaseModel):
     # (P155 §7 · P186) Davet gonderim ozeti — hesap DAIMA parolasiz acilir,
     # davet her zaman gonderilir (eski `temp_code` kaldirildi).
     davet: "DavetGonderimSonucu | None" = None
+    #: (P252) Ayni islemde acilan maas karti (calisma bilgisi geldiyse).
+    personel_kayit_id: uuid.UUID | None = None
 
 
 class UserUpdate(AdSoyadGirdisi):
@@ -6551,6 +6556,16 @@ class PersonelKayitCreate(BaseModel):
     #: Uygulama hesabiyla BAG (opsiyonel) — her personelin hesabi yoktur.
     app_user_id: uuid.UUID | None = None
     aktif: bool = True
+    #: (P252) Calisma bilgileri — maas otomasyonunun girdisi.
+    odeme_gunu: int | None = Field(None, ge=1, le=31)
+    kasa_id: uuid.UUID | None = None
+    iban: str | None = Field(None, max_length=42)
+    notlar: str | None = Field(None, max_length=_G.NOT)
+
+    @field_validator("iban")
+    @classmethod
+    def _iban(cls, v: str | None) -> str | None:
+        return _iban_dogrula(v)
 
     @model_validator(mode="after")
     def _tarih_sirasi(self) -> "PersonelKayitCreate":
@@ -6580,6 +6595,16 @@ class PersonelKayitUpdate(BaseModel):
     saatlik_ucret_kurus: int | None = Field(None, ge=0)
     app_user_id: uuid.UUID | None = None
     aktif: bool | None = None
+    #: (P252) Calisma bilgileri.
+    odeme_gunu: int | None = Field(None, ge=1, le=31)
+    kasa_id: uuid.UUID | None = None
+    iban: str | None = Field(None, max_length=42)
+    notlar: str | None = Field(None, max_length=_G.NOT)
+
+    @field_validator("iban")
+    @classmethod
+    def _iban(cls, v: str | None) -> str | None:
+        return _iban_dogrula(v)
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "PersonelKayitUpdate":
@@ -6600,6 +6625,35 @@ class PersonelKayitOut(_TanimBase):
     app_user_id: uuid.UUID | None = None
     #: Bagli kullanicinin adi (varsa) — "bu personel kim olarak giris yapiyor".
     app_user_ad: str | None = None
+    #: (P252) Calisma bilgileri + otomasyon damgalari (YALNIZ yonetim ucu).
+    odeme_gunu: int | None = None
+    kasa_id: uuid.UUID | None = None
+    iban: str | None = None
+    notlar: str | None = None
+    maas_ilk_donem: str | None = None
+    son_maas_donem: str | None = None
+
+
+class PersonelCalisma(BaseModel):
+    """(P252 §1) Personel EKLEME formundaki "Calisma bilgileri".
+
+    `POST /users` ile birlikte gelir; hesap ve maas karti AYNI islemde
+    olusur ve birbirine baglanir. Ucret yoksa kart yine acilir (giris
+    tarihi / gorev kaydi) ama otomasyon onu yazmaz.
+    """
+
+    giris_tarihi: date | None = None
+    gorev: str | None = Field(None, max_length=100)
+    maas_kurus: int | None = Field(None, ge=0, le=KURUS_UST_SINIR)
+    odeme_gunu: int | None = Field(None, ge=1, le=31)
+    kasa_id: uuid.UUID | None = None
+    iban: str | None = Field(None, max_length=42)
+    notlar: str | None = Field(None, max_length=_G.NOT)
+
+    @field_validator("iban")
+    @classmethod
+    def _iban(cls, v: str | None) -> str | None:
+        return _iban_dogrula(v)
 
 
 class PersonelKayitListResponse(BaseModel):
@@ -7292,6 +7346,37 @@ class AidatPlaniOut(AidatPlaniBase):
 
 class AidatPlaniListResponse(BaseModel):
     items: list[AidatPlaniOut]
+
+
+class MaasKuralGrubu(BaseModel):
+    """(P252 §2) "Her ayin 5'inde 3 personelin maasini gidere yaz"."""
+
+    odeme_gunu: int
+    personel_sayisi: int
+    aylik_toplam_kurus: int
+
+
+class MaasAyariOut(BaseModel):
+    """(P252 §2) Maas otomasyonu — tesis ayari + kural ozeti."""
+
+    aktif: bool
+    otomatik_onay: bool
+    gruplar: list[MaasKuralGrubu]
+    personel_sayisi: int
+    aylik_toplam_kurus: int
+
+
+class MaasAyariGuncelle(BaseModel):
+    aktif: bool | None = None
+    otomatik_onay: bool | None = None
+
+
+class MaasCalistirmaSonucu(BaseModel):
+    yazilan: int
+    toplam_kurus: int
+    onay_bekleyen: int = 0
+    #: donem (YYYY-MM) -> [personel sayisi, toplam kurus]
+    donemler: dict[str, list[int]] = {}
 
 
 class HatirlatmaAyariOut(BaseModel):

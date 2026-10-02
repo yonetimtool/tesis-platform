@@ -22,6 +22,7 @@ import 'package:mobile/src/features/auth/data/token_storage.dart';
 import 'package:mobile/src/features/staff/presentation/staff_screen.dart';
 
 import 'helpers/bellek_depo.dart';
+import 'helpers/form_kaydir.dart';
 import 'helpers/l10n_test_app.dart';
 import 'helpers/sahte_jwt.dart';
 
@@ -142,6 +143,8 @@ void main() {
     expect(_metin(tester, 'personel-soyad'), 'YILMAZ');
     await tester.enterText(
         find.byKey(const Key('personel-eposta')), 'm@ornek.com');
+    // (P252) Form uzadi (calisma bilgileri): dugmeyi gorunur alana kaydir.
+    await kaydetGorunsun(tester);
     await tester.tap(find.byType(FilledButton).last);
     await tester.pumpAndSettle();
     final post =
@@ -157,6 +160,8 @@ void main() {
     await tester.enterText(find.byKey(const Key('personel-ad')), 'ilker');
     await tester.enterText(
         find.byKey(const Key('personel-eposta')), 'i@ornek.com');
+    // (P252) Form uzadi (calisma bilgileri): dugmeyi gorunur alana kaydir.
+    await kaydetGorunsun(tester);
     await tester.tap(find.byType(FilledButton).last);
     await tester.pumpAndSettle();
     expect(find.text('Ad ve soyad zorunludur.'), findsWidgets);
@@ -172,6 +177,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(_metin(tester, 'personel-ad'), 'Ali');
     expect(_metin(tester, 'personel-soyad'), 'Veli');
+    // (P252) Form uzadi (calisma bilgileri): dugmeyi gorunur alana kaydir.
+    await kaydetGorunsun(tester);
     await tester.tap(find.byType(FilledButton).last);
     await tester.pumpAndSettle();
     final patch = tel.istekler

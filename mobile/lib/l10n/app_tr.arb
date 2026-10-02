@@ -4338,5 +4338,38 @@
   "tesisAyarKaydedildi": "Tesis ayarları kaydedildi.",
   "tesisAyarWebNotu": "Konum (harita), otopark kapasitesi ve eşik ayarları bilgisayardan yapılır.",
   "yoneticiListeBosAlt": "Yönetici ya da denetçi eklemek için sağ alttaki düğmeyi kullanın; hesap açılır ve davet e-postası gider.",
-  "webDemirbas": "Demirbaş"
+  "webDemirbas": "Demirbaş",
+  "calismaBaslik": "Çalışma bilgileri",
+  "calismaAlt": "Ücret girilirse her ay ödeme gününde maaş gideri otomatik yazılır. Maaşı olmayan (sözleşmeli, dış firma) personel için boş bırakın.",
+  "calismaGiris": "İşe giriş tarihi",
+  "calismaGorev": "Görevi",
+  "calismaGorevIpucu": "Örn. güvenlik, temizlik, bahçe",
+  "calismaUcret": "Aylık ücret (₺, net)",
+  "calismaOdemeGunu": "Ödeme günü",
+  "calismaOdemeGunuKurali": "Ayın bu gününde ödenir. Seçilen gün o ayda yoksa (ör. 31 ve 30 günlük ay) ayın son günü ödenir.",
+  "calismaKasa": "Ödendiği kasa",
+  "calismaKasaVarsayilan": "Varsayılan kasa",
+  "calismaIban": "IBAN (isteğe bağlı)",
+  "calismaNot": "Not (isteğe bağlı)",
+  "calismaUcretGecersiz": "Aylık ücret geçersiz.",
+  "calismaGunGerekli": "Ücret girildiyse ödeme günü de seçilmeli.",
+  "calismaKaydedildi": "Çalışma bilgileri kaydedildi.",
+  "calismaDugme": "Çalışma bilgileri",
+  "calismaBenimBaslik": "Çalışma bilgilerim",
+  "calismaSonOdemeler": "Son ödemeler",
+  "calismaOdemeGunuDeger": "Her ayın {gun}. günü",
+  "@calismaOdemeGunuDeger": {
+    "placeholders": {
+      "gun": {
+        "type": "int"
+      }
+    }
+  },
+  "calismaTurMaas": "Maaş",
+  "calismaTurMesai": "Fazla mesai",
+  "calismaTurDiger": "Diğer",
+  "calismaOnayBekliyor": "Onay bekliyor",
+  "calismaOdemeYok": "Henüz ödeme yok.",
+  "calismaKartYok": "Çalışma bilgisi girilmemiş.",
+  "calismaGunSecilmedi": "Seçilmedi"
 }

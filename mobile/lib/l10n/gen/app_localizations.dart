@@ -15310,6 +15310,162 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Demirbaş'**
   String get webDemirbas;
+
+  /// No description provided for @calismaBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çalışma bilgileri'**
+  String get calismaBaslik;
+
+  /// No description provided for @calismaAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ücret girilirse her ay ödeme gününde maaş gideri otomatik yazılır. Maaşı olmayan (sözleşmeli, dış firma) personel için boş bırakın.'**
+  String get calismaAlt;
+
+  /// No description provided for @calismaGiris.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşe giriş tarihi'**
+  String get calismaGiris;
+
+  /// No description provided for @calismaGorev.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görevi'**
+  String get calismaGorev;
+
+  /// No description provided for @calismaGorevIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Örn. güvenlik, temizlik, bahçe'**
+  String get calismaGorevIpucu;
+
+  /// No description provided for @calismaUcret.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aylık ücret (₺, net)'**
+  String get calismaUcret;
+
+  /// No description provided for @calismaOdemeGunu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ödeme günü'**
+  String get calismaOdemeGunu;
+
+  /// No description provided for @calismaOdemeGunuKurali.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ayın bu gününde ödenir. Seçilen gün o ayda yoksa (ör. 31 ve 30 günlük ay) ayın son günü ödenir.'**
+  String get calismaOdemeGunuKurali;
+
+  /// No description provided for @calismaKasa.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ödendiği kasa'**
+  String get calismaKasa;
+
+  /// No description provided for @calismaKasaVarsayilan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Varsayılan kasa'**
+  String get calismaKasaVarsayilan;
+
+  /// No description provided for @calismaIban.
+  ///
+  /// In tr, this message translates to:
+  /// **'IBAN (isteğe bağlı)'**
+  String get calismaIban;
+
+  /// No description provided for @calismaNot.
+  ///
+  /// In tr, this message translates to:
+  /// **'Not (isteğe bağlı)'**
+  String get calismaNot;
+
+  /// No description provided for @calismaUcretGecersiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aylık ücret geçersiz.'**
+  String get calismaUcretGecersiz;
+
+  /// No description provided for @calismaGunGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ücret girildiyse ödeme günü de seçilmeli.'**
+  String get calismaGunGerekli;
+
+  /// No description provided for @calismaKaydedildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çalışma bilgileri kaydedildi.'**
+  String get calismaKaydedildi;
+
+  /// No description provided for @calismaDugme.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çalışma bilgileri'**
+  String get calismaDugme;
+
+  /// No description provided for @calismaBenimBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çalışma bilgilerim'**
+  String get calismaBenimBaslik;
+
+  /// No description provided for @calismaSonOdemeler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Son ödemeler'**
+  String get calismaSonOdemeler;
+
+  /// No description provided for @calismaOdemeGunuDeger.
+  ///
+  /// In tr, this message translates to:
+  /// **'Her ayın {gun}. günü'**
+  String calismaOdemeGunuDeger(int gun);
+
+  /// No description provided for @calismaTurMaas.
+  ///
+  /// In tr, this message translates to:
+  /// **'Maaş'**
+  String get calismaTurMaas;
+
+  /// No description provided for @calismaTurMesai.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fazla mesai'**
+  String get calismaTurMesai;
+
+  /// No description provided for @calismaTurDiger.
+  ///
+  /// In tr, this message translates to:
+  /// **'Diğer'**
+  String get calismaTurDiger;
+
+  /// No description provided for @calismaOnayBekliyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Onay bekliyor'**
+  String get calismaOnayBekliyor;
+
+  /// No description provided for @calismaOdemeYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz ödeme yok.'**
+  String get calismaOdemeYok;
+
+  /// No description provided for @calismaKartYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çalışma bilgisi girilmemiş.'**
+  String get calismaKartYok;
+
+  /// No description provided for @calismaGunSecilmedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçilmedi'**
+  String get calismaGunSecilmedi;
 }
 
 class _AppLocalizationsDelegate

@@ -4,8 +4,8 @@
 //   * Kisiler: tek giris, dort sekme; adresteki sekme acilir; Personel
 //     sekmesi uc saha rolunu TEK istekte ister; eski `/users?rol=..`
 //     dogru sekmeye yonlenir.
-//   * Maas karti eylemi: bagli kart yoksa hesabin bilgileriyle DOLU ve
-//     BAGLI kart olusturur; varsa karti acar (ayni kisi iki kez yazilmaz).
+//   * (Maas karti eylemi P252'de "Calisma bilgileri" penceresine
+//     donustu: `p252-calisma-bilgileri.dom.test.ts`.)
 //   * Goruntuleme izni (web'e yeni): tek daire istegi `unit_id` ile gider;
 //     onayli dairede kayit TEK OKUMADA (onaydan sonra) istenir.
 import { screen, waitFor, within } from "@testing-library/react";
@@ -15,9 +15,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import GoruntulemeIzniPage from "@/app/(protected)/goruntuleme-izni/page";
 import MaasKartlariPage from "@/app/(protected)/finans/maas-kartlari/page";
 import KisilerPage from "@/app/(protected)/kisiler/page";
-import { MaasKartiEylemi } from "@/components/kisiler/maas-karti-eylemi";
 import { rolunSekmesi } from "@/lib/kisiler";
-import type { UserRow } from "@/lib/types";
 
 import { ciz } from "./yardimci";
 
@@ -106,40 +104,6 @@ describe("(P251 §8) Kisiler", () => {
     expect(rolunSekmesi("denetci")).toBe("yoneticiler");
     expect(rolunSekmesi("security")).toBe("personel");
     expect(rolunSekmesi("")).toBe("personel");
-  });
-});
-
-describe("(P251 §8) Maas karti eylemi (hesap <-> kart bagi)", () => {
-  const KISI: UserRow = {
-    id: "u1", ad: "Ali Kaya", email: "ali@ornek.com", role: "security",
-    is_active: true, created_at: "2026-01-01T00:00:00Z",
-  };
-
-  it("bagli kart YOKSA: hesabin bilgileriyle DOLU ve BAGLI kart olusturur", async () => {
-    sahte({
-      "/api/tanimlar/personel-kayitlari": { items: [] },
-      "/api/users/u1": { ...KISI, telefon: "+905321112233" },
-      "POST /api/tanimlar/personel-kayitlari": { id: "k9", app_user_id: "u1" },
-    });
-    ciz(() => MaasKartiEylemi({ kullanici: KISI }));
-    await userEvent.click(await screen.findByRole("button", { name: "Maaş kartı oluştur" }));
-    await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/finans/maas-kartlari?kart=k9"));
-    const post = cagrilar.find((c) => c.method === "POST");
-    expect(post?.body).toEqual({
-      ad: "Ali Kaya",
-      email: "ali@ornek.com",
-      telefon: "+905321112233",
-      gorev: expect.any(String),
-      app_user_id: "u1",
-    });
-  });
-
-  it("bagli kart VARSA: olusturma yok, karti acar", async () => {
-    sahte({ "/api/tanimlar/personel-kayitlari": { items: [{ id: "k1", app_user_id: "u1" }] } });
-    ciz(() => MaasKartiEylemi({ kullanici: KISI }));
-    await userEvent.click(await screen.findByRole("button", { name: "Maaş kartı" }));
-    expect(nav.push).toHaveBeenCalledWith("/finans/maas-kartlari?kart=k1");
-    expect(cagrilar.some((c) => c.method === "POST")).toBe(false);
   });
 });
 

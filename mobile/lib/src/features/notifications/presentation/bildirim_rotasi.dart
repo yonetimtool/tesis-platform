@@ -104,6 +104,8 @@ String? bildirimRotasi(AppNotification b, {UserRole? role}) {
     // yere gitmiyordu. Yeni tip eklerken BURASI da guncellenir —
     // `p241_bildirim_rotasi_test` iki yuzeyin haritasini karsilastirir.
     'vardiya_yayinlandi' => AppRoutes.vardiyaPlani,
+    // (P252 §2) Otomatik maas gideri ozeti -> gider listesi.
+    'maas_yazildi' => AppRoutes.gider,
     _ => null,
   };
   if (tipten != null) return tipten;

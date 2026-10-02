@@ -153,6 +153,8 @@ NOTIFICATION_TIP = ENUM(
     # (P247 §3, göç 0154) Güvenlik kargoyu sakine TESLİM ETTİ — dairenin
     # sakinlerine kalıcı bilgi (paketi kimin verdiği izlenebilir kalsın).
     "kargo_teslim",
+    # (P252, göç 0167) Aylık maaşlar gidere yazıldı — yönetime özet.
+    "maas_yazildi",
     name="notification_tip", create_type=False,
 )
 ASSET_KATEGORI = ENUM(
@@ -557,6 +559,14 @@ class Tenant(Base):
     #: imkansiz kilmamali.
     mesai_katsayisi = mapped_column(
         Numeric(4, 2), nullable=False, server_default=text("1.50")
+    )
+    #: (P252, goc 0167) Maas otomasyonu ve otomatik onay (varsayilan
+    #: ONAYLI — gerekce `docs/P252-kararlar.md` §2).
+    maas_otomasyonu_aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    maas_otomatik_onay: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
     )
     #: (P199, goc 0090) Yonetici OTOMASYON TERCIHLERINI bir kez
     #: KAYDETTI mi. Kurulum sihirbazinin otomasyon adimi bunu olcer;
@@ -3344,6 +3354,9 @@ class GelirGiderTanim(Base):
     dagitim_sekli: Mapped[str | None] = mapped_column(
         GELIR_GIDER_DAGITIM, nullable=True
     )
+    #: (P252, goc 0167) Otomasyonun kalemi ADINDAN degil KODUNDAN bulunur
+    #: (`personel_maasi`, `fazla_mesai`); yonetici adi degistirebilir.
+    sistem_kodu: Mapped[str | None] = mapped_column(Text, nullable=True)
     #: (P28) Borc KIME yazilir: aidat/faturalar kiraci oncelikli, yatirim/
     #: demirbas malik. Kural TANIMDA durur — borclandirma aninda secilseydi
     #: ayni kalem farkli aylarda farkli kisiye yazilabilirdi.
@@ -3429,6 +3442,18 @@ class PersonelKayit(Base):
     aktif: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")
     )
+    #: (P252, goc 0167) CALISMA BILGILERI — maas otomasyonunun girdisi.
+    #: Ayin kacinda odendigi (1–31); o ayda bu gun yoksa ayin SON gunu.
+    odeme_gunu: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    #: Maasin odendigi kasa; bossa varsayilan kasa (`defter.kasa_coz`).
+    kasa_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    iban: Mapped[str | None] = mapped_column(Text, nullable=True)
+    notlar: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: Otomasyonun YAZACAGI ilk donem (YYYY-MM): maas tanimlandiktan
+    #: sonraki ilk odeme tarihinin ayi. Gecmise donuk gider yazilmaz.
+    maas_ilk_donem: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: Son yazilan donem (YYYY-MM) — idempotency damgasi.
+    son_maas_donem: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at = _created_at()
     updated_at = _created_at()
 
@@ -3590,6 +3615,10 @@ class FinansalHareket(Base):
     ters_kayit_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), nullable=True
     )
+    #: (P252, goc 0167) Gideri KISIYE baglar — hesapsiz personel dahil.
+    personel_kayit_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
     kaydeden_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), nullable=True
     )
@@ -3747,6 +3776,8 @@ GIDER_PERIYOT = ENUM(
 OTOMASYON_TURU = ENUM(
     "aidat_tahakkuk", "aidat_onizleme", "borc_hatirlatma",
     "duzenli_gider", "gecikme_faizi", "aylik_ozet",
+    # (P252, goc 0167) Aylik personel maaslari.
+    "maas",
     name="otomasyon_turu", create_type=False,
 )
 

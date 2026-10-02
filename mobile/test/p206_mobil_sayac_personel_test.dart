@@ -25,6 +25,7 @@ import 'package:mobile/src/features/finans/presentation/sayac_okuma_screen.dart'
 import 'package:mobile/src/features/staff/presentation/staff_screen.dart';
 
 import 'helpers/bellek_depo.dart';
+import 'helpers/form_kaydir.dart';
 import 'helpers/l10n_test_app.dart';
 import 'helpers/sahte_jwt.dart';
 
@@ -135,6 +136,7 @@ void main() {
     await tester.enterText(find.byType(TextFormField).at(2), '5321112203');
     await tester.enterText(
         find.byKey(const Key('personel-eposta')), 'gorevli@ornek.com');
+    await kaydetGorunsun(tester);
     await tester.tap(find.byType(FilledButton).last);
     await tester.pumpAndSettle();
 
@@ -155,6 +157,7 @@ void main() {
     await tester.enterText(find.byKey(const Key('personel-soyad')), 'Gorevli');
     await _ulkeyiTRSec(tester);
     await tester.enterText(find.byType(TextFormField).at(2), '5321112203');
+    await kaydetGorunsun(tester);
     await tester.tap(find.byType(FilledButton).last);
     await tester.pumpAndSettle();
 

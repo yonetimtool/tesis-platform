@@ -357,6 +357,7 @@ PUT	/me/ana-ekran-izgarasi	zorunlu	tesis	kendi	-	genel	-	-		dar
 PATCH	/me/avatar	zorunlu	tesis	-	-	ozel	email	-		dar
 GET	/me/bildirim-tercihleri	zorunlu	tesis	-	-	-	bildirim_eposta	-		-
 PATCH	/me/bildirim-tercihleri	zorunlu	tesis	-	-	ozel	bildirim_eposta	-		-
+GET	/me/calisma	zorunlu	tesis	kendi	-	-	-	-		-
 GET	/me/checkpoints	zorunlu	tesis	-	-	-	-	-		-
 GET	/me/cihazlar	zorunlu	tesis	-	-	-	-	-		-
 POST	/me/cihazlar/tumunden-cik	zorunlu	tesis	-	-	ozel	-	-		-
@@ -412,6 +413,9 @@ POST	/notifications/toplu-sil	zorunlu	tesis	-	-	ozel	-	-		-
 POST	/notifications/tumunu-okundu	zorunlu	tesis	-	-	haric	-	-	kisinin kendi arayuz tercihi / okundu isareti — bilgi degeri yok (silme ozel denetimli)	-
 PATCH	/notifications/{notification_id}	zorunlu	tesis	hedef	-	haric	-	-	kisinin kendi arayuz tercihi / okundu isareti — bilgi degeri yok (silme ozel denetimli)	-
 GET	/otomasyon-gunlugu	zorunlu	tesis	-	-	-	-	-		dar
+GET	/otomasyon/maas-ayari	zorunlu	tesis	-	-	-	-	-		-
+PATCH	/otomasyon/maas-ayari	zorunlu	tesis	-	-	ozel	-	-		-
+POST	/otomasyon/maaslar/calistir	zorunlu	tesis	-	-	genel	-	-		-
 GET	/otomasyon/son-calismalar	zorunlu	tesis	-	-	-	-	-		-
 GET	/ozellikler	kamu	platform	-	-	-	-	-	herkese acik yapilandirma; kisisel veri yok	-
 GET	/panik	zorunlu	tesis	-	-	-	olusturan_telefon	-		dar
@@ -434,10 +438,10 @@ PATCH	/patrol-plans/{plan_id}	zorunlu	tesis	rol	-	genel	-	-		dar
 GET	/patrol-plans/{plan_id}/checkpoints	zorunlu	tesis	rol	-	-	-	-		-
 PUT	/patrol-plans/{plan_id}/checkpoints	zorunlu	tesis	rol	-	genel	-	-		-
 GET	/patrol-windows	zorunlu	tesis	-	-	-	-	-		-
-GET	/personel-kayitlari	zorunlu	tesis	-	-	-	email,tc,telefon	-		-
-POST	/personel-kayitlari	zorunlu	tesis	-	-	ozel	email,tc,telefon	-		dar
+GET	/personel-kayitlari	zorunlu	tesis	-	-	-	email,iban,tc,telefon	-		-
+POST	/personel-kayitlari	zorunlu	tesis	-	-	ozel	email,iban,tc,telefon	-		dar
 DELETE	/personel-kayitlari/{personel_id}	zorunlu	tesis	rol	-	ozel	-	-		-
-PATCH	/personel-kayitlari/{personel_id}	zorunlu	tesis	rol	-	ozel	email,tc,telefon	-		dar
+PATCH	/personel-kayitlari/{personel_id}	zorunlu	tesis	rol	-	ozel	email,iban,tc,telefon	-		dar
 GET	/platform/gonderim-gunlugu	zorunlu	tesis	-	-	-	-	-		dar
 POST	/public/tanitim-iletisim	kamu	platform	-	-	haric	-	-	tanitim sitesi formu; hiz sinirli, yalniz yazma	dar
 POST	/push/cihaz-temizle	zorunlu	tesis	-	-	ozel	-	-		-

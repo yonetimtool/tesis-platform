@@ -11,6 +11,7 @@ import '../../../core/validators/password_rule.dart';
 import '../../auth/data/token_storage.dart';
 import '../../auth/domain/user_role.dart';
 import '../../auth/presentation/rol_adi.dart';
+import '../../staff/presentation/calisma_bilgileri.dart';
 import '../../tasks/presentation/task_complete_controller.dart'
     show imagePickerProvider;
 import '../data/avatar_api.dart';
@@ -56,6 +57,13 @@ class ProfileScreen extends ConsumerWidget {
             if (UserRole.fromClaim(profile.role) == UserRole.yonetici ||
                 UserRole.fromClaim(profile.role) == UserRole.resident) ...[
               _AvatarCard(ad: profile.ad),
+              const SizedBox(height: 16),
+            ],
+            // (P252 §1) Saha personeli KENDI ucretini ve son odemelerini
+            // gorur (KVKK md. 11; salt okunur). Karti yoksa cizilmez.
+            if (const {UserRole.security, UserRole.tesisGorevlisi, UserRole.guvenlikAmiri}
+                .contains(UserRole.fromClaim(profile.role))) ...[
+              const BenimCalismamKarti(),
               const SizedBox(height: 16),
             ],
             const _PasswordCard(),

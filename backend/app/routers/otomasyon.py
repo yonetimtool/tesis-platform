@@ -32,6 +32,10 @@ from ..models import (
     Tenant,
 )
 from ..schemas import (
+    MaasAyariGuncelle,
+    MaasAyariOut,
+    MaasCalistirmaSonucu,
+    MaasKuralGrubu,
     AidatPlaniCreate,
     AidatPlaniErtele,
     AidatPlaniListResponse,
@@ -426,7 +430,94 @@ async def gider_sil(
 
 # ============================ KURAL SON CALISMA ============================= #
 #: Tekil kurallarin (tesis basina bir tane) gunluk turleri.
-_TEKIL_KURALLAR = ("borc_hatirlatma", "gecikme_faizi")
+_TEKIL_KURALLAR = ("borc_hatirlatma", "gecikme_faizi", "maas")
+
+
+# ============================ (P252) MAAS ==================================== #
+async def _maas_ayari(db: AsyncSession, tenant_id: uuid.UUID) -> MaasAyariOut:
+    from ..models import PersonelKayit, Tenant
+
+    tesis = (await db.execute(select(Tenant).where(Tenant.id == tenant_id))).scalar_one()
+    satirlar = (
+        await db.execute(
+            select(PersonelKayit.odeme_gunu, func.count(), func.sum(PersonelKayit.maas_kurus))
+            .where(
+                PersonelKayit.aktif.is_(True),
+                PersonelKayit.maas_kurus > 0,
+                PersonelKayit.odeme_gunu.is_not(None),
+            )
+            .group_by(PersonelKayit.odeme_gunu)
+            .order_by(PersonelKayit.odeme_gunu)
+        )
+    ).all()
+    gruplar = [
+        MaasKuralGrubu(odeme_gunu=g, personel_sayisi=n, aylik_toplam_kurus=int(t or 0))
+        for g, n, t in satirlar
+    ]
+    return MaasAyariOut(
+        aktif=tesis.maas_otomasyonu_aktif,
+        otomatik_onay=tesis.maas_otomatik_onay,
+        gruplar=gruplar,
+        personel_sayisi=sum(g.personel_sayisi for g in gruplar),
+        aylik_toplam_kurus=sum(g.aylik_toplam_kurus for g in gruplar),
+    )
+
+
+@router.get("/otomasyon/maas-ayari", response_model=MaasAyariOut)
+async def maas_ayari(
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YONETIM),
+) -> MaasAyariOut:
+    """(P252 §2) Maas otomasyonu: acik mi, otomatik onay, odeme gunu gruplari.
+
+    YALNIZ YONETIM (denetci dahil degil): grup toplamlari ucret bilgisidir.
+    """
+    return await _maas_ayari(db, user.tenant_id)
+
+
+@router.patch("/otomasyon/maas-ayari", response_model=MaasAyariOut)
+async def maas_ayari_guncelle(
+    body: MaasAyariGuncelle,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YONETIM),
+) -> MaasAyariOut:
+    from ..models import Tenant
+
+    tesis = (await db.execute(select(Tenant).where(Tenant.id == user.tenant_id))).scalar_one()
+    veri = body.model_dump(exclude_unset=True)
+    if "aktif" in veri and veri["aktif"] is not None:
+        tesis.maas_otomasyonu_aktif = veri["aktif"]
+    if "otomatik_onay" in veri and veri["otomatik_onay"] is not None:
+        tesis.maas_otomatik_onay = veri["otomatik_onay"]
+    await db.flush()
+    await audit_user(
+        db, user, Action.MUHASEBE_AYAR_UPDATE, resource_type="maas_otomasyonu",
+        resource_id=user.tenant_id, meta={"alanlar": sorted(veri)},
+    )
+    return await _maas_ayari(db, user.tenant_id)
+
+
+@router.post("/otomasyon/maaslar/calistir", response_model=MaasCalistirmaSonucu)
+async def maaslari_simdi_calistir(
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YONETIM),
+) -> MaasCalistirmaSonucu:
+    """(P252 §2) "Simdi calistir" — gunluk gorevle AYNI islev, ayni kurallar.
+
+    Iki kez basilsa da ikinci kosum yazmaz (defter anahtari + damga);
+    sonucun `yazilan: 0` donmesi tam da bunun kaniti.
+    """
+    from datetime import date
+
+    from ..otomasyon import maas_otomasyonu
+
+    sonuc = await maas_otomasyonu(db, user.tenant_id, date.today())
+    return MaasCalistirmaSonucu(
+        yazilan=sonuc["yazilan"],
+        toplam_kurus=sonuc["toplam_kurus"],
+        onay_bekleyen=sonuc.get("onay_bekleyen", 0),
+        donemler=sonuc.get("donemler") or {},
+    )
 
 
 @router.get("/otomasyon/son-calismalar", response_model=KuralSonCalismaListesi)

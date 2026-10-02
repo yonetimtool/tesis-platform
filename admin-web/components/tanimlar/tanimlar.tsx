@@ -319,7 +319,26 @@ const DEFTERLER: Defter[] = [
       { ad: "telefon", etiket: "tanimAlanTelefon", tip: "telefon", sutun: true },
       { ad: "giris_tarihi", etiket: "tanimAlanGirisTarihi", tip: "tarih" },
       { ad: "cikis_tarihi", etiket: "tanimAlanCikisTarihi", tip: "tarih" },
-      { ad: "maas_kurus", etiket: "tanimAlanMaas", tip: "kurus" },
+      { ad: "maas_kurus", etiket: "tanimAlanMaas", tip: "kurus", sutun: true },
+      // (P252 §1) Kisiler › Personel "Calisma bilgileri" ile AYNI kart —
+      // iki ekran ayni satiri okur/yazar (iki ayri kayit yok).
+      {
+        ad: "odeme_gunu",
+        etiket: "calismaOdemeGunu",
+        tip: "secim",
+        secenekler: Array.from({ length: 31 }, (_, i) => String(i + 1)),
+        ipucu: "calismaOdemeGunuKurali",
+        sutun: true,
+      },
+      {
+        ad: "kasa_id",
+        etiket: "calismaKasa",
+        tip: "referans",
+        kaynakUcu: "/api/tanimlar/kasalar?limit=200",
+        etiketAlani: "ad",
+      },
+      { ad: "iban", etiket: "calismaIban", tip: "iban" },
+      { ad: "notlar", etiket: "calismaNot", tip: "metin", azami: 2000 },
       // (P203 §5) SAATLIK ucret — fazla mesai hesabi icin. BOS
       // BIRAKILABILIR: o zaman aylikatan turetilir (`maas / 225`;
       // 30 gun x 7,5 saat). Zorunlu kilmak, ayligi girmis yoneticiye
@@ -453,7 +472,7 @@ const GIRIS_TIPI: Record<AlanTip, string> = {
 };
 /** IBAN hata kimligi -> sozluk anahtari. Kimlik/METIN ayrimi: kural
  *  `lib/iban.ts`te, metin sozlukte. */
-const IBAN_HATA_METNI = {
+export const IBAN_HATA_METNI = {
   iban_bos: "tanimIbanBos",
   iban_bicim: "tanimIbanBicim",
   iban_uzunluk: "tanimIbanUzunluk",

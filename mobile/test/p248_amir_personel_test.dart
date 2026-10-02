@@ -21,6 +21,7 @@ import 'package:mobile/src/features/auth/data/token_storage.dart';
 import 'package:mobile/src/features/staff/presentation/staff_screen.dart';
 
 import 'helpers/bellek_depo.dart';
+import 'helpers/form_kaydir.dart';
 import 'helpers/l10n_test_app.dart';
 import 'helpers/sahte_jwt.dart';
 
@@ -99,6 +100,8 @@ void main() {
     await tester.enterText(find.byKey(const Key('personel-soyad')), 'Amir');
     await tester.enterText(
         find.byKey(const Key('personel-eposta')), 'amir@ornek.com');
+    // (P252) Form uzadi (calisma bilgileri): dugmeyi gorunur alana kaydir.
+    await kaydetGorunsun(tester);
     await tester.tap(find.byType(FilledButton).last);
     await tester.pumpAndSettle();
 
@@ -116,6 +119,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Güvenlik Amiri').last);
     await tester.pumpAndSettle();
+    // (P252) Form uzadi (calisma bilgileri): dugmeyi gorunur alana kaydir.
+    await kaydetGorunsun(tester);
     await tester.tap(find.byType(FilledButton).last);
     await tester.pumpAndSettle();
 
@@ -132,6 +137,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Güvenlik').last);
     await tester.pumpAndSettle();
+    // (P252) Form uzadi (calisma bilgileri): dugmeyi gorunur alana kaydir.
+    await kaydetGorunsun(tester);
     await tester.tap(find.byType(FilledButton).last);
     await tester.pumpAndSettle();
 

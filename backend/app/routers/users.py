@@ -536,6 +536,13 @@ async def create_user(
         raise APIError(
             403, "forbidden", _ACMA_HATASI.get(user.role, "rol_olusturulamaz")
         )
+    # (P252 §1) UCRET BILGISI YALNIZ YONETIMDE. Amir personel acabilir
+    # (P231) ama ucret yazamaz; hesap OLUSTURULMADAN reddedilir.
+    if body.calisma is not None:
+        if user.role not in ("admin", "yonetici"):
+            raise APIError(403, "forbidden", "maas_bilgisi_yetkisiz")
+        if body.role == "resident":
+            raise APIError(422, "validation_error", "maas_bilgisi_rol")
     # (P186) YONETICI ARTIK PAROLA ATAMAZ, GECICI KOD DA URETILMEZ.
     # Yeni akista kisi kendi kimligini kendisi kurar: davet e-postasindaki
     # Tesis ID ile mobil "Kayit ol" -> SSO ya da e-posta + KENDI parolasi.
@@ -579,6 +586,32 @@ async def create_user(
             "gorev_penceresi": bool(obj.gorev_baslangic or obj.gorev_bitis),
         },
     )
+    # (P252 §1) HESAP + MAAS KARTI TEK ISLEMDE. Kart duserse (gecersiz kasa)
+    # istisna islemi geri alir — yarim kayit (hesap var, kart yok) kalmaz.
+    kart_id = None
+    if body.calisma is not None:
+        from ..models import Kasa, PersonelKayit
+        from .muhasebe_tanimlari import maas_baslangici
+
+        c = body.calisma
+        if c.kasa_id is not None and (
+            await db.execute(select(Kasa.id).where(Kasa.id == c.kasa_id))
+        ).scalar_one_or_none() is None:
+            raise APIError(422, "invalid_reference", "kasa_bulunamadi")
+        kart = PersonelKayit(
+            tenant_id=user.tenant_id, ad=obj.ad, telefon=obj.telefon,
+            email=obj.email, gorev=c.gorev, giris_tarihi=c.giris_tarihi,
+            maas_kurus=c.maas_kurus, odeme_gunu=c.odeme_gunu,
+            kasa_id=c.kasa_id, iban=c.iban, notlar=c.notlar, app_user_id=obj.id,
+        )
+        maas_baslangici(kart)
+        db.add(kart)
+        await db.flush()
+        kart_id = kart.id
+        await audit_user(
+            db, user, Action.MUHASEBE_TANIM_CREATE, resource_type="personel_kayit",
+            resource_id=kart.id, meta={"kaynak": "personel_ekleme"},
+        )
     # (P155 §7 · P186) DAVET: hesap DAIMA parolasiz oldugundan HER ZAMAN jetonlu
     # kayit bagi gonderilir (SMS + varsa HTML e-posta). Kisi bu Tesis ID ile
     # mobilden "Kayit ol" der ve kendi kimligini kurar. Gonderim katmani
@@ -607,6 +640,7 @@ async def create_user(
         gorev_bitis=obj.gorev_bitis,
         created_at=obj.created_at,
         davet=davet_ozeti,
+        personel_kayit_id=kart_id,
     )
 
 

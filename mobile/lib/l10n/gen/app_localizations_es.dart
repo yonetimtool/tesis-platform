@@ -8819,4 +8819,87 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get webDemirbas => 'Inventario';
+
+  @override
+  String get calismaBaslik => 'Datos laborales';
+
+  @override
+  String get calismaAlt =>
+      'Si se introduce un salario, el gasto se registra automáticamente cada mes el día de pago. Déjelo vacío para personal sin salario (contratistas, empresas externas).';
+
+  @override
+  String get calismaGiris => 'Fecha de alta';
+
+  @override
+  String get calismaGorev => 'Puesto';
+
+  @override
+  String get calismaGorevIpucu => 'Ej. seguridad, limpieza, jardín';
+
+  @override
+  String get calismaUcret => 'Salario mensual (₺, neto)';
+
+  @override
+  String get calismaOdemeGunu => 'Día de pago';
+
+  @override
+  String get calismaOdemeGunuKurali =>
+      'Se paga ese día del mes. Si el mes no tiene ese día (p. ej. 31 en un mes de 30), el último día.';
+
+  @override
+  String get calismaKasa => 'Caja';
+
+  @override
+  String get calismaKasaVarsayilan => 'Caja predeterminada';
+
+  @override
+  String get calismaIban => 'IBAN (opcional)';
+
+  @override
+  String get calismaNot => 'Nota (opcional)';
+
+  @override
+  String get calismaUcretGecersiz => 'Salario mensual no válido.';
+
+  @override
+  String get calismaGunGerekli =>
+      'Elija un día de pago si introduce un salario.';
+
+  @override
+  String get calismaKaydedildi => 'Datos laborales guardados.';
+
+  @override
+  String get calismaDugme => 'Empleo';
+
+  @override
+  String get calismaBenimBaslik => 'Mi empleo';
+
+  @override
+  String get calismaSonOdemeler => 'Pagos recientes';
+
+  @override
+  String calismaOdemeGunuDeger(int gun) {
+    return 'El día $gun de cada mes';
+  }
+
+  @override
+  String get calismaTurMaas => 'Salario';
+
+  @override
+  String get calismaTurMesai => 'Horas extra';
+
+  @override
+  String get calismaTurDiger => 'Otro';
+
+  @override
+  String get calismaOnayBekliyor => 'Pendiente';
+
+  @override
+  String get calismaOdemeYok => 'Sin pagos todavía.';
+
+  @override
+  String get calismaKartYok => 'Sin datos de empleo.';
+
+  @override
+  String get calismaGunSecilmedi => 'Sin definir';
 }

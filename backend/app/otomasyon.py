@@ -744,6 +744,45 @@ async def duzenli_giderleri_isle(
 
 
 # --------------------------------------------------------------------------- #
+#                  (P252) PERSONEL MAASLARI                                    #
+# --------------------------------------------------------------------------- #
+async def maas_otomasyonu(db: AsyncSession, tenant_id: uuid.UUID, bugun: date) -> dict:
+    """Odeme gunu gelen maaslari gidere yazar; gunluk + DONEM basina ozet.
+
+    Hesap ve idempotency `app/maas.py`de. Bildirim DONEM basina tek:
+    "Ekim 2026 maaslari gidere yazildi: 4 personel, toplam 92.000 TL" —
+    telafi kosumunda (birden cok ay) her ay ayri cumle.
+    """
+    from . import maas
+
+    sonuc = await maas.maaslari_isle(db, tenant_id, bugun)
+    if not sonuc.yazilan:
+        return {"yazilan": 0, "toplam_kurus": 0}
+    await _gunluk_yaz(
+        db, tenant_id=tenant_id, tur="maas", donem=donem_metni(bugun),
+        adet=sonuc.yazilan, tutar_kurus=sonuc.toplam_kurus,
+        sonuc={
+            "kartlar": sonuc.kartlar,
+            "donemler": sonuc.donemler,
+            "onay_bekleyen": sonuc.onay_bekleyen,
+        },
+    )
+    yonetim = await _yonetim_idleri(db)
+    for d, (adet, tutar) in sorted(sonuc.donemler.items()):
+        params = {"donem": maas.donem_adi(d), "adet": adet, "tutar": _tl(tutar)}
+        _bildir("maas_yazildi", tenant_id=tenant_id, aliciler=yonetim, params=params)
+        sakin_bildirimi_yaz(
+            db, tenant_id=tenant_id, tip="maas_yazildi", user_ids=yonetim, veri=params,
+        )
+    return {
+        "yazilan": sonuc.yazilan,
+        "toplam_kurus": sonuc.toplam_kurus,
+        "onay_bekleyen": sonuc.onay_bekleyen,
+        "donemler": sonuc.donemler,
+    }
+
+
+# --------------------------------------------------------------------------- #
 #                        4.6  AYLIK OZET RAPORU                                #
 # --------------------------------------------------------------------------- #
 async def aylik_ozet(db: AsyncSession, tenant_id: uuid.UUID, bugun: date) -> dict:
@@ -939,6 +978,8 @@ async def tum_tenantlar_icin(bugun: date | None = None) -> dict:
                 plan = await aidat_planlari_isle(db, tenant_id, gun)
                 hatirlatma = await borc_hatirlatmalari(db, tenant_id, gun)
                 gider = await duzenli_giderleri_isle(db, tenant_id, gun)
+                # (P252) Ayni gorev, ayri zamanlayici YOK.
+                maas_ = await maas_otomasyonu(db, tenant_id, gun)
                 faiz = await gecikme_faizi_otomatik(db, tenant_id, gun)
                 await aylik_ozet(db, tenant_id, gun)
                 await db.commit()
@@ -946,6 +987,7 @@ async def tum_tenantlar_icin(bugun: date | None = None) -> dict:
             ozet["tahakkuk"] += plan["tahakkuk"]
             ozet["hatirlatma"] += hatirlatma["gonderilen"]
             ozet["gider"] += gider["yazilan"]
+            ozet["maas"] = ozet.get("maas", 0) + maas_["yazilan"]
             ozet["faiz"] += faiz["yazilan"]
         except Exception as exc:  # noqa: BLE001
             log.warning("[otomasyon] tesis %s atlandi: %s", tenant_id, exc)

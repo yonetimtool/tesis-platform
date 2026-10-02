@@ -8905,4 +8905,86 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get webDemirbas => 'Инвентарь';
+
+  @override
+  String get calismaBaslik => 'Данные о работе';
+
+  @override
+  String get calismaAlt =>
+      'Если указана зарплата, расход проводится автоматически в день выплаты каждый месяц. Оставьте пустым для персонала без зарплаты (подрядчики, сторонние фирмы).';
+
+  @override
+  String get calismaGiris => 'Дата приёма';
+
+  @override
+  String get calismaGorev => 'Должность';
+
+  @override
+  String get calismaGorevIpucu => 'Напр. охрана, уборка, сад';
+
+  @override
+  String get calismaUcret => 'Месячная оплата (₺, нетто)';
+
+  @override
+  String get calismaOdemeGunu => 'День выплаты';
+
+  @override
+  String get calismaOdemeGunuKurali =>
+      'Выплата в этот день месяца. Если такого дня нет (напр. 31 в 30-дневном месяце) — в последний день.';
+
+  @override
+  String get calismaKasa => 'Касса';
+
+  @override
+  String get calismaKasaVarsayilan => 'Касса по умолчанию';
+
+  @override
+  String get calismaIban => 'IBAN (необязательно)';
+
+  @override
+  String get calismaNot => 'Примечание (необязательно)';
+
+  @override
+  String get calismaUcretGecersiz => 'Неверная месячная оплата.';
+
+  @override
+  String get calismaGunGerekli => 'Если указана оплата, выберите день выплаты.';
+
+  @override
+  String get calismaKaydedildi => 'Данные о работе сохранены.';
+
+  @override
+  String get calismaDugme => 'Работа';
+
+  @override
+  String get calismaBenimBaslik => 'Моя работа';
+
+  @override
+  String get calismaSonOdemeler => 'Последние выплаты';
+
+  @override
+  String calismaOdemeGunuDeger(int gun) {
+    return '$gun-го числа каждого месяца';
+  }
+
+  @override
+  String get calismaTurMaas => 'Зарплата';
+
+  @override
+  String get calismaTurMesai => 'Сверхурочные';
+
+  @override
+  String get calismaTurDiger => 'Другое';
+
+  @override
+  String get calismaOnayBekliyor => 'Ожидает';
+
+  @override
+  String get calismaOdemeYok => 'Выплат пока нет.';
+
+  @override
+  String get calismaKartYok => 'Данные о работе не указаны.';
+
+  @override
+  String get calismaGunSecilmedi => 'Не задано';
 }

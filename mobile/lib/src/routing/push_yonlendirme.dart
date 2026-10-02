@@ -315,6 +315,8 @@ String? _hamHedef(Map<String, String> data, UserRole? role) {
     case 'aylik_ozet':
       return AppRoutes.financialSummary;
     case 'gider_onay':
+    // (P252 §2) "Ekim maaslari gidere yazildi" — gider listesi.
+    case 'maas_yazildi':
       return AppRoutes.gider;
     // `dogrulama` (token saglik yoklamasi) ve `test` (push teshisi)
     // KULLANICIYA GORUNMEZ bir yere gitmeli: yonlendirme YOK.

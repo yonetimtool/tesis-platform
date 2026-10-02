@@ -29,6 +29,12 @@ import { alanliHataMetni, apiSend } from "@/lib/client";
 import type { UnitList } from "@/lib/types";
 import { jsonFetcher } from "@/lib/fetcher";
 import { AdSoyadAlanlari } from "@/components/AdSoyadAlanlari";
+import {
+  BOS_CALISMA,
+  CalismaAlanlari,
+  calismaGovdesi,
+  type CalismaDegeri,
+} from "@/components/kisiler/calisma-bilgileri";
 import { OdemeKodlariPenceresi } from "@/components/OdemeKodlariPenceresi";
 import { EpostaAlani } from "@/components/EpostaAlani";
 import { adAyir, adBicimle, soyadBicimle } from "@/lib/kisi-adi";
@@ -173,8 +179,10 @@ export interface KullaniciListesiOzellikleri {
   /** Sekme basligi; verilmezse "Kullanicilar". */
   baslik?: string;
   aciklama?: string;
-  /** Satir eylemlerine eklenir (Personel: maas karti). */
+  /** Satir eylemlerine eklenir (Personel: calisma bilgileri). */
   ekEylem?: (u: UserRow) => React.ReactNode;
+  /** (P252 §1) Ekleme formunda "Calisma bilgileri" bolumu (Personel sekmesi). */
+  calismaBolumu?: boolean;
 }
 
 export default function KullaniciListesi({
@@ -182,6 +190,7 @@ export default function KullaniciListesi({
   baslik,
   aciklama,
   ekEylem,
+  calismaBolumu = false,
 }: KullaniciListesiOzellikleri = {}) {
   const t = useT();
   const kapsamda = (r: string) => !kapsam || kapsam.includes(r as UserRole);
@@ -308,6 +317,8 @@ export default function KullaniciListesi({
   const [kodAcik, setKodAcik] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY);
+  // (P252 §1) Hesapla AYNI istekte giden calisma bilgileri.
+  const [calisma, setCalisma] = useState<CalismaDegeri>(BOS_CALISMA);
   const [formErr, setFormErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   // (P186 §2) Duzenlemede: kayit tamamlandiysa e-posta salt-okunur (giris
@@ -334,6 +345,7 @@ export default function KullaniciListesi({
   }
 
   function openNew() {
+    setCalisma(BOS_CALISMA);
     setEditingId(null);
     // Varsayilan rol de acilabilir kumeden secilir; sabit "security"
     // birakmak, o rolu acamayan bir cagirana pesinen gecersiz bir form
@@ -466,6 +478,17 @@ export default function KullaniciListesi({
         };
         if (form.gorevBaslangic) body.gorev_baslangic = form.gorevBaslangic;
         if (form.gorevBitis) body.gorev_bitis = form.gorevBitis;
+        // (P252 §1) Hesap + maas karti TEK istekte (sunucuda tek islem):
+        // biri duserse ikisi de yazilmaz.
+        if (calismaBolumu && form.role !== ROL_SAKIN) {
+          const { govde, hata } = calismaGovdesi(calisma);
+          if (hata) {
+            setFormErr(t(hata));
+            setSaving(false);
+            return;
+          }
+          if (govde) body.calisma = govde;
+        }
         const created = await apiSend<{ id?: string }>(
           "/api/users",
           "POST",
@@ -992,6 +1015,14 @@ export default function KullaniciListesi({
               belirleyemez (o parolayla hesaba girebilirdi). Kullanici kendi
               parolasini kurar/degistirir: davet (Tesis ID) ile ilk kayit,
               sonrasinda "sifremi unuttum" (e-posta) ya da kendi parola ayari. */}
+
+          {/* (P252 §1) CALISMA BILGILERI — yalniz YENI personelde; mevcut
+              personelin bilgisi satirdaki "Calisma bilgileri" penceresinde. */}
+          {calismaBolumu && !editingId && form.role !== ROL_SAKIN ? (
+            <div className="sm:col-span-2">
+              <CalismaAlanlari deger={calisma} onDegis={setCalisma} devre={saving} />
+            </div>
+          ) : null}
 
           {formErr && (
             <p

@@ -8623,4 +8623,86 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get webDemirbas => 'Demirbaş';
+
+  @override
+  String get calismaBaslik => 'Çalışma bilgileri';
+
+  @override
+  String get calismaAlt =>
+      'Ücret girilirse her ay ödeme gününde maaş gideri otomatik yazılır. Maaşı olmayan (sözleşmeli, dış firma) personel için boş bırakın.';
+
+  @override
+  String get calismaGiris => 'İşe giriş tarihi';
+
+  @override
+  String get calismaGorev => 'Görevi';
+
+  @override
+  String get calismaGorevIpucu => 'Örn. güvenlik, temizlik, bahçe';
+
+  @override
+  String get calismaUcret => 'Aylık ücret (₺, net)';
+
+  @override
+  String get calismaOdemeGunu => 'Ödeme günü';
+
+  @override
+  String get calismaOdemeGunuKurali =>
+      'Ayın bu gününde ödenir. Seçilen gün o ayda yoksa (ör. 31 ve 30 günlük ay) ayın son günü ödenir.';
+
+  @override
+  String get calismaKasa => 'Ödendiği kasa';
+
+  @override
+  String get calismaKasaVarsayilan => 'Varsayılan kasa';
+
+  @override
+  String get calismaIban => 'IBAN (isteğe bağlı)';
+
+  @override
+  String get calismaNot => 'Not (isteğe bağlı)';
+
+  @override
+  String get calismaUcretGecersiz => 'Aylık ücret geçersiz.';
+
+  @override
+  String get calismaGunGerekli => 'Ücret girildiyse ödeme günü de seçilmeli.';
+
+  @override
+  String get calismaKaydedildi => 'Çalışma bilgileri kaydedildi.';
+
+  @override
+  String get calismaDugme => 'Çalışma bilgileri';
+
+  @override
+  String get calismaBenimBaslik => 'Çalışma bilgilerim';
+
+  @override
+  String get calismaSonOdemeler => 'Son ödemeler';
+
+  @override
+  String calismaOdemeGunuDeger(int gun) {
+    return 'Her ayın $gun. günü';
+  }
+
+  @override
+  String get calismaTurMaas => 'Maaş';
+
+  @override
+  String get calismaTurMesai => 'Fazla mesai';
+
+  @override
+  String get calismaTurDiger => 'Diğer';
+
+  @override
+  String get calismaOnayBekliyor => 'Onay bekliyor';
+
+  @override
+  String get calismaOdemeYok => 'Henüz ödeme yok.';
+
+  @override
+  String get calismaKartYok => 'Çalışma bilgisi girilmemiş.';
+
+  @override
+  String get calismaGunSecilmedi => 'Seçilmedi';
 }

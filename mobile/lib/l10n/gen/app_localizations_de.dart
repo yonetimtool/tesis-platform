@@ -8835,4 +8835,87 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get webDemirbas => 'Inventar';
+
+  @override
+  String get calismaBaslik => 'Beschäftigungsdaten';
+
+  @override
+  String get calismaAlt =>
+      'Wird ein Lohn eingetragen, wird die Lohnausgabe jeden Monat am Zahltag automatisch gebucht. Für Personal ohne Lohn (Vertragsnehmer, Fremdfirmen) leer lassen.';
+
+  @override
+  String get calismaGiris => 'Eintrittsdatum';
+
+  @override
+  String get calismaGorev => 'Tätigkeit';
+
+  @override
+  String get calismaGorevIpucu => 'z. B. Sicherheit, Reinigung, Garten';
+
+  @override
+  String get calismaUcret => 'Monatslohn (₺, netto)';
+
+  @override
+  String get calismaOdemeGunu => 'Zahltag';
+
+  @override
+  String get calismaOdemeGunuKurali =>
+      'Wird an diesem Monatstag gezahlt. Gibt es den Tag im Monat nicht (z. B. 31. im 30-Tage-Monat), am letzten Tag.';
+
+  @override
+  String get calismaKasa => 'Kasse';
+
+  @override
+  String get calismaKasaVarsayilan => 'Standardkasse';
+
+  @override
+  String get calismaIban => 'IBAN (optional)';
+
+  @override
+  String get calismaNot => 'Notiz (optional)';
+
+  @override
+  String get calismaUcretGecersiz => 'Monatslohn ist ungültig.';
+
+  @override
+  String get calismaGunGerekli =>
+      'Bei eingetragenem Lohn muss ein Zahltag gewählt werden.';
+
+  @override
+  String get calismaKaydedildi => 'Beschäftigungsdaten gespeichert.';
+
+  @override
+  String get calismaDugme => 'Beschäftigung';
+
+  @override
+  String get calismaBenimBaslik => 'Meine Beschäftigung';
+
+  @override
+  String get calismaSonOdemeler => 'Letzte Zahlungen';
+
+  @override
+  String calismaOdemeGunuDeger(int gun) {
+    return 'Am $gun. jedes Monats';
+  }
+
+  @override
+  String get calismaTurMaas => 'Gehalt';
+
+  @override
+  String get calismaTurMesai => 'Überstunden';
+
+  @override
+  String get calismaTurDiger => 'Sonstiges';
+
+  @override
+  String get calismaOnayBekliyor => 'Wartet auf Freigabe';
+
+  @override
+  String get calismaOdemeYok => 'Noch keine Zahlungen.';
+
+  @override
+  String get calismaKartYok => 'Keine Beschäftigungsdaten.';
+
+  @override
+  String get calismaGunSecilmedi => 'Nicht gesetzt';
 }

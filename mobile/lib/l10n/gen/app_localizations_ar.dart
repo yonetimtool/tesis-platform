@@ -8862,4 +8862,86 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get webDemirbas => 'سجل الأصول';
+
+  @override
+  String get calismaBaslik => 'بيانات العمل';
+
+  @override
+  String get calismaAlt =>
+      'إذا أُدخل الراتب، يُسجّل مصروف الراتب تلقائيًا في يوم الدفع كل شهر. اتركه فارغًا للموظفين بلا راتب (المتعاقدون، الشركات الخارجية).';
+
+  @override
+  String get calismaGiris => 'تاريخ بدء العمل';
+
+  @override
+  String get calismaGorev => 'الوظيفة';
+
+  @override
+  String get calismaGorevIpucu => 'مثال: أمن، تنظيف، حديقة';
+
+  @override
+  String get calismaUcret => 'الأجر الشهري (₺، صافٍ)';
+
+  @override
+  String get calismaOdemeGunu => 'يوم الدفع';
+
+  @override
+  String get calismaOdemeGunuKurali =>
+      'يُدفع في هذا اليوم من الشهر. إذا لم يوجد اليوم في الشهر (مثل 31 في شهر من 30 يومًا) يُدفع في آخر يوم.';
+
+  @override
+  String get calismaKasa => 'الصندوق';
+
+  @override
+  String get calismaKasaVarsayilan => 'الصندوق الافتراضي';
+
+  @override
+  String get calismaIban => 'IBAN (اختياري)';
+
+  @override
+  String get calismaNot => 'ملاحظة (اختياري)';
+
+  @override
+  String get calismaUcretGecersiz => 'الأجر الشهري غير صالح.';
+
+  @override
+  String get calismaGunGerekli => 'اختر يوم الدفع عند إدخال الراتب.';
+
+  @override
+  String get calismaKaydedildi => 'تم حفظ بيانات العمل.';
+
+  @override
+  String get calismaDugme => 'العمل';
+
+  @override
+  String get calismaBenimBaslik => 'بيانات عملي';
+
+  @override
+  String get calismaSonOdemeler => 'آخر المدفوعات';
+
+  @override
+  String calismaOdemeGunuDeger(int gun) {
+    return 'اليوم $gun من كل شهر';
+  }
+
+  @override
+  String get calismaTurMaas => 'راتب';
+
+  @override
+  String get calismaTurMesai => 'عمل إضافي';
+
+  @override
+  String get calismaTurDiger => 'أخرى';
+
+  @override
+  String get calismaOnayBekliyor => 'بانتظار الموافقة';
+
+  @override
+  String get calismaOdemeYok => 'لا مدفوعات بعد.';
+
+  @override
+  String get calismaKartYok => 'لم تُسجَّل بيانات العمل.';
+
+  @override
+  String get calismaGunSecilmedi => 'غير محدد';
 }

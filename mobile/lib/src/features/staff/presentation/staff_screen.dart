@@ -15,6 +15,7 @@ import '../../auth/presentation/rol_adi.dart';
 import '../../tasks/presentation/task_complete_controller.dart'
     show imagePickerProvider;
 import '../data/staff_api.dart';
+import 'calisma_bilgileri.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/ui/gorsel_cozme.dart';
 import '../../../core/ui/merkez_diyalog.dart';
@@ -102,6 +103,10 @@ class _StaffTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final roleLabel = rolAdi(l10n, UserRole.fromClaim(member.role));
+    // (P252 §1) Ucret YALNIZ yonetime (admin/yonetici): amir listeyi gorur
+    // ama "Calisma bilgileri" eylemi ona cizilmez (sunucu da 403 doner).
+    final yonetim =
+        ref.watch(currentUserRoleProvider).value?.maasGorebilir ?? false;
     return Card(
       child: ListTile(
         leading: CircleAvatar(
@@ -135,9 +140,16 @@ class _StaffTile extends ConsumerWidget {
               onSelected: (v) {
                 if (v == 'edit') _edit(context, ref);
                 if (v == 'toggle') _toggle(context, ref);
+                if (v == 'calisma') _calisma(context);
               },
               itemBuilder: (_) => [
                 PopupMenuItem(value: 'edit', child: Text(l10n.ortakDuzenle)),
+                if (yonetim)
+                  PopupMenuItem(
+                    key: Key('calisma-${member.id}'),
+                    value: 'calisma',
+                    child: Text(l10n.calismaDugme),
+                  ),
                 PopupMenuItem(
                   value: 'toggle',
                   child: Text(member.isActive
@@ -158,6 +170,13 @@ class _StaffTile extends ConsumerWidget {
       builder: (_) => _AddStaffSheet(existing: member),
     );
     if (saved != null) ref.invalidate(fieldStaffProvider);
+  }
+
+  Future<void> _calisma(BuildContext context) async {
+    await merkezSayfaAc<String?>(
+      context,
+      builder: (_) => CalismaSayfasi(kisi: member),
+    );
   }
 
   Future<void> _toggle(BuildContext context, WidgetRef ref) async {
@@ -202,6 +221,12 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
   final _epostaCtrl = TextEditingController();
   String _role = 'security';
   bool _submitting = false;
+  // (P252 §1) Calisma bilgileri — yalniz EKLEMEDE ve yalniz yonetime.
+  final _calisma = CalismaDegeri();
+
+  bool get _calismaBolumu =>
+      !_isEdit &&
+      (ref.watch(currentUserRoleProvider).value?.maasGorebilir ?? false);
 
   // Profil fotografi (P3) — yonetici saha personeli fotosunu yukler.
   Uint8List? _onizleme; // yeni secilen foto (memory onizleme)
@@ -307,6 +332,7 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
     _soyadCtrl.dispose();
     _phoneCtrl.dispose();
     _epostaCtrl.dispose();
+    _calisma.dispose();
     super.dispose();
   }
 
@@ -316,6 +342,15 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     final l10n = context.l10n;
+    Map<String, dynamic>? calisma;
+    if (_calismaBolumu) {
+      final (govde, hata) = _calisma.govde(l10n);
+      if (hata != null) {
+        messenger.showSnackBar(SnackBar(content: Text(hata)));
+        return;
+      }
+      calisma = govde;
+    }
     setState(() => _submitting = true);
     try {
       final api = ref.read(staffApiProvider);
@@ -344,6 +379,7 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
             telefon: telefonNormalle(_phoneCtrl.text),
             email: _epostaCtrl.text.trim(),
             role: _role,
+            calisma: calisma,
           );
       // Personel olustuktan sonra foto secildiyse avatarini ata.
       if (_fotoKey != null) {
@@ -475,6 +511,10 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
             ),
             // Parola alani KALDIRILDI (P186-ek2): hesap parolasiz acilir ve
             // davet gonderilir; parolayi kisi kendi kayit akisinda belirler.
+            if (_calismaBolumu) ...[
+              const Divider(height: 32),
+              CalismaAlanlari(deger: _calisma, etkin: !_submitting),
+            ],
             const SizedBox(height: 16),
             FilledButton(
               onPressed: _submitting ? null : _submit,

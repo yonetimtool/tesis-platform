@@ -69,6 +69,10 @@ ISTISNALAR: dict[tuple[str, str], str] = {
         "(P250 §6) yol parametresi yok: yalniz token kullanicisinin "
         "tercihi yazilir; govdede kullanici kimligi alinmaz"
     ),
+    ("GET", "/me/calisma"): (
+        "(P252 §1) yol parametresi yok: yalniz token kullanicisinin KENDI "
+        "maas karti (`app_user_id = user.id`) okunur"
+    ),
     ("GET", "/me/ana-ekran-izgarasi"): (
         "(P251 §11) yol parametresi yok: kayit token kullanicisinin "
         "`pano_tercihi` satiridir"

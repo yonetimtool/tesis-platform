@@ -142,6 +142,7 @@ class StaffApi {
     String? telefon,
     required String email,
     required String role,
+    Map<String, dynamic>? calisma,
   }) async {
     final data = <String, dynamic>{
       'ad': ad,
@@ -150,6 +151,8 @@ class StaffApi {
       if (telefon != null && telefon.trim().isNotEmpty) 'telefon': telefon,
       'email': email,
       'role': role,
+      // (P252 §1) Hesap + maas karti TEK istekte (sunucuda tek islem).
+      'calisma': ?calisma,
     };
     try {
       final res = await _dio.post<Map<String, dynamic>>('/users', data: data);
@@ -189,6 +192,55 @@ class StaffApi {
 
   /// Saha personeli avatarini ata/kaldir (`PATCH /users/{id}/avatar` — yalniz
   /// yonetici; sunucu zorlar). null fotografi kaldirir.
+  // ---------------------- (P252 §1) calisma bilgileri ---------------------- #
+
+  /// Hesaba BAGLI maas karti (yoksa `null`). Yalniz yonetim (sunucu zorlar;
+  /// amir 403 alir — ekran bu cagriyi amire hic yapmaz).
+  Future<Map<String, dynamic>?> calismaKarti(String userId) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/personel-kayitlari',
+        queryParameters: {'app_user_id': userId, 'limit': 1},
+      );
+      final items = (res.data?['items'] as List?) ?? const [];
+      return items.isEmpty ? null : Map<String, dynamic>.from(items.first as Map);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// Kart varsa PATCH, yoksa hesabin bilgileriyle BAGLI kart POST.
+  Future<void> calismaKaydet({
+    String? kartId,
+    required StaffMember kisi,
+    required Map<String, dynamic> govde,
+  }) async {
+    try {
+      if (kartId != null) {
+        await _dio.patch<Map<String, dynamic>>('/personel-kayitlari/$kartId', data: govde);
+      } else {
+        await _dio.post<Map<String, dynamic>>('/personel-kayitlari', data: {
+          'ad': kisi.ad,
+          'app_user_id': kisi.id,
+          ...govde,
+        });
+      }
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// `GET /me/calisma` — kisinin KENDI calisma bilgisi (salt okunur).
+  Future<Map<String, dynamic>?> benimCalismam() async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>('/me/calisma');
+      final c = res.data?['calisma'];
+      return c == null ? null : Map<String, dynamic>.from(c as Map);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   Future<void> setStaffAvatar(String id, String? fotoKey) async {
     try {
       await _dio.patch<Map<String, dynamic>>(

@@ -62,6 +62,8 @@ export const BILDIRIM_ROTALARI: Record<string, string> = {
   bakim_gecikti: "/bakim",
   // (P241 §2e) Vardiya plani yayinlandi.
   vardiya_yayinlandi: "/vardiya-plani",
+  // (P252 §2) "Ekim maaslari gidere yazildi" — giderler listesi.
+  maas_yazildi: "/finans/giderler",
 };
 
 export function bildirimRotasi(tip: string): string | null {

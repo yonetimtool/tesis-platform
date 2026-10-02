@@ -256,3 +256,25 @@ def test_SAHA_MESAI_OZETINI_GOREMEZ(client, world, mesai_duzeni):
     h = _giris(client, world["slug_a"], world["guard_a"])
     r = client.get("/mesai/ozet", headers=h, params={"yil": 2026, "ay": 9})
     assert r.status_code == 403, r.text
+
+
+def test_P252_MESAI_AYRI_SISTEM_KALEMI_ve_KARTA_BAGLI(
+    client, world, mesai_duzeni, owner_conn
+):
+    """(P252 §2) Fazla mesai MAASA KATILMAZ: ayri "Fazla mesai" kalemi
+    (sistem kodu `fazla_mesai`) ve gider kisinin maas kartina bagli —
+    personel detayinin odeme gecmisinde "mesai" olarak gorunur."""
+    h = _giris(client, world["slug_a"], world["yonetici_a"])
+    r = client.post("/mesai/gidere-yaz", headers=h, json={
+        "yil": 2026, "ay": 9,
+        "satirlar": [{"user_id": mesai_duzeni["user_id"]}]})
+    assert r.status_code == 201, r.text
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "SELECT t.sistem_kodu, h.personel_kayit_id, p.id FROM finansal_hareket h "
+            "JOIN gelir_gider_tanim t ON t.id = h.gelir_gider_tanim_id "
+            "JOIN personel_kayit p ON p.app_user_id = h.user_id "
+            "WHERE h.tenant_id=%s AND h.aciklama LIKE 'Fazla mesai%%'", (world["a"],))
+        kod, bag, kart = cur.fetchone()
+    assert kod == "fazla_mesai"
+    assert bag == kart

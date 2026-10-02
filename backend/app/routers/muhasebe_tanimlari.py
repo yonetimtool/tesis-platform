@@ -540,14 +540,40 @@ async def _tek_kart(
         raise APIError(409, "conflict", "maas_karti_zaten_bagli")
 
 
+def maas_baslangici(obj: PersonelKayit) -> None:
+    """(P252 §2) Otomasyonun ILK donemini kur — maas + odeme gunu varsa.
+
+    Henuz hic yazilmadiysa (`son_maas_donem` bos) odeme gunu degisince
+    yeniden hesaplanir; yazildiysa damga zaten sirayi tasir.
+    """
+    from datetime import date
+
+    from .. import maas
+
+    if not (obj.maas_kurus and obj.odeme_gunu):
+        return
+    if obj.maas_ilk_donem is None or obj.son_maas_donem is None:
+        obj.maas_ilk_donem = maas.ilk_donem(date.today(), obj.odeme_gunu)
+
+
 @router.get("/personel-kayitlari", response_model=PersonelKayitListResponse)
 async def list_personel(
     aktif: bool | None = Query(None),
+    # (P252) Kisiler › Personel satiri "bu hesabin karti" sorusunu sorar.
+    app_user_id: uuid.UUID | None = Query(None),
     limit: int = Query(100, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_YONETIM),
 ) -> PersonelKayitListResponse:
+    if app_user_id is not None:
+        kayitlar = list((await db.execute(
+            select(PersonelKayit).where(PersonelKayit.app_user_id == app_user_id)
+        )).scalars().all())
+        return PersonelKayitListResponse(
+            meta={"limit": limit, "offset": 0, "total": len(kayitlar)},
+            items=await _personel_adlarla(db, kayitlar),
+        )
     kayitlar, total = await _sayfa(
         db, PersonelKayit, aktif=aktif, limit=limit, offset=offset,
         sirala=PersonelKayit.ad,
@@ -565,12 +591,14 @@ async def create_personel(
     user: AppUser = Depends(_YONETIM),
 ) -> PersonelKayitOut:
     await _referans_dogrula(db, AppUser, body.app_user_id, "kullanici_bulunamadi_veya_pasif")
+    await _referans_dogrula(db, Kasa, body.kasa_id, "kasa_bulunamadi")
     await _tek_kart(db, body.app_user_id, haric=None)
     veri = body.model_dump()
     veri["ad"] = veri["ad"].strip()
     if veri.get("email") is not None:
         veri["email"] = str(veri["email"])
     obj = PersonelKayit(tenant_id=user.tenant_id, **veri)
+    maas_baslangici(obj)
     db.add(obj)
     await _kaydet(db, obj)
     await audit_user(
@@ -594,8 +622,10 @@ async def update_personel(
     if veri.get("email") is not None:
         veri["email"] = str(veri["email"])
     await _referans_dogrula(db, AppUser, veri.get("app_user_id"), "kullanici_bulunamadi_veya_pasif")
+    await _referans_dogrula(db, Kasa, veri.get("kasa_id"), "kasa_bulunamadi")
     await _tek_kart(db, veri.get("app_user_id"), haric=obj.id)
     await _uygula(obj, veri)
+    maas_baslangici(obj)
     # BIRLESIK kural: tarihlerden yalniz biri gonderilmis olabilir.
     if (
         obj.cikis_tarihi is not None

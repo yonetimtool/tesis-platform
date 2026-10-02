@@ -89,6 +89,8 @@ _GRUP_ONEKLERI: tuple[tuple[str, str], ...] = (
     ("aidat_", "finans"),
     ("aylik_ozet", "finans"),
     ("gider_onay", "finans"),
+    # (P252) Aylik maaslar gidere yazildi — yonetime ozet.
+    ("maas_yazildi", "finans"),
     ("tahsilat", "finans"),
     ("duyuru", "duyuru"),
     ("anket_", "duyuru"),

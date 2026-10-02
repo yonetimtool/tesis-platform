@@ -8819,4 +8819,87 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get webDemirbas => 'Asset register';
+
+  @override
+  String get calismaBaslik => 'Employment details';
+
+  @override
+  String get calismaAlt =>
+      'If a salary is entered, the salary expense is recorded automatically on the payment day each month. Leave empty for staff without salary (contractors, external firms).';
+
+  @override
+  String get calismaGiris => 'Start date';
+
+  @override
+  String get calismaGorev => 'Job';
+
+  @override
+  String get calismaGorevIpucu => 'E.g. security, cleaning, garden';
+
+  @override
+  String get calismaUcret => 'Monthly pay (₺, net)';
+
+  @override
+  String get calismaOdemeGunu => 'Payment day';
+
+  @override
+  String get calismaOdemeGunuKurali =>
+      'Paid on this day of the month. If the month has no such day (e.g. 31 in a 30-day month), it is paid on the last day.';
+
+  @override
+  String get calismaKasa => 'Paid from';
+
+  @override
+  String get calismaKasaVarsayilan => 'Default cash account';
+
+  @override
+  String get calismaIban => 'IBAN (optional)';
+
+  @override
+  String get calismaNot => 'Note (optional)';
+
+  @override
+  String get calismaUcretGecersiz => 'Monthly pay is invalid.';
+
+  @override
+  String get calismaGunGerekli =>
+      'Choose a payment day when a salary is entered.';
+
+  @override
+  String get calismaKaydedildi => 'Employment details saved.';
+
+  @override
+  String get calismaDugme => 'Employment';
+
+  @override
+  String get calismaBenimBaslik => 'My employment';
+
+  @override
+  String get calismaSonOdemeler => 'Recent payments';
+
+  @override
+  String calismaOdemeGunuDeger(int gun) {
+    return 'Day $gun of each month';
+  }
+
+  @override
+  String get calismaTurMaas => 'Salary';
+
+  @override
+  String get calismaTurMesai => 'Overtime';
+
+  @override
+  String get calismaTurDiger => 'Other';
+
+  @override
+  String get calismaOnayBekliyor => 'Pending approval';
+
+  @override
+  String get calismaOdemeYok => 'No payments yet.';
+
+  @override
+  String get calismaKartYok => 'No employment details recorded.';
+
+  @override
+  String get calismaGunSecilmedi => 'Not set';
 }

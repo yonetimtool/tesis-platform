@@ -35,6 +35,8 @@ export const BILDIRIM_TIP: EnumHarita = {
   kargo: "bildirimTipKargo",
   // (P247 §3) Guvenlik kargoyu sakine teslim etti.
   kargo_teslim: "bildirimTipKargoTeslim",
+  // (P252 §2) Otomatik maas gideri ozeti (yonetime).
+  maas_yazildi: "bildirimTipMaasYazildi",
   ziyaretci: "bildirimTipZiyaretci",
   rezervasyon: "bildirimTipRezervasyon",
   sikayet_cozuldu: "bildirimTipSikayetCozuldu",

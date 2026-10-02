@@ -9402,6 +9402,18 @@ paths:
               schema: { $ref: "#/components/schemas/HizliIslemlerOut" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "422": { $ref: "#/components/responses/ValidationError" }
+  /me/calisma:
+    get:
+      tags: [me]
+      summary: (P252 §1) Kendi calisma bilgim — giris, gorev, ucret, odeme gunu, son 6 odeme
+      description: "TC, IBAN ve kasa DONMEZ (yonetim defteri). Maas karti yoksa calisma null."
+      responses:
+        "200":
+          description: Calisma bilgisi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeCalismaYanit" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
   /me/ana-ekran-izgarasi:
     get:
       tags: [me]
@@ -12303,6 +12315,49 @@ paths:
       summary: "(P192 §4.5) Tekrar KURALINI sil — yazilmis giderler kalir"
       responses:
         "204": { description: Silindi }
+  /otomasyon/maas-ayari:
+    get:
+      tags: [otomasyon]
+      summary: (P252 §2) Maas otomasyonu — acik mi, otomatik onay, odeme gunu gruplari
+      description: Yalniz admin/yonetici (grup toplamlari ucret bilgisidir; denetci ve amir 403).
+      responses:
+        "200":
+          description: Ayar ve kural ozeti
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MaasAyariOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    patch:
+      tags: [otomasyon]
+      summary: (P252 §2) Maas otomasyonunu ac/kapat, otomatik onayi degistir
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MaasAyariGuncelle" }
+      responses:
+        "200":
+          description: Guncel ayar
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MaasAyariOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /otomasyon/maaslar/calistir:
+    post:
+      tags: [otomasyon]
+      summary: (P252 §2) Maas otomasyonunu simdi calistir (gunluk gorevle ayni islev)
+      description: Ikinci kosum ayni donemi yazmaz (defter anahtari + damga) — `yazilan 0` doner.
+      responses:
+        "200":
+          description: Sonuc
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MaasCalistirmaSonucu" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
   /otomasyon/son-calismalar:
     get:
       tags: [otomasyon]
@@ -12762,6 +12817,10 @@ paths:
         - name: aktif
           in: query
           schema: { type: boolean }
+        - name: app_user_id
+          in: query
+          description: (P252) Bu hesaba bagli kart (en cok bir).
+          schema: { type: string, format: uuid }
       responses:
         "200":
           description: Liste
@@ -17844,6 +17903,13 @@ components:
             (P128) Gorev penceresi sonu. `gorev_baslangic`tan once olamaz
             (422; semada da CHECK var — goc 0032). Bu tarih gecince
             kullanici giris yapamaz ve ACIK oturumu da gecersizlesir.
+        calisma:
+          allOf: [{ $ref: "#/components/schemas/PersonelCalisma" }]
+          nullable: true
+          description: >
+            (P252 §1) Personel eklerken calisma bilgileri — hesap ve maas karti
+            AYNI islemde olusur. Yalniz admin/yonetici (amir 403 `maas_bilgisi_yetkisiz`);
+            sakin rolunde 422.
     UserCreatedOut:
       type: object
       description: >
@@ -17860,6 +17926,7 @@ components:
         role: { $ref: "#/components/schemas/UserRole" }
         is_active: { type: boolean }
         created_at: { type: string, format: date-time }
+        personel_kayit_id: { type: string, format: uuid, nullable: true, description: "(P252) Ayni islemde acilan maas karti" }
     UserUpdate:
       type: object
       minProperties: 1
@@ -24665,8 +24732,80 @@ components:
         app_user_id: { type: string, format: uuid, nullable: true }
         app_user_ad: { type: string, nullable: true }
         aktif: { type: boolean }
+        odeme_gunu: { type: integer, minimum: 1, maximum: 31, nullable: true, description: "(P252) Ayin kacinda odendigi; o ayda yoksa ayin son gunu" }
+        kasa_id: { type: string, format: uuid, nullable: true }
+        iban: { type: string, nullable: true, maxLength: 42 }
+        notlar: { type: string, nullable: true, maxLength: 2000 }
+        maas_ilk_donem: { type: string, nullable: true, description: "(P252) Otomasyonun yazacagi ilk donem (YYYY-MM)" }
+        son_maas_donem: { type: string, nullable: true, description: "(P252) Son yazilan donem (YYYY-MM)" }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+    OdemeSatiri:
+      type: object
+      required: [id, tarih, tutar_kurus, tur, durum]
+      properties:
+        id: { type: string, format: uuid }
+        tarih: { type: string, format: date }
+        donem: { type: string, nullable: true }
+        tutar_kurus: { type: integer, format: int64 }
+        tur: { type: string, enum: [maas, mesai] }
+        durum: { type: string }
+    MeCalismaOut:
+      type: object
+      properties:
+        giris_tarihi: { type: string, format: date, nullable: true }
+        gorev: { type: string, nullable: true }
+        maas_kurus: { type: integer, format: int64, nullable: true }
+        odeme_gunu: { type: integer, nullable: true }
+        odemeler: { type: array, items: { $ref: "#/components/schemas/OdemeSatiri" } }
+    MeCalismaYanit:
+      type: object
+      properties:
+        calisma:
+          allOf: [{ $ref: "#/components/schemas/MeCalismaOut" }]
+          nullable: true
+    MaasKuralGrubu:
+      type: object
+      required: [odeme_gunu, personel_sayisi, aylik_toplam_kurus]
+      properties:
+        odeme_gunu: { type: integer }
+        personel_sayisi: { type: integer }
+        aylik_toplam_kurus: { type: integer, format: int64 }
+    MaasAyariOut:
+      type: object
+      required: [aktif, otomatik_onay, gruplar, personel_sayisi, aylik_toplam_kurus]
+      properties:
+        aktif: { type: boolean }
+        otomatik_onay: { type: boolean, description: "Varsayilan true; kismi ay her zaman onay bekler" }
+        gruplar: { type: array, items: { $ref: "#/components/schemas/MaasKuralGrubu" } }
+        personel_sayisi: { type: integer }
+        aylik_toplam_kurus: { type: integer, format: int64 }
+    MaasAyariGuncelle:
+      type: object
+      properties:
+        aktif: { type: boolean, nullable: true }
+        otomatik_onay: { type: boolean, nullable: true }
+    MaasCalistirmaSonucu:
+      type: object
+      required: [yazilan, toplam_kurus]
+      properties:
+        yazilan: { type: integer }
+        toplam_kurus: { type: integer, format: int64 }
+        onay_bekleyen: { type: integer }
+        donemler:
+          type: object
+          additionalProperties: { type: array, items: { type: integer } }
+    PersonelCalisma:
+      type: object
+      description: (P252 §1) Personel ekleme formundaki "Calisma bilgileri".
+      properties:
+        giris_tarihi: { type: string, format: date, nullable: true }
+        gorev: { type: string, nullable: true, maxLength: 100 }
+        maas_kurus: { type: integer, format: int64, nullable: true, minimum: 0 }
+        odeme_gunu: { type: integer, minimum: 1, maximum: 31, nullable: true, description: "(P252) Ayin kacinda odendigi; o ayda yoksa ayin son gunu" }
+        kasa_id: { type: string, format: uuid, nullable: true }
+        iban: { type: string, nullable: true, maxLength: 42 }
+        notlar: { type: string, nullable: true, maxLength: 2000 }
     PersonelKayitCreate:
       type: object
       required: [ad]
@@ -24681,6 +24820,10 @@ components:
         maas_kurus: { type: integer, format: int64, nullable: true, minimum: 0 }
         app_user_id: { type: string, format: uuid, nullable: true }
         aktif: { type: boolean, default: true }
+        odeme_gunu: { type: integer, minimum: 1, maximum: 31, nullable: true, description: "(P252) Ayin kacinda odendigi; o ayda yoksa ayin son gunu" }
+        kasa_id: { type: string, format: uuid, nullable: true }
+        iban: { type: string, nullable: true, maxLength: 42 }
+        notlar: { type: string, nullable: true, maxLength: 2000 }
     PersonelKayitUpdate:
       type: object
       minProperties: 1
@@ -24695,6 +24838,10 @@ components:
         maas_kurus: { type: integer, format: int64, nullable: true, minimum: 0 }
         app_user_id: { type: string, format: uuid, nullable: true }
         aktif: { type: boolean }
+        odeme_gunu: { type: integer, minimum: 1, maximum: 31, nullable: true, description: "(P252) Ayin kacinda odendigi; o ayda yoksa ayin son gunu" }
+        kasa_id: { type: string, format: uuid, nullable: true }
+        iban: { type: string, nullable: true, maxLength: 42 }
+        notlar: { type: string, nullable: true, maxLength: 2000 }
     AracKayit:
       type: object
       description: >

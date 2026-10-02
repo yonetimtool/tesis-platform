@@ -1125,6 +1125,29 @@ METINLER: dict[str, PushMetni] = {
         },
         params=("donem", "tahsilat", "gider", "oran"),
     ),
+    # (P252) Otomatik maas gideri — DONEM basina tek ozet (kisi basina
+    # ayri push 40 personelli sitede 40 bildirim olurdu).
+    "maas_yazildi": PushMetni(
+        baslik={
+            "tr": "Maaşlar gidere yazıldı",
+            "en": "Salaries recorded as expenses",
+            "ar": "تم تسجيل الرواتب كمصروفات",
+            "ru": "Зарплаты проведены как расходы",
+            "de": "Gehälter als Ausgaben gebucht",
+            "fr": "Salaires enregistrés en dépenses",
+            "es": "Salarios registrados como gastos",
+        },
+        govde={
+            "tr": "{donem} maaşları gidere yazıldı: {adet} personel, toplam {tutar}.",
+            "en": "{donem} salaries recorded: {adet} staff, total {tutar}.",
+            "ar": "تم تسجيل رواتب {donem}: {adet} موظفين، الإجمالي {tutar}.",
+            "ru": "Зарплаты за {donem} проведены: {adet} сотрудн., итого {tutar}.",
+            "de": "Gehälter {donem} gebucht: {adet} Mitarbeitende, gesamt {tutar}.",
+            "fr": "Salaires de {donem} enregistrés : {adet} salariés, total {tutar}.",
+            "es": "Salarios de {donem} registrados: {adet} empleados, total {tutar}.",
+        },
+        params=("donem", "adet", "tutar"),
+    ),
     "gider_onay": PushMetni(
         baslik={
             "tr": "Onay bekleyen gider",

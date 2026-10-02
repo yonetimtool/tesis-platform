@@ -112,6 +112,11 @@ enum UserRole {
   /// admin + yoneticinin kumesinde; amirin kendisi YALNIZ `security` acar.
   bool get amirAtayabilir => this == admin || this == yonetici;
 
+  /// (P252 §1) Personel ucreti, odeme gunu ve odeme gecmisi — YALNIZ
+  /// yonetim. Guvenlik amiri Personel listesini gorur, ucreti GORMEZ
+  /// (P231; sunucu ucu amire 403).
+  bool get maasGorebilir => this == admin || this == yonetici;
+
   /// (P166 §8.2) Kurulum sihirbazi (`GET/PATCH /kurulum`) — admin +
   /// yonetici. Ucun `require_role`u ile AYNI kume; saha ve sakin 403
   /// alir, bu yuzden ekran ve hatirlatici onlarda istek bile ATMAZ.

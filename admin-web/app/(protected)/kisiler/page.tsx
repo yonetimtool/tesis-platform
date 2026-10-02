@@ -19,16 +19,16 @@
  * dogru sekmeyi acar. Sekme degisince adres de degisir (yenileme ve geri
  * tusu ayni sekmeyi acar).
  *
- * MAAS KARTI: Personel sekmesinde her satirda maas karti durumu ve
- * "Maas karti olustur" eylemi var — ayni kisi hesap + kart olarak iki kez
- * yazilmasin (bkz. `MaasKartiEylemi`).
+ * CALISMA BILGILERI (P252 §1): Personel eklerken ucret, giris tarihi,
+ * odeme gunu ve kasa AYNI formda; hesap ve maas karti tek istekte olusur.
+ * Mevcut personelde satirdaki "Calisma bilgileri" ayni karti acar.
  *
  * SAKIN MODUNDA (P247) bu sayfa gorunmez: rota yonetim rollerine acik.
  */
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { MaasKartiEylemi } from "@/components/kisiler/maas-karti-eylemi";
+import { CalismaEylemi } from "@/components/kisiler/calisma-bilgileri";
 import DavetListesi from "@/components/kisiler/davet-listesi";
 import KullaniciListesi from "@/components/kisiler/kullanici-listesi";
 import SakinListesi from "@/components/kisiler/sakin-listesi";
@@ -106,7 +106,10 @@ export default function KisilerPage() {
                 <KullaniciListesi
                   kapsam={SEKME_KAPSAMI.personel}
                   baslik={t("kisilerSekmePersonel")}
-                  ekEylem={(u) => <MaasKartiEylemi kullanici={u} />}
+                  // (P252 §1) Ekleme formunda "Calisma bilgileri"; mevcut
+                  // personelde satirdaki pencere (ayni maas karti).
+                  calismaBolumu
+                  ekEylem={(u) => <CalismaEylemi kullanici={u} />}
                 />
               </GomuluSayfa>
             ),

@@ -52,6 +52,8 @@ export const TANIM_SUZGECLERI: Record<string, string[]> = {
   "gorev-kategorileri": ["aktif"],
   "unit-gruplari": ["aktif"],
   "gelir-gider-tanimlari": ["tip"],
+  // (P252) Kisiler › Personel satiri "bu hesabin karti".
+  "personel-kayitlari": ["app_user_id"],
   "arac-kayitlari": ["plaka"],
   "sayaclar-bolum": ["ana_sayac_id", "unit_id"],
 };

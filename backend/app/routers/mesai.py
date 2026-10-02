@@ -37,7 +37,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .. import defter
+from .. import defter, maas
 from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404
 from ..deps import get_tenant_db, require_role
@@ -275,6 +275,19 @@ async def gidere_yaz(
         if var is None:
             raise APIError(422, "invalid_reference", "kasa_bulunamadi")
     kasa_id = await defter.kasa_coz(db, user.tenant_id, body.kasa_id)
+    # (P252 §2) FAZLA MESAI AYRI KALEM: sistem kodlu "Fazla mesai" tanimi
+    # (raporda maastan ayri okunur; seffaflikta "Personel giderleri"nde
+    # birlesir) ve gider KISININ maas kartina baglanir (personel detayi).
+    kalem = await maas.sistem_kalemi(db, user.tenant_id, maas.KOD_MESAI)
+    kartlar = dict(
+        (
+            await db.execute(
+                select(PersonelKayit.app_user_id, PersonelKayit.id).where(
+                    PersonelKayit.app_user_id.in_([s.user_id for s in body.satirlar])
+                )
+            )
+        ).all()
+    )
 
     olusan: list[uuid.UUID] = []
     for satir in body.satirlar:
@@ -303,6 +316,8 @@ async def gidere_yaz(
             yon="cikis",
             tutar_kurus=tutar,
             user_id=satir.user_id,
+            personel_kayit_id=kartlar.get(satir.user_id),
+            gelir_gider_tanim_id=kalem.id,
             kasa_id=kasa_id,
             tarih=son,
             aciklama=(
