@@ -182,7 +182,8 @@ def test_SAGLAYICI_GECERSIZ_JETONU_BILDIRIR(monkeypatch):
 def test_TEMIZLIK_UCU_YONETIME_ACIK_DIGERLERINE_KAPALI(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])
     assert client.post("/push/cihaz-temizle", headers=admin).status_code == 200
-    for kim in ("resident_a", "guard_a"):
+    # (P251 §2/§10) Yonetici de artik 403: teknik push islemleri platformda.
+    for kim in ("resident_a", "guard_a", "yonetici_a"):
         h = _headers(client, world["slug_a"], world[kim])
         assert client.post("/push/cihaz-temizle", headers=h).status_code == 403
     assert client.post("/push/cihaz-temizle").status_code == 401

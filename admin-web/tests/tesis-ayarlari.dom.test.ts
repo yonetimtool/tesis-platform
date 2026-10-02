@@ -136,6 +136,10 @@ describe("(P193 §5) tesis ayarları ekranı", () => {
     // GIRISI TEK SEFERDE yapmak sebebi ortadan kaldirir.
     //
     // Olculen sey degismedi: "1 yazilinca uyari cikar".
+    // (P251) Sunucu degeri forma DUSMEDEN yazilirsa sonradan gelen deger
+    // "1"i ezer ve uyari hic cikmaz (tam takimda olculdu; ayni yaris
+    // eskalasyon testinde de vardi).
+    await waitFor(() => expect((esik as HTMLInputElement).value).not.toBe(""));
     fireEvent.change(esik, { target: { value: "1" } });
     // ZAMAN ASIMI ACIKCA VERILDI. Izole kosumda bu iddia ~100 ms'de
     // gerceklesiyor; TAM TAKIMDA (180+ dosya paralel) makine yuku altinda

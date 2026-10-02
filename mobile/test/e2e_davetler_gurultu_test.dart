@@ -131,12 +131,15 @@ void main() {
       });
       expect(find.text('İletildi'), findsOneWidget);
       expect(find.text('Açıldı'), findsOneWidget);
-      expect(find.text('Geri döndü'), findsOneWidget);
-      expect(find.text('E-posta ayarı yok'), findsOneWidget);
+      // (P251 §10) Sade etiketler.
+      expect(find.text('Ulaşmadı'), findsOneWidget);
+      expect(find.text('E-posta gönderimi hazır değil'), findsOneWidget);
       expect(find.text('Kaydoldu'), findsOneWidget);
       expect(find.text('OLTU-260715'), findsOneWidget);
-      // Geri donmede SEBEP gorunur.
-      expect(find.text('bounce'), findsOneWidget);
+      // (P251 §10) Geri donmede ham saglayici kodu DEGIL, ne yapilacagi.
+      expect(find.text('bounce'), findsNothing);
+      expect(find.text('E-posta adresi geçersiz olabilir.'), findsOneWidget);
+      expect(find.text('destek@yonetiyor.com ile iletişime geçin.'), findsOneWidget);
       // Kaydolmus kisiye yeniden gonder dugmesi YOK.
       expect(find.byKey(const Key('davet-yeniden-5')), findsNothing);
 

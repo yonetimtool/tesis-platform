@@ -754,7 +754,11 @@ async def gecmis(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_YONETIM),
+    # (P251 §10) YALNIZ PLATFORM: satirlar saglayicinin HAM hatasini
+    # (535, 5.7.8...) tasir. Yonetici gonderim sonucunu BAGLAMDA (odeme
+    # kodu satiri, gonderim sonucu sayilari) sade dille gorur; tum tesislerin
+    # teknik gunlugu `GET /platform/gonderim-gunlugu`.
+    _: AppUser = Depends(_PLATFORM),
 ) -> MesajGonderimListResponse:
     q = select(MesajGonderim)
     if kanal is not None:

@@ -223,3 +223,88 @@ Adaylar tek tek elendi:
 * Gerçek tarayıcı: başlıklar okunur, satır 1'den, rol listesi kesilmeden.
   **Not:** tablo sayfayı yatayda taşırıyor — §4'te (içerik genişliği)
   ele alındı.
+
+# §10 — MESAJ VE PUSH GÜNLÜKLERİ PLATFORM PANELİNE
+
+## Ölçüm
+
+* Tesis yöneticisi ham sağlayıcı ayrıntısını üç yerde görüyordu:
+  * **Mesajlar → Gönderim geçmişi** tablosu: satır başına sağlayıcının
+    hata kodu (`535 5.7.8 …`, `bounce`).
+  * **Bildirimler** sayfasının üstündeki push teşhis paneli: bildirim
+    kimlikleri (`gecikmis_okutma`, `kacirilan_tur`), cihaz jetonu
+    parçaları, sağlayıcı/servis hesabı durumu.
+  * **Davetler** ekranı (web + mobil): ulaşmayan davette ham kod
+    ("bounce").
+* Ödeme kodu ve otomatik hatırlatma ekranları ham hata göstermiyordu
+  (sunucu `teslim_durumu` ile sade durum veriyordu) ama etiketler teknik
+  kalıyordu ("Geri döndü", "Başarısız", "E-posta ayarı yok") ve yöneticiye
+  ne yapması gerektiğini söylemiyordu.
+
+## Kararlar
+
+* **Platform paneli "Gönderim günlüğü"** (`/gonderim-gunlugu`, yalnız
+  admin): e-posta + SMS (`mesaj_gonderim`) ve push (`push_gonderim`) tek
+  listede, **tüm tesisler**: tarih, kanal, tesis, alıcı (ad + adres /
+  telefon / "platform …jetonun son 6 hanesi"), amaç (Türkçe: Ödeme kodu,
+  Hoş geldiniz, Aidat hatırlatması, bildirim türü…), durum, **ham hata
+  ayrıntısı** (yalnız burada).
+  * Arama kutusu: alıcı adı, adres/telefon, tesis adı, hata metni.
+  * Süzgeçler: kanal, durum, **yalnız başarısız olanlar**, tarih aralığı.
+  * Tesisler arası okuma `audit_log_list` deseninde sahip yetkili
+    `gonderim_gunlugu_list` fonksiyonuyla (göç **0166**, zaman indeksleri
+    dahil); secdef envanterine kayıtlı.
+  * P191'in push sağlayıcı paneli (sağlayıcı, servis hesabı, cihaz sayısı,
+    "kendime test gönder", geçersiz jetonları temizle) bu sayfanın altına
+    taşındı; olay sütunu artık okunur ad gösteriyor.
+* **Yöneticide ne kaldı (karar ve gerekçe):** yalnız **bağlam içindeki
+  sade durum** — çünkü yönetici yanlış e-posta adresini ancak ilgili
+  kişinin satırında görürse düzeltebilir; teknik ayrıntı (sağlayıcı kodu,
+  jeton) onun düzeltebileceği bir şey değil.
+  * Ödeme kodu satırı, otomatik hatırlatma e-postaları, davetler (web +
+    mobil): **İletildi / Ulaşmadı / Gönderilemedi / E-posta gönderimi
+    hazır değil** ve ulaşmadıysa tek cümle ne yapılacağı:
+    * geri döndü → "E-posta adresi geçersiz olabilir."
+    * gönderilemedi → "Bir süre sonra yeniden deneyin."
+    * hazır değil → "destek@yonetiyor.com ile iletişime geçin."
+  * Toplu mesaj gönderiminin sonucu sayılarla (gönderildi / rıza yok /
+    adres yok / başarısız) ekranda kalır.
+* **Kaldırılan / kapatılan (DAVRANIŞ DEĞİŞİKLİĞİ):**
+  * Mesajlar sayfasındaki gönderim geçmişi tablosu kalktı;
+    `GET /mesajlar/gecmis` artık **yalnız admin** (yöneticiye 403).
+  * `GET /push/teshis`, `POST /push/test`, `POST /push/cihaz-temizle`
+    **yalnız admin** (yöneticiye 403).
+* **Mobil:** mobilde teknik günlük hiç yoktu; davetler, ödeme kodu ve
+  hatırlatma ekranlarındaki etiket + açıklama web ile aynı. Platform
+  paneli yalnız web (`panel.*`; mobilde platform yüzeyi yok).
+
+## Testler
+
+* Sunucu `test_p251_gonderim_gunlugu.py` (2): yönetici 403 (günlük,
+  `/mesajlar/gecmis`, `/push/teshis`); iki tesisin kayıtları tek listede
+  tesis adıyla, arama (adres + hata metni), tesis / kanal / yalnız
+  başarısız süzgeçleri, push satırı (jeton son 6), geçersiz kanal 422.
+  Push teşhis testleri yönetici 403'e güncellendi; rol matrisi ve uç
+  güvenlik kilitleri yeniden üretildi.
+* Web `p251-gonderim-gunlugu.dom.test.ts` (3); mobil
+  `p250_odeme_kodlari_test` ve `e2e_davetler_gurultu_test` yeni sade
+  etiketlere güncellendi ("bounce" artık görünmüyor, açıklama görünüyor).
+* Gerçek tarayıcı: platform yöneticisi olarak 8.634 kayıt, tesis adlarıyla;
+  ham hata yalnız bu sayfada.
+
+# §2 — BİLDİRİMLER: TEK PANEL
+
+* Bildirimler sayfasının üstündeki push teşhis paneli kaldırıldı (§10 ile
+  platforma taşındı). Sayfada yalnız asıl bildirim ekranı kalır:
+  okunmamış/okunmuş, arama, toplu işlem.
+* **Tür adları:** 14 tür ham/kısa ve küçük harfliydi ("kaçırılan tur",
+  "eksik nokta", "talep → iş emri"). 7 dilde açık adlarla değiştirildi:
+  "Kaçırılan devriye turu", "Devriyede okutulmayan nokta", "Devriye
+  noktası geç okutuldu", "Konum dışından okutma", "Talep iş emrine
+  dönüştü", "Kargo geldi", "Ziyaretçi geldi" vb. Push kimlikleri
+  (`panik_kategori_*` dahil) aynı adlarla gösterilir.
+* Mobil bildirim ekranı türü adla değil ikonla gösteriyor; değişiklik
+  gerekmedi.
+* **Test:** `p251-gonderim-gunlugu.dom.test.ts` — bildirimler sayfası push
+  teşhis ucunu hiç çağırmıyor, tür "Kaçırılan devriye turu" yazıyor.
+

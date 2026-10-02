@@ -42,7 +42,11 @@ from ..schemas import (
 
 router = APIRouter(prefix="/push", tags=["push"])
 
-_YONETIM = require_role("admin", "yonetici")
+# (P251 §2/§10) YALNIZ PLATFORM. Push teshisi (saglayici, servis hesabi,
+# jeton parcalari, ham hata kodlari) TEKNIK bir gunluktur; tesis
+# yoneticisinin bildirim ekraninin ustunde duruyordu ve yoneticiye ait
+# degildi. Platform panelindeki "Gonderim gunlugu" ekranina tasindi.
+_YONETIM = require_role("admin")
 
 
 #: Tek cagrida dogrulanacak EN COK jeton (bkz. `cihaz_temizle`).

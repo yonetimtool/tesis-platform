@@ -13,7 +13,6 @@ import {
   Rozet,
 } from "@/components/ui";
 import { BILDIRIM_SAYAC_UC } from "@/components/ui/bildirim-merkezi";
-import { PushTeshis } from "@/components/PushTeshis";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { useGecikmeli } from "@/lib/gecikmeli";
@@ -46,8 +45,6 @@ const LIMIT = 20;
 const TUR_BIRINCIL = "birincil" as const;
 const TUR_IKINCIL = "ikincil" as const;
 const TUR_TEHLIKE = "tehlike" as const;
-const ROL_ADMIN = "admin" as const;
-const ROL_YONETICI = "yonetici" as const;
 
 export default function NotificationsPage() {
   const t = useT();
@@ -180,9 +177,10 @@ export default function NotificationsPage() {
         {t("kabukBildirimler")}
       </h1>
 
-      {/* (P191 §2) "Bildirim gelmiyor" sorusunun cevabi listenin USTUNDE:
-          kullanici zaten bu sayfaya "bildirimlerim nerede?" diye gelir. */}
-      {rol === ROL_ADMIN || rol === ROL_YONETICI ? <PushTeshis /> : null}
+      {/* (P251 §2) TEK PANEL. Ustteki push teshis paneli (gecikmis_okutma,
+          kacirilan_tur, jeton parcalari) teknik bir gonderim gunluguydu ve
+          yoneticiye ait degildi; platform panelindeki "Gonderim gunlugu"
+          ekranina tasindi. Burada yalniz kullanicinin bildirimleri kalir. */}
       {gecilen ? <RolGecisPerdesi rol={gecilen} /> : null}
 
       {/* SARILABILIR: uc filtre dugmesi 360 dp + buyuk kok yazi boyunda tek

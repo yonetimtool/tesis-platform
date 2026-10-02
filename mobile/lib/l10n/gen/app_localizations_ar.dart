@@ -3369,13 +3369,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get davetYonDurumKaydoldu => 'مُسجّل';
 
   @override
-  String get davetYonDurumGeriDondu => 'مرتد';
+  String get davetYonDurumGeriDondu => 'لم يصل';
 
   @override
   String get davetYonDurumGitmedi => 'لم تُرسل';
 
   @override
-  String get davetYonDurumAyarYok => 'البريد غير مهيأ';
+  String get davetYonDurumAyarYok => 'إرسال البريد غير جاهز';
 
   @override
   String get davetYonDurumAcildi => 'تم الفتح';
@@ -8188,13 +8188,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get odemeKoduDurumiletildi => 'سُلّم';
 
   @override
-  String get odemeKoduDurumgeri_dondu => 'ارتد';
+  String get odemeKoduDurumgeri_dondu => 'لم يصل';
 
   @override
-  String get odemeKoduDurumbasarisiz => 'فشل';
+  String get odemeKoduDurumbasarisiz => 'تعذّر الإرسال';
 
   @override
-  String get odemeKoduDurumyapilandirilmadi => 'البريد غير مُعد';
+  String get odemeKoduDurumyapilandirilmadi => 'إرسال البريد غير جاهز';
 
   @override
   String get odemeKoduEngeleposta_yok => 'لا يوجد بريد';
@@ -8723,4 +8723,14 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get rezGorselBekleyin =>
       'لا تزال الصورة قيد الرفع — انتظر حتى تنتهي أو أزلها.';
+
+  @override
+  String get teslimAciklama_geri_dondu => 'قد يكون عنوان البريد غير صالح.';
+
+  @override
+  String get teslimAciklama_basarisiz => 'حاول مرة أخرى لاحقًا.';
+
+  @override
+  String get teslimAciklama_yapilandirilmadi =>
+      'تواصل مع destek@yonetiyor.com.';
 }

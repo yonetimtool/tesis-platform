@@ -74,7 +74,7 @@ describe("Pano", () => {
     });
     ciz(DashboardPage);
     await waitFor(() =>
-      expect(screen.getByText("kaçırılan tur")).toBeInTheDocument(),
+      expect(screen.getByText("Kaçırılan devriye turu")).toBeInTheDocument(),
     );
     // Ham enum SIZMAZ.
     expect(screen.queryByText("kacirilan_tur")).not.toBeInTheDocument();

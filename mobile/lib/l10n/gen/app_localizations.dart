@@ -5552,7 +5552,7 @@ abstract class AppLocalizations {
   /// No description provided for @davetYonDurumGeriDondu.
   ///
   /// In tr, this message translates to:
-  /// **'Geri döndü'**
+  /// **'Ulaşmadı'**
   String get davetYonDurumGeriDondu;
 
   /// No description provided for @davetYonDurumGitmedi.
@@ -5564,7 +5564,7 @@ abstract class AppLocalizations {
   /// No description provided for @davetYonDurumAyarYok.
   ///
   /// In tr, this message translates to:
-  /// **'E-posta ayarı yok'**
+  /// **'E-posta gönderimi hazır değil'**
   String get davetYonDurumAyarYok;
 
   /// No description provided for @davetYonDurumAcildi.
@@ -14108,19 +14108,19 @@ abstract class AppLocalizations {
   /// No description provided for @odemeKoduDurumgeri_dondu.
   ///
   /// In tr, this message translates to:
-  /// **'Geri döndü'**
+  /// **'Ulaşmadı'**
   String get odemeKoduDurumgeri_dondu;
 
   /// No description provided for @odemeKoduDurumbasarisiz.
   ///
   /// In tr, this message translates to:
-  /// **'Başarısız'**
+  /// **'Gönderilemedi'**
   String get odemeKoduDurumbasarisiz;
 
   /// No description provided for @odemeKoduDurumyapilandirilmadi.
   ///
   /// In tr, this message translates to:
-  /// **'E-posta ayarı yok'**
+  /// **'E-posta gönderimi hazır değil'**
   String get odemeKoduDurumyapilandirilmadi;
 
   /// No description provided for @odemeKoduEngeleposta_yok.
@@ -15046,6 +15046,24 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Görsel henüz yükleniyor — bitmesini bekleyin veya kaldırın.'**
   String get rezGorselBekleyin;
+
+  /// No description provided for @teslimAciklama_geri_dondu.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta adresi geçersiz olabilir.'**
+  String get teslimAciklama_geri_dondu;
+
+  /// No description provided for @teslimAciklama_basarisiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bir süre sonra yeniden deneyin.'**
+  String get teslimAciklama_basarisiz;
+
+  /// No description provided for @teslimAciklama_yapilandirilmadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'destek@yonetiyor.com ile iletişime geçin.'**
+  String get teslimAciklama_yapilandirilmadi;
 }
 
 class _AppLocalizationsDelegate

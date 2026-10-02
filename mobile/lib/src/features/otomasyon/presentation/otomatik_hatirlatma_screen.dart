@@ -15,6 +15,8 @@ import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
 import '../data/hatirlatma_api.dart';
+import '../../odeme_kodlari/presentation/odeme_kodlari_screen.dart'
+    show teslimAciklamasi;
 import 'hatirlatma_cumlesi.dart';
 
 class OtomatikHatirlatmaScreen extends ConsumerStatefulWidget {
@@ -171,11 +173,14 @@ class _OtomatikHatirlatmaScreenState
                             ListTile(
                               contentPadding: EdgeInsets.zero,
                               title: Text(e.ad ?? '—'),
-                              subtitle: Text(
+                              // (P251 §10) Ulasmadiysa ne yapilacagi
+                              // (ham saglayici hatasi gosterilmez).
+                              subtitle: Text([
                                 MaterialLocalizations.of(
                                   context,
                                 ).formatShortDate(e.zaman),
-                              ),
+                                ?teslimAciklamasi(l10n, e.durum),
+                              ].join('\n')),
                               trailing: Text(_durumMetni(l10n, e.durum)),
                             ),
                         ],

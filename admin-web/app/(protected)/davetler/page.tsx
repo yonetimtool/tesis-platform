@@ -26,6 +26,7 @@ import {
 import { useToast } from "@/components/Toast";
 import { apiSend, ApiHatasi } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
+import { teslimAciklamasi } from "@/lib/teslim-durumu";
 import { useT } from "@/lib/i18n/kullan";
 
 interface DavetSatiri {
@@ -51,6 +52,16 @@ const R_OLUMLU = "olumlu" as const;
 const R_KRITIK = "kritik" as const;
 const R_BILGI = "bilgi" as const;
 const R_UYARI = "uyari" as const;
+const TESLIM_BASARISIZ = "basarisiz";
+const TESLIM_GERI_DONDU = "geri_dondu";
+/** (P251 §10) Davet satirinin teslim durumu (`islem_epostasi.teslim_durumu` ile ayni). */
+function davetTeslimDurumu(d: { used_at: string | null; son_durum: string | null; son_hata: string | null }): string | null {
+  if (d.used_at) return null;
+  if (d.son_durum !== TESLIM_BASARISIZ) return d.son_durum;
+  if (d.son_hata === HATA_GERI_DONDU) return TESLIM_GERI_DONDU;
+  return TESLIM_BASARISIZ;
+}
+
 /** Resend geri donusu (bounce) hata kodu — `eposta_webhook.OLAY_ESLEME`. */
 const HATA_GERI_DONDU = "bounce";
 
@@ -133,14 +144,17 @@ export default function DavetlerSayfasi() {
               <Rozet durum={durum.renk}>
                 {t(durum.anahtar as Parameters<typeof t>[0])}
               </Rozet>
-              {/* SEBEP GORUNUR KALIR: "gitmedi" tek basina yoneticiye ne
-                  yapacagini soylemiyor; saglayici hatasi burada yaziyor. */}
-              {d.son_durum === "basarisiz" && d.son_hata ? (
+              {/* (P251 §10) NE YAPILACAGI GORUNUR, HAM HATA DEGIL: "gitmedi"
+                  tek basina yoneticiye ne yapacagini soylemiyordu ve cozum
+                  saglayicinin ham kodunu ("bounce", "535 5.7.8") yaziyordu.
+                  Ham ayrinti platformdaki "Gonderim gunlugu"nde. */}
+              {teslimAciklamasi(davetTeslimDurumu(d)) ? (
                 <span
                   className="ms-2"
+                  data-test="davet-teslim-aciklama"
                   style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
                 >
-                  {d.son_hata}
+                  {t(teslimAciklamasi(davetTeslimDurumu(d))!)}
                 </span>
               ) : null}
             </>

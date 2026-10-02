@@ -184,11 +184,12 @@ class _DavetKarti extends StatelessWidget {
             ),
             if (satir.telefon.isNotEmpty)
               Text(satir.telefon, style: Theme.of(context).textTheme.bodySmall),
-            // SEBEP GORUNUR KALIR (web ile ayni): "gonderilemedi" tek basina
-            // yoneticiye ne yapacagini soylemiyor.
-            if (satir.sonDurum == 'basarisiz' && (satir.sonHata ?? '').isNotEmpty)
+            // (P251 §10) NE YAPILACAGI, HAM HATA DEGIL (web ile ayni):
+            // saglayicinin kodu ("bounce") yoneticiye bir sey soylemiyordu.
+            if (_davetAciklamasi(l10n, durum) case final aciklama?)
               Text(
-                satir.sonHata!,
+                aciklama,
+                key: const Key('davet-teslim-aciklama'),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             if (gonderim != null)
@@ -240,3 +241,11 @@ class _DavetKarti extends StatelessWidget {
     DavetDurumu.bekliyor => (l10n.davetYonDurumBekliyor, uyari),
   };
 }
+
+/// (P251 §10) Ulasmayan davette yoneticiye gosterilecek sade aciklama.
+String? _davetAciklamasi(AppLocalizations l10n, DavetDurumu d) => switch (d) {
+  DavetDurumu.geriDondu => l10n.teslimAciklama_geri_dondu,
+  DavetDurumu.gitmedi => l10n.teslimAciklama_basarisiz,
+  DavetDurumu.ayarYok => l10n.teslimAciklama_yapilandirilmadi,
+  _ => null,
+};

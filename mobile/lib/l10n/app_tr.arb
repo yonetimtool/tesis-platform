@@ -1366,9 +1366,9 @@
     }
   },
   "davetYonDurumKaydoldu": "Kaydoldu",
-  "davetYonDurumGeriDondu": "Geri döndü",
+  "davetYonDurumGeriDondu": "Ulaşmadı",
   "davetYonDurumGitmedi": "Gönderilemedi",
-  "davetYonDurumAyarYok": "E-posta ayarı yok",
+  "davetYonDurumAyarYok": "E-posta gönderimi hazır değil",
   "davetYonDurumAcildi": "Açıldı",
   "davetYonDurumIletildi": "İletildi",
   "davetYonDurumGonderildi": "Gönderildi",
@@ -4104,9 +4104,9 @@
   "odemeKoduDurumkuyrukta": "Sırada",
   "odemeKoduDurumgonderildi": "Gönderildi",
   "odemeKoduDurumiletildi": "İletildi",
-  "odemeKoduDurumgeri_dondu": "Geri döndü",
-  "odemeKoduDurumbasarisiz": "Başarısız",
-  "odemeKoduDurumyapilandirilmadi": "E-posta ayarı yok",
+  "odemeKoduDurumgeri_dondu": "Ulaşmadı",
+  "odemeKoduDurumbasarisiz": "Gönderilemedi",
+  "odemeKoduDurumyapilandirilmadi": "E-posta gönderimi hazır değil",
   "odemeKoduEngeleposta_yok": "E-posta adresi yok",
   "odemeKoduEngeleposta_kapali": "E-posta bildirimleri kapalı",
   "odemeKoduHicGonderilmedi": "Gönderilmedi",
@@ -4281,5 +4281,8 @@
   "panikKaynakTatbikat": "Tatbikatlar",
   "panikKaynakHepsi": "Gerçek ve tatbikat",
   "panikRozetTatbikat": "Tatbikat",
-  "rezGorselBekleyin": "Görsel henüz yükleniyor — bitmesini bekleyin veya kaldırın."
+  "rezGorselBekleyin": "Görsel henüz yükleniyor — bitmesini bekleyin veya kaldırın.",
+  "teslimAciklama_geri_dondu": "E-posta adresi geçersiz olabilir.",
+  "teslimAciklama_basarisiz": "Bir süre sonra yeniden deneyin.",
+  "teslimAciklama_yapilandirilmadi": "destek@yonetiyor.com ile iletişime geçin."
 }

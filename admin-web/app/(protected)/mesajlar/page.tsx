@@ -18,7 +18,7 @@ import {
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
-import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
+import { jsonFetcher } from "@/lib/fetcher";
 import { BagimlilikUyarisi } from "@/components/BagimlilikUyarisi";
 import { useT } from "@/lib/i18n/kullan";
 import { useSorguSecimi } from "@/lib/sorgu-secimi";
@@ -74,16 +74,6 @@ interface Sablon {
   amac: string;
   aktif: boolean;
 }
-interface Gecmis {
-  id: string;
-  kanal: string;
-  amac: string;
-  hedef: string;
-  konu: string | null;
-  durum: string;
-  hata: string | null;
-  created_at: string;
-}
 interface Onizleme {
   konu: string | null;
   govde: string;
@@ -92,15 +82,6 @@ interface Onizleme {
   parca: number;
   kalan: number;
   zorlayan: string[];
-}
-
-const LIMIT = 20;
-
-/** Bilinen teslim kodlarini cevirir; bilinmeyeni OLDUGU GIBI birakir. */
-function hataMetni(kod: string, t: (a: never) => string): string {
-  const anahtar = `mesajHata_${kod}`;
-  const cevrilmis = t(anahtar as never);
-  return cevrilmis === anahtar ? kod : cevrilmis;
 }
 
 export default function MesajlarPage() {
@@ -112,10 +93,11 @@ export default function MesajlarPage() {
     error: sErr,
     mutate: sablonTazele,
   } = useSWR<{ items: Sablon[] }>("/api/panel/mesaj-sablonlari?limit=100", jsonFetcher);
-  const { data: gecmis, error: gErr, mutate: gecmisTazele } = useSWR<{ items: Gecmis[] }>(
-    `/api/panel/mesaj-gecmis?limit=${LIMIT}`,
-    jsonFetcher,
-  );
+  // (P251 §10) GONDERIM GECMISI BURADAN KALKTI: satirlar saglayicinin ham
+  // hatasini (535, 5.7.8...) tasiyordu ve yoneticiye ait degildi; teknik
+  // gunluk platform panelinde ("Gonderim gunlugu"). Yonetici gonderim
+  // sonucunu bu ekranda SAYILARLA (gonderildi / riza yok / adres yok /
+  // basarisiz) ve odeme kodu satirlarinda sade durumla gorur.
 
   // --- yeni sablon ---
   // (P154 / Asama 7.1) Menudeki "SMS gonderimi / WhatsApp / E-posta
@@ -214,47 +196,6 @@ export default function MesajlarPage() {
       setMesgul(false);
     }
   }
-
-  const gecmisKolonlari: Kolon<Gecmis>[] = useMemo(
-    () => [
-      {
-        id: "tarih", kartRolu: "ozet",
-        baslik: t("mesajTarih"),
-        gizlenebilir: false,
-        hucre: (g) => <span className="whitespace-nowrap">{formatDateTime(g.created_at)}</span>,
-      },
-      {
-        id: "kanal", kartRolu: "ozet",
-        baslik: t("mesajKanal"),
-        hucre: (g) => t(`mesajKanal_${g.kanal}` as never),
-      },
-      { id: "hedef", kartRolu: "baslik", baslik: t("mesajHedef"), hucre: (g) => g.hedef },
-      {
-        id: "durum", kartRolu: "rozet",
-        baslik: t("mesajDurum"),
-        hucre: (g) => (
-          <>
-            {t(`mesajDurum_${g.durum}` as never)}
-            {/* SEBEP GORUNUR KALIR: "basarisiz" tek basina ne yapilacagini
-                soylemiyor; saglayici hatasi burada yaziyor. */}
-            {g.hata ? (
-              <span className="ms-1" style={{ color: "var(--yz-danger-ink)" }}>
-                {/* (P234 §1) TESLIM GERI BILDIRIMI CEVRILIR.
-                    `bounce` / `spam_sikayeti` bir saglayici kodu degil
-                    kullanicinin EYLEM ALMASI gereken bir bilgidir
-                    ("bu adres ulasilamaz" -> adresi duzelt). Ham kodu
-                    gostermek, yoneticiye sozluk aratmak olurdu.
-                    Cevirisi olmayan saglayici kodlari OLDUGU GIBI kalir:
-                    uydurmak yerine ham kod gostermek dogru. */}
-                · {hataMetni(g.hata, t)}
-              </span>
-            ) : null}
-          </>
-        ),
-      },
-    ],
-    [t],
-  );
 
   const sablonKolonlari: Kolon<Sablon>[] = useMemo(
     () => [
@@ -415,27 +356,6 @@ export default function MesajlarPage() {
         ) : null}
       </Kart>
 
-      {/* ------------------------------ gecmis ----------------------------- */}
-      <section className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
-            {t("mesajGecmis")}
-          </h2>
-          <Dugme boy="kucuk" onClick={() => void gecmisTazele()}>
-            {t("ortakYenile")}
-          </Dugme>
-        </div>
-        <VeriTablosu<Gecmis>
-          kolonlar={gecmisKolonlari}
-          satirlar={gecmis?.items ?? []}
-          satirId={(g) => g.id}
-          hata={gErr ? t("mesajGecmisHata") : null}
-          onTekrar={() => void gecmisTazele()}
-          yukleniyor={!gecmis && !gErr}
-          bosBaslik={t("mesajGecmisYok")}
-          bosAciklama={t("mesajGecmisYokAlt")}
-        />
-      </section>
     </div>
   );
 

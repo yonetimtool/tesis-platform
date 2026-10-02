@@ -16849,6 +16849,29 @@ paths:
       responses:
         '200': { description: "sabit govde: {status, role}" }
         '403': { $ref: '#/components/responses/Forbidden' }
+  /platform/gonderim-gunlugu:
+    get:
+      tags: [platform]
+      summary: Gonderim gunlugu — e-posta, SMS, push; tum tesisler (yalniz admin)
+      description: |
+        **(P251 §10)** Saglayici geri bildirimleri (gonderildi, iletildi,
+        basarisiz, geri dondu) ve push denemeleri platform panelinde.
+        Ham hata ayrintisi YALNIZ burada; tesis yoneticisi baglam icindeki
+        sade durumu gorur. Arama alici adi / adres / tesis / hata metninde.
+      parameters:
+        - { name: kanal, in: query, schema: { type: string, enum: [eposta, sms, push] } }
+        - { name: tenant_id, in: query, schema: { type: string, format: uuid } }
+        - { name: durum, in: query, schema: { type: string } }
+        - { name: ara, in: query, schema: { type: string } }
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+        - { name: basarisiz, in: query, schema: { type: boolean } }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200": { description: Gunluk }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /audit:
     get:
       tags: [audit]

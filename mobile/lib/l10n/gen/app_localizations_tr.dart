@@ -3154,13 +3154,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get davetYonDurumKaydoldu => 'Kaydoldu';
 
   @override
-  String get davetYonDurumGeriDondu => 'Geri döndü';
+  String get davetYonDurumGeriDondu => 'Ulaşmadı';
 
   @override
   String get davetYonDurumGitmedi => 'Gönderilemedi';
 
   @override
-  String get davetYonDurumAyarYok => 'E-posta ayarı yok';
+  String get davetYonDurumAyarYok => 'E-posta gönderimi hazır değil';
 
   @override
   String get davetYonDurumAcildi => 'Açıldı';
@@ -7946,13 +7946,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get odemeKoduDurumiletildi => 'İletildi';
 
   @override
-  String get odemeKoduDurumgeri_dondu => 'Geri döndü';
+  String get odemeKoduDurumgeri_dondu => 'Ulaşmadı';
 
   @override
-  String get odemeKoduDurumbasarisiz => 'Başarısız';
+  String get odemeKoduDurumbasarisiz => 'Gönderilemedi';
 
   @override
-  String get odemeKoduDurumyapilandirilmadi => 'E-posta ayarı yok';
+  String get odemeKoduDurumyapilandirilmadi => 'E-posta gönderimi hazır değil';
 
   @override
   String get odemeKoduEngeleposta_yok => 'E-posta adresi yok';
@@ -8485,4 +8485,14 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get rezGorselBekleyin =>
       'Görsel henüz yükleniyor — bitmesini bekleyin veya kaldırın.';
+
+  @override
+  String get teslimAciklama_geri_dondu => 'E-posta adresi geçersiz olabilir.';
+
+  @override
+  String get teslimAciklama_basarisiz => 'Bir süre sonra yeniden deneyin.';
+
+  @override
+  String get teslimAciklama_yapilandirilmadi =>
+      'destek@yonetiyor.com ile iletişime geçin.';
 }

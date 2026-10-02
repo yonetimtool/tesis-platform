@@ -145,3 +145,19 @@ export function enumAdi(
   const anahtar = harita[deger];
   return anahtar ? t(anahtar) : deger;
 }
+
+/**
+ * (P251 §2/§10) Push denemesinin `kimlik`i -> okunur ad.
+ *
+ * Kimlik cogunlukla bildirim tipidir (`kacirilan_tur`); panik alarmi ise
+ * kategoriyle gelir (`panik_kategori_deprem`). Ham kod ekrana yazilmaz;
+ * taninmayan kimlik OLDUGU GIBI kalir (eksik ceviri fark edilsin).
+ */
+export function pushKimlikAdi(
+  t: (a: SozlukAnahtari) => string,
+  kimlik: string | null | undefined,
+): string {
+  if (kimlik && kimlik.startsWith("panik_kategori_")) return t("bildirimTipPanikAlarm");
+  return enumAdi(t, BILDIRIM_TIP, kimlik);
+}
+

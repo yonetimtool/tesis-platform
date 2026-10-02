@@ -19,6 +19,7 @@ import { useToast } from "@/components/Toast";
 import { Dugme, Modal, Rozet, type RozetDurumu } from "@/components/ui";
 import { apiSend } from "@/lib/client";
 import { useT } from "@/lib/i18n/kullan";
+import { teslimAciklamasi } from "@/lib/teslim-durumu";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
 export type OdemeKoduSatiri = {
@@ -214,9 +215,20 @@ export function OdemeKodlariPenceresi({
                         {t(ENGEL_METNI[k.eposta_engeli] ?? ENGEL_YEDEK)}
                       </Rozet>
                     ) : durum ? (
-                      <Rozet durum={DURUM_TONU[durum] ?? TON_NOTR} nokta>
-                        {t(DURUM_METNI[durum] ?? DURUM_YEDEK)}
-                      </Rozet>
+                      // (P251 §10) SADE DURUM + NE YAPILACAGI — ham hata yok.
+                      <span className="flex flex-col items-end gap-0.5">
+                        <Rozet durum={DURUM_TONU[durum] ?? TON_NOTR} nokta>
+                          {t(DURUM_METNI[durum] ?? DURUM_YEDEK)}
+                        </Rozet>
+                        {teslimAciklamasi(durum) ? (
+                          <span
+                            data-test="odeme-kodu-teslim-aciklama"
+                            style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
+                          >
+                            {t(teslimAciklamasi(durum)!)}
+                          </span>
+                        ) : null}
+                      </span>
                     ) : (
                       <Rozet durum={TON_NOTR}>{t("odemeKoduHicGonderilmedi")}</Rozet>
                     )}

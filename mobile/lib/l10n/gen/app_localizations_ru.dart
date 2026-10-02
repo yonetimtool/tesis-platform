@@ -3362,13 +3362,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get davetYonDurumKaydoldu => 'Зарегистрирован';
 
   @override
-  String get davetYonDurumGeriDondu => 'Возвращено';
+  String get davetYonDurumGeriDondu => 'Не доставлено';
 
   @override
   String get davetYonDurumGitmedi => 'Не отправлено';
 
   @override
-  String get davetYonDurumAyarYok => 'Почта не настроена';
+  String get davetYonDurumAyarYok => 'Отправка почты не настроена';
 
   @override
   String get davetYonDurumAcildi => 'Открыто';
@@ -8226,13 +8226,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get odemeKoduDurumiletildi => 'Доставлено';
 
   @override
-  String get odemeKoduDurumgeri_dondu => 'Возврат';
+  String get odemeKoduDurumgeri_dondu => 'Не доставлено';
 
   @override
-  String get odemeKoduDurumbasarisiz => 'Ошибка';
+  String get odemeKoduDurumbasarisiz => 'Не удалось отправить';
 
   @override
-  String get odemeKoduDurumyapilandirilmadi => 'Почта не настроена';
+  String get odemeKoduDurumyapilandirilmadi => 'Отправка почты не настроена';
 
   @override
   String get odemeKoduEngeleposta_yok => 'Нет адреса';
@@ -8766,4 +8766,14 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get rezGorselBekleyin =>
       'Изображение ещё загружается — дождитесь окончания или удалите его.';
+
+  @override
+  String get teslimAciklama_geri_dondu => 'Возможно, адрес почты неверен.';
+
+  @override
+  String get teslimAciklama_basarisiz => 'Повторите попытку позже.';
+
+  @override
+  String get teslimAciklama_yapilandirilmadi =>
+      'Напишите на destek@yonetiyor.com.';
 }

@@ -436,6 +436,7 @@ GET	/personel-kayitlari	zorunlu	tesis	-	-	-	email,tc,telefon	-		-
 POST	/personel-kayitlari	zorunlu	tesis	-	-	ozel	email,tc,telefon	-		dar
 DELETE	/personel-kayitlari/{personel_id}	zorunlu	tesis	rol	-	ozel	-	-		-
 PATCH	/personel-kayitlari/{personel_id}	zorunlu	tesis	rol	-	ozel	email,tc,telefon	-		dar
+GET	/platform/gonderim-gunlugu	zorunlu	tesis	-	-	-	-	-		dar
 POST	/public/tanitim-iletisim	kamu	platform	-	-	haric	-	-	tanitim sitesi formu; hiz sinirli, yalniz yazma	dar
 POST	/push/cihaz-temizle	zorunlu	tesis	-	-	ozel	-	-		-
 GET	/push/teshis	zorunlu	tesis	-	-	-	cihaz_kullanici	-		-

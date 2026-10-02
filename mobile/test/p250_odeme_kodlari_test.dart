@@ -77,7 +77,9 @@ void main() {
     final yeni = tester.getTopLeft(find.text('TS-YENI22'));
     final eski = tester.getTopLeft(find.text('TS-ABC234'));
     expect(yeni.dy < eski.dy, isTrue);
-    expect(find.text('Geri döndü'), findsOneWidget);
+    // (P251 §10) Sade durum + ne yapilacagi; ham saglayici kodu yok.
+    expect(find.text('Ulaşmadı'), findsOneWidget);
+    expect(find.text('E-posta adresi geçersiz olabilir.'), findsOneWidget);
     expect(find.text('E-posta adresi yok'), findsOneWidget);
     expect(find.byTooltip('Kodu kopyala'), findsNWidgets(3));
   });

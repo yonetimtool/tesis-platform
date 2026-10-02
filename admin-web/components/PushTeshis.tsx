@@ -34,6 +34,7 @@ import {
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
+import { pushKimlikAdi } from "@/lib/enum-adlari";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
@@ -159,7 +160,9 @@ export function PushTeshis() {
         id: "kimlik",
         baslik: t("pushTeshisOlay"),
         kartRolu: "baslik",
-        hucre: (d) => <span className="font-mono">{d.kimlik}</span>,
+        // (P251 §2) Ham kod ("kacirilan_tur") degil, okunur ad; kod
+        // `title`da durur (platform teshisi icin).
+        hucre: (d) => <span title={d.kimlik}>{pushKimlikAdi(t, d.kimlik)}</span>,
       },
       {
         id: "kime",

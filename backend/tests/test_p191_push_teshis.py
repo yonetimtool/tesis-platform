@@ -102,7 +102,11 @@ def test_test_gonderimi_CIHAZ_YOKKEN_hedef_yok_der(client, world):
     Bu ayrim teshisin kalbi: "push tetiklendi ama cihaz yok" ile "push hic
     tetiklenmedi" TAMAMEN farkli iki arizadir.
     """
+    # (P251 §2/§10) Push teshisi yalniz PLATFORM (admin); yonetici 403.
     yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+    assert client.post("/push/test", headers=yonetici).status_code == 403
+    assert client.get("/push/teshis", headers=yonetici).status_code == 403
+    yonetici = _headers(client, world["slug_a"], world["admin_a"])
     r = client.post("/push/test", headers=yonetici)
     assert r.status_code == 200, r.text
     d = r.json()

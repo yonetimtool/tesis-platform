@@ -3255,13 +3255,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get davetYonDurumKaydoldu => 'Inscrit';
 
   @override
-  String get davetYonDurumGeriDondu => 'Rejeté';
+  String get davetYonDurumGeriDondu => 'Non remis';
 
   @override
   String get davetYonDurumGitmedi => 'Non envoyé';
 
   @override
-  String get davetYonDurumAyarYok => 'E-mail non configuré';
+  String get davetYonDurumAyarYok => 'Envoi d\'e-mails indisponible';
 
   @override
   String get davetYonDurumAcildi => 'Ouvert';
@@ -8151,13 +8151,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get odemeKoduDurumiletildi => 'Remis';
 
   @override
-  String get odemeKoduDurumgeri_dondu => 'Rejeté';
+  String get odemeKoduDurumgeri_dondu => 'Non remis';
 
   @override
-  String get odemeKoduDurumbasarisiz => 'Échec';
+  String get odemeKoduDurumbasarisiz => 'Échec de l\'envoi';
 
   @override
-  String get odemeKoduDurumyapilandirilmadi => 'E-mail non configuré';
+  String get odemeKoduDurumyapilandirilmadi => 'Envoi d\'e-mails indisponible';
 
   @override
   String get odemeKoduEngeleposta_yok => 'Pas d\'adresse e-mail';
@@ -8694,4 +8694,15 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get rezGorselBekleyin =>
       'L\'image est encore en cours d\'envoi — attendez la fin ou retirez-la.';
+
+  @override
+  String get teslimAciklama_geri_dondu =>
+      'L\'adresse e-mail est peut-être invalide.';
+
+  @override
+  String get teslimAciklama_basarisiz => 'Réessayez plus tard.';
+
+  @override
+  String get teslimAciklama_yapilandirilmadi =>
+      'Contactez destek@yonetiyor.com.';
 }

@@ -68,6 +68,8 @@ export const PLATFORM_ROTALARI = [
   // (P250 §8) SMS/e-posta TEKNIK ayarlari (saglayici, SMTP, kota) —
   // tesis yoneticisinden alindi, tesis secilerek buradan yonetilir.
   "/mesaj-ayarlari",
+  // (P251 §10) E-posta/SMS/push teslim gunlugu — tum tesisler.
+  "/gonderim-gunlugu",
 ] as const;
 
 /**

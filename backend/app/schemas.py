@@ -9898,6 +9898,29 @@ class PanikKapat(BaseModel):
     kapanis_notu: str | None = Field(None, max_length=2000)
 
 
+class GonderimGunluguSatiri(BaseModel):
+    """(P251 §10) Platform gonderim gunlugu satiri (e-posta / SMS / push)."""
+    id: uuid.UUID
+    kanal: str
+    tenant_id: uuid.UUID | None = None
+    tesis_ad: str | None = None
+    alici_ad: str | None = None
+    #: E-posta adresi / telefon / push icin "platform …son6".
+    hedef: str | None = None
+    #: Gonderimin isi (odeme_kodu, aidat_hatirlatma, bildirim tipi...).
+    amac: str | None = None
+    durum: str
+    #: Saglayicinin HAM hata ayrintisi — yalniz platformda gosterilir.
+    hata: str | None = None
+    saglayici: str | None = None
+    created_at: datetime
+
+
+class GonderimGunluguListesi(BaseModel):
+    meta: PageMetaOut
+    items: list[GonderimGunluguSatiri]
+
+
 class PanikOzetOut(BaseModel):
     """(P251 §1) Takip ekraninin sayilari — SUNUCUDA, durumdan.
 

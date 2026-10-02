@@ -331,6 +331,8 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/egitim-videolari", anahtar: "egitimPanelBaslik", icon: "help", grup: "platform" },
   // (P250 §8) SMS/e-posta teknik ayarlari — tesis secilerek.
   { href: "/mesaj-ayarlari", anahtar: "mesajAyarPanelBaslik", icon: "chat", grup: "platform" },
+  // (P251 §10) Teknik gonderim gunlugu (tesis yoneticisinden alindi).
+  { href: "/gonderim-gunlugu", anahtar: "gunlukBaslik", icon: "list", grup: "platform" },
   // kvkk-metinler ikonu asagida (doc) — platform grubunda doc yalniz burada.
   // (P170 §2) KVKK VE YASAL METIN YONETIMI BURAYA TASINDI.
   //

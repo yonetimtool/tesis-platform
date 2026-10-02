@@ -38,6 +38,7 @@ import {
 } from "@/components/ui";
 import { KurallarKarti } from "@/components/otomasyon/kurallar";
 import { hatirlatmaCumlesi } from "@/lib/otomasyon-cumle";
+import { teslimAciklamasi } from "@/lib/teslim-durumu";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useI18n, useT } from "@/lib/i18n/kullan";
@@ -305,7 +306,15 @@ function HatirlatmaEpostalariKarti() {
             <li key={o.id} className="flex flex-wrap items-center justify-between gap-2 py-2" style={{ fontSize: "var(--yz-fs-sm)" }}>
               <span style={{ color: "var(--yz-text)" }}>{o.ad ?? YOK}</span>
               <span style={{ color: "var(--yz-text-2)" }}>{tarihSaatBicimi(o.gonderim_zamani)}</span>
-              <Rozet>{t(EPOSTA_DURUM_METNI[o.durum] ?? EPOSTA_DURUM_YEDEK)}</Rozet>
+              <span className="flex flex-col items-end gap-0.5">
+                <Rozet>{t(EPOSTA_DURUM_METNI[o.durum] ?? EPOSTA_DURUM_YEDEK)}</Rozet>
+                {/* (P251 §10) Ulasmadiysa ne yapilacagi — ham hata yok. */}
+                {teslimAciklamasi(o.durum) ? (
+                  <span style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                    {t(teslimAciklamasi(o.durum)!)}
+                  </span>
+                ) : null}
+              </span>
             </li>
           ))}
         </ul>

@@ -103,7 +103,7 @@ describe("Bildirimler", () => {
     fetchSahtele({ "/api/notifications": BILDIRIMLER });
     ciz(NotificationsPage);
     await waitFor(() =>
-      expect(screen.getByText("gecikmiş okutma")).toBeInTheDocument(),
+      expect(screen.getByText("Devriye noktası geç okutuldu")).toBeInTheDocument(),
     );
     expect(screen.queryByText("gecikmis_okutma")).not.toBeInTheDocument();
     // Urunden kaldirilmis eski tip: rozet BOS KALMAZ, ham deger gorunur.

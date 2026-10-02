@@ -121,6 +121,8 @@ ENVANTER: dict[str, tuple[str, tuple[str, str] | None]] = {
     "support_ticket_answer": ("admin", ("patch", "/support/{tid}")),
     # --- KVKK denetim kaydi: tenant filtresi opsiyonel ---
     "audit_log_list": ("admin", ("get", "/audit")),
+    # (P251 §10) Platform gonderim gunlugu (e-posta/SMS/push, tum tesisler).
+    "gonderim_gunlugu_list": ("admin", ("get", "/platform/gonderim-gunlugu")),
     # --- KIMLIK ONCESI (bilincli): giris ve odeme webhook'u ---
     # Giriste kullanici henuz kimliklenmemistir; tenant'i cozmek icin RLS
     # bypass SART. Ikisi de yalniz bir uuid doner, satir vermez.

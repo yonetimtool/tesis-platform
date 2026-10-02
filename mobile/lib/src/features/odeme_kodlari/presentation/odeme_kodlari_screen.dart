@@ -265,7 +265,7 @@ class _DurumCipi extends StatelessWidget {
       (_, null) => (l10n.odemeKoduHicGonderilmedi, sema.outline),
       _ => (l10n.odemeKoduDurumbasarisiz, sema.error),
     };
-    return Container(
+    final cip = Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         border: Border.all(color: renk),
@@ -276,5 +276,29 @@ class _DurumCipi extends StatelessWidget {
         style: Theme.of(context).textTheme.labelSmall?.copyWith(color: renk),
       ),
     );
+    // (P251 §10) Ulasmadiysa NE YAPILACAGI — ham saglayici hatasi yok.
+    final aciklama = engel == null ? teslimAciklamasi(l10n, durum) : null;
+    if (aciklama == null) return cip;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        cip,
+        Text(
+          aciklama,
+          key: const Key('odeme-kodu-teslim-aciklama'),
+          textAlign: TextAlign.end,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
+    );
   }
 }
+
+/// (P251 §10) Web `lib/teslim-durumu.ts` ikizi.
+String? teslimAciklamasi(AppLocalizations l10n, String? durum) => switch (durum) {
+  'geri_dondu' => l10n.teslimAciklama_geri_dondu,
+  'basarisiz' => l10n.teslimAciklama_basarisiz,
+  'yapilandirilmadi' => l10n.teslimAciklama_yapilandirilmadi,
+  _ => null,
+};

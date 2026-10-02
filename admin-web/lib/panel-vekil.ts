@@ -33,7 +33,6 @@ export const OKUMA: Record<string, string> = {
   "rapor-katalog": "/raporlar/katalog",
   // --- mesaj (P32) ---
   "mesaj-sablonlari": "/mesaj-sablonlari",
-  "mesaj-gecmis": "/mesajlar/gecmis",
   // (P250 §8) Teknik ayarlar (`/mesaj-ayarlari`) PLATFORM paneline
   // tasindi: `/api/tenants/[id]/mesaj-ayarlari`. Tesis yuzeyi yalniz
   // kanal DURUMUNU (sir yok) ve hazir sablon kutuphanesini okur.
@@ -164,7 +163,6 @@ export const SUZGECLER: Record<string, string[]> = {
   //    "suzdum" der ama suzmez. Kullanan da yoktu (tarandi).
   "finans-hareketler": ["tip", "kasa_id", "user_id"],
   "mesaj-sablonlari": ["kanal", "aktif"],
-  "mesaj-gecmis": ["kanal", "durum"],
   "mesaj-sablonlari-hazir": ["kanal", "dil"],
   "unit-uyarilari": ["unit_id"],
   "karar-defteri": [],
