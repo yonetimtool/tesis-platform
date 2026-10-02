@@ -2770,5 +2770,20 @@
   "odemeKodlariAciklama": "Si les résidents indiquent leur code dans le libellé du virement, le paiement est rapproché automatiquement. Vous pouvez copier le code ou l'envoyer par e-mail ; l'e-mail contient aussi les coordonnées bancaires et le libellé à saisir.",
   "odemeKoduKopyala": "Copier le code",
   "odemeKoduKopyalandi": "Code copié",
-  "odemeKoduBosAciklama": "Les codes de paiement apparaissent ici à mesure que vous ajoutez des résidents."
+  "odemeKoduBosAciklama": "Les codes de paiement apparaissent ici à mesure que vous ajoutez des résidents.",
+  "egitimVideolariBaslik": "Vidéos d'installation",
+  "egitimVideolariIzle": "Voir les vidéos",
+  "egitimVideoyuIzle": "Voir la vidéo",
+  "egitimIlerleme": "{izlenen}/{toplam} vues",
+  "egitimSimdiYap": "Faire cette étape maintenant",
+  "egitimYakinda": "La vidéo de cette étape arrive bientôt.",
+  "egitimOnceki": "Étape précédente",
+  "egitimSonraki": "Étape suivante",
+  "egitimAdimBilinmeyen": "Étape d'installation",
+  "egitimVideoKapali": "La vidéo ne peut pas être lue : elle est peut-être privée ou l'intégration n'est pas autorisée.",
+  "egitimVideoErisilemiyor": "YouTube est injoignable pour le moment. Vérifiez votre connexion ; le reste de la page fonctionne toujours.",
+  "egitimVideoOynatilamadi": "La vidéo n'a pas pu être lue.",
+  "egitimAdimlar": "Étapes",
+  "egitimKaydirIpucu": "Faites glisser la vidéo vers la gauche ou la droite pour changer d'étape.",
+  "egitimIzlendi": "Vue"
 }

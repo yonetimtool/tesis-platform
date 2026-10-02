@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../egitim/data/egitim_api.dart';
+import '../../egitim/presentation/kurulum_videolari_karti.dart';
 import '../../../routing/app_router.dart';
 import '../../auth/domain/user_role.dart';
 import '../../auth/presentation/auth_controller.dart';
@@ -170,6 +172,12 @@ class YoneticiHomeScreen extends ConsumerWidget {
           hava: hava == null ? null : havaOzeti(hava),
         ),
         bolumler: [
+          // (P250 §4) KURULUM VIDEOLARI — tek dokunusla, ilerlemeyle.
+          // Video yoksa / yuklenemezse kart HIC cizilmez.
+          // Bolum YALNIZ video varsa listeye girer: bos bir bolum bile
+          // bolumler arasi bosluk ekler ve ana ekrani kaydirirdi.
+          if ((ref.watch(egitimListesiProvider).value?.toplam ?? 0) > 0)
+            const HomeSectionPad(child: KurulumVideolariKarti()),
           HomeSectionPad(
             child: HizliErisimIzgarasi(
               // (P230 §2) Modu EKRAN okur, izgaraya gecer — yaprak gorsel

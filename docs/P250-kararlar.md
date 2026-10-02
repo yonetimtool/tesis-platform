@@ -410,6 +410,225 @@ değişikliği gerekmedi.
 
 ---
 
+# §4 — KURULUM EĞİTİM VİDEOLARI (YouTube)
+
+## Veri: bağlantı platformda, izlenme hesapta (göç 0163)
+
+**`egitim_videosu`: platform tablosu.** Satırlar şunlardan oluşur:
+`set_kodu`, `adim_kodu`, `youtube_id`, `baslik`, `aciklama`, `sira`,
+`aktif`, `surum`.
+
+* **Yalnız video kimliği saklanır** (11 karakter). Video sunucumuzda
+  durmaz.
+* Aynı videolar bütün tesislere gösterilir, bu yüzden tablonun tesisi
+  yok.
+* Desen `surum_politikasi` ile aynı: RLS açık + FORCE, politika yok.
+  Erişim yalnız üç SECURITY DEFINER fonksiyonundan:
+  `egitim_videosu_oku`, `egitim_videosu_yaz`, `egitim_videosu_sil`.
+* Yazma ve silme yalnız platform admininde. Envanter kilidi bunu ölçüyor:
+  yönetici 403 alıyor.
+* Platform tablosu tavanı 4'ten 5'e bilinçli olarak yükseltildi.
+
+**`egitim_izleme`: tesis kapsamlı, hesaba ait.** Web ve mobil aynı
+satırı okur, dolayısıyla web'de izlenen video mobilde de işaretli.
+
+**Video setleri:** bugün yalnız `yonetici` (kurulum sihirbazının 19
+adımı). Sakin ve güvenlik için ayrı setler aynı tabloya yeni `set_kodu`
+ile gelir. Hangi rolün hangi seti göreceği `SET_ROLLERI`'nde tanımlı;
+şema değişmez. "Şimdilik yalnız yönetici görsün": diğer roller 403
+alır.
+
+**Anında yayın:** panelde kaydedilen satırı istemciler bir sonraki
+listede görür. Uygulama sürümü gerekmez.
+
+## Karar: video değişince "izlendi" sıfırlanır
+
+**Karar: sıfırlanır.** Video kimliği değişirse `surum` bir artar. İzlendi
+işareti hangi sürüm için konduysa ona aittir; eski işaret yeni videoya
+sayılmaz.
+
+**Gerekçe:** video, arayüz değiştiği için yeniden çekiliyor. Eski videoyu
+izlemiş kişi yeni ekranı görmemiştir. Işareti korumak "izlendi" diyerek
+yanlış bilgi verirdi.
+
+**Sınır:** başlık, açıklama, sıra ya da aktiflik değişikliği sürümü
+**artırmaz**. Yazım düzeltmesi kimseye videoyu yeniden izletmez.
+
+Panel bu kuralı kaydetme alanının altında açıkça yazıyor. Testte
+ölçüldü: başlık değişince sürüm 1 kalıyor, video değişince 2 oluyor ve
+izlenen sayısı 0'a düşüyor.
+
+## Bağlantı biçimleri
+
+Kabul edilenler:
+
+* `youtube.com/watch?v=` (`m.` ve `music.` alt alan adları dahil, `&t=`
+  ve `&list=` gibi ek parametrelerle),
+* `youtu.be/` (`?si=` izleyici parametresiyle),
+* `youtube.com/shorts/`,
+* `embed` bağlantıları ve yalnız kimlik.
+
+Video kimliği ayıklanır. Geçersiz bağlantı için anlaşılır hata (7 dil)
+gösterilir: "Geçerli bir YouTube bağlantısı girin
+(youtube.com/watch?v=…, youtu.be/… ya da youtube.com/shorts/…)". Başka
+bir alan adındaki `watch?v=` reddedilir.
+
+Kural sunucuda ve web'de ikiz (`egitim_video.py`, `lib/youtube.ts`). Web
+ikizi panel önizlemesi içindir.
+
+## Oynatma
+
+* **YouTube IFrame Player API** kullanılıyor. Oynatıcı
+  `youtube-nocookie.com` üzerinden yerleşir (`host`), `rel=0`.
+* **Video bitince (ENDED):** adım hesaba "izlendi" yazılır ve "Şimdi bu
+  adımı yap" vurgulanır. Web'de birincil düğmeye, mobilde dolgulu
+  düğmeye döner.
+* **Ortada kapatılan video izlendi sayılmaz.** ENDED dışındaki durumlar
+  (duraklatma vb.) istek üretmez; testte ölçüldü.
+* **Hatalar:**
+  * Gizli ya da yerleştirmeye kapalı video (oynatıcı hatası 100, 101,
+    150): "Video oynatılamıyor: video gizli olabilir ya da yerleştirmeye
+    izin verilmemiş."
+  * YouTube erişilemezse (API yüklenmedi, web'de 10 sn, mobilde 15 sn
+    zaman aşımı): anlaşılır mesaj gösterilir. Sayfanın geri kalanı
+    çalışır.
+* **Videosu girilmemiş adım "yakında" görünür;** kırık oynatıcı çizilmez.
+  Pasif video da "yakında" sayılır.
+* **Oynatma sırası:** panelde girilen `sira`; girilmemişse sihirbaz
+  sırası. Panelin önerdiği varsayılan, adımın sihirbazdaki yerinin 10
+  katı.
+
+## İçerik güvenlik politikası (CSP)
+
+**Panelde bugüne kadar hiç CSP yoktu** (yalnız Caddy'nin
+X-Frame-Options ve nosniff başlıkları). P250 ile `next.config.mjs`'e
+eklendi:
+
+| Yönerge | Değer |
+|---|---|
+| `script-src` | `'self' 'unsafe-inline'` + **yalnız `https://www.youtube.com`** (IFrame API). Geliştirmede `'unsafe-eval'` (React yenileme); üretimde yok |
+| `frame-src` | `'self'` + **`https://www.youtube-nocookie.com`** + mevcut harita gömüleri (`www.google.com`, `www.openstreetmap.org`; `SiteHarita`) |
+| `worker-src` | `'self' blob:` (hls.js canlı kamera akışını blob işçisiyle çözüyor) |
+| `object-src` / `base-uri` / `frame-ancestors` | `'none'` / `'self'` / `'none'` |
+
+**Joker yok.** Kilit: `tests/p250-csp.test.ts`. Betik yönergesinde
+YouTube'dan yalnız tek alan adı var; çerçeve yönergesinde `youtube.com`
+yok (yalnız nocookie).
+
+**Bilinçli olarak kısıtlanmayanlar:** `img-src`, `connect-src`,
+`style-src`, `font-src`. MinIO imzalı görselleri, API ve yazı tipleri
+ortama göre değişen alan adlarından geliyor. Bunları sabitlemek, ortam
+başına kırılma demekti.
+
+**Satır içi betik (`'unsafe-inline'`):** Next'in sayfa açılış betikleri
+satır içi. Nonce tabanlı CSP ayrı ve büyük bir iş; bu tur kapsamında
+değil.
+
+## Web
+
+| İstek | Yapılan |
+|---|---|
+| Ana sayfada kart, ilerlemeyle ("3/8 izlendi") | Özet sayfasında karşılama bandının hemen altında. Pano **bölümü değil**, "paneli düzenle" ile gizlenmez |
+| Kart kurulum bitince küçülür, kaybolmaz | `kurulum_tamam` (zorunlu adımlar tamam) gelince ilerleme çubuğu kalkar ve düğme küçülür. Devralan yönetici yine erişir |
+| Pencere: 16:9 video, adım numaraları (izlenende ✓, aktif vurgulu, tıklayınca geçiş), ileri/geri | ✓. Sol/sağ ok tuşları da gezer. Numaralar `aria-current="step"` taşır |
+| "Şimdi bu adımı yap" | Pencere kapanır, sihirbazdaki hedef sayfaya gidilir; video bitince vurgulanır |
+| Esc / dışarı tıklama | Ortak `Modal` |
+| Sihirbazda her adımın yanında "Videoyu izle" | Yalnız videosu olan adımda gösteriliyor; pencereyi o adımda açar |
+
+Hiç video girilmemişse kart çizilmez: "0/0" bir vaat değil, gürültü.
+
+**Platform paneli `/egitim-videolari`:**
+
+* sihirbazın 19 adımı, her biri için bağlantı, başlık, kısa açıklama,
+  sıra ve aktiflik,
+* **kaydetmeden önce önizleme:** oynatıcı hatası yakalanır ve gizli video
+  uyarısı yönetici kaydetmeden görünür,
+* "Videoyu kaldır".
+
+Rota platform yüzeyinde ve yalnız admin'e açık (`yuzey.ts`, menü,
+middleware matcher).
+
+## Mobil
+
+* **Tam ekran sayfa** (`/kurulum-videolari`, açılır pencere değil).
+  * Video üstte; yatay çevrilince tam ekran oynatılır (paket içi).
+  * Altında dikey adım listesi: numara, başlık, kısa açıklama, izlendi
+    işareti.
+  * Video alanı sağa/sola **kaydırılarak** adım değiştirilir (PageView).
+    Ayrıca etiketli ileri/geri düğmeleri var.
+  * "Şimdi bu adımı yap" altta sabit; video bitince dolgulu düğmeye
+    dönüşür.
+  * Adımın mobil karşılığı yoksa (ör. aidat, konum) düğme "bu adım
+    web'de yapılır" der ve devre dışıdır.
+* Yönetici ana ekranında aynı kart, hızlı erişim ızgarasının üstünde.
+* Sihirbaz ekranında videosu olan adımda "Videoyu izle".
+* **Paket: `youtube_player_iframe` 6.0.2.** Gerekçe:
+  * YouTube'un resmî IFrame API'sini WebView'da çalıştırıyor; `ENDED`
+    dahil oynatıcı durumları Dart akışına geliyor ("bitince izlendi"
+    ancak bununla yapılabilir),
+  * `privacyEnhancedMode` ile nocookie alan adı,
+  * yatay çevirmede tam ekran,
+  * 100/101/150 hata kodlarını ayrı veriyor.
+  * `youtube_player_flutter` eski bir sarmalayıcı ve nocookie seçeneği
+    yok.
+* **`rel=0` mobilde:** paketin karşılığı `strictRelatedVideos`. YouTube
+  2018'den beri `rel=0`'ı "yalnız aynı kanaldan öneri" olarak yorumluyor;
+  iki yüzeyde de sonuç aynı.
+* Testte WebView yok. Oynatıcı bir sağlayıcı üzerinden kuruluyor;
+  testler sahte kurucuyla ENDED ve hata olaylarını tetikliyor.
+
+## Testler
+
+* Sunucu `test_p250_egitim_videolari.py` (14):
+  * 9 bağlantı biçimi,
+  * panel kaydında yalnız kimlik saklanıyor ve anlaşılır hata var,
+  * sürüm kuralı (başlık artırmaz, video artırır),
+  * bilinmeyen adım 404,
+  * liste: pasif video "yakında", sihirbaz sırası, videosuz adıma
+    izlendi yazılamaz,
+  * izlendi işaretinin sayılması ve video değişince sıfırlanması,
+  * işaret hesaba ait (admin'e sızmıyor),
+  * rol kapıları.
+* Web:
+  * `p250-egitim-videolari.dom.test.ts`: açılış adımı, nocookie + rel=0,
+    ENDED → istek + vurgu + yönlendirme, duraklatma istek üretmiyor,
+    "yakında", gizli video uyarısı, kimlik ikizi,
+  * `p250-egitim-panel.dom.test.ts`: geçersiz bağlantı, kaydetmeden önce
+    önizleme uyarısı, PUT gövdesi,
+  * `p250-csp.test.ts`.
+* Mobil `p250_kurulum_videolari_test.dart`: açılış adımı, liste ve
+  izlendi işareti, ENDED → istek + vurgu, kaydırma ile "yakında", gizli
+  video uyarısı, kartın iki boyu.
+* Kilit kayıtları güncellendi:
+  * secdef envanteri (3 fonksiyon),
+  * RLS platform tavanı,
+  * rol matrisi,
+  * uç güvenlik tablosu,
+  * denetçi salt-okuma kümesi (izlendi kişinin kendi kaydı),
+  * openapi,
+  * 5 hata metni 7 dilde.
+
+**Testte bulunan kusur:** pencere, liste yüklenmeden açılırsa
+başlangıç adımını hiç ayarlamıyordu ve hep ilk adımda kalıyordu. Konum
+artık veri geldiğinde bir kez seçiliyor.
+
+## ÖLÇÜLEMEDİ
+
+* **Gerçek YouTube oynatma.** Dev ortamında gerçek bir "liste dışı"
+  video yok ve testler oynatıcıyı sahteliyor. Prod'da ölçülmesi
+  gerekenler:
+  * nocookie ile oynatma,
+  * ENDED olayının gelmesi,
+  * gizli video uyarısı (gizli bir videoyla),
+  * CSP'nin tarayıcıda oynatıcıyı engellememesi.
+* **Mobilde gerçek cihaz:** WebView'da oynatma, yatayda tam ekran,
+  kaydırma hissi. Emülatör yok.
+* **CSP'nin bütün sayfalara etkisi.** Bilinen iframe ve worker
+  kaynakları tarandı, ama tarayıcıda tüm sayfalar gezilmedi.
+  Dağıtımdan sonra tarayıcı konsolunda CSP ihlali aranmalı.
+
+---
+
 # §5 — GİRİŞ EKRANI E-POSTA SINIRI
 
 ## Ölçüm (değişiklikten önce)

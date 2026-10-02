@@ -81,11 +81,16 @@ TENANT_DEGISKENI = "app.current_tenant_id"
 #:     degil. Icinde kisisel veri YOK: yalnizca saglayicinin olay
 #:     kimligi. Erisim `eposta_webhook_olay_ekle` fonksiyonundan.
 #:
+#:   * `egitim_videosu` (0163, P250 §4) — kurulum egitim videolarinin
+#:     YouTube kimlikleri. Ayni video butun tesislere gosterilir;
+#:     platform admini girer. Kisisel/tesis verisi YOK. Erisim
+#:     `egitim_videosu_oku/_yaz/_sil` fonksiyonlarindan.
+#:
 #: Ucu de AYNI DESENI tasir: RLS ACIK + FORCE, POLITIKA YOK, erisim
 #: yalniz SECURITY DEFINER fonksiyonlarindan. Yani `app_rw` bu
 #: tablolarin HICBIR satirini dogrudan goremez (asagidaki davranissal
-#: test bunu olcer). Tavan 2 -> 3 -> 4 BILINCLI yukseltildi.
-PLATFORM_TABLO_TAVANI = int(os.getenv("RLS_PLATFORM_TAVAN", "4"))
+#: test bunu olcer). Tavan 2 -> 3 -> 4 -> 5 BILINCLI yukseltildi.
+PLATFORM_TABLO_TAVANI = int(os.getenv("RLS_PLATFORM_TAVAN", "5"))
 
 
 def _platform_tablolari(katalog) -> set[str]:

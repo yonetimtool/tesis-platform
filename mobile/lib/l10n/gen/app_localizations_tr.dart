@@ -7982,4 +7982,54 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get odemeKoduBosAciklama =>
       'Sakin ekledikçe ödeme kodları burada görünür.';
+
+  @override
+  String get egitimVideolariBaslik => 'Kurulum videoları';
+
+  @override
+  String get egitimVideolariIzle => 'Videoları izle';
+
+  @override
+  String get egitimVideoyuIzle => 'Videoyu izle';
+
+  @override
+  String egitimIlerleme(String izlenen, String toplam) {
+    return '$izlenen/$toplam izlendi';
+  }
+
+  @override
+  String get egitimSimdiYap => 'Şimdi bu adımı yap';
+
+  @override
+  String get egitimYakinda => 'Bu adımın videosu yakında.';
+
+  @override
+  String get egitimOnceki => 'Önceki adım';
+
+  @override
+  String get egitimSonraki => 'Sonraki adım';
+
+  @override
+  String get egitimAdimBilinmeyen => 'Kurulum adımı';
+
+  @override
+  String get egitimVideoKapali =>
+      'Video oynatılamıyor: video gizli olabilir ya da yerleştirmeye izin verilmemiş.';
+
+  @override
+  String get egitimVideoErisilemiyor =>
+      'YouTube\'a şu anda ulaşılamıyor. İnternet bağlantınızı kontrol edin; sayfanın geri kalanı çalışmaya devam eder.';
+
+  @override
+  String get egitimVideoOynatilamadi => 'Video oynatılamadı.';
+
+  @override
+  String get egitimAdimlar => 'Adımlar';
+
+  @override
+  String get egitimKaydirIpucu =>
+      'Adımlar arasında geçmek için videoyu sağa ya da sola kaydırın.';
+
+  @override
+  String get egitimIzlendi => 'İzlendi';
 }

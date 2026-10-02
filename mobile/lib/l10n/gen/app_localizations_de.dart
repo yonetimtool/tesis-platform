@@ -8188,4 +8188,55 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get odemeKoduBosAciklama =>
       'Zahlungscodes erscheinen hier, sobald Sie Bewohner hinzufügen.';
+
+  @override
+  String get egitimVideolariBaslik => 'Einrichtungsvideos';
+
+  @override
+  String get egitimVideolariIzle => 'Videos ansehen';
+
+  @override
+  String get egitimVideoyuIzle => 'Video ansehen';
+
+  @override
+  String egitimIlerleme(String izlenen, String toplam) {
+    return '$izlenen/$toplam angesehen';
+  }
+
+  @override
+  String get egitimSimdiYap => 'Diesen Schritt jetzt erledigen';
+
+  @override
+  String get egitimYakinda => 'Das Video zu diesem Schritt folgt bald.';
+
+  @override
+  String get egitimOnceki => 'Vorheriger Schritt';
+
+  @override
+  String get egitimSonraki => 'Nächster Schritt';
+
+  @override
+  String get egitimAdimBilinmeyen => 'Einrichtungsschritt';
+
+  @override
+  String get egitimVideoKapali =>
+      'Das Video kann nicht abgespielt werden: Es ist möglicherweise privat oder das Einbetten ist nicht erlaubt.';
+
+  @override
+  String get egitimVideoErisilemiyor =>
+      'YouTube ist gerade nicht erreichbar. Prüfen Sie Ihre Internetverbindung; der Rest der Seite funktioniert weiter.';
+
+  @override
+  String get egitimVideoOynatilamadi =>
+      'Das Video konnte nicht abgespielt werden.';
+
+  @override
+  String get egitimAdimlar => 'Schritte';
+
+  @override
+  String get egitimKaydirIpucu =>
+      'Wischen Sie das Video nach links oder rechts, um zwischen den Schritten zu wechseln.';
+
+  @override
+  String get egitimIzlendi => 'Angesehen';
 }

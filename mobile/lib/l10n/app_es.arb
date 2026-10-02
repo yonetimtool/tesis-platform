@@ -2770,5 +2770,20 @@
   "odemeKodlariAciklama": "Si los residentes escriben su código en el concepto de la transferencia, el pago se concilia automáticamente. Puede copiar el código o enviarlo por correo; el correo incluye también los datos bancarios y qué escribir en el concepto.",
   "odemeKoduKopyala": "Copiar código",
   "odemeKoduKopyalandi": "Código copiado",
-  "odemeKoduBosAciklama": "Los códigos de pago aparecen aquí a medida que añade residentes."
+  "odemeKoduBosAciklama": "Los códigos de pago aparecen aquí a medida que añade residentes.",
+  "egitimVideolariBaslik": "Vídeos de configuración",
+  "egitimVideolariIzle": "Ver vídeos",
+  "egitimVideoyuIzle": "Ver vídeo",
+  "egitimIlerleme": "{izlenen}/{toplam} vistos",
+  "egitimSimdiYap": "Hacer este paso ahora",
+  "egitimYakinda": "El vídeo de este paso llegará pronto.",
+  "egitimOnceki": "Paso anterior",
+  "egitimSonraki": "Paso siguiente",
+  "egitimAdimBilinmeyen": "Paso de configuración",
+  "egitimVideoKapali": "No se puede reproducir el vídeo: puede ser privado o no permitir la inserción.",
+  "egitimVideoErisilemiyor": "No se puede acceder a YouTube ahora. Compruebe su conexión; el resto de la página sigue funcionando.",
+  "egitimVideoOynatilamadi": "No se pudo reproducir el vídeo.",
+  "egitimAdimlar": "Pasos",
+  "egitimKaydirIpucu": "Deslice el vídeo a la izquierda o a la derecha para cambiar de paso.",
+  "egitimIzlendi": "Visto"
 }

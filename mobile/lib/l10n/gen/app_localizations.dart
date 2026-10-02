@@ -14176,6 +14176,96 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Sakin ekledikçe ödeme kodları burada görünür.'**
   String get odemeKoduBosAciklama;
+
+  /// No description provided for @egitimVideolariBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kurulum videoları'**
+  String get egitimVideolariBaslik;
+
+  /// No description provided for @egitimVideolariIzle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Videoları izle'**
+  String get egitimVideolariIzle;
+
+  /// No description provided for @egitimVideoyuIzle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Videoyu izle'**
+  String get egitimVideoyuIzle;
+
+  /// No description provided for @egitimIlerleme.
+  ///
+  /// In tr, this message translates to:
+  /// **'{izlenen}/{toplam} izlendi'**
+  String egitimIlerleme(String izlenen, String toplam);
+
+  /// No description provided for @egitimSimdiYap.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şimdi bu adımı yap'**
+  String get egitimSimdiYap;
+
+  /// No description provided for @egitimYakinda.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu adımın videosu yakında.'**
+  String get egitimYakinda;
+
+  /// No description provided for @egitimOnceki.
+  ///
+  /// In tr, this message translates to:
+  /// **'Önceki adım'**
+  String get egitimOnceki;
+
+  /// No description provided for @egitimSonraki.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sonraki adım'**
+  String get egitimSonraki;
+
+  /// No description provided for @egitimAdimBilinmeyen.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kurulum adımı'**
+  String get egitimAdimBilinmeyen;
+
+  /// No description provided for @egitimVideoKapali.
+  ///
+  /// In tr, this message translates to:
+  /// **'Video oynatılamıyor: video gizli olabilir ya da yerleştirmeye izin verilmemiş.'**
+  String get egitimVideoKapali;
+
+  /// No description provided for @egitimVideoErisilemiyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'YouTube\'a şu anda ulaşılamıyor. İnternet bağlantınızı kontrol edin; sayfanın geri kalanı çalışmaya devam eder.'**
+  String get egitimVideoErisilemiyor;
+
+  /// No description provided for @egitimVideoOynatilamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Video oynatılamadı.'**
+  String get egitimVideoOynatilamadi;
+
+  /// No description provided for @egitimAdimlar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Adımlar'**
+  String get egitimAdimlar;
+
+  /// No description provided for @egitimKaydirIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Adımlar arasında geçmek için videoyu sağa ya da sola kaydırın.'**
+  String get egitimKaydirIpucu;
+
+  /// No description provided for @egitimIzlendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İzlendi'**
+  String get egitimIzlendi;
 }
 
 class _AppLocalizationsDelegate

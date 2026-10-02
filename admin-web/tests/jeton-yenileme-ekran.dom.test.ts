@@ -72,18 +72,25 @@ describe("kurulum sihirbazi — jeton yenilendikten sonra", () => {
 
   it("GECICI HATADAN SONRA veri gelince hata TEMIZLENIR", async () => {
     // Ekran hatayi YEREL DURUMA kopyalasaydi burada takili kalirdi.
-    const cagri = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        json: async () => ({ error: { code: "server_error", message: "gecici" } }),
-      } as unknown as Response)
-      .mockResolvedValue({
+    // (P250 §4) Sayfa artik IKI istek atiyor (kurulum + egitim videolari);
+    // gecici hata yalniz KURULUM isteginin ilkine verilir — sira bagimli
+    // `mockResolvedValueOnce` hatayi yanlis istege verebiliyordu.
+    let kurulumIlk = true;
+    const cagri = vi.fn(async (girdi: RequestInfo | URL) => {
+      if (String(girdi).includes("kurulum") && kurulumIlk) {
+        kurulumIlk = false;
+        return {
+          ok: false,
+          status: 500,
+          json: async () => ({ error: { code: "server_error", message: "gecici" } }),
+        } as unknown as Response;
+      }
+      return {
         ok: true,
         status: 200,
         json: async () => DURUM,
-      } as unknown as Response);
+      } as unknown as Response;
+    });
     vi.stubGlobal("fetch", cagri);
 
     ciz(KurulumPage);

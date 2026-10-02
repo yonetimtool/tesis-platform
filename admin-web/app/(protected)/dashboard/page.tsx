@@ -63,6 +63,7 @@ import { PanoFinansOzeti } from "@/components/pano/finans-ozeti";
 import { PanoTakvim } from "@/components/pano/takvim";
 import { WidgetSeridi, type WidgetAdayi } from "@/components/pano/widget-seridi";
 import { SayfaEylemleri } from "@/components/SayfaEylemleri";
+import { KurulumVideolariKarti } from "@/components/KurulumVideolari";
 import { useToast } from "@/components/Toast";
 import { KameraSeridi } from "@/components/KameraSeridi";
 import { apiSend } from "@/lib/client";
@@ -1534,6 +1535,12 @@ export default function DashboardPage() {
           Bant bir BOLUM DEGIL: gizlenebilir bir karsilama satiri,
           sayfanin neresi oldugunu gizlenebilir yapardi. */}
       <KahramanBandi />
+
+      {/* (P250 §4) KURULUM VIDEOLARI — tek tikla erisim, ilerlemeyle.
+          Bir pano BOLUMU DEGIL (paneli duzenle ile gizlenmez): kurulum
+          bitince kart KUCULUR ama kaybolmaz; devralan yeni yonetici de
+          videolara buradan ulasir. Hic video yoksa cizilmez. */}
+      <KurulumVideolariKarti />
 
       {/* (P168 §1.3) DUZENLEME EYLEMLERI UST BARDA — bildirim ikonunun
           SOLUNDA. Kabuk bos bir yuva aciyor, sayfa kendi dugmesini oraya

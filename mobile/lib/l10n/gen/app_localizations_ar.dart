@@ -8223,4 +8223,54 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get odemeKoduBosAciklama => 'تظهر رموز الدفع هنا عند إضافة السكان.';
+
+  @override
+  String get egitimVideolariBaslik => 'فيديوهات الإعداد';
+
+  @override
+  String get egitimVideolariIzle => 'شاهد الفيديوهات';
+
+  @override
+  String get egitimVideoyuIzle => 'شاهد الفيديو';
+
+  @override
+  String egitimIlerleme(String izlenen, String toplam) {
+    return 'تمت مشاهدة $izlenen/$toplam';
+  }
+
+  @override
+  String get egitimSimdiYap => 'نفّذ هذه الخطوة الآن';
+
+  @override
+  String get egitimYakinda => 'فيديو هذه الخطوة قريبًا.';
+
+  @override
+  String get egitimOnceki => 'الخطوة السابقة';
+
+  @override
+  String get egitimSonraki => 'الخطوة التالية';
+
+  @override
+  String get egitimAdimBilinmeyen => 'خطوة الإعداد';
+
+  @override
+  String get egitimVideoKapali =>
+      'لا يمكن تشغيل الفيديو: قد يكون خاصًا أو قد لا يُسمح بتضمينه.';
+
+  @override
+  String get egitimVideoErisilemiyor =>
+      'تعذّر الوصول إلى YouTube الآن. تحقق من اتصالك بالإنترنت؛ بقية الصفحة تعمل كالمعتاد.';
+
+  @override
+  String get egitimVideoOynatilamadi => 'تعذّر تشغيل الفيديو.';
+
+  @override
+  String get egitimAdimlar => 'الخطوات';
+
+  @override
+  String get egitimKaydirIpucu =>
+      'اسحب الفيديو يمينًا أو يسارًا للتنقل بين الخطوات.';
+
+  @override
+  String get egitimIzlendi => 'تمت المشاهدة';
 }

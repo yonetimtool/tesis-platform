@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../egitim/data/egitim_api.dart';
 import '../../../routing/app_router.dart';
 import '../data/kurulum_api.dart';
 import 'ilk_giris_turu.dart';
@@ -42,45 +43,45 @@ import '../domain/kurulum_models.dart';
 
 /// Adim kodu -> (baslik, aciklama, gidilecek rota). Rota `null` ise adim
 /// bu yuzeyden TAMAMLANAMAZ ve neden yazilir.
-class _Hedef {
-  const _Hedef(this.baslik, this.aciklama, this.rota);
+class KurulumHedefi {
+  const KurulumHedefi(this.baslik, this.aciklama, this.rota);
   final String Function(AppLocalizations) baslik;
   final String Function(AppLocalizations) aciklama;
   final String? rota;
 }
 
-final Map<String, _Hedef> _hedefler = {
-  'blok': _Hedef(
+final Map<String, KurulumHedefi> kurulumHedefleri = {
+  'blok': KurulumHedefi(
     (l) => l.kurulumBlok,
     (l) => l.kurulumBlokAlt,
     AppRoutes.binaDuzenleme,
   ),
-  'daire': _Hedef(
+  'daire': KurulumHedefi(
     (l) => l.kurulumDaire,
     (l) => l.kurulumDaireAlt,
     AppRoutes.binaDuzenleme,
   ),
-  'daire_tipi': _Hedef(
+  'daire_tipi': KurulumHedefi(
     (l) => l.kurulumDaireTipi,
     (l) => l.kurulumDaireTipiAlt,
     AppRoutes.daireTanimlari,
   ),
-  'sakin': _Hedef(
+  'sakin': KurulumHedefi(
     (l) => l.kurulumSakin,
     (l) => l.kurulumSakinAlt,
     AppRoutes.sakinler,
   ),
-  'personel': _Hedef(
+  'personel': KurulumHedefi(
     (l) => l.kurulumPersonel,
     (l) => l.kurulumPersonelAlt,
     AppRoutes.personel,
   ),
-  'gorev_alani': _Hedef(
+  'gorev_alani': KurulumHedefi(
     (l) => l.kurulumGorevAlani,
     (l) => l.kurulumGorevAlaniAlt,
     AppRoutes.taskCategories,
   ),
-  'nfc_noktasi': _Hedef(
+  'nfc_noktasi': KurulumHedefi(
     (l) => l.kurulumNfc,
     (l) => l.kurulumNfcAlt,
     AppRoutes.checkpoints,
@@ -88,9 +89,9 @@ final Map<String, _Hedef> _hedefler = {
   // (P233 §1) KONUM — mobilde tesis ayarlari ekrani YOK (yonetim isi,
   // web yuzeyinde). Rota `null`: adim GORUNUR ama dokunulamaz; gizlemek,
   // mobilden bakan yoneticiye kurulumu TAMAM gostermek olurdu.
-  'konum': _Hedef((l) => l.kurulumKonum, (l) => l.kurulumKonumAlt, null),
+  'konum': KurulumHedefi((l) => l.kurulumKonum, (l) => l.kurulumKonumAlt, null),
   // Bkz. sinif notu: mobilde ekrani yok + uc admin'e kilitli.
-  'aidat': _Hedef((l) => l.kurulumAidat, (l) => l.kurulumAidatAlt, null),
+  'aidat': KurulumHedefi((l) => l.kurulumAidat, (l) => l.kurulumAidatAlt, null),
 };
 
 class KurulumScreen extends ConsumerStatefulWidget {
@@ -136,6 +137,13 @@ class _KurulumScreenState extends ConsumerState<KurulumScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final durum = ref.watch(kurulumDurumProvider);
+    // (P250 §4) Videosu olan adimlar. Liste yuklenemezse bos kume: sihirbaz
+    // videolara rehin degil, yalniz "Videoyu izle" dugmesi cizilmez.
+    final videoluAdimlar = {
+      for (final a in ref.watch(egitimListesiProvider).value?.adimlar ??
+          const <EgitimAdim>[])
+        if (a.video != null) a.adimKodu,
+    };
 
     return Scaffold(
       appBar: AppBar(
@@ -209,9 +217,14 @@ class _KurulumScreenState extends ConsumerState<KurulumScreen> {
                 _AdimKarti(
                   sira: i + 1,
                   adim: d.adimlar[i],
-                  hedef: _hedefler[d.adimlar[i].kod],
+                  hedef: kurulumHedefleri[d.adimlar[i].kod],
                   bekliyor: _bekleyen == d.adimlar[i].kod,
                   onAtla: (atla) => _atla(d.adimlar[i].kod, atla: atla),
+                  // (P250 §4) Adimin videosu varsa "Videoyu izle".
+                  onVideo: videoluAdimlar.contains(d.adimlar[i].kod)
+                      ? () => context.push(
+                            '${AppRoutes.kurulumVideolari}?adim=${d.adimlar[i].kod}')
+                      : null,
                 ),
               ],
             ],
@@ -287,11 +300,11 @@ class _AsgariKart extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             for (final kod in durum.asgariEksikler)
-              if (_hedefler[kod] != null)
+              if (kurulumHedefleri[kod] != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
-                    '• ${_hedefler[kod]!.baslik(l10n)}',
+                    '• ${kurulumHedefleri[kod]!.baslik(l10n)}',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
@@ -309,11 +322,14 @@ class _AdimKarti extends StatelessWidget {
     required this.hedef,
     required this.bekliyor,
     required this.onAtla,
+    this.onVideo,
   });
 
   final int sira;
+  /// (P250 §4) Adimin egitim videosu varsa acar; yoksa null (dugme yok).
+  final VoidCallback? onVideo;
   final KurulumAdim adim;
-  final _Hedef? hedef;
+  final KurulumHedefi? hedef;
   final bool bekliyor;
   final void Function(bool atla) onAtla;
 
@@ -374,6 +390,16 @@ class _AdimKarti extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
+            if (onVideo != null)
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton.icon(
+                  key: Key('kurulum-video-${adim.kod}'),
+                  onPressed: onVideo,
+                  icon: const Icon(Icons.play_circle_outline),
+                  label: Text(l10n.egitimVideoyuIzle),
+                ),
+              ),
             if (h.rota == null)
               // CIKMAZ YERINE ACIKLAMA: calismayacak bir dugme cizmek,
               // kullaniciyi denemeye ve basarisiz olmaya zorlamakti.

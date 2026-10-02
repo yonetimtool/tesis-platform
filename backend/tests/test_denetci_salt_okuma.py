@@ -319,6 +319,12 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     # turu goren ama isaretleyemeyen bir rol her giriste turu yeniden
     # gorurdu.
     ("POST", "/me/tur-goruldu"),
+    # --- (P250 §4) Egitim videosu "izlendi" isareti — ayni sinif: kisinin
+    # KENDI izleme kaydi (`egitim_izleme`), tesisin defterine dokunmaz.
+    # Rol bagimlilik olarak degil GOVDEDE denetlenir: hangi rolun hangi
+    # video setini gordugu sete baglidir (`SET_ROLLERI`); bugun denetci
+    # 403 alir.
+    ("POST", "/egitim-videolari/{adim_kodu}/izlendi"),
 })
 
 #: Denetcinin OKUYABILDIGI uclardan ornekler (davranissal olcum).

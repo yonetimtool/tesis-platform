@@ -8179,4 +8179,54 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get odemeKoduBosAciklama =>
       'Payment codes appear here as you add residents.';
+
+  @override
+  String get egitimVideolariBaslik => 'Setup videos';
+
+  @override
+  String get egitimVideolariIzle => 'Watch videos';
+
+  @override
+  String get egitimVideoyuIzle => 'Watch video';
+
+  @override
+  String egitimIlerleme(String izlenen, String toplam) {
+    return '$izlenen/$toplam watched';
+  }
+
+  @override
+  String get egitimSimdiYap => 'Do this step now';
+
+  @override
+  String get egitimYakinda => 'The video for this step is coming soon.';
+
+  @override
+  String get egitimOnceki => 'Previous step';
+
+  @override
+  String get egitimSonraki => 'Next step';
+
+  @override
+  String get egitimAdimBilinmeyen => 'Setup step';
+
+  @override
+  String get egitimVideoKapali =>
+      'The video cannot be played: it may be private or embedding may not be allowed.';
+
+  @override
+  String get egitimVideoErisilemiyor =>
+      'YouTube cannot be reached right now. Check your internet connection; the rest of the page keeps working.';
+
+  @override
+  String get egitimVideoOynatilamadi => 'The video could not be played.';
+
+  @override
+  String get egitimAdimlar => 'Steps';
+
+  @override
+  String get egitimKaydirIpucu =>
+      'Swipe the video left or right to move between steps.';
+
+  @override
+  String get egitimIzlendi => 'Watched';
 }

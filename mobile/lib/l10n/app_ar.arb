@@ -2770,5 +2770,20 @@
   "odemeKodlariAciklama": "إذا كتب السكان رمزهم في وصف التحويل، تتم مطابقة الدفعة تلقائيًا. يمكنك نسخ الرمز أو إرساله بالبريد؛ ويتضمن البريد أيضًا بيانات البنك وما يُكتب في الوصف.",
   "odemeKoduKopyala": "نسخ الرمز",
   "odemeKoduKopyalandi": "تم نسخ الرمز",
-  "odemeKoduBosAciklama": "تظهر رموز الدفع هنا عند إضافة السكان."
+  "odemeKoduBosAciklama": "تظهر رموز الدفع هنا عند إضافة السكان.",
+  "egitimVideolariBaslik": "فيديوهات الإعداد",
+  "egitimVideolariIzle": "شاهد الفيديوهات",
+  "egitimVideoyuIzle": "شاهد الفيديو",
+  "egitimIlerleme": "تمت مشاهدة {izlenen}/{toplam}",
+  "egitimSimdiYap": "نفّذ هذه الخطوة الآن",
+  "egitimYakinda": "فيديو هذه الخطوة قريبًا.",
+  "egitimOnceki": "الخطوة السابقة",
+  "egitimSonraki": "الخطوة التالية",
+  "egitimAdimBilinmeyen": "خطوة الإعداد",
+  "egitimVideoKapali": "لا يمكن تشغيل الفيديو: قد يكون خاصًا أو قد لا يُسمح بتضمينه.",
+  "egitimVideoErisilemiyor": "تعذّر الوصول إلى YouTube الآن. تحقق من اتصالك بالإنترنت؛ بقية الصفحة تعمل كالمعتاد.",
+  "egitimVideoOynatilamadi": "تعذّر تشغيل الفيديو.",
+  "egitimAdimlar": "الخطوات",
+  "egitimKaydirIpucu": "اسحب الفيديو يمينًا أو يسارًا للتنقل بين الخطوات.",
+  "egitimIzlendi": "تمت المشاهدة"
 }

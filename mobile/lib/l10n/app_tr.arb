@@ -4115,5 +4115,21 @@
   "odemeKodlariAciklama": "Sakinler havale açıklamasına kendi kodunu yazarsa ödeme otomatik eşleşir. Kodu kopyalayabilir ya da e-postayla gönderebilirsiniz; e-postada banka bilgisi ve havale açıklaması da yer alır.",
   "odemeKoduKopyala": "Kodu kopyala",
   "odemeKoduKopyalandi": "Kod kopyalandı",
-  "odemeKoduBosAciklama": "Sakin ekledikçe ödeme kodları burada görünür."
+  "odemeKoduBosAciklama": "Sakin ekledikçe ödeme kodları burada görünür.",
+  "egitimVideolariBaslik": "Kurulum videoları",
+  "egitimVideolariIzle": "Videoları izle",
+  "egitimVideoyuIzle": "Videoyu izle",
+  "egitimIlerleme": "{izlenen}/{toplam} izlendi",
+  "@egitimIlerleme": {"placeholders": {"izlenen": {"type": "String"}, "toplam": {"type": "String"}}},
+  "egitimSimdiYap": "Şimdi bu adımı yap",
+  "egitimYakinda": "Bu adımın videosu yakında.",
+  "egitimOnceki": "Önceki adım",
+  "egitimSonraki": "Sonraki adım",
+  "egitimAdimBilinmeyen": "Kurulum adımı",
+  "egitimVideoKapali": "Video oynatılamıyor: video gizli olabilir ya da yerleştirmeye izin verilmemiş.",
+  "egitimVideoErisilemiyor": "YouTube'a şu anda ulaşılamıyor. İnternet bağlantınızı kontrol edin; sayfanın geri kalanı çalışmaya devam eder.",
+  "egitimVideoOynatilamadi": "Video oynatılamadı.",
+  "egitimAdimlar": "Adımlar",
+  "egitimKaydirIpucu": "Adımlar arasında geçmek için videoyu sağa ya da sola kaydırın.",
+  "egitimIzlendi": "İzlendi"
 }

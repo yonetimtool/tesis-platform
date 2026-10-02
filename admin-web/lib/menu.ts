@@ -327,6 +327,8 @@ const OGELER: readonly MenuOgesi[] = [
   // magazadaki paket tektir: bir tesis yoneticisinin butun kullanicilari
   // kilitleyebilmesi dogru olmazdi.
   { href: "/surum-politikasi", anahtar: "kabukSurumPolitikasi", icon: "phone", grup: "platform" },
+  // (P250 §4) Kurulum egitim videolari (YouTube "liste disi").
+  { href: "/egitim-videolari", anahtar: "egitimPanelBaslik", icon: "help", grup: "platform" },
   // kvkk-metinler ikonu asagida (doc) — platform grubunda doc yalniz burada.
   // (P170 §2) KVKK VE YASAL METIN YONETIMI BURAYA TASINDI.
   //

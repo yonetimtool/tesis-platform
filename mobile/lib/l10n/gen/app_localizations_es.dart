@@ -8170,4 +8170,54 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get odemeKoduBosAciklama =>
       'Los códigos de pago aparecen aquí a medida que añade residentes.';
+
+  @override
+  String get egitimVideolariBaslik => 'Vídeos de configuración';
+
+  @override
+  String get egitimVideolariIzle => 'Ver vídeos';
+
+  @override
+  String get egitimVideoyuIzle => 'Ver vídeo';
+
+  @override
+  String egitimIlerleme(String izlenen, String toplam) {
+    return '$izlenen/$toplam vistos';
+  }
+
+  @override
+  String get egitimSimdiYap => 'Hacer este paso ahora';
+
+  @override
+  String get egitimYakinda => 'El vídeo de este paso llegará pronto.';
+
+  @override
+  String get egitimOnceki => 'Paso anterior';
+
+  @override
+  String get egitimSonraki => 'Paso siguiente';
+
+  @override
+  String get egitimAdimBilinmeyen => 'Paso de configuración';
+
+  @override
+  String get egitimVideoKapali =>
+      'No se puede reproducir el vídeo: puede ser privado o no permitir la inserción.';
+
+  @override
+  String get egitimVideoErisilemiyor =>
+      'No se puede acceder a YouTube ahora. Compruebe su conexión; el resto de la página sigue funcionando.';
+
+  @override
+  String get egitimVideoOynatilamadi => 'No se pudo reproducir el vídeo.';
+
+  @override
+  String get egitimAdimlar => 'Pasos';
+
+  @override
+  String get egitimKaydirIpucu =>
+      'Deslice el vídeo a la izquierda o a la derecha para cambiar de paso.';
+
+  @override
+  String get egitimIzlendi => 'Visto';
 }

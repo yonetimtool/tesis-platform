@@ -108,6 +108,14 @@ ENVANTER: dict[str, tuple[str, tuple[str, str] | None]] = {
     "surum_politikasi_oku": (None, ("post", "/surum/kontrol")),
     # YAZMA yalniz platform admininde (uc `require_role("admin")`).
     "surum_politikasi_yaz": ("admin", ("put", "/surum-politikasi/{platform}")),
+    # --- (P250 §4) kurulum egitim videolari: PLATFORM tablosu (goc 0163) ---
+    # Tablo tenant'siz ve politikasiz; `app_rw` dogrudan goremez. OKUMA
+    # yonetim rollerine acik uctan (`GET /egitim-videolari` rolu kendisi
+    # denetler) — verdigi tek sey video kimligi + baslik, kisisel/tesis
+    # verisi YOK. YAZMA ve SILME yalniz platform admini.
+    "egitim_videosu_oku": (None, ("get", "/egitim-videolari")),
+    "egitim_videosu_yaz": ("admin", ("put", "/egitim-videolari/yonetim/blok")),
+    "egitim_videosu_sil": ("admin", ("delete", "/egitim-videolari/yonetim/blok")),
     # --- platform destek kanali: TUM tenant'larin biletleri ---
     "support_ticket_list": ("admin", ("get", "/support/all")),
     "support_ticket_answer": ("admin", ("patch", "/support/{tid}")),

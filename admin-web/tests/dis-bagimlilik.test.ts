@@ -117,6 +117,22 @@ describe("calisma ani dis kaynaklar", () => {
           "cagrilmaz.",
       ],
       [
+        "www.youtube.com",
+        "(P250 §4) ISTEK GIDER — YALNIZ kurulum videolari penceresi ACILINCA: " +
+          "YouTube IFrame Player API betigi (`iframe_api`). Pencere acilmadan " +
+          "hicbir sey yuklenmez. CSP `script-src`te tek YouTube alan adi bu.",
+      ],
+      [
+        "www.youtube-nocookie.com",
+        "(P250 §4) ISTEK GIDER — oynatici CERCEVESI (gizlilik modu): YouTube " +
+          "kullanici oynat'a basana kadar cerez yazmaz. CSP `frame-src`te.",
+      ],
+      [
+        "youtu.be",
+        "ISTEK GITMIYOR: panelde yer tutucu ve onizleme icin bicim " +
+          "(`https://youtu.be/<kimlik>`); oynatma nocookie cercevesinden.",
+      ],
+      [
         "play.google.com",
         "Magaza baglantisi. Kullanici TIKLAMADAN istek gitmez.",
       ],

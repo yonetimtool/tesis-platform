@@ -17,6 +17,10 @@ import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { useToast } from "@/components/Toast";
 import { KURULUM_HEDEFLERI } from "@/lib/kurulum-adimlari";
+import {
+  KurulumVideolariPenceresi,
+  useEgitimVideolari,
+} from "@/components/KurulumVideolari";
 import { useRol } from "@/lib/rol-kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
@@ -85,6 +89,13 @@ const UC = "/api/panel/kurulum";
 
 export default function KurulumPage() {
   const t = useT();
+  // (P250 §4) Adimin videosu varsa yaninda "Videoyu izle" — pencere o
+  // adimda acilir. Videosuz adimda baglanti CIZILMEZ (kirik oynatici yok).
+  const { data: egitim } = useEgitimVideolari();
+  const [videoAdimi, setVideoAdimi] = useState<string | null>(null);
+  const videoluAdimlar = new Set(
+    (egitim?.adimlar ?? []).filter((x) => x.video).map((x) => x.adim_kodu),
+  );
   const toast = useToast();
   const [hata, setHata] = useState<string | null>(null);
   const { data, error, mutate } = useSWR<Durum>(UC, jsonFetcher);
@@ -322,6 +333,17 @@ export default function KurulumPage() {
                     </span>
                   </p>
                   <p className="mt-1" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{t(h.aciklama)}</p>
+                  {videoluAdimlar.has(a.kod) && (
+                    <button
+                      type="button"
+                      data-test="kurulum-video-izle"
+                      className="odak-ic mt-1 underline"
+                      style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-accent-ink)" }}
+                      onClick={() => setVideoAdimi(a.kod)}
+                    >
+                      ▶ {t("egitimVideoyuIzle")}
+                    </button>
+                  )}
                   {/* (P193 §2) ZORUNLU/ISTEGE BAGLI ROZETI ve — bitmemis
                       adimda — NEYI ENGELLEDIGI. Biten adimda engel metni
                       cizilmez: olmayan bir sorunu anlatmak gurultudur. */}
@@ -381,6 +403,14 @@ export default function KurulumPage() {
           );
         })}
       </ol>
+      {/* Yalniz ACIKKEN cizilir: kapali pencere oynatici kurmasin. */}
+      {videoAdimi !== null && (
+        <KurulumVideolariPenceresi
+          acik
+          baslangic={videoAdimi}
+          onKapat={() => setVideoAdimi(null)}
+        />
+      )}
     </div>
   );
 }

@@ -2770,5 +2770,20 @@
   "odemeKodlariAciklama": "If residents write their own code in the transfer description, the payment is matched automatically. You can copy a code or send it by email; the email also contains the bank details and what to write in the description.",
   "odemeKoduKopyala": "Copy code",
   "odemeKoduKopyalandi": "Code copied",
-  "odemeKoduBosAciklama": "Payment codes appear here as you add residents."
+  "odemeKoduBosAciklama": "Payment codes appear here as you add residents.",
+  "egitimVideolariBaslik": "Setup videos",
+  "egitimVideolariIzle": "Watch videos",
+  "egitimVideoyuIzle": "Watch video",
+  "egitimIlerleme": "{izlenen}/{toplam} watched",
+  "egitimSimdiYap": "Do this step now",
+  "egitimYakinda": "The video for this step is coming soon.",
+  "egitimOnceki": "Previous step",
+  "egitimSonraki": "Next step",
+  "egitimAdimBilinmeyen": "Setup step",
+  "egitimVideoKapali": "The video cannot be played: it may be private or embedding may not be allowed.",
+  "egitimVideoErisilemiyor": "YouTube cannot be reached right now. Check your internet connection; the rest of the page keeps working.",
+  "egitimVideoOynatilamadi": "The video could not be played.",
+  "egitimAdimlar": "Steps",
+  "egitimKaydirIpucu": "Swipe the video left or right to move between steps.",
+  "egitimIzlendi": "Watched"
 }

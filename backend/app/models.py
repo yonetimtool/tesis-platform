@@ -5673,3 +5673,25 @@ class BakimKaydi(Base):
     olusturan_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), nullable=True
     )
+
+
+class EgitimIzleme(Base):
+    """(P250 §4, goc 0163) Kurulum egitim videosu IZLENDI isareti — hesapta.
+
+    Web ve mobil ayni satiri okur. `surum`: isaretin kondugu video surumu;
+    video degisince (surum artar) adim yeniden "izlenmedi" gorunur.
+    Video tablosu (`egitim_videosu`) platform tablosudur ve modeli YOK:
+    erisim yalniz SECURITY DEFINER fonksiyonlarindan.
+    """
+
+    __tablename__ = "egitim_izleme"
+
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    set_kodu: Mapped[str] = mapped_column(Text, primary_key=True)
+    adim_kodu: Mapped[str] = mapped_column(Text, primary_key=True)
+    surum: Mapped[int] = mapped_column(Integer, nullable=False)
+    izlendi_at = _created_at()

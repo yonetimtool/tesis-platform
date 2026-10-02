@@ -2770,5 +2770,20 @@
   "odemeKodlariAciklama": "Schreiben Bewohner ihren Code in den Verwendungszweck, wird die Zahlung automatisch zugeordnet. Sie können den Code kopieren oder per E-Mail senden; die E-Mail enthält auch die Bankverbindung und den Verwendungszweck.",
   "odemeKoduKopyala": "Code kopieren",
   "odemeKoduKopyalandi": "Code kopiert",
-  "odemeKoduBosAciklama": "Zahlungscodes erscheinen hier, sobald Sie Bewohner hinzufügen."
+  "odemeKoduBosAciklama": "Zahlungscodes erscheinen hier, sobald Sie Bewohner hinzufügen.",
+  "egitimVideolariBaslik": "Einrichtungsvideos",
+  "egitimVideolariIzle": "Videos ansehen",
+  "egitimVideoyuIzle": "Video ansehen",
+  "egitimIlerleme": "{izlenen}/{toplam} angesehen",
+  "egitimSimdiYap": "Diesen Schritt jetzt erledigen",
+  "egitimYakinda": "Das Video zu diesem Schritt folgt bald.",
+  "egitimOnceki": "Vorheriger Schritt",
+  "egitimSonraki": "Nächster Schritt",
+  "egitimAdimBilinmeyen": "Einrichtungsschritt",
+  "egitimVideoKapali": "Das Video kann nicht abgespielt werden: Es ist möglicherweise privat oder das Einbetten ist nicht erlaubt.",
+  "egitimVideoErisilemiyor": "YouTube ist gerade nicht erreichbar. Prüfen Sie Ihre Internetverbindung; der Rest der Seite funktioniert weiter.",
+  "egitimVideoOynatilamadi": "Das Video konnte nicht abgespielt werden.",
+  "egitimAdimlar": "Schritte",
+  "egitimKaydirIpucu": "Wischen Sie das Video nach links oder rechts, um zwischen den Schritten zu wechseln.",
+  "egitimIzlendi": "Angesehen"
 }

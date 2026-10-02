@@ -8262,4 +8262,54 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get odemeKoduBosAciklama =>
       'Платёжные коды появятся здесь по мере добавления жильцов.';
+
+  @override
+  String get egitimVideolariBaslik => 'Видео по настройке';
+
+  @override
+  String get egitimVideolariIzle => 'Смотреть видео';
+
+  @override
+  String get egitimVideoyuIzle => 'Смотреть видео';
+
+  @override
+  String egitimIlerleme(String izlenen, String toplam) {
+    return 'Просмотрено $izlenen/$toplam';
+  }
+
+  @override
+  String get egitimSimdiYap => 'Выполнить этот шаг сейчас';
+
+  @override
+  String get egitimYakinda => 'Видео для этого шага скоро появится.';
+
+  @override
+  String get egitimOnceki => 'Предыдущий шаг';
+
+  @override
+  String get egitimSonraki => 'Следующий шаг';
+
+  @override
+  String get egitimAdimBilinmeyen => 'Шаг настройки';
+
+  @override
+  String get egitimVideoKapali =>
+      'Видео не воспроизводится: возможно, оно скрыто или его встраивание запрещено.';
+
+  @override
+  String get egitimVideoErisilemiyor =>
+      'YouTube сейчас недоступен. Проверьте подключение к интернету; остальная страница продолжает работать.';
+
+  @override
+  String get egitimVideoOynatilamadi => 'Не удалось воспроизвести видео.';
+
+  @override
+  String get egitimAdimlar => 'Шаги';
+
+  @override
+  String get egitimKaydirIpucu =>
+      'Проведите видео влево или вправо, чтобы переключать шаги.';
+
+  @override
+  String get egitimIzlendi => 'Просмотрено';
 }

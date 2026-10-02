@@ -218,6 +218,8 @@ class Action:
     VISITOR_ONAY_YANIT = "visitor_onay_yanit"
     DAIRE_TELEFON_GOSTER = "daire_telefon_goster"
     SESLI_MESAJ_GONDER = "sesli_mesaj_gonder"
+    # (P250 §4) Platform admini egitim videosu yazdi/sildi.
+    EGITIM_VIDEOSU = "egitim_videosu"
     SESLI_MESAJ_DINLE = "sesli_mesaj_dinle"
     SESLI_MESAJ_SIL = "sesli_mesaj_sil"
     # (P240 §2) DIYAFON — yapilandirma ve EYLEM ayri: kapi acmak fiziksel

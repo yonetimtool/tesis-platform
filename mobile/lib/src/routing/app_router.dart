@@ -49,6 +49,7 @@ import '../features/kargo/presentation/kargo_screen.dart';
 import '../features/nfc/presentation/nfc_screen.dart';
 import '../features/dues/presentation/my_dues_screen.dart';
 import '../features/yonetici_iletisim/presentation/yonetici_iletisim_screen.dart';
+import '../features/egitim/presentation/kurulum_videolari_screen.dart';
 import '../features/etkinlik/presentation/etkinlik_screen.dart';
 import '../features/patrol/presentation/patrol_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
@@ -116,6 +117,8 @@ class AppRoutes {
 
   /// (P166 §8.2) Kurulum sihirbazi — web ile AYNI adimlar, AYNI uc.
   static const kurulum = '/kurulum';
+  /// (P250 §4) Kurulum egitim videolari (tam ekran). `?adim=` ile o adimda acilir.
+  static const kurulumVideolari = '/kurulum-videolari';
   static const yoneticiIletisim = '/yonetici-iletisim';
   static const assets = '/assets';
   static const announcements = '/announcements';
@@ -662,6 +665,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         // hatirlatici, ana ekrandaki "Tum Moduller" ve Ayarlar.
         path: AppRoutes.kurulum,
         builder: (context, state) => const KurulumScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.kurulumVideolari,
+        builder: (context, state) => KurulumVideolariScreen(
+          baslangic: state.uri.queryParameters['adim'],
+        ),
       ),
       GoRoute(
         path: AppRoutes.anketler,

@@ -248,6 +248,11 @@ GET	/duzenli-giderler	zorunlu	tesis	-	-	-	-	-		-
 POST	/duzenli-giderler	zorunlu	tesis	-	-	ozel	-	-		dar
 DELETE	/duzenli-giderler/{gider_id}	zorunlu	tesis	rol	-	ozel	-	-		-
 PATCH	/duzenli-giderler/{gider_id}	zorunlu	tesis	rol	-	ozel	-	-		dar
+GET	/egitim-videolari	zorunlu	tesis	-	-	-	-	-		dar
+GET	/egitim-videolari/yonetim	zorunlu	tesis	-	-	-	-	-		dar
+DELETE	/egitim-videolari/yonetim/{adim_kodu}	zorunlu	tesis	rol	-	ozel	-	-		dar
+PUT	/egitim-videolari/yonetim/{adim_kodu}	zorunlu	tesis	rol	-	ozel	-	-		dar
+POST	/egitim-videolari/{adim_kodu}/izlendi	zorunlu	tesis	kendi	-	genel	-	-		dar
 GET	/ekler	zorunlu	tesis	-	-	-	-	-	daire ekinde saha rolu yalniz saha_gorebilir=true gorur (sorguda suzulur)	dar
 POST	/ekler	zorunlu	tesis	-	-	genel	-	-		dar
 DELETE	/ekler/{ek_id}	zorunlu	tesis	kendi	-	genel	-	-		-

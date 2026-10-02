@@ -10442,3 +10442,74 @@ class VardiyaIceAktarimSonuc(BaseModel):
     satirlar: list[VardiyaIceAktarimSatirSonuc]
     #: (E2E 2026-09) Ice aktarim `parti/{id}/geri-al` ile geri alinabilir.
     parti_id: uuid.UUID | None = None
+
+
+# ============================================================================ #
+# (P250 §4) KURULUM EGITIM VIDEOLARI
+# ============================================================================ #
+class EgitimVideosuOut(BaseModel):
+    adim_kodu: str
+    youtube_id: str
+    baslik: str
+    aciklama: str | None = None
+    sira: int
+    aktif: bool
+    #: Video degisince artar; izlendi isareti surume aittir.
+    surum: int
+    updated_at: datetime | None = None
+
+
+class EgitimVideoYonetimListe(BaseModel):
+    """Panel: setin BUTUN adimlari (sihirbaz sirasiyla) + kayitli videolar."""
+
+    set_kodu: str
+    adimlar: list[str]
+    videolar: list[EgitimVideosuOut]
+
+
+class EgitimVideosuYaz(BaseModel):
+    """`baglanti`: youtube.com/watch?v=, youtu.be/, youtube.com/shorts/ ya
+    da yalniz kimlik. Sunucu KIMLIGI ayiklar ve yalniz onu saklar."""
+
+    baglanti: str = Field(..., min_length=1, max_length=_G.URL)
+    baslik: str = Field(..., min_length=1, max_length=200)
+    aciklama: str | None = Field(None, max_length=500)
+    sira: int = Field(0, ge=0, le=9999)
+    aktif: bool = True
+
+    @field_validator("baslik")
+    @classmethod
+    def _baslik_bosluk(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("baslik_bos_olamaz")
+        return v
+
+    @field_validator("aciklama")
+    @classmethod
+    def _aciklama_bosluk(cls, v: str | None) -> str | None:
+        return (v or "").strip() or None
+
+
+class EgitimAdimVideo(BaseModel):
+    youtube_id: str
+    baslik: str
+    aciklama: str | None = None
+
+
+class EgitimAdimOut(BaseModel):
+    adim_kodu: str
+    #: Aktif video yoksa null -> istemci "yakinda" gosterir (kirik oynatici YOK).
+    video: EgitimAdimVideo | None = None
+    #: Bu kisi bu adimin GUNCEL videosunu sonuna kadar izledi mi.
+    izlendi: bool = False
+
+
+class EgitimVideoListe(BaseModel):
+    set_kodu: str
+    adimlar: list[EgitimAdimOut]
+    #: Videosu olan adim sayisi ve bunlardan izlenenler ("3/8 izlendi").
+    toplam: int
+    izlenen: int
+    #: Zorunlu kurulum adimlari tamam mi — kart kucuk cizilir, kaybolmaz.
+    kurulum_tamam: bool

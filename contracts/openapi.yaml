@@ -10389,6 +10389,86 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/SurumKontrolYanit" }
+  /egitim-videolari:
+    get:
+      tags: [egitim-videolari]
+      summary: (P250 §4) Kurulum egitim videolari — adimlar, video (yoksa "yakinda"), izlendi
+      description: >
+        Bugun yalniz `set=yonetici` (kurulum sihirbazi) ve yalniz admin +
+        yonetici gorur; ileride sakin/guvenlik setleri ayni yapida gelir.
+        `izlendi`, kisinin bu adimin GUNCEL videosunu (surum) sonuna kadar
+        izleyip izlemedigidir.
+      parameters:
+        - { name: set, in: query, required: false, schema: { type: string, default: yonetici } }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EgitimVideoListe" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /egitim-videolari/{adim_kodu}/izlendi:
+    post:
+      tags: [egitim-videolari]
+      summary: (P250 §4) Video SONUNA KADAR izlendi (oynaticinin ENDED olayi)
+      parameters:
+        - { name: adim_kodu, in: path, required: true, schema: { type: string } }
+        - { name: set, in: query, required: false, schema: { type: string, default: yonetici } }
+      responses:
+        "204": { description: Kaydedildi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: Adim ya da aktif video yok }
+  /egitim-videolari/yonetim:
+    get:
+      tags: [egitim-videolari]
+      summary: (P250 §4) Panel — setin adimlari + kayitli videolar (platform admini)
+      parameters:
+        - { name: set, in: query, required: false, schema: { type: string, default: yonetici } }
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EgitimVideoYonetimListe" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /egitim-videolari/yonetim/{adim_kodu}:
+    parameters:
+      - { name: adim_kodu, in: path, required: true, schema: { type: string } }
+      - { name: set, in: query, required: false, schema: { type: string, default: yonetici } }
+    put:
+      tags: [egitim-videolari]
+      summary: (P250 §4) Adimin videosunu yaz — YouTube baglantisindan yalniz KIMLIK saklanir
+      description: >
+        Kabul: youtube.com/watch?v=, youtu.be/, youtube.com/shorts/ (ve
+        embed/yalniz kimlik). Gecersizse 422 `youtube_baglantisi_gecersiz`.
+        Video kimligi degisirse `surum` artar ve izlendi isaretleri yeni
+        videoya sayilmaz. Degisiklik aninda yayindadir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EgitimVideosuYaz" }
+      responses:
+        "200":
+          description: Kaydedildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EgitimVideosuOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: Bilinmeyen set ya da adim }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [egitim-videolari]
+      summary: (P250 §4) Adimin videosunu kaldir ("yakinda" gorunur)
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: Video yok }
   /surum-politikasi:
     get:
       tags: [surum]
@@ -19510,6 +19590,57 @@ components:
             calisirken KIRIK bir dugmeye basardi.
         asgari_surum: { type: string, nullable: true }
         onerilen_surum: { type: string, nullable: true }
+    EgitimVideosuOut:
+      type: object
+      required: [adim_kodu, youtube_id, baslik, sira, aktif, surum]
+      properties:
+        adim_kodu: { type: string }
+        youtube_id: { type: string, pattern: "^[A-Za-z0-9_-]{11}$" }
+        baslik: { type: string }
+        aciklama: { type: string, nullable: true }
+        sira: { type: integer }
+        aktif: { type: boolean }
+        surum: { type: integer }
+        updated_at: { type: string, format: date-time, nullable: true }
+    EgitimVideoYonetimListe:
+      type: object
+      required: [set_kodu, adimlar, videolar]
+      properties:
+        set_kodu: { type: string }
+        adimlar: { type: array, items: { type: string } }
+        videolar: { type: array, items: { $ref: "#/components/schemas/EgitimVideosuOut" } }
+    EgitimVideosuYaz:
+      type: object
+      required: [baglanti, baslik]
+      properties:
+        baglanti: { type: string, maxLength: 2048 }
+        baslik: { type: string, maxLength: 200 }
+        aciklama: { type: string, maxLength: 500, nullable: true }
+        sira: { type: integer, minimum: 0, maximum: 9999, default: 0 }
+        aktif: { type: boolean, default: true }
+    EgitimVideoListe:
+      type: object
+      required: [set_kodu, adimlar, toplam, izlenen, kurulum_tamam]
+      properties:
+        set_kodu: { type: string }
+        toplam: { type: integer }
+        izlenen: { type: integer }
+        kurulum_tamam: { type: boolean }
+        adimlar:
+          type: array
+          items:
+            type: object
+            required: [adim_kodu, izlendi]
+            properties:
+              adim_kodu: { type: string }
+              izlendi: { type: boolean }
+              video:
+                type: object
+                nullable: true
+                properties:
+                  youtube_id: { type: string }
+                  baslik: { type: string }
+                  aciklama: { type: string, nullable: true }
     SurumPolitikasiOut:
       type: object
       required: [platform]

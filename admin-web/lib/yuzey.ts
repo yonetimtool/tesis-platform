@@ -63,6 +63,8 @@ export const PLATFORM_ROTALARI = [
   // tesise gore degismez. Bir tesis yoneticisinin butun kullanicilari
   // kilitleyebilmesi dogru olmazdi.
   "/surum-politikasi",
+  // (P250 §4) Kurulum egitim videolari — YouTube baglantilari.
+  "/egitim-videolari",
 ] as const;
 
 /**

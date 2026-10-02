@@ -197,7 +197,10 @@ describe("(P244 §5) ozet seridi", () => {
         !u.includes("/api/panel/yaslandirma") &&
         !u.includes("/api/complaints") &&
         !u.includes("/api/announcements") &&
-        !u.includes("/api/audit"),
+        !u.includes("/api/audit") &&
+        // (P250 §4) Kurulum videolari karti — yeni bir SUNUCU ucu
+        // (`GET /egitim-videolari`), bilincli olarak eklendi.
+        !u.includes("/api/egitim-videolari"),
     );
     expect(yeni, `beklenmeyen uc: ${yeni.join(", ")}`).toEqual([]);
   });
