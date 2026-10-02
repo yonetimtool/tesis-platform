@@ -79,7 +79,10 @@ def test_tekil_TUR_ve_HEDEF_ile(client, adm, gider):
     unit = _daire(client, adm)
     _sakin(client, adm, unit["no"], "kiraci")
     r = client.post("/dues/assessments", headers=adm, json={
-        "donem": f"2026-0{_sfx()[0] if _sfx()[0].isdigit() and _sfx()[0] != '0' else '1'}",
+        # (P251) Ay TEK cagridan: `_sfx()` iki kez cagrilinca denetlenen ile
+        # kullanilan farkli olabiliyor ve "2026-0a" ya da "2026-00" 422
+        # veriyordu (tam takimda olculdu).
+        "donem": f"2026-0{(lambda c: c if c in '123456789' else '1')(_sfx()[0])}",
         "unit_id": unit["id"], "tutar_kurus": 150000,
         "gelir_gider_tanim_id": gider["id"],
     })

@@ -78,6 +78,20 @@ def test_detect_creates_notification_idempotently(client, world, owner_conn):
 
 
 # ---------------------------- GET /notifications --------------------------- #
+def _tum_bildirimler(client, h, **params):
+    """Butun sayfalar (200'luk) — tek sayfaya guvenmek tam takimda flake."""
+    out, offset = [], 0
+    while True:
+        r = client.get("/notifications", headers=h,
+                       params={**params, "limit": 200, "offset": offset})
+        assert r.status_code == 200, r.text
+        sayfa = r.json()
+        out += sayfa["items"]
+        offset += 200
+        if offset >= sayfa["meta"]["total"] or not sayfa["items"]:
+            return out
+
+
 def test_list_notifications_and_okundu_filter(client, world, owner_conn):
     admin = _headers(client, world["slug_a"], world["admin_a"])
     wid = _make_missed(client, owner_conn, admin, world["a"])
@@ -86,18 +100,22 @@ def test_list_notifications_and_okundu_filter(client, world, owner_conn):
     assert r.status_code == 200, r.text
     body = r.json()
     assert {"meta", "items"} <= set(body)
-    item = next((n for n in body["items"] if n["patrol_window_id"] == str(wid)), None)
+    # (P251) TUM SAYFALAR taranir: `detect_missed(2030)` tesisteki BUTUN
+    # bekleyen pencereler icin ayni anda bildirim uretir; tam takimda 50'yi
+    # asar ve ayni zaman damgasinda sira `id`ye kalir — ilk sayfa yetmez.
+    item = next((n for n in _tum_bildirimler(client, admin)
+                 if n["patrol_window_id"] == str(wid)), None)
     assert item is not None
     assert item["tip"] == "kacirilan_tur" and item["okundu"] is False
 
     # okundu=false -> var; okundu=true -> yok
     assert any(
         n["patrol_window_id"] == str(wid)
-        for n in client.get("/notifications", headers=admin, params={"okundu": False}).json()["items"]
+        for n in _tum_bildirimler(client, admin, okundu=False)
     )
     assert all(
         n["patrol_window_id"] != str(wid)
-        for n in client.get("/notifications", headers=admin, params={"okundu": True}).json()["items"]
+        for n in _tum_bildirimler(client, admin, okundu=True)
     )
 
 
