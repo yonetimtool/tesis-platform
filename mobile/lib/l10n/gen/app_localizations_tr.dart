@@ -8498,4 +8498,10 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get semaSuresiDolmus => 'Süresi dolmuş (haritada sayılmıyor)';
+
+  @override
+  String get izgaraYukariTasi => 'Yukarı taşı';
+
+  @override
+  String get izgaraAsagiTasi => 'Aşağı taşı';
 }

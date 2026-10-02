@@ -8708,4 +8708,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get semaSuresiDolmus => 'Expirées (non comptées sur le plan)';
+
+  @override
+  String get izgaraYukariTasi => 'Monter';
+
+  @override
+  String get izgaraAsagiTasi => 'Descendre';
 }

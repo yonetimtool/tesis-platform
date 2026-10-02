@@ -7791,6 +7791,11 @@ class PanoTercihi(BaseModel):
     #: (P250 §6) Hizli Islemler kartinin secimi (sirali kimlikler). Ayri
     #: uctan (`PUT /me/hizli-islemler`) yazilir; yerlesim kaydi onu KORUR.
     hizli_islemler: list[str] | None = Field(None, max_length=8)
+    #: (P251 §11) MOBIL ana ekran izgarasi (sirali menu girisi adlari). Ayri
+    #: uctan (`PUT /me/ana-ekran-izgarasi`) yazilir; web yerlesim kaydi onu
+    #: KORUR. Web Ozet karolarindan AYRI anahtar: iki yuzeyin kume ve
+    #: sinirlari farkli (web 6 sayfa, mobil 8 menu girisi).
+    ana_ekran_izgarasi: list[str] | None = Field(None, max_length=8)
 
 
 HATIRLATMA_TEKRARLARI = ("yok", "gunluk", "haftalik", "aylik")
@@ -10705,6 +10710,27 @@ class HizliIslemlerOut(BaseModel):
     varsayilan: list[str]
     #: Kullanici kendi secimini yapti mi (varsayilana donunce false).
     ozel: bool
+
+
+#: (P251 §11) Mobil izgara ogesi: menu girisi adi (`HomeMenuEntry.name`) ya da
+#: menude karsiligi olmayan varsayilan kart (`kart:<HomeKartId>`). Ikincisi
+#: olmadan, varsayilan izgarayi surukleyen kullanicinin menusuz kartlari
+#: (sakinde "Sikayetlerim") kayitta kaybolurdu.
+IZGARA_GIRISI = Annotated[
+    str, Field(min_length=1, max_length=40, pattern=r"^(kart:)?[A-Za-z][A-Za-z0-9]*$")
+]
+
+
+class AnaEkranIzgarasi(BaseModel):
+    """(P251 §11) Mobil ana ekran izgarasi — SIRALI giris adlari.
+
+    `secili: null` = varsayilana don. Sunucu girisleri ROLE gore suzmez:
+    kume istemcinin menu izin katmanindan gelir (`izgarayiCoz`) ve kayit
+    bir GORUNUM tercihidir, yetki degil — rolun goremedigi bir ad kayitta
+    dursa bile cizilmez.
+    """
+
+    secili: list[IZGARA_GIRISI] | None = Field(None, max_length=8)
 
 
 class HizliIslemlerYaz(BaseModel):

@@ -8779,4 +8779,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get semaSuresiDolmus => 'Истёкшие (не учитываются на карте)';
+
+  @override
+  String get izgaraYukariTasi => 'Переместить вверх';
+
+  @override
+  String get izgaraAsagiTasi => 'Переместить вниз';
 }

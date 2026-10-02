@@ -2917,5 +2917,7 @@
   "teslimAciklama_geri_dondu": "قد يكون عنوان البريد غير صالح.",
   "teslimAciklama_basarisiz": "حاول مرة أخرى لاحقًا.",
   "teslimAciklama_yapilandirilmadi": "تواصل مع destek@yonetiyor.com.",
-  "semaSuresiDolmus": "منتهية (غير محسوبة في الخريطة)"
+  "semaSuresiDolmus": "منتهية (غير محسوبة في الخريطة)",
+  "izgaraYukariTasi": "نقل لأعلى",
+  "izgaraAsagiTasi": "نقل لأسفل"
 }

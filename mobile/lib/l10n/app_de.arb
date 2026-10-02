@@ -2917,5 +2917,7 @@
   "teslimAciklama_geri_dondu": "Die E-Mail-Adresse ist möglicherweise ungültig.",
   "teslimAciklama_basarisiz": "Bitte später erneut versuchen.",
   "teslimAciklama_yapilandirilmadi": "Wenden Sie sich an destek@yonetiyor.com.",
-  "semaSuresiDolmus": "Abgelaufen (nicht auf der Karte gezählt)"
+  "semaSuresiDolmus": "Abgelaufen (nicht auf der Karte gezählt)",
+  "izgaraYukariTasi": "Nach oben verschieben",
+  "izgaraAsagiTasi": "Nach unten verschieben"
 }

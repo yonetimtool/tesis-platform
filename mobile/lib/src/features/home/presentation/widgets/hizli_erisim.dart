@@ -1,5 +1,6 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 
 import '../../../../core/i18n/l10n.dart';
 import '../../../../core/ui/kelime_bolunmez.dart';
@@ -232,7 +233,17 @@ class HizliErisimIzgarasi extends StatefulWidget {
     required this.kartlar,
     required this.onSec,
     this.mod = GorunumModu.standart,
+    this.onSiraDegisti,
   });
+
+  /// (P251 §11) BASILI TUT, SURUKLE, BIRAK — yeni sira (TUM liste).
+  ///
+  /// `null` ise surukleme kapali (onizleme/test cizimleri). Kisa dokunus
+  /// her zaman [onSec]; surukleme yalniz uzun basista baslar, yani
+  /// sayfayi kaydirmak bir karti yerinden oynatmaz. Ekran okuyucu
+  /// kullanicisi surukleyemez: her karoda "Yukari tasi / Asagi tasi"
+  /// eylemleri ayni geri cagirmaya gider.
+  final ValueChanged<List<HizliErisimKart>>? onSiraDegisti;
 
   /// (P230 §2) GORUNUM MODU — YUKARIDAN VERILIR, burada okunmaz.
   ///
@@ -255,10 +266,34 @@ class _HizliErisimIzgarasiState extends State<HizliErisimIzgarasi> {
   final baslikGrubu = AutoSizeGroup();
   final sayacGrubu = AutoSizeGroup();
 
+  /// (P251 §11) Surukleme suresince ONIZLEME sirasi — diger kartlar "yer
+  /// acar". Birakinca kaydedilir, iptal edilirse atilir.
+  List<HizliErisimKart>? _onizleme;
+  bool _surukleniyor = false;
+
+  @override
+  void didUpdateWidget(covariant HizliErisimIzgarasi eski) {
+    super.didUpdateWidget(eski);
+    // Yeni sira ust katmandan geldi (ya da sayac yenilendi): onizleme
+    // artik gereksiz — surukleme suruyorsa dokunulmaz.
+    if (!_surukleniyor) _onizleme = null;
+  }
+
+  static String _kimlik(HizliErisimKart k) => '${k.id.name}|${k.rota}';
+
+  int _sira(List<HizliErisimKart> l, HizliErisimKart k) =>
+      l.indexWhere((x) => _kimlik(x) == _kimlik(k));
+
+  void _kaydet(List<HizliErisimKart> yeni) {
+    setState(() => _onizleme = yeni);
+    widget.onSiraDegisti?.call(yeni);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final kartlar = widget.kartlar;
+    final kartlar = _onizleme ?? widget.kartlar;
     if (kartlar.isEmpty) return const SizedBox.shrink();
+    final l10n = context.l10n;
 
     return LayoutBuilder(
       builder: (context, c) {
@@ -268,6 +303,24 @@ class _HizliErisimIzgarasiState extends State<HizliErisimIzgarasi> {
         final mod = widget.mod;
         final sutun = mod.izgaraSutun ?? hizliErisimSutun(c.maxWidth);
         final hucre = (c.maxWidth - HomeTokens.gridGap * (sutun - 1)) / sutun;
+        final oran = izgaraOrani(context, hizliErisimOran(sutun));
+        // Hangi dortlu kalir: KULLANICININ KENDI izgara sirasinin
+        // ilk dordu. "Buyuk mod icin ayri liste" kavrami eklemek,
+        // kullaniciya IKINCI bir duzenleme ekrani ogretmek olurdu.
+        // Gorunen kartlar listenin ONEKI oldugu icin tasima indeksleri
+        // tum listede de ayni yeri gosterir.
+        final gorunen = kartlar.take(mod.izgaraKaroSiniri ?? kartlar.length).toList();
+
+        Widget kart(HizliErisimKart k, {bool tasinan = false}) => HizliErisimKarti(
+              kart: k,
+              onTap: () => widget.onSec(k),
+              hucreGenisligi: hucre,
+              // Tasinan kopya ORTAK gruba girmez: ust katmanda yasayan
+              // gecici bir uye, izgaradaki kartlarin puntosunu oynatirdi.
+              baslikGrubu: tasinan ? null : baslikGrubu,
+              sayacGrubu: tasinan ? null : sayacGrubu,
+            );
+
         return GridView.count(
           crossAxisCount: sutun,
           shrinkWrap: true,
@@ -275,24 +328,93 @@ class _HizliErisimIzgarasiState extends State<HizliErisimIzgarasi> {
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: HomeTokens.gridGap,
           crossAxisSpacing: HomeTokens.gridGap,
-          childAspectRatio: izgaraOrani(context, hizliErisimOran(sutun)),
+          childAspectRatio: oran,
           children: [
-            // Hangi dortlu kalir: KULLANICININ KENDI izgara sirasinin
-            // ilk dordu. "Buyuk mod icin ayri liste" kavrami eklemek,
-            // kullaniciya IKINCI bir duzenleme ekrani ogretmek olurdu.
-            for (final k in kartlar.take(mod.izgaraKaroSiniri ?? kartlar.length))
-              HizliErisimKarti(
-                kart: k,
-                onTap: () => widget.onSec(k),
-                hucreGenisligi: hucre,
-                baslikGrubu: baslikGrubu,
-                sayacGrubu: sayacGrubu,
-              ),
+            for (final (i, k) in gorunen.indexed)
+              if (widget.onSiraDegisti == null)
+                kart(k)
+              else
+                KeyedSubtree(
+                  // Kimlikli: sira degisince kart DURUMUYLA tasinir; surukleme
+                  // sirasinda tutulan kart yeniden kurulmaz.
+                  key: ValueKey('izgara-${_kimlik(k)}'),
+                  child: Semantics(
+                    customSemanticsActions: {
+                      if (i > 0)
+                        CustomSemanticsAction(label: l10n.izgaraYukariTasi): () =>
+                            _kaydet(izgaradaSiraDegistir(kartlar, i, i - 1)),
+                      if (i < gorunen.length - 1)
+                        CustomSemanticsAction(label: l10n.izgaraAsagiTasi): () =>
+                            _kaydet(izgaradaSiraDegistir(kartlar, i, i + 1)),
+                    },
+                    child: DragTarget<HizliErisimKart>(
+                      // Uzerine gelince diger kartlar YER ACAR (onizleme).
+                      onWillAcceptWithDetails: (d) {
+                        final l = _onizleme ?? widget.kartlar;
+                        final eski = _sira(l, d.data);
+                        final yeni = _sira(l, k);
+                        if (eski >= 0 && yeni >= 0 && eski != yeni) {
+                          setState(() =>
+                              _onizleme = izgaradaSiraDegistir(l, eski, yeni));
+                        }
+                        return true;
+                      },
+                      onAcceptWithDetails: (_) {
+                        _surukleniyor = false;
+                        final l = _onizleme;
+                        if (l != null) _kaydet(l);
+                      },
+                      builder: (context, _, _) => LongPressDraggable<HizliErisimKart>(
+                        data: k,
+                        // Kalkis titresimi (Flutter varsayilani da acik;
+                        // acikca yazildi ki kural okunsun).
+                        hapticFeedbackOnStart: true,
+                        onDragStarted: () => setState(() {
+                          _surukleniyor = true;
+                          _onizleme = List.of(widget.kartlar);
+                        }),
+                        // Kart bir hedefin DISINDA birakildi: sira geri alinir.
+                        onDraggableCanceled: (_, _) => setState(() {
+                          _surukleniyor = false;
+                          _onizleme = null;
+                        }),
+                        feedback: SizedBox(
+                          width: hucre,
+                          height: hucre / oran,
+                          child: Transform.scale(
+                            scale: 1.06,
+                            child: Material(
+                              color: Colors.transparent,
+                              elevation: 8,
+                              borderRadius:
+                                  BorderRadius.circular(HomeTokens.cardRadius),
+                              child: kart(k, tasinan: true),
+                            ),
+                          ),
+                        ),
+                        childWhenDragging: Opacity(opacity: 0.3, child: kart(k)),
+                        child: kart(k),
+                      ),
+                    ),
+                  ),
+                ),
           ],
         );
       },
     );
   }
+}
+
+/// (P251 §11) Bir karti [eski] yerinden [yeni] yerine tasi (saf).
+List<HizliErisimKart> izgaradaSiraDegistir(
+  List<HizliErisimKart> kartlar,
+  int eski,
+  int yeni,
+) {
+  final l = List.of(kartlar);
+  final k = l.removeAt(eski);
+  l.insert(yeni.clamp(0, l.length), k);
+  return l;
 }
 
 /// Izgara sutun sayisi — referans 4. Esik IZGARANIN kendi genisligine gore

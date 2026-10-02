@@ -437,3 +437,57 @@ yapılmadı**.
 
 `tests/sayfa-aramasi.test.ts`: "kasalar" araması derin bağlantıyı
 döndürür.
+
+# §11 — Mobil ızgara: basılı tut, sürükle, bırak
+
+## Davranış
+
+* **Basılı tut**, karoyu kaldırır. Kart hafifçe büyüyüp gölgeyle yükselir, titreşim olur ve yerinde soluk bir iz kalır.
+* **Sürükle**: başka bir karonun üstüne gelince diğer karolar yer açar. Bu canlı bir önizlemedir ve henüz kaydedilmez.
+* **Bırak**: yeni sıra hesaba kaydedilir. Karo bir hedefin dışında bırakılırsa sıra geri alınır.
+* **Kaydırmayla çakışmaz.** Kısa dokunuş karoyu açar. Sürükleme yalnız uzun basışta (`kLongPressTimeout`) başlar, yani sayfayı kaydıran parmak karoyu oynatmaz.
+* **Büyük mod** (2 sütun, ilk 4 karo) ve **Standart** modda aynı şekilde çalışır. Görünen karolar listenin başı olduğu için taşıma tüm listede de aynı yeri gösterir.
+* **Erişilebilirlik:** ekran okuyucu sürükleyemez. Her karoda "Yukarı taşı" ve "Aşağı taşı" özel eylemleri var (7 dil). İlk karoda "Yukarı", sonuncuda "Aşağı" eylemi yok.
+
+## Kayıt: tek tercih, artık hesapta
+
+* P139.3'te ızgara tercihi **cihazdaydı** (secure storage). İstek "yeni sıra hesaba kaydedilir" diyor. Kayıt sunucuya taşındı: `pano_tercihi.ana_ekran_izgarasi`, uçlar `GET`/`PUT /me/ana-ekran-izgarasi`.
+* "Ana ekranı düzenle" ekranı ve sürükle-bırak **aynı kaydı** yazıyor; ikinci bir düzen kaydı yok. Aynı kullanıcı her telefonda aynı ızgarayı görür.
+* Web Özet düzeni kaydedilirken (`PUT /me/pano-tercihi`) bu anahtar **korunur**, tıpkı P250'nin Hızlı İşlemler seçimi gibi. Mobil yazım da web düzenine ve Hızlı İşlemler'e dokunmaz.
+* **Geçiş:** hesapta kayıt yoksa ve cihazda eski (P139) kayıt varsa, kayıt hesaba taşınır ve cihazdan silinir. Kimse düzenini kaybetmez. Uygulama açıldığında cihazda eski kayıt duruyorsa hesaptakinin yerine o geçer (bekleyen yazım sayılır). Bu yalnız bir kez olur.
+* **Çevrimdışı:** yazma başarısız olursa seçim cihaza yazılır ve bir sonraki açılışta hesaba taşınır. Sıfırlama çevrimdışıyken yapılırsa yalnız cihazda geçerli olur ve hesaptaki kayıt yeniden gelir. Bu sınır kabul edildi.
+
+## Ölçülen engel: menüde karşılığı olmayan kartlar
+
+Kayıt menü girişi adlarını tutuyordu. Varsayılan ızgarada **5 rolde** menüde karşılığı olmayan kart var:
+
+| Rol | Kart |
+|---|---|
+| Sakin | Şikayetlerim |
+| Güvenlik | Araç plaka |
+| Güvenlik amiri | Demirbaş |
+| Admin | Görevler, Aidat durumu, Raporlar |
+
+Yalnız giriş adlarıyla kaydetmek, bu kullanıcıların ilk sürüklemede o kartları **sessizce kaybetmesi** demekti. Çözüm: kayıt bu kartları `kart:<kimlik>` olarak tutar (sunucu deseni `^(kart:)?[A-Za-z][A-Za-z0-9]*$`, en çok 8 öğe). Gidiş-dönüş (kart → kayıt → kart) her rolde, düz ve ters sırada kayıpsız; test bunu kilitliyor.
+
+"Ana ekranı düzenle" ekranı yalnız menü girişlerini listeler. O ekrandan kaydetmek `kart:` öğelerini düşürür; bu, P139'dan beri süren davranıştır.
+
+## Web Özet karoları aynı tercih mi? Hayır, ayrı anahtar (aynı satır)
+
+Web Özet kısayolları (`widgetlar`) **web sayfalarıdır** ve en çok 6 tanedir. Mobil ızgara ise **mobil menü girişleridir** ve en çok 8 tanedir. İki küme farklı rotalardan oluşuyor; birinin sırası ötekine anlamlı bir şekilde aktarılamaz. Biri ötekini ezmesin diye ikisi aynı `pano_tercihi` satırında ama ayrı anahtarlarda duruyor.
+
+## Kilitler
+
+* `backend/tests/test_p251_ana_ekran_izgarasi.py`:
+  * sıralı kayıt, null ile varsayılana dönüş;
+  * web ve mobil kayıtları birbirini ezmiyor;
+  * geçersiz ad, `kart:` boş ya da 9 öğe → 422;
+  * kayıt kişiye özel.
+* `mobile/test/p251_izgara_surukle_test.dart` (18 test):
+  * tüm rollerde gidiş-dönüş;
+  * uzun bas ve sürükle; kısa dokunuş açar; dışarıda bırakınca geri alınır;
+  * Büyük mod;
+  * ekran okuyucu eylemleri;
+  * hesaptan okuma; cihaz kaydının taşınması; çevrimdışı bekleme;
+  * düzenleme ekranının aynı kayda yazması.
+* Kilit kayıtları: openapi, `uc-guvenlik.tsv` (kendi), `rol-matrisi.txt`, IDOR istisnaları, denetçi salt-okuma istisnası (kişinin kendi görünümü).

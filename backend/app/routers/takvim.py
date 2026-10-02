@@ -56,6 +56,7 @@ from ..models import (
     Unit,
 )
 from ..schemas import (
+    AnaEkranIzgarasi,
     HizliIslemlerOut,
     HizliIslemlerYaz,
     HatirlatmaCreate,
@@ -454,9 +455,46 @@ async def pano_tercihi_yaz(
         yeni["hizli_islemler"] = hizli_islem.gecerli_secim(
             user.role, yeni["hizli_islemler"]
         )
+    # (P251 §11) MOBIL IZGARA da ayni sekilde korunur: web duzeni kaydedince
+    # telefondaki karo sirasi silinmemeli.
+    izgara = (user.pano_tercihi or {}).get("ana_ekran_izgarasi")
+    if "ana_ekran_izgarasi" not in body and izgara is not None:
+        yeni["ana_ekran_izgarasi"] = izgara
     user.pano_tercihi = yeni
     user.updated_at = func.now()
     return dict(user.pano_tercihi)
+
+
+# =========================================================================== #
+# (P251 §11) MOBIL ANA EKRAN IZGARASI — karo secimi ve SIRASI, hesapta
+# =========================================================================== #
+@router.get("/me/ana-ekran-izgarasi", response_model=AnaEkranIzgarasi)
+async def ana_ekran_izgaram(
+    user: AppUser = Depends(get_current_user),
+) -> AnaEkranIzgarasi:
+    """Kayitli izgara; `secili: null` = kullanici secim yapmadi."""
+    return AnaEkranIzgarasi(secili=(user.pano_tercihi or {}).get("ana_ekran_izgarasi"))
+
+
+@router.put("/me/ana-ekran-izgarasi", response_model=AnaEkranIzgarasi)
+async def ana_ekran_izgarasi_yaz(
+    body: AnaEkranIzgarasi,
+    user: AppUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_tenant_db),
+) -> AnaEkranIzgarasi:
+    """Secimi ve sirayi kaydet. Yalniz BU anahtar degisir; web Ozet duzeni
+    ve Hizli Islemler secimi oldugu gibi kalir (iki yuzey ayni satiri
+    paylasiyor, biri digerini ezmemeli).
+    """
+    tercih = dict(user.pano_tercihi or {})
+    if body.secili is None:
+        tercih.pop("ana_ekran_izgarasi", None)
+    else:
+        tercih["ana_ekran_izgarasi"] = list(dict.fromkeys(body.secili))
+    user.pano_tercihi = tercih
+    user.updated_at = func.now()
+    await db.flush()
+    return AnaEkranIzgarasi(secili=tercih.get("ana_ekran_izgarasi"))
 
 
 # =========================================================================== #

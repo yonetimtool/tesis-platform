@@ -15070,6 +15070,18 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Süresi dolmuş (haritada sayılmıyor)'**
   String get semaSuresiDolmus;
+
+  /// (P251 §11) Ekran okuyucu eylemi: ana ekran karosunu bir sira one al.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yukarı taşı'**
+  String get izgaraYukariTasi;
+
+  /// (P251 §11) Ekran okuyucu eylemi: ana ekran karosunu bir sira geri al.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aşağı taşı'**
+  String get izgaraAsagiTasi;
 }
 
 class _AppLocalizationsDelegate

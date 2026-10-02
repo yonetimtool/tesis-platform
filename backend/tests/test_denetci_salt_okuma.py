@@ -330,6 +330,8 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     # rol katalogu belirler (yetkisiz kimlik 422); denetci yalniz raporu
     # secebilir ve bu bir YAZMA yetkisi vermez.
     ("PUT", "/me/hizli-islemler"),
+    # (P251 §11) Mobil ana ekran karo sirasi — kisinin kendi gorunumu.
+    ("PUT", "/me/ana-ekran-izgarasi"),
 })
 
 #: Denetcinin OKUYABILDIGI uclardan ornekler (davranissal olcum).

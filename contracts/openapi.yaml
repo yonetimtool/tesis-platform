@@ -9402,6 +9402,40 @@ paths:
               schema: { $ref: "#/components/schemas/HizliIslemlerOut" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "422": { $ref: "#/components/responses/ValidationError" }
+  /me/ana-ekran-izgarasi:
+    get:
+      tags: [me]
+      summary: (P251 §11) Mobil ana ekran izgarasi — secili karolar ve SIRASI
+      description: >
+        Hesapta (`pano_tercihi.ana_ekran_izgarasi`); ayni kullanici her
+        cihazda ayni izgarayi gorur. `secili: null` = secim yok, rolun
+        varsayilan izgarasi cizilir. Web Ozet karolarindan ayri anahtar.
+      responses:
+        "200":
+          description: Kayitli izgara
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AnaEkranIzgarasi" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    put:
+      tags: [me]
+      summary: (P251 §11) Mobil izgarayi kaydet (sirali); null = varsayilana don
+      description: >
+        Yalniz bu anahtar yazilir; web Ozet duzeni ve Hizli Islemler secimi
+        korunur.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AnaEkranIzgarasi" }
+      responses:
+        "200":
+          description: Kaydedildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AnaEkranIzgarasi" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /me/pano-tercihi:
     get:
       tags: [takvim]
@@ -18042,6 +18076,17 @@ components:
         secili: { type: array, items: { type: string } }
         varsayilan: { type: array, items: { type: string } }
         ozel: { type: boolean }
+    AnaEkranIzgarasi:
+      type: object
+      description: >
+        (P251 §11) Mobil ana ekran karolari, sirali: menu girisi adi ya da
+        menude karsiligi olmayan varsayilan kart (`kart:<kimlik>`).
+      properties:
+        secili:
+          type: array
+          nullable: true
+          maxItems: 8
+          items: { type: string, maxLength: 40, pattern: "^(kart:)?[A-Za-z][A-Za-z0-9]*$" }
     HizliIslemlerYaz:
       type: object
       properties:
@@ -18074,6 +18119,18 @@ components:
           nullable: true
           items: { $ref: "#/components/schemas/PanoSatir" }
           description: "(P181 7.1/7.2) Satir bazli yerlesim; yoksa tam/yarim eslesme."
+        hizli_islemler:
+          type: array
+          maxItems: 8
+          nullable: true
+          items: { type: string }
+          description: (P250 §6) Hizli Islemler secimi; kendi ucundan yazilir, yerlesim kaydi korur.
+        ana_ekran_izgarasi:
+          type: array
+          maxItems: 8
+          nullable: true
+          items: { type: string }
+          description: (P251 §11) Mobil izgara; kendi ucundan yazilir, yerlesim kaydi korur.
     BildirimTercihleri:
       type: object
       description: >

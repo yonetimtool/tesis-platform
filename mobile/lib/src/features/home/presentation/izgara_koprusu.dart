@@ -1,5 +1,6 @@
 import '../../auth/domain/user_role.dart';
 import '../data/home_repository.dart';
+import '../domain/home_izgara.dart';
 import '../domain/home_kart_id.dart';
 import '../domain/home_menu.dart';
 import '../domain/home_varyant.dart';
@@ -116,4 +117,82 @@ List<HizliErisimKart> izgaraKartlari(
   final mevcut = taban.hizliErisim(varyant);
   if (girisler == null) return mevcut;
   return [for (final g in girisler) izgaraKartiUret(g, mevcut)];
+}
+
+/// (P251 §11) Menude karsiligi olmayan kartin kayit oneki.
+const izgaraKartOneki = 'kart:';
+
+/// (P251 §11) CIZILEN KART SIRASI -> KAYDEDILECEK ADLAR.
+///
+/// Surukle-birak ekrandaki KARTLARI tasir; kayit ise ad tutar. Kart uc
+/// yoldan ada baglanir, sirayla:
+///   1. kullanicinin sectigi karoda `modulGirisi` dolu,
+///   2. rolun bugunku (varsayilan) kartinda ROTA ile menu girisi bulunur
+///      (kopru [izgaraKartiUret] de ayni dili konusuyor),
+///   3. menude karsiligi YOKSA `kart:<kimlik>` — OLCULDU: varsayilan
+///      izgarada bes rolde menusuz kart var (sakinde "Sikayetlerim",
+///      guvenlikte "Arac plaka", amirde "Demirbas", adminde uc kart).
+///      Ucuncu yol olmasaydi bu kullanicilar ilk surukleyiste o kartlari
+///      SESSIZCE kaybederdi.
+List<String> kartlardanIzgara(List<HizliErisimKart> kartlar, UserRole rol) {
+  final secenekler = izgaraSecenekleri(rol);
+  final sonuc = <String>[];
+  for (final k in kartlar) {
+    final ad = (k.modulGirisi ?? _rotadanGiris(k.rota, secenekler))?.name ??
+        '$izgaraKartOneki${k.id.name}';
+    if (!sonuc.contains(ad)) sonuc.add(ad);
+  }
+  return sonuc;
+}
+
+/// (P251 §11) KAYITLI ADLAR -> CIZILECEK KARTLAR.
+///
+/// [adlar] `null` ise [kurasyon] (bugun kapali, bkz. `izgaraKarolariProvider`)
+/// ya da rolun bugunku listesi. Rolun goremedigi giris ve rolde artik
+/// olmayan kart CIZILMEZ; ust sinir [izgaraEnCokKaro]. Hicbiri cozulmezse
+/// rolun bugunku listesi — kullanici bos bir ana ekranla kalmaz.
+List<HizliErisimKart> izgaraKartlariKayittan(
+  List<String>? adlar,
+  List<HomeMenuEntry>? kurasyon,
+  UserRole rol,
+  HomeVaryant varyant,
+  HomeRepository taban,
+) {
+  final mevcut = rolunKartlari(taban.hizliErisim(varyant), rol);
+  if (adlar == null) {
+    return kurasyon == null
+        ? mevcut
+        : rolunKartlari(izgaraKartlari(kurasyon, varyant, taban), rol);
+  }
+  final izinli = izgaraSecenekleri(rol).toSet();
+  final girisler = HomeMenuEntry.values.asNameMap();
+  final sonuc = <HizliErisimKart>[];
+  void ekle(HizliErisimKart k) {
+    if (!sonuc.any((x) => x.id == k.id && x.rota == k.rota)) sonuc.add(k);
+  }
+
+  for (final ad in adlar) {
+    if (ad.startsWith(izgaraKartOneki)) {
+      final id = ad.substring(izgaraKartOneki.length);
+      for (final k in mevcut) {
+        if (k.id.name == id) {
+          ekle(k);
+          break;
+        }
+      }
+      continue;
+    }
+    final g = girisler[ad];
+    if (g != null && izinli.contains(g)) ekle(izgaraKartiUret(g, mevcut));
+  }
+  if (sonuc.isEmpty) return mevcut;
+  return rolunKartlari(sonuc.take(izgaraEnCokKaro).toList(), rol);
+}
+
+HomeMenuEntry? _rotadanGiris(String? rota, List<HomeMenuEntry> secenekler) {
+  if (rota == null) return null;
+  for (final e in secenekler) {
+    if (moduleCardSpec(e).route == rota) return e;
+  }
+  return null;
 }

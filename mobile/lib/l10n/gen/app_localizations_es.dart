@@ -8692,4 +8692,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get semaSuresiDolmus => 'Caducadas (no cuentan en el mapa)';
+
+  @override
+  String get izgaraYukariTasi => 'Mover arriba';
+
+  @override
+  String get izgaraAsagiTasi => 'Mover abajo';
 }

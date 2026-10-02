@@ -8693,4 +8693,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get semaSuresiDolmus => 'Expired (not counted on the map)';
+
+  @override
+  String get izgaraYukariTasi => 'Move up';
+
+  @override
+  String get izgaraAsagiTasi => 'Move down';
 }

@@ -42,6 +42,9 @@ import 'package:flutter_test/flutter_test.dart';
 /// * `app.yonetiyor.com`: TESIS YUZEYININ ADRESI. Cevrilecek bir cumle
 ///   degil bir ADRESTIR ve her dilde AYNI yazilir; cevrilirse denetciye
 ///   calismayan bir adres verilmis olur (P139.2).
+///
+/// * `kart:` (P251 §11): ana ekran izgarasi KAYIT oneki — sunucuya giden
+///   teknik bir anahtar, ekranda cizilmez.
 final _izinli = RegExp(
   r'^('
   r'[\d.,:/+\-#%*]+|.{0,1}|[a-z_]+|/[\w/{}.-]*|https?://.*|rtsps?://.*'
@@ -50,7 +53,7 @@ final _izinli = RegExp(
   r'|\[.*\]|[a-zA-Z0-9]+([-_][a-zA-Z0-9]+)+'
   r'|PICCData|\(Kurulum bekliyor\)|\{\{.*\}\}.*'
   r'|Yönetiyor|GÜVENLİK & DANIŞMANLIK|app\.yonetiyor\.com'
-  r'|Google|Microsoft|Apple'
+  r'|Google|Microsoft|Apple|kart:'
   r'|(\\u\{1F1[0-9A-F]{2}\}){2}'
   r')$',
 );

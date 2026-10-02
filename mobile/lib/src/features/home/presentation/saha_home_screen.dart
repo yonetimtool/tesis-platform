@@ -136,14 +136,16 @@ class SahaHomeScreen extends ConsumerWidget {
     final varyant =
         guvenlik ? HomeVaryant.gorevli : HomeVaryant.tesisGorevlisi;
     final izgaraSecimi = ref.watch(izgaraKarolariProvider(role));
+    // (P251 §11) Kayit ham adlar (menu girisi ya da `kart:`); bkz. kopru.
+    final izgaraKaydi = ref.watch(izgaraTercihiProvider);
     final erisim = [
       // (P139.4) IZGARA ARTIK KULLANICININ: kaynak `taban.hizliErisim`
       // degil, kullanicinin tercihinden cozulen kume. Kopru secilen
       // girisi rolun MEVCUT kartiyla ROTA uzerinden esler ve eslesirse o
       // karti OLDUGU GIBI kullanir — bu yuzden asagidaki sayac `switch`i
       // hicbir degisiklik olmadan calismaya devam eder.
-      for (final k in rolunKartlari(
-          izgaraKartlari(izgaraSecimi, varyant, taban), role))
+      for (final k in izgaraKartlariKayittan(
+          izgaraKaydi, izgaraSecimi, role, varyant, taban))
           switch (k.id) {
             HomeKartId.vardiyaDurum =>
               k.sayacla(vardiyaAsync.metin((_) => l10n.sayacAktif(aktifVardiya))),
@@ -243,6 +245,10 @@ class SahaHomeScreen extends ConsumerWidget {
               // bilesen kuresel duruma uzanmaz.
               mod: ref.watch(gorunumModuProvider),
               kartlar: erisim,
+              // (P251 §11) Basili tut + surukle: yeni sira hesaba yazilir.
+              onSiraDegisti: (yeni) => ref
+                  .read(izgaraTercihiProvider.notifier)
+                  .siraKaydet(kartlardanIzgara(yeni, role)),
               onSec: (k) => _ac(context, k),
             ),
           ),

@@ -4285,5 +4285,13 @@
   "teslimAciklama_geri_dondu": "E-posta adresi geçersiz olabilir.",
   "teslimAciklama_basarisiz": "Bir süre sonra yeniden deneyin.",
   "teslimAciklama_yapilandirilmadi": "destek@yonetiyor.com ile iletişime geçin.",
-  "semaSuresiDolmus": "Süresi dolmuş (haritada sayılmıyor)"
+  "semaSuresiDolmus": "Süresi dolmuş (haritada sayılmıyor)",
+  "izgaraYukariTasi": "Yukarı taşı",
+  "izgaraAsagiTasi": "Aşağı taşı",
+  "@izgaraYukariTasi": {
+    "description": "(P251 §11) Ekran okuyucu eylemi: ana ekran karosunu bir sira one al."
+  },
+  "@izgaraAsagiTasi": {
+    "description": "(P251 §11) Ekran okuyucu eylemi: ana ekran karosunu bir sira geri al."
+  }
 }

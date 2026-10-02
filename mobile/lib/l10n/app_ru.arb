@@ -2917,5 +2917,7 @@
   "teslimAciklama_geri_dondu": "Возможно, адрес почты неверен.",
   "teslimAciklama_basarisiz": "Повторите попытку позже.",
   "teslimAciklama_yapilandirilmadi": "Напишите на destek@yonetiyor.com.",
-  "semaSuresiDolmus": "Истёкшие (не учитываются на карте)"
+  "semaSuresiDolmus": "Истёкшие (не учитываются на карте)",
+  "izgaraYukariTasi": "Переместить вверх",
+  "izgaraAsagiTasi": "Переместить вниз"
 }

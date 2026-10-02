@@ -352,6 +352,8 @@ GET	/kvkk/metin	zorunlu	tesis	-	-	-	-	-		dar
 POST	/kvkk/onay	zorunlu	tesis	-	-	ozel	-	-		-
 GET	/kvkk/onaylarim	zorunlu	tesis	-	-	-	-	-		-
 GET	/me	zorunlu	tesis	-	-	-	email	-		-
+GET	/me/ana-ekran-izgarasi	zorunlu	tesis	kendi	-	-	-	-		-
+PUT	/me/ana-ekran-izgarasi	zorunlu	tesis	kendi	-	genel	-	-		dar
 PATCH	/me/avatar	zorunlu	tesis	-	-	ozel	email	-		dar
 GET	/me/bildirim-tercihleri	zorunlu	tesis	-	-	-	bildirim_eposta	-		-
 PATCH	/me/bildirim-tercihleri	zorunlu	tesis	-	-	ozel	bildirim_eposta	-		-

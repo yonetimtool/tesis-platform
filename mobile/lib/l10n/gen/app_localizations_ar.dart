@@ -8736,4 +8736,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get semaSuresiDolmus => 'منتهية (غير محسوبة في الخريطة)';
+
+  @override
+  String get izgaraYukariTasi => 'نقل لأعلى';
+
+  @override
+  String get izgaraAsagiTasi => 'نقل لأسفل';
 }
