@@ -16942,6 +16942,14 @@ paths:
                   dukkan:
                     type: boolean
                     description: Pazar yeri yuzeyi acik mi (varsayilan false)
+                  harita_karo_url:
+                    type: string
+                    nullable: true
+                    description: >
+                      (P253 A2) Kendi harita karo dosyamizin (Turkiye PMTiles,
+                      MinIO `karo` kovasi, HTTP range) tam adresi. Web ve mobil
+                      AYNI kaynagi kullanir; null = harita kapali. Dosya
+                      surumlu ad tasir ve `immutable` onbelleklenir.
   /me:
     get:
       tags: [me]

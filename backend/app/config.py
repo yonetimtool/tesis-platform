@@ -294,6 +294,14 @@ class Settings(BaseSettings):
     minio_bucket: str = "tesis-foto"
     minio_region: str = "us-east-1"
     minio_url_expire_seconds: int = 900
+    #: (P253 A2) HARITA KARO DOSYASI — kendi PMTiles kesitimiz (Turkiye).
+    #: `karo` kovasinda SURUMLU ad (`turkiye-20261003.pmtiles`); dosya
+    #: `docs/karo-guncelle.sh` ile konur. Istemciler adresi `/ozellikler`
+    #: `harita_karo_url`den alir: dosya degisince UYGULAMA GUNCELLENMEZ,
+    #: yalniz bu deger degisir. BOSSA harita kapali (istemci haritayi
+    #: cizmez, adres aramasi yine calisir).
+    harita_karo_kovasi: str = "karo"
+    harita_karo_dosyasi: str = ""
 
     # --- Odeme saglayici (kart) ---
     # manual | iyzico | paytr. GERCEK ANAHTAR YOK — placeholder'lar (sandbox sonra).

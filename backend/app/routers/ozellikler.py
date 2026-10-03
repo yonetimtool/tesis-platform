@@ -49,4 +49,19 @@ async def ozellikler() -> OzellikBayraklari:
     istemciler eski sunucudan alani almadiginda kendi varsayilanini
     kullanir. Iki yonde de kirilma olmaz.
     """
-    return OzellikBayraklari(dukkan=settings.dukkan_mobil_acik)
+    return OzellikBayraklari(
+        dukkan=settings.dukkan_mobil_acik,
+        harita_karo_url=harita_karo_url(),
+    )
+
+
+def harita_karo_url() -> str | None:
+    """(P253 A2) PMTiles dosyasinin GENEL adresi (MinIO `karo` kovasi).
+
+    Genel depolama adresi (`minio_endpoint`, presign host'u ile ayni)
+    uzerinden: dev'de `http://<ip>:9000`, prod'da `https://storage...`.
+    Karo kimlik tasimaz; kova yalniz okuma icin herkese acik."""
+    if not settings.harita_karo_dosyasi:
+        return None
+    taban = settings.minio_endpoint.rstrip("/")
+    return f"{taban}/{settings.harita_karo_kovasi}/{settings.harita_karo_dosyasi}"

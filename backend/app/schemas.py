@@ -392,6 +392,9 @@ class OzellikBayraklari(BaseModel):
     """
 
     dukkan: bool = False
+    #: (P253 A2) Kendi karo dosyamizin (PMTiles) tam adresi; None = harita
+    #: kapali. Web ve mobil AYNI kaynagi kullanir.
+    harita_karo_url: str | None = None
 
 
 class MeTemaRequest(BaseModel):

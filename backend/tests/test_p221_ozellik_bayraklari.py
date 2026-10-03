@@ -67,3 +67,16 @@ def test_SEMA_VARSAYILANI_FALSE():
     from app.schemas import OzellikBayraklari
 
     assert OzellikBayraklari().dukkan is False
+
+
+def test_P253_harita_karo_url_ayardan(client, monkeypatch):
+    """(P253 A2) Karo dosyasi ayarlanmissa tam adres; bossa None (harita kapali).
+    Adres genel depolama adresi + `karo` kovasi + surumlu dosya adi."""
+    from app.config import settings
+    from app.routers.ozellikler import harita_karo_url
+
+    monkeypatch.setattr(settings, "harita_karo_dosyasi", "", raising=False)
+    assert harita_karo_url() is None
+    monkeypatch.setattr(settings, "harita_karo_dosyasi", "turkiye-20261003.pmtiles", raising=False)
+    monkeypatch.setattr(settings, "minio_endpoint", "https://storage.ornek.test/", raising=False)
+    assert harita_karo_url() == "https://storage.ornek.test/karo/turkiye-20261003.pmtiles"

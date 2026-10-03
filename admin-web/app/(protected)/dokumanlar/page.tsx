@@ -74,10 +74,12 @@ const SAYFA_BOYU = 25;
  *  sonunda reddedilmesin. */
 const MAKS_BAYT = 26_214_400;
 const KB = 1024;
-/** Kabul edilen turler. Sunucu icerik tipini SERBEST birakiyor; sinirlama
- *  burada bir KOLAYLIK (dosya secicide filtre), guvenlik siniri degil —
- *  guvenligi depo ve `Content-Type` basligi tasir. */
-const KABUL = ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.png,.jpg,.jpeg,.zip";
+/** Kabul edilen turler — SUNUCUNUN KABUL ETTIGIYLE AYNI: belge amacinda
+ *  PDF + gorsel (`PresignRequest`: jpeg/png/webp/heic + application/pdf).
+ *  (P253 A2) Eski not "sunucu serbest" diyordu ve secici Word/Excel/zip
+ *  sunuyordu; sunucu bunlari 422 ile reddediyordu (olculdu). Secicide
+ *  yuklenemeyecek bir turu sunmak, hatayi kullaniciya birakmakti. */
+const KABUL = ".pdf,application/pdf,.png,.jpg,.jpeg,.webp,.heic";
 const VARSAYILAN_TUR = "application/octet-stream";
 const YENI_SEKME = "_blank";
 const SEKME_GUVENLIGI = "noopener";
@@ -173,6 +175,10 @@ export default function DokumanlarPage() {
       const bilet = await apiSend<PresignBileti>("/api/uploads/presign", "POST", {
         content_type: dosya.type || VARSAYILAN_TUR,
         dosya_adi: dosya.name,
+        // (P253 A2) BELGE AMACI ZORUNLU: sunucu PDF'i yalniz `amac: "belge"`
+        // ile kabul eder; alan yokken web'den PDF yukleme 422 aliyordu
+        // (olculdu). Ekler bileseni E2E 2026-09'da ayni sebeple duzeltilmisti.
+        amac: "belge",
       });
       await depoyaYukle(bilet.upload_url, dosya);
       await apiSend("/api/panel/dokumanlar", "POST", {

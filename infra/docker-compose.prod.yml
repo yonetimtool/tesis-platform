@@ -170,6 +170,13 @@ services:
         done
         mc mb -p "local/$$MINIO_BUCKET" || true
         echo "bucket hazir: $$MINIO_BUCKET"
+        # (P253 A2) HARITA KARO DOSYASI (PMTiles). Kova YALNIZ OKUMA icin
+        # herkese acik: karo kimlik tasimaz, web ve mobil dogrudan (HTTP
+        # range) okur. Yazma yalniz yonetici anahtariyla — dosyayi
+        # docs/karo-guncelle.sh koyar.
+        mc mb -p local/karo || true
+        mc anonymous set download local/karo
+        echo "bucket hazir: karo (herkese acik okuma)"
     networks: [tesisnet]
     restart: "no"
 
@@ -437,6 +444,16 @@ services:
       TRANSLATE_PROVIDER: ${TRANSLATE_PROVIDER:-libretranslate}
       TRANSLATE_URL: ${TRANSLATE_URL:-http://libretranslate:5000}
       FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
+      # (P253 A2) .env.prod.example'da TARIF EDILEN ama buraya hic
+      # yazilmamis oldugu icin konteynere ULASMAYAN ayarlar (olculdu):
+      # Dukkan bayragi acilamiyordu; Resend webhook'u her istekte 401
+      # donuyordu (teslim durumlari hic guncellenmiyordu).
+      DUKKAN_MOBIL_ACIK: ${DUKKAN_MOBIL_ACIK:-false}
+      RESEND_WEBHOOK_SIRRI: ${RESEND_WEBHOOK_SIRRI:-}
+      PLAY_STORE_URL: ${PLAY_STORE_URL:-https://play.google.com/store/apps/details?id=com.app.yonetiyor}
+      APP_STORE_URL: ${APP_STORE_URL:-https://apps.apple.com/tr/app/id6797316863}
+      # (P253 A2) Harita karo dosyasi (PMTiles, `karo` kovasi). Bos = harita kapali.
+      HARITA_KARO_DOSYASI: ${HARITA_KARO_DOSYASI:-}
       FCM_SERVICE_ACCOUNT_PATH: ${FCM_SERVICE_ACCOUNT_PATH:-/secrets/fcm-service-account.json}
       # --- (P154 / Asama 4) SOSYAL GIRIS — Google / Microsoft / Apple ---
       #

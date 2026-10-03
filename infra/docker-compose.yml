@@ -75,6 +75,13 @@ services:
         done
         mc mb -p "local/$$MINIO_BUCKET" || true
         echo "bucket hazir: $$MINIO_BUCKET"
+        # (P253 A2) HARITA KARO DOSYASI (PMTiles). Kova YALNIZ OKUMA icin
+        # herkese acik: karo kimlik tasimaz, web ve mobil dogrudan (HTTP
+        # range) okur. Yazma yalniz yonetici anahtariyla — dosyayi
+        # docs/karo-guncelle.sh koyar.
+        mc mb -p local/karo || true
+        mc anonymous set download local/karo
+        echo "bucket hazir: karo (herkese acik okuma)"
     restart: "no"
 
   # Ceviri motoru — KENDI BARINDIRDIGIMIZ LibreTranslate.
@@ -318,6 +325,9 @@ services:
       DB_POOL_SIZE: ${DB_POOL_SIZE:-5}
       DB_MAX_OVERFLOW: ${DB_MAX_OVERFLOW:-5}
       FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
+      DUKKAN_MOBIL_ACIK: ${DUKKAN_MOBIL_ACIK:-false}
+      # (P253 A2) Harita karo dosyasi (PMTiles, `karo` kovasi). Bos = harita kapali.
+      HARITA_KARO_DOSYASI: ${HARITA_KARO_DOSYASI:-}
       # Icerik cevirisi. DEV VARSAYILANI `echo` (deterministik sahte ceviri):
       # test kosumu model indirmesine/CPU'ya bagli olmasin ve 600+ testin her
       # duyuru olusturmasi gercek ceviri kuyrugu tetiklemesin. GERCEK ceviri
@@ -376,6 +386,10 @@ services:
       # sir icermiyor (yalniz degisken REFERANSLARI).
       - ./docker-compose.yml:/infra/docker-compose.yml:ro
       - ./docker-compose.prod.yml:/infra/docker-compose.prod.yml:ro
+      # (P253 A2) Ornek prod ortami — sir YOK, yalniz adlar ve aciklama.
+      # Kilit: tarif edilen her ayar `api`ye GECIRILIYOR mu
+      # (`tests/test_compose_ortam.py`).
+      - ./.env.prod.example:/infra/.env.prod.example:ro
       # (P215) Gecit yapilandirmasi: `api`nin aradigi port ile gecidin
       # dinledigi portun ayni oldugunu test OKUYARAK dogruluyor. Sir
       # icermez (yalniz dinleme adresleri ve ag izinleri).
