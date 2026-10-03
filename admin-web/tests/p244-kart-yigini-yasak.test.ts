@@ -68,7 +68,6 @@ const ISTISNALAR: Record<string, string> = {
   // tasiyan kaydi tablo hucresine sikistirmak dokunma hedefini de
   // kucultururdu. Kayitlar ONCEDEN de ayri bloktu (ciplak `<article>`);
   // degisen sey kartin YUZEY kazanmasi.
-  "gorevlerim/page.tsx": "kart = yapilacak is (icinde girdi + eylem)",
   // (P244 §8b) Taleplerimde kart bir OKUNACAK METIN: konu + cok satirli
   // serbest aciklama + yonetimin karari. Tabloya cevirmek cok satirli
   // mesaji tek hucreye sikistirirdi; liste de kisadir (sakinin kendi

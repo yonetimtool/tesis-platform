@@ -263,7 +263,6 @@ const OGELER: readonly MenuOgesi[] = [
   // --- TESIS: binanin kendisi -------------------------------------------
   { href: "/units", anahtar: "kabukDaireler", icon: "home", grup: "tesis" },
   { href: "/tasks", anahtar: "kabukGorevler", icon: "task", grup: "tesis" },
-  { href: "/gorevlerim", anahtar: "kabukGorevlerim", icon: "check", grup: "tesis" },
   { href: "/assets", anahtar: "kabukDemirbas", icon: "cube", grup: "tesis" },
   { href: "/schematic", anahtar: "kabukSikayetHaritasi", icon: "pin", grup: "tesis" },
   { href: "/dis-hizmetler", anahtar: "kabukDisHizmetler", icon: "hub", grup: "tesis" },
@@ -349,6 +348,8 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/mesaj-ayarlari", anahtar: "mesajAyarPanelBaslik", icon: "chat", grup: "platform" },
   // (P251 §10) Teknik gonderim gunlugu (tesis yoneticisinden alindi).
   { href: "/gonderim-gunlugu", anahtar: "gunlukBaslik", icon: "list", grup: "platform" },
+  // (P253 §D) Resmi kimlik acma — YALNIZ platform; site yoneticisine ASLA.
+  { href: "/sikayet-kimlik", anahtar: "menuSikayetKimlik", icon: "eye", grup: "platform" },
   // kvkk-metinler ikonu asagida (doc) — platform grubunda doc yalniz burada.
   // (P170 §2) KVKK VE YASAL METIN YONETIMI BURAYA TASINDI.
   //

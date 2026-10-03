@@ -674,6 +674,49 @@ METINLER: dict[str, PushMetni] = {
         },
         params=('daire',),
     ),
+    # (P253 §D) Yalniz SIKAYET EDENE gider; yonetim kimin oldugunu ogrenmez.
+    "sikayet_asilsiz": PushMetni(
+        baslik={
+            "tr": "Şikâyetiniz",
+            "en": "Your complaint",
+            "ar": "شكواك",
+            "ru": "Ваша жалоба",
+            "de": "Ihre Beschwerde",
+            "fr": "Votre plainte",
+            "es": "Su queja",
+        },
+        govde={
+            "tr": "Yönetim şikâyetinizi değerlendirdi ve asılsız buldu ({daire}). Gerekçeyi Şikâyetlerim'de görebilirsiniz.",
+            "en": "Management reviewed your complaint and found it unfounded ({daire}). You can see the reason in My complaints.",
+            "ar": "راجعت الإدارة شكواك ووجدتها غير مبررة ({daire}). يمكنك رؤية السبب في شكاواي.",
+            "ru": "Управление рассмотрело вашу жалобу и признало её необоснованной ({daire}). Причину можно увидеть в разделе «Мои жалобы».",
+            "de": "Die Verwaltung hat Ihre Beschwerde geprüft und als unbegründet eingestuft ({daire}). Die Begründung finden Sie unter Meine Beschwerden.",
+            "fr": "La gestion a examiné votre plainte et l'a jugée infondée ({daire}). Vous trouverez le motif dans Mes plaintes.",
+            "es": "La administración revisó su queja y la consideró infundada ({daire}). Puede ver el motivo en Mis quejas.",
+        },
+        params=('daire',),
+    ),
+    "sikayet_sinirlama": PushMetni(
+        baslik={
+            "tr": "Şikâyet oluşturma",
+            "en": "Filing complaints",
+            "ar": "تقديم الشكاوى",
+            "ru": "Подача жалоб",
+            "de": "Beschwerden einreichen",
+            "fr": "Dépôt de plaintes",
+            "es": "Presentar quejas",
+        },
+        govde={
+            "tr": "Son şikâyetlerinizin çoğu asılsız bulunduğu için yeni şikâyet oluşturma {tarih} tarihine kadar geçici olarak kapalı.",
+            "en": "Because most of your recent complaints were found unfounded, filing new complaints is paused until {tarih}.",
+            "ar": "نظرًا لأن معظم شكاواك الأخيرة اعتُبرت غير مبررة، فإن تقديم شكاوى جديدة متوقف مؤقتًا حتى {tarih}.",
+            "ru": "Поскольку большинство ваших недавних жалоб признаны необоснованными, подача новых жалоб приостановлена до {tarih}.",
+            "de": "Da die meisten Ihrer letzten Beschwerden als unbegründet eingestuft wurden, ist das Einreichen neuer Beschwerden bis {tarih} pausiert.",
+            "fr": "La plupart de vos plaintes récentes ayant été jugées infondées, le dépôt de nouvelles plaintes est suspendu jusqu'au {tarih}.",
+            "es": "Como la mayoría de sus quejas recientes se consideraron infundadas, la presentación de nuevas quejas está pausada hasta el {tarih}.",
+        },
+        params=('tarih',),
+    ),
     "rezervasyon": PushMetni(
         baslik={
             "tr": "Rezervasyon",

@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/src/core/error/api_exception.dart';
 import 'package:mobile/src/features/auth/data/current_user_provider.dart';
 import 'package:mobile/src/features/auth/domain/user_role.dart';
 import 'package:mobile/src/features/building_map/data/building_map_api.dart';
@@ -36,6 +37,9 @@ class _FakeComplaintApi extends UnitComplaintApi {
   /// Gecikmeli file() icin acilinca cozulen kapi (cift-dokunus testi).
   Completer<void>? gate;
 
+  /// (P253 §D) Verilirse file() bunu firlatir (gunluk sinir 429).
+  ApiException? hata;
+
   @override
   Future<List<UnitComplaint>> fetchForUnit(String unitId,
           {bool acikOnly = true}) async =>
@@ -47,6 +51,7 @@ class _FakeComplaintApi extends UnitComplaintApi {
   @override
   Future<UnitComplaint> file(UnitComplaintDraft draft) async {
     filed.add(draft);
+    if (hata != null) throw hata!;
     if (gate != null) await gate!.future; // in-flight tut (cift-dokunus)
     return _items.isEmpty ? UnitComplaint.fromJson(const {}) : _items.first;
   }
@@ -119,8 +124,6 @@ UnitComplaint _c() => UnitComplaint(
       targetUnitId: 'id-A-2',
       kategori: UnitComplaintKategori.zararVerme,
       durum: 'acik',
-      complainantUserId: 'r-9',
-      complainantAd: 'Ayşe Sakin',
       createdAt: DateTime.utc(2026, 7, 12),
     );
 
@@ -231,6 +234,34 @@ void main() {
       await tester.pumpAndSettle();
       expect(capi.filed.length, 1);
       expect(capi.filed.first.targetUnitId, 'id-A-2');
+    });
+
+    testWidgets('(P253 §D) gunluk sinir 429: sunucu metni BILGI olarak '
+        '(hata rengi DEGIL); form acik kalir; guvence metni gorunur',
+        (tester) async {
+      const metin = 'Bugün için bildirim hakkınızı kullandınız (5 bildirim); '
+          'yönetim kayıtlarınızı aldı. Yarın yeniden bildirebilirsiniz.';
+      final capi = _FakeComplaintApi(const [])
+        ..hata = const ApiException(
+            code: 'rate_limited', message: metin, statusCode: 429);
+      await tester.pumpWidget(
+        _app(UserRole.resident, map: _structureMap(), complaintApi: capi),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('A-2'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Bu daireyi şikayet et'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Kimliğiniz kimseye gösterilmez'), findsOneWidget);
+      await tester.tap(find.text('Şikayeti gönder'));
+      await tester.pumpAndSettle();
+      final bilgi = find.byKey(const Key('sikayet-sinir-bilgi'));
+      expect(bilgi, findsOneWidget);
+      expect((tester.widget<Text>(bilgi)).data, metin);
+      final renk = tester.widget<Text>(bilgi).style?.color;
+      final ctx = tester.element(bilgi);
+      expect(renk, isNot(Theme.of(ctx).colorScheme.error));
+      expect(find.text('Şikayeti gönder'), findsOneWidget);
     });
 
     testWidgets('cift-dokunus KORUMASI: hizli iki dokunus -> file YALNIZ 1 kez '

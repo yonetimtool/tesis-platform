@@ -108,6 +108,45 @@ class UnitComplaintApi {
     }
   }
 
+  /// (P253 §D) Daireye gelen sikayetlerin ORUNTUSU (YALNIZ yonetim).
+  Future<SikayetKaynakOzeti> kaynakOzeti(String unitId) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/unit-complaints/kaynak-ozeti',
+        queryParameters: {'unit_id': unitId},
+      );
+      return SikayetKaynakOzeti.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (P253 §D) "Asilsiz" isareti — gerekce ZORUNLU. Sikayet edene bildirim
+  /// gider; yonetim kimin oldugunu ogrenmez.
+  Future<UnitComplaint> asilsizIsaretle(String id, String gerekce) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/unit-complaints/$id/asilsiz',
+        data: {'gerekce': gerekce},
+      );
+      return UnitComplaint.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (P253 §D) Isareti geri al — kisitlama kendiliginden kalkar.
+  Future<UnitComplaint> asilsizGeriAl(String id) async {
+    try {
+      final res = await _dio.delete<Map<String, dynamic>>(
+        '/unit-complaints/$id/asilsiz',
+      );
+      return UnitComplaint.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   /// Daire sikayeti ac (YALNIZ resident). Ayni daireye ayni KATEGORIDE 7 gunde
   /// 2. kez -> 409; kendi blogun disi -> 403.
   /// (P146) `POST /unit-complaints/{id}/withdraw` — SIKAYET EDEN kendi

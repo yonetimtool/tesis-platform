@@ -77,6 +77,8 @@ String? bildirimRotasi(AppNotification b, {UserRole? role}) {
     'ziyaretci' => AppRoutes.visitors,
     'rezervasyon' => AppRoutes.rezervasyon,
     'sikayet_cozuldu' => AppRoutes.sikayetlerim,
+    // (P253 §D) Sikayet edene: asilsiz karari ve gecici sinirlama.
+    'sikayet_asilsiz' || 'sikayet_sinirlama' => AppRoutes.sikayetlerim,
     // (P241) PAKET OLCUMUNDE YAKALANDI: P240'ta uc yeni bildirim ailesi
     // eklendi ama bu beyaz liste guncellenmemisti — panik push'una
     // dokunan kullanici ALARM EKRANINA GITMIYOR, bildirim yalnizca
@@ -132,6 +134,8 @@ String? _referanstan(AppNotification b) {
 const sakinKimlikleri = <String>{
   'kargo', 'kargo_teslim', 'ziyaretci', 'rezervasyon',
   'sikayet_cozuldu', 'talep_is_emri', 'talep_cozuldu', 'talep_reddedildi',
+  // (P253 §D)
+  'sikayet_asilsiz', 'sikayet_sinirlama',
   'erisim_onaylandi', 'erisim_reddedildi',
   'aidat_borc', 'aidat_odendi', 'aidat_hatirlatma',
   'gurultu_uyari_sakin', 'akilli_ev_kacak', 'akilli_ev_yangin',

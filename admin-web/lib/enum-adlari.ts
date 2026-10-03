@@ -40,6 +40,9 @@ export const BILDIRIM_TIP: EnumHarita = {
   ziyaretci: "bildirimTipZiyaretci",
   rezervasyon: "bildirimTipRezervasyon",
   sikayet_cozuldu: "bildirimTipSikayetCozuldu",
+  // (P253 §D) Sikayet edene: "asilsiz" karari ve gecici sinirlama.
+  sikayet_asilsiz: "bildirimTipSikayetAsilsiz",
+  sikayet_sinirlama: "bildirimTipSikayetSinirlama",
   // (P181 Bölüm 10.2) Vardiya sonu özeti (batching) — "X/Y nokta okutuldu".
   vardiya_ozeti: "bildirimTipVardiyaOzeti",
   // (E2E 2026-09) Sunucu enum'unda VARDI, haritada yoktu (model de

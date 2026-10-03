@@ -97,7 +97,7 @@ describe("(P193 §5) tesis ayarları ekranı", () => {
     // (P219 §1) ETIKETLER SONUC ODAKLI YENIDEN YAZILDI: "Gürültü uyarı
     // eşiği" -> "Kaç şikâyet birikince daireye uyarı gitsin". Iddia
     // degismedi (alan cizilyor mu), sorgu yeni metne uyarlandi.
-    expect(screen.getByLabelText(/Kaç şikâyet birikince/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Kaç farklı daireden şikâyet/)).toBeInTheDocument();
     expect(screen.getByLabelText(/kaç gün geriye kadar sayılsın/)).toBeInTheDocument();
     expect(screen.getByLabelText(/kaç metre uzaktan/)).toBeInTheDocument();
   });
@@ -125,7 +125,7 @@ describe("(P193 §5) tesis ayarları ekranı", () => {
     // Sunucu kabul eder, arayuz UYARIR.
     kur();
     ciz(TesisAyarlariPage);
-    const esik = await screen.findByLabelText(/Kaç şikâyet birikince/);
+    const esik = await screen.findByLabelText(/Kaç farklı daireden şikâyet/);
     // (P218) `userEvent.type` YERINE `fireEvent.change`.
     //
     // KOK NEDEN: `userEvent` tusa tus yazar ve HER karakterde yeniden

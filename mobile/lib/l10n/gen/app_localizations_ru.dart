@@ -2087,7 +2087,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get semaSikayetAnonimNot =>
-      'Ваша жалоба поступает руководству; соседям она не показывается.';
+      'Ваша жалоба передаётся управлению. Ваша личность никому не показывается — включая управление.';
 
   @override
   String get semaSikayetiGonder => 'Отправить жалобу';
@@ -9115,4 +9115,57 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get paylasDugme => 'Поделиться';
+
+  @override
+  String sikayetOruntu(int gun, int n, int k) {
+    return '$n жалоб за последние $gun дней, из $k разных квартир';
+  }
+
+  @override
+  String get sikayetTekKaynak => 'В основном из одной квартиры';
+
+  @override
+  String get sikayetTekKaynakIpucu =>
+      'Большинство жалоб приходит из одной квартиры; учитывайте это при оценке.';
+
+  @override
+  String sikayetAsilsizSayisi(int n) {
+    return '$n отмечено необоснованными';
+  }
+
+  @override
+  String get sikayetAsilsiz => 'Необоснованная';
+
+  @override
+  String get sikayetAsilsizIsaretle => 'Отметить необоснованной';
+
+  @override
+  String get sikayetAsilsizGeriAl => 'Снять отметку';
+
+  @override
+  String get sikayetAsilsizGerekce => 'Причина (обязательно)';
+
+  @override
+  String get sikayetAsilsizAciklama =>
+      'Автор жалобы получит уведомление; кто это, вам не показывается. Повторные необоснованные жалобы сначала перестают учитываться в пороге, затем новые жалобы этого человека временно приостанавливаются. Отметку можно снять.';
+
+  @override
+  String get sikayetAsilsizOnayla => 'Отметить';
+
+  @override
+  String sikayetAsilsizGerekceGoster(String gerekce) {
+    return 'Причина: $gerekce';
+  }
+
+  @override
+  String sikayetKayitNo(String id) {
+    return '№ записи: $id';
+  }
+
+  @override
+  String get semaSinirBilgi =>
+      'Вы достигли сегодняшнего лимита сообщений; управление получило ваши сообщения. Завтра можно сообщить снова.';
+
+  @override
+  String get sikayetDetayBaslik => 'Подробности жалобы';
 }

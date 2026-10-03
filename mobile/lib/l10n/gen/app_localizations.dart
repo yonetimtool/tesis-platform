@@ -3459,7 +3459,7 @@ abstract class AppLocalizations {
   /// No description provided for @semaSikayetAnonimNot.
   ///
   /// In tr, this message translates to:
-  /// **'Şikayetiniz yönetime iletilir; komşularınıza gösterilmez.'**
+  /// **'Şikâyetiniz yönetime iletilir. Kimliğiniz kimseye gösterilmez — yönetim dahil.'**
   String get semaSikayetAnonimNot;
 
   /// No description provided for @semaSikayetiGonder.
@@ -15676,6 +15676,90 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Paylaş'**
   String get paylasDugme;
+
+  /// (P253 §D) Yonetim: daireye gelen sikayet oruntusu
+  ///
+  /// In tr, this message translates to:
+  /// **'Son {gun} günde {n} şikâyet, {k} farklı daireden'**
+  String sikayetOruntu(int gun, int n, int k);
+
+  /// No description provided for @sikayetTekKaynak.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çoğu tek daireden'**
+  String get sikayetTekKaynak;
+
+  /// No description provided for @sikayetTekKaynakIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şikâyetlerin büyük kısmı aynı daireden geliyor; değerlendirirken bunu göz önünde bulundurun.'**
+  String get sikayetTekKaynakIpucu;
+
+  /// (P253 §D) asilsiz isaretli sayisi
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} asılsız işaretli'**
+  String sikayetAsilsizSayisi(int n);
+
+  /// No description provided for @sikayetAsilsiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Asılsız'**
+  String get sikayetAsilsiz;
+
+  /// No description provided for @sikayetAsilsizIsaretle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Asılsız işaretle'**
+  String get sikayetAsilsizIsaretle;
+
+  /// No description provided for @sikayetAsilsizGeriAl.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşareti geri al'**
+  String get sikayetAsilsizGeriAl;
+
+  /// No description provided for @sikayetAsilsizGerekce.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gerekçe (zorunlu)'**
+  String get sikayetAsilsizGerekce;
+
+  /// No description provided for @sikayetAsilsizAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şikâyet edene bildirim gider; kim olduğu size gösterilmez. Tekrarlayan asılsız şikâyetler önce eşiğe sayılmaz, sonra kişinin yeni şikâyet açması geçici olarak durur. İşaret geri alınabilir.'**
+  String get sikayetAsilsizAciklama;
+
+  /// No description provided for @sikayetAsilsizOnayla.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşaretle'**
+  String get sikayetAsilsizOnayla;
+
+  /// (P253 §D) asilsiz gerekcesi
+  ///
+  /// In tr, this message translates to:
+  /// **'Gerekçe: {gerekce}'**
+  String sikayetAsilsizGerekceGoster(String gerekce);
+
+  /// (P253 §D) resmi talepte platforma iletilecek kayit no
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıt no: {id}'**
+  String sikayetKayitNo(String id);
+
+  /// No description provided for @semaSinirBilgi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bugün için bildirim sınırına ulaştınız; yönetim kayıtlarınızı aldı. Yarın yeniden bildirebilirsiniz.'**
+  String get semaSinirBilgi;
+
+  /// No description provided for @sikayetDetayBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şikâyet ayrıntısı'**
+  String get sikayetDetayBaslik;
 }
 
 class _AppLocalizationsDelegate

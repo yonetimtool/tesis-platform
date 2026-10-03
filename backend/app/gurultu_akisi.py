@@ -35,6 +35,7 @@ from .models import (
     UnitUyari,
 )
 from .safe_http import SSRFBlocked, send_webhook
+from .sikayet_koruma import esige_sayilir_kosullari, kaynak_ifadesi
 from .push_metinleri import push_govdesi
 from .sakin_bildirimi import sakin_bildirimi_yaz
 from .scheduler.notify import dispatch_external
@@ -83,18 +84,23 @@ async def acik_gurultu_sayisi(
     sayiliyordu: bir yil once acilmis ve kimsenin kapatmadigi bir
     sikayet, dun geceki kadar agirlik tasiyordu. `pencere_gun=0` ESKI
     DAVRANISTIR (sinirsiz) ve mevcut tesisler icin kacis kapisidir.
+
+    (P253 §D) SAYILAN SEY SIKAYET DEGIL, FARKLI KAYNAK DAIREDIR: bir
+    kisinin bes sikayeti esigi dolduramaz. "Asilsiz" isaretli sikayet ve
+    esik disi kalan kisinin sikayeti sayilmaz (`sikayet_koruma`).
     """
     kosullar = [
         UnitComplaint.target_unit_id == unit_id,
         UnitComplaint.kategori == CAYDIRICI_KATEGORI,
         UnitComplaint.durum == "acik",
+        *esige_sayilir_kosullari(),
     ]
     if pencere_gun and pencere_gun > 0:
         sinir = datetime.now(tz=timezone.utc) - timedelta(days=pencere_gun)
         kosullar.append(UnitComplaint.created_at >= sinir)
     return (
         await db.execute(
-            select(func.count()).select_from(UnitComplaint).where(*kosullar)
+            select(func.count(func.distinct(kaynak_ifadesi()))).where(*kosullar)
         )
     ).scalar_one()
 

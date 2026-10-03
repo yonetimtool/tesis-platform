@@ -261,7 +261,9 @@ Plan §4.5'te, uç üretmeyen web eylemleri (CSV indir gibi) için kaynakta
 ### Eylem paritesi tablosu ve üç kilit
 
 **Tablo** (`contracts/eylem-paritesi.tsv`): sözleşmedeki **her** işlem
-(660) + 5 istemci tarafı dışa aktarım = **665 satır**.
+(660) + 5 istemci tarafı dışa aktarım = **665 satır**. §D dört uç ekledi
+(3 `ayni`, 1 `platform`); güncel toplam **669** (`ayni` 286, `platform`
+44 — diğerleri aynı).
 
 | Durum | Satır | Anlamı |
 |---|---:|---|
@@ -329,6 +331,109 @@ aşamalarına göre önek kuralları:
 **alanları** gönderip göndermediği ölçülmüyor. Örnek: mobil tahsilatta
 tarih ve belge no yok. Bunlar planın §1 tablosunda `KISMEN` olarak duruyor
 ve aşamalarda kapatılır.
+
+## §D — Şikâyet gizliliği
+
+### Ölçüm (her yüzey)
+
+| Yüzey | Bulgu |
+|---|---|
+| `GET /unit-complaints` (liste), `PATCH`, `/okundu`, `POST` yanıtı | Şemada `complainant_user_id` ve `complainant_ad` **duruyordu**, her zaman `null`. Değer sızmıyordu ama alanın varlığı bir gün doldurulmasına davetiyeydi. |
+| Web harita daire ayrıntısı | `complainant_ad` gelirse **gösteren** dal vardı (`haritaSikayetEden`). Metin "kimlik yalnız yönetime gösterilir" diyordu — **yanlıştı**. |
+| `/density`, `/building-map`, `/gorunur-sayi`, `/mine` | Kimlik yok. |
+| `/activity` | Anonim; sakin yalnız kendi kayıtlarını görür. |
+| Bildirimler | `sikayet_cozuldu` yalnız şikâyet edene; eşik bildirimi yönetime kişi adı içermiyor. |
+| Raporlar / dışa aktarım / arama | Daire şikâyeti hiçbir rapora, dışa aktarıma ya da aramaya girmiyor (kaynak taraması). |
+| **`GET /audit`** (platform) | **Sızıyordu:** `unit_complaint_file` ve `unit_complaint_withdraw` satırlarının aktörü şikâyet eden; `resource_id` şikâyetin kendisi. Platform yöneticisi gerekçesiz ve denetimsiz eşleyebiliyordu. |
+| Mobil | Model alanları okuyordu ama çizmiyordu; güvence metni "komşularınıza gösterilmez" diyordu (yönetimi söylemiyordu). |
+
+### Kararlar
+
+1. **Kimlik hiçbir site rolüne dönmez.**
+   * `complainant_*` alanları şemadan, sözleşmeden, web tipinden ve mobil
+     modelden **kaldırıldı**. Web'deki gösteren dal silindi.
+   * `/audit` bu iki eylemde aktörü `null` verir.
+   * Kimlik veritabanında durur (sınırlama ve resmî açma için).
+   * Metin: web "Şikâyet edenin kimliği kimseye gösterilmez — yönetim
+     dahil", mobil oluşturma ekranı "Kimliğiniz kimseye gösterilmez —
+     yönetim dahil" (7 dil).
+2. **Eşik farklı kaynak daire sayar.**
+   * Yeni sütun `unit_complaint.kaynak_unit_id`: şikâyetçinin hedefin
+     bloğundaki aktif dairesi.
+   * Sayaç `count(DISTINCT coalesce(kaynak_unit_id, complainant_user_id))`.
+     Aynı evden iki kişi tek kaynak sayılır.
+   * Eski satırlar göçte dolduruldu.
+   * Ayar metni "Kaç farklı daireden şikâyet gelince uyarı gitsin" oldu.
+3. **Günlük sınırlar.** Önerilen varsayılanlar:
+   * Aynı kişi → aynı daire: 24 saatte 2. Bir gecede iki ayrı olay
+     (akşam + gece yarısı) olağan; üçüncüsü bildirim değil baskı.
+   * Aynı kişinin toplamı: 24 saatte 5. Sınırı gerçek kullanıcıya değil
+     toplu atışa koyar.
+   * Mevcut kural (aynı daire + aynı kategori 7 günde 1) aynen duruyor.
+   * Yanıt 429 `rate_limited`, kibar metinle ("…yönetim kayıtlarınızı
+     aldı. Yarın yeniden bildirebilirsiniz."). Mobil bunu kırmızı hata
+     olarak değil, bilgi satırı olarak çizer.
+   * Sınırlar şimdilik sabit (`app/sikayet_koruma.py`). Tesis ayarı
+     istenirse tek yerden açılır.
+4. **Yönetim yalnız örüntüyü görür.**
+   * Yeni uç `GET /unit-complaints/kaynak-ozeti`: son 30 günde kaç
+     şikâyet, kaç farklı daireden.
+   * "Çoğu tek daireden" rozeti: en az 4 şikâyet ve en az %75'i tek
+     kaynaktan.
+   * Kaynak **etiketi yok**. "Kaynak A" gibi bir etiket iki özet
+     arasında kişiyi izlemeye yeterdi.
+5. **"Asılsız" işareti.**
+   * Uçlar: `POST/DELETE /unit-complaints/{id}/asilsiz`. Gerekçe zorunlu.
+   * Şikâyet edene `sikayet_asilsiz` bildirimi gider (uygulama içi +
+     push). Yönetim kim olduğunu öğrenmez.
+   * Kademe, kişi başına son 90 gün:
+     * **Eşik dışı:** en az 2 asılsız **ve** oranı en az %50. Tek bir
+       hatalı işaret kimseyi susturmaz. Çok şikâyet edip birkaçı asılsız
+       çıkan gerçek mağdur da etkilenmez (oran şartı).
+     * **Askıda:** en az 4 asılsız **ve** oranı en az %60. Son işaretten
+       14 gün yeni şikâyet açamaz; 429 `sikayet_askida` ve
+       `sikayet_sinirlama` bildirimi alır. 14 gün, "bir sonraki hafta
+       sonu"nu kapsar ama kişiyi kalıcı dışlamaz.
+   * Durum **saklanmaz, her seferinde hesaplanır**: işaret geri alınınca
+     ya da pencere geçince kısıtlama kendiliğinden kalkar.
+   * Asılsız şikâyet haritayı ve görünür sayıyı boyamaz.
+6. **Resmî kimlik açma yalnız platform.**
+   * Uç: `POST /platform/sikayet-kimlik`, yalnız `admin`. Gerekçe en az
+     20 karakter.
+   * Her görüntüleme o tesisin denetimine `sikayet_kimlik_acma` olarak
+     yazılır; ikinci bakış ikinci kayıttır.
+   * POST kullanıldı: kimlik sorgu dizesinde ya da erişim günlüğünde
+     kalmasın.
+   * Panel sayfası `/sikayet-kimlik` (platform menüsü). Yöneticiye kayıt
+     no gösterilir; resmî talepte o iletilir.
+   * Site yöneticisi 403 (rol matrisi + test).
+
+**Göç:** `0168_p253_sikayet_gizlilik`.
+
+**Kilitler** (`backend/tests/test_p253_sikayet_gizlilik.py`):
+
+* Gizlilik: 10 okuma ucu × 7 site rolü, artı yönetim eylemlerinin
+  yanıtları. Ne `complainant` anahtarı, ne şikâyet edenin id, e-posta ya
+  da adı.
+* `/audit` maskesi; şemada kimlik alanı yok.
+* Eşik: bir kişinin 5 şikâyeti doldurmaz, 3 farklı daire doldurur; eşik
+  dışı kişi sayılmaz.
+* Sınırlar ve metinlerin tonu.
+* Asılsız: gerekçe, bildirim, yalnız yönetim, askı + geri alınca kalkma.
+* Kaynak özeti, platform açma.
+* Kırma denemesi: `DISTINCT` kaldırıldı → eşik testi düştü; `/audit`
+  maskesi kaldırıldı → denetim testi düştü.
+* Mobil: `p253_sikayet_gizlilik_test.dart` (taklit HTTP adaptöründe) ve
+  `building_schematic_test` 429 bilgi satırı.
+
+**Web ↔ mobil:**
+
+* Web harita daire ayrıntısı ve mobil yönetim şikâyet kuyruğu ayrıntısı
+  aynı üç ucu çağırıyor (eylem tablosunda `ayni`).
+* Sakinin kendi listesi kararı ve gerekçeyi gösteriyor (mobil; web'de
+  sakin şikâyet yüzeyi yok, şikâyet mobilde açılır).
+* Bildirim yönlendirme iki yüzeyde: mobil "Şikâyetlerim", web
+  `/taleplerim`.
 
 ## §E — "Şimdi çalıştır" saat dilimi
 

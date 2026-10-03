@@ -45,6 +45,10 @@ export const BILDIRIM_ROTALARI: Record<string, string> = {
   ziyaretci: "/goruntuleme-izni",
   rezervasyon: "/rezervasyon-yonetimi",
   sikayet_cozuldu: "/complaints",
+  // (P253 §D) Yalniz SIKAYET EDENE gider (sakin) — `sikayet_cozuldu`nun
+  // sakin hedefiyle ayni ekran.
+  sikayet_asilsiz: "/taleplerim",
+  sikayet_sinirlama: "/taleplerim",
   // (P240) Panik / akilli ev / entegrasyon.
   panik_alarm: "/panik",
   panik_yanlis_alarm: "/panik",

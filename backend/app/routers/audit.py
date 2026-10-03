@@ -23,6 +23,11 @@ router = APIRouter(prefix="/audit", tags=["audit"])
 
 _ADMIN = require_role("admin")
 
+#: (P253 §D) Bu kayitlarin AKTORU sikayet edenin kendisidir; denetim
+#: goruntuleyicisi kimligi buradan SIZDIRMAZ. Resmi kimlik acma ayri,
+#: gerekceli ve denetimli bir uctur (`POST /platform/sikayet-kimlik`).
+_AKTORU_GIZLI = frozenset({"unit_complaint_file", "unit_complaint_withdraw"})
+
 _QUERY = text(
     "SELECT * FROM public.audit_log_list("
     ":tid, :action, :rtype, :dfrom, :dto, :lim, :off)"
@@ -62,7 +67,7 @@ async def list_audit(
             id=r["id"],
             ts=r["ts"],
             tenant_id=r["tenant_id"],
-            actor_user_id=r["actor_user_id"],
+            actor_user_id=None if r["action"] in _AKTORU_GIZLI else r["actor_user_id"],
             actor_rol=r["actor_rol"],
             action=r["action"],
             resource_type=r["resource_type"],

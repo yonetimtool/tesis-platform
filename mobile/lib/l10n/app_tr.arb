@@ -743,7 +743,7 @@
   "semaKendiBlok": "Yalnızca kendi bloğunuzdaki daireleri şikayet edebilirsiniz.",
   "semaGonderilemedi": "Gönderilemedi. Lütfen tekrar deneyin.",
   "semaSikayetEtBaslik": "Daire {no} — şikayet et",
-  "semaSikayetAnonimNot": "Şikayetiniz yönetime iletilir; komşularınıza gösterilmez.",
+  "semaSikayetAnonimNot": "Şikâyetiniz yönetime iletilir. Kimliğiniz kimseye gösterilmez — yönetim dahil.",
   "semaSikayetiGonder": "Şikayeti gönder",
   "kategoriGurultu": "Gürültü",
   "@kategoriGurultu": {
@@ -4490,5 +4490,57 @@
   "listeSecimiBitir": "Seçimi bitir",
   "paylasHazirlaniyor": "Dosya hazırlanıyor…",
   "paylasHata": "Dosya oluşturulamadı.",
-  "paylasDugme": "Paylaş"
+  "paylasDugme": "Paylaş",
+  "sikayetOruntu": "Son {gun} günde {n} şikâyet, {k} farklı daireden",
+  "@sikayetOruntu": {
+    "description": "(P253 §D) Yonetim: daireye gelen sikayet oruntusu",
+    "placeholders": {
+      "gun": {
+        "type": "int"
+      },
+      "n": {
+        "type": "int"
+      },
+      "k": {
+        "type": "int"
+      }
+    }
+  },
+  "sikayetTekKaynak": "Çoğu tek daireden",
+  "sikayetTekKaynakIpucu": "Şikâyetlerin büyük kısmı aynı daireden geliyor; değerlendirirken bunu göz önünde bulundurun.",
+  "sikayetAsilsizSayisi": "{n} asılsız işaretli",
+  "@sikayetAsilsizSayisi": {
+    "description": "(P253 §D) asilsiz isaretli sayisi",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "sikayetAsilsiz": "Asılsız",
+  "sikayetAsilsizIsaretle": "Asılsız işaretle",
+  "sikayetAsilsizGeriAl": "İşareti geri al",
+  "sikayetAsilsizGerekce": "Gerekçe (zorunlu)",
+  "sikayetAsilsizAciklama": "Şikâyet edene bildirim gider; kim olduğu size gösterilmez. Tekrarlayan asılsız şikâyetler önce eşiğe sayılmaz, sonra kişinin yeni şikâyet açması geçici olarak durur. İşaret geri alınabilir.",
+  "sikayetAsilsizOnayla": "İşaretle",
+  "sikayetAsilsizGerekceGoster": "Gerekçe: {gerekce}",
+  "@sikayetAsilsizGerekceGoster": {
+    "description": "(P253 §D) asilsiz gerekcesi",
+    "placeholders": {
+      "gerekce": {
+        "type": "String"
+      }
+    }
+  },
+  "sikayetKayitNo": "Kayıt no: {id}",
+  "@sikayetKayitNo": {
+    "description": "(P253 §D) resmi talepte platforma iletilecek kayit no",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "semaSinirBilgi": "Bugün için bildirim sınırına ulaştınız; yönetim kayıtlarınızı aldı. Yarın yeniden bildirebilirsiniz.",
+  "sikayetDetayBaslik": "Şikâyet ayrıntısı"
 }

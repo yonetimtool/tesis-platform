@@ -38,6 +38,7 @@ from .routers import announcements as announcements_router
 from .routers import assets as assets_router
 from .routers import audit as audit_router
 from .routers import platform_gunluk as platform_gunluk_router
+from .routers import platform_sikayet as platform_sikayet_router
 from .routers import personel as personel_router
 from .routers import auth as auth_router
 from .routers import kayit as kayit_router
@@ -299,6 +300,7 @@ app.include_router(eposta_webhook_router.router)
 app.include_router(audit_router.router)
 # (P251 §10) Platform gonderim gunlugu (e-posta/SMS/push, tum tesisler).
 app.include_router(platform_gunluk_router.router)
+app.include_router(platform_sikayet_router.router)
 app.include_router(personel_router.router)
 app.include_router(support_router.router)
 # (P127.2) Tanitim sitesi iletisim formu — public gonderim + admin okuma.

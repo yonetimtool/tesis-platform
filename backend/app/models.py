@@ -155,6 +155,9 @@ NOTIFICATION_TIP = ENUM(
     "kargo_teslim",
     # (P252, göç 0167) Aylık maaşlar gidere yazıldı — yönetime özet.
     "maas_yazildi",
+    # (P253 §D, göç 0168) Şikâyet eden sakine: "asılsız" kararı ve geçici
+    # sınırlama. Yönetim KİMİN olduğunu öğrenmez; bildirim yalnız ona gider.
+    "sikayet_asilsiz", "sikayet_sinirlama",
     name="notification_tip", create_type=False,
 )
 ASSET_KATEGORI = ENUM(
@@ -2811,6 +2814,13 @@ class UnitComplaint(Base):
     durum: Mapped[str] = mapped_column(
         UNIT_COMPLAINT_DURUM, nullable=False, server_default=text("'acik'")
     )
+    # (P253 §D, göç 0168) Sikayetin GELDIGI daire — esik FARKLI KAYNAK
+    # DAIRE sayar. IC ALAN: hicbir yanitta donmez, yalniz sayilir.
+    kaynak_unit_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    # Yonetimin "asilsiz" karari (gerekce zorunlu; geri alinabilir).
+    asilsiz_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    asilsiz_gerekce: Mapped[str | None] = mapped_column(Text, nullable=True)
+    asilsiz_isaretleyen: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     created_at = _created_at()
     updated_at = _created_at()
 

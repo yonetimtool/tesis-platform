@@ -1982,7 +1982,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get semaSikayetAnonimNot =>
-      'Su queja se envía a la administración; no se muestra a sus vecinos.';
+      'Su queja se envía a la administración. Su identidad no se muestra a nadie, tampoco a la administración.';
 
   @override
   String get semaSikayetiGonder => 'Enviar queja';
@@ -9030,4 +9030,57 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get paylasDugme => 'Compartir';
+
+  @override
+  String sikayetOruntu(int gun, int n, int k) {
+    return '$n quejas en los últimos $gun días, desde $k viviendas distintas';
+  }
+
+  @override
+  String get sikayetTekKaynak => 'Mayormente de una vivienda';
+
+  @override
+  String get sikayetTekKaynakIpucu =>
+      'La mayoría de las quejas proceden de la misma vivienda; téngalo en cuenta al valorarlas.';
+
+  @override
+  String sikayetAsilsizSayisi(int n) {
+    return '$n marcadas como infundadas';
+  }
+
+  @override
+  String get sikayetAsilsiz => 'Infundada';
+
+  @override
+  String get sikayetAsilsizIsaretle => 'Marcar como infundada';
+
+  @override
+  String get sikayetAsilsizGeriAl => 'Deshacer marca';
+
+  @override
+  String get sikayetAsilsizGerekce => 'Motivo (obligatorio)';
+
+  @override
+  String get sikayetAsilsizAciklama =>
+      'Se notifica a quien presentó la queja; no se le muestra quién es. Las quejas infundadas repetidas primero dejan de contar para el umbral y después se pausan temporalmente las nuevas quejas de esa persona. La marca se puede deshacer.';
+
+  @override
+  String get sikayetAsilsizOnayla => 'Marcar';
+
+  @override
+  String sikayetAsilsizGerekceGoster(String gerekce) {
+    return 'Motivo: $gerekce';
+  }
+
+  @override
+  String sikayetKayitNo(String id) {
+    return 'N.º de registro: $id';
+  }
+
+  @override
+  String get semaSinirBilgi =>
+      'Ha alcanzado el límite de avisos de hoy; la administración ha recibido sus avisos. Podrá volver a informar mañana.';
+
+  @override
+  String get sikayetDetayBaslik => 'Detalles de la queja';
 }

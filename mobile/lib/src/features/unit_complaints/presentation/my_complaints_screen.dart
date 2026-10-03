@@ -145,7 +145,17 @@ class _ComplaintCardState extends ConsumerState<_ComplaintCard> {
             unitComplaintKategoriAdi(context.l10n, c.kategori),
           ),
         ),
-        subtitle: Text(tarihSaatBicimi(c.createdAt, context.dilKodu)),
+        subtitle: Text(
+          [
+            tarihSaatBicimi(c.createdAt, context.dilKodu),
+            // (P253 §D) Yonetimin "asilsiz" karari ve gerekcesi SAHIBINE
+            // gosterilir — bildirimle gelen karar burada okunur.
+            if (c.asilsiz) context.l10n.sikayetAsilsiz,
+            if (c.asilsiz && (c.asilsizGerekce ?? '').isNotEmpty)
+              context.l10n.sikayetAsilsizGerekceGoster(c.asilsizGerekce!),
+          ].join('\n'),
+        ),
+        isThreeLine: c.asilsiz,
         // (P146) Geri alma YALNIZ acik sikayette: yonetim kapattiktan
         // sonra karar verilmis kaydi sahibi tek tarafli degistiremez.
         trailing: acik

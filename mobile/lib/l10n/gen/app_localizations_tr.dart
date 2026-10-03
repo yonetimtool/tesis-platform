@@ -1927,7 +1927,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get semaSikayetAnonimNot =>
-      'Şikayetiniz yönetime iletilir; komşularınıza gösterilmez.';
+      'Şikâyetiniz yönetime iletilir. Kimliğiniz kimseye gösterilmez — yönetim dahil.';
 
   @override
   String get semaSikayetiGonder => 'Şikayeti gönder';
@@ -8833,4 +8833,57 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get paylasDugme => 'Paylaş';
+
+  @override
+  String sikayetOruntu(int gun, int n, int k) {
+    return 'Son $gun günde $n şikâyet, $k farklı daireden';
+  }
+
+  @override
+  String get sikayetTekKaynak => 'Çoğu tek daireden';
+
+  @override
+  String get sikayetTekKaynakIpucu =>
+      'Şikâyetlerin büyük kısmı aynı daireden geliyor; değerlendirirken bunu göz önünde bulundurun.';
+
+  @override
+  String sikayetAsilsizSayisi(int n) {
+    return '$n asılsız işaretli';
+  }
+
+  @override
+  String get sikayetAsilsiz => 'Asılsız';
+
+  @override
+  String get sikayetAsilsizIsaretle => 'Asılsız işaretle';
+
+  @override
+  String get sikayetAsilsizGeriAl => 'İşareti geri al';
+
+  @override
+  String get sikayetAsilsizGerekce => 'Gerekçe (zorunlu)';
+
+  @override
+  String get sikayetAsilsizAciklama =>
+      'Şikâyet edene bildirim gider; kim olduğu size gösterilmez. Tekrarlayan asılsız şikâyetler önce eşiğe sayılmaz, sonra kişinin yeni şikâyet açması geçici olarak durur. İşaret geri alınabilir.';
+
+  @override
+  String get sikayetAsilsizOnayla => 'İşaretle';
+
+  @override
+  String sikayetAsilsizGerekceGoster(String gerekce) {
+    return 'Gerekçe: $gerekce';
+  }
+
+  @override
+  String sikayetKayitNo(String id) {
+    return 'Kayıt no: $id';
+  }
+
+  @override
+  String get semaSinirBilgi =>
+      'Bugün için bildirim sınırına ulaştınız; yönetim kayıtlarınızı aldı. Yarın yeniden bildirebilirsiniz.';
+
+  @override
+  String get sikayetDetayBaslik => 'Şikâyet ayrıntısı';
 }

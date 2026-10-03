@@ -109,11 +109,13 @@ export function GonderimKarti({ sablonlar }: { sablonlar: GonderimSablonu[] }) {
   const govde = () => aliciGovdesi(seciliId, kime, blok, rol);
   const eksik = !sablon || (kime === "blok" && !blok.trim());
 
-  async function calis<T>(is: () => Promise<T>): Promise<T | null> {
+  // Istek SOZ olarak gelir (`() => apiSend<..>` bicimi sabit-metin
+  // taramasinda JSX metni gibi okunuyordu).
+  async function calis<T>(is: Promise<T>): Promise<T | null> {
     setHata(null);
     setMesgul(true);
     try {
-      return await is();
+      return await is;
     } catch (e) {
       setHata(e instanceof Error ? e.message : String(e));
       return null;
@@ -125,7 +127,7 @@ export function GonderimKarti({ sablonlar }: { sablonlar: GonderimSablonu[] }) {
   async function onizle() {
     if (!sablon) return;
     setSonuc(null);
-    const veri = await calis(() =>
+    const veri = await calis(
       apiSend<Onizleme>(`/api/panel/mesaj-onizleme?kanal=${sablon.kanal}`, "POST", {
         govde: sablon.govde,
         konu: sablon.konu,
@@ -136,13 +138,13 @@ export function GonderimKarti({ sablonlar }: { sablonlar: GonderimSablonu[] }) {
 
   async function ozetAl() {
     setSonuc(null);
-    const veri = await calis(() => apiSend<AliciOzeti>("/api/panel/mesaj-alicilar", "POST", govde()));
+    const veri = await calis(apiSend<AliciOzeti>("/api/panel/mesaj-alicilar", "POST", govde()));
     if (veri) setOzet(veri);
     if (veri && !onizleme) void onizle();
   }
 
   async function gonder() {
-    const veri = await calis(() => apiSend<GonderimSonucu>("/api/panel/mesaj-gonder", "POST", govde()));
+    const veri = await calis(apiSend<GonderimSonucu>("/api/panel/mesaj-gonder", "POST", govde()));
     if (veri) {
       setSonuc(veri);
       setOzet(null);

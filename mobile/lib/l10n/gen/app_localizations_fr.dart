@@ -1984,7 +1984,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get semaSikayetAnonimNot =>
-      'Votre plainte est transmise à la gestion ; elle n\'est pas montrée à vos voisins.';
+      'Votre plainte est transmise à la gestion. Votre identité n\'est montrée à personne — gestion comprise.';
 
   @override
   String get semaSikayetiGonder => 'Envoyer la plainte';
@@ -9045,4 +9045,57 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get paylasDugme => 'Partager';
+
+  @override
+  String sikayetOruntu(int gun, int n, int k) {
+    return '$n plaintes ces $gun derniers jours, depuis $k logements différents';
+  }
+
+  @override
+  String get sikayetTekKaynak => 'Surtout d\'un seul logement';
+
+  @override
+  String get sikayetTekKaynakIpucu =>
+      'La plupart des plaintes viennent du même logement ; tenez-en compte dans votre évaluation.';
+
+  @override
+  String sikayetAsilsizSayisi(int n) {
+    return '$n marquées infondées';
+  }
+
+  @override
+  String get sikayetAsilsiz => 'Infondée';
+
+  @override
+  String get sikayetAsilsizIsaretle => 'Marquer infondée';
+
+  @override
+  String get sikayetAsilsizGeriAl => 'Annuler le marquage';
+
+  @override
+  String get sikayetAsilsizGerekce => 'Motif (obligatoire)';
+
+  @override
+  String get sikayetAsilsizAciklama =>
+      'L\'auteur de la plainte est notifié ; son identité ne vous est pas montrée. Des plaintes infondées répétées cessent d\'abord de compter pour le seuil, puis les nouvelles plaintes de la personne sont suspendues temporairement. Le marquage est réversible.';
+
+  @override
+  String get sikayetAsilsizOnayla => 'Marquer';
+
+  @override
+  String sikayetAsilsizGerekceGoster(String gerekce) {
+    return 'Motif : $gerekce';
+  }
+
+  @override
+  String sikayetKayitNo(String id) {
+    return 'N° d\'enregistrement : $id';
+  }
+
+  @override
+  String get semaSinirBilgi =>
+      'Vous avez atteint la limite de signalements du jour ; la gestion a bien reçu vos signalements. Vous pourrez de nouveau signaler demain.';
+
+  @override
+  String get sikayetDetayBaslik => 'Détails de la plainte';
 }

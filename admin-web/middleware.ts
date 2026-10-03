@@ -261,6 +261,7 @@ export const config = {
     "/egitim-videolari/:path*",
     "/mesaj-ayarlari/:path*",
     "/gonderim-gunlugu/:path*",
+    "/sikayet-kimlik/:path*",
     // (P193 §5) Yoneticinin tesis ayarlari ekrani. `/settings` PLATFORM
     // yuzeyinde kaldi; bu TESIS yuzeyindedir ve ayrica korunmali —
     // `middleware.test.ts` eksigi yakaladi.

@@ -2096,7 +2096,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get semaSikayetAnonimNot =>
-      'تُرسل شكواك إلى الإدارة؛ ولا تُعرض على جيرانك.';
+      'تُرسل شكواك إلى الإدارة. لا تُعرض هويتك لأي أحد — بما في ذلك الإدارة.';
 
   @override
   String get semaSikayetiGonder => 'إرسال الشكوى';
@@ -9071,4 +9071,57 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get paylasDugme => 'مشاركة';
+
+  @override
+  String sikayetOruntu(int gun, int n, int k) {
+    return '$n شكاوى خلال آخر $gun يومًا، من $k وحدات مختلفة';
+  }
+
+  @override
+  String get sikayetTekKaynak => 'معظمها من وحدة واحدة';
+
+  @override
+  String get sikayetTekKaynakIpucu =>
+      'معظم الشكاوى تأتي من الوحدة نفسها؛ ضع ذلك في الاعتبار عند التقييم.';
+
+  @override
+  String sikayetAsilsizSayisi(int n) {
+    return '$n مصنّفة غير مبررة';
+  }
+
+  @override
+  String get sikayetAsilsiz => 'غير مبررة';
+
+  @override
+  String get sikayetAsilsizIsaretle => 'تصنيف كغير مبررة';
+
+  @override
+  String get sikayetAsilsizGeriAl => 'إلغاء التصنيف';
+
+  @override
+  String get sikayetAsilsizGerekce => 'السبب (إلزامي)';
+
+  @override
+  String get sikayetAsilsizAciklama =>
+      'يُبلَّغ مقدّم الشكوى؛ ولا تُعرض عليك هويته. تتوقف الشكاوى غير المبررة المتكررة أولًا عن الاحتساب ضمن الحد، ثم يُوقف تقديم الشخص لشكاوى جديدة مؤقتًا. يمكن التراجع عن التصنيف.';
+
+  @override
+  String get sikayetAsilsizOnayla => 'تصنيف';
+
+  @override
+  String sikayetAsilsizGerekceGoster(String gerekce) {
+    return 'السبب: $gerekce';
+  }
+
+  @override
+  String sikayetKayitNo(String id) {
+    return 'رقم السجل: $id';
+  }
+
+  @override
+  String get semaSinirBilgi =>
+      'لقد بلغت حد البلاغات لهذا اليوم؛ وصلت بلاغاتك إلى الإدارة. يمكنك الإبلاغ مجددًا غدًا.';
+
+  @override
+  String get sikayetDetayBaslik => 'تفاصيل الشكوى';
 }

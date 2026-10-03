@@ -138,6 +138,8 @@ def kayit_etiketi(kimlik: str | None, data: Mapping[str, str] | None) -> str | N
 SAKIN_KIMLIKLERI: frozenset[str] = frozenset({
     "kargo", "kargo_teslim", "ziyaretci", "rezervasyon",
     "sikayet_cozuldu", "talep_is_emri", "talep_cozuldu", "talep_reddedildi",
+    # (P253 §D) Sikayet edene: asilsiz karari ve gecici sinirlama.
+    "sikayet_asilsiz", "sikayet_sinirlama",
     "erisim_onaylandi", "erisim_reddedildi",
     "aidat_borc", "aidat_odendi", "aidat_hatirlatma",
     "gurultu_uyari_sakin", "akilli_ev_kacak", "akilli_ev_yangin",

@@ -5745,10 +5745,12 @@ class UnitComplaintDecision(BaseModel):
 class UnitComplaintOut(BaseModel):
     """Daire sikayeti ciktisi.
 
-    Rev-2 GIZLILIK: `complainant_user_id` + `complainant_ad` ARTIK HICBIR uctan
-    DOLDURULMAZ (her zaman None) — yonetim dahil kimse sikayet edenin kimligini
-    gormez. Alanlar geriye-uyum icin sema'da kalir (hep null). `notlar` yalniz
-    kendi kaydini goren sakine + yonetime doludur."""
+    (P253 §D) GIZLILIK: sikayet edenin kimligi HICBIR site rolune donmez —
+    yonetici dahil. `complainant_user_id` / `complainant_ad` alanlari
+    SEMADAN KALDIRILDI (Rev-2'de "hep null" duruyordu; alanin varligi bile
+    bir gun doldurulmasina davetiyeydi). Resmi kimlik acma yalniz platform
+    yoneticisinde (`POST /platform/sikayet-kimlik`, gerekceli + denetimli).
+    `notlar` yalniz kendi kaydini goren sakine + yonetime doludur."""
 
     id: uuid.UUID
     target_unit_id: uuid.UUID
@@ -5757,10 +5759,6 @@ class UnitComplaintOut(BaseModel):
     notlar: str | None = None
     durum: str
     created_at: datetime
-    # YALNIZ yonetim icin doldurulur (denetim); digerinde None. resident kendi
-    # actigi kaydin yanitinda da None gorur (kendi kimligini tekrar donmeye gerek yok).
-    complainant_user_id: uuid.UUID | None = None
-    complainant_ad: str | None = None
     #: ISTEYEN yoneticiye gore okunmus mu (P24 triyaj). Yonetim uclarinda dolu,
     #: sakin uclarinda None — okuma durumu bir YONETIM kuyrugu kavramidir.
     okundu: bool | None = None
@@ -5768,6 +5766,10 @@ class UnitComplaintOut(BaseModel):
     #: "suresi dolmus": hala acik ama haritada SAYILMIYOR. Yonetim
     #: listesinde dolu; pencere tanimsizsa (suresiz) hep False.
     suresi_doldu: bool | None = None
+    #: (P253 §D) Yonetimin "asilsiz" karari ve gerekcesi. Yonetime ve
+    #: sikayeti ACAN sakinin kendisine doner (kendisi ogrenmeli).
+    asilsiz: bool = False
+    asilsiz_gerekce: str | None = None
 
     @classmethod
     def from_model(
@@ -5776,8 +5778,6 @@ class UnitComplaintOut(BaseModel):
         *,
         unit_no: str | None,
         include_note: bool,
-        include_complainant: bool = False,
-        complainant_ad: str | None = None,
         okundu: bool | None = None,
     ) -> "UnitComplaintOut":
         return cls(
@@ -5789,9 +5789,62 @@ class UnitComplaintOut(BaseModel):
             notlar=obj.notlar if include_note else None,
             durum=obj.durum,
             created_at=obj.created_at,
-            complainant_user_id=obj.complainant_user_id if include_complainant else None,
-            complainant_ad=complainant_ad if include_complainant else None,
+            asilsiz=obj.asilsiz_at is not None,
+            asilsiz_gerekce=obj.asilsiz_gerekce if include_note else None,
         )
+
+
+class SikayetAsilsizIstek(BaseModel):
+    """(P253 §D) "Asilsiz" isareti — gerekce ZORUNLU."""
+
+    gerekce: str = Field(min_length=3, max_length=500)
+
+    @field_validator("gerekce")
+    @classmethod
+    def _bos_degil(cls, v: str) -> str:
+        v = v.strip()
+        if len(v) < 3:
+            raise ValueError("gerekce_zorunlu")
+        return v
+
+
+class SikayetKaynakOzeti(BaseModel):
+    """(P253 §D) Yonetimin gordugu ORUNTU — kaynak etiketi YOK."""
+
+    gun: int
+    sikayet_sayisi: int
+    farkli_kaynak: int
+    tek_kaynak_yogun: bool
+    asilsiz_sayisi: int
+
+
+class SikayetKimlikIstek(BaseModel):
+    """(P253 §D) Resmi kimlik acma — YALNIZ platform; gerekce en az 20 karakter."""
+
+    tenant_id: uuid.UUID
+    sikayet_id: uuid.UUID
+    gerekce: str = Field(min_length=20, max_length=1000)
+
+    @field_validator("gerekce")
+    @classmethod
+    def _dolu(cls, v: str) -> str:
+        v = v.strip()
+        if len(v) < 20:
+            raise ValueError("gerekce_en_az_20")
+        return v
+
+
+class SikayetKimlikOut(BaseModel):
+    sikayet_id: uuid.UUID
+    tenant_id: uuid.UUID
+    hedef_daire: str | None
+    kaynak_daire: str | None
+    kategori: str
+    created_at: datetime
+    sikayet_eden_id: uuid.UUID
+    sikayet_eden_ad: str
+    sikayet_eden_telefon: str | None
+    sikayet_eden_eposta: str | None
 
 
 class UnitComplaintListResponse(BaseModel):

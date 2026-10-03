@@ -280,20 +280,27 @@ def test_ESIK_UYARISI_HALA_URETILIYOR(client, owner_conn, yon, sakin, blok):
     # GERCEK UC cagrisi 409 alirdi ve olculen sey esik degil spam
     # korumasi olurdu.
     #
-    # Esik sayaci DAIRE basina sayar, sikayetci basina degil — bu yuzden
-    # baska bir kullanici kullanmak olcumu bozmuyor.
+    # (P253 §D) Esik sayaci FARKLI KAYNAK DAIRE sayar (`kaynak_unit_id`);
+    # kayitlar ayri dairelerden yazildigi icin tek kullanici yeter.
     baska = owner_conn.execute(
         "SELECT id FROM app_user WHERE tenant_id = %s AND id <> %s LIMIT 1",
         (tenant_id, sakin_id)).fetchone()[0]
 
+    # (P253 §D) Esik FARKLI KAYNAK DAIRE sayar: her kayit ayri bir
+    # daireden (sakinin kendi dairesi haric — o, gercek uctan gelecek).
+    kaynaklar = [owner_conn.execute(
+        "INSERT INTO unit (tenant_id, no) VALUES (%s, %s) RETURNING id",
+        (tenant_id, f"KAYNAK-{uuid.uuid4().hex[:8]}")).fetchone()[0]
+        for _ in range(esik - 1)]
+
     # hepsi HARITA PENCERESI DISINDA (3 saat eski, pencere 1 saat).
-    for _ in range(esik - 1):
+    for kaynak in kaynaklar:
         owner_conn.execute(
             "INSERT INTO unit_complaint (id, tenant_id, target_unit_id, "
-            "  complainant_user_id, kategori, notlar, durum, created_at) "
-            "VALUES (gen_random_uuid(), %s, %s, %s, 'gurultu', 'esik olcum', "
+            "  complainant_user_id, kaynak_unit_id, kategori, notlar, durum, created_at) "
+            "VALUES (gen_random_uuid(), %s, %s, %s, %s, 'gurultu', 'esik olcum', "
             " 'acik', now() - interval '3 hours')",
-            (tenant_id, hedef, baska))
+            (tenant_id, hedef, baska, kaynak))
 
     once = owner_conn.execute(
         "SELECT count(*) FROM unit_uyari WHERE unit_id = %s", (hedef,)

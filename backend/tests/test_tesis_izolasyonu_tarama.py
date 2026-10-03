@@ -60,6 +60,9 @@ TESIS_UCLARI: tuple[str, ...] = (
     # yazilmasaydi kapsam orani sessizce duserdi — nitekim tam suite'te
     # `test_tarama_kapsami_daralmadi` bunu YAKALADI.
     "/unit-complaints/gorunur-sayi",
+    # (P253 §D) Oruntu ozeti: A'nin yoneticisi B'nin DAIRESINI sorar
+    # (`__B_UNIT__`) — RLS altinda 404 olmali, sayi sizmamali.
+    "/unit-complaints/kaynak-ozeti",
     "/assets",
     "/cameras",
     "/announcements",
@@ -189,6 +192,7 @@ PLATFORM_UCLARI: tuple[str, ...] = (
 #: sozlesmesini test icin GEVSETMEYIZ; test uca UYAR.
 _PARAMETRELER: dict[str, dict] = {
     "/activity": {"limit": 50},
+    "/unit-complaints/kaynak-ozeti": {"unit_id": "__B_UNIT__"},
     "/raporlar/isler": {"limit": 50},
     # Takvim en fazla 120 gunluk aralik kabul eder — sinir UCUN kurali,
     # test ona uyar.
@@ -323,6 +327,8 @@ def test_TESIS_UCLARI_BASKA_TESISIN_VERISINI_DONDURMEZ(client, world, b_izleri, 
         params = dict(_PARAMETRELER.get(yol, {"limit": 50}))
         if params.get("q") == "__IZ__":
             params["q"] = b_izleri["iz"]
+        if params.get("unit_id") == "__B_UNIT__":
+            params["unit_id"] = b_izleri["idler"]["unit"]
         r = client.get(yol, headers=h, params=params)
         if r.status_code in (403, 404):
             continue

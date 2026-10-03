@@ -70,6 +70,8 @@ export const PLATFORM_ROTALARI = [
   "/mesaj-ayarlari",
   // (P251 §10) E-posta/SMS/push teslim gunlugu — tum tesisler.
   "/gonderim-gunlugu",
+  // (P253 §D) Sikayet edenin kimligini RESMI olarak acma (gerekceli + denetimli).
+  "/sikayet-kimlik",
 ] as const;
 
 /**

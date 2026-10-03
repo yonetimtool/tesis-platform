@@ -107,7 +107,7 @@ def test_sakin_acar_kendi_kaydini_gorur_complainant_donmez(ucworld, client):
     assert r.status_code == 201, r.text
     body = r.json()
     # resident kendi kaydini gorur ama complainant kimligi DONMEZ (None)
-    assert body["complainant_user_id"] is None and body["complainant_ad"] is None
+    assert "complainant_user_id" not in body and "complainant_ad" not in body
     assert body["target_unit_id"] == ucworld["unit1"]
     assert body["kategori"] == "gurultu" and body["durum"] == "acik"
 
@@ -147,9 +147,12 @@ def test_spam_haftalik_kategori_bazli(ucworld, client):
     dup = _file(client, slug, r0, ucworld["unit1"], kategori="gurultu")
     assert dup.status_code == 409 and dup.json()["error"]["code"] == "conflict"
     assert dup.json()["error"]["message"] == METINLER["sikayet_haftalik_limit"]["tr"]
-    # ayni daire FARKLI kategori -> serbest (201)
+    # ayni daire FARKLI kategori -> haftalik kural serbest (201) ...
     assert _file(client, slug, r0, ucworld["unit1"], kategori="zarar_verme").status_code == 201
-    assert _file(client, slug, r0, ucworld["unit1"], kategori="kapi_onu_ayakkabi").status_code == 201
+    # ... ama (P253 §D) ayni daireye 24 saatte en fazla 2: ucuncusu KIBAR 429.
+    ucuncu = _file(client, slug, r0, ucworld["unit1"], kategori="kapi_onu_ayakkabi")
+    assert ucuncu.status_code == 429, ucuncu.text
+    assert ucuncu.json()["error"]["message"] == METINLER["sikayet_daire_gunluk_sinir"]["tr"].format(sayi=2)
     # BASKA daire ayni kategori -> 201
     assert _file(client, slug, r0, ucworld["unit2"], kategori="gurultu").status_code == 201
     # BASKA sakin ayni daire+kategori -> 201
@@ -211,7 +214,7 @@ def test_sikayetlerim_yalniz_kendi_kayitlari(ucworld, client):
     for it in body["items"]:
         assert it["unit_no"] and it["kategori"] and it["durum"] and it["created_at"]
         # complainant (kendisi) donmez; yogunluk/renk alani da yok
-        assert it["complainant_user_id"] is None and it["complainant_ad"] is None
+        assert "complainant_user_id" not in it and "complainant_ad" not in it
         assert "renk" not in it and "acik_sayisi" not in it
     # RBAC: /mine yalniz resident
     for cred in (ucworld["admin_a"], ucworld["yonetici_a"], ucworld["guard_a"], ucworld["gorevli_a"]):
@@ -353,7 +356,7 @@ def test_complainant_yonetime_bile_gorunmez_digerine_403(ucworld, client):
         )
         assert resp.status_code == 200
         item = resp.json()["items"][0]
-        assert item["complainant_user_id"] is None and item["complainant_ad"] is None
+        assert "complainant_user_id" not in item and "complainant_ad" not in item
         assert item["notlar"] == "Gizli not"  # not gorunur, kimlik gorunmez
         # sikayet edenin id'si yanit govdesinde HICBIR yerde sizmasin
         assert r0["id"] not in resp.text
@@ -565,7 +568,7 @@ def test_sikayet_eden_kendi_sikayetini_geri_alir(ucworld, client):
     assert r.status_code == 200, r.text
     assert r.json()["durum"] == "geri_alindi"
     # GIZLILIK KORUNUYOR: geri alma kimligi acmaz.
-    assert r.json()["complainant_user_id"] is None
+    assert "complainant_user_id" not in r.json()
 
 
 def test_baskasinin_sikayeti_geri_alinamaz_404(ucworld, client):

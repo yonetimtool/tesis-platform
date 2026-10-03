@@ -1,22 +1,27 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 
 import {
+  AlanSarmal,
   BosDurum,
+  CokSatir,
+  Dugme,
   HataDurumu,
   IskeletMetin,
   Kart,
   Modal,
   OzetKarti,
   OzetSeridi,
+  Rozet,
   SayfaBasligi,
   Secim,
   Sekmeler,
 } from "@/components/ui";
 import { PlanHaritasiYukleyici } from "@/components/harita/harita-yukleyici";
 import type { PlanBlogu, PlanHucresi } from "@/components/harita/plan-haritasi";
+import { alanliHataMetni, apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
@@ -25,6 +30,7 @@ import type {
   BuildingMap,
   BuildingMapUnit,
   DensityRenk,
+  SikayetKaynakOzeti,
   UnitComplaint,
   UnitComplaintList,
 } from "@/lib/types";
@@ -163,9 +169,33 @@ function Legend() {
   );
 }
 
-/** (P251 §3) Tek sikayet satiri: tur, tarih, aciklama. */
-function SikayetSatiri({ it }: { it: UnitComplaint }) {
+/** (P251 §3) Tek sikayet satiri: tur, tarih, aciklama.
+ *  (P253 §D) + "asilsiz" isareti (gerekce zorunlu) ve geri alma. Sikayet
+ *  edenin kimligi HICBIR role donmez — burada gosterilecek bir alan yok. */
+function SikayetSatiri({ it, onDegisti }: { it: UnitComplaint; onDegisti: () => void }) {
   const t = useT();
+  const [form, setForm] = useState(false);
+  const [gerekce, setGerekce] = useState("");
+  const [mesgul, setMesgul] = useState(false);
+  const [hata, setHata] = useState<string | null>(null);
+  const yolla = async (yontem: "POST" | "DELETE") => {
+    setMesgul(true);
+    setHata(null);
+    try {
+      await apiSend(
+        `/api/unit-complaints/${it.id}/asilsiz`,
+        yontem,
+        yontem === "POST" ? { gerekce: gerekce.trim() } : undefined,
+      );
+      setForm(false);
+      setGerekce("");
+      onDegisti();
+    } catch (e) {
+      setHata(alanliHataMetni(e, t("sikayetIslemHatasi")));
+    } finally {
+      setMesgul(false);
+    }
+  };
   return (
     <li
       className="px-3 py-2"
@@ -179,19 +209,73 @@ function SikayetSatiri({ it }: { it: UnitComplaint }) {
       <div className="flex justify-between gap-2">
         <span style={{ fontWeight: 600 }}>
           {KATEGORI_ANAHTAR[it.kategori] ? t(KATEGORI_ANAHTAR[it.kategori]) : it.kategori}
+          {it.asilsiz && (
+            <span className="ms-2" data-test="sikayet-asilsiz-rozet">
+              <Rozet durum="uyari">{t("sikayetAsilsiz")}</Rozet>
+            </span>
+          )}
         </span>
         <span style={{ color: "var(--yz-text-3)" }}>{fmtDate(it.created_at)}</span>
       </div>
-      {/* Sikayet eden kimligi: sunucu Rev-2'den beri HIC dondurmuyor
-          (yonetim dahil); alan gelirse yonetime gosterilir. */}
-      {it.complainant_ad && (
-        <p className="mt-0.5" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
-          {t("haritaSikayetEden", { kisi: it.complainant_ad })}
-        </p>
-      )}
       {it.notlar && (
         <p className="mt-1" style={{ color: "var(--yz-text-2)" }}>
           {it.notlar}
+        </p>
+      )}
+      {it.asilsiz && it.asilsiz_gerekce && (
+        <p className="mt-1" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+          {t("sikayetAsilsizGerekceGoster", { gerekce: it.asilsiz_gerekce })}
+        </p>
+      )}
+      {/* Resmi kimlik acma talebinde platforma iletilecek kayit no. */}
+      <p className="mt-1 select-all" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}>
+        {t("sikayetKayitNo", { id: it.id })}
+      </p>
+      <div className="mt-1 flex flex-wrap gap-2">
+        {it.asilsiz ? (
+          <Dugme tur="ikincil" boy="kucuk" disabled={mesgul} onClick={() => yolla("DELETE")}
+            data-test="sikayet-asilsiz-geri-al">
+            {t("sikayetAsilsizGeriAl")}
+          </Dugme>
+        ) : !form ? (
+          <Dugme tur="ikincil" boy="kucuk" onClick={() => setForm(true)} data-test="sikayet-asilsiz-ac">
+            {t("sikayetAsilsizIsaretle")}
+          </Dugme>
+        ) : null}
+      </div>
+      {form && !it.asilsiz && (
+        <div className="mt-2 space-y-2" data-test="sikayet-asilsiz-form">
+          <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+            {t("sikayetAsilsizAciklama")}
+          </p>
+          <AlanSarmal etiket={t("sikayetAsilsizGerekce")} zorunlu hata={hata}>
+            {(baglar) => (
+              <CokSatir
+                {...baglar}
+                required
+                rows={2}
+                value={gerekce}
+                maxLength={500}
+                onChange={(e) => setGerekce(e.target.value)}
+                data-test="sikayet-asilsiz-gerekce"
+              />
+            )}
+          </AlanSarmal>
+          <div className="flex gap-2">
+            <Dugme boy="kucuk" disabled={mesgul || gerekce.trim().length < 3}
+              onClick={() => yolla("POST")} data-test="sikayet-asilsiz-onayla">
+              {t("sikayetAsilsizOnayla")}
+            </Dugme>
+            <Dugme tur="ikincil" boy="kucuk" disabled={mesgul}
+              onClick={() => { setForm(false); setGerekce(""); setHata(null); }}>
+              {t("ortakVazgec")}
+            </Dugme>
+          </div>
+        </div>
+      )}
+      {hata && !form && (
+        <p role="alert" className="mt-1" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-danger-ink)" }}>
+          {hata}
         </p>
       )}
     </li>
@@ -212,16 +296,31 @@ function SikayetSatiri({ it }: { it: UnitComplaint }) {
  */
 function DaireAyrintisi({ unit }: { unit: BuildingMapUnit }) {
   const t = useT();
-  // Sikayet listesi (durum=acik — sayimla tutarli). Rev-1: yonetim gorunumunde
-  // notlar + complainant (sikayet eden) DOLU gelir (denetim; backend zorlar).
-  const { data, error, isLoading } = useSWR<UnitComplaintList>(
+  // Sikayet listesi (durum=acik — sayimla tutarli). Yonetim gorunumunde
+  // notlar dolu; (P253 §D) sikayet edenin kimligi HICBIR role donmez.
+  const { data, error, isLoading, mutate } = useSWR<UnitComplaintList>(
     `/api/unit-complaints?target_unit_id=${unit.unit_id}&durum=acik`,
     jsonFetcher,
   );
+  // (P253 §D) ORUNTU: kac sikayet, kac farkli daireden; tek kaynak uyarisi.
+  const { data: oruntu, mutate: oruntuTazele } = useSWR<SikayetKaynakOzeti>(
+    `/api/unit-complaints/kaynak-ozeti?unit_id=${unit.unit_id}`,
+    jsonFetcher,
+  );
+  const { mutate: genelTazele } = useSWRConfig();
+  const tazele = () => {
+    void mutate();
+    void oruntuTazele();
+    // Hucre rengi/sayisi da degisir (asilsiz sikayet haritayi boyamaz).
+    void genelTazele((k) => typeof k === "string" && k.startsWith("/api/building-map"));
+  };
   const ton = renkTonu(unit.color);
   const items: UnitComplaint[] = data?.items ?? [];
 
   const acik = items.filter((it) => !it.suresi_doldu);
+  // Baslik sayisi haritayla AYNI kural (acik + pencere ici + asilsiz
+  // degil). Hucreden gelen anlik goruntu isaretten sonra bayat kalirdi.
+  const gorunurSayi = data ? acik.filter((it) => !it.asilsiz).length : (unit.complaint_count ?? 0);
   const dolmus = items.filter((it) => it.suresi_doldu);
   return (
     <div className="space-y-3" data-test="harita-daire-ayrinti">
@@ -234,9 +333,26 @@ function DaireAyrintisi({ unit }: { unit: BuildingMapUnit }) {
         {/* SAYI metin renginde: renkli metin 4.5 ister ve iki temada ayri
             olcum demekti; nokta zaten rengi tasiyor. */}
         <span className="ms-auto" style={{ fontWeight: 600, color: "var(--yz-text)" }}>
-          {t("haritaAcikSikayetSayisi", { n: unit.complaint_count ?? 0 })}
+          {t("haritaAcikSikayetSayisi", { n: gorunurSayi })}
         </span>
       </div>
+      {oruntu && oruntu.sikayet_sayisi + oruntu.asilsiz_sayisi > 0 && (
+        <div className="flex flex-wrap items-center gap-2" data-test="sikayet-oruntu">
+          <span style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>
+            {t("sikayetOruntu", { gun: oruntu.gun, n: oruntu.sikayet_sayisi, k: oruntu.farkli_kaynak })}
+          </span>
+          {oruntu.tek_kaynak_yogun && (
+            <span title={t("sikayetTekKaynakIpucu")} data-test="sikayet-tek-kaynak">
+              <Rozet durum="uyari">{t("sikayetTekKaynak")}</Rozet>
+            </span>
+          )}
+          {oruntu.asilsiz_sayisi > 0 && (
+            <span style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+              {t("sikayetAsilsizSayisi", { n: oruntu.asilsiz_sayisi })}
+            </span>
+          )}
+        </div>
+      )}
       {unit.blok != null && (
         <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
           {t("haritaBlokKatSira", { blok: unit.blok })}
@@ -262,7 +378,7 @@ function DaireAyrintisi({ unit }: { unit: BuildingMapUnit }) {
             {t("haritaAcikSikayetler")}
           </h3>
           <ul className="space-y-1">
-            {acik.map((it) => <SikayetSatiri key={it.id} it={it} />)}
+            {acik.map((it) => <SikayetSatiri key={it.id} it={it} onDegisti={tazele} />)}
           </ul>
         </section>
       )}
@@ -272,7 +388,7 @@ function DaireAyrintisi({ unit }: { unit: BuildingMapUnit }) {
             {t("haritaSuresiDolmus")}
           </h3>
           <ul className="space-y-1">
-            {dolmus.map((it) => <SikayetSatiri key={it.id} it={it} />)}
+            {dolmus.map((it) => <SikayetSatiri key={it.id} it={it} onDegisti={tazele} />)}
           </ul>
         </section>
       )}

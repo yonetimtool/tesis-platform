@@ -446,6 +446,7 @@ DELETE	/personel-kayitlari/{personel_id}	zorunlu	tesis	rol	-	ozel	-	-		-
 PATCH	/personel-kayitlari/{personel_id}	zorunlu	tesis	rol	-	ozel	email,iban,tc,telefon	-		dar
 GET	/personel/detay	zorunlu	tesis	-	-	-	iban	-		-
 GET	/platform/gonderim-gunlugu	zorunlu	tesis	-	-	-	-	-		dar
+POST	/platform/sikayet-kimlik	zorunlu	tesis	rol	-	ozel	sikayet_eden_eposta,sikayet_eden_telefon	-		dar
 POST	/public/tanitim-iletisim	kamu	platform	-	-	haric	-	-	tanitim sitesi formu; hiz sinirli, yalniz yazma	dar
 POST	/push/cihaz-temizle	zorunlu	tesis	-	-	ozel	-	-		-
 GET	/push/teshis	zorunlu	tesis	-	-	-	cihaz_kullanici	-		-
@@ -561,8 +562,11 @@ POST	/unit-complaints	zorunlu	tesis	-	-	ozel	-	-		dar
 GET	/unit-complaints/building-map	zorunlu	tesis	-	-	-	-	-		-
 GET	/unit-complaints/density	zorunlu	tesis	-	-	-	-	-		-
 GET	/unit-complaints/gorunur-sayi	zorunlu	tesis	-	-	-	-	-		-
+GET	/unit-complaints/kaynak-ozeti	zorunlu	tesis	-	-	-	-	-		-
 GET	/unit-complaints/mine	zorunlu	tesis	-	-	-	-	-		-
 PATCH	/unit-complaints/{complaint_id}	zorunlu	tesis	rol	-	ozel	-	-		-
+DELETE	/unit-complaints/{complaint_id}/asilsiz	zorunlu	tesis	rol	-	ozel	-	-		-
+POST	/unit-complaints/{complaint_id}/asilsiz	zorunlu	tesis	rol	-	ozel	-	-		dar
 POST	/unit-complaints/{complaint_id}/okundu	zorunlu	tesis	rol	-	genel	-	-		-
 POST	/unit-complaints/{complaint_id}/withdraw	zorunlu	tesis	kendi	-	ozel	-	-		-
 GET	/unit-gruplari	zorunlu	tesis	-	-	-	-	-		-

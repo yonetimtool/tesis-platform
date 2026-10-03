@@ -6,6 +6,7 @@ import '../../../core/i18n/l10n.dart';
 import '../../../core/theme/home_tokens.dart';
 import '../domain/unit_complaint_models.dart';
 import 'kategori_adi.dart';
+import 'sikayet_ayrinti_sheet.dart';
 import 'sikayet_kuyrugu_controller.dart';
 
 /// "Şikayet Kuyruğu" (P24) — YONETIM triyaj gorunumu.
@@ -178,6 +179,14 @@ class _KuyrukKarti extends ConsumerWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
+        // (P253 §D) Ayrinti: oruntu + "asilsiz" isareti (web harita
+        // daire ayrintisiyla ayni eylemler).
+        onTap: () async {
+          final degisti = await sikayetAyrintisiAc(context, c);
+          if (degisti == true) {
+            await ref.read(sikayetKuyruguControllerProvider.notifier).refresh();
+          }
+        },
         leading: Icon(
           c.acik ? Icons.hourglass_bottom_outlined : Icons.check_circle_outline,
           color: c.acik ? Colors.orange : Colors.green,
@@ -196,6 +205,7 @@ class _KuyrukKarti extends ConsumerWidget {
         subtitle: Text(
           [
             tarihSaatBicimi(c.createdAt, context.dilKodu),
+            if (c.asilsiz) l10n.sikayetAsilsiz,
             if (c.notlar != null && c.notlar!.isNotEmpty) c.notlar!,
           ].join('\n'),
         ),

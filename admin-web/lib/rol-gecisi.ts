@@ -80,6 +80,8 @@ export const SAKIN_BILDIRIM_ROTALARI: Record<string, string> = {
   talep_cozuldu: "/taleplerim",
   talep_reddedildi: "/taleplerim",
   sikayet_cozuldu: "/taleplerim",
+  sikayet_asilsiz: "/taleplerim",
+  sikayet_sinirlama: "/taleplerim",
   gurultu_uyari_sakin: "/taleplerim",
   rezervasyon: "/rezervasyonlarim",
   rezervasyon_karar: "/rezervasyonlarim",
@@ -106,6 +108,8 @@ export const SAKIN_BILDIRIM_ROTALARI: Record<string, string> = {
 export const SAKIN_KIMLIKLERI: ReadonlySet<string> = new Set([
   "kargo", "kargo_teslim", "ziyaretci", "rezervasyon",
   "sikayet_cozuldu", "talep_is_emri", "talep_cozuldu", "talep_reddedildi",
+  // (P253 §D)
+  "sikayet_asilsiz", "sikayet_sinirlama",
   "erisim_onaylandi", "erisim_reddedildi",
   "aidat_borc", "aidat_odendi", "aidat_hatirlatma",
   "gurultu_uyari_sakin", "akilli_ev_kacak", "akilli_ev_yangin",

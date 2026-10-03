@@ -810,6 +810,10 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
   bool _busy = false;
   String? _error;
 
+  /// (P253 §D) Gunluk sinir / gecici askiya alma: HATA DEGIL, bilgi —
+  /// kirmizi cizilmez (sunucu metni istegin dilinde ve kibar).
+  String? _bilgi;
+
   /// `setState` yollarinda kullanilan yerellestirme (build disi).
   AppLocalizations get _l10n => AppLocalizations.of(context);
 
@@ -827,6 +831,7 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
     setState(() {
       _busy = true;
       _error = null;
+      _bilgi = null;
     });
     try {
       await ref
@@ -843,6 +848,11 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
       if (!mounted) return;
       setState(() {
         _busy = false;
+        // 429 (P253 §D): gunluk sinir ya da gecici askiya alma — bilgi.
+        if (e.statusCode == 429) {
+          _bilgi = e.message.isNotEmpty ? e.message : _l10n.semaSinirBilgi;
+          return;
+        }
         // 409: haftalik kategori limiti; 403: kendi blogun disi.
         _error = switch (e.statusCode) {
           409 => _l10n.semaHaftalikSinir,
@@ -918,6 +928,29 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
             Text(
               _error!,
               style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ],
+          if (_bilgi != null) ...[
+            const SizedBox(height: 4),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    _bilgi!,
+                    key: const Key('sikayet-sinir-bilgi'),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
           const SizedBox(height: 12),

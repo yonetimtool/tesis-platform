@@ -304,8 +304,8 @@ def test_building_map_yonetici_sayim_renk_gorur_complainant_gormez(mapworld, cli
     )
     assert resp.status_code == 200
     lst = resp.json()["items"]
-    assert lst and lst[0]["complainant_user_id"] is None
-    assert lst[0]["complainant_ad"] is None
+    assert lst and "complainant_user_id" not in lst[0]
+    assert "complainant_ad" not in lst[0]
     assert r0["id"] not in resp.text
 
 

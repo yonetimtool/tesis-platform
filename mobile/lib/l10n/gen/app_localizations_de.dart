@@ -1986,7 +1986,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get semaSikayetAnonimNot =>
-      'Ihre Beschwerde geht an die Verwaltung; Nachbarn sehen sie nicht.';
+      'Ihre Beschwerde geht an die Verwaltung. Ihre Identität wird niemandem angezeigt – auch nicht der Verwaltung.';
 
   @override
   String get semaSikayetiGonder => 'Beschwerde senden';
@@ -9046,4 +9046,57 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get paylasDugme => 'Teilen';
+
+  @override
+  String sikayetOruntu(int gun, int n, int k) {
+    return '$n Beschwerden in den letzten $gun Tagen, aus $k verschiedenen Einheiten';
+  }
+
+  @override
+  String get sikayetTekKaynak => 'Meist aus einer Einheit';
+
+  @override
+  String get sikayetTekKaynakIpucu =>
+      'Die meisten Beschwerden kommen aus derselben Einheit; berücksichtigen Sie das bei der Bewertung.';
+
+  @override
+  String sikayetAsilsizSayisi(int n) {
+    return '$n als unbegründet markiert';
+  }
+
+  @override
+  String get sikayetAsilsiz => 'Unbegründet';
+
+  @override
+  String get sikayetAsilsizIsaretle => 'Als unbegründet markieren';
+
+  @override
+  String get sikayetAsilsizGeriAl => 'Markierung aufheben';
+
+  @override
+  String get sikayetAsilsizGerekce => 'Begründung (Pflicht)';
+
+  @override
+  String get sikayetAsilsizAciklama =>
+      'Die beschwerdeführende Person wird benachrichtigt; wer sie ist, wird Ihnen nicht angezeigt. Wiederholt unbegründete Beschwerden zählen zunächst nicht mehr zur Schwelle, danach werden neue Beschwerden der Person vorübergehend pausiert. Die Markierung kann aufgehoben werden.';
+
+  @override
+  String get sikayetAsilsizOnayla => 'Markieren';
+
+  @override
+  String sikayetAsilsizGerekceGoster(String gerekce) {
+    return 'Begründung: $gerekce';
+  }
+
+  @override
+  String sikayetKayitNo(String id) {
+    return 'Datensatz-Nr.: $id';
+  }
+
+  @override
+  String get semaSinirBilgi =>
+      'Sie haben das heutige Meldelimit erreicht; die Verwaltung hat Ihre Meldungen erhalten. Morgen können Sie erneut melden.';
+
+  @override
+  String get sikayetDetayBaslik => 'Beschwerdedetails';
 }

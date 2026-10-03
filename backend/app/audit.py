@@ -247,6 +247,10 @@ class Action:
     UNIT_COMPLAINT_FILE = "unit_complaint_file"
     UNIT_COMPLAINT_CLOSE = "unit_complaint_close"
     UNIT_COMPLAINT_WITHDRAW = "unit_complaint_withdraw"
+    # (P253 §D) "Asilsiz" isareti ve geri alinmasi; platformun resmi kimlik acmasi.
+    UNIT_COMPLAINT_ASILSIZ = "unit_complaint_asilsiz"
+    UNIT_COMPLAINT_ASILSIZ_GERI = "unit_complaint_asilsiz_geri"
+    SIKAYET_KIMLIK_ACMA = "sikayet_kimlik_acma"
     DUES_ASSESSMENT_CREATE = "dues_assessment_create"
     DUES_PAYMENT_RECORD = "dues_payment_record"
     BLOCK_CREATE = "block_create"

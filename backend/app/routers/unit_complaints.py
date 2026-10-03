@@ -71,6 +71,13 @@ from ..crud_helpers import get_or_404, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..gurultu_akisi import esik_kontrol
 from ..sakin_bildirimi import sakin_bildirimi_yaz
+from ..scheduler.notify import dispatch_external
+from ..sikayet_koruma import (
+    kaynak_dairesi,
+    kaynak_durumu,
+    kaynak_ozeti,
+    olusturma_siniri,
+)
 from ..errors import APIError
 from ..models import (
     AppUser,
@@ -83,6 +90,8 @@ from ..models import (
 from ..schemas import (
     GorunurSikayetSayisi,
     BuildingMapBlok,
+    SikayetAsilsizIstek,
+    SikayetKaynakOzeti,
     BuildingMapKat,
     BuildingMapResponse,
     BuildingMapUnit,
@@ -173,13 +182,18 @@ async def file_unit_complaint(
     # SPAM KORUMASI (Rev-1.1 — HAFTALIK + KATEGORI-BAZLI, YARISSIZ):
     # ayni sikayetci ayni daireye ayni KATEGORIDE 7 gunde en fazla 1 (farkli
     # kategori serbest; durumdan bagimsiz). Es zamanli iki istek yarissa
-    # cift kayit olusmasin diye (complainant,unit,kategori) icin transaction-
-    # kapsamli advisory lock alinir; ardindan sliding 7-gun penceresi kontrol
-    # edilir. Kilit transaction bitince (commit/rollback) otomatik birakilir.
+    # cift kayit olusmasin diye transaction-kapsamli advisory lock alinir;
+    # ardindan sliding 7-gun penceresi kontrol edilir. Kilit transaction
+    # bitince (commit/rollback) otomatik birakilir.
+    #
+    # (P253 §D) KILIT ARTIK KISI BASINA: gunluk TOPLAM sinir farkli
+    # dairelere paralel isteklerle de asilamasin. Askida kisi ve gunluk
+    # sinirlar `sikayet_koruma.olusturma_siniri` (429, kibar metin).
     await db.execute(
         text("SELECT pg_advisory_xact_lock(hashtext(:k)::bigint)"),
-        {"k": f"uc:{user.id}:{unit.id}:{body.kategori}"},
+        {"k": f"uc:{user.id}"},
     )
+    await olusturma_siniri(db, user, unit.id)
     son = (
         await db.execute(
             select(UnitComplaint.id).where(
@@ -197,6 +211,8 @@ async def file_unit_complaint(
         tenant_id=user.tenant_id,
         target_unit_id=unit.id,
         complainant_user_id=user.id,  # IC — resident'a donmez
+        # (P253 §D) Esik FARKLI KAYNAK DAIRE sayar; ic alan, donmez.
+        kaynak_unit_id=await kaynak_dairesi(db, user, unit),
         kategori=body.kategori,
         notlar=body.notlar,
     )
@@ -299,6 +315,8 @@ async def unit_density(
                 and_(
                     UnitComplaint.target_unit_id == Unit.id,
                     UnitComplaint.durum == "acik",
+                    # (P253 §D) "Asilsiz" isaretli sikayet haritayi boyamaz.
+                    UnitComplaint.asilsiz_at.is_(None),
                     # (P219 §2) HARITA PENCERESI — gorunurluk filtresi.
                     *( [pencere] if pencere is not None else [] ),
                     *_kategori_kosulu(kategori),
@@ -340,7 +358,7 @@ async def gorunur_sikayet_sayisi(
     izgara icin tek bir tam sayi yeter.
     """
     pencere = await _harita_penceresi(db)
-    kosullar = [UnitComplaint.durum == "acik"]
+    kosullar = [UnitComplaint.durum == "acik", UnitComplaint.asilsiz_at.is_(None)]
     if pencere is not None:
         kosullar.append(pencere)
     toplam = (
@@ -389,7 +407,6 @@ async def my_unit_complaints(
     return UnitComplaintListResponse(
         meta={"limit": limit, "offset": offset, "total": total},
         items=[
-            # complainant OMITTED (kendisi) — include_complainant=False.
             UnitComplaintOut.from_model(obj, unit_no=no, include_note=True)
             for obj, no in rows
         ],
@@ -432,6 +449,8 @@ async def building_map(
                 .where(
                     UnitComplaint.complainant_user_id == user.id,
                     UnitComplaint.durum == "acik",
+                    # (P253 §D) "Asilsiz" isaretli sikayet haritayi boyamaz.
+                    UnitComplaint.asilsiz_at.is_(None),
                     # ==========================================
                     # (P220 §1) OLCULEN KUSUR — AYNI PENCERE
                     # ==========================================
@@ -474,6 +493,8 @@ async def building_map(
                 and_(
                     UnitComplaint.target_unit_id == Unit.id,
                     UnitComplaint.durum == "acik",
+                    # (P253 §D) "Asilsiz" isaretli sikayet haritayi boyamaz.
+                    UnitComplaint.asilsiz_at.is_(None),
                     # (P219 §2) Ayni pencere BURADA DA: iki uc ayni
                     # haritayi besliyor ve birinde filtreleyip otekinde
                     # filtrelememek, ayni ekranda iki farkli sayi
@@ -602,7 +623,7 @@ async def list_unit_complaints(
     )
     items = []
     for obj, no, okundu_id in rows:
-        # complainant ARTIK DONMEZ (include_complainant=False, gizlilik).
+        # (P253 §D) sikayet eden kimligi HICBIR role donmez (alan yok).
         out = UnitComplaintOut.from_model(
             obj, unit_no=no, include_note=True, okundu=okundu_id is not None
         )
@@ -751,3 +772,120 @@ async def close_unit_complaint(
     return UnitComplaintOut.from_model(
         obj, unit_no=unit_no, include_note=True, okundu=okundu
     )
+
+
+# ----------------------- (P253 §D) oruntu + asilsiz ------------------------- #
+@router.get("/kaynak-ozeti", response_model=SikayetKaynakOzeti)
+async def sikayet_kaynak_ozeti(
+    unit_id: uuid.UUID = Query(...),
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_MANAGER),
+) -> SikayetKaynakOzeti:
+    """Bir daireye gelen sikayetlerin ORUNTUSU: "son 30 gunde 12 sikayet,
+    2 farkli kaynaktan" + tek kaynak yogunsa uyari. KIMLIK DEGIL, ETIKET
+    DE DEGIL ("Kaynak A" bile yok — iki ozet arasinda kisiyi izlemeye
+    yeterdi)."""
+    await get_or_404(db, Unit, unit_id)
+    return SikayetKaynakOzeti(**await kaynak_ozeti(db, unit_id))
+
+
+async def _cikti(db: AsyncSession, obj: UnitComplaint, user: AppUser) -> UnitComplaintOut:
+    unit_no = (
+        await db.execute(select(Unit.no).where(Unit.id == obj.target_unit_id))
+    ).scalar_one_or_none()
+    okundu = (
+        await db.execute(
+            select(UnitComplaintOkuma.id).where(
+                UnitComplaintOkuma.unit_complaint_id == obj.id,
+                UnitComplaintOkuma.user_id == user.id,
+            )
+        )
+    ).scalar_one_or_none() is not None
+    return UnitComplaintOut.from_model(obj, unit_no=unit_no, include_note=True, okundu=okundu)
+
+
+@router.post("/{complaint_id}/asilsiz", response_model=UnitComplaintOut)
+async def sikayet_asilsiz_isaretle(
+    complaint_id: uuid.UUID,
+    body: SikayetAsilsizIstek,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_MANAGER),
+) -> UnitComplaintOut:
+    """Yonetim sikayeti "asilsiz" isaretler — gerekce ZORUNLU.
+
+    Isaret sikayet edenle GIZLICE iliskilenir (satir zaten onu tasir);
+    yonetici KIMIN oldugunu ogrenmez. Kademe (`sikayet_koruma`): once
+    esige sayilmama, sonra gecici askiya alma. Sikayet edene bildirim
+    gider; askiya alma bu isaretle BASLADIYSA ayrica o da bildirilir.
+    """
+    obj = await get_or_404(db, UnitComplaint, complaint_id)
+    if obj.asilsiz_at is not None or obj.durum == "geri_alindi":
+        raise APIError(
+            422, "invalid_transition", "gecersiz_durum_gecisi",
+            mevcut="asilsiz" if obj.asilsiz_at is not None else obj.durum,
+            hedef="asilsiz",
+        )
+    simdi = datetime.now(tz=timezone.utc)
+    once = (await kaynak_durumu(db, obj.complainant_user_id)).askida_bitis(simdi)
+    obj.asilsiz_at = func.now()
+    obj.asilsiz_gerekce = body.gerekce
+    obj.asilsiz_isaretleyen = user.id
+    obj.updated_at = func.now()
+    await db.flush()
+    await db.refresh(obj)
+    await audit_user(
+        db, user, Action.UNIT_COMPLAINT_ASILSIZ, resource_type="unit_complaint",
+        resource_id=obj.id, meta={"gerekce": body.gerekce},
+    )
+    unit_no = (
+        await db.execute(select(Unit.no).where(Unit.id == obj.target_unit_id))
+    ).scalar_one_or_none() or "-"
+    alici = (obj.complainant_user_id,)
+    sakin_bildirimi_yaz(
+        db, tenant_id=user.tenant_id, tip="sikayet_asilsiz",
+        user_ids=alici, veri={"daire": unit_no},
+    )
+    dispatch_external(
+        "sikayet_asilsiz", tenant_id=user.tenant_id, target_user_ids=alici,
+        params={"daire": unit_no}, data={"tip": "sikayet_asilsiz"},
+    )
+    sonra = (await kaynak_durumu(db, obj.complainant_user_id)).askida_bitis(simdi)
+    if once is None and sonra is not None:
+        tarih = sonra.date().isoformat()
+        sakin_bildirimi_yaz(
+            db, tenant_id=user.tenant_id, tip="sikayet_sinirlama",
+            user_ids=alici, veri={"tarih": tarih},
+        )
+        dispatch_external(
+            "sikayet_sinirlama", tenant_id=user.tenant_id, target_user_ids=alici,
+            params={"tarih": tarih}, data={"tip": "sikayet_sinirlama"},
+        )
+    return await _cikti(db, obj, user)
+
+
+@router.delete("/{complaint_id}/asilsiz", response_model=UnitComplaintOut)
+async def sikayet_asilsiz_geri_al(
+    complaint_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_MANAGER),
+) -> UnitComplaintOut:
+    """Isareti geri alir. Kisitlama SAKLANMADIGI icin (her seferinde
+    hesaplanir) esik disi / askida durumu kendiliginden kalkar."""
+    obj = await get_or_404(db, UnitComplaint, complaint_id)
+    if obj.asilsiz_at is None:
+        raise APIError(
+            422, "invalid_transition", "gecersiz_durum_gecisi",
+            mevcut=obj.durum, hedef="asilsiz_degil",
+        )
+    eski = obj.asilsiz_gerekce
+    obj.asilsiz_at = None
+    obj.asilsiz_gerekce = None
+    obj.asilsiz_isaretleyen = None
+    obj.updated_at = func.now()
+    await db.flush()
+    await db.refresh(obj)
+    await audit_user(
+        db, user, Action.UNIT_COMPLAINT_ASILSIZ_GERI, resource_type="unit_complaint",
+        resource_id=obj.id, meta={"onceki_gerekce": eski},
+    )
+    return await _cikti(db, obj, user)

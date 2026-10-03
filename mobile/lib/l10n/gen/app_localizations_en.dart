@@ -2042,7 +2042,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get semaSikayetAnonimNot =>
-      'Your complaint goes to management; it is not shown to your neighbours.';
+      'Your complaint goes to management. Your identity is never shown to anyone — management included.';
 
   @override
   String get semaSikayetiGonder => 'Send complaint';
@@ -9030,4 +9030,57 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get paylasDugme => 'Share';
+
+  @override
+  String sikayetOruntu(int gun, int n, int k) {
+    return '$n complaints in the last $gun days, from $k different units';
+  }
+
+  @override
+  String get sikayetTekKaynak => 'Mostly from one unit';
+
+  @override
+  String get sikayetTekKaynakIpucu =>
+      'Most complaints come from the same unit; keep this in mind when assessing.';
+
+  @override
+  String sikayetAsilsizSayisi(int n) {
+    return '$n marked unfounded';
+  }
+
+  @override
+  String get sikayetAsilsiz => 'Unfounded';
+
+  @override
+  String get sikayetAsilsizIsaretle => 'Mark unfounded';
+
+  @override
+  String get sikayetAsilsizGeriAl => 'Undo mark';
+
+  @override
+  String get sikayetAsilsizGerekce => 'Reason (required)';
+
+  @override
+  String get sikayetAsilsizAciklama =>
+      'The complainant is notified; who they are is not shown to you. Repeated unfounded complaints first stop counting toward the threshold, then the person\'s new complaints are paused for a while. The mark can be undone.';
+
+  @override
+  String get sikayetAsilsizOnayla => 'Mark';
+
+  @override
+  String sikayetAsilsizGerekceGoster(String gerekce) {
+    return 'Reason: $gerekce';
+  }
+
+  @override
+  String sikayetKayitNo(String id) {
+    return 'Record no: $id';
+  }
+
+  @override
+  String get semaSinirBilgi =>
+      'You\'ve reached today\'s reporting limit; management has your reports. You can report again tomorrow.';
+
+  @override
+  String get sikayetDetayBaslik => 'Complaint details';
 }

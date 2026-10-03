@@ -18,6 +18,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../girdi_siniri.dart';
 import '../i18n/l10n.dart';
 import 'coklu_secim.dart';
 import 'merkez_diyalog.dart';
@@ -226,6 +227,8 @@ class ListeEkraniState<T> extends State<ListeEkrani<T>> {
                 Expanded(
                   child: TextField(
                     key: const Key('liste-ara'),
+                    maxLength: GirdiSiniri.arama,
+                    buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
                     decoration: InputDecoration(
                       hintText: l10n.listeAra,
                       prefixIcon: const Icon(Icons.search),

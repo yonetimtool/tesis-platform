@@ -476,6 +476,7 @@ DELETE	/personel-kayitlari/{id}	+	-	planli:3	admin,yonetici	Maas kartlari listes
 PATCH	/personel-kayitlari/{id}	+	+	ayni	admin,yonetici	-
 GET	/personel/detay	+	+	ayni	admin,yonetici	-
 GET	/platform/gonderim-gunlugu	+	-	platform	admin	Platform paneli (panel.yonetiyor.com) — kapsam disi
+POST	/platform/sikayet-kimlik	+	-	platform	admin	Resmi kimlik acma YALNIZ platform paneli (P253 §D) — site rolu/mobil yok
 POST	/public/tanitim-iletisim	-	-	yapisal	admin,yonetici,security,tesis_gorevlisi,resident,guvenlik_amiri,denetci	Tanitim sitesi (kamu)
 POST	/push/cihaz-temizle	+	-	platform	admin	Platform paneli (panel.yonetiyor.com) — kapsam disi
 GET	/push/teshis	+	-	platform	admin	Platform paneli (panel.yonetiyor.com) — kapsam disi
@@ -591,8 +592,11 @@ POST	/unit-complaints	-	+	yalniz_mobil	resident	Mobil akis (saha/sakin ya da cih
 GET	/unit-complaints/building-map	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,resident	-
 GET	/unit-complaints/density	-	-	ic	admin,yonetici	Hicbir yuzey cagirmiyor (otomasyon, webhook, eski ya da yalniz API)
 GET	/unit-complaints/gorunur-sayi	+	+	ayni	admin,yonetici	-
+GET	/unit-complaints/kaynak-ozeti	+	+	ayni	admin,yonetici	-
 GET	/unit-complaints/mine	-	+	yalniz_mobil	resident	Mobil akis (saha/sakin ya da cihaz) — web karsiligi aranmaz
 PATCH	/unit-complaints/{id}	-	-	ic	admin,yonetici	Hicbir yuzey cagirmiyor (otomasyon, webhook, eski ya da yalniz API)
+POST	/unit-complaints/{id}/asilsiz	+	+	ayni	admin,yonetici	-
+DELETE	/unit-complaints/{id}/asilsiz	+	+	ayni	admin,yonetici	-
 POST	/unit-complaints/{id}/okundu	-	+	yalniz_mobil	admin,yonetici	Mobil akis (saha/sakin ya da cihaz) — web karsiligi aranmaz
 POST	/unit-complaints/{id}/withdraw	-	+	yalniz_mobil	resident	Mobil akis (saha/sakin ya da cihaz) — web karsiligi aranmaz
 GET	/unit-gruplari	+	+	ayni	admin,yonetici,security,tesis_gorevlisi	-

@@ -41,7 +41,7 @@ def test_suresi_doldu_isareti(client, world, owner_conn):
         isaret = {i["id"]: i["suresi_doldu"] for i in r.json()["items"]}
         assert isaret == {yeni: False, eski: True}
         # Kimlik hala donmuyor (Rev-2 gizlilik kurali korunuyor).
-        assert all(i["complainant_ad"] is None for i in r.json()["items"])
+        assert all("complainant_ad" not in i for i in r.json()["items"])
         # Pencere 0 (suresiz) -> hicbiri dolmus degil.
         owner_conn.execute("UPDATE tenant SET sikayet_harita_saat=0 WHERE id=%s", (world["a"],))
         r = client.get("/unit-complaints", headers=y, params={"target_unit_id": unit})

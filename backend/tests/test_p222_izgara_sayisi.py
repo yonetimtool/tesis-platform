@@ -207,6 +207,10 @@ def test_ESIK_SAYACI_IZGARA_DUZELTMESINDEN_ETKILENMEZ(
             "target_unit_id": hedef, "kategori": k, "notlar": "P222 esik"})
         if r.status_code in (200, 201):
             idler.append(r.json()["id"])
+            # (P253 §D) Ayni daireye 24 saatte en fazla 2: kaydi 25 saat
+            # geriye al ki sonraki kategori gunluk sinira takilmasin
+            # (asagida zaten 3 saate cekiliyor).
+            _eskit(owner_conn, idler[-1], 25)
     assert len(idler) >= 5, f"5 sikayet acilamadi: {len(idler)}"
 
     # Hepsi haritanin 1 saatlik penceresinin DISINA cikarilir.

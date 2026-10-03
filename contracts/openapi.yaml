@@ -15744,6 +15744,12 @@ paths:
         korumasi + denetim icin saklanir; resident'a DONMEZ. Spam (Rev-1.1):
         ayni daireye ayni KATEGORIDE 7 gunde en fazla 1 (farkli kategori
         serbest; durumdan bagimsiz) -> aksi 409.
+
+        **(P253 §D)** Gunluk sinirlar (kibar 429, `rate_limited`): ayni
+        daireye 24 saatte en fazla 2 (`sikayet_daire_gunluk_sinir`), toplam
+        5 (`sikayet_gunluk_sinir`); "asilsiz" kademesiyle gecici askida
+        olan kisi `sikayet_askida` alir. Kaynak daire (`kaynak_unit_id`)
+        icte saklanir; esik FARKLI KAYNAK DAIRE sayar.
       requestBody:
         required: true
         content:
@@ -15764,6 +15770,7 @@ paths:
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
   /unit-complaints/mine:
     get:
       tags: [unit-complaints]
@@ -15910,6 +15917,71 @@ paths:
       responses:
         "200":
           description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UnitComplaint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /unit-complaints/kaynak-ozeti:
+    get:
+      tags: [unit-complaints]
+      summary: Daireye gelen sikayetlerin ORUNTUSU (admin+yonetici) — kimliksiz
+      description: >
+        **(P253 §D)** Son 30 gunde kac sikayet, kac FARKLI kaynak daireden;
+        en az 4 sikayetin en az %75'i tek kaynaktansa `tek_kaynak_yogun`.
+        Kaynak ETIKETI yok ("Kaynak A" bile) — iki ozet arasinda kisiyi
+        izlemeye yeterdi. "Asilsiz" isaretliler ayrica sayilir.
+      parameters:
+        - { name: unit_id, in: query, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Oruntu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SikayetKaynakOzeti" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /unit-complaints/{id}/asilsiz:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [unit-complaints]
+      summary: Sikayeti ASILSIZ isaretle (admin+yonetici) — gerekce zorunlu
+      description: >
+        **(P253 §D)** Isaret sikayet edenle GIZLICE iliskilenir; yonetim
+        kimin oldugunu ogrenmez. Kademe (kisi basina, 90 gun): en az 2
+        asilsiz ve oran >= %50 -> esige sayilmaz; en az 4 ve oran >= %60
+        -> son isaretten 14 gun yeni sikayet acamaz. Sikayet edene bildirim
+        (`sikayet_asilsiz`; askiya alma bu isaretle basladiysa ayrica
+        `sikayet_sinirlama`). Zaten asilsiz ya da geri alinmis -> 422.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SikayetAsilsizIstek" }
+      responses:
+        "200":
+          description: Isaretlendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UnitComplaint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [unit-complaints]
+      summary: Asilsiz isaretini GERI AL (admin+yonetici)
+      description: >
+        **(P253 §D)** Kisitlama saklanmaz, her seferinde hesaplanir: geri
+        alinca esik disi / askida durumu KENDILIGINDEN kalkar.
+      responses:
+        "200":
+          description: Geri alindi
           content:
             application/json:
               schema: { $ref: "#/components/schemas/UnitComplaint" }
@@ -17031,6 +17103,31 @@ paths:
       responses:
         "200": { description: Gunluk }
         "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /platform/sikayet-kimlik:
+    post:
+      tags: [platform]
+      summary: Sikayet edenin kimligini RESMI olarak ac (YALNIZ platform admin)
+      description: |
+        **(P253 §D)** Sikayet edenin kimligi hicbir site rolune donmez
+        (yonetici dahil). Resmi talepte (mahkeme, kolluk, KVKK basvurusu)
+        yalniz platform yoneticisi acar: gerekce en az 20 karakter, HER
+        goruntuleme o tesisin denetimine `sikayet_kimlik_acma` olarak
+        yazilir. POST: kimlik sorgu dizesinde/erisim gunlugunde kalmasin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SikayetKimlikIstek" }
+      responses:
+        "200":
+          description: Kimlik
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SikayetKimlikOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
         "422": { $ref: "#/components/responses/ValidationError" }
   /audit:
     get:
@@ -18437,10 +18534,10 @@ components:
     UnitComplaint:
       type: object
       description: >
-        Daire sikayeti ciktisi (Rev-2 GIZLILIK). complainant_user_id +
-        complainant_ad ARTIK HICBIR uctan DONMEZ (yonetim dahil, hep null;
-        alanlar geriye-uyum icin durur). notlar yalniz yonetime + kendi kaydini
-        goren sakine dolu. resident/security/gorevli liste/density'ye ERISEMEZ.
+        Daire sikayeti ciktisi. (P253 §D) Sikayet edenin kimligi HICBIR site
+        rolune donmez (yonetici dahil); `complainant_*` alanlari SEMADAN
+        KALDIRILDI. notlar yalniz yonetime + kendi kaydini goren sakine dolu.
+        resident/security/gorevli liste/density'ye ERISEMEZ.
       required: [id, target_unit_id, kategori, durum, created_at]
       properties:
         id: { type: string, format: uuid }
@@ -18453,12 +18550,12 @@ components:
           description: YALNIZ admin+yonetici icin dolu; diger rollerde null
         durum: { type: string, enum: [acik, kapali, geri_alindi] }
         created_at: { type: string, format: date-time }
-        complainant_user_id:
+        asilsiz: { type: boolean, description: "(P253 §D) Yonetim asilsiz isaretledi mi" }
+        asilsiz_gerekce:
           type: string
-          format: uuid
           nullable: true
-          description: YALNIZ yonetim (denetim) icin dolu; resident/saha icin null
-        complainant_ad: { type: string, nullable: true, description: Sikayet edenin adi (yalniz yonetim) }
+          description: Yonetime ve sikayeti ACAN sakine dolu
+        suresi_doldu: { type: boolean, nullable: true }
         okundu:
           type: boolean
           nullable: true
@@ -18467,6 +18564,41 @@ components:
             uclarinda (liste / kapatma / okundu) dolu; sakin uclarinda
             (`POST /unit-complaints`, `/mine`) null — okuma durumu bir
             YONETIM kuyrugu kavramidir.
+    SikayetAsilsizIstek:
+      type: object
+      required: [gerekce]
+      properties:
+        gerekce: { type: string, minLength: 3, maxLength: 500 }
+    SikayetKaynakOzeti:
+      type: object
+      required: [gun, sikayet_sayisi, farkli_kaynak, tek_kaynak_yogun, asilsiz_sayisi]
+      properties:
+        gun: { type: integer }
+        sikayet_sayisi: { type: integer }
+        farkli_kaynak: { type: integer }
+        tek_kaynak_yogun: { type: boolean }
+        asilsiz_sayisi: { type: integer }
+    SikayetKimlikIstek:
+      type: object
+      required: [tenant_id, sikayet_id, gerekce]
+      properties:
+        tenant_id: { type: string, format: uuid }
+        sikayet_id: { type: string, format: uuid }
+        gerekce: { type: string, minLength: 20, maxLength: 1000 }
+    SikayetKimlikOut:
+      type: object
+      required: [sikayet_id, tenant_id, kategori, created_at, sikayet_eden_id, sikayet_eden_ad]
+      properties:
+        sikayet_id: { type: string, format: uuid }
+        tenant_id: { type: string, format: uuid }
+        hedef_daire: { type: string, nullable: true }
+        kaynak_daire: { type: string, nullable: true }
+        kategori: { type: string }
+        created_at: { type: string, format: date-time }
+        sikayet_eden_id: { type: string, format: uuid }
+        sikayet_eden_ad: { type: string }
+        sikayet_eden_telefon: { type: string, nullable: true }
+        sikayet_eden_eposta: { type: string, nullable: true }
     UnitComplaintCreate:
       type: object
       required: [target_unit_id]

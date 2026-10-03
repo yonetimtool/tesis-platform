@@ -868,8 +868,9 @@ export interface BuildingMap {
   unplaced: BuildingMapUnit[];
 }
 
-// GET /unit-complaints?target_unit_id= — YALNIZ yonetim (Rev-1). complainant +
-// notlar admin/yonetici icin dolu (denetim).
+// GET /unit-complaints?target_unit_id= — YALNIZ yonetim (Rev-1). notlar
+// admin/yonetici icin dolu. (P253 §D) Sikayet edenin kimligi HICBIR role
+// donmez — alan yok.
 export interface UnitComplaint {
   id: string;
   target_unit_id: string;
@@ -878,10 +879,34 @@ export interface UnitComplaint {
   notlar?: string | null;
   durum: string;
   created_at: string;
-  complainant_user_id?: string | null;
-  complainant_ad?: string | null;
   /** (P251 §3) Harita penceresinden eski (haritada sayilmiyor). */
   suresi_doldu?: boolean | null;
+  /** (P253 §D) Yonetim "asilsiz" isaretledi mi + gerekcesi. */
+  asilsiz?: boolean;
+  asilsiz_gerekce?: string | null;
+}
+
+/** (P253 §D) GET /unit-complaints/kaynak-ozeti — oruntu, kimliksiz. */
+export interface SikayetKaynakOzeti {
+  gun: number;
+  sikayet_sayisi: number;
+  farkli_kaynak: number;
+  tek_kaynak_yogun: boolean;
+  asilsiz_sayisi: number;
+}
+
+/** (P253 §D) POST /platform/sikayet-kimlik — yalniz platform. */
+export interface SikayetKimlik {
+  sikayet_id: string;
+  tenant_id: string;
+  hedef_daire: string | null;
+  kaynak_daire: string | null;
+  kategori: string;
+  created_at: string;
+  sikayet_eden_id: string;
+  sikayet_eden_ad: string;
+  sikayet_eden_telefon: string | null;
+  sikayet_eden_eposta: string | null;
 }
 export interface UnitComplaintList {
   meta: PageMeta;

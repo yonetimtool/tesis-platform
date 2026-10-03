@@ -42,10 +42,10 @@ class UnitComplaint {
     required this.createdAt,
     this.unitNo,
     this.notlar,
-    this.complainantUserId,
-    this.complainantAd,
     this.okundu,
     this.suresiDoldu = false,
+    this.asilsiz = false,
+    this.asilsizGerekce,
   });
 
   final String id;
@@ -61,10 +61,13 @@ class UnitComplaint {
 
   final DateTime createdAt;
 
-  /// Sikayet eden (complainant) — Rev-2 gizlilik: ARTIK HICBIR uctan donmez
-  /// (yonetim dahil hep null). Alanlar geriye-uyum icin durur; gosterilmez.
-  final String? complainantUserId;
-  final String? complainantAd;
+  // (P253 §D) Sikayet edenin kimligi HICBIR role donmez (yonetici dahil);
+  // `complainant_*` alanlari sozlesmeden KALDIRILDI — modelde de yok.
+
+  /// (P253 §D) Yonetim "asilsiz" isaretledi mi + gerekcesi. Yonetime ve
+  /// sikayeti ACAN sakinin kendisine doner.
+  final bool asilsiz;
+  final String? asilsizGerekce;
 
   /// (P24) ISTEGI YAPAN yoneticiye gore okundu mu — okuma durumu KISI
   /// BASINADIR. Sakin uclarinda (`/mine`) null gelir: okunmamis kuyrugu bir
@@ -97,10 +100,10 @@ class UnitComplaint {
         createdAt: createdAt,
         unitNo: unitNo,
         notlar: notlar,
-        complainantUserId: complainantUserId,
-        complainantAd: complainantAd,
         okundu: true,
         suresiDoldu: suresiDoldu,
+        asilsiz: asilsiz,
+        asilsizGerekce: asilsizGerekce,
       );
 
   factory UnitComplaint.fromJson(Map<String, dynamic> json) => UnitComplaint(
@@ -110,10 +113,10 @@ class UnitComplaint {
         kategori: UnitComplaintKategori.fromWire(json['kategori'] as String?),
         notlar: json['notlar'] as String?,
         durum: json['durum'] as String? ?? 'acik',
-        complainantUserId: json['complainant_user_id'] as String?,
-        complainantAd: json['complainant_ad'] as String?,
         okundu: json['okundu'] as bool?,
         suresiDoldu: (json['suresi_doldu'] as bool?) ?? false,
+        asilsiz: (json['asilsiz'] as bool?) ?? false,
+        asilsizGerekce: json['asilsiz_gerekce'] as String?,
         createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
             DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
       );
@@ -139,4 +142,33 @@ class UnitComplaintDraft {
         'kategori': kategori.wire,
         if (notlar != null && notlar!.isNotEmpty) 'notlar': notlar,
       };
+}
+
+/// (P253 §D) `GET /unit-complaints/kaynak-ozeti` — daireye gelen sikayetlerin
+/// ORUNTUSU: sayi + farkli kaynak daire + tek kaynak uyarisi. Kimlik ve
+/// kaynak ETIKETI yok.
+class SikayetKaynakOzeti {
+  const SikayetKaynakOzeti({
+    required this.gun,
+    required this.sikayetSayisi,
+    required this.farkliKaynak,
+    required this.tekKaynakYogun,
+    required this.asilsizSayisi,
+  });
+
+  final int gun;
+  final int sikayetSayisi;
+  final int farkliKaynak;
+  final bool tekKaynakYogun;
+  final int asilsizSayisi;
+
+  bool get bos => sikayetSayisi + asilsizSayisi == 0;
+
+  factory SikayetKaynakOzeti.fromJson(Map<String, dynamic> j) => SikayetKaynakOzeti(
+        gun: (j['gun'] as num?)?.toInt() ?? 30,
+        sikayetSayisi: (j['sikayet_sayisi'] as num?)?.toInt() ?? 0,
+        farkliKaynak: (j['farkli_kaynak'] as num?)?.toInt() ?? 0,
+        tekKaynakYogun: (j['tek_kaynak_yogun'] as bool?) ?? false,
+        asilsizSayisi: (j['asilsiz_sayisi'] as num?)?.toInt() ?? 0,
+      );
 }
