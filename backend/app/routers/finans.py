@@ -20,6 +20,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..tesis_saati import tesis_bugun
 from .. import girdi_siniri as _G
 from ..audit import Action, audit_user
 from ..belge_no import belge_no_ata
@@ -1276,7 +1277,7 @@ async def finans_ozet(
     _: AppUser = Depends(_OKUMA),
 ) -> FinansOzet:
     """Panel ozet kartlari — hepsi DEFTERDEN okunur, hicbiri saklanmaz."""
-    bugun = datetime.now(timezone.utc).date()
+    bugun = await tesis_bugun(db)
     ay_basi = date(bugun.year, bugun.month, 1)
 
     # (P192 §6.3) Ters kayit cifti borc DEGILDIR.

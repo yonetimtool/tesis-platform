@@ -533,8 +533,11 @@ async def kalemsiz_tahsilat_donemi(
         for k in sorted(kalemler, key=fifo_sirasi):
             if kalan.get(k.id, 0) > 0:
                 return k.donem
-    gun = tarih or date.today()
-    return f"{gun.year}-{gun.month:02d}"
+    if tarih is None:
+        from .tesis_saati import tesis_bugun
+
+        tarih = await tesis_bugun(db)  # (P253 §E) tesisin gunu
+    return f"{tarih.year}-{tarih.month:02d}"
 
 
 async def tahsilat_dairesi_coz(

@@ -100,7 +100,10 @@ async def hesapla(
     uygula, oran = await ayarlar(db)
     if not uygula or oran <= 0:
         return []
-    bugun = bugun or date.today()
+    if bugun is None:
+        from .tesis_saati import tesis_bugun
+
+        bugun = await tesis_bugun(db)  # (P253 §E)
 
     borclar = (
         await db.execute(

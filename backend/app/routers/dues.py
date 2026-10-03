@@ -31,6 +31,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..tesis_saati import tesis_bugun
 from .. import girdi_siniri as _G
 from ..audit import Action, audit_user
 from ..belge_no import belge_no_ata
@@ -199,7 +200,7 @@ async def _zenginlestir(
     ).first()
     uygula = bool(ayar[0]) if ayar else False
     oran = (ayar[1] if ayar else 0) or 0
-    bugun = datetime.now(timezone.utc).date()
+    bugun = await tesis_bugun(db)
 
     # (P192 §3.1) YAZILMIS faiz kalemleri gosterilen "gecikme"den DUSULUR:
     # yoksa ayni faiz hem bu alanda hem ayri bir borc kalemi olarak IKI KEZ

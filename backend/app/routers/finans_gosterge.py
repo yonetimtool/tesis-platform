@@ -19,6 +19,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..tesis_saati import tesis_bugun
 from .. import girdi_siniri as _G
 from .. import defter, yaslandirma
 from ..finans import tarih_metni, tl_metni
@@ -112,7 +113,7 @@ async def tahsilat_gostergesi(
     `defter.tahsilat_toplami`. Rapor, seffaflik ve mobil ana ekran da
     ayni fonksiyonlari cagirir.
     """
-    su_an = donem or _donem_metni(date.today())
+    su_an = donem or _donem_metni(await tesis_bugun(db))
     onceki = _onceki_donem(su_an)
 
     async def _oran(d: str) -> tuple[int, int, int | None]:

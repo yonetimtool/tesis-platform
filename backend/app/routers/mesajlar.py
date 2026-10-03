@@ -214,9 +214,10 @@ async def _degerler(
     db: AsyncSession, tenant: Tenant, user_id: uuid.UUID | None
 ) -> dict[str, str]:
     """Etiket degerleri. Kisi verilmezse ORNEK degerler doner (onizleme)."""
-    from datetime import datetime, timezone
+    from ..tesis_saati import yerel_bugun
 
-    bugun = datetime.now(timezone.utc).date().strftime("%d.%m.%Y")
+    # (P253 §E) Sablondaki {tarih} tesisin gunu.
+    bugun = yerel_bugun(tenant.timezone).strftime("%d.%m.%Y")
     if user_id is None:
         return {
             "adi_soyadi": "Ad Soyad", "adres": "A-12", "site_adi": tenant.ad,

@@ -256,7 +256,9 @@ async def personel_detayi(
         raise APIError(404, "not_found", "personel_bulunamadi")
 
     kasalar = dict((await db.execute(select(Kasa.id, Kasa.ad))).all())
-    bugun = date.today()
+    from ..tesis_saati import tesis_bugun
+
+    bugun = await tesis_bugun(db)
     odemeler: list[OdemeDetay] = []
     yil = 0
     calisma = None

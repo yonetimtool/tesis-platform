@@ -83,8 +83,11 @@ _OKUR = require_role(
 GECIKME_TEKRAR = GECIKME_TEKRAR_GUN
 
 
-def _bugun() -> date:
-    return datetime.now(timezone.utc).date()
+async def _bugun(db: AsyncSession) -> date:
+    """(P253 §E) Tesisin takvim gunu (UTC degil)."""
+    from ..tesis_saati import tesis_bugun
+
+    return await tesis_bugun(db)
 
 
 async def _tesis_uyari_gun(db: AsyncSession) -> int:
@@ -101,9 +104,9 @@ def _cikti(
     blok_ad: str | None = None,
     firma_ad: str | None = None,
     son_kayit: date | None = None,
-    bugun: date | None = None,
+    bugun: date,
 ) -> BakimEkipmaniOut:
-    g = bugun or _bugun()
+    g = bugun
     etkin = e.uyari_gun if e.uyari_gun is not None else tesis_uyari
     return BakimEkipmaniOut(
         id=e.id, ad=e.ad, tur=e.tur, blok_id=e.blok_id, blok_ad=blok_ad,
@@ -165,7 +168,7 @@ async def ekipman_liste(
             .offset(offset)
         )
     ).all()
-    g = _bugun()
+    g = await _bugun(db)
     items = [
         _cikti(e, tesis_uyari=tesis_uyari, blok_ad=b, firma_ad=f, bugun=g)
         for e, b, f in satirlar
@@ -215,7 +218,7 @@ async def ekipman_ekle(
     veri = body.model_dump()
     sonraki = veri.pop("sonraki_bakim", None)
     if sonraki is None:
-        temel = body.son_bakim or _bugun()
+        temel = body.son_bakim or await _bugun(db)
         sonraki = sonraki_tarih(temel, body.periyot, body.periyot_gun)
     obj = BakimEkipmani(tenant_id=user.tenant_id, sonraki_bakim=sonraki, **veri)
     db.add(obj)
@@ -225,7 +228,7 @@ async def ekipman_ekle(
         db, user, Action.BAKIM_YAZ, resource_type="bakim_ekipmani",
         resource_id=obj.id, meta={"ad": obj.ad, "periyot": obj.periyot},
     )
-    return _cikti(obj, tesis_uyari=await _tesis_uyari_gun(db))
+    return _cikti(obj, tesis_uyari=await _tesis_uyari_gun(db), bugun=await _bugun(db))
 
 
 @router.patch("/ekipmanlar/{ekipman_id}", response_model=BakimEkipmaniOut)
@@ -281,7 +284,7 @@ async def ekipman_guncelle(
         db, user, Action.BAKIM_YAZ, resource_type="bakim_ekipmani",
         resource_id=obj.id, meta={"alanlar": sorted(alanlar)},
     )
-    return _cikti(obj, tesis_uyari=await _tesis_uyari_gun(db))
+    return _cikti(obj, tesis_uyari=await _tesis_uyari_gun(db), bugun=await _bugun(db))
 
 
 @router.delete("/ekipmanlar/{ekipman_id}", status_code=204)
@@ -370,7 +373,7 @@ async def kayit_ekle(
     # zorunlu bakimi yillarca gizliyordu. "Bakim yapildi" gecmise dair bir
     # beyandir. BIR GUN TOLERANS: `_bugun` UTC; Turkiye UTC+3 oldugu icin
     # gece 00:00-03:00 arasi girilen "bugun" kaydi UTC'de yarin gorunur.
-    if body.tarih > _bugun() + timedelta(days=1):
+    if body.tarih > await _bugun(db) + timedelta(days=1):
         raise APIError(422, "validation_error", "bakim_tarihi_gelecekte")
     kayit = BakimKaydi(
         tenant_id=user.tenant_id,

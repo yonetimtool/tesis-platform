@@ -604,7 +604,7 @@ async def create_user(
             maas_kurus=c.maas_kurus, odeme_gunu=c.odeme_gunu,
             kasa_id=c.kasa_id, iban=c.iban, notlar=c.notlar, app_user_id=obj.id,
         )
-        maas_baslangici(kart)
+        await maas_baslangici(db, kart)
         db.add(kart)
         await db.flush()
         kart_id = kart.id

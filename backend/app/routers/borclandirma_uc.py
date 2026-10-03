@@ -20,6 +20,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..tesis_saati import tesis_bugun
 from ..audit import Action, audit_user
 from ..borclandirma import hedef_sec, sayac_tuketim_dagitimi
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
@@ -455,7 +456,7 @@ async def gecikme_faizi_onizleme(
     Onizleme ile isleme AYNI hesabi cagirir (`gecikme.hesapla`); ayri iki
     hesap yazsaydik yoneticiye gosterilen ile yazilan ayrisabilirdi.
     """
-    bugun = date.today()
+    bugun = await tesis_bugun(db)
     uygula, oran = await gecikme.ayarlar(db)
     satirlar = await gecikme.hesapla(db, bugun=bugun)
     kalanlar = [s for s in satirlar if s.fark_kurus > 0]
@@ -483,7 +484,7 @@ async def gecikme_faizi_isle(
     olur ve hicbir satir acilmaz; ayrica `uq_assessment_faiz_donem` ayni
     borca ayni donemde ikinci kalemi veritabani duzeyinde engeller.
     """
-    bugun = date.today()
+    bugun = await tesis_bugun(db)
     donem = gecikme.faiz_donemi(bugun)
     satirlar = [s for s in await gecikme.hesapla(db, bugun=bugun) if s.fark_kurus > 0]
 

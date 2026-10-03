@@ -16,6 +16,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..tesis_saati import tesis_bugun
 from .. import girdi_siniri as _G
 from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
@@ -100,7 +101,7 @@ async def plan_onizleme(
             select(GelirGiderTanim).where(GelirGiderTanim.id == body.gelir_gider_tanim_id)
         )
     ).scalar_one()
-    bugun = _date.today()
+    bugun = await tesis_bugun(db)
     donem = oto.donem_metni(bugun)
     # Gecici plan: ORM nesnesi DEGIL (oturuma karisma ihtimali bile
     # olmasin); `_plan_istegi` yalniz alanlari okur.
@@ -289,7 +290,7 @@ async def hatirlatma_onizleme(
     ayar = await _ayar(db, user.tenant_id)
     _, kisi, _, alicisiz = await oto.hatirlatma_hedefleri(
         db, vade_oncesi_gun=ayar.vade_oncesi_gun, kademeler=ayar.kademeler or [],
-        bugun=_date.today(),
+        bugun=await tesis_bugun(db),
     )
     return KuralOnizleme(
         adet=len(kisi),
@@ -533,7 +534,9 @@ async def maaslari_simdi_calistir(
 
     from ..otomasyon import maas_otomasyonu
 
-    sonuc = await maas_otomasyonu(db, user.tenant_id, date.today())
+    # (P253 §E) TESISIN bugunu: Istanbul'da 00:00-03:00 arasi UTC dunku
+    # gundur; ayin 1'i gecesi elle tetiklenen maas onceki ayi gorurdu.
+    sonuc = await maas_otomasyonu(db, user.tenant_id, await tesis_bugun(db))
     return MaasCalistirmaSonucu(
         yazilan=sonuc["yazilan"],
         toplam_kurus=sonuc["toplam_kurus"],

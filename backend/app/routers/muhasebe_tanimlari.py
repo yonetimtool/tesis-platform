@@ -540,7 +540,7 @@ async def _tek_kart(
         raise APIError(409, "conflict", "maas_karti_zaten_bagli")
 
 
-def maas_baslangici(obj: PersonelKayit) -> None:
+async def maas_baslangici(db: AsyncSession, obj: PersonelKayit) -> None:
     """(P252 §2) Otomasyonun ILK donemini kur — maas + odeme gunu varsa.
 
     Henuz hic yazilmadiysa (`son_maas_donem` bos) odeme gunu degisince
@@ -553,7 +553,11 @@ def maas_baslangici(obj: PersonelKayit) -> None:
     if not (obj.maas_kurus and obj.odeme_gunu):
         return
     if obj.maas_ilk_donem is None or obj.son_maas_donem is None:
-        obj.maas_ilk_donem = maas.ilk_donem(date.today(), obj.odeme_gunu)
+        from ..tesis_saati import tesis_bugun
+
+        # (P253 §E) Tesisin gunu: gece yarisindan sonra girilen maasin
+        # ilk donemi UTC'ye gore bir gun once hesaplanirdi.
+        obj.maas_ilk_donem = maas.ilk_donem(await tesis_bugun(db), obj.odeme_gunu)
 
 
 @router.get("/personel-kayitlari", response_model=PersonelKayitListResponse)
@@ -598,7 +602,7 @@ async def create_personel(
     if veri.get("email") is not None:
         veri["email"] = str(veri["email"])
     obj = PersonelKayit(tenant_id=user.tenant_id, **veri)
-    maas_baslangici(obj)
+    await maas_baslangici(db, obj)
     db.add(obj)
     await _kaydet(db, obj)
     await audit_user(
@@ -625,7 +629,7 @@ async def update_personel(
     await _referans_dogrula(db, Kasa, veri.get("kasa_id"), "kasa_bulunamadi")
     await _tek_kart(db, veri.get("app_user_id"), haric=obj.id)
     await _uygula(obj, veri)
-    maas_baslangici(obj)
+    await maas_baslangici(db, obj)
     # BIRLESIK kural: tarihlerden yalniz biri gonderilmis olabilir.
     if (
         obj.cikis_tarihi is not None

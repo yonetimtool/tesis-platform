@@ -616,7 +616,9 @@ async def _hatirlatma_epostalari(
         )
     ).scalar_one_or_none()
     diller = await islem_epostasi.alici_dili(db, [k.id for k in kisiler], "tr")
-    yil = date.today().year
+    from .tesis_saati import tesis_bugun
+
+    yil = (await tesis_bugun(db, tenant_id)).year
     kuyruga = atlanan = 0
     for k in kisiler:
         if islem_epostasi.gonderilemez_sebebi(k):
@@ -966,7 +968,8 @@ async def tum_tenantlar_icin(bugun: date | None = None) -> dict:
     kendi try/except'i icinde. Aksi halde tek bir bozuk plan, butun
     musterilerin tahakkukunu durdururdu.
     """
-    gun = bugun or date.today()
+    # (P253 §E) Verilmediyse tesis basina dongude cozulur (tesisin gunu).
+    gun = bugun
     ozet = {"tesis": 0, "tahakkuk": 0, "hatirlatma": 0, "gider": 0, "faiz": 0}
     for tenant_id in _tenant_idler():
         try:
@@ -975,6 +978,12 @@ async def tum_tenantlar_icin(bugun: date | None = None) -> dict:
                     text("SELECT set_config('app.current_tenant_id', :t, true)"),
                     {"t": str(tenant_id)},
                 )
+                # (P253 §E) Verilmediyse HER TESISIN kendi gunu: gorev 06:00
+                # Istanbul'da kosar ama tesis baska saat diliminde olabilir.
+                if bugun is None:
+                    from .tesis_saati import tesis_bugun
+
+                    gun = await tesis_bugun(db, tenant_id)
                 plan = await aidat_planlari_isle(db, tenant_id, gun)
                 hatirlatma = await borc_hatirlatmalari(db, tenant_id, gun)
                 gider = await duzenli_giderleri_isle(db, tenant_id, gun)

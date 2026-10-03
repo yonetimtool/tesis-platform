@@ -24,6 +24,7 @@ from sqlalchemy import func, literal_column, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
+from ..tesis_saati import tesis_bugun
 from .. import girdi_siniri as _G
 from ..hiz_siniri import DISA_AKTARIM_SINIRI
 from ..borclandirma import gecikme_kurus
@@ -357,7 +358,7 @@ async def _kisi_borclari(
     gorunur: P28 oncesi kayitlar hedefsizdir ve raporda kaybolmalari,
     toplamlarin defterle tutmamasi demekti.
     """
-    tazminat_gunu = p.tazminat_tarihi or p.bitis or datetime.now(timezone.utc).date()
+    tazminat_gunu = p.tazminat_tarihi or p.bitis or await tesis_bugun(db)
 
     q = select(
         DuesAssessment.unit_id,
@@ -693,11 +694,12 @@ async def _uret(
         ).all()
 
         satirlar = []
+        bugun_tesis = await tesis_bugun(db)
         for tarih, donem, tutar, no, blok in borclar:
             if p.blok and blok != p.blok:
                 continue
             satirlar.append({
-                "tarih": (tarih or date.today()).isoformat(),
+                "tarih": (tarih or bugun_tesis).isoformat(),
                 "unit_no": no or "—", "aciklama": f"Tahakkuk {donem}",
                 "borc_kurus": tutar, "alacak_kurus": 0,
             })
@@ -991,7 +993,7 @@ async def _tahsilat_performansi(
     # kartiyla AYNI modulden (`yaslandirma.hesapla`, FIFO dagitimli).
     from .. import yaslandirma as _yas
 
-    bugun = p.tazminat_tarihi or datetime.now(timezone.utc).date()
+    bugun = p.tazminat_tarihi or await tesis_bugun(db)
     kovalar = {
         f"{k.kova} gün": k.kalan_kurus
         for k in await _yas.hesapla(db, bugun=bugun)
@@ -1162,7 +1164,7 @@ async def _ihtar(db: AsyncSession, user: AppUser, p: RaporParam) -> RaporSonuc:
     """
     tenant = await _tenant(db, user)
     kisiler = await _kisi_borclari(db, p, tenant.gecikme_aylik_yuzde)
-    bugun = p.tazminat_tarihi or datetime.now(timezone.utc).date()
+    bugun = p.tazminat_tarihi or await tesis_bugun(db)
     parcalar = []
     for k in kisiler:
         borc = (k["bas_ana_para"] + k["ici_borc"]) - k["ici_tahsilat"]
