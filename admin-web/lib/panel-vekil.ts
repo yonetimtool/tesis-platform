@@ -169,7 +169,9 @@ export const SUZGECLER: Record<string, string[]> = {
   //    yetenegi VARMIS gibi gosteriyordu: biri tarih suzgeci yazsa
   //    parametre sunucuya gider, FastAPI onu sessizce atar ve ekran
   //    "suzdum" der ama suzmez. Kullanan da yoktu (tarandi).
-  "finans-hareketler": ["tip", "kasa_id", "user_id"],
+  // (P253 A2) `q` (serbest arama) ve `durum` sunucuda var (routers/finans.py
+  // `hareket_listesi`, sozlesmede yazili) — web ve mobil ayni parametreler.
+  "finans-hareketler": ["tip", "kasa_id", "user_id", "q", "durum"],
   "mesaj-sablonlari": ["kanal", "aktif"],
   "mesaj-sablonlari-hazir": ["kanal", "dil"],
   "unit-uyarilari": ["unit_id"],

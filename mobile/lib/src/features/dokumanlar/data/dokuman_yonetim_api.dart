@@ -61,7 +61,13 @@ class DokumanYonetimApi {
     try {
       final bilet = await _dio.post<Map<String, dynamic>>(
         '/uploads/presign',
-        data: {'content_type': dosya.icerikTipi, 'dosya_adi': dosya.dosyaAdi},
+        data: {
+          'content_type': dosya.icerikTipi,
+          'dosya_adi': dosya.dosyaAdi,
+          // (P253 Asama 2) PDF bileti YALNIZ `belge` amaciyla verilir
+          // (sunucu `PresignRequest`); gorselde eski varsayilan (`gorsel`).
+          if (dosya.icerikTipi == 'application/pdf') 'amac': 'belge',
+        },
       );
       final anahtar = bilet.data?['foto_key'];
       final url = bilet.data?['upload_url'];

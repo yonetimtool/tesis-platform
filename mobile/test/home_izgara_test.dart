@@ -55,10 +55,11 @@ void main() {
       }
     });
 
-    test('DENETCI mobilde izgara GORMEZ (urun karari)', () {
-      // P128/P129 + Kerem'in onayi: denetimin yuzeyi web. Bos izgara bir
-      // eksiklik degil KARARDIR; ekran yerine yonlendirme gosterilir.
-      expect(izgaraSecenekleri(UserRole.denetci), isEmpty);
+    test('DENETCI izgara secenekleri = salt okuma menusu (P253 Asama 2)', () {
+      // (P253 Asama 2, karar §A-1) Denetci mobilde SALT OKUMA yuzeyi
+      // kazandi; secenekler menuden turer (raporlar, seffaflik, icra, bakim).
+      expect(izgaraSecenekleri(UserRole.denetci), homeMenuForRole(UserRole.denetci));
+      expect(izgaraSecenekleri(UserRole.denetci), hasLength(4));
     });
   });
 
@@ -189,8 +190,8 @@ void main() {
       expect(izgaraTavani(UserRole.guvenlikAmiri), izgaraEnCokKaro);
     });
 
-    test('DENETCIDE tavan 0 (mobil yuzeyi yok)', () {
-      expect(izgaraTavani(UserRole.denetci), 0);
+    test('DENETCIDE tavan = salt okuma girisi sayisi (P253 Asama 2)', () {
+      expect(izgaraTavani(UserRole.denetci), 4);
     });
 
     test('KAYITLI 6LIK TERCIH KORUNUR — otomatik 8e TAMAMLANMAZ', () {

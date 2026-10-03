@@ -36,9 +36,12 @@ import useSWR from "swr";
 
 import { useToast } from "@/components/Toast";
 import {
+  AramaAlani,
   Dugme,
   DugmeBaglantisi,
+  FiltreCubugu,
   SayfaBasligi,
+  Secim,
   VeriTablosu,
   useOnay,
   type Kolon,
@@ -46,6 +49,7 @@ import {
 } from "@/components/ui";
 import { agIstegi, apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
+import { useGecikmeli } from "@/lib/gecikmeli";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import { kurusToTL } from "@/lib/money";
@@ -82,6 +86,14 @@ const UZANTI_PDF = "pdf";
 const TUR_BIRINCIL = "birincil" as const;
 const TUR_IKINCIL = "ikincil" as const;
 const YOK_ISARETI = "—";
+/** (P253 A2) Durum suzgeci — sunucu `hareket_durum` enum'u. Bos = hepsi. */
+const DURUM_HEPSI = "";
+const DURUM_SECENEKLERI: readonly (readonly [string, SozlukAnahtari])[] = [
+  ["odendi", "finansDurumOdendi"],
+  ["bekliyor", "finansDurumBekliyor"],
+  ["onay_bekliyor", "finansDurumOnayBekliyor"],
+  ["iptal", "finansDurumReddedildi"],
+];
 const HEDEF_AYRAC = " · ";
 const MESAJ_AYRAC = " — ";
 
@@ -253,11 +265,21 @@ export function HareketSayfasi({
     sayfa: 1, boy: 25, siraKolon: null, siraYonu: "artan",
   });
 
+  // (P253 A2) SERBEST ARAMA + DURUM — sunucuda suzulur (sayfalama dogru
+  // kalsin diye istemcide DEGIL). Arama 300 ms gecikmeli: her tusta istek
+  // atmak, yazarken listeyi titretirdi.
+  const [arama, setArama] = useState("");
+  const [durumSecimi, setDurumSecimi] = useState(DURUM_HEPSI);
+  const aranan = useGecikmeli(arama.trim());
+  const sayfaBasa = () => setDurum((d) => ({ ...d, sayfa: 1 }));
+
   // (P244 §7) AD DEGISTI: `suzgec` artik bir PROP (filtre cubugu yuvasi).
   const tipSorgusu = tip ? `&tip=${encodeURIComponent(tip)}` : "";
+  const aramaSorgusu = aranan ? `&q=${encodeURIComponent(aranan)}` : "";
+  const durumSorgusu = durumSecimi ? `&durum=${encodeURIComponent(durumSecimi)}` : "";
   const anahtar =
     `/api/panel/finans-hareketler?limit=${durum.boy}` +
-    `&offset=${(durum.sayfa - 1) * durum.boy}${tipSorgusu}&_=${yenile}`;
+    `&offset=${(durum.sayfa - 1) * durum.boy}${tipSorgusu}${aramaSorgusu}${durumSorgusu}&_=${yenile}`;
   const { data, error, isLoading, mutate } = useSWR<{
     meta: { total: number };
     items: Hareket[];
@@ -459,6 +481,43 @@ export function HareketSayfasi({
       {ozet}
       {grafik}
       {suzgec}
+      <FiltreCubugu
+        arama={
+          <AramaAlani
+            deger={arama}
+            onDegisim={(v) => {
+              setArama(v);
+              sayfaBasa();
+            }}
+            etiket={t("fdzAramaEtiket")}
+            yerTutucu={t("fdzAramaIpucu")}
+            temizleEtiketi={t("ortakKapat")}
+          />
+        }
+        aktifSayi={(arama ? 1 : 0) + (durumSecimi ? 1 : 0)}
+        onTemizle={() => {
+          setArama("");
+          setDurumSecimi(DURUM_HEPSI);
+          sayfaBasa();
+        }}
+      >
+        <div className="w-auto">
+        <Secim
+          aria-label={t("fdzDurumEtiket")}
+          value={durumSecimi}
+          onChange={(e) => {
+            setDurumSecimi(e.target.value);
+            sayfaBasa();
+          }}
+          data-test="hareket-durum"
+        >
+          <option value={DURUM_HEPSI}>{t("fdzDurumHepsi")}</option>
+          {DURUM_SECENEKLERI.map(([d, a]) => (
+            <option key={d} value={d}>{t(a)}</option>
+          ))}
+        </Secim>
+        </div>
+      </FiltreCubugu>
 
       <VeriTablosu
         kolonlar={sutunlar}

@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mobile/src/core/dosya/dosya_secici.dart';
 import 'package:mobile/src/features/auth/data/current_user_provider.dart';
 import 'package:mobile/src/features/auth/domain/user_role.dart';
 import 'package:mobile/src/features/dokumanlar/data/dokuman_api.dart';
@@ -82,6 +83,22 @@ class _Secici extends ImagePicker {
           name: 'plan.jpg', path: '/tmp/plan.jpg', mimeType: 'image/jpeg');
 }
 
+/// (P253 Asama 2) Telefondaki dosya — taklit secici (gercek eklenti testte calismaz).
+class _DosyaSecici implements DosyaSecici {
+  final istenenUzantilar = <List<String>>[];
+  @override
+  Future<SecilenDosya?> sec({required List<String> uzantilar}) async {
+    istenenUzantilar.add(uzantilar);
+    return SecilenDosya(
+      baytlar: Uint8List.fromList(List<int>.filled(4096, 1)),
+      ad: 'denetim-raporu.pdf',
+      icerikTipi: icerikTipiOf('denetim-raporu.pdf'),
+    );
+  }
+}
+
+final _dosyaSecici = _DosyaSecici();
+
 Map<String, dynamic> _dok({bool acik = false}) => {
       'id': 'd-1',
       'ad': 'Yönetim planı',
@@ -103,6 +120,7 @@ Widget _uygulama(Widget ekran, Dio dio, {UserRole rol = UserRole.yonetici}) => P
         takvimApiProvider.overrideWithValue(TakvimApi(dio)),
         makbuzApiProvider.overrideWithValue(MakbuzApi(dio, depoDio: dio)),
         imagePickerProvider.overrideWithValue(_Secici()),
+        dosyaSeciciProvider.overrideWithValue(_dosyaSecici),
         currentUserRoleProvider.overrideWith((ref) async => rol),
       ],
       child: l10nApp(ekran),
@@ -211,6 +229,47 @@ void main() {
         'aciklama': null,
         'sakine_acik': true,
       });
+    });
+  });
+
+  group('Dokumanlar — PDF (P253 Asama 2)', () {
+    testWidgets('PDF: secici yalniz pdf ister; bilet amac=belge; kayit icerik_tipi pdf',
+        (tester) async {
+      final (dio, a) = _dio();
+      a.yanitlar['POST /uploads/presign'] = {
+        'foto_key': 't/belge/abc.pdf',
+        'upload_url': 'http://depo/yukle',
+        'method': 'PUT',
+        'expires_in': 300,
+      };
+      a.yanitlar['POST /dokumanlar'] = _dok();
+      await tester.pumpWidget(_uygulama(
+        Builder(builder: (c) => const Scaffold(body: SingleChildScrollView(child: DokumanYukleFormu()))),
+        dio,
+      ));
+      await tester.pumpAndSettle();
+      // Eski "PDF icin web paneli" notu kalkti.
+      expect(find.textContaining('web panel'), findsNothing);
+      await tester.tap(find.byKey(const Key('dok-dosya')));
+      await tester.pumpAndSettle();
+      expect(_dosyaSecici.istenenUzantilar.last, ['pdf']);
+      expect(find.byKey(const Key('dok-secilen')), findsOneWidget);
+      await tester.ensureVisible(find.byKey(const Key('dok-gonder')));
+      await tester.tap(find.byKey(const Key('dok-gonder')));
+      await tester.pumpAndSettle();
+
+      final sira = a.istekler.map((i) => '${i.metot} ${i.yol}').toList();
+      expect(sira, ['POST /uploads/presign', 'PUT /yukle', 'POST /dokumanlar']);
+      expect(a.yap('POST', '/uploads/presign').single.govde, {
+        'content_type': 'application/pdf',
+        'dosya_adi': 'denetim-raporu.pdf',
+        'amac': 'belge',
+      });
+      final kayit = a.yap('POST', '/dokumanlar').single.govde as Map;
+      expect(kayit['icerik_tipi'], 'application/pdf');
+      expect(kayit['obje_anahtari'], 't/belge/abc.pdf');
+      expect(kayit['boyut_bayt'], 4096);
+      expect(kayit['ad'], 'denetim-raporu.pdf');
     });
   });
 

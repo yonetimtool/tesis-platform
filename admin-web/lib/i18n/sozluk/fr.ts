@@ -4064,4 +4064,11 @@ export const fr: Sozluk = {
   haritaKaroDili: "fr",
   haritaKapali: "La carte est indisponible pour le moment ; vous pouvez choisir l’emplacement avec la recherche d’adresse.",
   konumIgneIpucu: "Faites glisser l’épingle ou touchez la carte pour placer l’emplacement sur le bâtiment.",
+  bildirimTipRaporHazir: "Rapport prêt",
+  finansSonPartiOzet: "Dernière facturation groupée : {adet} logements · {donem}",
+  finansPartiGeriAl: "Annuler la facturation groupée",
+  finansPartiGeriAlOnay: "Chacune des {adet} charges écrites pour {donem} sera clôturée par une contre-écriture. Rien n’est supprimé ; les charges déjà payées ne sont pas annulées et vous sont signalées.",
+  finansPartiGeriAlindi: "{adet} charges annulées",
+  finansAtlamaOdenmis: "déjà payée, corriger individuellement",
+  finansAtlamaZatenTersKayitli: "déjà corrigée",
 };

@@ -10,6 +10,7 @@ import '../domain/task_category_models.dart';
 ///   * `GET    /task-categories`      → liste (gorev goren roller; varsayilan
 ///                                       yalniz aktifler, ad sirali)
 ///   * `POST   /task-categories`      → ekle (admin + yonetici; ayni ad 409)
+///   * `PATCH  /task-categories/{id}` → ad duzelt (P253 Asama 2)
 ///   * `DELETE /task-categories/{id}` → SOFT-DELETE (aktif=false)
 class TaskCategoryApi {
   TaskCategoryApi(this._dio);
@@ -46,6 +47,19 @@ class TaskCategoryApi {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
         '/task-categories',
+        data: {'ad': ad},
+      );
+      return TaskCategory.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (P253 Asama 2) Ad duzelt — kimlik degismez, gorevler bagli kalir.
+  Future<TaskCategory> update(String id, {required String ad}) async {
+    try {
+      final res = await _dio.patch<Map<String, dynamic>>(
+        '/task-categories/$id',
         data: {'ad': ad},
       );
       return TaskCategory.fromJson(res.data ?? const {});

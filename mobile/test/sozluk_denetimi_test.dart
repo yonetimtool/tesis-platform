@@ -43,6 +43,13 @@ const _tumKopyaIstisnalari = {
   //   Kamera: tr == de ("Kamera"), fr "Caméra", ru "Камера" AYRI.
   //   Manuel: tr == fr ("Manuel"), de "Manuell", es "Manual" AYRI.
   'ihlalKaynakKamera', 'ihlalKaynakManuel',
+  // (P253 Asama 2) Tanimlar defteri: "Telefon" tr == de (`profilTelefon`
+  // ile ayni kognat), "Model" tr == en/de. Web sozlugunden aynen alindi.
+  'tnmAlanTelefon', 'tnmAlanModel',
+  // (P253 Asama 2) Raporlar: "Excel", "PDF", "NFC" dosya bicimi/teknoloji
+  // ADLARIDIR (her dilde ayni); "Katalog" tr == de, "Foto" tr == de
+  // kognat. Web sozlugunden aynen alindi.
+  'rprExcel', 'rprPdf', 'rprTabloNfc', 'rprSekmeKatalog', 'rprTabloFoto',
   // (DUKKAN F3) "WhatsApp" bir MARKA ADIDIR ve latin alfabesi kullanan
   // dillerde AYNI yazilir; cevirmek markayi tanınmaz kilardi. Arapca
   // karsiligi ZATEN farkli ("واتساب") — yani ceviri unutulmasi degil,

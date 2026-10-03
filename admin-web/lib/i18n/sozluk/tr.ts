@@ -4141,4 +4141,11 @@ export const tr = {
   haritaKaroDili: "tr",
   haritaKapali: "Harita şu anda kullanılamıyor; konumu adres aramasıyla seçebilirsiniz.",
   konumIgneIpucu: "İğneyi sürükleyin ya da haritaya dokunun: konumu binanın üzerine getirin.",
+  bildirimTipRaporHazir: "Rapor hazır",
+  finansSonPartiOzet: "Son toplu borçlandırma: {adet} daire · {donem}",
+  finansPartiGeriAl: "Toplu borçlandırmayı geri al",
+  finansPartiGeriAlOnay: "{donem} dönemi için yazılan {adet} borcun her biri ters kayıtla kapatılacak. Kayıtlar silinmez; ödeme almış borçlar geri alınmaz ve size bildirilir.",
+  finansPartiGeriAlindi: "{adet} borç ters kayıtla geri alındı",
+  finansAtlamaOdenmis: "ödeme almış, tek tek düzeltin",
+  finansAtlamaZatenTersKayitli: "zaten düzeltilmiş",
 } as const;

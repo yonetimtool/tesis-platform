@@ -32,6 +32,7 @@ import {
   Modal,
   Secim,
   HataDurumu,
+  Kart,
   VeriTablosu,
   useOnay,
   type Kolon,
@@ -109,6 +110,9 @@ const ATLAMA_ETIKET: Record<string, SozlukAnahtari> = {
   tip_varsayilani_yok: "finansAtlamaTipVarsayilaniYok",
   tutar_cozulemedi: "finansAtlamaTutarYok",
   benzersizlik_carpismasi: "finansAtlamaCarpisma",
+  // (P253 §C-4) Toplu geri almada atlananlar.
+  odenmis: "finansAtlamaOdenmis",
+  zaten_ters_kayitli: "finansAtlamaZatenTersKayitli",
 };
 
 function atlamaMetni(t: (a: SozlukAnahtari) => string, neden: string): string {
@@ -133,6 +137,13 @@ interface TopluSatir {
   /** (P218) Hedef çözülemedi — borç DAİREYE yazılacak. Bu bir ATLAMA
    *  DEĞİL: satır işlenir, ama borç kimseye ait olmaz. */
   hedef_cozulemedi?: boolean;
+}
+
+/** (P253 §C-4) Son toplu tahakkuk — geri alinabilir parti. */
+interface SonParti {
+  parti_id: string;
+  olusan: number;
+  donem: string;
 }
 
 interface Atlanan {
@@ -261,6 +272,8 @@ export default function BorclandirmalarPage() {
   const { onayla, sebepleOnayla, diyalog } = useOnay();
   const [tekil, setTekil] = useState(false);
   const [toplu, setToplu] = useState(false);
+  // (P253 §C-4) Son toplu tahakkuk partisi — "Geri al" icin.
+  const [sonParti, setSonParti] = useState<SonParti | null>(null);
   const [yenile, setYenile] = useState(0);
   const [durum, setDurum] = useState<TabloDurumu>({
     sayfa: 1, boy: 25, siraKolon: null, siraYonu: "artan",
@@ -284,6 +297,38 @@ export default function BorclandirmalarPage() {
   // "SIL" DEMEZ ve silmez: finansal kayit silinmez, ters bir satir
   // yazilir ve ikisi de defterde durur. Onay metni bunu soyler — aksi
   // hâlde kullanici listede iki satir gorunce yanlislik sanirdi.
+  async function partiGeriAl() {
+    if (!sonParti) return;
+    const sebep = await sebepleOnayla({
+      baslik: t("finansPartiGeriAl"),
+      mesaj: t("finansPartiGeriAlOnay", { adet: String(sonParti.olusan), donem: sonParti.donem }),
+      onayMetni: t("finansPartiGeriAl"),
+      tehlikeli: true,
+      sebepEtiketi: t("finansSebepEtiket"),
+    });
+    if (sebep === null) return;
+    try {
+      const s = await apiSend<{ geri_alinan: number; atlananlar: Atlanan[] }>(
+        `/api/borclandirma/parti/${sonParti.parti_id}/geri-al`,
+        "POST",
+        { aciklama: sebep },
+      );
+      toast.success(t("finansPartiGeriAlindi", { adet: String(s.geri_alinan) }));
+      if (s.atlananlar.length) {
+        toast.error(
+          `${t("finansAtlananlar")}: ${s.atlananlar
+            .map((x) => `${x.unit_no ?? ""} (${atlamaMetni(t, x.neden)})`)
+            .join(", ")}`,
+        );
+      }
+      setSonParti(null);
+      setYenile((n) => n + 1);
+      void mutate();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("ortakHataOlustu"));
+    }
+  }
+
   async function tersKayit(a: Tahakkuk) {
     // (P253 §C) Hedef (kisi · kalem) + tutar diyalogda; SEBEP ZORUNLU
     // (sunucu da reddeder).
@@ -393,6 +438,19 @@ export default function BorclandirmalarPage() {
 
       <GecikmeFaiziKarti />
 
+      {/* (P253 §C-4) SON TOPLU TAHAKKUK — GERI AL. Parti tek istekte ters
+          kayitla kapanir; odeme almis satirlar atlanir ve soylenir. */}
+      {sonParti && (
+        <Kart className="mb-3 flex flex-wrap items-center justify-between gap-2" data-test="son-parti">
+          <span style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>
+            {t("finansSonPartiOzet", { adet: String(sonParti.olusan), donem: sonParti.donem })}
+          </span>
+          <Dugme tur="ikincil" boy="kucuk" onClick={() => void partiGeriAl()} data-test="parti-geri-al">
+            {t("finansPartiGeriAl")}
+          </Dugme>
+        </Kart>
+      )}
+
       <VeriTablosu
         kolonlar={sutunlar}
         satirlar={data?.items ?? []}
@@ -415,7 +473,10 @@ export default function BorclandirmalarPage() {
       <TopluModal
         acik={toplu}
         onKapat={() => setToplu(false)}
-        onKaydedildi={() => setYenile((n) => n + 1)}
+        onKaydedildi={(parti) => {
+          setYenile((n) => n + 1);
+          if (parti) setSonParti(parti);
+        }}
       />
     </div>
   );
@@ -544,7 +605,7 @@ function TekilModal({
 
 function TopluModal({
   acik, onKapat, onKaydedildi,
-}: { acik: boolean; onKapat: () => void; onKaydedildi: () => void }) {
+}: { acik: boolean; onKapat: () => void; onKaydedildi: (parti?: SonParti) => void }) {
   const t = useT();
   const toast = useToast();
   const tanimlar = useGelirGiderTanimlari();
@@ -616,7 +677,7 @@ function TopluModal({
   async function isle() {
     setHata(null); setMesgul(true);
     try {
-      const sonuc = await apiSend<{ olusan?: number; atlananlar?: Atlanan[] }>(
+      const sonuc = await apiSend<{ olusan?: number; atlananlar?: Atlanan[]; parti_id?: string | null }>(
         "/api/panel/borclandirma-toplu", "POST", govde());
       // (P192 §3.2) SESSIZ ATLAMA YOK: atlanan varsa kullaniciya SOYLENIR.
       // Onceden yalnizca bir sayi donuyordu ve kimse bakmiyordu; yonetici
@@ -646,7 +707,11 @@ function TopluModal({
         toast.error(t("finansTahakkukOlusmadi"));
       }
       setOnizleme(null); setTutar(""); setAciklama("");
-      onKaydedildi();
+      onKaydedildi(
+        olusan > 0 && sonuc?.parti_id
+          ? { parti_id: sonuc.parti_id, olusan, donem: donemden(tarih) }
+          : undefined,
+      );
       // Hicbir sey olusmadiysa MODAL ACIK KALIR: kullanici donemi
       // duzeltip yeniden deneyebilsin. Basaride kapanir (§2 karari).
       if (olusan > 0) onKapat();

@@ -290,15 +290,21 @@ class FinansApi {
   Future<({List<FinansHareketi> items, int toplam})> hareketler({
     String? tip,
     String? kasaId,
+    String? arama,
+    String? durum,
     int limit = 30,
     int offset = 0,
   }) async {
+    final q = (arama ?? '').trim();
     try {
       final res = await _dio.get<Map<String, dynamic>>(
         '/finans/hareketler',
         queryParameters: {
           'tip': ?tip,
           'kasa_id': ?kasaId,
+          // (P253 A2) Sunucuda suzulur: web ile ayni parametreler.
+          if (q.isNotEmpty) 'q': q,
+          'durum': ?durum,
           'limit': limit,
           'offset': offset,
         },
@@ -392,6 +398,122 @@ class FinansApi {
       return ((res.data?['items'] as List?) ?? const [])
           .whereType<Map>()
           .map((m) => Firma.fromJson(Map<String, dynamic>.from(m)))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  // ===================== (P253 A2) FINANS DUZELTMELERI ===================== #
+  // Hepsi web ile AYNI uc ve govde. §C: cagiran onay diyalogundan gecirir.
+
+  /// Ters kayitla IPTAL — sebep ZORUNLU (sunucu 422 `sebep_zorunlu`).
+  /// Virman satirinda IKI bacak birlikte ters kayitlanir. Donus: ters satir.
+  Future<FinansHareketi> iptal(String hareketId, String sebep) =>
+      _hareketYaz('/finans/hareketler/$hareketId/iptal', {'aciklama': sebep});
+
+  /// IADE (tahsilat/gelir). [tutarKurus] bos = kalan tutarin tamami.
+  Future<FinansHareketi> iade(String hareketId, {int? tutarKurus, String? aciklama}) =>
+      _hareketYaz('/finans/iade', {
+        'hareket_id': hareketId,
+        'tutar_kurus': ?tutarKurus,
+        if ((aciklama ?? '').trim().isNotEmpty) 'aciklama': aciklama!.trim(),
+      });
+
+  /// Acilis fisi (kasa ya da kisi baslangic bakiyesi).
+  Future<FinansHareketi> acilis({
+    required String kasaId,
+    required String yon,
+    required int tutarKurus,
+    String? userId,
+    DateTime? tarih,
+    String? aciklama,
+  }) =>
+      _hareketYaz('/finans/acilis', {
+        'kasa_id': kasaId,
+        'yon': yon,
+        'tutar_kurus': tutarKurus,
+        'user_id': ?userId,
+        if (tarih != null) 'tarih': _gun(tarih),
+        if ((aciklama ?? '').trim().isNotEmpty) 'aciklama': aciklama!.trim(),
+      });
+
+  /// Hesaplar arasi VIRMAN — iki satir (cikis + giris) doner.
+  Future<List<FinansHareketi>> virman({
+    required String kaynakKasaId,
+    required String hedefKasaId,
+    required int tutarKurus,
+    DateTime? tarih,
+    String? aciklama,
+  }) =>
+      _listeYaz('/finans/virman', {
+        'kaynak_kasa_id': kaynakKasaId,
+        'hedef_kasa_id': hedefKasaId,
+        'tutar_kurus': tutarKurus,
+        if (tarih != null) 'tarih': _gun(tarih),
+        if ((aciklama ?? '').trim().isNotEmpty) 'aciklama': aciklama!.trim(),
+      });
+
+  /// TOPLU tahsilat — satir basina daire (+ istege bagli kisi) ve tutar.
+  Future<List<FinansHareketi>> topluTahsilat({
+    required String kasaId,
+    required List<({String unitId, String? userId, int tutarKurus})> satirlar,
+    DateTime? tarih,
+  }) =>
+      _listeYaz('/finans/tahsilat/toplu', {
+        'kasa_id': kasaId,
+        if (tarih != null) 'tarih': _gun(tarih),
+        'satirlar': [
+          for (final s in satirlar)
+            {'unit_id': s.unitId, 'user_id': ?s.userId, 'tutar_kurus': s.tutarKurus},
+        ],
+      });
+
+  /// Secili dairelerin acik FAIZ kalemleri ters kayitla affedilir.
+  Future<({int kalem, int toplamKurus})> faizAffi(List<String> unitIds) async {
+    try {
+      final r = await _dio.post<Map<String, dynamic>>(
+        '/finans/borclulara/faiz-affi',
+        data: {'unit_ids': unitIds},
+      );
+      return (
+        kalem: (r.data?['affedilen_kalem'] as num?)?.toInt() ?? 0,
+        toplamKurus: (r.data?['toplam_kurus'] as num?)?.toInt() ?? 0,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// ODEME PLANI — acik borclarin vadeleri `taksitSayisi` aya yayilir
+  /// (yeni borc URETMEZ). Donus: daire sayisi.
+  Future<int> odemePlani(List<String> unitIds, {required int taksitSayisi, required DateTime ilkVade}) async {
+    try {
+      final r = await _dio.post<Map<String, dynamic>>(
+        '/finans/borclulara/odeme-plani',
+        data: {'unit_ids': unitIds, 'taksit_sayisi': taksitSayisi, 'ilk_vade': _gun(ilkVade)},
+      );
+      return (r.data?['daire'] as num?)?.toInt() ?? 0;
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  Future<FinansHareketi> _hareketYaz(String yol, Map<String, dynamic> govde) async {
+    try {
+      final r = await _dio.post<Map<String, dynamic>>(yol, data: govde);
+      return FinansHareketi.fromJson(r.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  Future<List<FinansHareketi>> _listeYaz(String yol, Map<String, dynamic> govde) async {
+    try {
+      final r = await _dio.post<Map<String, dynamic>>(yol, data: govde);
+      return ((r.data?['items'] as List?) ?? const [])
+          .whereType<Map>()
+          .map((m) => FinansHareketi.fromJson(Map<String, dynamic>.from(m)))
           .toList();
     } on DioException catch (e) {
       throw ApiException.fromDio(e);

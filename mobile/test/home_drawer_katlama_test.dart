@@ -59,7 +59,8 @@ void main() {
   testWidgets('BOLUM BASLIKLARI cizilir ve ogeler altinda durur', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(400, 2400);
+    // (P253 Asama 2) Menu buyudu (icra, borclandirma...): son baslik gorunsun.
+    tester.view.physicalSize = const Size(400, 3600);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 

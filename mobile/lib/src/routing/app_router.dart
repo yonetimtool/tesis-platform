@@ -20,6 +20,8 @@ import '../features/cameras/presentation/camera_player_screen.dart';
 import '../features/cameras/presentation/kameralar_screen.dart';
 import '../features/cameras/presentation/kamera_kayitlari_screen.dart';
 import '../features/finans/presentation/borclular_screen.dart';
+import '../features/borclandirma/presentation/borclandirmalar_screen.dart';
+import '../features/borclandirma/presentation/toplu_tahakkuk_screen.dart';
 import '../features/finans/presentation/finans_defteri_screen.dart';
 import '../features/finans/presentation/otomasyon_gunlugu_screen.dart';
 import '../features/finans/presentation/gider_screen.dart';
@@ -35,6 +37,7 @@ import '../features/auth/presentation/davet_screen.dart';
 import '../features/auth/presentation/kayit_screen.dart';
 import '../features/auth/presentation/set_password_screen.dart';
 import '../features/budget/presentation/budget_screen.dart';
+import '../features/budget/presentation/butce_hedefleri_screen.dart';
 import '../features/building_map/presentation/bina_duzenleme_screen.dart';
 import '../features/building_map/presentation/building_schematic_screen.dart';
 import '../features/unit_complaints/presentation/my_complaints_screen.dart';
@@ -60,10 +63,14 @@ import '../features/bilgisayardan/presentation/bilgisayardan_screen.dart';
 import '../features/kisiler/domain/kisiler_sekmeleri.dart';
 import '../features/kisiler/presentation/kisiler_screen.dart';
 import '../features/otomasyon/presentation/otomasyon_kurallari_screen.dart';
+import '../features/tanimlar/domain/defter_tanimi.dart';
+import '../features/tanimlar/presentation/genel_defter_screen.dart';
 import '../features/tanimlar/presentation/tanimlar_screen.dart';
 import '../features/tenant/presentation/tesis_ayarlari_screen.dart';
 import '../features/patrol/presentation/patrol_plans_screen.dart';
 import '../features/patrol/presentation/patrol_tracking_screen.dart';
+import '../features/raporlar/presentation/icra_screen.dart';
+import '../features/raporlar/presentation/rapor_merkezi_screen.dart';
 import '../features/reports/presentation/reports_screen.dart';
 import '../features/rezervasyon/presentation/rezervasyon_screen.dart';
 import '../features/scan/presentation/outbox_screen.dart';
@@ -145,7 +152,12 @@ class AppRoutes {
   static const finansDefteri = '/finans-defteri';
   static const otomasyonGunlugu = '/otomasyon-gunlugu';
   static const siteBudget = '/site-budget';
+  // (P253 Asama 2) Butce hedefleri + karsilastirma.
+  static const butceHedefleri = '/butce-hedefleri';
   static const transparency = '/transparency';
+  // (P253 Asama 2) Rapor merkezi `/reports`ta; eski aylik ozet alt rotada.
+  static const aylikRapor = '/reports/aylik';
+  static const icra = '/icra';
   static const myDues = '/my-dues';
   /// (P253 A1) Sakinin makbuz arsivi (Aidatim'dan acilir).
   static const makbuzlar = '/my-dues/makbuzlar';
@@ -227,6 +239,9 @@ class AppRoutes {
   static const tahsilat = '/tahsilat';
   static const gider = '/gider';
   static const borclular = '/borclular';
+  // (P253 Asama 2) Borclandirma listesi + toplu tahakkuk sihirbazi.
+  static const borclandirmalar = '/borclandirmalar';
+  static const topluTahakkuk = '/toplu-tahakkuk';
   static const sayacOkuma = '/sayac-okuma';
   static const kameralar = '/kameralar';
 
@@ -261,6 +276,9 @@ class AppRoutes {
   // (P251 §8) Menu paritesi — web ile ayni adresler.
   static const kisiler = '/kisiler';
   static const tanimlar = '/tanimlar';
+  /// (P253 Asama 2) Tek genel defter (`?defter=kasalar` — web ile ayni ad).
+  static const genelDefter = '/tanimlar/defter';
+  static const muhasebeAyarlari = '/tanimlar/muhasebe-ayarlari';
   static const tesisAyarlari = '/tesis-ayarlari';
   static const otomasyon = '/otomasyon';
   static const bilgisayardan = '/bilgisayardan';
@@ -374,7 +392,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.reports,
+        // (P253 A2) `?sekme=isler`: "rapor hazir" bildirimi Islerim'i acar.
+        builder: (context, state) => RaporMerkeziScreen(
+          islerSekmesi: state.uri.queryParameters['sekme'] == 'isler',
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.aylikRapor,
         builder: (context, state) => const ReportsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.icra,
+        builder: (context, state) => const IcraScreen(),
       ),
       GoRoute(
         path: AppRoutes.vardiyalar,
@@ -443,6 +472,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const BorclularScreen(),
       ),
       GoRoute(
+        path: AppRoutes.borclandirmalar,
+        builder: (context, state) => const BorclandirmalarScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.topluTahakkuk,
+        builder: (context, state) => const TopluTahakkukScreen(),
+      ),
+      GoRoute(
         path: AppRoutes.sayacOkuma,
         builder: (context, state) => const SayacOkumaScreen(),
       ),
@@ -482,6 +519,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.siteBudget,
         builder: (context, state) => const SiteBudgetScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.butceHedefleri,
+        builder: (context, state) => const ButceHedefleriScreen(),
       ),
       GoRoute(
         path: AppRoutes.transparency,
@@ -775,6 +816,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.tanimlar,
         builder: (context, state) => const TanimlarScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.genelDefter,
+        builder: (context, state) {
+          final d = defterBul(state.uri.queryParameters['defter']);
+          return d == null ? const TanimlarScreen() : GenelDefterScreen(defter: d);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.muhasebeAyarlari,
+        builder: (context, state) => const MuhasebeAyarlariScreen(),
       ),
       GoRoute(
         path: AppRoutes.tesisAyarlari,

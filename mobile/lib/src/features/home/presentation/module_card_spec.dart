@@ -135,6 +135,11 @@ ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
           icon: Icons.receipt_long_outlined,
           accent: _teal,
           route: AppRoutes.gider);
+    case HomeMenuEntry.borclandirmalar:
+      return const ModuleCardSpec(
+          icon: Icons.request_quote_outlined,
+          accent: _amber,
+          route: AppRoutes.borclandirmalar);
     case HomeMenuEntry.borclular:
       return const ModuleCardSpec(
           icon: Icons.gavel_outlined,
@@ -162,6 +167,11 @@ ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
           icon: Icons.insights_outlined,
           accent: _teal,
           route: AppRoutes.transparency);
+    case HomeMenuEntry.icra:
+      return const ModuleCardSpec(
+          icon: Icons.gavel_outlined,
+          accent: _teal,
+          route: AppRoutes.icra);
     case HomeMenuEntry.siteBudget:
       return const ModuleCardSpec(
           icon: Icons.pie_chart_outline,

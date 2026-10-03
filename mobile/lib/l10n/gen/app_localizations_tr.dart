@@ -5115,11 +5115,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get demoSimuleOkutmaHata => 'Simüle okutma yapılamadı.';
 
   @override
-  String get denetciWebBaslik => 'Denetim ekranları web\'de';
+  String get denetciWebBaslik => 'Web\'de kalanlar';
 
   @override
   String denetciWebGovde(String adres) {
-    return 'Denetim raporları ve mali gözetim masaüstü için tasarlandı. Bilgisayarınızdan $adres adresine girin.';
+    return 'Fazla mesai ve masaüstü için tasarlanan diğer denetim ekranları web\'de. Bilgisayarınızdan $adres adresine girin.';
   }
 
   @override
@@ -8551,10 +8551,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get yoneticiEklendi => 'Hesap açıldı; davet e-postası gönderildi.';
 
   @override
-  String get tanimlarWebNotu =>
-      'Kasalar, gelir/gider tanımları, firmalar, sayaçlar, araç kayıtları ve muhasebe ayarları bilgisayardan yönetilir.';
-
-  @override
   String bilgisayardanAciklama(String adres) {
     return 'Bu işlemler geniş tablo ve önizleme ister; $adres adresinden yapılır.';
   }
@@ -8612,10 +8608,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get tesisAyarKaydedildi => 'Tesis ayarları kaydedildi.';
-
-  @override
-  String get tesisAyarWebNotu =>
-      'Konum (harita), otopark kapasitesi ve eşik ayarları bilgisayardan yapılır.';
 
   @override
   String get yoneticiListeBosAlt =>
@@ -9309,7 +9301,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get dokYukleNot =>
-      'Telefondan fotoğraf yükleyebilirsiniz. PDF ve diğer dosyalar için şimdilik web panelini kullanın.';
+      'Fotoğraf çekin, galeriden seçin ya da telefondaki bir PDF\'i yükleyin (en fazla 25 MB).';
 
   @override
   String get hatAciklama => 'Not (isteğe bağlı)';
@@ -9546,4 +9538,1447 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get hatBosRehber =>
       'Kendinize not ya da hatırlatma eklemek için \"+\" düğmesine dokunun.';
+
+  @override
+  String get tsaAyarGrupDevriye => 'Devriye ve turlar';
+
+  @override
+  String get tsaAyarGrupVardiya => 'Vardiya ve güvenlik';
+
+  @override
+  String get tsaAyarGrupGurultu => 'Gürültü şikâyetleri';
+
+  @override
+  String get tsaAyarGrupFinans => 'Aidat ve giderler';
+
+  @override
+  String get tsaAyarGrupRezervasyon => 'Rezervasyon';
+
+  @override
+  String get tsaAyarGrupOtopark => 'Otopark';
+
+  @override
+  String get tsaAyarTurTolerans => 'Tur başlamazsa kaç dakika sonra uyarılsın';
+
+  @override
+  String get tsaAyarTurToleransIpucu =>
+      'Tur saati geldiğinde bu süre içinde hiç okutma yapılmazsa yöneticiye alarm gider.';
+
+  @override
+  String get tsaAyarTurTekrar => 'Alarm tekrar sayısı';
+
+  @override
+  String get tsaAyarTurTekrarIpucu =>
+      '0 = alarm kapalı. Aralıklar katlanır: tolerans, 2×, 4×.';
+
+  @override
+  String get tsaAyarTurFoto => 'Tura başlarken fotoğraf istensin';
+
+  @override
+  String get tsaAyarTurFotoIpucu =>
+      'Görevli turun ilk noktasında kamerayla fotoğraf çeker. Galeriden hazır fotoğraf seçemez.';
+
+  @override
+  String get tsaAyarVardiyaHatirlatma =>
+      'Vardiyadan kaç dakika önce hatırlatılsın';
+
+  @override
+  String get tsaAyarVardiyaHatirlatmaIpucu =>
+      'Örnek: 30 yazarsanız yarım saat önce hatırlatma gider. Birden çok hatırlatma için virgülle yazın (30,5). Boş bırakırsanız hatırlatma gönderilmez.';
+
+  @override
+  String get tsaAyarVardiyaBaslamadi =>
+      'Vardiyaya başlanmazsa kaç dakika sonra uyarılsın';
+
+  @override
+  String get tsaAyarVardiyaBaslamadiIpucu =>
+      'Vardiya saati geldikten sonra bu süre içinde hiç okutma yapılmazsa yöneticiye uyarı gider. 0 yazarsanız bu uyarı gönderilmez.';
+
+  @override
+  String get tsaAyarOkutmaMesafe =>
+      'Okutma en fazla kaç metre uzaktan yapılabilsin';
+
+  @override
+  String get tsaAyarOkutmaMesafeIpucu =>
+      'Bu mesafeden uzakta yapılan okutmalar raporda işaretlenir ve yöneticiye bildirilir. Okutma engellenmez.';
+
+  @override
+  String get tsaAyarOtoparkKapasite => 'Otopark kaç araç alıyor?';
+
+  @override
+  String get tsaAyarOtoparkKapasiteIpucu =>
+      'Toplam araç kapasitesi. Boş bırakılırsa doluluk yüzdesi hesaplanmaz, yalnız içerideki araç sayısı gösterilir.';
+
+  @override
+  String get tsaAyarRezervasyonGecmis =>
+      'Geçmiş rezervasyonlar kaç ay geriye görünsün';
+
+  @override
+  String get tsaAyarRezervasyonGecmisIpucu =>
+      'Daha eski kayıtlar listede gösterilmez. Kayıtlar silinmez — bir rezervasyon ortak alan anlaşmazlığında kanıttır. 0 yazarsanız tümü görünür.';
+
+  @override
+  String get tsaAyarVarsayilanHedef =>
+      'Yeni gider türlerinde borç kime yazılsın';
+
+  @override
+  String get tsaAyarVarsayilanHedefIpucu =>
+      'Yalnızca YENİ açılan gelir/gider türleri için başlangıç değeridir; her tür ayrıca değiştirilebilir (Tanımlar > Gelir/Gider türleri).';
+
+  @override
+  String get tsaTanimHedefKullanan => 'Kullanan öder (kiracı, yoksa malik)';
+
+  @override
+  String get tsaTanimHedefMalik => 'Malik öder';
+
+  @override
+  String get tsaAyarGurultuEsigi =>
+      'Kaç farklı daireden şikâyet gelince uyarı gitsin';
+
+  @override
+  String get tsaAyarGurultuEsigiIpucu =>
+      'Bir daire için bu sayıda FARKLI daireden gürültü şikâyeti gelince sakine sesli uyarı gönderilir ve sayaç sıfırlanır. Aynı kişinin birden çok şikâyeti tek sayılır; asılsız işaretlenen şikâyetler sayılmaz.';
+
+  @override
+  String get tsaAyarGurultuMetni => 'Sakine gidecek uyarı metni';
+
+  @override
+  String get tsaAyarGurultuMetniIpucu =>
+      'Boş bırakırsanız hazır metin kullanılır.';
+
+  @override
+  String get tsaAyarGurultuPencere =>
+      'Şikâyetler kaç gün geriye kadar sayılsın';
+
+  @override
+  String get tsaAyarGurultuPencereIpucu =>
+      'Yalnızca son bu kadar gün içindeki şikâyetler sayılır. Bir yıla yayılan beş şikâyet ile bir haftadaki beş şikâyet aynı şey değildir. 0 yazarsanız tüm açık şikâyetler sayılır. (Haritada görünme süresiyle karıştırmayın — o ayrı bir ayardır.)';
+
+  @override
+  String get tsaAyarGurultuSusma =>
+      'Uyarıdan sonra kaç gün yeniden uyarılmasın';
+
+  @override
+  String get tsaAyarGurultuSusmaIpucu =>
+      'Uyarı alan daireye bu süre boyunca yeni uyarı gönderilmez. Her gece tekrarlanan bir uyarı kendisi gürültüye dönüşür. 0 yazarsanız her eşikte yeniden uyarılır.';
+
+  @override
+  String get tsaAyarGurultuEskalasyon =>
+      'Kaçıncı uyarıda güvenliğe bildirilsin';
+
+  @override
+  String get tsaAyarGurultuEskalasyonIpucu =>
+      'Bir daire bu sayıda uyarı aldığında güvenliğe de bildirim gider ve güvenlik yerinde kontrol eder, gerekirse polise haber verir. 2 yazarsanız ilk uyarıda yalnız sakine, ikinci uyarıda güvenliğe de gider.';
+
+  @override
+  String get tsaAyarHaritaSaat => 'Şikâyetler haritada kaç saat görünsün';
+
+  @override
+  String get tsaAyarHaritaSaatIpucu =>
+      'Bu süre geçince şikâyet haritadan kalkar. Şikâyet SİLİNMEZ: listede, raporlarda ve eşik sayacında durmaya devam eder — yalnızca harita “şu anda nerede sorun var” sorusunu yanıtlasın diye gizlenir. 0 yazarsanız süresiz görünür. (Eşik sayacının kendi süresi ayrıdır: “Şikâyetler kaç gün geriye kadar sayılsın”.)';
+
+  @override
+  String get tsaAyarGurultuSakin => 'Daire sakinine uyarı bildirimi gönder';
+
+  @override
+  String get tsaAyarGurultuSakinIpucu =>
+      'Eşik aşılınca dairede oturan kişiye bildirim gider. Bildirimde şikayet edenin kimliği ve şikayet sayısı YER ALMAZ. Kapatırsanız uyarıyı yönetim kendi yöntemiyle iletir.';
+
+  @override
+  String get tsaAyarGurultuEsikBirUyari =>
+      'Eşik 1: her gürültü şikâyetinde daireye uyarı gider. Bu, uyarıyı hızla anlamsızlaştırır — 3 ve üzeri önerilir.';
+
+  @override
+  String get tsaAyarDegisiklikYok => 'Değişiklik yok.';
+
+  @override
+  String get tsaTesisAyarPlatformNotu =>
+      'Saat dilimi, tesis kodu ve güvenlik modu buradan değiştirilemez; bunlar Yönetiyor ekibinde kalır. Değişmesi gerekiyorsa destek talebi açın.';
+
+  @override
+  String tsaAralikHatasi(int min, int max) {
+    return '$min ile $max arasında bir sayı girin.';
+  }
+
+  @override
+  String get tnmKasalar => 'Kasalar';
+
+  @override
+  String get tnmGelirGiderGruplari => 'Gelir/Gider Grupları';
+
+  @override
+  String get tnmGelirGiderTanimlari => 'Gelir/Gider Kalemleri';
+
+  @override
+  String get tnmFirmalar => 'Firmalar';
+
+  @override
+  String get tnmAraclar => 'Araçlar';
+
+  @override
+  String get tnmSayaclar => 'Sayaçlar';
+
+  @override
+  String get tnmSayaclarBolum => 'Bölüm Sayaçları';
+
+  @override
+  String get tnmAyarlar => 'Muhasebe Ayarları';
+
+  @override
+  String get tnmYeniKayit => 'Yeni kayıt';
+
+  @override
+  String get tnmKayitYok => 'Henüz kayıt yok.';
+
+  @override
+  String get tnmKayitYokAlt =>
+      'Bu defter henüz boş. Yukarıdaki ekleme düğmesiyle ilk kaydı oluşturun.';
+
+  @override
+  String get tnmParaBirimiNotu =>
+      'Para birimi YALNIZ gösterimdir; tutarlar ₺ olarak saklanır ve hesaplanır.';
+
+  @override
+  String tnmTutarGecersiz(String alan) {
+    return '$alan için geçerli bir tutar girin. Örnek: 1.250,00';
+  }
+
+  @override
+  String tnmSayiGecersiz(String alan) {
+    return '$alan için geçerli bir sayı girin.';
+  }
+
+  @override
+  String get tnmAlanKod => 'Kod';
+
+  @override
+  String get tnmAlanAd => 'Ad';
+
+  @override
+  String get tnmAlanAcilisTarihi => 'Açılış tarihi';
+
+  @override
+  String get tnmAlanAcilisBakiye => 'Açılış bakiyesi (₺)';
+
+  @override
+  String get tnmAlanBankaMi => 'Banka hesabı';
+
+  @override
+  String get tnmAlanIban => 'IBAN (yalnız banka)';
+
+  @override
+  String get tnmAlanBankaAdi => 'Banka adı';
+
+  @override
+  String get tnmAlanSube => 'Şube';
+
+  @override
+  String get tnmAlanAktif => 'Aktif';
+
+  @override
+  String get tnmAlanTip => 'Tip';
+
+  @override
+  String get tnmAlanHedefKurali => 'Borç kime yazılır';
+
+  @override
+  String get tnmHedefKuraliIpucu =>
+      'KMK md. 20: işletme giderleri (kapıcı, elektrik, su, asansör işletme, temizlik) genellikle KULLANANA; anayapının bakım, onarım ve güçlendirme giderleri MALİKE yazılır. Kira sözleşmesi farklı düzenlemiş olabilir — karar sizindir.';
+
+  @override
+  String get tnmHedefKullanan => 'Kullanan öder (kiracı, yoksa malik)';
+
+  @override
+  String get tnmHedefMalik => 'Malik öder';
+
+  @override
+  String get tnmAlanDagitim => 'Dağıtım şekli (yalnız gider)';
+
+  @override
+  String get tnmAlanVergiNo => 'Vergi no / TC';
+
+  @override
+  String get tnmAlanVergiDairesi => 'Vergi dairesi';
+
+  @override
+  String get tnmAlanTelefon => 'Telefon';
+
+  @override
+  String get tnmAlanEposta => 'E-posta';
+
+  @override
+  String get tnmAlanYetkili => 'Yetkili';
+
+  @override
+  String get tnmAlanBakiyeYonu => 'Bakiye yönü';
+
+  @override
+  String get tnmAlanPlaka => 'Plaka';
+
+  @override
+  String get tnmAlanMarka => 'Marka';
+
+  @override
+  String get tnmAlanModel => 'Model';
+
+  @override
+  String get tnmAlanRenk => 'Renk';
+
+  @override
+  String get tnmAlanTesisatNo => 'Tesisat no';
+
+  @override
+  String get tnmAlanOrtakAlanYuzde => 'Ortak alan payı (%)';
+
+  @override
+  String get tnmAlanDaire => 'Daire';
+
+  @override
+  String get tnmAlanAnaSayac => 'Ana sayaç';
+
+  @override
+  String get tnmAlanIlkOkuma => 'İlk okuma';
+
+  @override
+  String get tnmReferansYuklenemedi => 'Liste yüklenemedi';
+
+  @override
+  String get tnmSayacUretimBaslik => 'Toplu sayaç üretimi';
+
+  @override
+  String get tnmSayacUret => 'Sayaçları üret';
+
+  @override
+  String get tnmSayacUretimNotu =>
+      'Seçili ana sayaç için tüm aktif dairelere sayaç açılır; zaten sayacı olan daireler atlanır. Tekrar çalıştırmak güvenlidir.';
+
+  @override
+  String tnmSayacUretimSonuc(String olusturulan, String atlanan) {
+    return '$olusturulan sayaç açıldı, $atlanan daire atlandı.';
+  }
+
+  @override
+  String get tnmAlanEvrakSeri => 'Evrak seri';
+
+  @override
+  String get tnmAlanEvrakSira => 'Evrak sıra';
+
+  @override
+  String get tnmAlanParaBirimi => 'Para birimi';
+
+  @override
+  String tnmZorunluAlan(String alan) {
+    return '$alan zorunludur';
+  }
+
+  @override
+  String get tnmTipGelir => 'Gelir';
+
+  @override
+  String get tnmTipGider => 'Gider';
+
+  @override
+  String get tnmTipHerIkisi => 'Her ikisi';
+
+  @override
+  String get tnmDagitimEsit => 'Bağımsız bölümlere eşit';
+
+  @override
+  String get tnmDagitimTipeGore => 'Daire tipine göre';
+
+  @override
+  String get tnmYonBorc => 'Borç';
+
+  @override
+  String get tnmYonAlacak => 'Alacak';
+
+  @override
+  String get tnmSayacSu => 'Su';
+
+  @override
+  String get tnmSayacElektrik => 'Elektrik';
+
+  @override
+  String get tnmSayacDogalgaz => 'Doğalgaz';
+
+  @override
+  String get tnmSayacIsi => 'Isı';
+
+  @override
+  String get tnmSayacDiger => 'Diğer';
+
+  @override
+  String get tnmSecilmedi => 'Seçilmedi';
+
+  @override
+  String get tnmDuzenle => 'Düzenle';
+
+  @override
+  String get tnmSilBaslik => 'Kaydı sil';
+
+  @override
+  String tnmSilOnay(String ad) {
+    return '\"$ad\" silinsin mi? Bu işlem geri alınamaz.';
+  }
+
+  @override
+  String get tnmSilKullanimda =>
+      'Bu kayıt başka kayıtlarda kullanıldığı için silinemiyor. Bunun yerine pasifleştirebilirsiniz (\"Aktif\" kutusunu kapatın).';
+
+  @override
+  String get tnmSilindi => 'Kayıt silindi';
+
+  @override
+  String get tnmKaydedildi => 'Kaydedildi';
+
+  @override
+  String get tnmPasif => 'Pasif';
+
+  @override
+  String get tnmTarihSec => 'Tarih seç';
+
+  @override
+  String get tnmKategoriDuzenle => 'Kategoriyi düzenle';
+
+  @override
+  String tnmKategoriGuncellendi(String ad) {
+    return 'Kategori güncellendi: $ad';
+  }
+
+  @override
+  String get tnmEvrakSeriIpucu => '1–5 büyük harf (ör. ABC)';
+
+  @override
+  String get bthBaslik => 'Bütçe hedefleri';
+
+  @override
+  String get bthAc => 'Hedefler';
+
+  @override
+  String bthYil(int yil) {
+    return 'Yıl: $yil';
+  }
+
+  @override
+  String get bthOncekiYil => 'Önceki yıl';
+
+  @override
+  String get bthSonrakiYil => 'Sonraki yıl';
+
+  @override
+  String get bthKarsilastirma => 'Hedef ve gerçekleşen';
+
+  @override
+  String get bthHedef => 'Hedef';
+
+  @override
+  String get bthGerceklesen => 'Gerçekleşen';
+
+  @override
+  String get bthSapma => 'Sapma';
+
+  @override
+  String bthToplamGelir(String hedef, String gercek) {
+    return 'Gelir — hedef $hedef, gerçekleşen $gercek';
+  }
+
+  @override
+  String bthToplamGider(String hedef, String gercek) {
+    return 'Gider — hedef $hedef, gerçekleşen $gercek';
+  }
+
+  @override
+  String get bthYazilanlar => 'Yazılan hedefler';
+
+  @override
+  String get bthYillik => 'Yıllık';
+
+  @override
+  String get bthYeni => 'Hedef yaz';
+
+  @override
+  String get bthTur => 'Gelir/gider türü';
+
+  @override
+  String get bthDonem => 'Dönem';
+
+  @override
+  String get bthTutar => 'Hedef tutar (₺)';
+
+  @override
+  String get bthAciklama => 'Açıklama (isteğe bağlı)';
+
+  @override
+  String get bthGuncellemeNotu =>
+      'Aynı tür ve dönem için yeniden yazılan hedef öncekini günceller.';
+
+  @override
+  String get bthKaydedildi => 'Hedef kaydedildi';
+
+  @override
+  String get bthSilBaslik => 'Hedefi sil';
+
+  @override
+  String bthSilOnay(String tur, String donem, String tutar) {
+    return '$tur · $donem · $tutar hedefi silinsin mi? Hiçbir muhasebe kaydı değişmez.';
+  }
+
+  @override
+  String get bthSil => 'Sil';
+
+  @override
+  String get bthSilindi => 'Hedef silindi';
+
+  @override
+  String get bthBos => 'Bu yıl için hedef yok';
+
+  @override
+  String get bthBosRehber =>
+      'Bir gelir ya da gider türüne yıllık veya aylık hedef yazmak için \"Hedef yaz\"a dokunun.';
+
+  @override
+  String get bthTurYok =>
+      'Önce Kategoriler sekmesinden bir gelir/gider türü ekleyin.';
+
+  @override
+  String get rprAciklamalar => 'Açıklamaları Göster';
+
+  @override
+  String get rprBaslangic => 'Başlangıç';
+
+  @override
+  String get rprBaslangicAy => 'Başlangıç Ayı';
+
+  @override
+  String get rprBaslangicYil => 'Başlangıç Yılı';
+
+  @override
+  String get rprBitis => 'Bitiş';
+
+  @override
+  String get rprBitisAy => 'Bitiş Ayı';
+
+  @override
+  String get rprBitisYil => 'Bitiş Yılı';
+
+  @override
+  String get rprBlok => 'Blok';
+
+  @override
+  String get rprBolum => 'Bölüm';
+
+  @override
+  String get rprCalismaNakit => 'Nakit';
+
+  @override
+  String get rprCalismaSekli => 'Çalışma Şekli';
+
+  @override
+  String get rprCalismaTahakkuk => 'Tahakkuk';
+
+  @override
+  String get rprDaire => 'Daire';
+
+  @override
+  String get rprEkstreDetay => 'Detaylı';
+
+  @override
+  String get rprEkstreOzet => 'Özet';
+
+  @override
+  String get rprEkstreTuru => 'Ekstre Türü';
+
+  @override
+  String get rprEvrakBilgisi => 'Evrak Bilgisini Göster';
+
+  @override
+  String get rprEvrakFatura => 'Fatura';
+
+  @override
+  String get rprEvrakMakbuz => 'Makbuz';
+
+  @override
+  String get rprEvrakTipi => 'Evrak Tipi';
+
+  @override
+  String get rprFirma => 'Firma';
+
+  @override
+  String get rprGrupla => 'Gruplandır';
+
+  @override
+  String get rprIcradakiler => 'İcradakileri Göster';
+
+  @override
+  String get rprIletisimGoster => 'İletişim Bilgilerini Göster';
+
+  @override
+  String get rprImza => 'İmza Alanı Ekle';
+
+  @override
+  String get rprIsBekliyor => 'Sırada';
+
+  @override
+  String get rprIsHata => 'Hata';
+
+  @override
+  String get rprIsHazir => 'Hazır';
+
+  @override
+  String get rprIsmiGoster => 'Ad sütunu';
+
+  @override
+  String get rprIsUretiliyor => 'Üretiliyor';
+
+  @override
+  String get rprKasa => 'Kasa';
+
+  @override
+  String get rprKatDokumler => 'Dökümler';
+
+  @override
+  String get rprKatEkstreler => 'Ekstreler';
+
+  @override
+  String get rprKatListeler => 'Listeler';
+
+  @override
+  String get rprKisi => 'Kişi';
+
+  @override
+  String get rprListelemeTipi => 'Listeleme Tipi';
+
+  @override
+  String get rprMaxTutar => 'En Çok Tutar';
+
+  @override
+  String get rprMinTutar => 'En Az Tutar';
+
+  @override
+  String get rprOlusturan => 'Oluşturan';
+
+  @override
+  String get rprPersonel => 'Personel';
+
+  @override
+  String get rprSiraAd => 'Ad Soyad';
+
+  @override
+  String get rprSiraBakiye => 'Bakiye';
+
+  @override
+  String get rprSiraDaire => 'Daire No';
+
+  @override
+  String get rprSiralama => 'Sıralama';
+
+  @override
+  String get rprTanim => 'Gelir/Gider Türü';
+
+  @override
+  String get rprTanimlar => 'Borçlandırma Türleri';
+
+  @override
+  String get rprTazminatTarihi => 'Tazminat Tarihi';
+
+  @override
+  String get rprTipAlacakli => 'Alacaklılar';
+
+  @override
+  String get rprTipBorclu => 'Borçlular';
+
+  @override
+  String get rprAgirUyari =>
+      'Bu rapor tüm defteri tarar. PDF/Excel isteği kuyruğa alınır; hazır olunca aşağıdaki listeden indirilir.';
+
+  @override
+  String get rprAlt => 'Katalogdan rapor seçin, ekranda görün veya indirin';
+
+  @override
+  String get rprExcel => 'Excel';
+
+  @override
+  String get rprGoster => 'Göster';
+
+  @override
+  String get rprHepsi => 'Tümü';
+
+  @override
+  String get rprIndirildi => 'Rapor indirildi.';
+
+  @override
+  String get rprIsAdi => 'Rapor';
+
+  @override
+  String get rprIsBicim => 'Biçim';
+
+  @override
+  String get rprIsIndir => 'İndir';
+
+  @override
+  String get rprIslerim => 'Rapor İşlerim';
+
+  @override
+  String get rprIsYok => 'Kuyrukta rapor yok.';
+
+  @override
+  String get rprIsYokAlt =>
+      'Ağır bir raporun PDF veya Excel çıktısını istediğinizde burada görünür.';
+
+  @override
+  String get rprIsZaman => 'İstek Zamanı';
+
+  @override
+  String get rprKatalogHata => 'Rapor katalogu alınamadı.';
+
+  @override
+  String get rprKuyrugaAlindi => 'Rapor kuyruğa alındı.';
+
+  @override
+  String get rprPdf => 'PDF';
+
+  @override
+  String get rprSatirYok => 'Satır yok';
+
+  @override
+  String get rprSatirYokAlt => 'Seçilen ölçütlere uyan kayıt bulunmuyor.';
+
+  @override
+  String get rprYokAlt => 'Sunucuda tanımlı rapor bulunamadı.';
+
+  @override
+  String get rprKatalog => 'Rapor katalogu';
+
+  @override
+  String get rprIcraBaslik => 'İcra dosyaları';
+
+  @override
+  String get rprIcraDosyaNo => 'Dosya no';
+
+  @override
+  String get rprIcraBorclu => 'Borçlu';
+
+  @override
+  String get rprIcraAcikBorc => 'Açık borç';
+
+  @override
+  String get rprIcraAvukat => 'Avukat';
+
+  @override
+  String get rprIcraVerisTarihi => 'Veriliş tarihi';
+
+  @override
+  String get rprIcraAciklama => 'Açıklama';
+
+  @override
+  String get rprIcraDurum => 'Durum';
+
+  @override
+  String get rprIcraDurumHepsi => 'Tümü';
+
+  @override
+  String get rprIcraKayitYok => 'İcra dosyası yok.';
+
+  @override
+  String get rprIcraDurumbaginiz => 'Bağınız';
+
+  @override
+  String get rprIcraDurumbeklemede => 'Beklemede';
+
+  @override
+  String get rprIcraDurumavukatta => 'Avukatta';
+
+  @override
+  String get rprIcraDurummahkemede => 'Mahkeme Sürecinde';
+
+  @override
+  String get rprIcraDurumkapandi => 'Kapandı';
+
+  @override
+  String get rprAylikOzet => 'Aylık özet';
+
+  @override
+  String get rprSekmeKatalog => 'Katalog';
+
+  @override
+  String rprIsHazirBildirim(String ad) {
+    return 'Rapor hazır: $ad';
+  }
+
+  @override
+  String get rprAgirUyariMobil =>
+      'Bu rapor tüm defteri tarar. PDF/Excel isteği kuyruğa alınır; hazır olunca İşlerim sekmesinden paylaşılır.';
+
+  @override
+  String get rprKatalogBosAlt =>
+      'Sunucuda tanımlı rapor bulunamadı; yöneticinize bildirin.';
+
+  @override
+  String get rprIcraBosAlt =>
+      'İcra dosyaları web panelinden açılır; açıldığında burada görünür.';
+
+  @override
+  String get dntBaslik => 'Denetim';
+
+  @override
+  String get dntAlt =>
+      'Salt okuma: raporlar, şeffaflık, icra ve bakım. Değişiklik yapılamaz.';
+
+  @override
+  String get sdgDonguYeni => 'Yeni döngü tanımla…';
+
+  @override
+  String get sdgDonguAd => 'Döngü adı';
+
+  @override
+  String get sdgDonguDilimler => 'Vardiya dilimleri';
+
+  @override
+  String get sdgDonguDilimAd => 'Dilim adı';
+
+  @override
+  String get sdgDonguDilimEkle => 'Dilim ekle';
+
+  @override
+  String get sdgDonguAdimlar => 'Döngü adımları';
+
+  @override
+  String get sdgDonguAdimDilim => 'Dilim / tatil';
+
+  @override
+  String get sdgDonguTatil => 'Tatil';
+
+  @override
+  String get sdgDonguGunSayisi => 'Gün sayısı';
+
+  @override
+  String get sdgDonguDuzen => 'Düzen';
+
+  @override
+  String get sdgDonguHerGun => 'Her gün';
+
+  @override
+  String get sdgDonguGunAsiri => 'Gün aşırı (12/36)';
+
+  @override
+  String get sdgDonguAdimEkle => 'Adım ekle';
+
+  @override
+  String sdgDonguUzunluk(int n) {
+    return '$n günlük döngü';
+  }
+
+  @override
+  String get sdgDonguKaydet => 'Döngüyü kaydet';
+
+  @override
+  String get sdgDonguKaydedildi => 'Döngü kaydedildi.';
+
+  @override
+  String get sdgVardiyaBaslangicSaati => 'Başlangıç saati';
+
+  @override
+  String get sdgVardiyaBitisSaati => 'Bitiş saati';
+
+  @override
+  String get sdgAc => 'Serbest döngü tanımla';
+
+  @override
+  String get sdgBlokSil => 'Adımı kaldır';
+
+  @override
+  String get sdgDilimSil => 'Dilimi kaldır';
+
+  @override
+  String get sdgSinirAsildi => 'Döngü en fazla 84 gün olabilir.';
+
+  @override
+  String get fdzIslemler => 'İşlem';
+
+  @override
+  String get fdzIslemSec => 'Hangi işlem?';
+
+  @override
+  String get fdzVirman => 'Virman';
+
+  @override
+  String get fdzTopluTahsilat => 'Toplu tahsilat';
+
+  @override
+  String get fdzAcilis => 'Açılış fişi';
+
+  @override
+  String get fdzIptalEt => 'İptal et';
+
+  @override
+  String get fdzIptalBaslik => 'Hareketi iptal et (ters kayıt)';
+
+  @override
+  String get fdzIptalSonuc =>
+      'Kayıt silinmez; deftere ters bir satır eklenir. Ters kayıt geri alınamaz.';
+
+  @override
+  String get fdzIptalVirmanNotu =>
+      'Virmanın iki satırı birlikte ters kaydedilir.';
+
+  @override
+  String get fdzIptalEdildi => 'Hareket iptal edildi (ters kayıt)';
+
+  @override
+  String get fdzIade => 'İade';
+
+  @override
+  String get fdzIadeTutarIpucu => 'Boş bırakılırsa kalan tutarın tamamı';
+
+  @override
+  String get fdzIadeSonuc =>
+      'İade kasadan çıkar. Geri almak için iade iptal edilir (sebep istenir).';
+
+  @override
+  String get fdzIadeYapildi => 'İade kaydedildi';
+
+  @override
+  String get fdzGeriAl => 'Geri al';
+
+  @override
+  String get fdzGeriAlBaslik => 'İşlemi geri al';
+
+  @override
+  String get fdzGeriAlSonuc =>
+      'Ters kayıt yazılır. Geri alma da geri alınamaz.';
+
+  @override
+  String get fdzGeriAlindi => 'Geri alındı';
+
+  @override
+  String get fdzKaynakKasa => 'Kaynak kasa';
+
+  @override
+  String get fdzHedefKasa => 'Hedef kasa';
+
+  @override
+  String get fdzVirmanSonuc =>
+      'İki satır yazılır (çıkış + giriş). Geri almak için virman iptal edilir (sebep istenir).';
+
+  @override
+  String get fdzVirmanYapildi => 'Virman kaydedildi';
+
+  @override
+  String get fdzAyniKasa => 'Kaynak ve hedef kasa aynı olamaz.';
+
+  @override
+  String get fdzYon => 'Yön';
+
+  @override
+  String get fdzYonGiris => 'Giriş (bakiye artar)';
+
+  @override
+  String get fdzYonCikis => 'Çıkış (bakiye azalır)';
+
+  @override
+  String get fdzAcilisSonuc =>
+      'Kasanın başlangıç bakiyesine yazılır. Geri almak için fiş iptal edilir (sebep istenir).';
+
+  @override
+  String get fdzAcilisYapildi => 'Açılış fişi kaydedildi';
+
+  @override
+  String get fdzTopluSonuc =>
+      'Seçili dairelere tahsilat yazılır ve makbuz kesilir. Geri almak için tahsilatlar iptal edilir (sebep istenir).';
+
+  @override
+  String get fdzFaizAffi => 'Faizi affet';
+
+  @override
+  String get fdzFaizAffiSonuc =>
+      'Açık faiz kalemleri ters kayıtla affedilir. Af geri alınamaz.';
+
+  @override
+  String get fdzOdemePlani => 'Ödeme planı';
+
+  @override
+  String get fdzTaksitSayisi => 'Taksit sayısı (2–36)';
+
+  @override
+  String get fdzIlkVade => 'İlk vade';
+
+  @override
+  String get fdzSecimToplami => 'Seçili borç toplamı';
+
+  @override
+  String get fdzDurumOdendi => 'Ödendi';
+
+  @override
+  String get fdzDurumBekliyor => 'Bekliyor';
+
+  @override
+  String fdzPlanSonuc(int n) {
+    return 'Açık borçların vadeleri $n aya yayılır; yeni borç yazılmaz. Geri alınamaz, yeni bir planla değiştirilebilir.';
+  }
+
+  @override
+  String fdzPlanUygulandi(int n) {
+    return '$n dairede ödeme planı uygulandı';
+  }
+
+  @override
+  String fdzTopluYapildi(int n) {
+    return '$n tahsilat kaydedildi';
+  }
+
+  @override
+  String fdzFaizAffedildi(int n, String tutar) {
+    return '$n faiz kalemi affedildi ($tutar)';
+  }
+
+  @override
+  String fdzDaireler(int n, String daireler) {
+    return '$n daire: $daireler';
+  }
+
+  @override
+  String get fdzDurumEtiketi => 'Durum';
+
+  @override
+  String get dsyDosyaSec => 'Dosya (PDF)';
+
+  @override
+  String get brcKalemAidat => 'Aidat';
+
+  @override
+  String get brcKalemDemirbas => 'Demirbaş';
+
+  @override
+  String get brcKalemOlaganustu => 'Olağanüstü';
+
+  @override
+  String get brcKalemSayac => 'Sayaç';
+
+  @override
+  String get brcKalemFaiz => 'Gecikme faizi';
+
+  @override
+  String get brcKalemDiger => 'Diğer';
+
+  @override
+  String get brcDagitimDaireBasina => 'Daire başına sabit tutar';
+
+  @override
+  String get brcDagitimEsit => 'Toplamı eşit dağıt';
+
+  @override
+  String get brcDagitimArsaPayi => 'Toplamı arsa payına göre dağıt';
+
+  @override
+  String get brcDagitimMetrekare => 'Toplamı metrekareye göre dağıt';
+
+  @override
+  String get brcAtlamaArsaPayi => 'Arsa payı girilmemiş';
+
+  @override
+  String get brcAtlamaMetrekare => 'Metrekare girilmemiş';
+
+  @override
+  String get brcAtlamaTip => 'Daire tipinin varsayılan tutarı yok';
+
+  @override
+  String get brcAtlamaCarpisma => 'Bu dönemde aynı türde borç zaten var';
+
+  @override
+  String get brcAtlamaTutar => 'Tutar belirlenemedi';
+
+  @override
+  String get brcYontemElden => 'Elden';
+
+  @override
+  String get brcYontemHavale => 'Havale/EFT';
+
+  @override
+  String get brcYontemKart => 'Kart';
+
+  @override
+  String get brcYontemDiger => 'Diğer';
+
+  @override
+  String get brcDaireSec => 'Daire seçin';
+
+  @override
+  String get brcTurSec => 'Tür seçin';
+
+  @override
+  String get brcTutarGecersiz => 'Geçerli bir tutar girin';
+
+  @override
+  String get brcOnayBaslik => 'Borçlandırmayı onayla';
+
+  @override
+  String brcDonem(String donem) {
+    return 'Dönem $donem';
+  }
+
+  @override
+  String get brcOnaySonuc =>
+      'Borç kaydı silinmez; yanlışsa ters kayıtla düzeltilir.';
+
+  @override
+  String get brcKaydet => 'Borçlandır';
+
+  @override
+  String get brcKaydedildi => 'Borçlandırma kaydedildi';
+
+  @override
+  String get brcTekil => 'Tek daire borçlandır';
+
+  @override
+  String get brcDaire => 'Daire';
+
+  @override
+  String get brcTur => 'Tür';
+
+  @override
+  String brcTarihDegeri(String tarih) {
+    return 'Tarih: $tarih';
+  }
+
+  @override
+  String get brcSonOdemeYok => 'Son ödeme tarihi yok';
+
+  @override
+  String brcSonOdemeDegeri(String tarih) {
+    return 'Son ödeme: $tarih';
+  }
+
+  @override
+  String get brcTutar => 'Tutar (₺)';
+
+  @override
+  String get brcAciklama => 'Açıklama';
+
+  @override
+  String get brcGecikmeUygula => 'Gecikme faizi uygulansın';
+
+  @override
+  String get brcFaiz => 'Gecikme faizi';
+
+  @override
+  String brcFaizOnayHedef(int n, String donem) {
+    return '$n borç · gecikme faizi · $donem';
+  }
+
+  @override
+  String get brcFaizOnaySonuc =>
+      'Faiz yeni borç kalemi olarak yazılır; yanlışsa her kalem ters kayıtla düzeltilir.';
+
+  @override
+  String get brcFaizIsle => 'Faizi işle';
+
+  @override
+  String brcFaizIslendi(int n) {
+    return '$n faiz kalemi yazıldı';
+  }
+
+  @override
+  String get brcFaizKapali =>
+      'Gecikme faizi bu tesiste kapalı (Otomasyon › Gecikme ayarı).';
+
+  @override
+  String get brcFaizYok => 'Bu dönemde işlenecek gecikme faizi yok.';
+
+  @override
+  String brcFaizIslenecek(int n, String tutar) {
+    return '$n borç için toplam $tutar faiz yazılacak.';
+  }
+
+  @override
+  String get brcToplu => 'Toplu tahakkuk';
+
+  @override
+  String get brcBlokSec => 'Blok seçin';
+
+  @override
+  String brcTopluOnayHedef(int n, String tur, String donem) {
+    return '$n daire · $tur · $donem';
+  }
+
+  @override
+  String get brcTopluOnaySonuc =>
+      'İşlemden sonra sonuç ekranından tek seferde ters kayıtla geri alınabilir; ödeme almış satırlar geri alınmaz.';
+
+  @override
+  String get brcTopluIsle => 'Tahakkuku yaz';
+
+  @override
+  String brcAdim(int n, int toplam) {
+    return 'Adım $n/$toplam';
+  }
+
+  @override
+  String get brcGeri => 'Geri';
+
+  @override
+  String get brcIleri => 'İleri';
+
+  @override
+  String get brcAdimNe => 'Ne borçlandırılıyor?';
+
+  @override
+  String get brcAdimNeKadar => 'Ne kadar?';
+
+  @override
+  String get brcAdimKime => 'Kime?';
+
+  @override
+  String get brcAdimOnizleme => 'Önizleme';
+
+  @override
+  String get brcAdimOnay => 'Onay';
+
+  @override
+  String get brcKalemTipi => 'Kalem tipi';
+
+  @override
+  String get brcTutarDaireBasina =>
+      'Daire başına tutar (₺) — boşsa daire tipinin tutarı';
+
+  @override
+  String get brcTutarToplam => 'Dağıtılacak toplam (₺)';
+
+  @override
+  String get brcKapsamTumu => 'Tüm daireler';
+
+  @override
+  String get brcKapsamBlok => 'Bir blok';
+
+  @override
+  String get brcKapsamSecili => 'Seçtiğim daireler';
+
+  @override
+  String brcSeciliSayi(int n) {
+    return '$n daire seçildi';
+  }
+
+  @override
+  String get brcTumunuSec => 'Tümünü seç';
+
+  @override
+  String brcOnizlemeIslenecek(int n) {
+    return '$n daireye borç yazılacak';
+  }
+
+  @override
+  String brcOnizlemeToplam(String tutar) {
+    return 'Toplam $tutar';
+  }
+
+  @override
+  String brcOnizlemeAtlanacak(int n) {
+    return '$n daire atlanacak';
+  }
+
+  @override
+  String brcOnizlemeHedefsiz(int n) {
+    return '$n dairede borç kimseye değil daireye yazılacak (kayıtlı malik yok)';
+  }
+
+  @override
+  String get brcEnYuksek => 'En yüksek 5';
+
+  @override
+  String get brcEnDusuk => 'En düşük 5';
+
+  @override
+  String brcTopluOlustu(int n) {
+    return '$n daireye borç yazıldı';
+  }
+
+  @override
+  String get brcTopluOlusmadi =>
+      'Hiçbir borç yazılmadı — dönemi ya da türü kontrol edin.';
+
+  @override
+  String get brcAtlananlar => 'Atlananlar';
+
+  @override
+  String get brcTersKayit => 'Ters kayıtla düzelt';
+
+  @override
+  String get brcTersKayitSonuc =>
+      'Kayıt silinmez; deftere ters bir satır eklenir. Bu işlem geri alınamaz.';
+
+  @override
+  String get brcTersKayitYapildi => 'Ters kayıt yapıldı';
+
+  @override
+  String get brcDonemEtiket => 'Dönem';
+
+  @override
+  String get brcSonOdemeEtiket => 'Son ödeme';
+
+  @override
+  String get brcGecikme => 'Gecikme';
+
+  @override
+  String get brcDuzeltme => 'Düzeltme kaydı';
+
+  @override
+  String get brcDuzeltildi => 'Düzeltildi';
+
+  @override
+  String get brcDaireBorcu => 'Borç durumu';
+
+  @override
+  String get brcToplamTahakkuk => 'Toplam borçlandırma';
+
+  @override
+  String get brcToplamOdenen => 'Toplam ödenen';
+
+  @override
+  String get brcBakiye => 'Bakiye';
+
+  @override
+  String get brcBorclandir => 'Borçlandır';
+
+  @override
+  String get brcOdemeKaydet => 'Ödeme kaydet';
+
+  @override
+  String get brcTahakkuklar => 'Borç kalemleri';
+
+  @override
+  String get brcTahakkukYok => 'Henüz borç kalemi yok';
+
+  @override
+  String get brcOdemeler => 'Ödemeler';
+
+  @override
+  String get brcOdemeYok => 'Henüz ödeme yok';
+
+  @override
+  String get brcOdemeOnaySonuc =>
+      'Ödeme kasaya girer; yanlışsa finans defterinden iade ya da iptalle düzeltilir.';
+
+  @override
+  String get brcOdemeKaydedildi => 'Ödeme kaydedildi';
+
+  @override
+  String get brcYontem => 'Yöntem';
+
+  @override
+  String get brcOdenenKalem => 'Ödenen borç kalemi';
+
+  @override
+  String get brcKalemSecimsiz => 'Belirli bir kaleme değil';
+
+  @override
+  String get brcDonemAlan => 'Dönem (YYYY-AA)';
+
+  @override
+  String get brcMakbuzNo => 'Makbuz no';
+
+  @override
+  String get brcYok => 'Henüz borçlandırma yok';
+
+  @override
+  String get rprGorevGecmisi => 'Görev Geçmişi';
+
+  @override
+  String get rprGorev => 'Görev';
+
+  @override
+  String get rprTabloTip => 'Tip';
+
+  @override
+  String get rprTabloTamamlayan => 'Tamamlayan';
+
+  @override
+  String get rprTabloZaman => 'Zaman';
+
+  @override
+  String get rprTabloFoto => 'Foto';
+
+  @override
+  String get rprTabloNfc => 'NFC';
+
+  @override
+  String get rprNot => 'Not';
+
+  @override
+  String get rprVar => 'var';
+
+  @override
+  String get rprYok => 'yok';
+
+  @override
+  String get rprCsvPaylas => 'CSV paylaş';
+
+  @override
+  String get rprBolumDisaAktarim => 'Dışa aktarım';
+
+  @override
+  String get rprGorevGecmisiAlt =>
+      'Seçilen tarih aralığındaki görev tamamlamaları (web\'deki görev geçmişi CSV\'si ile aynı sütunlar).';
+
+  @override
+  String get rprEvet => 'Evet';
+
+  @override
+  String get rprHayir => 'Hayır';
+
+  @override
+  String get harKapali =>
+      'Harita şu anda kullanılamıyor; konumu adres aramasıyla seçebilirsiniz.';
+
+  @override
+  String get harYuklenemedi => 'Harita yüklenemedi';
+
+  @override
+  String get harOsmAtif => 'Protomaps © OpenStreetMap katkıcıları';
+
+  @override
+  String get harTesisKonumu => 'Tesis konumu';
+
+  @override
+  String get harYerAdi => 'Yer adı (ilçe, mahalle)';
+
+  @override
+  String get harAra => 'Ara';
+
+  @override
+  String get harAramaHata =>
+      'Adres araması şu anda yapılamıyor; biraz sonra yeniden deneyin.';
+
+  @override
+  String get harSonucYok =>
+      'Bu adla bir yer bulunamadı; ilçe ya da il adıyla deneyin.';
+
+  @override
+  String get harIgneIpucu =>
+      'Haritayı kaydırın ya da dokunun: iğne binanın üzerine gelsin, sonra Kaydet\'e basın.';
+
+  @override
+  String harSecili(String ad, String lat, String lon) {
+    return 'Seçili: $ad ($lat, $lon)';
+  }
+
+  @override
+  String get brcPartiGeriAl => 'Toplu borçlandırmayı geri al';
+
+  @override
+  String get brcPartiGeriAlSonuc =>
+      'Her borç ters kayıtla kapatılır; kayıtlar silinmez. Ödeme almış borçlar geri alınmaz ve listelenir.';
+
+  @override
+  String brcPartiGeriAlindi(int n) {
+    return '$n borç ters kayıtla geri alındı';
+  }
+
+  @override
+  String get brcAtlamaOdenmis => 'ödeme almış, tek tek düzeltin';
+
+  @override
+  String get brcAtlamaZatenTersKayitli => 'zaten düzeltilmiş';
+
+  @override
+  String get rprKesildi =>
+      'Kayıt sayısı üst sınıra takıldı — rapor eksik olabilir. Tarih aralığını daraltın.';
 }

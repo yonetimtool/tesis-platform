@@ -18,6 +18,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/core/network/dio_provider.dart';
 import 'package:mobile/src/features/auth/data/token_storage.dart';
 import 'package:mobile/src/features/shifts/presentation/dongu_ata_dialogu.dart';
+import 'package:mobile/src/features/shifts/presentation/serbest_dongu_editoru.dart';
 import 'package:mobile/src/features/shifts/presentation/vardiya_plani_screen.dart';
 
 import 'helpers/bellek_depo.dart';
@@ -366,5 +367,50 @@ void main() {
     );
     expect(find.byKey(const Key('dongu-bosluk-2026-03-02')), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  // ============ (P253 Asama 2) SERBEST DONGU TANIMI (YETENEK) ============
+  test('bloklariAc: web ile AYNI (her gun / gun asiri / tatil)', () {
+    expect(bloklariAc(varsayilanBloklar), [
+      [1], [1], [0], [0], <int>[], <int>[],
+    ]);
+    expect(
+      bloklariAc(const [
+        DonguBlogu(dilim: 2, gun: 4, duzen: BlokDuzeni.gunAsiri),
+        DonguBlogu(dilim: tatil, gun: 1),
+      ]),
+      [[2], <int>[], [2], <int>[], <int>[]],
+    );
+  });
+
+  testWidgets('SERBEST DONGU: tanim -> POST kaliplar (dilim + adim) -> secili -> kuru onizleme',
+      (tester) async {
+    final tel = await _ac(tester);
+    await _dokun(tester, 'dongu-serbest');
+    expect(find.byType(SerbestDonguEditoru), findsOneWidget);
+    // Ad bosken kaydet pasif.
+    expect(tester.widget<FilledButton>(find.byKey(const Key('sdg-kaydet'))).onPressed, isNull);
+    await tester.enterText(find.byKey(const Key('sdg-ad')), '3 gece 1 tatil');
+    await tester.pumpAndSettle();
+    // Ilk blok (gece, 2 gun) 3 gune; ikinci blok (gunduz) kaldirilir.
+    await tester.enterText(find.byKey(const Key('sdg-blok-gun-0')), '3');
+    await tester.pumpAndSettle();
+    await _dokun(tester, 'sdg-blok-sil-1');
+    // Kalan: gece x3 + tatil x2 -> tatil bloku 1 gune.
+    await tester.enterText(find.byKey(const Key('sdg-blok-gun-1')), '1');
+    await tester.pumpAndSettle();
+    expect(find.text('4 günlük döngü'), findsOneWidget);
+    await _dokun(tester, 'sdg-kaydet');
+    final kayit = tel.istekler.lastWhere(
+        (i) => i.metot == 'POST' && i.yol == '/vardiya-plani/kaliplar');
+    expect(kayit.govde['ad'], '3 gece 1 tatil');
+    expect(kayit.govde['adimlar'], [[1], [1], [1], <int>[]]);
+    expect((kayit.govde['dilimler'] as List).length, 2);
+    // Kaydedilen kalip SECILI: kisi secip onizle -> kuru=true, kalip_id=k3.
+    await _kisiSec(tester, 'u1');
+    await _dokun(tester, 'dongu-onizle');
+    final onizle = tel.istekler.lastWhere((i) => i.yol == '/vardiya-plani/dongu-uygula');
+    expect(onizle.govde['kuru'], true);
+    expect(onizle.govde['kalip_id'], 'k3');
   });
 }

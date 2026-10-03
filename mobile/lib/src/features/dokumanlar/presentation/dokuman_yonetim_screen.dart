@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/dosya/dosya_secici.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/girdi_siniri.dart';
@@ -174,9 +175,10 @@ class _DokumanYonetimScreenState extends ConsumerState<DokumanYonetimScreen> {
   }
 }
 
-/// Yukleme formu (merkez pencere). Dosya telefonda secilen FOTOGRAFTIR
-/// (kamera ya da galeri); PDF secici yeni bir bagimlilik ister — o karar
-/// verilene kadar formdaki not kullaniciya bunu acikca soyler.
+/// Yukleme formu (merkez pencere). Dosya: FOTOGRAF (kamera ya da galeri)
+/// ya da (P253 Asama 2) telefondaki bir PDF (`core/dosya/dosya_secici.dart`).
+/// Secici yalniz sunucunun kabul ettigi turleri gosterir: belge bileti
+/// PDF ve gorsel kabul eder (`PresignRequest`), baska tur 422 olurdu.
 class DokumanYukleFormu extends ConsumerStatefulWidget {
   const DokumanYukleFormu({super.key});
 
@@ -221,6 +223,22 @@ class _DokumanYukleFormuState extends ConsumerState<DokumanYukleFormu> {
       _hata = null;
       _dosya = YuklenecekDosya(baytlar: baytlar, icerikTipi: f.mimeType ?? _tur(f.name), dosyaAdi: f.name);
       if (_ad.text.trim().isEmpty) _ad.text = f.name;
+    });
+  }
+
+  /// (P253 Asama 2) Telefondaki PDF.
+  Future<void> _dosyaSec() async {
+    final l10n = context.l10n;
+    final f = await ref.read(dosyaSeciciProvider).sec(uzantilar: const ['pdf']);
+    if (f == null || !mounted) return;
+    if (f.baytlar.length > dokumanAzamiBayt) {
+      setState(() => _hata = l10n.dokCokBuyuk);
+      return;
+    }
+    setState(() {
+      _hata = null;
+      _dosya = YuklenecekDosya(baytlar: f.baytlar, icerikTipi: f.icerikTipi, dosyaAdi: f.ad);
+      if (_ad.text.trim().isEmpty) _ad.text = f.ad;
     });
   }
 
@@ -278,6 +296,12 @@ class _DokumanYukleFormuState extends ConsumerState<DokumanYukleFormu> {
                 onPressed: _mesgul ? null : () => _sec(ImageSource.gallery),
                 icon: const Icon(Icons.photo_library_outlined),
                 label: Text(l10n.dokGaleri),
+              ),
+              OutlinedButton.icon(
+                key: const Key('dok-dosya'),
+                onPressed: _mesgul ? null : _dosyaSec,
+                icon: const Icon(Icons.picture_as_pdf_outlined),
+                label: Text(l10n.dsyDosyaSec),
               ),
             ],
           ),

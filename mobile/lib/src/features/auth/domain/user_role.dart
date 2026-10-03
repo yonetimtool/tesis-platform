@@ -126,8 +126,9 @@ enum UserRole {
   bool get canPublishTransparency => this == admin || this == yonetici;
 
   /// Seffaflik Panosu goruntuleme — tum bilinen roller (sakin dahil; ANONIM
-  /// agregat ozet). unknown haric.
-  bool get canViewTransparency => this != unknown && this != denetci;
+  /// agregat ozet). unknown haric. (P253 Asama 2) Denetci de okur (sunucu
+  /// `GET /transparency` denetciye acik; yayinlama `canPublish`te degil).
+  bool get canViewTransparency => this != unknown;
 
   /// Sikayet/oneri ekranini gorme — yasayan/calisandan yonetime kanal
   /// (kesin kural, auth.md §4): acan roller kendi taleplerini, yonetim

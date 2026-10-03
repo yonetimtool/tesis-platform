@@ -40,8 +40,8 @@ const int izgaraEnCokKaro = 8;
 /// (P140.1) Neden gerekli — OLCULDU: guvenlik amiri YALNIZ ALTI karo
 /// gorebiliyor (izin kumesi o kadar). Ona "8 karodan n secildi" demek,
 /// ulasamayacagi bir tavani soylemek olurdu; secim ekrani da hicbir zaman
-/// dolmayan bir sayac gosterirdi. Denetcide kume BOSTUR (mobil yuzeyi
-/// yok — P128/P129) ve tavan 0 olur.
+/// dolmayan bir sayac gosterirdi. Denetcide kume salt okuma menusudur
+/// (P253 Asama 2: raporlar, seffaflik, icra, bakim) ve tavan 4 olur.
 ///
 /// EKSIK KARO DURUMUNDA YER TUTUCU CIZILMEZ: izgara mevcut sayiya gore
 /// kapanir (bkz. ana ekranlar). Bos kutu, "yuklenmedi mi?" sorusunu

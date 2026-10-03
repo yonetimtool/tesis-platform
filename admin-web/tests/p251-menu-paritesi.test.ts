@@ -56,7 +56,7 @@ describe("(P251 §8) menu paritesi tablosu", () => {
     const hata: string[] = [];
     for (const s of T) {
       const k = `${s.kapsam}/${s.web}/${s.mobil}`;
-      if (!["yonetici", "sakin"].includes(s.kapsam)) hata.push(`${k}: kapsam`);
+      if (!["yonetici", "sakin", "denetci"].includes(s.kapsam)) hata.push(`${k}: kapsam`);
       if (!GRUPLAR.includes(s.grup)) hata.push(`${k}: grup ${s.grup}`);
       if (!DURUMLAR.includes(s.durum)) hata.push(`${k}: durum ${s.durum}`);
       if (s.durum === "ayni" && (s.web === "-" || s.mobil === "-")) hata.push(`${k}: ayni ama bir yuzey bos`);
@@ -75,6 +75,26 @@ describe("(P251 §8) menu paritesi tablosu", () => {
       const s = beklenen.find((b) => b.web === o.href);
       if (!s) {
         fark.push(`tabloda yok: ${o.href} (${ad(o.anahtar)}) — contracts/menu-paritesi.tsv'ye ekleyin`);
+        continue;
+      }
+      if (o.grup !== s.grup) fark.push(`${o.href}: grup web=${o.grup} tablo=${s.grup}`);
+      if (ad(o.anahtar) !== s.ad) fark.push(`${o.href}: ad web="${ad(o.anahtar)}" tablo="${s.ad}"`);
+    }
+    for (const s of beklenen) {
+      if (!menu.some((o) => o.href === s.web)) fark.push(`menude yok: ${s.web} (${s.ad})`);
+    }
+    expect(fark).toEqual([]);
+  });
+
+  it("(P253 A2) DENETCI: web menusu tabloyla BIREBIR (grup + Turkce ad)", () => {
+    const beklenen = T.filter((s) => s.kapsam === "denetci" && s.web !== "-");
+    expect(beklenen.length, "denetci kapsami bos — olcum bosa dusmesin").toBeGreaterThan(3);
+    const menu = menuGruplari("tesis", "denetci").flatMap((g) => g.ogeler);
+    const fark: string[] = [];
+    for (const o of menu) {
+      const s = beklenen.find((b) => b.web === o.href);
+      if (!s) {
+        fark.push(`tabloda yok: ${o.href} (${ad(o.anahtar)})`);
         continue;
       }
       if (o.grup !== s.grup) fark.push(`${o.href}: grup web=${o.grup} tablo=${s.grup}`);

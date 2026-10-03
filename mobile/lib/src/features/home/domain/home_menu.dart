@@ -60,6 +60,10 @@ enum HomeMenuEntry {
   /// yayinlanmis aylar (salt okuma); yonetici/admin: her ay + yayinla/geri-al.
   transparency,
 
+  /// (P253 Asama 2) Icra dosyalari — SALT OKUMA liste (yonetim + denetci).
+  /// Web `/icra`nin karsiligi; dosya acma/durum degistirme web'de kalir.
+  icra,
+
   /// Site Butcesi (Wave 2B) — resident: SALT OKUMA agregat seffaflik
   /// (toplam gelir/gider/kasa; defter satiri ve kisi/daire verisi yok).
   siteBudget,
@@ -236,6 +240,10 @@ enum HomeMenuEntry {
 
   /// (P206 §4.4) Borclular — yaslandirma + toplu hatirlatma (yonetici).
   borclular,
+
+  /// (P253 Asama 2) Borclandirmalar — liste, tekil, toplu tahakkuk
+  /// sihirbazi, ters kayit, gecikme faizi (web Finans › Borclandirmalar).
+  borclandirmalar,
 
   /// (P206 §4.5) Sayac okuma — sahada oku, oracikta borclandir (yonetici).
   sayacOkuma,
@@ -464,12 +472,15 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         // "telefonda yapilamiyor" hissini surdururdu.
         HomeMenuEntry.tahsilat,
         HomeMenuEntry.borclular,
+        HomeMenuEntry.borclandirmalar,
         HomeMenuEntry.gider,
         HomeMenuEntry.sayacOkuma,
         HomeMenuEntry.budget,
         HomeMenuEntry.financialSummary,
         HomeMenuEntry.transparency,
         HomeMenuEntry.reports,
+        // (P253 Asama 2) Icra dosyalari — salt okuma liste.
+        HomeMenuEntry.icra,
         // (P251 §8) Otomasyon kendi girisinde (web Finans › Otomasyon).
         HomeMenuEntry.otomasyon,
         // (P251 §8) KISILER TEK GIRIS — Saha personeli, Site sakinleri ve
@@ -549,14 +560,18 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.yoneticiIletisim,
       ];
     case UserRole.denetci:
-      // (P128/P129) DENETCININ MOBIL MENUSU BOS — ve bu bir eksiklik degil
-      // KARARDIR. Denetimin isi masabasi isidir (rapor okumak, tablo
-      // indirmek) ve urun karari `app.*` web yuzeyi yonunde verildi.
-      //
-      // Buraya "birkac kart" koymak, kullanilabilir bir denetci deneyimi
-      // TASARLAMADAN varmis gibi gostermek olurdu. Ekran, giris yapan
-      // denetciye web adresini soyler (home_gate).
-      return const [];
+      // (P253 Asama 2, karar §A-1) DENETCI MOBILDE SALT OKUMA. Eskiden
+      // (P128/P129) menu bostu ve ekran web adresini soyluyordu; karar
+      // degisti: web'deki denetci kumesinin (raporlar, seffaflik, icra,
+      // bakim, fazla mesai) mobil karsiliklari. Fazla mesai mobilde Asama
+      // 3'te gelir (eylem tablosu planli:3). Yazma dugmeleri her ekranda
+      // ROLE BAKILARAK cizilmez; sunucu zaten reddeder.
+      return const [
+        HomeMenuEntry.reports,
+        HomeMenuEntry.transparency,
+        HomeMenuEntry.icra,
+        HomeMenuEntry.bakim,
+      ];
     case UserRole.unknown:
       // Rol cozulmeden (storage okumasi) veya bilinmeyen degerde: bos —
       // saniye alti bir durumdur, yanlis karti gostermekten iyidir.
@@ -586,10 +601,12 @@ String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
       HomeMenuEntry.tahsilat => l10n.finansTahsilatBaslik,
       HomeMenuEntry.gider => l10n.finansGiderBaslik,
       HomeMenuEntry.borclular => l10n.finansBorclularBaslik,
+      HomeMenuEntry.borclandirmalar => l10n.webBorclandirmalar,
       HomeMenuEntry.sayacOkuma => l10n.sayacOkumaBaslik,
       HomeMenuEntry.budget => l10n.modulButce,
       HomeMenuEntry.financialSummary => l10n.butFinansalOzet,
       HomeMenuEntry.transparency => l10n.modulSeffaflik,
+      HomeMenuEntry.icra => l10n.rprIcraBaslik,
       HomeMenuEntry.siteBudget => l10n.modulSiteButcesi,
       HomeMenuEntry.myDues => l10n.aidatBaslik,
       HomeMenuEntry.complaints => l10n.kartTalepAriza,
@@ -708,11 +725,13 @@ HomeMenuGrup homeMenuGrubu(HomeMenuEntry e) => switch (e) {
   HomeMenuEntry.tahsilat ||
   HomeMenuEntry.gider ||
   HomeMenuEntry.borclular ||
+  HomeMenuEntry.borclandirmalar ||
   HomeMenuEntry.sayacOkuma ||
   HomeMenuEntry.reports ||
   HomeMenuEntry.budget ||
   HomeMenuEntry.financialSummary ||
   HomeMenuEntry.transparency ||
+  HomeMenuEntry.icra ||
   HomeMenuEntry.siteBudget ||
   HomeMenuEntry.otomasyon ||
   HomeMenuEntry.myDues => HomeMenuGrup.finans,

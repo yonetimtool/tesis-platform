@@ -21,16 +21,24 @@ import '../network/dio_provider.dart';
 /// "Bilmiyorsak acalim" demek, hazir olmayan bir pazar yerini
 /// kullaniciya gostermek olurdu.
 class OzellikBayraklari {
-  const OzellikBayraklari({this.dukkan = false});
+  const OzellikBayraklari({this.dukkan = false, this.haritaKaroUrl});
 
   /// Pazar yeri yuzeyi acik mi. VARSAYILAN FALSE.
   final bool dukkan;
+
+  /// (P253 A2) Kendi harita karo dosyamiz (Turkiye PMTiles); null = harita
+  /// kapali. Web ile AYNI kaynak; dosya degisince uygulama guncellenmez.
+  final String? haritaKaroUrl;
 
   factory OzellikBayraklari.fromJson(Map<String, dynamic> j) =>
       OzellikBayraklari(
         // `as bool?` + `?? false`: sunucu alani hic gondermezse ya da
         // beklenmedik bir tip gonderirse KAPALI kalir.
         dukkan: j['dukkan'] as bool? ?? false,
+        haritaKaroUrl: switch (j['harita_karo_url']) {
+          final String u when u.isNotEmpty => u,
+          _ => null,
+        },
       );
 }
 
@@ -75,4 +83,9 @@ final ozellikBayraklariProvider =
 /// ekran, kullaniciya "bozuk" gorunurdu.
 final dukkanAcikProvider = Provider<bool>((ref) {
   return ref.watch(ozellikBayraklariProvider).value?.dukkan ?? false;
+});
+
+/// (P253 A2) Harita karo adresi; yuklenmediyse ya da kapaliysa null.
+final haritaKaroUrlProvider = Provider<String?>((ref) {
+  return ref.watch(ozellikBayraklariProvider).value?.haritaKaroUrl;
 });

@@ -45,6 +45,7 @@ import {
   OzetKarti,
   OzetSeridi,
   SayfaBasligi,
+  useOnay,
 } from "@/components/ui";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -195,6 +196,7 @@ export default function BorclularPage() {
   const [kova, setKova] = useState<string | null>(null);
   const [secili, setSecili] = useState<string[]>([]);
   const [plan, setPlan] = useState(false);
+  const { onayla, diyalog } = useOnay();
 
   const { data, error, isLoading, mutate } = useSWR<Yaslandirma>(
     kova
@@ -218,6 +220,23 @@ export default function BorclularPage() {
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("ortakHataOlustu"));
     }
+  }
+
+  // (P253 §C-1) FAIZ AFFI ONAY ISTER: hedef daireler + secili borc toplami
+  // yazili; af ters kayittir ve geri alinamaz — ONCEDEN soylenir.
+  async function faizAffet() {
+    const secilen = satirlar.filter((d) => secili.includes(d.unit_id));
+    const ok = await onayla({
+      baslik: t("yasTopluFaizAffi"),
+      mesaj: t("fdzFaizAffiOnay", {
+        daireler: secilen.map((d) => d.unit_no).join(", "),
+        tutar: kurusToTL(secilen.reduce((a, d) => a + d.kalan_kurus, 0)),
+      }),
+      onayMetni: t("yasTopluFaizAffi"),
+      tehlikeli: true,
+    });
+    if (!ok) return;
+    await toplu("/api/panel/borclulara-faiz-affi", (n) => t("yasAffedildi", { n }));
   }
 
   const kolonlar: Kolon<Daire>[] = [
@@ -246,6 +265,7 @@ export default function BorclularPage() {
 
   return (
     <div>
+      {diyalog}
       <SayfaBasligi baslik={t("finansBorclular")} aciklama={t("borclularSayfaAlt")} />
 
       {/* (P245) OZET SERIDI — referansta (ui2, borclular ekrani) ustte uc kart:
@@ -362,10 +382,7 @@ export default function BorclularPage() {
                 {t("yasTopluHatirlat")}
               </Dugme>
               <Dugme tur="ikincil" boy="kucuk" disabled={secili.length === 0}
-                onClick={() => void toplu(
-                  "/api/panel/borclulara-faiz-affi",
-                  (n) => t("yasAffedildi", { n }),
-                )}
+                onClick={() => void faizAffet()}
               >
                 {t("yasTopluFaizAffi")}
               </Dugme>

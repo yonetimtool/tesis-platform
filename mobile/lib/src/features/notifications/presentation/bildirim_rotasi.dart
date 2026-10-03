@@ -79,6 +79,8 @@ String? bildirimRotasi(AppNotification b, {UserRole? role}) {
     'sikayet_cozuldu' => AppRoutes.sikayetlerim,
     // (P253 §D) Sikayet edene: asilsiz karari ve gecici sinirlama.
     'sikayet_asilsiz' || 'sikayet_sinirlama' => AppRoutes.sikayetlerim,
+    // (P253 A2) Kuyruktaki rapor bitti.
+    'rapor_hazir' => '${AppRoutes.reports}?sekme=isler',
     // (P241) PAKET OLCUMUNDE YAKALANDI: P240'ta uc yeni bildirim ailesi
     // eklendi ama bu beyaz liste guncellenmemisti — panik push'una
     // dokunan kullanici ALARM EKRANINA GITMIYOR, bildirim yalnizca

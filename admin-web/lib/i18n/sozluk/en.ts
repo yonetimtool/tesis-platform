@@ -4064,4 +4064,11 @@ export const en: Sozluk = {
   haritaKaroDili: "en",
   haritaKapali: "The map is currently unavailable; you can pick the location with the address search.",
   konumIgneIpucu: "Drag the pin or tap the map to place the location on the building.",
+  bildirimTipRaporHazir: "Report ready",
+  finansSonPartiOzet: "Last bulk charge: {adet} units · {donem}",
+  finansPartiGeriAl: "Undo bulk charge",
+  finansPartiGeriAlOnay: "Each of the {adet} charges written for {donem} will be closed with a reversing entry. Records are not deleted; charges that already received payments are not undone and are reported to you.",
+  finansPartiGeriAlindi: "{adet} charges reversed",
+  finansAtlamaOdenmis: "already paid, correct individually",
+  finansAtlamaZatenTersKayitli: "already corrected",
 };

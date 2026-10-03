@@ -77,6 +77,34 @@ class _TaskCategoriesScreenState extends ConsumerState<TaskCategoriesScreen> {
     }
   }
 
+  /// (P253 Asama 2) Ad duzelt. Sil-yeniden-olustur yerine: kategoriyi
+  /// kullanan gorevler pasif bir kategoriye baglanmasin.
+  Future<void> _duzenle(TaskCategory kategori) async {
+    final l10n = context.l10n;
+    final ad = await metinIste(
+      context,
+      baslik: l10n.tnmKategoriDuzenle,
+      onayEtiketi: l10n.ortakKaydet,
+      etiket: l10n.gorevKategoriAdi,
+      baslangic: kategori.ad,
+      enFazla: 100,
+    );
+    if (ad == null || ad.isEmpty || ad == kategori.ad) return;
+    try {
+      await ref.read(taskCategoryApiProvider).update(kategori.id, ad: ad);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.tnmKategoriGuncellendi(ad))),
+      );
+      await _yenile();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(apiHataMetni(l10n, e))),
+      );
+    }
+  }
+
   Future<void> _sil(TaskCategory kategori) async {
     final l10n = context.l10n;
     final onay = await showDialog<bool>(
@@ -160,8 +188,10 @@ class _TaskCategoriesScreenState extends ConsumerState<TaskCategoriesScreen> {
               itemBuilder: (context, i) {
                 final k = liste[i];
                 return ListTile(
+                  key: Key('kategori-${k.id}'),
                   leading: const Icon(Icons.label_outline),
                   title: Text(k.ad),
+                  onTap: () => _duzenle(k),
                   trailing: IconButton(
                     tooltip: l10n.ortakSil,
                     icon: const Icon(Icons.delete_outline),

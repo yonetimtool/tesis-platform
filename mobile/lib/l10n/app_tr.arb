@@ -2251,11 +2251,11 @@
     }
   },
   "demoSimuleOkutmaHata": "Simüle okutma yapılamadı.",
-  "denetciWebBaslik": "Denetim ekranları web'de",
+  "denetciWebBaslik": "Web'de kalanlar",
   "@denetciWebBaslik": {
     "description": "Denetci mobil girisinde: is masaustunde"
   },
-  "denetciWebGovde": "Denetim raporları ve mali gözetim masaüstü için tasarlandı. Bilgisayarınızdan {adres} adresine girin.",
+  "denetciWebGovde": "Fazla mesai ve masaüstü için tasarlanan diğer denetim ekranları web'de. Bilgisayarınızdan {adres} adresine girin.",
   "@denetciWebGovde": {
     "description": "Denetciye web adresini soyler",
     "placeholders": {
@@ -4309,7 +4309,6 @@
   "yoneticiListeBos": "Bu tesiste başka yönetici ya da denetçi yok.",
   "yoneticiEkle": "Yönetici / denetçi ekle",
   "yoneticiEklendi": "Hesap açıldı; davet e-postası gönderildi.",
-  "tanimlarWebNotu": "Kasalar, gelir/gider tanımları, firmalar, sayaçlar, araç kayıtları ve muhasebe ayarları bilgisayardan yönetilir.",
   "bilgisayardanAciklama": "Bu işlemler geniş tablo ve önizleme ister; {adres} adresinden yapılır.",
   "@bilgisayardanAciklama": {
     "placeholders": {
@@ -4336,7 +4335,6 @@
   "tesisAyarIl": "İl",
   "tesisAyarPostaKodu": "Posta kodu",
   "tesisAyarKaydedildi": "Tesis ayarları kaydedildi.",
-  "tesisAyarWebNotu": "Konum (harita), otopark kapasitesi ve eşik ayarları bilgisayardan yapılır.",
   "yoneticiListeBosAlt": "Yönetici ya da denetçi eklemek için sağ alttaki düğmeyi kullanın; hesap açılır ve davet e-postası gider.",
   "webDemirbas": "Demirbaş",
   "calismaBaslik": "Çalışma bilgileri",
@@ -4800,7 +4798,7 @@
   "dokYonetimBos": "Arşivde doküman yok. Yüklemek için Yükle'ye dokunun.",
   "dokYukle": "Yükle",
   "dokYuklendi": "Doküman yüklendi.",
-  "dokYukleNot": "Telefondan fotoğraf yükleyebilirsiniz. PDF ve diğer dosyalar için şimdilik web panelini kullanın.",
+  "dokYukleNot": "Fotoğraf çekin, galeriden seçin ya da telefondaki bir PDF'i yükleyin (en fazla 25 MB).",
   "hatAciklama": "Not (isteğe bağlı)",
   "hatAyBos": "Bu ay takvimde bir şey yok.",
   "hatBaslik": "Başlık",
@@ -4929,5 +4927,754 @@
   "kisSuzgecTemizle": "Süzgeci temizle",
   "kisSuzgecSonucYok": "Süzgece uyan kayıt yok.",
   "kisTarihAraligi": "Tarih aralığı",
-  "hatBosRehber": "Kendinize not ya da hatırlatma eklemek için \"+\" düğmesine dokunun."
+  "hatBosRehber": "Kendinize not ya da hatırlatma eklemek için \"+\" düğmesine dokunun.",
+  "tsaAyarGrupDevriye": "Devriye ve turlar",
+  "tsaAyarGrupVardiya": "Vardiya ve güvenlik",
+  "tsaAyarGrupGurultu": "Gürültü şikâyetleri",
+  "tsaAyarGrupFinans": "Aidat ve giderler",
+  "tsaAyarGrupRezervasyon": "Rezervasyon",
+  "tsaAyarGrupOtopark": "Otopark",
+  "tsaAyarTurTolerans": "Tur başlamazsa kaç dakika sonra uyarılsın",
+  "tsaAyarTurToleransIpucu": "Tur saati geldiğinde bu süre içinde hiç okutma yapılmazsa yöneticiye alarm gider.",
+  "tsaAyarTurTekrar": "Alarm tekrar sayısı",
+  "tsaAyarTurTekrarIpucu": "0 = alarm kapalı. Aralıklar katlanır: tolerans, 2×, 4×.",
+  "tsaAyarTurFoto": "Tura başlarken fotoğraf istensin",
+  "tsaAyarTurFotoIpucu": "Görevli turun ilk noktasında kamerayla fotoğraf çeker. Galeriden hazır fotoğraf seçemez.",
+  "tsaAyarVardiyaHatirlatma": "Vardiyadan kaç dakika önce hatırlatılsın",
+  "tsaAyarVardiyaHatirlatmaIpucu": "Örnek: 30 yazarsanız yarım saat önce hatırlatma gider. Birden çok hatırlatma için virgülle yazın (30,5). Boş bırakırsanız hatırlatma gönderilmez.",
+  "tsaAyarVardiyaBaslamadi": "Vardiyaya başlanmazsa kaç dakika sonra uyarılsın",
+  "tsaAyarVardiyaBaslamadiIpucu": "Vardiya saati geldikten sonra bu süre içinde hiç okutma yapılmazsa yöneticiye uyarı gider. 0 yazarsanız bu uyarı gönderilmez.",
+  "tsaAyarOkutmaMesafe": "Okutma en fazla kaç metre uzaktan yapılabilsin",
+  "tsaAyarOkutmaMesafeIpucu": "Bu mesafeden uzakta yapılan okutmalar raporda işaretlenir ve yöneticiye bildirilir. Okutma engellenmez.",
+  "tsaAyarOtoparkKapasite": "Otopark kaç araç alıyor?",
+  "tsaAyarOtoparkKapasiteIpucu": "Toplam araç kapasitesi. Boş bırakılırsa doluluk yüzdesi hesaplanmaz, yalnız içerideki araç sayısı gösterilir.",
+  "tsaAyarRezervasyonGecmis": "Geçmiş rezervasyonlar kaç ay geriye görünsün",
+  "tsaAyarRezervasyonGecmisIpucu": "Daha eski kayıtlar listede gösterilmez. Kayıtlar silinmez — bir rezervasyon ortak alan anlaşmazlığında kanıttır. 0 yazarsanız tümü görünür.",
+  "tsaAyarVarsayilanHedef": "Yeni gider türlerinde borç kime yazılsın",
+  "tsaAyarVarsayilanHedefIpucu": "Yalnızca YENİ açılan gelir/gider türleri için başlangıç değeridir; her tür ayrıca değiştirilebilir (Tanımlar > Gelir/Gider türleri).",
+  "tsaTanimHedefKullanan": "Kullanan öder (kiracı, yoksa malik)",
+  "tsaTanimHedefMalik": "Malik öder",
+  "tsaAyarGurultuEsigi": "Kaç farklı daireden şikâyet gelince uyarı gitsin",
+  "tsaAyarGurultuEsigiIpucu": "Bir daire için bu sayıda FARKLI daireden gürültü şikâyeti gelince sakine sesli uyarı gönderilir ve sayaç sıfırlanır. Aynı kişinin birden çok şikâyeti tek sayılır; asılsız işaretlenen şikâyetler sayılmaz.",
+  "tsaAyarGurultuMetni": "Sakine gidecek uyarı metni",
+  "tsaAyarGurultuMetniIpucu": "Boş bırakırsanız hazır metin kullanılır.",
+  "tsaAyarGurultuPencere": "Şikâyetler kaç gün geriye kadar sayılsın",
+  "tsaAyarGurultuPencereIpucu": "Yalnızca son bu kadar gün içindeki şikâyetler sayılır. Bir yıla yayılan beş şikâyet ile bir haftadaki beş şikâyet aynı şey değildir. 0 yazarsanız tüm açık şikâyetler sayılır. (Haritada görünme süresiyle karıştırmayın — o ayrı bir ayardır.)",
+  "tsaAyarGurultuSusma": "Uyarıdan sonra kaç gün yeniden uyarılmasın",
+  "tsaAyarGurultuSusmaIpucu": "Uyarı alan daireye bu süre boyunca yeni uyarı gönderilmez. Her gece tekrarlanan bir uyarı kendisi gürültüye dönüşür. 0 yazarsanız her eşikte yeniden uyarılır.",
+  "tsaAyarGurultuEskalasyon": "Kaçıncı uyarıda güvenliğe bildirilsin",
+  "tsaAyarGurultuEskalasyonIpucu": "Bir daire bu sayıda uyarı aldığında güvenliğe de bildirim gider ve güvenlik yerinde kontrol eder, gerekirse polise haber verir. 2 yazarsanız ilk uyarıda yalnız sakine, ikinci uyarıda güvenliğe de gider.",
+  "tsaAyarHaritaSaat": "Şikâyetler haritada kaç saat görünsün",
+  "tsaAyarHaritaSaatIpucu": "Bu süre geçince şikâyet haritadan kalkar. Şikâyet SİLİNMEZ: listede, raporlarda ve eşik sayacında durmaya devam eder — yalnızca harita “şu anda nerede sorun var” sorusunu yanıtlasın diye gizlenir. 0 yazarsanız süresiz görünür. (Eşik sayacının kendi süresi ayrıdır: “Şikâyetler kaç gün geriye kadar sayılsın”.)",
+  "tsaAyarGurultuSakin": "Daire sakinine uyarı bildirimi gönder",
+  "tsaAyarGurultuSakinIpucu": "Eşik aşılınca dairede oturan kişiye bildirim gider. Bildirimde şikayet edenin kimliği ve şikayet sayısı YER ALMAZ. Kapatırsanız uyarıyı yönetim kendi yöntemiyle iletir.",
+  "tsaAyarGurultuEsikBirUyari": "Eşik 1: her gürültü şikâyetinde daireye uyarı gider. Bu, uyarıyı hızla anlamsızlaştırır — 3 ve üzeri önerilir.",
+  "tsaAyarDegisiklikYok": "Değişiklik yok.",
+  "tsaTesisAyarPlatformNotu": "Saat dilimi, tesis kodu ve güvenlik modu buradan değiştirilemez; bunlar Yönetiyor ekibinde kalır. Değişmesi gerekiyorsa destek talebi açın.",
+  "tsaAralikHatasi": "{min} ile {max} arasında bir sayı girin.",
+  "@tsaAralikHatasi": {
+    "description": "Sayi ayari aralik disi",
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "tnmKasalar": "Kasalar",
+  "tnmGelirGiderGruplari": "Gelir/Gider Grupları",
+  "tnmGelirGiderTanimlari": "Gelir/Gider Kalemleri",
+  "tnmFirmalar": "Firmalar",
+  "tnmAraclar": "Araçlar",
+  "tnmSayaclar": "Sayaçlar",
+  "tnmSayaclarBolum": "Bölüm Sayaçları",
+  "tnmAyarlar": "Muhasebe Ayarları",
+  "tnmYeniKayit": "Yeni kayıt",
+  "tnmKayitYok": "Henüz kayıt yok.",
+  "tnmKayitYokAlt": "Bu defter henüz boş. Yukarıdaki ekleme düğmesiyle ilk kaydı oluşturun.",
+  "tnmParaBirimiNotu": "Para birimi YALNIZ gösterimdir; tutarlar ₺ olarak saklanır ve hesaplanır.",
+  "tnmTutarGecersiz": "{alan} için geçerli bir tutar girin. Örnek: 1.250,00",
+  "@tnmTutarGecersiz": {
+    "placeholders": {
+      "alan": {
+        "type": "String"
+      }
+    },
+    "description": "(P253 A2) Tanimlar genel defteri"
+  },
+  "tnmSayiGecersiz": "{alan} için geçerli bir sayı girin.",
+  "@tnmSayiGecersiz": {
+    "placeholders": {
+      "alan": {
+        "type": "String"
+      }
+    },
+    "description": "(P253 A2) Tanimlar genel defteri"
+  },
+  "tnmAlanKod": "Kod",
+  "tnmAlanAd": "Ad",
+  "tnmAlanAcilisTarihi": "Açılış tarihi",
+  "tnmAlanAcilisBakiye": "Açılış bakiyesi (₺)",
+  "tnmAlanBankaMi": "Banka hesabı",
+  "tnmAlanIban": "IBAN (yalnız banka)",
+  "tnmAlanBankaAdi": "Banka adı",
+  "tnmAlanSube": "Şube",
+  "tnmAlanAktif": "Aktif",
+  "tnmAlanTip": "Tip",
+  "tnmAlanHedefKurali": "Borç kime yazılır",
+  "tnmHedefKuraliIpucu": "KMK md. 20: işletme giderleri (kapıcı, elektrik, su, asansör işletme, temizlik) genellikle KULLANANA; anayapının bakım, onarım ve güçlendirme giderleri MALİKE yazılır. Kira sözleşmesi farklı düzenlemiş olabilir — karar sizindir.",
+  "tnmHedefKullanan": "Kullanan öder (kiracı, yoksa malik)",
+  "tnmHedefMalik": "Malik öder",
+  "tnmAlanDagitim": "Dağıtım şekli (yalnız gider)",
+  "tnmAlanVergiNo": "Vergi no / TC",
+  "tnmAlanVergiDairesi": "Vergi dairesi",
+  "tnmAlanTelefon": "Telefon",
+  "tnmAlanEposta": "E-posta",
+  "tnmAlanYetkili": "Yetkili",
+  "tnmAlanBakiyeYonu": "Bakiye yönü",
+  "tnmAlanPlaka": "Plaka",
+  "tnmAlanMarka": "Marka",
+  "tnmAlanModel": "Model",
+  "tnmAlanRenk": "Renk",
+  "tnmAlanTesisatNo": "Tesisat no",
+  "tnmAlanOrtakAlanYuzde": "Ortak alan payı (%)",
+  "tnmAlanDaire": "Daire",
+  "tnmAlanAnaSayac": "Ana sayaç",
+  "tnmAlanIlkOkuma": "İlk okuma",
+  "tnmReferansYuklenemedi": "Liste yüklenemedi",
+  "tnmSayacUretimBaslik": "Toplu sayaç üretimi",
+  "tnmSayacUret": "Sayaçları üret",
+  "tnmSayacUretimNotu": "Seçili ana sayaç için tüm aktif dairelere sayaç açılır; zaten sayacı olan daireler atlanır. Tekrar çalıştırmak güvenlidir.",
+  "tnmSayacUretimSonuc": "{olusturulan} sayaç açıldı, {atlanan} daire atlandı.",
+  "@tnmSayacUretimSonuc": {
+    "placeholders": {
+      "olusturulan": {
+        "type": "String"
+      },
+      "atlanan": {
+        "type": "String"
+      }
+    },
+    "description": "(P253 A2) Tanimlar genel defteri"
+  },
+  "tnmAlanEvrakSeri": "Evrak seri",
+  "tnmAlanEvrakSira": "Evrak sıra",
+  "tnmAlanParaBirimi": "Para birimi",
+  "tnmZorunluAlan": "{alan} zorunludur",
+  "@tnmZorunluAlan": {
+    "placeholders": {
+      "alan": {
+        "type": "String"
+      }
+    },
+    "description": "(P253 A2) Tanimlar genel defteri"
+  },
+  "tnmTipGelir": "Gelir",
+  "tnmTipGider": "Gider",
+  "tnmTipHerIkisi": "Her ikisi",
+  "tnmDagitimEsit": "Bağımsız bölümlere eşit",
+  "tnmDagitimTipeGore": "Daire tipine göre",
+  "tnmYonBorc": "Borç",
+  "tnmYonAlacak": "Alacak",
+  "tnmSayacSu": "Su",
+  "tnmSayacElektrik": "Elektrik",
+  "tnmSayacDogalgaz": "Doğalgaz",
+  "tnmSayacIsi": "Isı",
+  "tnmSayacDiger": "Diğer",
+  "tnmSecilmedi": "Seçilmedi",
+  "tnmDuzenle": "Düzenle",
+  "tnmSilBaslik": "Kaydı sil",
+  "tnmSilOnay": "\"{ad}\" silinsin mi? Bu işlem geri alınamaz.",
+  "@tnmSilOnay": {
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    },
+    "description": "(P253 A2) Tanimlar genel defteri"
+  },
+  "tnmSilKullanimda": "Bu kayıt başka kayıtlarda kullanıldığı için silinemiyor. Bunun yerine pasifleştirebilirsiniz (\"Aktif\" kutusunu kapatın).",
+  "tnmSilindi": "Kayıt silindi",
+  "tnmKaydedildi": "Kaydedildi",
+  "tnmPasif": "Pasif",
+  "tnmTarihSec": "Tarih seç",
+  "tnmKategoriDuzenle": "Kategoriyi düzenle",
+  "tnmKategoriGuncellendi": "Kategori güncellendi: {ad}",
+  "@tnmKategoriGuncellendi": {
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    },
+    "description": "(P253 A2) Tanimlar genel defteri"
+  },
+  "tnmEvrakSeriIpucu": "1–5 büyük harf (ör. ABC)",
+  "bthBaslik": "Bütçe hedefleri",
+  "bthAc": "Hedefler",
+  "bthYil": "Yıl: {yil}",
+  "@bthYil": {
+    "placeholders": {
+      "yil": {
+        "type": "int"
+      }
+    }
+  },
+  "bthOncekiYil": "Önceki yıl",
+  "bthSonrakiYil": "Sonraki yıl",
+  "bthKarsilastirma": "Hedef ve gerçekleşen",
+  "bthHedef": "Hedef",
+  "bthGerceklesen": "Gerçekleşen",
+  "bthSapma": "Sapma",
+  "bthToplamGelir": "Gelir — hedef {hedef}, gerçekleşen {gercek}",
+  "@bthToplamGelir": {
+    "placeholders": {
+      "hedef": {
+        "type": "String"
+      },
+      "gercek": {
+        "type": "String"
+      }
+    }
+  },
+  "bthToplamGider": "Gider — hedef {hedef}, gerçekleşen {gercek}",
+  "@bthToplamGider": {
+    "placeholders": {
+      "hedef": {
+        "type": "String"
+      },
+      "gercek": {
+        "type": "String"
+      }
+    }
+  },
+  "bthYazilanlar": "Yazılan hedefler",
+  "bthYillik": "Yıllık",
+  "bthYeni": "Hedef yaz",
+  "bthTur": "Gelir/gider türü",
+  "bthDonem": "Dönem",
+  "bthTutar": "Hedef tutar (₺)",
+  "bthAciklama": "Açıklama (isteğe bağlı)",
+  "bthGuncellemeNotu": "Aynı tür ve dönem için yeniden yazılan hedef öncekini günceller.",
+  "bthKaydedildi": "Hedef kaydedildi",
+  "bthSilBaslik": "Hedefi sil",
+  "bthSilOnay": "{tur} · {donem} · {tutar} hedefi silinsin mi? Hiçbir muhasebe kaydı değişmez.",
+  "@bthSilOnay": {
+    "placeholders": {
+      "tur": {
+        "type": "String"
+      },
+      "donem": {
+        "type": "String"
+      },
+      "tutar": {
+        "type": "String"
+      }
+    }
+  },
+  "bthSil": "Sil",
+  "bthSilindi": "Hedef silindi",
+  "bthBos": "Bu yıl için hedef yok",
+  "bthBosRehber": "Bir gelir ya da gider türüne yıllık veya aylık hedef yazmak için \"Hedef yaz\"a dokunun.",
+  "bthTurYok": "Önce Kategoriler sekmesinden bir gelir/gider türü ekleyin.",
+  "rprAciklamalar": "Açıklamaları Göster",
+  "rprBaslangic": "Başlangıç",
+  "rprBaslangicAy": "Başlangıç Ayı",
+  "rprBaslangicYil": "Başlangıç Yılı",
+  "rprBitis": "Bitiş",
+  "rprBitisAy": "Bitiş Ayı",
+  "rprBitisYil": "Bitiş Yılı",
+  "rprBlok": "Blok",
+  "rprBolum": "Bölüm",
+  "rprCalismaNakit": "Nakit",
+  "rprCalismaSekli": "Çalışma Şekli",
+  "rprCalismaTahakkuk": "Tahakkuk",
+  "rprDaire": "Daire",
+  "rprEkstreDetay": "Detaylı",
+  "rprEkstreOzet": "Özet",
+  "rprEkstreTuru": "Ekstre Türü",
+  "rprEvrakBilgisi": "Evrak Bilgisini Göster",
+  "rprEvrakFatura": "Fatura",
+  "rprEvrakMakbuz": "Makbuz",
+  "rprEvrakTipi": "Evrak Tipi",
+  "rprFirma": "Firma",
+  "rprGrupla": "Gruplandır",
+  "rprIcradakiler": "İcradakileri Göster",
+  "rprIletisimGoster": "İletişim Bilgilerini Göster",
+  "rprImza": "İmza Alanı Ekle",
+  "rprIsBekliyor": "Sırada",
+  "rprIsHata": "Hata",
+  "rprIsHazir": "Hazır",
+  "rprIsmiGoster": "Ad sütunu",
+  "rprIsUretiliyor": "Üretiliyor",
+  "rprKasa": "Kasa",
+  "rprKatDokumler": "Dökümler",
+  "rprKatEkstreler": "Ekstreler",
+  "rprKatListeler": "Listeler",
+  "rprKisi": "Kişi",
+  "rprListelemeTipi": "Listeleme Tipi",
+  "rprMaxTutar": "En Çok Tutar",
+  "rprMinTutar": "En Az Tutar",
+  "rprOlusturan": "Oluşturan",
+  "rprPersonel": "Personel",
+  "rprSiraAd": "Ad Soyad",
+  "rprSiraBakiye": "Bakiye",
+  "rprSiraDaire": "Daire No",
+  "rprSiralama": "Sıralama",
+  "rprTanim": "Gelir/Gider Türü",
+  "rprTanimlar": "Borçlandırma Türleri",
+  "rprTazminatTarihi": "Tazminat Tarihi",
+  "rprTipAlacakli": "Alacaklılar",
+  "rprTipBorclu": "Borçlular",
+  "rprAgirUyari": "Bu rapor tüm defteri tarar. PDF/Excel isteği kuyruğa alınır; hazır olunca aşağıdaki listeden indirilir.",
+  "rprAlt": "Katalogdan rapor seçin, ekranda görün veya indirin",
+  "rprExcel": "Excel",
+  "rprGoster": "Göster",
+  "rprHepsi": "Tümü",
+  "rprIndirildi": "Rapor indirildi.",
+  "rprIsAdi": "Rapor",
+  "rprIsBicim": "Biçim",
+  "rprIsIndir": "İndir",
+  "rprIslerim": "Rapor İşlerim",
+  "rprIsYok": "Kuyrukta rapor yok.",
+  "rprIsYokAlt": "Ağır bir raporun PDF veya Excel çıktısını istediğinizde burada görünür.",
+  "rprIsZaman": "İstek Zamanı",
+  "rprKatalogHata": "Rapor katalogu alınamadı.",
+  "rprKuyrugaAlindi": "Rapor kuyruğa alındı.",
+  "rprPdf": "PDF",
+  "rprSatirYok": "Satır yok",
+  "rprSatirYokAlt": "Seçilen ölçütlere uyan kayıt bulunmuyor.",
+  "rprYokAlt": "Sunucuda tanımlı rapor bulunamadı.",
+  "rprKatalog": "Rapor katalogu",
+  "rprIcraBaslik": "İcra dosyaları",
+  "rprIcraDosyaNo": "Dosya no",
+  "rprIcraBorclu": "Borçlu",
+  "rprIcraAcikBorc": "Açık borç",
+  "rprIcraAvukat": "Avukat",
+  "rprIcraVerisTarihi": "Veriliş tarihi",
+  "rprIcraAciklama": "Açıklama",
+  "rprIcraDurum": "Durum",
+  "rprIcraDurumHepsi": "Tümü",
+  "rprIcraKayitYok": "İcra dosyası yok.",
+  "rprIcraDurumbaginiz": "Bağınız",
+  "rprIcraDurumbeklemede": "Beklemede",
+  "rprIcraDurumavukatta": "Avukatta",
+  "rprIcraDurummahkemede": "Mahkeme Sürecinde",
+  "rprIcraDurumkapandi": "Kapandı",
+  "rprAylikOzet": "Aylık özet",
+  "rprSekmeKatalog": "Katalog",
+  "rprIsHazirBildirim": "Rapor hazır: {ad}",
+  "@rprIsHazirBildirim": {
+    "description": "(P253 A2) kuyruk isi hazir",
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    }
+  },
+  "rprAgirUyariMobil": "Bu rapor tüm defteri tarar. PDF/Excel isteği kuyruğa alınır; hazır olunca İşlerim sekmesinden paylaşılır.",
+  "rprKatalogBosAlt": "Sunucuda tanımlı rapor bulunamadı; yöneticinize bildirin.",
+  "rprIcraBosAlt": "İcra dosyaları web panelinden açılır; açıldığında burada görünür.",
+  "dntBaslik": "Denetim",
+  "dntAlt": "Salt okuma: raporlar, şeffaflık, icra ve bakım. Değişiklik yapılamaz.",
+  "sdgDonguYeni": "Yeni döngü tanımla…",
+  "sdgDonguAd": "Döngü adı",
+  "sdgDonguDilimler": "Vardiya dilimleri",
+  "sdgDonguDilimAd": "Dilim adı",
+  "sdgDonguDilimEkle": "Dilim ekle",
+  "sdgDonguAdimlar": "Döngü adımları",
+  "sdgDonguAdimDilim": "Dilim / tatil",
+  "sdgDonguTatil": "Tatil",
+  "sdgDonguGunSayisi": "Gün sayısı",
+  "sdgDonguDuzen": "Düzen",
+  "sdgDonguHerGun": "Her gün",
+  "sdgDonguGunAsiri": "Gün aşırı (12/36)",
+  "sdgDonguAdimEkle": "Adım ekle",
+  "sdgDonguUzunluk": "{n} günlük döngü",
+  "@sdgDonguUzunluk": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "sdgDonguKaydet": "Döngüyü kaydet",
+  "sdgDonguKaydedildi": "Döngü kaydedildi.",
+  "sdgVardiyaBaslangicSaati": "Başlangıç saati",
+  "sdgVardiyaBitisSaati": "Bitiş saati",
+  "sdgAc": "Serbest döngü tanımla",
+  "sdgBlokSil": "Adımı kaldır",
+  "sdgDilimSil": "Dilimi kaldır",
+  "sdgSinirAsildi": "Döngü en fazla 84 gün olabilir.",
+  "fdzIslemler": "İşlem",
+  "fdzIslemSec": "Hangi işlem?",
+  "fdzVirman": "Virman",
+  "fdzTopluTahsilat": "Toplu tahsilat",
+  "fdzAcilis": "Açılış fişi",
+  "fdzIptalEt": "İptal et",
+  "fdzIptalBaslik": "Hareketi iptal et (ters kayıt)",
+  "fdzIptalSonuc": "Kayıt silinmez; deftere ters bir satır eklenir. Ters kayıt geri alınamaz.",
+  "fdzIptalVirmanNotu": "Virmanın iki satırı birlikte ters kaydedilir.",
+  "fdzIptalEdildi": "Hareket iptal edildi (ters kayıt)",
+  "fdzIade": "İade",
+  "fdzIadeTutarIpucu": "Boş bırakılırsa kalan tutarın tamamı",
+  "fdzIadeSonuc": "İade kasadan çıkar. Geri almak için iade iptal edilir (sebep istenir).",
+  "fdzIadeYapildi": "İade kaydedildi",
+  "fdzGeriAl": "Geri al",
+  "fdzGeriAlBaslik": "İşlemi geri al",
+  "fdzGeriAlSonuc": "Ters kayıt yazılır. Geri alma da geri alınamaz.",
+  "fdzGeriAlindi": "Geri alındı",
+  "fdzKaynakKasa": "Kaynak kasa",
+  "fdzHedefKasa": "Hedef kasa",
+  "fdzVirmanSonuc": "İki satır yazılır (çıkış + giriş). Geri almak için virman iptal edilir (sebep istenir).",
+  "fdzVirmanYapildi": "Virman kaydedildi",
+  "fdzAyniKasa": "Kaynak ve hedef kasa aynı olamaz.",
+  "fdzYon": "Yön",
+  "fdzYonGiris": "Giriş (bakiye artar)",
+  "fdzYonCikis": "Çıkış (bakiye azalır)",
+  "fdzAcilisSonuc": "Kasanın başlangıç bakiyesine yazılır. Geri almak için fiş iptal edilir (sebep istenir).",
+  "fdzAcilisYapildi": "Açılış fişi kaydedildi",
+  "fdzTopluSonuc": "Seçili dairelere tahsilat yazılır ve makbuz kesilir. Geri almak için tahsilatlar iptal edilir (sebep istenir).",
+  "fdzFaizAffi": "Faizi affet",
+  "fdzFaizAffiSonuc": "Açık faiz kalemleri ters kayıtla affedilir. Af geri alınamaz.",
+  "fdzOdemePlani": "Ödeme planı",
+  "fdzTaksitSayisi": "Taksit sayısı (2–36)",
+  "fdzIlkVade": "İlk vade",
+  "fdzSecimToplami": "Seçili borç toplamı",
+  "fdzDurumOdendi": "Ödendi",
+  "fdzDurumBekliyor": "Bekliyor",
+  "fdzPlanSonuc": "Açık borçların vadeleri {n} aya yayılır; yeni borç yazılmaz. Geri alınamaz, yeni bir planla değiştirilebilir.",
+  "@fdzPlanSonuc": {
+    "description": "(P253 A2) finans duzeltmeleri",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "fdzPlanUygulandi": "{n} dairede ödeme planı uygulandı",
+  "@fdzPlanUygulandi": {
+    "description": "(P253 A2) finans duzeltmeleri",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "fdzTopluYapildi": "{n} tahsilat kaydedildi",
+  "@fdzTopluYapildi": {
+    "description": "(P253 A2) finans duzeltmeleri",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "fdzFaizAffedildi": "{n} faiz kalemi affedildi ({tutar})",
+  "@fdzFaizAffedildi": {
+    "description": "(P253 A2) finans duzeltmeleri",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "tutar": {
+        "type": "String"
+      }
+    }
+  },
+  "fdzDaireler": "{n} daire: {daireler}",
+  "@fdzDaireler": {
+    "description": "(P253 A2) finans duzeltmeleri",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "daireler": {
+        "type": "String"
+      }
+    }
+  },
+  "fdzDurumEtiketi": "Durum",
+  "dsyDosyaSec": "Dosya (PDF)",
+  "brcKalemAidat": "Aidat",
+  "brcKalemDemirbas": "Demirbaş",
+  "brcKalemOlaganustu": "Olağanüstü",
+  "brcKalemSayac": "Sayaç",
+  "brcKalemFaiz": "Gecikme faizi",
+  "brcKalemDiger": "Diğer",
+  "brcDagitimDaireBasina": "Daire başına sabit tutar",
+  "brcDagitimEsit": "Toplamı eşit dağıt",
+  "brcDagitimArsaPayi": "Toplamı arsa payına göre dağıt",
+  "brcDagitimMetrekare": "Toplamı metrekareye göre dağıt",
+  "brcAtlamaArsaPayi": "Arsa payı girilmemiş",
+  "brcAtlamaMetrekare": "Metrekare girilmemiş",
+  "brcAtlamaTip": "Daire tipinin varsayılan tutarı yok",
+  "brcAtlamaCarpisma": "Bu dönemde aynı türde borç zaten var",
+  "brcAtlamaTutar": "Tutar belirlenemedi",
+  "brcYontemElden": "Elden",
+  "brcYontemHavale": "Havale/EFT",
+  "brcYontemKart": "Kart",
+  "brcYontemDiger": "Diğer",
+  "brcDaireSec": "Daire seçin",
+  "brcTurSec": "Tür seçin",
+  "brcTutarGecersiz": "Geçerli bir tutar girin",
+  "brcOnayBaslik": "Borçlandırmayı onayla",
+  "brcDonem": "Dönem {donem}",
+  "@brcDonem": {
+    "description": "(P253 A2) borclandirma",
+    "placeholders": {
+      "donem": {
+        "type": "String"
+      }
+    }
+  },
+  "brcOnaySonuc": "Borç kaydı silinmez; yanlışsa ters kayıtla düzeltilir.",
+  "brcKaydet": "Borçlandır",
+  "brcKaydedildi": "Borçlandırma kaydedildi",
+  "brcTekil": "Tek daire borçlandır",
+  "brcDaire": "Daire",
+  "brcTur": "Tür",
+  "brcTarihDegeri": "Tarih: {tarih}",
+  "@brcTarihDegeri": {
+    "description": "(P253 A2) borclandirma",
+    "placeholders": {
+      "tarih": {
+        "type": "String"
+      }
+    }
+  },
+  "brcSonOdemeYok": "Son ödeme tarihi yok",
+  "brcSonOdemeDegeri": "Son ödeme: {tarih}",
+  "@brcSonOdemeDegeri": {
+    "description": "(P253 A2) borclandirma",
+    "placeholders": {
+      "tarih": {
+        "type": "String"
+      }
+    }
+  },
+  "brcTutar": "Tutar (₺)",
+  "brcAciklama": "Açıklama",
+  "brcGecikmeUygula": "Gecikme faizi uygulansın",
+  "brcFaiz": "Gecikme faizi",
+  "brcFaizOnayHedef": "{n} borç · gecikme faizi · {donem}",
+  "@brcFaizOnayHedef": {
+    "description": "(P253 A2) borclandirma",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "donem": {
+        "type": "String"
+      }
+    }
+  },
+  "brcFaizOnaySonuc": "Faiz yeni borç kalemi olarak yazılır; yanlışsa her kalem ters kayıtla düzeltilir.",
+  "brcFaizIsle": "Faizi işle",
+  "brcFaizIslendi": "{n} faiz kalemi yazıldı",
+  "@brcFaizIslendi": {
+    "description": "(P253 A2) borclandirma",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "brcFaizKapali": "Gecikme faizi bu tesiste kapalı (Otomasyon › Gecikme ayarı).",
+  "brcFaizYok": "Bu dönemde işlenecek gecikme faizi yok.",
+  "brcFaizIslenecek": "{n} borç için toplam {tutar} faiz yazılacak.",
+  "@brcFaizIslenecek": {
+    "description": "(P253 A2) borclandirma",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "tutar": {
+        "type": "String"
+      }
+    }
+  },
+  "brcToplu": "Toplu tahakkuk",
+  "brcBlokSec": "Blok seçin",
+  "brcTopluOnayHedef": "{n} daire · {tur} · {donem}",
+  "@brcTopluOnayHedef": {
+    "description": "(P253 A2) borclandirma",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "tur": {
+        "type": "String"
+      },
+      "donem": {
+        "type": "String"
+      }
+    }
+  },
+  "brcTopluOnaySonuc": "İşlemden sonra sonuç ekranından tek seferde ters kayıtla geri alınabilir; ödeme almış satırlar geri alınmaz.",
+  "brcTopluIsle": "Tahakkuku yaz",
+  "brcAdim": "Adım {n}/{toplam}",
+  "@brcAdim": {
+    "description": "(P253 A2) borclandirma",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "toplam": {
+        "type": "int"
+      }
+    }
+  },
+  "brcGeri": "Geri",
+  "brcIleri": "İleri",
+  "brcAdimNe": "Ne borçlandırılıyor?",
+  "brcAdimNeKadar": "Ne kadar?",
+  "brcAdimKime": "Kime?",
+  "brcAdimOnizleme": "Önizleme",
+  "brcAdimOnay": "Onay",
+  "brcKalemTipi": "Kalem tipi",
+  "brcTutarDaireBasina": "Daire başına tutar (₺) — boşsa daire tipinin tutarı",
+  "brcTutarToplam": "Dağıtılacak toplam (₺)",
+  "brcKapsamTumu": "Tüm daireler",
+  "brcKapsamBlok": "Bir blok",
+  "brcKapsamSecili": "Seçtiğim daireler",
+  "brcSeciliSayi": "{n} daire seçildi",
+  "@brcSeciliSayi": {
+    "description": "(P253 A2) borclandirma",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "brcTumunuSec": "Tümünü seç",
+  "brcOnizlemeIslenecek": "{n} daireye borç yazılacak",
+  "@brcOnizlemeIslenecek": {
+    "description": "(P253 A2) borclandirma",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "brcOnizlemeToplam": "Toplam {tutar}",
+  "@brcOnizlemeToplam": {
+    "description": "(P253 A2) borclandirma",
+    "placeholders": {
+      "tutar": {
+        "type": "String"
+      }
+    }
+  },
+  "brcOnizlemeAtlanacak": "{n} daire atlanacak",
+  "@brcOnizlemeAtlanacak": {
+    "description": "(P253 A2) borclandirma",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "brcOnizlemeHedefsiz": "{n} dairede borç kimseye değil daireye yazılacak (kayıtlı malik yok)",
+  "@brcOnizlemeHedefsiz": {
+    "description": "(P253 A2) borclandirma",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "brcEnYuksek": "En yüksek 5",
+  "brcEnDusuk": "En düşük 5",
+  "brcTopluOlustu": "{n} daireye borç yazıldı",
+  "@brcTopluOlustu": {
+    "description": "(P253 A2) borclandirma",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "brcTopluOlusmadi": "Hiçbir borç yazılmadı — dönemi ya da türü kontrol edin.",
+  "brcAtlananlar": "Atlananlar",
+  "brcTersKayit": "Ters kayıtla düzelt",
+  "brcTersKayitSonuc": "Kayıt silinmez; deftere ters bir satır eklenir. Bu işlem geri alınamaz.",
+  "brcTersKayitYapildi": "Ters kayıt yapıldı",
+  "brcDonemEtiket": "Dönem",
+  "brcSonOdemeEtiket": "Son ödeme",
+  "brcGecikme": "Gecikme",
+  "brcDuzeltme": "Düzeltme kaydı",
+  "brcDuzeltildi": "Düzeltildi",
+  "brcDaireBorcu": "Borç durumu",
+  "brcToplamTahakkuk": "Toplam borçlandırma",
+  "brcToplamOdenen": "Toplam ödenen",
+  "brcBakiye": "Bakiye",
+  "brcBorclandir": "Borçlandır",
+  "brcOdemeKaydet": "Ödeme kaydet",
+  "brcTahakkuklar": "Borç kalemleri",
+  "brcTahakkukYok": "Henüz borç kalemi yok",
+  "brcOdemeler": "Ödemeler",
+  "brcOdemeYok": "Henüz ödeme yok",
+  "brcOdemeOnaySonuc": "Ödeme kasaya girer; yanlışsa finans defterinden iade ya da iptalle düzeltilir.",
+  "brcOdemeKaydedildi": "Ödeme kaydedildi",
+  "brcYontem": "Yöntem",
+  "brcOdenenKalem": "Ödenen borç kalemi",
+  "brcKalemSecimsiz": "Belirli bir kaleme değil",
+  "brcDonemAlan": "Dönem (YYYY-AA)",
+  "brcMakbuzNo": "Makbuz no",
+  "brcYok": "Henüz borçlandırma yok",
+  "rprGorevGecmisi": "Görev Geçmişi",
+  "rprGorev": "Görev",
+  "rprTabloTip": "Tip",
+  "rprTabloTamamlayan": "Tamamlayan",
+  "rprTabloZaman": "Zaman",
+  "rprTabloFoto": "Foto",
+  "rprTabloNfc": "NFC",
+  "rprNot": "Not",
+  "rprVar": "var",
+  "rprYok": "yok",
+  "rprCsvPaylas": "CSV paylaş",
+  "rprBolumDisaAktarim": "Dışa aktarım",
+  "rprGorevGecmisiAlt": "Seçilen tarih aralığındaki görev tamamlamaları (web'deki görev geçmişi CSV'si ile aynı sütunlar).",
+  "rprEvet": "Evet",
+  "rprHayir": "Hayır",
+  "harKapali": "Harita şu anda kullanılamıyor; konumu adres aramasıyla seçebilirsiniz.",
+  "harYuklenemedi": "Harita yüklenemedi",
+  "harOsmAtif": "Protomaps © OpenStreetMap katkıcıları",
+  "harTesisKonumu": "Tesis konumu",
+  "harYerAdi": "Yer adı (ilçe, mahalle)",
+  "harAra": "Ara",
+  "harAramaHata": "Adres araması şu anda yapılamıyor; biraz sonra yeniden deneyin.",
+  "harSonucYok": "Bu adla bir yer bulunamadı; ilçe ya da il adıyla deneyin.",
+  "harIgneIpucu": "Haritayı kaydırın ya da dokunun: iğne binanın üzerine gelsin, sonra Kaydet'e basın.",
+  "harSecili": "Seçili: {ad} ({lat}, {lon})",
+  "@harSecili": {
+    "description": "(P253 A2) secili tesis konumu",
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      },
+      "lat": {
+        "type": "String"
+      },
+      "lon": {
+        "type": "String"
+      }
+    }
+  },
+  "brcPartiGeriAl": "Toplu borçlandırmayı geri al",
+  "brcPartiGeriAlSonuc": "Her borç ters kayıtla kapatılır; kayıtlar silinmez. Ödeme almış borçlar geri alınmaz ve listelenir.",
+  "brcPartiGeriAlindi": "{n} borç ters kayıtla geri alındı",
+  "@brcPartiGeriAlindi": {
+    "description": "(P253 §C-4) toplu geri alma sonucu",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "brcAtlamaOdenmis": "ödeme almış, tek tek düzeltin",
+  "brcAtlamaZatenTersKayitli": "zaten düzeltilmiş",
+  "rprKesildi": "Kayıt sayısı üst sınıra takıldı — rapor eksik olabilir. Tarih aralığını daraltın."
 }

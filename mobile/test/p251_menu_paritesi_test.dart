@@ -56,7 +56,12 @@ void main() {
     expect(bilinmeyen, isEmpty);
   });
 
-  for (final (kapsam, rol) in [('yonetici', UserRole.yonetici), ('sakin', UserRole.resident)]) {
+  // (P253 Asama 2) `denetci` kapsami: mobil denetci SALT OKUMA menusu.
+  for (final (kapsam, rol) in [
+    ('yonetici', UserRole.yonetici),
+    ('sakin', UserRole.resident),
+    ('denetci', UserRole.denetci),
+  ]) {
     test('$kapsam: mobil menu tabloyla BIREBIR (grup + Turkce ad)', () {
       final beklenen = tablo.where((s) => s.kapsam == kapsam && s.mobil != '-').toList();
       final menu = homeMenuForRole(rol);

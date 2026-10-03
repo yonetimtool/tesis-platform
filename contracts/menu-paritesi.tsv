@@ -8,6 +8,7 @@
 #
 # kapsam : yonetici (web tesis yuzeyi yonetici <-> mobil yonetici)
 #          sakin    (web sakin modu P247 <-> mobil sakin)
+#          denetci  (P253 Asama 2: web denetci menusu <-> mobil denetci, SALT OKUMA)
 # grup   : ozet guvenlik tesis finans iletisim kisiler tanimlar yonetim
 #          (sakin kapsaminda web tek basliksiz bolumdur; grup mobilde olculur)
 # web    : rota (sorgusuz) ya da -
@@ -45,16 +46,16 @@ yonetici	finans	/finans/butce	budget	Bütçe	ayni	-
 yonetici	finans	/sayac-okuma	sayacOkuma	Sayaç okuma	ayni	-
 yonetici	finans	/raporlar	reports	Raporlar	ayni	-
 yonetici	finans	/transparency	transparency	Şeffaflık	ayni	-
-yonetici	finans	/dues	-	Aidat	yalniz_web	Toplu aidat tahakkuku daire başına önizleme ve dağıtım seçimi ister; geniş tablo telefonda doğrulanamaz. Mobilde aidat planı Otomasyon'dan kurulur.
-yonetici	finans	/finans/borclandirmalar	-	Borçlandırmalar	yalniz_web	Tek ve toplu borçlandırma aynı geniş önizleme tablosunu kullanır (Aidat ile aynı gerekçe).
+yonetici	finans	/dues	-	Aidat	yapisal	(P253 Aşama 2) Web'in aidat sayfası (tahakkuk + tahsilat listesi) mobilde Borçlandırmalar (liste, tekil, toplu tahakkuk sihirbazı) ve daire borç durumu (ödeme kaydı) olarak var; ayrı menü girişi yok.
+yonetici	finans	/finans/borclandirmalar	borclandirmalar	Borçlandırmalar	ayni	-
 yonetici	finans	/finans/gelirler	-	Gelirler	yapisal	(P253) Gelir kaydı mobilde Bütçe ekranından yapılır (aynı defter, finansal_hareket); P251'deki "yalnız web" yanlıştı. Kasa/kalem/belge seçimi P253 Aşama 1'de gider ekranıyla birleşir.
-yonetici	finans	/finans/virman	-	Hesaplar arası virman	yalniz_web	İki kasa arasında para taşır; yanlış girişin düzeltmesi ters kayıt ister. Muhasebe defteri işidir.
-yonetici	finans	/finans/iade	-	Ödeme iadesi	yalniz_web	İade bir tahsilatın ters kaydıdır; özgün kaydı defterde bulup eşleştirmek geniş ekran ister.
-yonetici	finans	/finans/acilis	-	Açılış fişleri	yalniz_web	Kurulumda bir kez girilen devir bakiyeleri; çok satırlı fiş.
+yonetici	finans	/finans/virman	-	Hesaplar arası virman	yapisal	(P253 Aşama 2) Mobilde Finans defterinin İşlem düğmesinden (§C onaylı, ters virmanla geri alınır); ayrı menü girişi yok.
+yonetici	finans	/finans/iade	-	Ödeme iadesi	yapisal	(P253 Aşama 2) Mobilde hareket ayrıntısından (tahsilat/gelir satırında İade; §C onaylı, geri alınabilir); ayrı menü girişi yok.
+yonetici	finans	/finans/acilis	-	Açılış fişleri	yapisal	(P253 Aşama 2) Mobilde Finans defterinin İşlem düğmesinden açılış fişi (§C onaylı); ayrı menü girişi yok.
 yonetici	finans	/finans/banka	-	Banka Entegrasyonu	yalniz_web	Ekstre dosyası yükleme ve satır satır eşleştirme (P191).
 yonetici	finans	/finans/mesai	-	Fazla mesai	yalniz_web	Haftalık hesap tablosu ve gider olarak işleme; kişi × hafta matrisi telefonda okunmaz.
 yonetici	finans	/finans/maas-kartlari	-	Maaş kartları	yalniz_web	Ücret, giriş/çıkış tarihi ve kimlik bilgisi içeren kayıt; personel hesabı mobilde Kişiler'de açılır, maaş kartı ona bilgisayardan bağlanır.
-yonetici	finans	/icra	-	İcra dosyaları	yalniz_web	Hukuki dosya: belge, safha ve tutar geçmişi.
+yonetici	finans	/icra	icra	İcra dosyaları	ayni	-
 yonetici	iletisim	/announcements	announcements	Duyurular	ayni	-
 yonetici	iletisim	/site-kurallari	siteKurallari	Site kuralları	ayni	-
 yonetici	iletisim	/etkinlik-yonetimi	etkinlik	Etkinlikler	ayni	-
@@ -93,3 +94,9 @@ sakin	finans	-	siteBudget	Site Bütçesi	yalniz_mobil	Yönetici web'de bütçeni
 sakin	finans	-	transparency	Şeffaflık	yalniz_mobil	Yönetici web'de Şeffaflık'ı Finans grubunda yayımlar; sakin modunda ikinci kopya gerekmez.
 sakin	iletisim	-	anketler	Anketler	yalniz_mobil	Yönetici web'de anketi açar ve sonuçları görür; oy verme sakinin telefonundan.
 sakin	yonetim	-	dokumanlar	Dokümanlar	yalniz_mobil	Yönetici web'de Dokümanlar'ı yönetir; sakin modunda ikinci kopya gerekmez.
+denetci	finans	/raporlar	reports	Raporlar	ayni	-
+denetci	finans	/transparency	transparency	Şeffaflık	ayni	-
+denetci	finans	/icra	icra	İcra dosyaları	ayni	-
+denetci	tesis	/bakim	bakim	Bakım takibi	ayni	-
+denetci	finans	/finans/mesai	-	Fazla mesai	yalniz_web	Fazla mesai mobilde Aşama 3'te (eylem tablosu planli:3); denetçi web'den okur.
+denetci	yonetim	/kvkk	-	KVKK tercihlerim	yapisal	Kişisel izin tercihi; mobilde Profil › Ayarlar'da durur (denetçi ana ekranından Profil düğmesiyle açılır).

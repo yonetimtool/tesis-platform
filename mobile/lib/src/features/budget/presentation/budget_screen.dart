@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/grafik/grafik_karti.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobile/src/core/girdi_siniri.dart';
 
 import '../../../core/error/akis_hatasi.dart';
@@ -10,6 +11,7 @@ import '../../../core/i18n/l10n.dart';
 import '../data/budget_api.dart';
 import '../domain/budget_models.dart';
 import '../../../core/ui/merkez_diyalog.dart';
+import '../../../routing/app_router.dart';
 import 'butce_tip_adi.dart';
 import '../../../core/ui/bos_durum.dart';
 
@@ -95,6 +97,15 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(baslikBuyuk(l10n.butBaslik, context.dilKodu)),
+          actions: [
+            // (P253 Asama 2) Butce hedefleri + hedef/gerceklesen karsilastirmasi.
+            TextButton.icon(
+              key: const Key('but-hedefler'),
+              icon: const Icon(Icons.flag_outlined),
+              label: Text(l10n.bthAc),
+              onPressed: () => context.push(AppRoutes.butceHedefleri),
+            ),
+          ],
           bottom: TabBar(
             tabs: [
               Tab(text: l10n.butSekmeOzet),

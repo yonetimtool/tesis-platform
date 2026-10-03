@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../home/domain/home_menu.dart';
-import '../../home/presentation/denetci_yonlendirme_screen.dart';
+import '../../home/presentation/denetci_home_screen.dart';
 
 /// Yalniz web'de kalan bir islem: web rotasi + adi + gruplandigi bolum.
 class WebIslemi {
@@ -22,15 +22,9 @@ class WebIslemi {
 ///
 /// Gerekceler tabloda (her satirda yazili); burada tekrarlanmaz.
 final List<WebIslemi> webIslemleri = [
-  WebIslemi('/dues', HomeMenuGrup.finans, (l) => l.webAidat),
-  WebIslemi('/finans/borclandirmalar', HomeMenuGrup.finans, (l) => l.webBorclandirmalar),
-  WebIslemi('/finans/virman', HomeMenuGrup.finans, (l) => l.webVirman),
-  WebIslemi('/finans/iade', HomeMenuGrup.finans, (l) => l.webIade),
-  WebIslemi('/finans/acilis', HomeMenuGrup.finans, (l) => l.webAcilis),
   WebIslemi('/finans/banka', HomeMenuGrup.finans, (l) => l.webBanka),
   WebIslemi('/finans/mesai', HomeMenuGrup.finans, (l) => l.webMesai),
   WebIslemi('/finans/maas-kartlari', HomeMenuGrup.finans, (l) => l.webMaasKartlari),
-  WebIslemi('/icra', HomeMenuGrup.finans, (l) => l.webIcra),
   WebIslemi('/assets', HomeMenuGrup.tesis, (l) => l.webDemirbas),
   WebIslemi('/mesajlar', HomeMenuGrup.iletisim, (l) => l.webMesajlar),
   WebIslemi('/ice-aktarim', HomeMenuGrup.tanimlar, (l) => l.webIceAktarim),
@@ -47,7 +41,7 @@ class BilgisayardanScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    const adres = DenetciYonlendirmeScreen.adres;
+    const adres = DenetciHomeScreen.adres;
     return Scaffold(
       appBar: AppBar(title: Text(baslikBuyuk(l10n.modulBilgisayardan, context.dilKodu))),
       body: ListView(

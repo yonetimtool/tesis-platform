@@ -37,7 +37,7 @@ void main() {
   group('(P139.2) rol cikmazi', () {
     // DUZ `test`: hicbir widget pump edilmiyor, yalniz kaynak okunuyor.
     // `testWidgets` icine koymak kosumu askida birakiyordu.
-    test('denetci KALICI splash gormez, yonlendirme ekrani gorur', () async {
+    test('denetci KALICI splash gormez, salt okuma ana ekranini gorur', () async {
       // `home_gate` denetciyi `role != yonetici` dalina dusuruyor ve sonsuz
       // SplashScreen ciziyordu (rol cozulmustu, bekleyen veri yoktu).
       final kaynak = await File(
@@ -45,7 +45,8 @@ void main() {
       ).readAsString();
       expect(kaynak, contains('UserRole.denetci'),
           reason: 'denetci dali yok — kalici splash geri gelmis olabilir');
-      expect(kaynak, contains('DenetciYonlendirmeScreen'));
+      // (P253 Asama 2) Yonlendirme ekrani yerine salt okuma ana ekrani.
+      expect(kaynak, contains('DenetciHomeScreen'));
       // Kapinin dallanma sirasi: denetci dali `role != yonetici`den ONCE
       // gelmeli, yoksa yine yutulur.
       expect(kaynak.indexOf('UserRole.denetci'),

@@ -4064,4 +4064,11 @@ export const ar: Sozluk = {
   haritaKaroDili: "ar",
   haritaKapali: "الخريطة غير متاحة حاليًا؛ يمكنك اختيار الموقع عبر البحث عن العنوان.",
   konumIgneIpucu: "اسحب الدبوس أو اضغط على الخريطة لوضع الموقع على المبنى.",
+  bildirimTipRaporHazir: "التقرير جاهز",
+  finansSonPartiOzet: "آخر تحميل جماعي: {adet} وحدة · {donem}",
+  finansPartiGeriAl: "التراجع عن التحميل الجماعي",
+  finansPartiGeriAlOnay: "سيُغلق كل من التحميلات الـ{adet} لفترة {donem} بقيد عكسي. لا يُحذف شيء؛ والتحميلات المدفوعة لا يُتراجع عنها ويتم إبلاغك بها.",
+  finansPartiGeriAlindi: "تم عكس {adet} من التحميلات",
+  finansAtlamaOdenmis: "مدفوع بالفعل، صحّحه بشكل منفرد",
+  finansAtlamaZatenTersKayitli: "مصحّح بالفعل",
 };

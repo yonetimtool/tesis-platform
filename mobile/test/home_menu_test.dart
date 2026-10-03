@@ -163,12 +163,15 @@ void main() {
           // surdururdu.
           HomeMenuEntry.tahsilat,
           HomeMenuEntry.borclular,
+          HomeMenuEntry.borclandirmalar,
           HomeMenuEntry.gider,
           HomeMenuEntry.sayacOkuma,
           HomeMenuEntry.budget,
           HomeMenuEntry.financialSummary,
           HomeMenuEntry.transparency,
           HomeMenuEntry.reports,
+          // (P253 Asama 2) Icra dosyalari — salt okuma.
+          HomeMenuEntry.icra,
           // (P251 §8) MENU PARITESI (contracts/menu-paritesi.tsv):
           // Otomasyon kendi girisinde; Kisiler TEK giris (personel,
           // sakinler, davetler sekme); diyafon Entegrasyonlar'in icinde;

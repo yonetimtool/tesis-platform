@@ -9068,13 +9068,13 @@ abstract class AppLocalizations {
   /// Denetci mobil girisinde: is masaustunde
   ///
   /// In tr, this message translates to:
-  /// **'Denetim ekranları web\'de'**
+  /// **'Web\'de kalanlar'**
   String get denetciWebBaslik;
 
   /// Denetciye web adresini soyler
   ///
   /// In tr, this message translates to:
-  /// **'Denetim raporları ve mali gözetim masaüstü için tasarlandı. Bilgisayarınızdan {adres} adresine girin.'**
+  /// **'Fazla mesai ve masaüstü için tasarlanan diğer denetim ekranları web\'de. Bilgisayarınızdan {adres} adresine girin.'**
   String denetciWebGovde(String adres);
 
   /// Adresi panoya kopyala dugmesi
@@ -15173,12 +15173,6 @@ abstract class AppLocalizations {
   /// **'Hesap açıldı; davet e-postası gönderildi.'**
   String get yoneticiEklendi;
 
-  /// No description provided for @tanimlarWebNotu.
-  ///
-  /// In tr, this message translates to:
-  /// **'Kasalar, gelir/gider tanımları, firmalar, sayaçlar, araç kayıtları ve muhasebe ayarları bilgisayardan yönetilir.'**
-  String get tanimlarWebNotu;
-
   /// No description provided for @bilgisayardanAciklama.
   ///
   /// In tr, this message translates to:
@@ -15292,12 +15286,6 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Tesis ayarları kaydedildi.'**
   String get tesisAyarKaydedildi;
-
-  /// No description provided for @tesisAyarWebNotu.
-  ///
-  /// In tr, this message translates to:
-  /// **'Konum (harita), otopark kapasitesi ve eşik ayarları bilgisayardan yapılır.'**
-  String get tesisAyarWebNotu;
 
   /// No description provided for @yoneticiListeBosAlt.
   ///
@@ -16532,7 +16520,7 @@ abstract class AppLocalizations {
   /// No description provided for @dokYukleNot.
   ///
   /// In tr, this message translates to:
-  /// **'Telefondan fotoğraf yükleyebilirsiniz. PDF ve diğer dosyalar için şimdilik web panelini kullanın.'**
+  /// **'Fotoğraf çekin, galeriden seçin ya da telefondaki bir PDF\'i yükleyin (en fazla 25 MB).'**
   String get dokYukleNot;
 
   /// No description provided for @hatAciklama.
@@ -16972,6 +16960,2628 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Kendinize not ya da hatırlatma eklemek için \"+\" düğmesine dokunun.'**
   String get hatBosRehber;
+
+  /// No description provided for @tsaAyarGrupDevriye.
+  ///
+  /// In tr, this message translates to:
+  /// **'Devriye ve turlar'**
+  String get tsaAyarGrupDevriye;
+
+  /// No description provided for @tsaAyarGrupVardiya.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vardiya ve güvenlik'**
+  String get tsaAyarGrupVardiya;
+
+  /// No description provided for @tsaAyarGrupGurultu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gürültü şikâyetleri'**
+  String get tsaAyarGrupGurultu;
+
+  /// No description provided for @tsaAyarGrupFinans.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aidat ve giderler'**
+  String get tsaAyarGrupFinans;
+
+  /// No description provided for @tsaAyarGrupRezervasyon.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rezervasyon'**
+  String get tsaAyarGrupRezervasyon;
+
+  /// No description provided for @tsaAyarGrupOtopark.
+  ///
+  /// In tr, this message translates to:
+  /// **'Otopark'**
+  String get tsaAyarGrupOtopark;
+
+  /// No description provided for @tsaAyarTurTolerans.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tur başlamazsa kaç dakika sonra uyarılsın'**
+  String get tsaAyarTurTolerans;
+
+  /// No description provided for @tsaAyarTurToleransIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tur saati geldiğinde bu süre içinde hiç okutma yapılmazsa yöneticiye alarm gider.'**
+  String get tsaAyarTurToleransIpucu;
+
+  /// No description provided for @tsaAyarTurTekrar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Alarm tekrar sayısı'**
+  String get tsaAyarTurTekrar;
+
+  /// No description provided for @tsaAyarTurTekrarIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'0 = alarm kapalı. Aralıklar katlanır: tolerans, 2×, 4×.'**
+  String get tsaAyarTurTekrarIpucu;
+
+  /// No description provided for @tsaAyarTurFoto.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tura başlarken fotoğraf istensin'**
+  String get tsaAyarTurFoto;
+
+  /// No description provided for @tsaAyarTurFotoIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görevli turun ilk noktasında kamerayla fotoğraf çeker. Galeriden hazır fotoğraf seçemez.'**
+  String get tsaAyarTurFotoIpucu;
+
+  /// No description provided for @tsaAyarVardiyaHatirlatma.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vardiyadan kaç dakika önce hatırlatılsın'**
+  String get tsaAyarVardiyaHatirlatma;
+
+  /// No description provided for @tsaAyarVardiyaHatirlatmaIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Örnek: 30 yazarsanız yarım saat önce hatırlatma gider. Birden çok hatırlatma için virgülle yazın (30,5). Boş bırakırsanız hatırlatma gönderilmez.'**
+  String get tsaAyarVardiyaHatirlatmaIpucu;
+
+  /// No description provided for @tsaAyarVardiyaBaslamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vardiyaya başlanmazsa kaç dakika sonra uyarılsın'**
+  String get tsaAyarVardiyaBaslamadi;
+
+  /// No description provided for @tsaAyarVardiyaBaslamadiIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vardiya saati geldikten sonra bu süre içinde hiç okutma yapılmazsa yöneticiye uyarı gider. 0 yazarsanız bu uyarı gönderilmez.'**
+  String get tsaAyarVardiyaBaslamadiIpucu;
+
+  /// No description provided for @tsaAyarOkutmaMesafe.
+  ///
+  /// In tr, this message translates to:
+  /// **'Okutma en fazla kaç metre uzaktan yapılabilsin'**
+  String get tsaAyarOkutmaMesafe;
+
+  /// No description provided for @tsaAyarOkutmaMesafeIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu mesafeden uzakta yapılan okutmalar raporda işaretlenir ve yöneticiye bildirilir. Okutma engellenmez.'**
+  String get tsaAyarOkutmaMesafeIpucu;
+
+  /// No description provided for @tsaAyarOtoparkKapasite.
+  ///
+  /// In tr, this message translates to:
+  /// **'Otopark kaç araç alıyor?'**
+  String get tsaAyarOtoparkKapasite;
+
+  /// No description provided for @tsaAyarOtoparkKapasiteIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplam araç kapasitesi. Boş bırakılırsa doluluk yüzdesi hesaplanmaz, yalnız içerideki araç sayısı gösterilir.'**
+  String get tsaAyarOtoparkKapasiteIpucu;
+
+  /// No description provided for @tsaAyarRezervasyonGecmis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geçmiş rezervasyonlar kaç ay geriye görünsün'**
+  String get tsaAyarRezervasyonGecmis;
+
+  /// No description provided for @tsaAyarRezervasyonGecmisIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daha eski kayıtlar listede gösterilmez. Kayıtlar silinmez — bir rezervasyon ortak alan anlaşmazlığında kanıttır. 0 yazarsanız tümü görünür.'**
+  String get tsaAyarRezervasyonGecmisIpucu;
+
+  /// No description provided for @tsaAyarVarsayilanHedef.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni gider türlerinde borç kime yazılsın'**
+  String get tsaAyarVarsayilanHedef;
+
+  /// No description provided for @tsaAyarVarsayilanHedefIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yalnızca YENİ açılan gelir/gider türleri için başlangıç değeridir; her tür ayrıca değiştirilebilir (Tanımlar > Gelir/Gider türleri).'**
+  String get tsaAyarVarsayilanHedefIpucu;
+
+  /// No description provided for @tsaTanimHedefKullanan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kullanan öder (kiracı, yoksa malik)'**
+  String get tsaTanimHedefKullanan;
+
+  /// No description provided for @tsaTanimHedefMalik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Malik öder'**
+  String get tsaTanimHedefMalik;
+
+  /// No description provided for @tsaAyarGurultuEsigi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaç farklı daireden şikâyet gelince uyarı gitsin'**
+  String get tsaAyarGurultuEsigi;
+
+  /// No description provided for @tsaAyarGurultuEsigiIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bir daire için bu sayıda FARKLI daireden gürültü şikâyeti gelince sakine sesli uyarı gönderilir ve sayaç sıfırlanır. Aynı kişinin birden çok şikâyeti tek sayılır; asılsız işaretlenen şikâyetler sayılmaz.'**
+  String get tsaAyarGurultuEsigiIpucu;
+
+  /// No description provided for @tsaAyarGurultuMetni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakine gidecek uyarı metni'**
+  String get tsaAyarGurultuMetni;
+
+  /// No description provided for @tsaAyarGurultuMetniIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Boş bırakırsanız hazır metin kullanılır.'**
+  String get tsaAyarGurultuMetniIpucu;
+
+  /// No description provided for @tsaAyarGurultuPencere.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şikâyetler kaç gün geriye kadar sayılsın'**
+  String get tsaAyarGurultuPencere;
+
+  /// No description provided for @tsaAyarGurultuPencereIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yalnızca son bu kadar gün içindeki şikâyetler sayılır. Bir yıla yayılan beş şikâyet ile bir haftadaki beş şikâyet aynı şey değildir. 0 yazarsanız tüm açık şikâyetler sayılır. (Haritada görünme süresiyle karıştırmayın — o ayrı bir ayardır.)'**
+  String get tsaAyarGurultuPencereIpucu;
+
+  /// No description provided for @tsaAyarGurultuSusma.
+  ///
+  /// In tr, this message translates to:
+  /// **'Uyarıdan sonra kaç gün yeniden uyarılmasın'**
+  String get tsaAyarGurultuSusma;
+
+  /// No description provided for @tsaAyarGurultuSusmaIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Uyarı alan daireye bu süre boyunca yeni uyarı gönderilmez. Her gece tekrarlanan bir uyarı kendisi gürültüye dönüşür. 0 yazarsanız her eşikte yeniden uyarılır.'**
+  String get tsaAyarGurultuSusmaIpucu;
+
+  /// No description provided for @tsaAyarGurultuEskalasyon.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaçıncı uyarıda güvenliğe bildirilsin'**
+  String get tsaAyarGurultuEskalasyon;
+
+  /// No description provided for @tsaAyarGurultuEskalasyonIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bir daire bu sayıda uyarı aldığında güvenliğe de bildirim gider ve güvenlik yerinde kontrol eder, gerekirse polise haber verir. 2 yazarsanız ilk uyarıda yalnız sakine, ikinci uyarıda güvenliğe de gider.'**
+  String get tsaAyarGurultuEskalasyonIpucu;
+
+  /// No description provided for @tsaAyarHaritaSaat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şikâyetler haritada kaç saat görünsün'**
+  String get tsaAyarHaritaSaat;
+
+  /// No description provided for @tsaAyarHaritaSaatIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu süre geçince şikâyet haritadan kalkar. Şikâyet SİLİNMEZ: listede, raporlarda ve eşik sayacında durmaya devam eder — yalnızca harita “şu anda nerede sorun var” sorusunu yanıtlasın diye gizlenir. 0 yazarsanız süresiz görünür. (Eşik sayacının kendi süresi ayrıdır: “Şikâyetler kaç gün geriye kadar sayılsın”.)'**
+  String get tsaAyarHaritaSaatIpucu;
+
+  /// No description provided for @tsaAyarGurultuSakin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire sakinine uyarı bildirimi gönder'**
+  String get tsaAyarGurultuSakin;
+
+  /// No description provided for @tsaAyarGurultuSakinIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Eşik aşılınca dairede oturan kişiye bildirim gider. Bildirimde şikayet edenin kimliği ve şikayet sayısı YER ALMAZ. Kapatırsanız uyarıyı yönetim kendi yöntemiyle iletir.'**
+  String get tsaAyarGurultuSakinIpucu;
+
+  /// No description provided for @tsaAyarGurultuEsikBirUyari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Eşik 1: her gürültü şikâyetinde daireye uyarı gider. Bu, uyarıyı hızla anlamsızlaştırır — 3 ve üzeri önerilir.'**
+  String get tsaAyarGurultuEsikBirUyari;
+
+  /// No description provided for @tsaAyarDegisiklikYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Değişiklik yok.'**
+  String get tsaAyarDegisiklikYok;
+
+  /// No description provided for @tsaTesisAyarPlatformNotu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Saat dilimi, tesis kodu ve güvenlik modu buradan değiştirilemez; bunlar Yönetiyor ekibinde kalır. Değişmesi gerekiyorsa destek talebi açın.'**
+  String get tsaTesisAyarPlatformNotu;
+
+  /// Sayi ayari aralik disi
+  ///
+  /// In tr, this message translates to:
+  /// **'{min} ile {max} arasında bir sayı girin.'**
+  String tsaAralikHatasi(int min, int max);
+
+  /// No description provided for @tnmKasalar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kasalar'**
+  String get tnmKasalar;
+
+  /// No description provided for @tnmGelirGiderGruplari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gelir/Gider Grupları'**
+  String get tnmGelirGiderGruplari;
+
+  /// No description provided for @tnmGelirGiderTanimlari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gelir/Gider Kalemleri'**
+  String get tnmGelirGiderTanimlari;
+
+  /// No description provided for @tnmFirmalar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Firmalar'**
+  String get tnmFirmalar;
+
+  /// No description provided for @tnmAraclar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Araçlar'**
+  String get tnmAraclar;
+
+  /// No description provided for @tnmSayaclar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sayaçlar'**
+  String get tnmSayaclar;
+
+  /// No description provided for @tnmSayaclarBolum.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bölüm Sayaçları'**
+  String get tnmSayaclarBolum;
+
+  /// No description provided for @tnmAyarlar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Muhasebe Ayarları'**
+  String get tnmAyarlar;
+
+  /// No description provided for @tnmYeniKayit.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni kayıt'**
+  String get tnmYeniKayit;
+
+  /// No description provided for @tnmKayitYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz kayıt yok.'**
+  String get tnmKayitYok;
+
+  /// No description provided for @tnmKayitYokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu defter henüz boş. Yukarıdaki ekleme düğmesiyle ilk kaydı oluşturun.'**
+  String get tnmKayitYokAlt;
+
+  /// No description provided for @tnmParaBirimiNotu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Para birimi YALNIZ gösterimdir; tutarlar ₺ olarak saklanır ve hesaplanır.'**
+  String get tnmParaBirimiNotu;
+
+  /// (P253 A2) Tanimlar genel defteri
+  ///
+  /// In tr, this message translates to:
+  /// **'{alan} için geçerli bir tutar girin. Örnek: 1.250,00'**
+  String tnmTutarGecersiz(String alan);
+
+  /// (P253 A2) Tanimlar genel defteri
+  ///
+  /// In tr, this message translates to:
+  /// **'{alan} için geçerli bir sayı girin.'**
+  String tnmSayiGecersiz(String alan);
+
+  /// No description provided for @tnmAlanKod.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kod'**
+  String get tnmAlanKod;
+
+  /// No description provided for @tnmAlanAd.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ad'**
+  String get tnmAlanAd;
+
+  /// No description provided for @tnmAlanAcilisTarihi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açılış tarihi'**
+  String get tnmAlanAcilisTarihi;
+
+  /// No description provided for @tnmAlanAcilisBakiye.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açılış bakiyesi (₺)'**
+  String get tnmAlanAcilisBakiye;
+
+  /// No description provided for @tnmAlanBankaMi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Banka hesabı'**
+  String get tnmAlanBankaMi;
+
+  /// No description provided for @tnmAlanIban.
+  ///
+  /// In tr, this message translates to:
+  /// **'IBAN (yalnız banka)'**
+  String get tnmAlanIban;
+
+  /// No description provided for @tnmAlanBankaAdi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Banka adı'**
+  String get tnmAlanBankaAdi;
+
+  /// No description provided for @tnmAlanSube.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şube'**
+  String get tnmAlanSube;
+
+  /// No description provided for @tnmAlanAktif.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aktif'**
+  String get tnmAlanAktif;
+
+  /// No description provided for @tnmAlanTip.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tip'**
+  String get tnmAlanTip;
+
+  /// No description provided for @tnmAlanHedefKurali.
+  ///
+  /// In tr, this message translates to:
+  /// **'Borç kime yazılır'**
+  String get tnmAlanHedefKurali;
+
+  /// No description provided for @tnmHedefKuraliIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'KMK md. 20: işletme giderleri (kapıcı, elektrik, su, asansör işletme, temizlik) genellikle KULLANANA; anayapının bakım, onarım ve güçlendirme giderleri MALİKE yazılır. Kira sözleşmesi farklı düzenlemiş olabilir — karar sizindir.'**
+  String get tnmHedefKuraliIpucu;
+
+  /// No description provided for @tnmHedefKullanan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kullanan öder (kiracı, yoksa malik)'**
+  String get tnmHedefKullanan;
+
+  /// No description provided for @tnmHedefMalik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Malik öder'**
+  String get tnmHedefMalik;
+
+  /// No description provided for @tnmAlanDagitim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dağıtım şekli (yalnız gider)'**
+  String get tnmAlanDagitim;
+
+  /// No description provided for @tnmAlanVergiNo.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vergi no / TC'**
+  String get tnmAlanVergiNo;
+
+  /// No description provided for @tnmAlanVergiDairesi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vergi dairesi'**
+  String get tnmAlanVergiDairesi;
+
+  /// No description provided for @tnmAlanTelefon.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telefon'**
+  String get tnmAlanTelefon;
+
+  /// No description provided for @tnmAlanEposta.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta'**
+  String get tnmAlanEposta;
+
+  /// No description provided for @tnmAlanYetkili.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yetkili'**
+  String get tnmAlanYetkili;
+
+  /// No description provided for @tnmAlanBakiyeYonu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bakiye yönü'**
+  String get tnmAlanBakiyeYonu;
+
+  /// No description provided for @tnmAlanPlaka.
+  ///
+  /// In tr, this message translates to:
+  /// **'Plaka'**
+  String get tnmAlanPlaka;
+
+  /// No description provided for @tnmAlanMarka.
+  ///
+  /// In tr, this message translates to:
+  /// **'Marka'**
+  String get tnmAlanMarka;
+
+  /// No description provided for @tnmAlanModel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Model'**
+  String get tnmAlanModel;
+
+  /// No description provided for @tnmAlanRenk.
+  ///
+  /// In tr, this message translates to:
+  /// **'Renk'**
+  String get tnmAlanRenk;
+
+  /// No description provided for @tnmAlanTesisatNo.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesisat no'**
+  String get tnmAlanTesisatNo;
+
+  /// No description provided for @tnmAlanOrtakAlanYuzde.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ortak alan payı (%)'**
+  String get tnmAlanOrtakAlanYuzde;
+
+  /// No description provided for @tnmAlanDaire.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire'**
+  String get tnmAlanDaire;
+
+  /// No description provided for @tnmAlanAnaSayac.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ana sayaç'**
+  String get tnmAlanAnaSayac;
+
+  /// No description provided for @tnmAlanIlkOkuma.
+  ///
+  /// In tr, this message translates to:
+  /// **'İlk okuma'**
+  String get tnmAlanIlkOkuma;
+
+  /// No description provided for @tnmReferansYuklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Liste yüklenemedi'**
+  String get tnmReferansYuklenemedi;
+
+  /// No description provided for @tnmSayacUretimBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplu sayaç üretimi'**
+  String get tnmSayacUretimBaslik;
+
+  /// No description provided for @tnmSayacUret.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sayaçları üret'**
+  String get tnmSayacUret;
+
+  /// No description provided for @tnmSayacUretimNotu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçili ana sayaç için tüm aktif dairelere sayaç açılır; zaten sayacı olan daireler atlanır. Tekrar çalıştırmak güvenlidir.'**
+  String get tnmSayacUretimNotu;
+
+  /// (P253 A2) Tanimlar genel defteri
+  ///
+  /// In tr, this message translates to:
+  /// **'{olusturulan} sayaç açıldı, {atlanan} daire atlandı.'**
+  String tnmSayacUretimSonuc(String olusturulan, String atlanan);
+
+  /// No description provided for @tnmAlanEvrakSeri.
+  ///
+  /// In tr, this message translates to:
+  /// **'Evrak seri'**
+  String get tnmAlanEvrakSeri;
+
+  /// No description provided for @tnmAlanEvrakSira.
+  ///
+  /// In tr, this message translates to:
+  /// **'Evrak sıra'**
+  String get tnmAlanEvrakSira;
+
+  /// No description provided for @tnmAlanParaBirimi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Para birimi'**
+  String get tnmAlanParaBirimi;
+
+  /// (P253 A2) Tanimlar genel defteri
+  ///
+  /// In tr, this message translates to:
+  /// **'{alan} zorunludur'**
+  String tnmZorunluAlan(String alan);
+
+  /// No description provided for @tnmTipGelir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gelir'**
+  String get tnmTipGelir;
+
+  /// No description provided for @tnmTipGider.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gider'**
+  String get tnmTipGider;
+
+  /// No description provided for @tnmTipHerIkisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Her ikisi'**
+  String get tnmTipHerIkisi;
+
+  /// No description provided for @tnmDagitimEsit.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bağımsız bölümlere eşit'**
+  String get tnmDagitimEsit;
+
+  /// No description provided for @tnmDagitimTipeGore.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire tipine göre'**
+  String get tnmDagitimTipeGore;
+
+  /// No description provided for @tnmYonBorc.
+  ///
+  /// In tr, this message translates to:
+  /// **'Borç'**
+  String get tnmYonBorc;
+
+  /// No description provided for @tnmYonAlacak.
+  ///
+  /// In tr, this message translates to:
+  /// **'Alacak'**
+  String get tnmYonAlacak;
+
+  /// No description provided for @tnmSayacSu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Su'**
+  String get tnmSayacSu;
+
+  /// No description provided for @tnmSayacElektrik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Elektrik'**
+  String get tnmSayacElektrik;
+
+  /// No description provided for @tnmSayacDogalgaz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Doğalgaz'**
+  String get tnmSayacDogalgaz;
+
+  /// No description provided for @tnmSayacIsi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Isı'**
+  String get tnmSayacIsi;
+
+  /// No description provided for @tnmSayacDiger.
+  ///
+  /// In tr, this message translates to:
+  /// **'Diğer'**
+  String get tnmSayacDiger;
+
+  /// No description provided for @tnmSecilmedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçilmedi'**
+  String get tnmSecilmedi;
+
+  /// No description provided for @tnmDuzenle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Düzenle'**
+  String get tnmDuzenle;
+
+  /// No description provided for @tnmSilBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaydı sil'**
+  String get tnmSilBaslik;
+
+  /// (P253 A2) Tanimlar genel defteri
+  ///
+  /// In tr, this message translates to:
+  /// **'\"{ad}\" silinsin mi? Bu işlem geri alınamaz.'**
+  String tnmSilOnay(String ad);
+
+  /// No description provided for @tnmSilKullanimda.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu kayıt başka kayıtlarda kullanıldığı için silinemiyor. Bunun yerine pasifleştirebilirsiniz (\"Aktif\" kutusunu kapatın).'**
+  String get tnmSilKullanimda;
+
+  /// No description provided for @tnmSilindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıt silindi'**
+  String get tnmSilindi;
+
+  /// No description provided for @tnmKaydedildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaydedildi'**
+  String get tnmKaydedildi;
+
+  /// No description provided for @tnmPasif.
+  ///
+  /// In tr, this message translates to:
+  /// **'Pasif'**
+  String get tnmPasif;
+
+  /// No description provided for @tnmTarihSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tarih seç'**
+  String get tnmTarihSec;
+
+  /// No description provided for @tnmKategoriDuzenle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kategoriyi düzenle'**
+  String get tnmKategoriDuzenle;
+
+  /// (P253 A2) Tanimlar genel defteri
+  ///
+  /// In tr, this message translates to:
+  /// **'Kategori güncellendi: {ad}'**
+  String tnmKategoriGuncellendi(String ad);
+
+  /// No description provided for @tnmEvrakSeriIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'1–5 büyük harf (ör. ABC)'**
+  String get tnmEvrakSeriIpucu;
+
+  /// No description provided for @bthBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bütçe hedefleri'**
+  String get bthBaslik;
+
+  /// No description provided for @bthAc.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hedefler'**
+  String get bthAc;
+
+  /// No description provided for @bthYil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yıl: {yil}'**
+  String bthYil(int yil);
+
+  /// No description provided for @bthOncekiYil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Önceki yıl'**
+  String get bthOncekiYil;
+
+  /// No description provided for @bthSonrakiYil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sonraki yıl'**
+  String get bthSonrakiYil;
+
+  /// No description provided for @bthKarsilastirma.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hedef ve gerçekleşen'**
+  String get bthKarsilastirma;
+
+  /// No description provided for @bthHedef.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hedef'**
+  String get bthHedef;
+
+  /// No description provided for @bthGerceklesen.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gerçekleşen'**
+  String get bthGerceklesen;
+
+  /// No description provided for @bthSapma.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sapma'**
+  String get bthSapma;
+
+  /// No description provided for @bthToplamGelir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gelir — hedef {hedef}, gerçekleşen {gercek}'**
+  String bthToplamGelir(String hedef, String gercek);
+
+  /// No description provided for @bthToplamGider.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gider — hedef {hedef}, gerçekleşen {gercek}'**
+  String bthToplamGider(String hedef, String gercek);
+
+  /// No description provided for @bthYazilanlar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yazılan hedefler'**
+  String get bthYazilanlar;
+
+  /// No description provided for @bthYillik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yıllık'**
+  String get bthYillik;
+
+  /// No description provided for @bthYeni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hedef yaz'**
+  String get bthYeni;
+
+  /// No description provided for @bthTur.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gelir/gider türü'**
+  String get bthTur;
+
+  /// No description provided for @bthDonem.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dönem'**
+  String get bthDonem;
+
+  /// No description provided for @bthTutar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hedef tutar (₺)'**
+  String get bthTutar;
+
+  /// No description provided for @bthAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açıklama (isteğe bağlı)'**
+  String get bthAciklama;
+
+  /// No description provided for @bthGuncellemeNotu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aynı tür ve dönem için yeniden yazılan hedef öncekini günceller.'**
+  String get bthGuncellemeNotu;
+
+  /// No description provided for @bthKaydedildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hedef kaydedildi'**
+  String get bthKaydedildi;
+
+  /// No description provided for @bthSilBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hedefi sil'**
+  String get bthSilBaslik;
+
+  /// No description provided for @bthSilOnay.
+  ///
+  /// In tr, this message translates to:
+  /// **'{tur} · {donem} · {tutar} hedefi silinsin mi? Hiçbir muhasebe kaydı değişmez.'**
+  String bthSilOnay(String tur, String donem, String tutar);
+
+  /// No description provided for @bthSil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sil'**
+  String get bthSil;
+
+  /// No description provided for @bthSilindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hedef silindi'**
+  String get bthSilindi;
+
+  /// No description provided for @bthBos.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu yıl için hedef yok'**
+  String get bthBos;
+
+  /// No description provided for @bthBosRehber.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bir gelir ya da gider türüne yıllık veya aylık hedef yazmak için \"Hedef yaz\"a dokunun.'**
+  String get bthBosRehber;
+
+  /// No description provided for @bthTurYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Önce Kategoriler sekmesinden bir gelir/gider türü ekleyin.'**
+  String get bthTurYok;
+
+  /// No description provided for @rprAciklamalar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açıklamaları Göster'**
+  String get rprAciklamalar;
+
+  /// No description provided for @rprBaslangic.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlangıç'**
+  String get rprBaslangic;
+
+  /// No description provided for @rprBaslangicAy.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlangıç Ayı'**
+  String get rprBaslangicAy;
+
+  /// No description provided for @rprBaslangicYil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlangıç Yılı'**
+  String get rprBaslangicYil;
+
+  /// No description provided for @rprBitis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bitiş'**
+  String get rprBitis;
+
+  /// No description provided for @rprBitisAy.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bitiş Ayı'**
+  String get rprBitisAy;
+
+  /// No description provided for @rprBitisYil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bitiş Yılı'**
+  String get rprBitisYil;
+
+  /// No description provided for @rprBlok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok'**
+  String get rprBlok;
+
+  /// No description provided for @rprBolum.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bölüm'**
+  String get rprBolum;
+
+  /// No description provided for @rprCalismaNakit.
+  ///
+  /// In tr, this message translates to:
+  /// **'Nakit'**
+  String get rprCalismaNakit;
+
+  /// No description provided for @rprCalismaSekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çalışma Şekli'**
+  String get rprCalismaSekli;
+
+  /// No description provided for @rprCalismaTahakkuk.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tahakkuk'**
+  String get rprCalismaTahakkuk;
+
+  /// No description provided for @rprDaire.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire'**
+  String get rprDaire;
+
+  /// No description provided for @rprEkstreDetay.
+  ///
+  /// In tr, this message translates to:
+  /// **'Detaylı'**
+  String get rprEkstreDetay;
+
+  /// No description provided for @rprEkstreOzet.
+  ///
+  /// In tr, this message translates to:
+  /// **'Özet'**
+  String get rprEkstreOzet;
+
+  /// No description provided for @rprEkstreTuru.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ekstre Türü'**
+  String get rprEkstreTuru;
+
+  /// No description provided for @rprEvrakBilgisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Evrak Bilgisini Göster'**
+  String get rprEvrakBilgisi;
+
+  /// No description provided for @rprEvrakFatura.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fatura'**
+  String get rprEvrakFatura;
+
+  /// No description provided for @rprEvrakMakbuz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Makbuz'**
+  String get rprEvrakMakbuz;
+
+  /// No description provided for @rprEvrakTipi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Evrak Tipi'**
+  String get rprEvrakTipi;
+
+  /// No description provided for @rprFirma.
+  ///
+  /// In tr, this message translates to:
+  /// **'Firma'**
+  String get rprFirma;
+
+  /// No description provided for @rprGrupla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gruplandır'**
+  String get rprGrupla;
+
+  /// No description provided for @rprIcradakiler.
+  ///
+  /// In tr, this message translates to:
+  /// **'İcradakileri Göster'**
+  String get rprIcradakiler;
+
+  /// No description provided for @rprIletisimGoster.
+  ///
+  /// In tr, this message translates to:
+  /// **'İletişim Bilgilerini Göster'**
+  String get rprIletisimGoster;
+
+  /// No description provided for @rprImza.
+  ///
+  /// In tr, this message translates to:
+  /// **'İmza Alanı Ekle'**
+  String get rprImza;
+
+  /// No description provided for @rprIsBekliyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sırada'**
+  String get rprIsBekliyor;
+
+  /// No description provided for @rprIsHata.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hata'**
+  String get rprIsHata;
+
+  /// No description provided for @rprIsHazir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hazır'**
+  String get rprIsHazir;
+
+  /// No description provided for @rprIsmiGoster.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ad sütunu'**
+  String get rprIsmiGoster;
+
+  /// No description provided for @rprIsUretiliyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Üretiliyor'**
+  String get rprIsUretiliyor;
+
+  /// No description provided for @rprKasa.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kasa'**
+  String get rprKasa;
+
+  /// No description provided for @rprKatDokumler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dökümler'**
+  String get rprKatDokumler;
+
+  /// No description provided for @rprKatEkstreler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ekstreler'**
+  String get rprKatEkstreler;
+
+  /// No description provided for @rprKatListeler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Listeler'**
+  String get rprKatListeler;
+
+  /// No description provided for @rprKisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kişi'**
+  String get rprKisi;
+
+  /// No description provided for @rprListelemeTipi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Listeleme Tipi'**
+  String get rprListelemeTipi;
+
+  /// No description provided for @rprMaxTutar.
+  ///
+  /// In tr, this message translates to:
+  /// **'En Çok Tutar'**
+  String get rprMaxTutar;
+
+  /// No description provided for @rprMinTutar.
+  ///
+  /// In tr, this message translates to:
+  /// **'En Az Tutar'**
+  String get rprMinTutar;
+
+  /// No description provided for @rprOlusturan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Oluşturan'**
+  String get rprOlusturan;
+
+  /// No description provided for @rprPersonel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Personel'**
+  String get rprPersonel;
+
+  /// No description provided for @rprSiraAd.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ad Soyad'**
+  String get rprSiraAd;
+
+  /// No description provided for @rprSiraBakiye.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bakiye'**
+  String get rprSiraBakiye;
+
+  /// No description provided for @rprSiraDaire.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire No'**
+  String get rprSiraDaire;
+
+  /// No description provided for @rprSiralama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sıralama'**
+  String get rprSiralama;
+
+  /// No description provided for @rprTanim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gelir/Gider Türü'**
+  String get rprTanim;
+
+  /// No description provided for @rprTanimlar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Borçlandırma Türleri'**
+  String get rprTanimlar;
+
+  /// No description provided for @rprTazminatTarihi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tazminat Tarihi'**
+  String get rprTazminatTarihi;
+
+  /// No description provided for @rprTipAlacakli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Alacaklılar'**
+  String get rprTipAlacakli;
+
+  /// No description provided for @rprTipBorclu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Borçlular'**
+  String get rprTipBorclu;
+
+  /// No description provided for @rprAgirUyari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu rapor tüm defteri tarar. PDF/Excel isteği kuyruğa alınır; hazır olunca aşağıdaki listeden indirilir.'**
+  String get rprAgirUyari;
+
+  /// No description provided for @rprAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Katalogdan rapor seçin, ekranda görün veya indirin'**
+  String get rprAlt;
+
+  /// No description provided for @rprExcel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Excel'**
+  String get rprExcel;
+
+  /// No description provided for @rprGoster.
+  ///
+  /// In tr, this message translates to:
+  /// **'Göster'**
+  String get rprGoster;
+
+  /// No description provided for @rprHepsi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tümü'**
+  String get rprHepsi;
+
+  /// No description provided for @rprIndirildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rapor indirildi.'**
+  String get rprIndirildi;
+
+  /// No description provided for @rprIsAdi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rapor'**
+  String get rprIsAdi;
+
+  /// No description provided for @rprIsBicim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Biçim'**
+  String get rprIsBicim;
+
+  /// No description provided for @rprIsIndir.
+  ///
+  /// In tr, this message translates to:
+  /// **'İndir'**
+  String get rprIsIndir;
+
+  /// No description provided for @rprIslerim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rapor İşlerim'**
+  String get rprIslerim;
+
+  /// No description provided for @rprIsYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kuyrukta rapor yok.'**
+  String get rprIsYok;
+
+  /// No description provided for @rprIsYokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ağır bir raporun PDF veya Excel çıktısını istediğinizde burada görünür.'**
+  String get rprIsYokAlt;
+
+  /// No description provided for @rprIsZaman.
+  ///
+  /// In tr, this message translates to:
+  /// **'İstek Zamanı'**
+  String get rprIsZaman;
+
+  /// No description provided for @rprKatalogHata.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rapor katalogu alınamadı.'**
+  String get rprKatalogHata;
+
+  /// No description provided for @rprKuyrugaAlindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rapor kuyruğa alındı.'**
+  String get rprKuyrugaAlindi;
+
+  /// No description provided for @rprPdf.
+  ///
+  /// In tr, this message translates to:
+  /// **'PDF'**
+  String get rprPdf;
+
+  /// No description provided for @rprSatirYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Satır yok'**
+  String get rprSatirYok;
+
+  /// No description provided for @rprSatirYokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçilen ölçütlere uyan kayıt bulunmuyor.'**
+  String get rprSatirYokAlt;
+
+  /// No description provided for @rprYokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sunucuda tanımlı rapor bulunamadı.'**
+  String get rprYokAlt;
+
+  /// No description provided for @rprKatalog.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rapor katalogu'**
+  String get rprKatalog;
+
+  /// No description provided for @rprIcraBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'İcra dosyaları'**
+  String get rprIcraBaslik;
+
+  /// No description provided for @rprIcraDosyaNo.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dosya no'**
+  String get rprIcraDosyaNo;
+
+  /// No description provided for @rprIcraBorclu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Borçlu'**
+  String get rprIcraBorclu;
+
+  /// No description provided for @rprIcraAcikBorc.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açık borç'**
+  String get rprIcraAcikBorc;
+
+  /// No description provided for @rprIcraAvukat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Avukat'**
+  String get rprIcraAvukat;
+
+  /// No description provided for @rprIcraVerisTarihi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Veriliş tarihi'**
+  String get rprIcraVerisTarihi;
+
+  /// No description provided for @rprIcraAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açıklama'**
+  String get rprIcraAciklama;
+
+  /// No description provided for @rprIcraDurum.
+  ///
+  /// In tr, this message translates to:
+  /// **'Durum'**
+  String get rprIcraDurum;
+
+  /// No description provided for @rprIcraDurumHepsi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tümü'**
+  String get rprIcraDurumHepsi;
+
+  /// No description provided for @rprIcraKayitYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'İcra dosyası yok.'**
+  String get rprIcraKayitYok;
+
+  /// No description provided for @rprIcraDurumbaginiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bağınız'**
+  String get rprIcraDurumbaginiz;
+
+  /// No description provided for @rprIcraDurumbeklemede.
+  ///
+  /// In tr, this message translates to:
+  /// **'Beklemede'**
+  String get rprIcraDurumbeklemede;
+
+  /// No description provided for @rprIcraDurumavukatta.
+  ///
+  /// In tr, this message translates to:
+  /// **'Avukatta'**
+  String get rprIcraDurumavukatta;
+
+  /// No description provided for @rprIcraDurummahkemede.
+  ///
+  /// In tr, this message translates to:
+  /// **'Mahkeme Sürecinde'**
+  String get rprIcraDurummahkemede;
+
+  /// No description provided for @rprIcraDurumkapandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapandı'**
+  String get rprIcraDurumkapandi;
+
+  /// No description provided for @rprAylikOzet.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aylık özet'**
+  String get rprAylikOzet;
+
+  /// No description provided for @rprSekmeKatalog.
+  ///
+  /// In tr, this message translates to:
+  /// **'Katalog'**
+  String get rprSekmeKatalog;
+
+  /// (P253 A2) kuyruk isi hazir
+  ///
+  /// In tr, this message translates to:
+  /// **'Rapor hazır: {ad}'**
+  String rprIsHazirBildirim(String ad);
+
+  /// No description provided for @rprAgirUyariMobil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu rapor tüm defteri tarar. PDF/Excel isteği kuyruğa alınır; hazır olunca İşlerim sekmesinden paylaşılır.'**
+  String get rprAgirUyariMobil;
+
+  /// No description provided for @rprKatalogBosAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sunucuda tanımlı rapor bulunamadı; yöneticinize bildirin.'**
+  String get rprKatalogBosAlt;
+
+  /// No description provided for @rprIcraBosAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'İcra dosyaları web panelinden açılır; açıldığında burada görünür.'**
+  String get rprIcraBosAlt;
+
+  /// No description provided for @dntBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Denetim'**
+  String get dntBaslik;
+
+  /// No description provided for @dntAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Salt okuma: raporlar, şeffaflık, icra ve bakım. Değişiklik yapılamaz.'**
+  String get dntAlt;
+
+  /// No description provided for @sdgDonguYeni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni döngü tanımla…'**
+  String get sdgDonguYeni;
+
+  /// No description provided for @sdgDonguAd.
+  ///
+  /// In tr, this message translates to:
+  /// **'Döngü adı'**
+  String get sdgDonguAd;
+
+  /// No description provided for @sdgDonguDilimler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vardiya dilimleri'**
+  String get sdgDonguDilimler;
+
+  /// No description provided for @sdgDonguDilimAd.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dilim adı'**
+  String get sdgDonguDilimAd;
+
+  /// No description provided for @sdgDonguDilimEkle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dilim ekle'**
+  String get sdgDonguDilimEkle;
+
+  /// No description provided for @sdgDonguAdimlar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Döngü adımları'**
+  String get sdgDonguAdimlar;
+
+  /// No description provided for @sdgDonguAdimDilim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dilim / tatil'**
+  String get sdgDonguAdimDilim;
+
+  /// No description provided for @sdgDonguTatil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tatil'**
+  String get sdgDonguTatil;
+
+  /// No description provided for @sdgDonguGunSayisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gün sayısı'**
+  String get sdgDonguGunSayisi;
+
+  /// No description provided for @sdgDonguDuzen.
+  ///
+  /// In tr, this message translates to:
+  /// **'Düzen'**
+  String get sdgDonguDuzen;
+
+  /// No description provided for @sdgDonguHerGun.
+  ///
+  /// In tr, this message translates to:
+  /// **'Her gün'**
+  String get sdgDonguHerGun;
+
+  /// No description provided for @sdgDonguGunAsiri.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gün aşırı (12/36)'**
+  String get sdgDonguGunAsiri;
+
+  /// No description provided for @sdgDonguAdimEkle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Adım ekle'**
+  String get sdgDonguAdimEkle;
+
+  /// No description provided for @sdgDonguUzunluk.
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} günlük döngü'**
+  String sdgDonguUzunluk(int n);
+
+  /// No description provided for @sdgDonguKaydet.
+  ///
+  /// In tr, this message translates to:
+  /// **'Döngüyü kaydet'**
+  String get sdgDonguKaydet;
+
+  /// No description provided for @sdgDonguKaydedildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Döngü kaydedildi.'**
+  String get sdgDonguKaydedildi;
+
+  /// No description provided for @sdgVardiyaBaslangicSaati.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlangıç saati'**
+  String get sdgVardiyaBaslangicSaati;
+
+  /// No description provided for @sdgVardiyaBitisSaati.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bitiş saati'**
+  String get sdgVardiyaBitisSaati;
+
+  /// No description provided for @sdgAc.
+  ///
+  /// In tr, this message translates to:
+  /// **'Serbest döngü tanımla'**
+  String get sdgAc;
+
+  /// No description provided for @sdgBlokSil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Adımı kaldır'**
+  String get sdgBlokSil;
+
+  /// No description provided for @sdgDilimSil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dilimi kaldır'**
+  String get sdgDilimSil;
+
+  /// No description provided for @sdgSinirAsildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Döngü en fazla 84 gün olabilir.'**
+  String get sdgSinirAsildi;
+
+  /// No description provided for @fdzIslemler.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşlem'**
+  String get fdzIslemler;
+
+  /// No description provided for @fdzIslemSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hangi işlem?'**
+  String get fdzIslemSec;
+
+  /// No description provided for @fdzVirman.
+  ///
+  /// In tr, this message translates to:
+  /// **'Virman'**
+  String get fdzVirman;
+
+  /// No description provided for @fdzTopluTahsilat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplu tahsilat'**
+  String get fdzTopluTahsilat;
+
+  /// No description provided for @fdzAcilis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açılış fişi'**
+  String get fdzAcilis;
+
+  /// No description provided for @fdzIptalEt.
+  ///
+  /// In tr, this message translates to:
+  /// **'İptal et'**
+  String get fdzIptalEt;
+
+  /// No description provided for @fdzIptalBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hareketi iptal et (ters kayıt)'**
+  String get fdzIptalBaslik;
+
+  /// No description provided for @fdzIptalSonuc.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıt silinmez; deftere ters bir satır eklenir. Ters kayıt geri alınamaz.'**
+  String get fdzIptalSonuc;
+
+  /// No description provided for @fdzIptalVirmanNotu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Virmanın iki satırı birlikte ters kaydedilir.'**
+  String get fdzIptalVirmanNotu;
+
+  /// No description provided for @fdzIptalEdildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hareket iptal edildi (ters kayıt)'**
+  String get fdzIptalEdildi;
+
+  /// No description provided for @fdzIade.
+  ///
+  /// In tr, this message translates to:
+  /// **'İade'**
+  String get fdzIade;
+
+  /// No description provided for @fdzIadeTutarIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Boş bırakılırsa kalan tutarın tamamı'**
+  String get fdzIadeTutarIpucu;
+
+  /// No description provided for @fdzIadeSonuc.
+  ///
+  /// In tr, this message translates to:
+  /// **'İade kasadan çıkar. Geri almak için iade iptal edilir (sebep istenir).'**
+  String get fdzIadeSonuc;
+
+  /// No description provided for @fdzIadeYapildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İade kaydedildi'**
+  String get fdzIadeYapildi;
+
+  /// No description provided for @fdzGeriAl.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geri al'**
+  String get fdzGeriAl;
+
+  /// No description provided for @fdzGeriAlBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşlemi geri al'**
+  String get fdzGeriAlBaslik;
+
+  /// No description provided for @fdzGeriAlSonuc.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ters kayıt yazılır. Geri alma da geri alınamaz.'**
+  String get fdzGeriAlSonuc;
+
+  /// No description provided for @fdzGeriAlindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geri alındı'**
+  String get fdzGeriAlindi;
+
+  /// No description provided for @fdzKaynakKasa.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaynak kasa'**
+  String get fdzKaynakKasa;
+
+  /// No description provided for @fdzHedefKasa.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hedef kasa'**
+  String get fdzHedefKasa;
+
+  /// No description provided for @fdzVirmanSonuc.
+  ///
+  /// In tr, this message translates to:
+  /// **'İki satır yazılır (çıkış + giriş). Geri almak için virman iptal edilir (sebep istenir).'**
+  String get fdzVirmanSonuc;
+
+  /// No description provided for @fdzVirmanYapildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Virman kaydedildi'**
+  String get fdzVirmanYapildi;
+
+  /// No description provided for @fdzAyniKasa.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaynak ve hedef kasa aynı olamaz.'**
+  String get fdzAyniKasa;
+
+  /// No description provided for @fdzYon.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yön'**
+  String get fdzYon;
+
+  /// No description provided for @fdzYonGiris.
+  ///
+  /// In tr, this message translates to:
+  /// **'Giriş (bakiye artar)'**
+  String get fdzYonGiris;
+
+  /// No description provided for @fdzYonCikis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çıkış (bakiye azalır)'**
+  String get fdzYonCikis;
+
+  /// No description provided for @fdzAcilisSonuc.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kasanın başlangıç bakiyesine yazılır. Geri almak için fiş iptal edilir (sebep istenir).'**
+  String get fdzAcilisSonuc;
+
+  /// No description provided for @fdzAcilisYapildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açılış fişi kaydedildi'**
+  String get fdzAcilisYapildi;
+
+  /// No description provided for @fdzTopluSonuc.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçili dairelere tahsilat yazılır ve makbuz kesilir. Geri almak için tahsilatlar iptal edilir (sebep istenir).'**
+  String get fdzTopluSonuc;
+
+  /// No description provided for @fdzFaizAffi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Faizi affet'**
+  String get fdzFaizAffi;
+
+  /// No description provided for @fdzFaizAffiSonuc.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açık faiz kalemleri ters kayıtla affedilir. Af geri alınamaz.'**
+  String get fdzFaizAffiSonuc;
+
+  /// No description provided for @fdzOdemePlani.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ödeme planı'**
+  String get fdzOdemePlani;
+
+  /// No description provided for @fdzTaksitSayisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Taksit sayısı (2–36)'**
+  String get fdzTaksitSayisi;
+
+  /// No description provided for @fdzIlkVade.
+  ///
+  /// In tr, this message translates to:
+  /// **'İlk vade'**
+  String get fdzIlkVade;
+
+  /// No description provided for @fdzSecimToplami.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçili borç toplamı'**
+  String get fdzSecimToplami;
+
+  /// No description provided for @fdzDurumOdendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ödendi'**
+  String get fdzDurumOdendi;
+
+  /// No description provided for @fdzDurumBekliyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bekliyor'**
+  String get fdzDurumBekliyor;
+
+  /// (P253 A2) finans duzeltmeleri
+  ///
+  /// In tr, this message translates to:
+  /// **'Açık borçların vadeleri {n} aya yayılır; yeni borç yazılmaz. Geri alınamaz, yeni bir planla değiştirilebilir.'**
+  String fdzPlanSonuc(int n);
+
+  /// (P253 A2) finans duzeltmeleri
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} dairede ödeme planı uygulandı'**
+  String fdzPlanUygulandi(int n);
+
+  /// (P253 A2) finans duzeltmeleri
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} tahsilat kaydedildi'**
+  String fdzTopluYapildi(int n);
+
+  /// (P253 A2) finans duzeltmeleri
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} faiz kalemi affedildi ({tutar})'**
+  String fdzFaizAffedildi(int n, String tutar);
+
+  /// (P253 A2) finans duzeltmeleri
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} daire: {daireler}'**
+  String fdzDaireler(int n, String daireler);
+
+  /// No description provided for @fdzDurumEtiketi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Durum'**
+  String get fdzDurumEtiketi;
+
+  /// No description provided for @dsyDosyaSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dosya (PDF)'**
+  String get dsyDosyaSec;
+
+  /// No description provided for @brcKalemAidat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aidat'**
+  String get brcKalemAidat;
+
+  /// No description provided for @brcKalemDemirbas.
+  ///
+  /// In tr, this message translates to:
+  /// **'Demirbaş'**
+  String get brcKalemDemirbas;
+
+  /// No description provided for @brcKalemOlaganustu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Olağanüstü'**
+  String get brcKalemOlaganustu;
+
+  /// No description provided for @brcKalemSayac.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sayaç'**
+  String get brcKalemSayac;
+
+  /// No description provided for @brcKalemFaiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gecikme faizi'**
+  String get brcKalemFaiz;
+
+  /// No description provided for @brcKalemDiger.
+  ///
+  /// In tr, this message translates to:
+  /// **'Diğer'**
+  String get brcKalemDiger;
+
+  /// No description provided for @brcDagitimDaireBasina.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire başına sabit tutar'**
+  String get brcDagitimDaireBasina;
+
+  /// No description provided for @brcDagitimEsit.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplamı eşit dağıt'**
+  String get brcDagitimEsit;
+
+  /// No description provided for @brcDagitimArsaPayi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplamı arsa payına göre dağıt'**
+  String get brcDagitimArsaPayi;
+
+  /// No description provided for @brcDagitimMetrekare.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplamı metrekareye göre dağıt'**
+  String get brcDagitimMetrekare;
+
+  /// No description provided for @brcAtlamaArsaPayi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Arsa payı girilmemiş'**
+  String get brcAtlamaArsaPayi;
+
+  /// No description provided for @brcAtlamaMetrekare.
+  ///
+  /// In tr, this message translates to:
+  /// **'Metrekare girilmemiş'**
+  String get brcAtlamaMetrekare;
+
+  /// No description provided for @brcAtlamaTip.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire tipinin varsayılan tutarı yok'**
+  String get brcAtlamaTip;
+
+  /// No description provided for @brcAtlamaCarpisma.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu dönemde aynı türde borç zaten var'**
+  String get brcAtlamaCarpisma;
+
+  /// No description provided for @brcAtlamaTutar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tutar belirlenemedi'**
+  String get brcAtlamaTutar;
+
+  /// No description provided for @brcYontemElden.
+  ///
+  /// In tr, this message translates to:
+  /// **'Elden'**
+  String get brcYontemElden;
+
+  /// No description provided for @brcYontemHavale.
+  ///
+  /// In tr, this message translates to:
+  /// **'Havale/EFT'**
+  String get brcYontemHavale;
+
+  /// No description provided for @brcYontemKart.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kart'**
+  String get brcYontemKart;
+
+  /// No description provided for @brcYontemDiger.
+  ///
+  /// In tr, this message translates to:
+  /// **'Diğer'**
+  String get brcYontemDiger;
+
+  /// No description provided for @brcDaireSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire seçin'**
+  String get brcDaireSec;
+
+  /// No description provided for @brcTurSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tür seçin'**
+  String get brcTurSec;
+
+  /// No description provided for @brcTutarGecersiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geçerli bir tutar girin'**
+  String get brcTutarGecersiz;
+
+  /// No description provided for @brcOnayBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Borçlandırmayı onayla'**
+  String get brcOnayBaslik;
+
+  /// (P253 A2) borclandirma
+  ///
+  /// In tr, this message translates to:
+  /// **'Dönem {donem}'**
+  String brcDonem(String donem);
+
+  /// No description provided for @brcOnaySonuc.
+  ///
+  /// In tr, this message translates to:
+  /// **'Borç kaydı silinmez; yanlışsa ters kayıtla düzeltilir.'**
+  String get brcOnaySonuc;
+
+  /// No description provided for @brcKaydet.
+  ///
+  /// In tr, this message translates to:
+  /// **'Borçlandır'**
+  String get brcKaydet;
+
+  /// No description provided for @brcKaydedildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Borçlandırma kaydedildi'**
+  String get brcKaydedildi;
+
+  /// No description provided for @brcTekil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tek daire borçlandır'**
+  String get brcTekil;
+
+  /// No description provided for @brcDaire.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire'**
+  String get brcDaire;
+
+  /// No description provided for @brcTur.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tür'**
+  String get brcTur;
+
+  /// (P253 A2) borclandirma
+  ///
+  /// In tr, this message translates to:
+  /// **'Tarih: {tarih}'**
+  String brcTarihDegeri(String tarih);
+
+  /// No description provided for @brcSonOdemeYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Son ödeme tarihi yok'**
+  String get brcSonOdemeYok;
+
+  /// (P253 A2) borclandirma
+  ///
+  /// In tr, this message translates to:
+  /// **'Son ödeme: {tarih}'**
+  String brcSonOdemeDegeri(String tarih);
+
+  /// No description provided for @brcTutar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tutar (₺)'**
+  String get brcTutar;
+
+  /// No description provided for @brcAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açıklama'**
+  String get brcAciklama;
+
+  /// No description provided for @brcGecikmeUygula.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gecikme faizi uygulansın'**
+  String get brcGecikmeUygula;
+
+  /// No description provided for @brcFaiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gecikme faizi'**
+  String get brcFaiz;
+
+  /// (P253 A2) borclandirma
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} borç · gecikme faizi · {donem}'**
+  String brcFaizOnayHedef(int n, String donem);
+
+  /// No description provided for @brcFaizOnaySonuc.
+  ///
+  /// In tr, this message translates to:
+  /// **'Faiz yeni borç kalemi olarak yazılır; yanlışsa her kalem ters kayıtla düzeltilir.'**
+  String get brcFaizOnaySonuc;
+
+  /// No description provided for @brcFaizIsle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Faizi işle'**
+  String get brcFaizIsle;
+
+  /// (P253 A2) borclandirma
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} faiz kalemi yazıldı'**
+  String brcFaizIslendi(int n);
+
+  /// No description provided for @brcFaizKapali.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gecikme faizi bu tesiste kapalı (Otomasyon › Gecikme ayarı).'**
+  String get brcFaizKapali;
+
+  /// No description provided for @brcFaizYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu dönemde işlenecek gecikme faizi yok.'**
+  String get brcFaizYok;
+
+  /// (P253 A2) borclandirma
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} borç için toplam {tutar} faiz yazılacak.'**
+  String brcFaizIslenecek(int n, String tutar);
+
+  /// No description provided for @brcToplu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplu tahakkuk'**
+  String get brcToplu;
+
+  /// No description provided for @brcBlokSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok seçin'**
+  String get brcBlokSec;
+
+  /// (P253 A2) borclandirma
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} daire · {tur} · {donem}'**
+  String brcTopluOnayHedef(int n, String tur, String donem);
+
+  /// No description provided for @brcTopluOnaySonuc.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşlemden sonra sonuç ekranından tek seferde ters kayıtla geri alınabilir; ödeme almış satırlar geri alınmaz.'**
+  String get brcTopluOnaySonuc;
+
+  /// No description provided for @brcTopluIsle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tahakkuku yaz'**
+  String get brcTopluIsle;
+
+  /// (P253 A2) borclandirma
+  ///
+  /// In tr, this message translates to:
+  /// **'Adım {n}/{toplam}'**
+  String brcAdim(int n, int toplam);
+
+  /// No description provided for @brcGeri.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geri'**
+  String get brcGeri;
+
+  /// No description provided for @brcIleri.
+  ///
+  /// In tr, this message translates to:
+  /// **'İleri'**
+  String get brcIleri;
+
+  /// No description provided for @brcAdimNe.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ne borçlandırılıyor?'**
+  String get brcAdimNe;
+
+  /// No description provided for @brcAdimNeKadar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ne kadar?'**
+  String get brcAdimNeKadar;
+
+  /// No description provided for @brcAdimKime.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kime?'**
+  String get brcAdimKime;
+
+  /// No description provided for @brcAdimOnizleme.
+  ///
+  /// In tr, this message translates to:
+  /// **'Önizleme'**
+  String get brcAdimOnizleme;
+
+  /// No description provided for @brcAdimOnay.
+  ///
+  /// In tr, this message translates to:
+  /// **'Onay'**
+  String get brcAdimOnay;
+
+  /// No description provided for @brcKalemTipi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kalem tipi'**
+  String get brcKalemTipi;
+
+  /// No description provided for @brcTutarDaireBasina.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire başına tutar (₺) — boşsa daire tipinin tutarı'**
+  String get brcTutarDaireBasina;
+
+  /// No description provided for @brcTutarToplam.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dağıtılacak toplam (₺)'**
+  String get brcTutarToplam;
+
+  /// No description provided for @brcKapsamTumu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tüm daireler'**
+  String get brcKapsamTumu;
+
+  /// No description provided for @brcKapsamBlok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bir blok'**
+  String get brcKapsamBlok;
+
+  /// No description provided for @brcKapsamSecili.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçtiğim daireler'**
+  String get brcKapsamSecili;
+
+  /// (P253 A2) borclandirma
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} daire seçildi'**
+  String brcSeciliSayi(int n);
+
+  /// No description provided for @brcTumunuSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tümünü seç'**
+  String get brcTumunuSec;
+
+  /// (P253 A2) borclandirma
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} daireye borç yazılacak'**
+  String brcOnizlemeIslenecek(int n);
+
+  /// (P253 A2) borclandirma
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplam {tutar}'**
+  String brcOnizlemeToplam(String tutar);
+
+  /// (P253 A2) borclandirma
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} daire atlanacak'**
+  String brcOnizlemeAtlanacak(int n);
+
+  /// (P253 A2) borclandirma
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} dairede borç kimseye değil daireye yazılacak (kayıtlı malik yok)'**
+  String brcOnizlemeHedefsiz(int n);
+
+  /// No description provided for @brcEnYuksek.
+  ///
+  /// In tr, this message translates to:
+  /// **'En yüksek 5'**
+  String get brcEnYuksek;
+
+  /// No description provided for @brcEnDusuk.
+  ///
+  /// In tr, this message translates to:
+  /// **'En düşük 5'**
+  String get brcEnDusuk;
+
+  /// (P253 A2) borclandirma
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} daireye borç yazıldı'**
+  String brcTopluOlustu(int n);
+
+  /// No description provided for @brcTopluOlusmadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hiçbir borç yazılmadı — dönemi ya da türü kontrol edin.'**
+  String get brcTopluOlusmadi;
+
+  /// No description provided for @brcAtlananlar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Atlananlar'**
+  String get brcAtlananlar;
+
+  /// No description provided for @brcTersKayit.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ters kayıtla düzelt'**
+  String get brcTersKayit;
+
+  /// No description provided for @brcTersKayitSonuc.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıt silinmez; deftere ters bir satır eklenir. Bu işlem geri alınamaz.'**
+  String get brcTersKayitSonuc;
+
+  /// No description provided for @brcTersKayitYapildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ters kayıt yapıldı'**
+  String get brcTersKayitYapildi;
+
+  /// No description provided for @brcDonemEtiket.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dönem'**
+  String get brcDonemEtiket;
+
+  /// No description provided for @brcSonOdemeEtiket.
+  ///
+  /// In tr, this message translates to:
+  /// **'Son ödeme'**
+  String get brcSonOdemeEtiket;
+
+  /// No description provided for @brcGecikme.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gecikme'**
+  String get brcGecikme;
+
+  /// No description provided for @brcDuzeltme.
+  ///
+  /// In tr, this message translates to:
+  /// **'Düzeltme kaydı'**
+  String get brcDuzeltme;
+
+  /// No description provided for @brcDuzeltildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Düzeltildi'**
+  String get brcDuzeltildi;
+
+  /// No description provided for @brcDaireBorcu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Borç durumu'**
+  String get brcDaireBorcu;
+
+  /// No description provided for @brcToplamTahakkuk.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplam borçlandırma'**
+  String get brcToplamTahakkuk;
+
+  /// No description provided for @brcToplamOdenen.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplam ödenen'**
+  String get brcToplamOdenen;
+
+  /// No description provided for @brcBakiye.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bakiye'**
+  String get brcBakiye;
+
+  /// No description provided for @brcBorclandir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Borçlandır'**
+  String get brcBorclandir;
+
+  /// No description provided for @brcOdemeKaydet.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ödeme kaydet'**
+  String get brcOdemeKaydet;
+
+  /// No description provided for @brcTahakkuklar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Borç kalemleri'**
+  String get brcTahakkuklar;
+
+  /// No description provided for @brcTahakkukYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz borç kalemi yok'**
+  String get brcTahakkukYok;
+
+  /// No description provided for @brcOdemeler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ödemeler'**
+  String get brcOdemeler;
+
+  /// No description provided for @brcOdemeYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz ödeme yok'**
+  String get brcOdemeYok;
+
+  /// No description provided for @brcOdemeOnaySonuc.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ödeme kasaya girer; yanlışsa finans defterinden iade ya da iptalle düzeltilir.'**
+  String get brcOdemeOnaySonuc;
+
+  /// No description provided for @brcOdemeKaydedildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ödeme kaydedildi'**
+  String get brcOdemeKaydedildi;
+
+  /// No description provided for @brcYontem.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yöntem'**
+  String get brcYontem;
+
+  /// No description provided for @brcOdenenKalem.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ödenen borç kalemi'**
+  String get brcOdenenKalem;
+
+  /// No description provided for @brcKalemSecimsiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Belirli bir kaleme değil'**
+  String get brcKalemSecimsiz;
+
+  /// No description provided for @brcDonemAlan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dönem (YYYY-AA)'**
+  String get brcDonemAlan;
+
+  /// No description provided for @brcMakbuzNo.
+  ///
+  /// In tr, this message translates to:
+  /// **'Makbuz no'**
+  String get brcMakbuzNo;
+
+  /// No description provided for @brcYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz borçlandırma yok'**
+  String get brcYok;
+
+  /// No description provided for @rprGorevGecmisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görev Geçmişi'**
+  String get rprGorevGecmisi;
+
+  /// No description provided for @rprGorev.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görev'**
+  String get rprGorev;
+
+  /// No description provided for @rprTabloTip.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tip'**
+  String get rprTabloTip;
+
+  /// No description provided for @rprTabloTamamlayan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tamamlayan'**
+  String get rprTabloTamamlayan;
+
+  /// No description provided for @rprTabloZaman.
+  ///
+  /// In tr, this message translates to:
+  /// **'Zaman'**
+  String get rprTabloZaman;
+
+  /// No description provided for @rprTabloFoto.
+  ///
+  /// In tr, this message translates to:
+  /// **'Foto'**
+  String get rprTabloFoto;
+
+  /// No description provided for @rprTabloNfc.
+  ///
+  /// In tr, this message translates to:
+  /// **'NFC'**
+  String get rprTabloNfc;
+
+  /// No description provided for @rprNot.
+  ///
+  /// In tr, this message translates to:
+  /// **'Not'**
+  String get rprNot;
+
+  /// No description provided for @rprVar.
+  ///
+  /// In tr, this message translates to:
+  /// **'var'**
+  String get rprVar;
+
+  /// No description provided for @rprYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'yok'**
+  String get rprYok;
+
+  /// No description provided for @rprCsvPaylas.
+  ///
+  /// In tr, this message translates to:
+  /// **'CSV paylaş'**
+  String get rprCsvPaylas;
+
+  /// No description provided for @rprBolumDisaAktarim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dışa aktarım'**
+  String get rprBolumDisaAktarim;
+
+  /// No description provided for @rprGorevGecmisiAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçilen tarih aralığındaki görev tamamlamaları (web\'deki görev geçmişi CSV\'si ile aynı sütunlar).'**
+  String get rprGorevGecmisiAlt;
+
+  /// No description provided for @rprEvet.
+  ///
+  /// In tr, this message translates to:
+  /// **'Evet'**
+  String get rprEvet;
+
+  /// No description provided for @rprHayir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hayır'**
+  String get rprHayir;
+
+  /// No description provided for @harKapali.
+  ///
+  /// In tr, this message translates to:
+  /// **'Harita şu anda kullanılamıyor; konumu adres aramasıyla seçebilirsiniz.'**
+  String get harKapali;
+
+  /// No description provided for @harYuklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Harita yüklenemedi'**
+  String get harYuklenemedi;
+
+  /// No description provided for @harOsmAtif.
+  ///
+  /// In tr, this message translates to:
+  /// **'Protomaps © OpenStreetMap katkıcıları'**
+  String get harOsmAtif;
+
+  /// No description provided for @harTesisKonumu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis konumu'**
+  String get harTesisKonumu;
+
+  /// No description provided for @harYerAdi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yer adı (ilçe, mahalle)'**
+  String get harYerAdi;
+
+  /// No description provided for @harAra.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ara'**
+  String get harAra;
+
+  /// No description provided for @harAramaHata.
+  ///
+  /// In tr, this message translates to:
+  /// **'Adres araması şu anda yapılamıyor; biraz sonra yeniden deneyin.'**
+  String get harAramaHata;
+
+  /// No description provided for @harSonucYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu adla bir yer bulunamadı; ilçe ya da il adıyla deneyin.'**
+  String get harSonucYok;
+
+  /// No description provided for @harIgneIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Haritayı kaydırın ya da dokunun: iğne binanın üzerine gelsin, sonra Kaydet\'e basın.'**
+  String get harIgneIpucu;
+
+  /// (P253 A2) secili tesis konumu
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçili: {ad} ({lat}, {lon})'**
+  String harSecili(String ad, String lat, String lon);
+
+  /// No description provided for @brcPartiGeriAl.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplu borçlandırmayı geri al'**
+  String get brcPartiGeriAl;
+
+  /// No description provided for @brcPartiGeriAlSonuc.
+  ///
+  /// In tr, this message translates to:
+  /// **'Her borç ters kayıtla kapatılır; kayıtlar silinmez. Ödeme almış borçlar geri alınmaz ve listelenir.'**
+  String get brcPartiGeriAlSonuc;
+
+  /// (P253 §C-4) toplu geri alma sonucu
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} borç ters kayıtla geri alındı'**
+  String brcPartiGeriAlindi(int n);
+
+  /// No description provided for @brcAtlamaOdenmis.
+  ///
+  /// In tr, this message translates to:
+  /// **'ödeme almış, tek tek düzeltin'**
+  String get brcAtlamaOdenmis;
+
+  /// No description provided for @brcAtlamaZatenTersKayitli.
+  ///
+  /// In tr, this message translates to:
+  /// **'zaten düzeltilmiş'**
+  String get brcAtlamaZatenTersKayitli;
+
+  /// No description provided for @rprKesildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıt sayısı üst sınıra takıldı — rapor eksik olabilir. Tarih aralığını daraltın.'**
+  String get rprKesildi;
 }
 
 class _AppLocalizationsDelegate

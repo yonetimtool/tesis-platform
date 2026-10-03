@@ -152,6 +152,13 @@ Widget _kategoriler(_SahteKategoriApi api) => ProviderScope(
   child: l10nApp(const TaskCategoriesScreen(), locale: const Locale('tr')),
 );
 
+/// (P253 A2) Form uzadi (operasyon ayarlari + tesis konumu): tembel listede
+/// Kaydet ancak kaydirilinca kurulur.
+Future<void> _kaydetGorunsun(WidgetTester tester) async {
+  await tester.scrollUntilVisible(find.byKey(_kaydet), 400, scrollable: find.byType(Scrollable).first);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   group('Ayarlar — rol kapilari', () {
     // (P251 §8) MENU PARITESI: tesis adi Yonetim › Tesis ayarlari'na,
@@ -218,6 +225,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.enterText(find.byKey(_adAlani), 'Yeni Tesis');
       await tester.pump();
+      await _kaydetGorunsun(tester);
       await tester.tap(find.byKey(_kaydet));
       await tester.pumpAndSettle();
       expect(api.gonderilenler, [
@@ -232,6 +240,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const Key('tesis-ayar-adres')), 'Örnek Mah. No:5');
       await tester.pump();
+      await _kaydetGorunsun(tester);
       await tester.tap(find.byKey(_kaydet));
       await tester.pumpAndSettle();
       expect(api.gonderilenler, [
@@ -246,6 +255,7 @@ void main() {
       await tester.enterText(find.byKey(_adAlani), '   ');
       await tester.pump();
       final dugme = find.byKey(_kaydet);
+      await _kaydetGorunsun(tester);
       if (tester.widget<FilledButton>(dugme).onPressed != null) {
         await tester.tap(dugme);
         await tester.pumpAndSettle();
@@ -265,6 +275,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.enterText(find.byKey(_adAlani), 'Ab');
       await tester.pump();
+      await _kaydetGorunsun(tester);
       await tester.tap(find.byKey(_kaydet));
       await tester.pumpAndSettle();
       expect(find.text('Ad cok kisa'), findsOneWidget);
@@ -276,6 +287,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.enterText(find.byKey(_adAlani), 'Bir Ad');
       await tester.pump();
+      await _kaydetGorunsun(tester);
       await tester.tap(find.byKey(_kaydet));
       await tester.pumpAndSettle();
       expect(find.byType(SnackBar), findsOneWidget);

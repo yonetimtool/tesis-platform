@@ -11,10 +11,9 @@
 ///
 /// (P253 Asama 1) kisi bazinda "sonlandir" ve kalip silme de burada.
 ///
-/// YOK (yalniz web, plan §5 `yapisal`): SERBEST dongu tanimi (dilim
-/// saatleri + adim bloklari editoru). Tanim bir kez yapilir ve 6 dilim
-/// x 84 gunluk bir blok editoru telefonda hata uretir; atama ise sahada
-/// tekrar tekrar yapilan istir. Sunucu kurallari (cakisma, izin, taslak,
+/// (P253 Asama 2) SERBEST dongu tanimi (dilim saatleri + adim bloklari)
+/// da artik mobilde: `serbest_dongu_editoru.dart` (web `dongu-modali`
+/// ile ayni blok modeli). Sunucu kurallari (cakisma, izin, taslak,
 /// parti) iki yuzeyde de AYNI uctan gecer.
 ///
 /// `kuru=true` ile onizleme ve kaydetme AYNI uca gider (P207 K1.4).
@@ -31,6 +30,7 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../staff/data/staff_api.dart';
 import '../data/vardiya_plani_api.dart';
 import '../domain/vardiya_plani_models.dart';
+import 'serbest_dongu_editoru.dart';
 
 /// Hazir donguler — web'deki `HAZIR_BLOK` ile ayni adim dizileri.
 const List<List<int>> hazir222 = [
@@ -174,6 +174,23 @@ class _DonguAtaDialoguState extends ConsumerState<DonguAtaDialogu> {
       _kalipId = k.id;
     });
   });
+
+  /// (P253 Asama 2) Serbest dongu tanimi — kaydedilen kalip secili olur.
+  Future<void> _serbestTanimla() async {
+    final k = await showDialog<VardiyaKalibi>(
+      context: context,
+      builder: (_) => const Dialog(child: SerbestDonguEditoru()),
+    );
+    if (k == null || !mounted) return;
+    await _yukle();
+    if (!mounted) return;
+    setState(() {
+      if (!_kaliplar.any((x) => x.id == k.id)) _kaliplar = [..._kaliplar, k];
+      _kalipId = k.id;
+      _sonuc = null;
+      _degisti = true;
+    });
+  }
 
   int get _kaydirma => int.tryParse(_kaydirmaCtrl.text.trim()) ?? 0;
 
@@ -331,6 +348,11 @@ class _DonguAtaDialoguState extends ConsumerState<DonguAtaDialogu> {
                               _kaliplar.firstWhere((x) => x.id == _kalipId)),
                       child: Text(l10n.vrdKalipSil),
                     ),
+                  TextButton(
+                    key: const Key('dongu-serbest'),
+                    onPressed: _bekliyor ? null : _serbestTanimla,
+                    child: Text(l10n.sdgAc),
+                  ),
                   TextButton(
                     key: const Key('dongu-hazir-222'),
                     onPressed: _bekliyor

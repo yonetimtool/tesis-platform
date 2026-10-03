@@ -14,7 +14,14 @@ class TenantSettings {
     this.ilce,
     this.il,
     this.postaKodu,
+    this.ham = const {},
   });
+
+  /// (P253 Asama 2) Sunucu yanitinin TAMAMI — operasyon ayarlari
+  /// (`tesis_ayar_alanlari.dart`) buradan okunur. Her alana ayri model
+  /// alani yazmak, web tablosuna bir ayar eklendiginde ikinci bir yerin
+  /// unutulmasi demekti.
+  final Map<String, dynamic> ham;
 
   /// (P251 §8) Tesis adresi — mobil Tesis ayarlari ekrani duzenler
   /// (web `/tesis-ayarlari` ile ayni alanlar; sunucu yoneticiye acik).
@@ -49,5 +56,6 @@ class TenantSettings {
         ilce: json['ilce'] as String?,
         il: json['il'] as String?,
         postaKodu: json['posta_kodu'] as String?,
+        ham: Map<String, dynamic>.unmodifiable(json),
       );
 }

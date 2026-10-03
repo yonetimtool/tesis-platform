@@ -26,6 +26,7 @@ import '../../../core/ui/liste_ekrani.dart';
 import '../../../routing/app_router.dart';
 import '../data/finans_api.dart';
 import '../domain/finans_models.dart';
+import 'finans_duzeltme.dart';
 
 final finansOzetiProvider = FutureProvider.autoDispose<FinansOzeti>(
   (ref) => ref.watch(finansApiProvider).ozet(),
@@ -90,6 +91,15 @@ class _FinansDefteriScreenState extends ConsumerState<FinansDefteriScreen> {
           _OzetSekmesi(onTazele: _tazele),
           _HareketlerSekmesi(listeAnahtari: _liste, onDegisti: _tazele),
         ]),
+        // (P253 A2) Virman / acilis fisi — §C onay diyalogundan gecer.
+        floatingActionButton: FloatingActionButton.extended(
+          key: const Key('fdz-islem'),
+          icon: const Icon(Icons.add),
+          label: Text(l10n.fdzIslemler),
+          onPressed: () async {
+            if (await defterIslemi(context, ref, onDegisti: _tazele)) _tazele();
+          },
+        ),
       ),
     );
   }
@@ -233,7 +243,19 @@ class _HareketlerSekmesi extends ConsumerWidget {
     return ListeEkrani<FinansHareketi>(
       key: listeAnahtari,
       kimlik: (h) => h.id,
+      // (P253 A2) Serbest arama + durum SUNUCUDA (web ile ayni `q`/`durum`).
+      aramaVar: true,
       suzgecler: [
+        SuzgecTanimi(
+          ad: 'durum',
+          etiket: (l) => l.fdzDurumEtiketi,
+          secenekler: [
+            SuzgecSecenegi('odendi', (l) => l.fdzDurumOdendi),
+            SuzgecSecenegi('bekliyor', (l) => l.fdzDurumBekliyor),
+            SuzgecSecenegi('onay_bekliyor', (l) => l.finDurumOnayBekliyor),
+            SuzgecSecenegi('iptal', (l) => l.finDurumReddedildi),
+          ],
+        ),
         SuzgecTanimi(
           ad: 'tip',
           etiket: (l) => l.finSuzgecTip,
@@ -256,6 +278,8 @@ class _HareketlerSekmesi extends ConsumerWidget {
         final r = await api.hareketler(
           tip: s.suzgec['tip'],
           kasaId: s.suzgec['kasa_id'],
+          arama: s.arama,
+          durum: s.suzgec['durum'],
           limit: s.limit,
           offset: s.offset,
         );
@@ -306,10 +330,25 @@ class HareketKarti extends StatelessWidget {
   }
 }
 
-/// Hareket ayrintisi; onay bekleyen satirda ONAYLA / REDDET (§C).
-/// Donus: bir islem yapildiysa `true`.
-Future<bool?> hareketAyrintisi(BuildContext context, WidgetRef ref, FinansHareketi h) {
-  return showDialog<bool>(
+/// Hareket ayrintisi; onay bekleyen satirda ONAYLA / REDDET, gerceklesmis
+/// satirda IPTAL ET ve (tahsilat/gelir) IADE (§C). Donus: islem yapildiysa
+/// `true`.
+///
+/// Iptal ve iade AYRINTI KAPANDIKTAN SONRA ekranin baglamiyla yurur: iade
+/// sonrasi "Geri al" snackbar'i kapanmis bir diyalogun baglamina baglanamaz.
+Future<bool?> hareketAyrintisi(BuildContext context, WidgetRef ref, FinansHareketi h) async {
+  final sonuc = await _ayrintiDiyalogu(context, ref, h);
+  if (!context.mounted) return null;
+  return switch (sonuc) {
+    'iptal' => hareketIptalEt(context, ref, h),
+    'iade' => hareketIadeEt(context, ref, h),
+    true => true,
+    _ => null,
+  };
+}
+
+Future<Object?> _ayrintiDiyalogu(BuildContext context, WidgetRef ref, FinansHareketi h) {
+  return showDialog<Object>(
     context: context,
     builder: (dctx) {
       final l10n = dctx.l10n;
@@ -360,11 +399,24 @@ Future<bool?> hareketAyrintisi(BuildContext context, WidgetRef ref, FinansHareke
               },
               child: Text(l10n.finOnayla),
             ),
-          ] else
+          ] else ...[
+            if (h.iadeEdilebilir)
+              TextButton(
+                key: const Key('fdz-iade'),
+                onPressed: () => Navigator.of(dctx).pop('iade'),
+                child: Text(l10n.fdzIade),
+              ),
+            if (h.iptalEdilebilir)
+              TextButton(
+                key: const Key('fdz-iptal'),
+                onPressed: () => Navigator.of(dctx).pop('iptal'),
+                child: Text(l10n.fdzIptalEt),
+              ),
             TextButton(
               onPressed: () => Navigator.of(dctx).pop(),
               child: Text(l10n.ortakKapat),
             ),
+          ],
         ],
       );
     },

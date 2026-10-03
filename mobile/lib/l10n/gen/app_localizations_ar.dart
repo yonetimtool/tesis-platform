@@ -5377,11 +5377,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get demoSimuleOkutmaHata => 'تعذّر تسجيل المسح المحاكى.';
 
   @override
-  String get denetciWebBaslik => 'شاشات التدقيق على الويب';
+  String get denetciWebBaslik => 'ما يبقى على الويب';
 
   @override
   String denetciWebGovde(String adres) {
-    return 'تقارير التدقيق والإشراف المالي مصمَّمة لسطح المكتب. افتح $adres على حاسوبك.';
+    return 'العمل الإضافي وشاشات التدقيق الأخرى المصممة لسطح المكتب موجودة على الويب. افتح $adres على حاسوبك.';
   }
 
   @override
@@ -8790,10 +8790,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get yoneticiEklendi => 'تم إنشاء الحساب وأُرسلت رسالة الدعوة.';
 
   @override
-  String get tanimlarWebNotu =>
-      'تُدار الصناديق وتعريفات الإيرادات/المصروفات والشركات والعدادات والمركبات وإعدادات المحاسبة من الحاسوب.';
-
-  @override
   String bilgisayardanAciklama(String adres) {
     return 'تحتاج هذه العمليات إلى جداول ومعاينات واسعة؛ استخدم $adres.';
   }
@@ -8851,10 +8847,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get tesisAyarKaydedildi => 'تم حفظ إعدادات المنشأة.';
-
-  @override
-  String get tesisAyarWebNotu =>
-      'يُضبط الموقع (الخريطة) وسعة الموقف والعتبات من الحاسوب.';
 
   @override
   String get yoneticiListeBosAlt =>
@@ -9544,7 +9536,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dokYukleNot =>
-      'يمكنك رفع الصور من الهاتف. لملفات PDF وغيرها استخدم لوحة الويب حاليًا.';
+      'التقط صورة أو اختر من المعرض أو ارفع ملف PDF من هاتفك (حتى 25 ميغابايت).';
 
   @override
   String get hatAciklama => 'ملاحظة (اختياري)';
@@ -9780,4 +9772,1439 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get hatBosRehber => 'اضغط \"+\" لإضافة ملاحظة أو تذكير لنفسك.';
+
+  @override
+  String get tsaAyarGrupDevriye => 'الجولات والدوريات';
+
+  @override
+  String get tsaAyarGrupVardiya => 'المناوبات والأمن';
+
+  @override
+  String get tsaAyarGrupGurultu => 'شكاوى الضوضاء';
+
+  @override
+  String get tsaAyarGrupFinans => 'الرسوم والمصروفات';
+
+  @override
+  String get tsaAyarGrupRezervasyon => 'الحجوزات';
+
+  @override
+  String get tsaAyarGrupOtopark => 'المواقف';
+
+  @override
+  String get tsaAyarTurTolerans =>
+      'Alert after how many minutes if a round doesn\'t start';
+
+  @override
+  String get tsaAyarTurToleransIpucu =>
+      'If no scan happens within this time after the round is due, the manager gets an alert.';
+
+  @override
+  String get tsaAyarTurTekrar => 'عدد تكرارات الإنذار';
+
+  @override
+  String get tsaAyarTurTekrarIpucu =>
+      '0 = الإنذار متوقف. الفواصل تتضاعف: المهلة، 2×، 4×.';
+
+  @override
+  String get tsaAyarTurFoto => 'Require a photo when starting a round';
+
+  @override
+  String get tsaAyarTurFotoIpucu =>
+      'The guard takes a camera photo at the first checkpoint. Choosing an existing photo from the gallery is not allowed.';
+
+  @override
+  String get tsaAyarVardiyaHatirlatma =>
+      'Remind how many minutes before a shift';
+
+  @override
+  String get tsaAyarVardiyaHatirlatmaIpucu =>
+      'Example: enter 30 for a reminder half an hour ahead. For several reminders, separate with commas (30,5). Leave empty to send none.';
+
+  @override
+  String get tsaAyarVardiyaBaslamadi =>
+      'Warn after how many minutes if a shift isn\'t started';
+
+  @override
+  String get tsaAyarVardiyaBaslamadiIpucu =>
+      'If no scan happens within this time after the shift begins, the manager is warned. Enter 0 to disable this warning.';
+
+  @override
+  String get tsaAyarOkutmaMesafe =>
+      'Maximum distance a scan may be made from (metres)';
+
+  @override
+  String get tsaAyarOkutmaMesafeIpucu =>
+      'Scans made farther than this are flagged in reports and reported to the manager. The scan itself is not blocked.';
+
+  @override
+  String get tsaAyarOtoparkKapasite => 'كم مركبة تتسع لها المواقف؟';
+
+  @override
+  String get tsaAyarOtoparkKapasiteIpucu =>
+      'إجمالي سعة المركبات. إذا تُرك فارغًا، لا تُحتسب نسبة الإشغال — يُعرض عدد المركبات بالداخل فقط.';
+
+  @override
+  String get tsaAyarRezervasyonGecmis =>
+      'How many months of past reservations to show';
+
+  @override
+  String get tsaAyarRezervasyonGecmisIpucu =>
+      'Older records are not listed. Nothing is deleted — a reservation is evidence in a common-area dispute. Enter 0 to show all.';
+
+  @override
+  String get tsaAyarVarsayilanHedef =>
+      'من يتحمّل الدين في أنواع المصروفات الجديدة';
+
+  @override
+  String get tsaAyarVarsayilanHedefIpucu =>
+      'قيمة أوّلية للأنواع الجديدة فقط؛ يمكن تغيير كل نوع لاحقًا (التعريفات > أنواع الإيرادات/المصروفات).';
+
+  @override
+  String get tsaTanimHedefKullanan => 'يدفع الشاغل (المستأجر، وإلا المالك)';
+
+  @override
+  String get tsaTanimHedefMalik => 'يدفع المالك';
+
+  @override
+  String get tsaAyarGurultuEsigi =>
+      'من كم وحدة مختلفة يجب أن تصل الشكاوى قبل إرسال التحذير';
+
+  @override
+  String get tsaAyarGurultuEsigiIpucu =>
+      'عندما تصل شكاوى الضوضاء عن وحدة من هذا العدد من الوحدات المختلفة، يتلقى الساكن تحذيرًا صوتيًا ويُعاد ضبط العداد. تُحسب عدة شكاوى من الشخص نفسه مرة واحدة؛ ولا تُحسب الشكاوى المصنّفة غير مبررة.';
+
+  @override
+  String get tsaAyarGurultuMetni => 'Warning text sent to the resident';
+
+  @override
+  String get tsaAyarGurultuMetniIpucu =>
+      'Leave empty to use the built-in text.';
+
+  @override
+  String get tsaAyarGurultuPencere => 'احتساب الشكاوى حتى كم يومًا للخلف';
+
+  @override
+  String get tsaAyarGurultuPencereIpucu =>
+      'تُحتسب شكاوى آخر هذا العدد من الأيام فقط. خمس شكاوى موزّعة على سنة ليست كخمس شكاوى في أسبوع. أدخل 0 لاحتساب كل الشكاوى المفتوحة. (يختلف عن مدة الظهور على الخريطة — هذا إعداد منفصل.)';
+
+  @override
+  String get tsaAyarGurultuSusma => 'Days of silence after a warning';
+
+  @override
+  String get tsaAyarGurultuSusmaIpucu =>
+      'No new warning is sent to that unit during this period. A warning repeated every night becomes noise itself. Enter 0 to warn again at every threshold.';
+
+  @override
+  String get tsaAyarGurultuEskalasyon => 'عند أي إنذار يتم إبلاغ الأمن';
+
+  @override
+  String get tsaAyarGurultuEskalasyonIpucu =>
+      'عندما تصل الوحدة إلى هذا العدد من الإنذارات، يُبلَّغ الأمن أيضًا ويتحقّق ميدانيًا ويستدعي الشرطة عند اللزوم. أدخل 2 لإبلاغ الساكن فقط في الإنذار الأول والأمن اعتبارًا من الثاني.';
+
+  @override
+  String get tsaAyarHaritaSaat => 'كم ساعة تبقى الشكاوى على الخريطة';
+
+  @override
+  String get tsaAyarHaritaSaatIpucu =>
+      'بعد هذه المدة تختفي الشكوى من الخريطة. لا تُحذف: تبقى في القائمة والتقارير وعدّاد العتبة — تُخفى فقط لتجيب الخريطة عن سؤال «أين توجد مشكلة الآن». أدخل 0 لعرضها بلا حد زمني. (لعدّاد العتبة مدة منفصلة: «احتساب الشكاوى حتى كم يومًا للخلف».)';
+
+  @override
+  String get tsaAyarGurultuSakin => 'إرسال تنبيه إلى ساكن الوحدة';
+
+  @override
+  String get tsaAyarGurultuSakinIpucu =>
+      'عند بلوغ الحد يتم إشعار الشخص المقيم في الوحدة. لا يتضمن التنبيه هوية مقدّم الشكوى ولا عدد الشكاوى. إذا أوقفته، تتولى الإدارة إبلاغ التنبيه بطريقتها.';
+
+  @override
+  String get tsaAyarGurultuEsikBirUyari =>
+      'الحد 1: كل شكوى ضوضاء تُرسل تنبيهًا إلى الوحدة، ما يُفقد التنبيه معناه سريعًا — يُنصح بـ 3 فأكثر.';
+
+  @override
+  String get tsaAyarDegisiklikYok => 'لا توجد تغييرات.';
+
+  @override
+  String get tsaTesisAyarPlatformNotu =>
+      'لا يمكن تغيير المنطقة الزمنية ورمز المرفق ووضع الأمان من هنا؛ فهي تبقى لدى فريق Yönetiyor. افتح طلب دعم إذا لزم التغيير.';
+
+  @override
+  String tsaAralikHatasi(int min, int max) {
+    return 'أدخل رقمًا بين $min و$max.';
+  }
+
+  @override
+  String get tnmKasalar => 'الصناديق';
+
+  @override
+  String get tnmGelirGiderGruplari => 'مجموعات الإيرادات/المصروفات';
+
+  @override
+  String get tnmGelirGiderTanimlari => 'بنود الإيرادات/المصروفات';
+
+  @override
+  String get tnmFirmalar => 'الشركات';
+
+  @override
+  String get tnmAraclar => 'المركبات';
+
+  @override
+  String get tnmSayaclar => 'العدادات';
+
+  @override
+  String get tnmSayaclarBolum => 'عدادات الوحدات';
+
+  @override
+  String get tnmAyarlar => 'إعدادات المحاسبة';
+
+  @override
+  String get tnmYeniKayit => 'سجل جديد';
+
+  @override
+  String get tnmKayitYok => 'لا توجد سجلات بعد.';
+
+  @override
+  String get tnmKayitYokAlt =>
+      'هذا السجل فارغ. استخدم زر الإضافة أعلاه لإنشاء أول سجل.';
+
+  @override
+  String get tnmParaBirimiNotu =>
+      'العملة للعرض فقط؛ تُخزَّن المبالغ وتُحسب بالليرة التركية.';
+
+  @override
+  String tnmTutarGecersiz(String alan) {
+    return 'أدخل مبلغاً صالحاً لـ $alan. مثال: 1.250,00';
+  }
+
+  @override
+  String tnmSayiGecersiz(String alan) {
+    return 'أدخل رقماً صالحاً لـ $alan.';
+  }
+
+  @override
+  String get tnmAlanKod => 'الرمز';
+
+  @override
+  String get tnmAlanAd => 'الاسم';
+
+  @override
+  String get tnmAlanAcilisTarihi => 'تاريخ الافتتاح';
+
+  @override
+  String get tnmAlanAcilisBakiye => 'الرصيد الافتتاحي (₺)';
+
+  @override
+  String get tnmAlanBankaMi => 'حساب بنكي';
+
+  @override
+  String get tnmAlanIban => 'IBAN (للبنك فقط)';
+
+  @override
+  String get tnmAlanBankaAdi => 'اسم البنك';
+
+  @override
+  String get tnmAlanSube => 'الفرع';
+
+  @override
+  String get tnmAlanAktif => 'نشط';
+
+  @override
+  String get tnmAlanTip => 'النوع';
+
+  @override
+  String get tnmAlanHedefKurali => 'على من يُقيَّد الدين';
+
+  @override
+  String get tnmHedefKuraliIpucu =>
+      'المادة 20 من قانون ملكية الطوابق: نفقات التشغيل (البواب، الكهرباء، الماء، تشغيل المصعد، النظافة) تقع عادةً على الشاغل؛ ونفقات الصيانة والإصلاح والتقوية تقع على المالك. قد ينص عقد الإيجار على خلاف ذلك — القرار لك.';
+
+  @override
+  String get tnmHedefKullanan => 'يدفع الشاغل (المستأجر، وإلا المالك)';
+
+  @override
+  String get tnmHedefMalik => 'يدفع المالك';
+
+  @override
+  String get tnmAlanDagitim => 'طريقة التوزيع (للمصروفات فقط)';
+
+  @override
+  String get tnmAlanVergiNo => 'الرقم الضريبي / الهوية';
+
+  @override
+  String get tnmAlanVergiDairesi => 'مكتب الضرائب';
+
+  @override
+  String get tnmAlanTelefon => 'الهاتف';
+
+  @override
+  String get tnmAlanEposta => 'البريد الإلكتروني';
+
+  @override
+  String get tnmAlanYetkili => 'المسؤول';
+
+  @override
+  String get tnmAlanBakiyeYonu => 'اتجاه الرصيد';
+
+  @override
+  String get tnmAlanPlaka => 'اللوحة';
+
+  @override
+  String get tnmAlanMarka => 'الماركة';
+
+  @override
+  String get tnmAlanModel => 'الطراز';
+
+  @override
+  String get tnmAlanRenk => 'اللون';
+
+  @override
+  String get tnmAlanTesisatNo => 'رقم التركيب';
+
+  @override
+  String get tnmAlanOrtakAlanYuzde => 'حصة المناطق المشتركة (%)';
+
+  @override
+  String get tnmAlanDaire => 'الوحدة';
+
+  @override
+  String get tnmAlanAnaSayac => 'العداد الرئيسي';
+
+  @override
+  String get tnmAlanIlkOkuma => 'القراءة الأولى';
+
+  @override
+  String get tnmReferansYuklenemedi => 'تعذر تحميل القائمة';
+
+  @override
+  String get tnmSayacUretimBaslik => 'إنشاء عدادات بالجملة';
+
+  @override
+  String get tnmSayacUret => 'إنشاء العدادات';
+
+  @override
+  String get tnmSayacUretimNotu =>
+      'يُنشئ عدادًا لكل وحدة نشطة ضمن العداد الرئيسي المحدد؛ وتُتجاهل الوحدات التي لديها عداد. التشغيل مرة أخرى آمن.';
+
+  @override
+  String tnmSayacUretimSonuc(String olusturulan, String atlanan) {
+    return 'تم إنشاء $olusturulan عدادًا وتجاهل $atlanan وحدة.';
+  }
+
+  @override
+  String get tnmAlanEvrakSeri => 'سلسلة المستند';
+
+  @override
+  String get tnmAlanEvrakSira => 'رقم المستند';
+
+  @override
+  String get tnmAlanParaBirimi => 'العملة';
+
+  @override
+  String tnmZorunluAlan(String alan) {
+    return '$alan مطلوب';
+  }
+
+  @override
+  String get tnmTipGelir => 'إيراد';
+
+  @override
+  String get tnmTipGider => 'مصروف';
+
+  @override
+  String get tnmTipHerIkisi => 'كلاهما';
+
+  @override
+  String get tnmDagitimEsit => 'بالتساوي بين الوحدات';
+
+  @override
+  String get tnmDagitimTipeGore => 'حسب نوع الوحدة';
+
+  @override
+  String get tnmYonBorc => 'مدين';
+
+  @override
+  String get tnmYonAlacak => 'دائن';
+
+  @override
+  String get tnmSayacSu => 'مياه';
+
+  @override
+  String get tnmSayacElektrik => 'كهرباء';
+
+  @override
+  String get tnmSayacDogalgaz => 'غاز طبيعي';
+
+  @override
+  String get tnmSayacIsi => 'تدفئة';
+
+  @override
+  String get tnmSayacDiger => 'أخرى';
+
+  @override
+  String get tnmSecilmedi => 'غير محدد';
+
+  @override
+  String get tnmDuzenle => 'تعديل';
+
+  @override
+  String get tnmSilBaslik => 'حذف السجل';
+
+  @override
+  String tnmSilOnay(String ad) {
+    return 'هل تريد حذف \"$ad\"؟ لا يمكن التراجع عن ذلك.';
+  }
+
+  @override
+  String get tnmSilKullanimda =>
+      'هذا السجل مستخدم في سجلات أخرى ولا يمكن حذفه. يمكنك إلغاء تفعيله بدلًا من ذلك (أوقف \"نشط\").';
+
+  @override
+  String get tnmSilindi => 'تم حذف السجل';
+
+  @override
+  String get tnmKaydedildi => 'تم الحفظ';
+
+  @override
+  String get tnmPasif => 'غير نشط';
+
+  @override
+  String get tnmTarihSec => 'اختر تاريخًا';
+
+  @override
+  String get tnmKategoriDuzenle => 'تعديل الفئة';
+
+  @override
+  String tnmKategoriGuncellendi(String ad) {
+    return 'تم تحديث الفئة: $ad';
+  }
+
+  @override
+  String get tnmEvrakSeriIpucu => 'من 1 إلى 5 أحرف كبيرة (مثل ABC)';
+
+  @override
+  String get bthBaslik => 'أهداف الميزانية';
+
+  @override
+  String get bthAc => 'الأهداف';
+
+  @override
+  String bthYil(int yil) {
+    return 'السنة: $yil';
+  }
+
+  @override
+  String get bthOncekiYil => 'السنة السابقة';
+
+  @override
+  String get bthSonrakiYil => 'السنة التالية';
+
+  @override
+  String get bthKarsilastirma => 'الهدف والفعلي';
+
+  @override
+  String get bthHedef => 'الهدف';
+
+  @override
+  String get bthGerceklesen => 'الفعلي';
+
+  @override
+  String get bthSapma => 'الانحراف';
+
+  @override
+  String bthToplamGelir(String hedef, String gercek) {
+    return 'الإيرادات — الهدف $hedef، الفعلي $gercek';
+  }
+
+  @override
+  String bthToplamGider(String hedef, String gercek) {
+    return 'المصروفات — الهدف $hedef، الفعلي $gercek';
+  }
+
+  @override
+  String get bthYazilanlar => 'الأهداف المحددة';
+
+  @override
+  String get bthYillik => 'سنوي';
+
+  @override
+  String get bthYeni => 'تحديد هدف';
+
+  @override
+  String get bthTur => 'نوع الإيراد/المصروف';
+
+  @override
+  String get bthDonem => 'الفترة';
+
+  @override
+  String get bthTutar => 'المبلغ المستهدف (₺)';
+
+  @override
+  String get bthAciklama => 'ملاحظة (اختياري)';
+
+  @override
+  String get bthGuncellemeNotu =>
+      'إعادة تحديد هدف لنفس النوع والفترة تُحدّث الهدف السابق.';
+
+  @override
+  String get bthKaydedildi => 'تم حفظ الهدف';
+
+  @override
+  String get bthSilBaslik => 'حذف الهدف';
+
+  @override
+  String bthSilOnay(String tur, String donem, String tutar) {
+    return 'حذف الهدف $tur · $donem · $tutar؟ لا يتغير أي قيد محاسبي.';
+  }
+
+  @override
+  String get bthSil => 'حذف';
+
+  @override
+  String get bthSilindi => 'تم حذف الهدف';
+
+  @override
+  String get bthBos => 'لا أهداف لهذه السنة';
+
+  @override
+  String get bthBosRehber =>
+      'اضغط \"تحديد هدف\" لتعيين هدف سنوي أو شهري لنوع إيراد أو مصروف.';
+
+  @override
+  String get bthTurYok => 'أضف أولًا نوع إيراد/مصروف من تبويب الفئات.';
+
+  @override
+  String get rprAciklamalar => 'إظهار الأوصاف';
+
+  @override
+  String get rprBaslangic => 'من';
+
+  @override
+  String get rprBaslangicAy => 'شهر البداية';
+
+  @override
+  String get rprBaslangicYil => 'سنة البداية';
+
+  @override
+  String get rprBitis => 'إلى';
+
+  @override
+  String get rprBitisAy => 'شهر النهاية';
+
+  @override
+  String get rprBitisYil => 'سنة النهاية';
+
+  @override
+  String get rprBlok => 'المبنى';
+
+  @override
+  String get rprBolum => 'القسم';
+
+  @override
+  String get rprCalismaNakit => 'النقد';
+
+  @override
+  String get rprCalismaSekli => 'أساس المحاسبة';
+
+  @override
+  String get rprCalismaTahakkuk => 'الاستحقاق';
+
+  @override
+  String get rprDaire => 'الوحدة';
+
+  @override
+  String get rprEkstreDetay => 'مفصل';
+
+  @override
+  String get rprEkstreOzet => 'ملخص';
+
+  @override
+  String get rprEkstreTuru => 'نوع الكشف';
+
+  @override
+  String get rprEvrakBilgisi => 'إظهار بيانات المستند';
+
+  @override
+  String get rprEvrakFatura => 'فاتورة';
+
+  @override
+  String get rprEvrakMakbuz => 'إيصال';
+
+  @override
+  String get rprEvrakTipi => 'نوع المستند';
+
+  @override
+  String get rprFirma => 'الشركة';
+
+  @override
+  String get rprGrupla => 'تجميع الصفوف';
+
+  @override
+  String get rprIcradakiler => 'إظهار ملفات التنفيذ';
+
+  @override
+  String get rprIletisimGoster => 'إظهار بيانات الاتصال';
+
+  @override
+  String get rprImza => 'إضافة حقل التوقيع';
+
+  @override
+  String get rprIsBekliyor => 'في الانتظار';
+
+  @override
+  String get rprIsHata => 'فشل';
+
+  @override
+  String get rprIsHazir => 'جاهز';
+
+  @override
+  String get rprIsmiGoster => 'عمود الاسم';
+
+  @override
+  String get rprIsUretiliyor => 'قيد الإنشاء';
+
+  @override
+  String get rprKasa => 'الصندوق';
+
+  @override
+  String get rprKatDokumler => 'المستندات';
+
+  @override
+  String get rprKatEkstreler => 'الكشوف';
+
+  @override
+  String get rprKatListeler => 'القوائم';
+
+  @override
+  String get rprKisi => 'الشخص';
+
+  @override
+  String get rprListelemeTipi => 'نوع القائمة';
+
+  @override
+  String get rprMaxTutar => 'أقصى مبلغ';
+
+  @override
+  String get rprMinTutar => 'أقل مبلغ';
+
+  @override
+  String get rprOlusturan => 'أنشأه';
+
+  @override
+  String get rprPersonel => 'الموظف';
+
+  @override
+  String get rprSiraAd => 'الاسم الكامل';
+
+  @override
+  String get rprSiraBakiye => 'الرصيد';
+
+  @override
+  String get rprSiraDaire => 'رقم الوحدة';
+
+  @override
+  String get rprSiralama => 'الترتيب';
+
+  @override
+  String get rprTanim => 'نوع الدخل/المصروف';
+
+  @override
+  String get rprTanimlar => 'أنواع التحميل';
+
+  @override
+  String get rprTazminatTarihi => 'تاريخ الغرامة';
+
+  @override
+  String get rprTipAlacakli => 'الدائنون';
+
+  @override
+  String get rprTipBorclu => 'المدينون';
+
+  @override
+  String get rprAgirUyari =>
+      'يمسح هذا التقرير الدفتر بالكامل. تُدرج طلبات PDF/Excel في قائمة الانتظار ويمكن تنزيلها من القائمة أدناه عند جاهزيتها.';
+
+  @override
+  String get rprAlt => 'اختر تقريرًا من الفهرس، اعرضه أو نزّله';
+
+  @override
+  String get rprExcel => 'Excel';
+
+  @override
+  String get rprGoster => 'عرض';
+
+  @override
+  String get rprHepsi => 'الكل';
+
+  @override
+  String get rprIndirildi => 'تم تنزيل التقرير.';
+
+  @override
+  String get rprIsAdi => 'التقرير';
+
+  @override
+  String get rprIsBicim => 'الصيغة';
+
+  @override
+  String get rprIsIndir => 'تنزيل';
+
+  @override
+  String get rprIslerim => 'مهام تقاريري';
+
+  @override
+  String get rprIsYok => 'لا توجد تقارير في قائمة الانتظار.';
+
+  @override
+  String get rprIsYokAlt => 'اطلب إخراج PDF أو Excel لتقرير ثقيل ليظهر هنا.';
+
+  @override
+  String get rprIsZaman => 'وقت الطلب';
+
+  @override
+  String get rprKatalogHata => 'تعذّر تحميل فهرس التقارير.';
+
+  @override
+  String get rprKuyrugaAlindi => 'تمت إضافة التقرير إلى قائمة الانتظار.';
+
+  @override
+  String get rprPdf => 'PDF';
+
+  @override
+  String get rprSatirYok => 'لا توجد صفوف';
+
+  @override
+  String get rprSatirYokAlt => 'لا يوجد سجل يطابق المعايير المحددة.';
+
+  @override
+  String get rprYokAlt => 'لا يوجد تقرير معرّف على الخادم.';
+
+  @override
+  String get rprKatalog => 'فهرس التقارير';
+
+  @override
+  String get rprIcraBaslik => 'ملفات التنفيذ';
+
+  @override
+  String get rprIcraDosyaNo => 'رقم الملف';
+
+  @override
+  String get rprIcraBorclu => 'المدين';
+
+  @override
+  String get rprIcraAcikBorc => 'الدين المستحق';
+
+  @override
+  String get rprIcraAvukat => 'المحامي';
+
+  @override
+  String get rprIcraVerisTarihi => 'تاريخ التقديم';
+
+  @override
+  String get rprIcraAciklama => 'ملاحظات';
+
+  @override
+  String get rprIcraDurum => 'الحالة';
+
+  @override
+  String get rprIcraDurumHepsi => 'الكل';
+
+  @override
+  String get rprIcraKayitYok => 'لا توجد ملفات تنفيذ.';
+
+  @override
+  String get rprIcraDurumbaginiz => 'الحجز';
+
+  @override
+  String get rprIcraDurumbeklemede => 'قيد الانتظار';
+
+  @override
+  String get rprIcraDurumavukatta => 'لدى المحامي';
+
+  @override
+  String get rprIcraDurummahkemede => 'في إجراءات المحكمة';
+
+  @override
+  String get rprIcraDurumkapandi => 'مغلق';
+
+  @override
+  String get rprAylikOzet => 'الملخص الشهري';
+
+  @override
+  String get rprSekmeKatalog => 'الفهرس';
+
+  @override
+  String rprIsHazirBildirim(String ad) {
+    return 'التقرير جاهز: $ad';
+  }
+
+  @override
+  String get rprAgirUyariMobil =>
+      'يفحص هذا التقرير الدفتر بالكامل. تُوضع طلبات PDF/Excel في قائمة الانتظار؛ وعند جاهزيتها شاركها من علامة تبويب مهامي.';
+
+  @override
+  String get rprKatalogBosAlt =>
+      'لا توجد تقارير معرّفة على الخادم؛ أبلغ المسؤول.';
+
+  @override
+  String get rprIcraBosAlt =>
+      'تُفتح ملفات التنفيذ من لوحة الويب، وتظهر هنا بعد فتحها.';
+
+  @override
+  String get dntBaslik => 'التدقيق';
+
+  @override
+  String get dntAlt =>
+      'للقراءة فقط: التقارير والشفافية والتنفيذ والصيانة. لا يمكن إجراء تغييرات.';
+
+  @override
+  String get sdgDonguYeni => 'تعريف تناوب جديد…';
+
+  @override
+  String get sdgDonguAd => 'اسم التناوب';
+
+  @override
+  String get sdgDonguDilimler => 'فترات الوردية';
+
+  @override
+  String get sdgDonguDilimAd => 'اسم الفترة';
+
+  @override
+  String get sdgDonguDilimEkle => 'إضافة فترة';
+
+  @override
+  String get sdgDonguAdimlar => 'خطوات التناوب';
+
+  @override
+  String get sdgDonguAdimDilim => 'الفترة / الراحة';
+
+  @override
+  String get sdgDonguTatil => 'راحة';
+
+  @override
+  String get sdgDonguGunSayisi => 'عدد الأيام';
+
+  @override
+  String get sdgDonguDuzen => 'النمط';
+
+  @override
+  String get sdgDonguHerGun => 'كل يوم';
+
+  @override
+  String get sdgDonguGunAsiri => 'يوم بعد يوم (12/36)';
+
+  @override
+  String get sdgDonguAdimEkle => 'إضافة خطوة';
+
+  @override
+  String sdgDonguUzunluk(int n) {
+    return 'دورة من $n يوم';
+  }
+
+  @override
+  String get sdgDonguKaydet => 'حفظ التناوب';
+
+  @override
+  String get sdgDonguKaydedildi => 'تم حفظ التناوب.';
+
+  @override
+  String get sdgVardiyaBaslangicSaati => 'وقت البدء';
+
+  @override
+  String get sdgVardiyaBitisSaati => 'وقت الانتهاء';
+
+  @override
+  String get sdgAc => 'تعريف دورة مخصصة';
+
+  @override
+  String get sdgBlokSil => 'إزالة الخطوة';
+
+  @override
+  String get sdgDilimSil => 'إزالة الفترة';
+
+  @override
+  String get sdgSinirAsildi => 'يمكن أن تكون الدورة 84 يومًا كحد أقصى.';
+
+  @override
+  String get fdzIslemler => 'إجراء';
+
+  @override
+  String get fdzIslemSec => 'أي إجراء؟';
+
+  @override
+  String get fdzVirman => 'تحويل';
+
+  @override
+  String get fdzTopluTahsilat => 'تحصيل جماعي';
+
+  @override
+  String get fdzAcilis => 'قيد افتتاحي';
+
+  @override
+  String get fdzIptalEt => 'إلغاء';
+
+  @override
+  String get fdzIptalBaslik => 'إلغاء الحركة (قيد عكسي)';
+
+  @override
+  String get fdzIptalSonuc =>
+      'لا يُحذف السجل؛ يُضاف قيد عكسي. لا يمكن التراجع عن الإلغاء.';
+
+  @override
+  String get fdzIptalVirmanNotu => 'يُعكس سطرا التحويل معًا.';
+
+  @override
+  String get fdzIptalEdildi => 'أُلغيت الحركة (قيد عكسي)';
+
+  @override
+  String get fdzIade => 'استرداد';
+
+  @override
+  String get fdzIadeTutarIpucu => 'إن تُرك فارغًا: كامل المبلغ المتبقي';
+
+  @override
+  String get fdzIadeSonuc =>
+      'يخرج الاسترداد من الصندوق. للتراجع يُلغى الاسترداد (مع سبب).';
+
+  @override
+  String get fdzIadeYapildi => 'سُجّل الاسترداد';
+
+  @override
+  String get fdzGeriAl => 'تراجع';
+
+  @override
+  String get fdzGeriAlBaslik => 'التراجع عن الإجراء';
+
+  @override
+  String get fdzGeriAlSonuc => 'يُكتب قيد عكسي. لا يمكن التراجع عن التراجع.';
+
+  @override
+  String get fdzGeriAlindi => 'تم التراجع';
+
+  @override
+  String get fdzKaynakKasa => 'الصندوق المصدر';
+
+  @override
+  String get fdzHedefKasa => 'الصندوق الهدف';
+
+  @override
+  String get fdzVirmanSonuc =>
+      'يُكتب سطران (خروج + دخول). للتراجع يُلغى التحويل (مع سبب).';
+
+  @override
+  String get fdzVirmanYapildi => 'سُجّل التحويل';
+
+  @override
+  String get fdzAyniKasa => 'لا يمكن أن يكون الصندوقان نفس الصندوق.';
+
+  @override
+  String get fdzYon => 'الاتجاه';
+
+  @override
+  String get fdzYonGiris => 'دخول (يزيد الرصيد)';
+
+  @override
+  String get fdzYonCikis => 'خروج (ينقص الرصيد)';
+
+  @override
+  String get fdzAcilisSonuc =>
+      'يُسجّل في الرصيد الافتتاحي. للتراجع يُلغى القيد (مع سبب).';
+
+  @override
+  String get fdzAcilisYapildi => 'سُجّل القيد الافتتاحي';
+
+  @override
+  String get fdzTopluSonuc =>
+      'تُسجّل تحصيلات مع إيصالات للوحدات المحددة. للتراجع تُلغى (مع سبب).';
+
+  @override
+  String get fdzFaizAffi => 'إعفاء الفوائد';
+
+  @override
+  String get fdzFaizAffiSonuc =>
+      'تُعفى بنود الفوائد المفتوحة بقيد عكسي. لا يمكن التراجع.';
+
+  @override
+  String get fdzOdemePlani => 'خطة سداد';
+
+  @override
+  String get fdzTaksitSayisi => 'عدد الأقساط (2–36)';
+
+  @override
+  String get fdzIlkVade => 'أول استحقاق';
+
+  @override
+  String get fdzSecimToplami => 'إجمالي الدين المحدد';
+
+  @override
+  String get fdzDurumOdendi => 'مدفوع';
+
+  @override
+  String get fdzDurumBekliyor => 'قيد الانتظار';
+
+  @override
+  String fdzPlanSonuc(int n) {
+    return 'تُوزّع استحقاقات الديون المفتوحة على $n أشهر؛ لا يُنشأ دين جديد. لا يمكن التراجع لكن يمكن استبدالها بخطة جديدة.';
+  }
+
+  @override
+  String fdzPlanUygulandi(int n) {
+    return 'طُبّقت الخطة على $n وحدات';
+  }
+
+  @override
+  String fdzTopluYapildi(int n) {
+    return 'سُجّل $n تحصيلات';
+  }
+
+  @override
+  String fdzFaizAffedildi(int n, String tutar) {
+    return 'أُعفي $n من بنود الفوائد ($tutar)';
+  }
+
+  @override
+  String fdzDaireler(int n, String daireler) {
+    return '$n وحدات: $daireler';
+  }
+
+  @override
+  String get fdzDurumEtiketi => 'الحالة';
+
+  @override
+  String get dsyDosyaSec => 'ملف (PDF)';
+
+  @override
+  String get brcKalemAidat => 'رسوم';
+
+  @override
+  String get brcKalemDemirbas => 'المعدات';
+
+  @override
+  String get brcKalemOlaganustu => 'استثنائي';
+
+  @override
+  String get brcKalemSayac => 'العداد';
+
+  @override
+  String get brcKalemFaiz => 'فائدة التأخير';
+
+  @override
+  String get brcKalemDiger => 'أخرى';
+
+  @override
+  String get brcDagitimDaireBasina => 'مبلغ ثابت لكل وحدة';
+
+  @override
+  String get brcDagitimEsit => 'توزيع الإجمالي بالتساوي';
+
+  @override
+  String get brcDagitimArsaPayi => 'توزيع الإجمالي حسب حصة الأرض';
+
+  @override
+  String get brcDagitimMetrekare => 'توزيع الإجمالي حسب المساحة';
+
+  @override
+  String get brcAtlamaArsaPayi => 'لم تُدخل حصة الأرض';
+
+  @override
+  String get brcAtlamaMetrekare => 'لم تُدخل المساحة';
+
+  @override
+  String get brcAtlamaTip => 'لا يوجد مبلغ افتراضي لنوع الوحدة';
+
+  @override
+  String get brcAtlamaCarpisma => 'يوجد بالفعل دين من هذا النوع لهذه الفترة';
+
+  @override
+  String get brcAtlamaTutar => 'تعذّر تحديد المبلغ';
+
+  @override
+  String get brcYontemElden => 'نقدًا';
+
+  @override
+  String get brcYontemHavale => 'تحويل بنكي';
+
+  @override
+  String get brcYontemKart => 'بطاقة';
+
+  @override
+  String get brcYontemDiger => 'أخرى';
+
+  @override
+  String get brcDaireSec => 'اختر وحدة';
+
+  @override
+  String get brcTurSec => 'اختر نوعًا';
+
+  @override
+  String get brcTutarGecersiz => 'أدخل مبلغًا صالحًا';
+
+  @override
+  String get brcOnayBaslik => 'تأكيد الدين';
+
+  @override
+  String brcDonem(String donem) {
+    return 'الفترة $donem';
+  }
+
+  @override
+  String get brcOnaySonuc => 'لا يُحذف الدين؛ إن كان خاطئًا يُصحَّح بقيد عكسي.';
+
+  @override
+  String get brcKaydet => 'تسجيل الدين';
+
+  @override
+  String get brcKaydedildi => 'تم حفظ الدين';
+
+  @override
+  String get brcTekil => 'تسجيل دين لوحدة واحدة';
+
+  @override
+  String get brcDaire => 'الوحدة';
+
+  @override
+  String get brcTur => 'النوع';
+
+  @override
+  String brcTarihDegeri(String tarih) {
+    return 'التاريخ: $tarih';
+  }
+
+  @override
+  String get brcSonOdemeYok => 'لا يوجد تاريخ استحقاق';
+
+  @override
+  String brcSonOdemeDegeri(String tarih) {
+    return 'الاستحقاق: $tarih';
+  }
+
+  @override
+  String get brcTutar => 'المبلغ (₺)';
+
+  @override
+  String get brcAciklama => 'الوصف';
+
+  @override
+  String get brcGecikmeUygula => 'تطبيق فائدة التأخير';
+
+  @override
+  String get brcFaiz => 'فائدة التأخير';
+
+  @override
+  String brcFaizOnayHedef(int n, String donem) {
+    return '$n ديون · فائدة التأخير · $donem';
+  }
+
+  @override
+  String get brcFaizOnaySonuc =>
+      'تُسجَّل الفائدة كبنود دين جديدة؛ وإن كانت خاطئة يُصحَّح كل بند بقيد عكسي.';
+
+  @override
+  String get brcFaizIsle => 'تسجيل الفائدة';
+
+  @override
+  String brcFaizIslendi(int n) {
+    return 'تم تسجيل $n من بنود الفائدة';
+  }
+
+  @override
+  String get brcFaizKapali =>
+      'فائدة التأخير معطّلة في هذا الموقع (الأتمتة › إعداد التأخير).';
+
+  @override
+  String get brcFaizYok => 'لا توجد فائدة تأخير لتسجيلها في هذه الفترة.';
+
+  @override
+  String brcFaizIslenecek(int n, String tutar) {
+    return 'سيُسجَّل إجمالي فائدة $tutar لـ $n من الديون.';
+  }
+
+  @override
+  String get brcToplu => 'تسجيل ديون جماعي';
+
+  @override
+  String get brcBlokSec => 'اختر مبنى';
+
+  @override
+  String brcTopluOnayHedef(int n, String tur, String donem) {
+    return '$n وحدات · $tur · $donem';
+  }
+
+  @override
+  String get brcTopluOnaySonuc =>
+      'بعد ذلك يمكن التراجع عنه دفعة واحدة بقيود عكسية من شاشة النتيجة؛ ولا يُتراجع عن السطور المدفوعة.';
+
+  @override
+  String get brcTopluIsle => 'تسجيل الديون';
+
+  @override
+  String brcAdim(int n, int toplam) {
+    return 'الخطوة $n/$toplam';
+  }
+
+  @override
+  String get brcGeri => 'رجوع';
+
+  @override
+  String get brcIleri => 'التالي';
+
+  @override
+  String get brcAdimNe => 'ما الذي يُسجَّل كدين؟';
+
+  @override
+  String get brcAdimNeKadar => 'كم المبلغ؟';
+
+  @override
+  String get brcAdimKime => 'لمن؟';
+
+  @override
+  String get brcAdimOnizleme => 'معاينة';
+
+  @override
+  String get brcAdimOnay => 'التأكيد';
+
+  @override
+  String get brcKalemTipi => 'نوع البند';
+
+  @override
+  String get brcTutarDaireBasina =>
+      'المبلغ لكل وحدة (₺) — فارغ = مبلغ نوع الوحدة';
+
+  @override
+  String get brcTutarToplam => 'الإجمالي المراد توزيعه (₺)';
+
+  @override
+  String get brcKapsamTumu => 'جميع الوحدات';
+
+  @override
+  String get brcKapsamBlok => 'مبنى واحد';
+
+  @override
+  String get brcKapsamSecili => 'الوحدات التي أختارها';
+
+  @override
+  String brcSeciliSayi(int n) {
+    return 'تم اختيار $n وحدات';
+  }
+
+  @override
+  String get brcTumunuSec => 'تحديد الكل';
+
+  @override
+  String brcOnizlemeIslenecek(int n) {
+    return 'سيُسجَّل دين على $n وحدات';
+  }
+
+  @override
+  String brcOnizlemeToplam(String tutar) {
+    return 'الإجمالي $tutar';
+  }
+
+  @override
+  String brcOnizlemeAtlanacak(int n) {
+    return 'سيتم تخطي $n وحدات';
+  }
+
+  @override
+  String brcOnizlemeHedefsiz(int n) {
+    return 'في $n وحدات سيُسجَّل الدين على الوحدة لا على شخص (لا يوجد مالك مسجّل)';
+  }
+
+  @override
+  String get brcEnYuksek => 'أعلى 5';
+
+  @override
+  String get brcEnDusuk => 'أدنى 5';
+
+  @override
+  String brcTopluOlustu(int n) {
+    return 'تم تسجيل الدين على $n وحدات';
+  }
+
+  @override
+  String get brcTopluOlusmadi => 'لم يُسجَّل أي دين — تحقق من الفترة أو النوع.';
+
+  @override
+  String get brcAtlananlar => 'تم تخطيها';
+
+  @override
+  String get brcTersKayit => 'تصحيح بقيد عكسي';
+
+  @override
+  String get brcTersKayitSonuc =>
+      'لا يُحذف السجل؛ يُضاف قيد عكسي. لا يمكن التراجع عن ذلك.';
+
+  @override
+  String get brcTersKayitYapildi => 'تم تسجيل القيد العكسي';
+
+  @override
+  String get brcDonemEtiket => 'الفترة';
+
+  @override
+  String get brcSonOdemeEtiket => 'تاريخ الاستحقاق';
+
+  @override
+  String get brcGecikme => 'التأخير';
+
+  @override
+  String get brcDuzeltme => 'قيد تصحيح';
+
+  @override
+  String get brcDuzeltildi => 'تم التصحيح';
+
+  @override
+  String get brcDaireBorcu => 'حالة الدين';
+
+  @override
+  String get brcToplamTahakkuk => 'إجمالي الديون';
+
+  @override
+  String get brcToplamOdenen => 'إجمالي المدفوع';
+
+  @override
+  String get brcBakiye => 'الرصيد';
+
+  @override
+  String get brcBorclandir => 'تسجيل دين';
+
+  @override
+  String get brcOdemeKaydet => 'تسجيل دفعة';
+
+  @override
+  String get brcTahakkuklar => 'بنود الدين';
+
+  @override
+  String get brcTahakkukYok => 'لا توجد بنود دين بعد';
+
+  @override
+  String get brcOdemeler => 'المدفوعات';
+
+  @override
+  String get brcOdemeYok => 'لا توجد مدفوعات بعد';
+
+  @override
+  String get brcOdemeOnaySonuc =>
+      'تدخل الدفعة إلى الصندوق؛ وإن كانت خاطئة تُصحَّح بالاسترداد أو الإلغاء من الدفتر.';
+
+  @override
+  String get brcOdemeKaydedildi => 'تم تسجيل الدفعة';
+
+  @override
+  String get brcYontem => 'الطريقة';
+
+  @override
+  String get brcOdenenKalem => 'بند الدين المدفوع';
+
+  @override
+  String get brcKalemSecimsiz => 'ليس بندًا محددًا';
+
+  @override
+  String get brcDonemAlan => 'الفترة (YYYY-MM)';
+
+  @override
+  String get brcMakbuzNo => 'رقم الإيصال';
+
+  @override
+  String get brcYok => 'لا توجد ديون بعد';
+
+  @override
+  String get rprGorevGecmisi => 'سجل المهام';
+
+  @override
+  String get rprGorev => 'المهمة';
+
+  @override
+  String get rprTabloTip => 'النوع';
+
+  @override
+  String get rprTabloTamamlayan => 'أنجزها';
+
+  @override
+  String get rprTabloZaman => 'الوقت';
+
+  @override
+  String get rprTabloFoto => 'صورة';
+
+  @override
+  String get rprTabloNfc => 'NFC';
+
+  @override
+  String get rprNot => 'ملاحظة';
+
+  @override
+  String get rprVar => 'نعم';
+
+  @override
+  String get rprYok => 'لا';
+
+  @override
+  String get rprCsvPaylas => 'مشاركة CSV';
+
+  @override
+  String get rprBolumDisaAktarim => 'التصدير';
+
+  @override
+  String get rprGorevGecmisiAlt =>
+      'المهام المكتملة في النطاق المحدد (نفس أعمدة ملف CSV على الويب).';
+
+  @override
+  String get rprEvet => 'نعم';
+
+  @override
+  String get rprHayir => 'لا';
+
+  @override
+  String get harKapali =>
+      'الخريطة غير متاحة حاليًا؛ يمكنك اختيار الموقع عبر البحث عن العنوان.';
+
+  @override
+  String get harYuklenemedi => 'تعذّر تحميل الخريطة';
+
+  @override
+  String get harOsmAtif => 'Protomaps © مساهمو OpenStreetMap';
+
+  @override
+  String get harTesisKonumu => 'موقع المنشأة';
+
+  @override
+  String get harYerAdi => 'اسم المكان (المنطقة، الحي)';
+
+  @override
+  String get harAra => 'بحث';
+
+  @override
+  String get harAramaHata =>
+      'البحث عن العنوان غير متاح الآن؛ حاول مرة أخرى بعد قليل.';
+
+  @override
+  String get harSonucYok =>
+      'لم يُعثر على مكان بهذا الاسم؛ جرّب اسم منطقة أو محافظة.';
+
+  @override
+  String get harIgneIpucu =>
+      'حرّك الخريطة أو اضغط عليها ليقع الدبوس على المبنى، ثم اضغط حفظ.';
+
+  @override
+  String harSecili(String ad, String lat, String lon) {
+    return 'المحدد: $ad ($lat، $lon)';
+  }
+
+  @override
+  String get brcPartiGeriAl => 'التراجع عن التحميل الجماعي';
+
+  @override
+  String get brcPartiGeriAlSonuc =>
+      'يُغلق كل تحميل بقيد عكسي؛ لا يُحذف شيء. التحميلات المدفوعة لا يُتراجع عنها وتُدرج.';
+
+  @override
+  String brcPartiGeriAlindi(int n) {
+    return 'تم عكس $n من التحميلات';
+  }
+
+  @override
+  String get brcAtlamaOdenmis => 'مدفوع بالفعل، صحّحه بشكل منفرد';
+
+  @override
+  String get brcAtlamaZatenTersKayitli => 'مصحّح بالفعل';
+
+  @override
+  String get rprKesildi =>
+      'بلغ عدد السجلات الحد الأقصى — قد يكون التقرير ناقصاً. ضيّق النطاق الزمني.';
 }

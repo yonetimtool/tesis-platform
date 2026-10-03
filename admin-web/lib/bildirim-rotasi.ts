@@ -47,6 +47,8 @@ export const BILDIRIM_ROTALARI: Record<string, string> = {
   sikayet_cozuldu: "/complaints",
   // (P253 §D) Yalniz SIKAYET EDENE gider (sakin) — `sikayet_cozuldu`nun
   // sakin hedefiyle ayni ekran.
+  // (P253 A2) Kuyruktaki rapor bitti — isteyen kisinin rapor isleri.
+  rapor_hazir: "/raporlar",
   sikayet_asilsiz: "/taleplerim",
   sikayet_sinirlama: "/taleplerim",
   // (P240) Panik / akilli ev / entegrasyon.

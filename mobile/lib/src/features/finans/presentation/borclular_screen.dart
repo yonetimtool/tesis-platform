@@ -27,6 +27,7 @@ import '../../../core/i18n/l10n.dart';
 import '../../otomasyon/presentation/otomasyon_kurallari_screen.dart';
 import '../data/finans_api.dart';
 import '../domain/finans_models.dart';
+import 'finans_duzeltme.dart';
 import 'tahsilat_screen.dart' show borclularProvider;
 
 final tahsilatGostergesiProvider =
@@ -65,6 +66,27 @@ class _BorclularScreenState extends ConsumerState<BorclularScreen> {
       setState(() => _gonderiyor = false);
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
+    }
+  }
+
+  /// (P253 A2) Secili borclular — eylemler (faiz affi, plan, toplu
+  /// tahsilat) bu listeyle calisir; secim kova degisince temizlenir.
+  List<Borclu> _seciliBorclular() {
+    final y = ref.read(borclularProvider).value;
+    if (y == null) return const [];
+    return [
+      for (final k in y.kovalar)
+        for (final b in k.borclular)
+          if (_secili.contains(b.unitId)) b,
+    ];
+  }
+
+  Future<void> _eylem(Future<bool> Function(List<Borclu> secili) is_) async {
+    final secili = _seciliBorclular();
+    if (secili.isEmpty) return;
+    if (await is_(secili) && mounted) {
+      setState(_secili.clear);
+      ref.invalidate(borclularProvider);
     }
   }
 
@@ -212,6 +234,36 @@ class _BorclularScreenState extends ConsumerState<BorclularScreen> {
       // TOPLU HATIRLATMA: secim VARKEN gorunur. Bos secimle basilabilen
       // bir dugme, hicbir sey yapmayip kullaniciyi "gitti mi" diye
       // birakirdi.
+      // (P253 A2) Secim varken finans eylemleri — §C diyalogundan gecer.
+      bottomNavigationBar: _secili.isEmpty
+          ? null
+          : SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    OutlinedButton(
+                      key: const Key('borclular-toplu-tahsilat'),
+                      onPressed: () => _eylem((s) => topluTahsilatYap(context, ref, s,
+                          onDegisti: () => ref.invalidate(borclularProvider))),
+                      child: Text(l10n.fdzTopluTahsilat),
+                    ),
+                    OutlinedButton(
+                      key: const Key('borclular-faiz-affi'),
+                      onPressed: () => _eylem((s) => faizAffet(context, ref, s)),
+                      child: Text(l10n.fdzFaizAffi),
+                    ),
+                    OutlinedButton(
+                      key: const Key('borclular-odeme-plani'),
+                      onPressed: () => _eylem((s) => odemePlaniUygula(context, ref, s)),
+                      child: Text(l10n.fdzOdemePlani),
+                    ),
+                  ],
+                ),
+              ),
+            ),
       floatingActionButton: _secili.isEmpty
           ? null
           : FloatingActionButton.extended(

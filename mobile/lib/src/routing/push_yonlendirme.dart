@@ -191,6 +191,9 @@ String? _hamHedef(Map<String, String> data, UserRole? role) {
       final taban = sakin ? AppRoutes.sikayetlerim : AppRoutes.complaints;
       final id = data['complaint_id'];
       return id == null || id.isEmpty ? taban : '$taban?complaint_id=$id';
+    case 'rapor_hazir':
+      // (P253 A2) Kuyruktaki rapor bitti — isteyenin Islerim sekmesi.
+      return '${AppRoutes.reports}?sekme=isler';
     case 'sikayet_asilsiz':
     case 'sikayet_sinirlama':
       // (P253 §D) Yalniz SIKAYET EDENE gider: karar ve gerekce kendi

@@ -4064,4 +4064,11 @@ export const de: Sozluk = {
   haritaKaroDili: "de",
   haritaKapali: "Die Karte ist derzeit nicht verfügbar; Sie können den Standort über die Adresssuche wählen.",
   konumIgneIpucu: "Ziehen Sie die Nadel oder tippen Sie auf die Karte, um den Standort auf das Gebäude zu setzen.",
+  bildirimTipRaporHazir: "Bericht fertig",
+  finansSonPartiOzet: "Letzte Sammelbelastung: {adet} Einheiten · {donem}",
+  finansPartiGeriAl: "Sammelbelastung rückgängig machen",
+  finansPartiGeriAlOnay: "Jede der {adet} Belastungen für {donem} wird durch eine Gegenbuchung geschlossen. Datensätze werden nicht gelöscht; bereits bezahlte Belastungen werden nicht rückgängig gemacht und Ihnen gemeldet.",
+  finansPartiGeriAlindi: "{adet} Belastungen storniert",
+  finansAtlamaOdenmis: "bereits bezahlt, einzeln korrigieren",
+  finansAtlamaZatenTersKayitli: "bereits korrigiert",
 };

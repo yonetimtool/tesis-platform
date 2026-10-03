@@ -7,6 +7,7 @@ import '../../../core/i18n/l10n.dart';
 import '../../../core/error/api_exception.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../../auth/domain/user_role.dart';
+import '../../borclandirma/presentation/daire_borc_durumu.dart';
 import '../../unit_complaints/data/unit_complaint_api.dart';
 import '../../unit_complaints/domain/unit_complaint_models.dart';
 import '../../unit_complaints/presentation/kategori_adi.dart';
@@ -648,6 +649,21 @@ class _UnitDetailSheetState extends ConsumerState<_UnitDetailSheet> {
                   icon: const Icon(Icons.add_alert_outlined),
                   label: Text(context.l10n.semaBuDaireyiSikayetEt),
                   onPressed: () => _openFileForm(context),
+                ),
+              ),
+            ],
+            // (P253 Asama 2) DAIRE BORC DURUMU — yalniz yonetim (web daire
+            // ayrintisi ile ayni: ozet, kalemler, odeme kaydi, borclandir).
+            if (notYonetimi) ...[
+              const Divider(),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  key: const Key('sema-borc-durumu'),
+                  style: OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
+                  icon: const Icon(Icons.account_balance_wallet_outlined),
+                  label: Text(context.l10n.brcDaireBorcu),
+                  onPressed: () => daireBorcDurumuAc(context, unitId: u.unitId),
                 ),
               ),
             ],

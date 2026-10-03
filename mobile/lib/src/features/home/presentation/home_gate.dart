@@ -12,7 +12,7 @@ import '../../tenant/presentation/setup_tenant_screen.dart';
 import '../../../routing/splash_screen.dart';
 import '../../kurulum/presentation/ilk_giris_turu.dart';
 import '../../kurulum/presentation/kurulum_hatirlatici.dart';
-import 'denetci_yonlendirme_screen.dart';
+import 'denetci_home_screen.dart';
 import 'resident_home_screen.dart';
 import 'saha_home_screen.dart';
 import 'yonetici_home_screen.dart';
@@ -72,8 +72,10 @@ class HomeGate extends ConsumerWidget {
     // (home_gate)" diyordu; KOD BUNU YAPMIYORDU. Karar dogruydu, uygulamasi
     // eksikti: denetimin isi masabasi isidir ve mobil onun yuzeyi degil —
     // ama bunu SOYLEMEK gerekir, sonsuz bir acilis ekrani gostermek degil.
+    // (P253 Asama 2) Karar degisti: denetci mobilde SALT OKUMA ana ekrani
+    // gorur (raporlar, seffaflik, icra, bakim) — web adresi alt bilgide.
     if (role == UserRole.denetci) {
-      return const DenetciYonlendirmeScreen();
+      return const DenetciHomeScreen();
     }
     // Kalan tek durum `unknown`: rol cozulmeden gecen saniye-alti an.
     if (role != UserRole.yonetici) {

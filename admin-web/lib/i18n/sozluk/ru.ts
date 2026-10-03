@@ -4064,4 +4064,11 @@ export const ru: Sozluk = {
   haritaKaroDili: "ru",
   haritaKapali: "Карта сейчас недоступна; местоположение можно выбрать через поиск адреса.",
   konumIgneIpucu: "Перетащите метку или нажмите на карту, чтобы поставить точку на здание.",
+  bildirimTipRaporHazir: "Отчёт готов",
+  finansSonPartiOzet: "Последнее массовое начисление: {adet} квартир · {donem}",
+  finansPartiGeriAl: "Отменить массовое начисление",
+  finansPartiGeriAlOnay: "Каждое из {adet} начислений за {donem} будет закрыто сторнирующей записью. Записи не удаляются; уже оплаченные начисления не отменяются, о них будет сообщено.",
+  finansPartiGeriAlindi: "Отменено начислений: {adet}",
+  finansAtlamaOdenmis: "уже оплачено, исправьте по отдельности",
+  finansAtlamaZatenTersKayitli: "уже исправлено",
 };

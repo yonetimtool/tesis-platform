@@ -31,8 +31,10 @@ function sunucu(olusan: number, atlananlar: unknown[] = [], hedefsizSayisi = 0) 
   const cagrilar: string[] = [];
   globalThis.fetch = (async (girdi: RequestInfo | URL, init?: RequestInit) => {
     const url = String(girdi);
-    cagrilar.push(`${init?.method ?? "GET"} ${url}`);
-    const govde = url.includes("borclandirma-toplu-onizleme")
+    cagrilar.push(`${init?.method ?? "GET"} ${url}${init?.body ? ` ${String(init.body)}` : ""}`);
+    const govde = url.includes("/api/borclandirma/parti/")
+      ? { geri_alinan: olusan - 1, atlananlar: [{ unit_id: "u1", unit_no: "A-1", neden: "odenmis" }] }
+      : url.includes("borclandirma-toplu-onizleme")
       ? {
           islenecek: 15, atlanacak: 0, toplam_kurus: 150000,
           hedefsiz: hedefsizSayisi,
@@ -42,7 +44,8 @@ function sunucu(olusan: number, atlananlar: unknown[] = [], hedefsizSayisi = 0) 
             : [],
         }
       : url.includes("borclandirma-toplu")
-        ? { created: [], olusan, atlanan: atlananlar.length, atlananlar }
+        ? { created: [], olusan, atlanan: atlananlar.length, atlananlar,
+            parti_id: olusan ? "p-1" : null }
         : url.includes("gelir-gider-tanimlari") || url.includes("tanimlar")
           ? TANIMLAR
           : url.includes("dues-assessments")
@@ -65,7 +68,7 @@ afterEach(() => vi.restoreAllMocks());
 
 describe("(P217 §1) toplu borçlandırma sonucu", () => {
   async function modaliAcVeIsle(olusan: number, atlananlar: unknown[] = []) {
-    sunucu(olusan, atlananlar);
+    const cagrilar = sunucu(olusan, atlananlar);
     ciz(BorclandirmalarPage);
     const k = userEvent.setup();
     await k.click(await screen.findByRole("button", { name: /toplu borçlandırma/i }));
@@ -92,6 +95,7 @@ describe("(P217 §1) toplu borçlandırma sonucu", () => {
       expect(getByRole("button", { name: /^kaydet$/i })).toBeInTheDocument(),
     );
     await k.click(getByRole("button", { name: /^kaydet$/i }));
+    return { cagrilar, k };
   }
 
   it("OLUSTUYSA kac tane oldugunu SOYLER", async () => {
@@ -120,6 +124,25 @@ describe("(P217 §1) toplu borçlandırma sonucu", () => {
     await modaliAcVeIsle(15);
     await screen.findByText(/15 tahakkuk oluşturuldu/i);
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("(P253 §C-4) GERI AL: parti tek istekte, SEBEP ZORUNLU, atlanan soylenir", async () => {
+    const { cagrilar, k } = await modaliAcVeIsle(15);
+    await screen.findByText(/15 tahakkuk oluşturuldu/i);
+    const serit = await screen.findByText(/son toplu borçlandırma: 15 daire/i);
+    expect(serit).toBeInTheDocument();
+    await k.click(screen.getByRole("button", { name: /toplu borçlandırmayı geri al/i }));
+    const diyalog = await screen.findByRole("dialog");
+    const onay = within(diyalog).getByRole("button", { name: /toplu borçlandırmayı geri al/i });
+    expect(onay).toBeDisabled();
+    await k.type(within(diyalog).getByLabelText(/Sebep/), "Yanlış dönem");
+    await k.click(onay);
+    await waitFor(() =>
+      expect(cagrilar.some((c) => c.startsWith("POST /api/borclandirma/parti/p-1/geri-al"))).toBe(true));
+    const istek = cagrilar.find((c) => c.startsWith("POST /api/borclandirma/parti/p-1/geri-al"))!;
+    expect(JSON.parse(istek.split(" ").slice(2).join(" "))).toEqual({ aciklama: "Yanlış dönem" });
+    expect(await screen.findByText(/14 borç ters kayıtla geri alındı/i)).toBeInTheDocument();
+    expect(await screen.findByText(/ödeme almış/i)).toBeInTheDocument();
   });
 });
 

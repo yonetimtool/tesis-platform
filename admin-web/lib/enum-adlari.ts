@@ -42,6 +42,8 @@ export const BILDIRIM_TIP: EnumHarita = {
   sikayet_cozuldu: "bildirimTipSikayetCozuldu",
   // (P253 §D) Sikayet edene: "asilsiz" karari ve gecici sinirlama.
   sikayet_asilsiz: "bildirimTipSikayetAsilsiz",
+  // (P253 A2) Kuyruktaki rapor bitti.
+  rapor_hazir: "bildirimTipRaporHazir",
   sikayet_sinirlama: "bildirimTipSikayetSinirlama",
   // (P181 Bölüm 10.2) Vardiya sonu özeti (batching) — "X/Y nokta okutuldu".
   vardiya_ozeti: "bildirimTipVardiyaOzeti",

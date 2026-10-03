@@ -48,10 +48,13 @@ void main() {
       }
     });
 
-    test('DENETCI icin bolum de YOK (mobil yuzeyi yok)', () {
-      // (P128/P129) Denetcinin mobil menusu bilerek bos; bolumleme buna
-      // "bes bos baslik" eklememeli.
-      expect(homeMenuGruplariForRole(UserRole.denetci), isEmpty);
+    test('DENETCI: yalniz salt okuma bolumleri (P253 Asama 2)', () {
+      // (P253 Asama 2) Denetci mobilde salt okuma yuzeyi kazandi: raporlar,
+      // seffaflik, icra (finans) ve bakim (tesis). Bos bolum CIZILMEZ.
+      final g = homeMenuGruplariForRole(UserRole.denetci);
+      expect(g.keys.map((k) => k.name).toSet(), {'tesis', 'finans'});
+      expect(g.values.expand((x) => x).map((e) => e.name).toSet(),
+          {'reports', 'transparency', 'icra', 'bakim'});
     });
 
     test('YONETICIDE bolum sayisi menuyu GERCEKTEN kisaltiyor', () {

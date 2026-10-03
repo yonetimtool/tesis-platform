@@ -8,7 +8,9 @@
 ///   * sarmalayici: bir islev parametresini `_dio.<metot>(param` olarak
 ///     iletiyorsa (`_liste(String yol)` -> GET), o isleve DIZE argumanla
 ///     yapilan cagrilar o metodu tasir;
-///   * acik metot: `_yaz('PATCH', '/x/$id', ...)`.
+///   * acik metot: `_yaz('PATCH', '/x/$id', ...)`;
+///   * genel defter (P253 Asama 2): `DefterTanimi(... uc: '/x' ...)` →
+///     GET/POST `/x`, PATCH/DELETE `/x/{x}`.
 /// Yol normallestirme web taramasiyla AYNI: parametre `{x}`, sorgu yok.
 library;
 
@@ -133,6 +135,28 @@ List<MobilUcu> mobilUclari({String kok = 'lib'}) {
   final tumu = {for (final f in dosyalar) f.path: f.readAsStringSync()};
   for (final f in dosyalar) {
     final s = tumu[f.path]!;
+    // (P253 Asama 2) GENEL DEFTER: `DefterTanimi(... uc: '/kasalar' ...)`
+    // blogundaki literal uc, genel defter ekraninin YAPABILDIGI dort
+    // islemle acilir (liste, ekle, duzenle, sil) — web `genelAcilim`in
+    // ikizi. Yol degiskenle cagrildigi icin (`_dio.get(uc`) dogrudan
+    // taramaya gorunmez; tanim literal kaldigi surece burasi gorur.
+    for (final m in RegExp(r'\bDefterTanimi\(').allMatches(s)) {
+      var i = m.end;
+      var derinlik = 1;
+      while (i < s.length && derinlik > 0) {
+        if (s[i] == '(') derinlik++;
+        if (s[i] == ')') derinlik--;
+        i++;
+      }
+      final blok = s.substring(m.end, i);
+      final uc = RegExp(r"\buc:\s*'(/[^']*)'").firstMatch(blok)?.group(1);
+      if (uc == null) continue;
+      out.add(MobilUcu('GET', yolNormalle(uc), f.path));
+      out.add(MobilUcu('POST', yolNormalle(uc), f.path));
+      out.add(MobilUcu('PATCH', yolNormalle('$uc/{x}'), f.path));
+      out.add(MobilUcu('DELETE', yolNormalle('$uc/{x}'), f.path));
+    }
+    // Genel defter tanimi dio icermez; kural bu suzgecten ONCE.
     if (!s.contains('dio')) continue;
     // Dosyadaki sabit yollar: `const _uc = '/x'`.
     final sabitler = <String, String>{};

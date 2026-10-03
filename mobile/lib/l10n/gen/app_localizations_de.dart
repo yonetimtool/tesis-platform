@@ -5288,11 +5288,11 @@ class AppLocalizationsDe extends AppLocalizations {
       'Der simulierte Scan konnte nicht erfasst werden.';
 
   @override
-  String get denetciWebBaslik => 'Prüfansichten sind im Web';
+  String get denetciWebBaslik => 'Weiterhin im Web';
 
   @override
   String denetciWebGovde(String adres) {
-    return 'Prüfberichte und Finanzaufsicht sind für den Desktop ausgelegt. Öffnen Sie $adres auf Ihrem Computer.';
+    return 'Überstunden und die anderen für den Desktop gestalteten Prüfansichten sind im Web. Öffnen Sie $adres am Computer.';
   }
 
   @override
@@ -8763,10 +8763,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Konto angelegt; Einladung per E-Mail gesendet.';
 
   @override
-  String get tanimlarWebNotu =>
-      'Kassen, Einnahme-/Ausgabedefinitionen, Firmen, Zähler, Fahrzeuge und Buchhaltungseinstellungen werden am Computer verwaltet.';
-
-  @override
   String bilgisayardanAciklama(String adres) {
     return 'Diese benötigen breite Tabellen und Vorschauen; nutzen Sie $adres.';
   }
@@ -8824,10 +8820,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get tesisAyarKaydedildi => 'Anlageneinstellungen gespeichert.';
-
-  @override
-  String get tesisAyarWebNotu =>
-      'Standort (Karte), Parkkapazität und Schwellenwerte werden am Computer eingestellt.';
 
   @override
   String get yoneticiListeBosAlt =>
@@ -9522,7 +9514,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get dokYukleNot =>
-      'Sie können Fotos vom Telefon hochladen. Für PDFs und andere Dateien nutzen Sie vorerst das Webpanel.';
+      'Fotografieren, aus der Galerie wählen oder ein PDF vom Telefon hochladen (bis 25 MB).';
 
   @override
   String get hatAciklama => 'Notiz (optional)';
@@ -9759,4 +9751,1453 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get hatBosRehber =>
       'Tippen Sie auf \"+\", um sich eine Notiz oder Erinnerung anzulegen.';
+
+  @override
+  String get tsaAyarGrupDevriye => 'Rundgänge und Patrouillen';
+
+  @override
+  String get tsaAyarGrupVardiya => 'Schichten und Sicherheit';
+
+  @override
+  String get tsaAyarGrupGurultu => 'Lärmbeschwerden';
+
+  @override
+  String get tsaAyarGrupFinans => 'Hausgeld und Ausgaben';
+
+  @override
+  String get tsaAyarGrupRezervasyon => 'Reservierungen';
+
+  @override
+  String get tsaAyarGrupOtopark => 'Parkplatz';
+
+  @override
+  String get tsaAyarTurTolerans =>
+      'Alert after how many minutes if a round doesn\'t start';
+
+  @override
+  String get tsaAyarTurToleransIpucu =>
+      'If no scan happens within this time after the round is due, the manager gets an alert.';
+
+  @override
+  String get tsaAyarTurTekrar => 'Alarmwiederholungen';
+
+  @override
+  String get tsaAyarTurTekrarIpucu =>
+      '0 = Alarm aus. Abstände verdoppeln sich: Toleranz, 2×, 4×.';
+
+  @override
+  String get tsaAyarTurFoto => 'Require a photo when starting a round';
+
+  @override
+  String get tsaAyarTurFotoIpucu =>
+      'The guard takes a camera photo at the first checkpoint. Choosing an existing photo from the gallery is not allowed.';
+
+  @override
+  String get tsaAyarVardiyaHatirlatma =>
+      'Remind how many minutes before a shift';
+
+  @override
+  String get tsaAyarVardiyaHatirlatmaIpucu =>
+      'Example: enter 30 for a reminder half an hour ahead. For several reminders, separate with commas (30,5). Leave empty to send none.';
+
+  @override
+  String get tsaAyarVardiyaBaslamadi =>
+      'Warn after how many minutes if a shift isn\'t started';
+
+  @override
+  String get tsaAyarVardiyaBaslamadiIpucu =>
+      'If no scan happens within this time after the shift begins, the manager is warned. Enter 0 to disable this warning.';
+
+  @override
+  String get tsaAyarOkutmaMesafe =>
+      'Maximum distance a scan may be made from (metres)';
+
+  @override
+  String get tsaAyarOkutmaMesafeIpucu =>
+      'Scans made farther than this are flagged in reports and reported to the manager. The scan itself is not blocked.';
+
+  @override
+  String get tsaAyarOtoparkKapasite =>
+      'Wie viele Fahrzeuge fasst der Parkplatz?';
+
+  @override
+  String get tsaAyarOtoparkKapasiteIpucu =>
+      'Gesamtzahl der Stellplätze. Wenn leer, wird kein Auslastungsprozentsatz berechnet — es wird nur die Anzahl der Fahrzeuge angezeigt.';
+
+  @override
+  String get tsaAyarRezervasyonGecmis =>
+      'How many months of past reservations to show';
+
+  @override
+  String get tsaAyarRezervasyonGecmisIpucu =>
+      'Older records are not listed. Nothing is deleted — a reservation is evidence in a common-area dispute. Enter 0 to show all.';
+
+  @override
+  String get tsaAyarVarsayilanHedef => 'Standardzahler für neue Ausgabearten';
+
+  @override
+  String get tsaAyarVarsayilanHedefIpucu =>
+      'Nur der Startwert für NEU angelegte Einnahme-/Ausgabearten; jede Art bleibt änderbar (Definitionen > Einnahme-/Ausgabearten).';
+
+  @override
+  String get tsaTanimHedefKullanan => 'Nutzer zahlt (Mieter, sonst Eigentümer)';
+
+  @override
+  String get tsaTanimHedefMalik => 'Eigentümer zahlt';
+
+  @override
+  String get tsaAyarGurultuEsigi =>
+      'Aus wie vielen verschiedenen Wohneinheiten Beschwerden kommen müssen, bevor gewarnt wird';
+
+  @override
+  String get tsaAyarGurultuEsigiIpucu =>
+      'Kommen Lärmbeschwerden über eine Einheit aus so vielen VERSCHIEDENEN Einheiten, erhält die Bewohnerschaft eine akustische Warnung und der Zähler wird zurückgesetzt. Mehrere Beschwerden derselben Person zählen einmal; als unbegründet markierte zählen nicht.';
+
+  @override
+  String get tsaAyarGurultuMetni => 'Warning text sent to the resident';
+
+  @override
+  String get tsaAyarGurultuMetniIpucu =>
+      'Leave empty to use the built-in text.';
+
+  @override
+  String get tsaAyarGurultuPencere =>
+      'Beschwerden wie viele Tage rückwirkend zählen';
+
+  @override
+  String get tsaAyarGurultuPencereIpucu =>
+      'Nur Beschwerden der letzten so vielen Tage werden gezählt. Fünf Beschwerden über ein Jahr sind nicht dasselbe wie fünf in einer Woche. Mit 0 werden alle offenen Beschwerden gezählt. (Nicht zu verwechseln mit der Anzeigedauer auf der Karte — das ist eine eigene Einstellung.)';
+
+  @override
+  String get tsaAyarGurultuSusma => 'Days of silence after a warning';
+
+  @override
+  String get tsaAyarGurultuSusmaIpucu =>
+      'No new warning is sent to that unit during this period. A warning repeated every night becomes noise itself. Enter 0 to warn again at every threshold.';
+
+  @override
+  String get tsaAyarGurultuEskalasyon =>
+      'Bei welcher Verwarnung die Sicherheit informieren';
+
+  @override
+  String get tsaAyarGurultuEskalasyonIpucu =>
+      'Erreicht eine Einheit so viele Verwarnungen, wird auch die Sicherheit benachrichtigt, prüft vor Ort und ruft nötigenfalls die Polizei. Mit 2 geht die erste Verwarnung nur an den Bewohner, ab der zweiten auch an die Sicherheit.';
+
+  @override
+  String get tsaAyarHaritaSaat =>
+      'Wie viele Stunden Beschwerden auf der Karte bleiben';
+
+  @override
+  String get tsaAyarHaritaSaatIpucu =>
+      'Nach dieser Zeit verschwindet die Beschwerde von der Karte. Sie wird NICHT gelöscht: sie bleibt in der Liste, in Berichten und im Schwellenzähler — sie wird nur ausgeblendet, damit die Karte beantwortet, „wo gerade ein Problem ist“. Mit 0 dauerhaft anzeigen. (Der Zähler hat eine eigene Frist: „Beschwerden wie viele Tage rückwirkend zählen“.)';
+
+  @override
+  String get tsaAyarGurultuSakin =>
+      'Hinweis an den Bewohner der Einheit senden';
+
+  @override
+  String get tsaAyarGurultuSakinIpucu =>
+      'Bei Erreichen der Schwelle wird die in der Einheit wohnende Person benachrichtigt. Der Hinweis enthält weder die Identität des Beschwerdeführers noch die Anzahl der Beschwerden. Wenn ausgeschaltet, übermittelt die Verwaltung die Warnung selbst.';
+
+  @override
+  String get tsaAyarGurultuEsikBirUyari =>
+      'Schwelle 1: Jede Lärmbeschwerde löst eine Warnung an die Einheit aus. Das entwertet die Warnung schnell — 3 oder mehr wird empfohlen.';
+
+  @override
+  String get tsaAyarDegisiklikYok => 'Keine Änderungen.';
+
+  @override
+  String get tsaTesisAyarPlatformNotu =>
+      'Zeitzone, Anlagenkennung und Sicherheitsmodus lassen sich hier nicht ändern; sie bleiben beim Yönetiyor-Team. Bei Bedarf bitte eine Supportanfrage stellen.';
+
+  @override
+  String tsaAralikHatasi(int min, int max) {
+    return 'Geben Sie eine Zahl zwischen $min und $max ein.';
+  }
+
+  @override
+  String get tnmKasalar => 'Kassen';
+
+  @override
+  String get tnmGelirGiderGruplari => 'Einnahmen-/Ausgabengruppen';
+
+  @override
+  String get tnmGelirGiderTanimlari => 'Einnahmen-/Ausgabenposten';
+
+  @override
+  String get tnmFirmalar => 'Firmen';
+
+  @override
+  String get tnmAraclar => 'Fahrzeuge';
+
+  @override
+  String get tnmSayaclar => 'Zähler';
+
+  @override
+  String get tnmSayaclarBolum => 'Wohnungszähler';
+
+  @override
+  String get tnmAyarlar => 'Buchhaltungseinstellungen';
+
+  @override
+  String get tnmYeniKayit => 'Neuer Eintrag';
+
+  @override
+  String get tnmKayitYok => 'Noch keine Einträge.';
+
+  @override
+  String get tnmKayitYokAlt =>
+      'Dieses Register ist leer. Erstellen Sie mit der Schaltfläche oben den ersten Eintrag.';
+
+  @override
+  String get tnmParaBirimiNotu =>
+      'Die Währung dient nur der Anzeige; Beträge werden in ₺ gespeichert und berechnet.';
+
+  @override
+  String tnmTutarGecersiz(String alan) {
+    return 'Geben Sie einen gültigen Betrag für $alan ein. Beispiel: 1.250,00';
+  }
+
+  @override
+  String tnmSayiGecersiz(String alan) {
+    return 'Geben Sie eine gültige Zahl für $alan ein.';
+  }
+
+  @override
+  String get tnmAlanKod => 'Code';
+
+  @override
+  String get tnmAlanAd => 'Name';
+
+  @override
+  String get tnmAlanAcilisTarihi => 'Eröffnungsdatum';
+
+  @override
+  String get tnmAlanAcilisBakiye => 'Anfangssaldo (₺)';
+
+  @override
+  String get tnmAlanBankaMi => 'Bankkonto';
+
+  @override
+  String get tnmAlanIban => 'IBAN (nur Bank)';
+
+  @override
+  String get tnmAlanBankaAdi => 'Bankname';
+
+  @override
+  String get tnmAlanSube => 'Filiale';
+
+  @override
+  String get tnmAlanAktif => 'Aktiv';
+
+  @override
+  String get tnmAlanTip => 'Typ';
+
+  @override
+  String get tnmAlanHedefKurali => 'Wem wird belastet';
+
+  @override
+  String get tnmHedefKuraliIpucu =>
+      'Türkisches WEG Art. 20: Betriebskosten (Hausmeister, Strom, Wasser, Aufzugsbetrieb, Reinigung) trägt in der Regel der NUTZER; Instandhaltung, Reparatur und Ertüchtigung des Gebäudes der EIGENTÜMER. Ein Mietvertrag kann es anders regeln — Sie entscheiden.';
+
+  @override
+  String get tnmHedefKullanan => 'Nutzer zahlt (Mieter, sonst Eigentümer)';
+
+  @override
+  String get tnmHedefMalik => 'Eigentümer zahlt';
+
+  @override
+  String get tnmAlanDagitim => 'Verteilungsart (nur Ausgaben)';
+
+  @override
+  String get tnmAlanVergiNo => 'Steuernr. / Ausweisnr.';
+
+  @override
+  String get tnmAlanVergiDairesi => 'Finanzamt';
+
+  @override
+  String get tnmAlanTelefon => 'Telefon';
+
+  @override
+  String get tnmAlanEposta => 'E-Mail';
+
+  @override
+  String get tnmAlanYetkili => 'Ansprechpartner';
+
+  @override
+  String get tnmAlanBakiyeYonu => 'Saldorichtung';
+
+  @override
+  String get tnmAlanPlaka => 'Kennzeichen';
+
+  @override
+  String get tnmAlanMarka => 'Marke';
+
+  @override
+  String get tnmAlanModel => 'Modell';
+
+  @override
+  String get tnmAlanRenk => 'Farbe';
+
+  @override
+  String get tnmAlanTesisatNo => 'Anlagennr.';
+
+  @override
+  String get tnmAlanOrtakAlanYuzde => 'Gemeinschaftsanteil (%)';
+
+  @override
+  String get tnmAlanDaire => 'Wohnung';
+
+  @override
+  String get tnmAlanAnaSayac => 'Hauptzähler';
+
+  @override
+  String get tnmAlanIlkOkuma => 'Erstablesung';
+
+  @override
+  String get tnmReferansYuklenemedi => 'Liste konnte nicht geladen werden';
+
+  @override
+  String get tnmSayacUretimBaslik => 'Zähler sammelweise anlegen';
+
+  @override
+  String get tnmSayacUret => 'Zähler anlegen';
+
+  @override
+  String get tnmSayacUretimNotu =>
+      'Legt für jede aktive Wohnung unter dem gewählten Hauptzähler einen Zähler an; Wohnungen mit Zähler werden übersprungen. Erneutes Ausführen ist unbedenklich.';
+
+  @override
+  String tnmSayacUretimSonuc(String olusturulan, String atlanan) {
+    return '$olusturulan Zähler angelegt, $atlanan Wohnungen übersprungen.';
+  }
+
+  @override
+  String get tnmAlanEvrakSeri => 'Belegserie';
+
+  @override
+  String get tnmAlanEvrakSira => 'Belegnummer';
+
+  @override
+  String get tnmAlanParaBirimi => 'Währung';
+
+  @override
+  String tnmZorunluAlan(String alan) {
+    return '$alan ist erforderlich';
+  }
+
+  @override
+  String get tnmTipGelir => 'Einnahme';
+
+  @override
+  String get tnmTipGider => 'Ausgabe';
+
+  @override
+  String get tnmTipHerIkisi => 'Beides';
+
+  @override
+  String get tnmDagitimEsit => 'Gleichmäßig auf Einheiten';
+
+  @override
+  String get tnmDagitimTipeGore => 'Nach Einheitstyp';
+
+  @override
+  String get tnmYonBorc => 'Soll';
+
+  @override
+  String get tnmYonAlacak => 'Haben';
+
+  @override
+  String get tnmSayacSu => 'Wasser';
+
+  @override
+  String get tnmSayacElektrik => 'Strom';
+
+  @override
+  String get tnmSayacDogalgaz => 'Erdgas';
+
+  @override
+  String get tnmSayacIsi => 'Wärme';
+
+  @override
+  String get tnmSayacDiger => 'Sonstiges';
+
+  @override
+  String get tnmSecilmedi => 'Nicht ausgewählt';
+
+  @override
+  String get tnmDuzenle => 'Bearbeiten';
+
+  @override
+  String get tnmSilBaslik => 'Eintrag löschen';
+
+  @override
+  String tnmSilOnay(String ad) {
+    return '„$ad“ löschen? Dies kann nicht rückgängig gemacht werden.';
+  }
+
+  @override
+  String get tnmSilKullanimda =>
+      'Dieser Eintrag wird von anderen Einträgen verwendet und kann nicht gelöscht werden. Sie können ihn stattdessen deaktivieren („Aktiv“ ausschalten).';
+
+  @override
+  String get tnmSilindi => 'Eintrag gelöscht';
+
+  @override
+  String get tnmKaydedildi => 'Gespeichert';
+
+  @override
+  String get tnmPasif => 'Inaktiv';
+
+  @override
+  String get tnmTarihSec => 'Datum wählen';
+
+  @override
+  String get tnmKategoriDuzenle => 'Kategorie bearbeiten';
+
+  @override
+  String tnmKategoriGuncellendi(String ad) {
+    return 'Kategorie aktualisiert: $ad';
+  }
+
+  @override
+  String get tnmEvrakSeriIpucu => '1–5 Großbuchstaben (z. B. ABC)';
+
+  @override
+  String get bthBaslik => 'Budgetziele';
+
+  @override
+  String get bthAc => 'Ziele';
+
+  @override
+  String bthYil(int yil) {
+    return 'Jahr: $yil';
+  }
+
+  @override
+  String get bthOncekiYil => 'Vorheriges Jahr';
+
+  @override
+  String get bthSonrakiYil => 'Nächstes Jahr';
+
+  @override
+  String get bthKarsilastirma => 'Ziel und Ist';
+
+  @override
+  String get bthHedef => 'Ziel';
+
+  @override
+  String get bthGerceklesen => 'Ist';
+
+  @override
+  String get bthSapma => 'Abweichung';
+
+  @override
+  String bthToplamGelir(String hedef, String gercek) {
+    return 'Einnahmen — Ziel $hedef, Ist $gercek';
+  }
+
+  @override
+  String bthToplamGider(String hedef, String gercek) {
+    return 'Ausgaben — Ziel $hedef, Ist $gercek';
+  }
+
+  @override
+  String get bthYazilanlar => 'Gesetzte Ziele';
+
+  @override
+  String get bthYillik => 'Jährlich';
+
+  @override
+  String get bthYeni => 'Ziel festlegen';
+
+  @override
+  String get bthTur => 'Einnahmen-/Ausgabenart';
+
+  @override
+  String get bthDonem => 'Zeitraum';
+
+  @override
+  String get bthTutar => 'Zielbetrag (₺)';
+
+  @override
+  String get bthAciklama => 'Notiz (optional)';
+
+  @override
+  String get bthGuncellemeNotu =>
+      'Ein erneut gesetztes Ziel für dieselbe Art und denselben Zeitraum ersetzt das vorherige.';
+
+  @override
+  String get bthKaydedildi => 'Ziel gespeichert';
+
+  @override
+  String get bthSilBaslik => 'Ziel löschen';
+
+  @override
+  String bthSilOnay(String tur, String donem, String tutar) {
+    return 'Ziel $tur · $donem · $tutar löschen? Keine Buchung ändert sich.';
+  }
+
+  @override
+  String get bthSil => 'Löschen';
+
+  @override
+  String get bthSilindi => 'Ziel gelöscht';
+
+  @override
+  String get bthBos => 'Keine Ziele für dieses Jahr';
+
+  @override
+  String get bthBosRehber =>
+      'Tippen Sie auf \"Ziel festlegen\", um einer Einnahmen- oder Ausgabenart ein Jahres- oder Monatsziel zu geben.';
+
+  @override
+  String get bthTurYok =>
+      'Legen Sie zuerst im Reiter Kategorien eine Einnahmen-/Ausgabenart an.';
+
+  @override
+  String get rprAciklamalar => 'Beschreibungen anzeigen';
+
+  @override
+  String get rprBaslangic => 'Von';
+
+  @override
+  String get rprBaslangicAy => 'Startmonat';
+
+  @override
+  String get rprBaslangicYil => 'Startjahr';
+
+  @override
+  String get rprBitis => 'Bis';
+
+  @override
+  String get rprBitisAy => 'Endmonat';
+
+  @override
+  String get rprBitisYil => 'Endjahr';
+
+  @override
+  String get rprBlok => 'Block';
+
+  @override
+  String get rprBolum => 'Bereich';
+
+  @override
+  String get rprCalismaNakit => 'Ist-Basis';
+
+  @override
+  String get rprCalismaSekli => 'Rechnungsbasis';
+
+  @override
+  String get rprCalismaTahakkuk => 'Periodengerecht';
+
+  @override
+  String get rprDaire => 'Wohnung';
+
+  @override
+  String get rprEkstreDetay => 'Detailliert';
+
+  @override
+  String get rprEkstreOzet => 'Zusammenfassung';
+
+  @override
+  String get rprEkstreTuru => 'Auszugsart';
+
+  @override
+  String get rprEvrakBilgisi => 'Belegdaten anzeigen';
+
+  @override
+  String get rprEvrakFatura => 'Rechnung';
+
+  @override
+  String get rprEvrakMakbuz => 'Quittung';
+
+  @override
+  String get rprEvrakTipi => 'Belegart';
+
+  @override
+  String get rprFirma => 'Lieferant';
+
+  @override
+  String get rprGrupla => 'Gruppieren';
+
+  @override
+  String get rprIcradakiler => 'Vollstreckungsfaelle einschliessen';
+
+  @override
+  String get rprIletisimGoster => 'Kontaktdaten anzeigen';
+
+  @override
+  String get rprImza => 'Unterschriftsfeld hinzufuegen';
+
+  @override
+  String get rprIsBekliyor => 'In Warteschlange';
+
+  @override
+  String get rprIsHata => 'Fehler';
+
+  @override
+  String get rprIsHazir => 'Fertig';
+
+  @override
+  String get rprIsmiGoster => 'Namensspalte';
+
+  @override
+  String get rprIsUretiliyor => 'Wird erstellt';
+
+  @override
+  String get rprKasa => 'Kasse';
+
+  @override
+  String get rprKatDokumler => 'Auswertungen';
+
+  @override
+  String get rprKatEkstreler => 'Auszuege';
+
+  @override
+  String get rprKatListeler => 'Listen';
+
+  @override
+  String get rprKisi => 'Person';
+
+  @override
+  String get rprListelemeTipi => 'Listenart';
+
+  @override
+  String get rprMaxTutar => 'Höchstbetrag';
+
+  @override
+  String get rprMinTutar => 'Mindestbetrag';
+
+  @override
+  String get rprOlusturan => 'Erstellt von';
+
+  @override
+  String get rprPersonel => 'Mitarbeiter';
+
+  @override
+  String get rprSiraAd => 'Name';
+
+  @override
+  String get rprSiraBakiye => 'Saldo';
+
+  @override
+  String get rprSiraDaire => 'Wohnungsnr.';
+
+  @override
+  String get rprSiralama => 'Sortierung';
+
+  @override
+  String get rprTanim => 'Ertrags-/Aufwandsart';
+
+  @override
+  String get rprTanimlar => 'Belastungsarten';
+
+  @override
+  String get rprTazminatTarihi => 'Verzugsdatum';
+
+  @override
+  String get rprTipAlacakli => 'Glaeubiger';
+
+  @override
+  String get rprTipBorclu => 'Schuldner';
+
+  @override
+  String get rprAgirUyari =>
+      'Dieser Bericht durchsucht das gesamte Buch. PDF-/Excel-Anfragen werden eingereiht und koennen nach Fertigstellung unten heruntergeladen werden.';
+
+  @override
+  String get rprAlt =>
+      'Bericht aus dem Katalog wählen, ansehen oder herunterladen';
+
+  @override
+  String get rprExcel => 'Excel';
+
+  @override
+  String get rprGoster => 'Anzeigen';
+
+  @override
+  String get rprHepsi => 'Alle';
+
+  @override
+  String get rprIndirildi => 'Bericht heruntergeladen.';
+
+  @override
+  String get rprIsAdi => 'Bericht';
+
+  @override
+  String get rprIsBicim => 'Format';
+
+  @override
+  String get rprIsIndir => 'Herunterladen';
+
+  @override
+  String get rprIslerim => 'Meine Berichtsauftraege';
+
+  @override
+  String get rprIsYok => 'Keine Berichte in der Warteschlange.';
+
+  @override
+  String get rprIsYokAlt =>
+      'Fordern Sie die PDF- oder Excel-Ausgabe eines schweren Berichts an, dann erscheint sie hier.';
+
+  @override
+  String get rprIsZaman => 'Angefordert am';
+
+  @override
+  String get rprKatalogHata => 'Berichtskatalog konnte nicht geladen werden.';
+
+  @override
+  String get rprKuyrugaAlindi => 'Der Bericht wurde eingereiht.';
+
+  @override
+  String get rprPdf => 'PDF';
+
+  @override
+  String get rprSatirYok => 'Keine Zeilen';
+
+  @override
+  String get rprSatirYokAlt => 'Kein Eintrag entspricht den Kriterien.';
+
+  @override
+  String get rprYokAlt => 'Auf dem Server ist kein Bericht definiert.';
+
+  @override
+  String get rprKatalog => 'Berichtskatalog';
+
+  @override
+  String get rprIcraBaslik => 'Vollstreckungsakten';
+
+  @override
+  String get rprIcraDosyaNo => 'Aktenzeichen';
+
+  @override
+  String get rprIcraBorclu => 'Schuldner';
+
+  @override
+  String get rprIcraAcikBorc => 'Offene Forderung';
+
+  @override
+  String get rprIcraAvukat => 'Anwalt';
+
+  @override
+  String get rprIcraVerisTarihi => 'Einreichungsdatum';
+
+  @override
+  String get rprIcraAciklama => 'Anmerkungen';
+
+  @override
+  String get rprIcraDurum => 'Status';
+
+  @override
+  String get rprIcraDurumHepsi => 'Alle';
+
+  @override
+  String get rprIcraKayitYok => 'Keine Vollstreckungsakten.';
+
+  @override
+  String get rprIcraDurumbaginiz => 'Pfaendung';
+
+  @override
+  String get rprIcraDurumbeklemede => 'Ausstehend';
+
+  @override
+  String get rprIcraDurumavukatta => 'Beim Anwalt';
+
+  @override
+  String get rprIcraDurummahkemede => 'Im Gerichtsverfahren';
+
+  @override
+  String get rprIcraDurumkapandi => 'Geschlossen';
+
+  @override
+  String get rprAylikOzet => 'Monatsübersicht';
+
+  @override
+  String get rprSekmeKatalog => 'Katalog';
+
+  @override
+  String rprIsHazirBildirim(String ad) {
+    return 'Bericht fertig: $ad';
+  }
+
+  @override
+  String get rprAgirUyariMobil =>
+      'Dieser Bericht durchsucht das ganze Buch. PDF/Excel-Anfragen werden in die Warteschlange gestellt; wenn fertig, teilen Sie sie im Tab Meine Aufträge.';
+
+  @override
+  String get rprKatalogBosAlt =>
+      'Auf dem Server sind keine Berichte definiert; informieren Sie Ihre Verwaltung.';
+
+  @override
+  String get rprIcraBosAlt =>
+      'Vollstreckungsakten werden im Webpanel angelegt und erscheinen dann hier.';
+
+  @override
+  String get dntBaslik => 'Prüfung';
+
+  @override
+  String get dntAlt =>
+      'Nur lesen: Berichte, Transparenz, Vollstreckung und Wartung. Keine Änderungen möglich.';
+
+  @override
+  String get sdgDonguYeni => 'Neue Rotation festlegen…';
+
+  @override
+  String get sdgDonguAd => 'Name der Rotation';
+
+  @override
+  String get sdgDonguDilimler => 'Schichtblöcke';
+
+  @override
+  String get sdgDonguDilimAd => 'Blockname';
+
+  @override
+  String get sdgDonguDilimEkle => 'Block hinzufügen';
+
+  @override
+  String get sdgDonguAdimlar => 'Rotationsschritte';
+
+  @override
+  String get sdgDonguAdimDilim => 'Block / frei';
+
+  @override
+  String get sdgDonguTatil => 'Frei';
+
+  @override
+  String get sdgDonguGunSayisi => 'Tage';
+
+  @override
+  String get sdgDonguDuzen => 'Muster';
+
+  @override
+  String get sdgDonguHerGun => 'Jeden Tag';
+
+  @override
+  String get sdgDonguGunAsiri => 'Jeden zweiten Tag (12/36)';
+
+  @override
+  String get sdgDonguAdimEkle => 'Schritt hinzufügen';
+
+  @override
+  String sdgDonguUzunluk(int n) {
+    return '$n-Tage-Zyklus';
+  }
+
+  @override
+  String get sdgDonguKaydet => 'Rotation speichern';
+
+  @override
+  String get sdgDonguKaydedildi => 'Rotation gespeichert.';
+
+  @override
+  String get sdgVardiyaBaslangicSaati => 'Startzeit';
+
+  @override
+  String get sdgVardiyaBitisSaati => 'Endzeit';
+
+  @override
+  String get sdgAc => 'Eigenen Zyklus festlegen';
+
+  @override
+  String get sdgBlokSil => 'Schritt entfernen';
+
+  @override
+  String get sdgDilimSil => 'Schicht entfernen';
+
+  @override
+  String get sdgSinirAsildi => 'Ein Zyklus darf höchstens 84 Tage lang sein.';
+
+  @override
+  String get fdzIslemler => 'Aktion';
+
+  @override
+  String get fdzIslemSec => 'Welche Aktion?';
+
+  @override
+  String get fdzVirman => 'Umbuchung';
+
+  @override
+  String get fdzTopluTahsilat => 'Sammelinkasso';
+
+  @override
+  String get fdzAcilis => 'Eröffnungsbuchung';
+
+  @override
+  String get fdzIptalEt => 'Stornieren';
+
+  @override
+  String get fdzIptalBaslik => 'Buchung stornieren (Gegenbuchung)';
+
+  @override
+  String get fdzIptalSonuc =>
+      'Der Datensatz wird nicht gelöscht; eine Gegenbuchung wird ergänzt. Die Stornierung ist nicht rückgängig zu machen.';
+
+  @override
+  String get fdzIptalVirmanNotu =>
+      'Beide Zeilen der Umbuchung werden gemeinsam storniert.';
+
+  @override
+  String get fdzIptalEdildi => 'Buchung storniert';
+
+  @override
+  String get fdzIade => 'Erstattung';
+
+  @override
+  String get fdzIadeTutarIpucu => 'Leer = gesamter Restbetrag';
+
+  @override
+  String get fdzIadeSonuc =>
+      'Die Erstattung geht aus der Kasse. Rückgängig nur durch Storno (Grund nötig).';
+
+  @override
+  String get fdzIadeYapildi => 'Erstattung gebucht';
+
+  @override
+  String get fdzGeriAl => 'Rückgängig';
+
+  @override
+  String get fdzGeriAlBaslik => 'Aktion rückgängig machen';
+
+  @override
+  String get fdzGeriAlSonuc =>
+      'Eine Gegenbuchung wird geschrieben. Dies ist nicht rückgängig zu machen.';
+
+  @override
+  String get fdzGeriAlindi => 'Rückgängig gemacht';
+
+  @override
+  String get fdzKaynakKasa => 'Von Kasse';
+
+  @override
+  String get fdzHedefKasa => 'An Kasse';
+
+  @override
+  String get fdzVirmanSonuc =>
+      'Zwei Zeilen werden gebucht (Aus- und Eingang). Rückgängig nur durch Storno (Grund nötig).';
+
+  @override
+  String get fdzVirmanYapildi => 'Umbuchung gebucht';
+
+  @override
+  String get fdzAyniKasa => 'Quell- und Zielkasse dürfen nicht gleich sein.';
+
+  @override
+  String get fdzYon => 'Richtung';
+
+  @override
+  String get fdzYonGiris => 'Eingang (Saldo steigt)';
+
+  @override
+  String get fdzYonCikis => 'Ausgang (Saldo sinkt)';
+
+  @override
+  String get fdzAcilisSonuc =>
+      'Wird als Anfangssaldo gebucht. Rückgängig nur durch Storno (Grund nötig).';
+
+  @override
+  String get fdzAcilisYapildi => 'Eröffnungsbuchung gebucht';
+
+  @override
+  String get fdzTopluSonuc =>
+      'Für die gewählten Einheiten werden Zahlungen mit Quittung gebucht. Rückgängig nur durch Storno (Grund nötig).';
+
+  @override
+  String get fdzFaizAffi => 'Zinsen erlassen';
+
+  @override
+  String get fdzFaizAffiSonuc =>
+      'Offene Zinsposten werden per Gegenbuchung erlassen. Nicht rückgängig zu machen.';
+
+  @override
+  String get fdzOdemePlani => 'Ratenplan';
+
+  @override
+  String get fdzTaksitSayisi => 'Anzahl Raten (2–36)';
+
+  @override
+  String get fdzIlkVade => 'Erste Fälligkeit';
+
+  @override
+  String get fdzSecimToplami => 'Ausgewählte Schuld gesamt';
+
+  @override
+  String get fdzDurumOdendi => 'Bezahlt';
+
+  @override
+  String get fdzDurumBekliyor => 'Ausstehend';
+
+  @override
+  String fdzPlanSonuc(int n) {
+    return 'Fälligkeiten offener Schulden werden auf $n Monate verteilt; keine neue Schuld. Nicht rückgängig, aber durch neuen Plan ersetzbar.';
+  }
+
+  @override
+  String fdzPlanUygulandi(int n) {
+    return 'Ratenplan für $n Einheiten angewendet';
+  }
+
+  @override
+  String fdzTopluYapildi(int n) {
+    return '$n Zahlungen gebucht';
+  }
+
+  @override
+  String fdzFaizAffedildi(int n, String tutar) {
+    return '$n Zinsposten erlassen ($tutar)';
+  }
+
+  @override
+  String fdzDaireler(int n, String daireler) {
+    return '$n Einheiten: $daireler';
+  }
+
+  @override
+  String get fdzDurumEtiketi => 'Status';
+
+  @override
+  String get dsyDosyaSec => 'Datei (PDF)';
+
+  @override
+  String get brcKalemAidat => 'Hausgeld';
+
+  @override
+  String get brcKalemDemirbas => 'Inventar';
+
+  @override
+  String get brcKalemOlaganustu => 'Sonderumlage';
+
+  @override
+  String get brcKalemSayac => 'Zähler';
+
+  @override
+  String get brcKalemFaiz => 'Verzugszinsen';
+
+  @override
+  String get brcKalemDiger => 'Sonstiges';
+
+  @override
+  String get brcDagitimDaireBasina => 'Fester Betrag pro Einheit';
+
+  @override
+  String get brcDagitimEsit => 'Gesamtbetrag gleich verteilen';
+
+  @override
+  String get brcDagitimArsaPayi =>
+      'Gesamtbetrag nach Miteigentumsanteil verteilen';
+
+  @override
+  String get brcDagitimMetrekare => 'Gesamtbetrag nach Wohnfläche verteilen';
+
+  @override
+  String get brcAtlamaArsaPayi => 'Kein Miteigentumsanteil eingetragen';
+
+  @override
+  String get brcAtlamaMetrekare => 'Keine Wohnfläche eingetragen';
+
+  @override
+  String get brcAtlamaTip => 'Einheitstyp hat keinen Standardbetrag';
+
+  @override
+  String get brcAtlamaCarpisma =>
+      'Für diesen Zeitraum besteht bereits eine Forderung dieser Art';
+
+  @override
+  String get brcAtlamaTutar => 'Betrag konnte nicht ermittelt werden';
+
+  @override
+  String get brcYontemElden => 'Bar';
+
+  @override
+  String get brcYontemHavale => 'Überweisung';
+
+  @override
+  String get brcYontemKart => 'Karte';
+
+  @override
+  String get brcYontemDiger => 'Sonstiges';
+
+  @override
+  String get brcDaireSec => 'Einheit auswählen';
+
+  @override
+  String get brcTurSec => 'Art auswählen';
+
+  @override
+  String get brcTutarGecersiz => 'Gültigen Betrag eingeben';
+
+  @override
+  String get brcOnayBaslik => 'Forderung bestätigen';
+
+  @override
+  String brcDonem(String donem) {
+    return 'Zeitraum $donem';
+  }
+
+  @override
+  String get brcOnaySonuc =>
+      'Die Forderung wird nicht gelöscht; falls falsch, wird sie storniert.';
+
+  @override
+  String get brcKaydet => 'Belasten';
+
+  @override
+  String get brcKaydedildi => 'Forderung gespeichert';
+
+  @override
+  String get brcTekil => 'Eine Einheit belasten';
+
+  @override
+  String get brcDaire => 'Einheit';
+
+  @override
+  String get brcTur => 'Art';
+
+  @override
+  String brcTarihDegeri(String tarih) {
+    return 'Datum: $tarih';
+  }
+
+  @override
+  String get brcSonOdemeYok => 'Kein Fälligkeitsdatum';
+
+  @override
+  String brcSonOdemeDegeri(String tarih) {
+    return 'Fällig: $tarih';
+  }
+
+  @override
+  String get brcTutar => 'Betrag (₺)';
+
+  @override
+  String get brcAciklama => 'Beschreibung';
+
+  @override
+  String get brcGecikmeUygula => 'Verzugszinsen anwenden';
+
+  @override
+  String get brcFaiz => 'Verzugszinsen';
+
+  @override
+  String brcFaizOnayHedef(int n, String donem) {
+    return '$n Forderungen · Verzugszinsen · $donem';
+  }
+
+  @override
+  String get brcFaizOnaySonuc =>
+      'Zinsen werden als neue Forderungen gebucht; falls falsch, wird jede Zeile storniert.';
+
+  @override
+  String get brcFaizIsle => 'Zinsen buchen';
+
+  @override
+  String brcFaizIslendi(int n) {
+    return '$n Zinsposten gebucht';
+  }
+
+  @override
+  String get brcFaizKapali =>
+      'Verzugszinsen sind für diese Anlage aus (Automatisierung › Verzugseinstellung).';
+
+  @override
+  String get brcFaizYok =>
+      'Für diesen Zeitraum sind keine Verzugszinsen zu buchen.';
+
+  @override
+  String brcFaizIslenecek(int n, String tutar) {
+    return 'Für $n Forderungen werden insgesamt $tutar Zinsen gebucht.';
+  }
+
+  @override
+  String get brcToplu => 'Sammelbelastung';
+
+  @override
+  String get brcBlokSec => 'Block auswählen';
+
+  @override
+  String brcTopluOnayHedef(int n, String tur, String donem) {
+    return '$n Einheiten · $tur · $donem';
+  }
+
+  @override
+  String get brcTopluOnaySonuc =>
+      'Danach kann es auf dem Ergebnisbildschirm in einem Schritt per Gegenbuchung rückgängig gemacht werden; bereits bezahlte Zeilen nicht.';
+
+  @override
+  String get brcTopluIsle => 'Forderungen buchen';
+
+  @override
+  String brcAdim(int n, int toplam) {
+    return 'Schritt $n/$toplam';
+  }
+
+  @override
+  String get brcGeri => 'Zurück';
+
+  @override
+  String get brcIleri => 'Weiter';
+
+  @override
+  String get brcAdimNe => 'Was wird belastet?';
+
+  @override
+  String get brcAdimNeKadar => 'Wie viel?';
+
+  @override
+  String get brcAdimKime => 'Wem?';
+
+  @override
+  String get brcAdimOnizleme => 'Vorschau';
+
+  @override
+  String get brcAdimOnay => 'Bestätigen';
+
+  @override
+  String get brcKalemTipi => 'Postenart';
+
+  @override
+  String get brcTutarDaireBasina =>
+      'Betrag pro Einheit (₺) — leer = Betrag des Einheitstyps';
+
+  @override
+  String get brcTutarToplam => 'Zu verteilender Gesamtbetrag (₺)';
+
+  @override
+  String get brcKapsamTumu => 'Alle Einheiten';
+
+  @override
+  String get brcKapsamBlok => 'Ein Block';
+
+  @override
+  String get brcKapsamSecili => 'Ausgewählte Einheiten';
+
+  @override
+  String brcSeciliSayi(int n) {
+    return '$n Einheiten ausgewählt';
+  }
+
+  @override
+  String get brcTumunuSec => 'Alle auswählen';
+
+  @override
+  String brcOnizlemeIslenecek(int n) {
+    return '$n Einheiten werden belastet';
+  }
+
+  @override
+  String brcOnizlemeToplam(String tutar) {
+    return 'Gesamt $tutar';
+  }
+
+  @override
+  String brcOnizlemeAtlanacak(int n) {
+    return '$n Einheiten werden übersprungen';
+  }
+
+  @override
+  String brcOnizlemeHedefsiz(int n) {
+    return 'Bei $n Einheiten wird die Einheit, nicht eine Person belastet (kein Eigentümer erfasst)';
+  }
+
+  @override
+  String get brcEnYuksek => 'Höchste 5';
+
+  @override
+  String get brcEnDusuk => 'Niedrigste 5';
+
+  @override
+  String brcTopluOlustu(int n) {
+    return '$n Einheiten belastet';
+  }
+
+  @override
+  String get brcTopluOlusmadi =>
+      'Keine Forderung gebucht — Zeitraum oder Art prüfen.';
+
+  @override
+  String get brcAtlananlar => 'Übersprungen';
+
+  @override
+  String get brcTersKayit => 'Per Storno korrigieren';
+
+  @override
+  String get brcTersKayitSonuc =>
+      'Der Datensatz wird nicht gelöscht; eine Gegenbuchung wird ergänzt. Dies ist nicht umkehrbar.';
+
+  @override
+  String get brcTersKayitYapildi => 'Storno gebucht';
+
+  @override
+  String get brcDonemEtiket => 'Zeitraum';
+
+  @override
+  String get brcSonOdemeEtiket => 'Fällig';
+
+  @override
+  String get brcGecikme => 'Verzug';
+
+  @override
+  String get brcDuzeltme => 'Korrekturbuchung';
+
+  @override
+  String get brcDuzeltildi => 'Korrigiert';
+
+  @override
+  String get brcDaireBorcu => 'Kontostand';
+
+  @override
+  String get brcToplamTahakkuk => 'Gesamt belastet';
+
+  @override
+  String get brcToplamOdenen => 'Gesamt bezahlt';
+
+  @override
+  String get brcBakiye => 'Saldo';
+
+  @override
+  String get brcBorclandir => 'Belasten';
+
+  @override
+  String get brcOdemeKaydet => 'Zahlung erfassen';
+
+  @override
+  String get brcTahakkuklar => 'Forderungen';
+
+  @override
+  String get brcTahakkukYok => 'Noch keine Forderungen';
+
+  @override
+  String get brcOdemeler => 'Zahlungen';
+
+  @override
+  String get brcOdemeYok => 'Noch keine Zahlungen';
+
+  @override
+  String get brcOdemeOnaySonuc =>
+      'Die Zahlung geht in die Kasse; falls falsch, über Erstattung oder Storno im Journal korrigieren.';
+
+  @override
+  String get brcOdemeKaydedildi => 'Zahlung erfasst';
+
+  @override
+  String get brcYontem => 'Methode';
+
+  @override
+  String get brcOdenenKalem => 'Bezahlte Forderung';
+
+  @override
+  String get brcKalemSecimsiz => 'Keine bestimmte Forderung';
+
+  @override
+  String get brcDonemAlan => 'Zeitraum (JJJJ-MM)';
+
+  @override
+  String get brcMakbuzNo => 'Beleg-Nr.';
+
+  @override
+  String get brcYok => 'Noch keine Forderungen';
+
+  @override
+  String get rprGorevGecmisi => 'Aufgabenverlauf';
+
+  @override
+  String get rprGorev => 'Aufgabe';
+
+  @override
+  String get rprTabloTip => 'Typ';
+
+  @override
+  String get rprTabloTamamlayan => 'Erledigt von';
+
+  @override
+  String get rprTabloZaman => 'Zeit';
+
+  @override
+  String get rprTabloFoto => 'Foto';
+
+  @override
+  String get rprTabloNfc => 'NFC';
+
+  @override
+  String get rprNot => 'Notiz';
+
+  @override
+  String get rprVar => 'ja';
+
+  @override
+  String get rprYok => 'nein';
+
+  @override
+  String get rprCsvPaylas => 'CSV teilen';
+
+  @override
+  String get rprBolumDisaAktarim => 'Export';
+
+  @override
+  String get rprGorevGecmisiAlt =>
+      'Aufgabenabschlüsse im gewählten Zeitraum (gleiche Spalten wie die Web-CSV).';
+
+  @override
+  String get rprEvet => 'Ja';
+
+  @override
+  String get rprHayir => 'Nein';
+
+  @override
+  String get harKapali =>
+      'Die Karte ist derzeit nicht verfügbar; Sie können den Standort über die Adresssuche wählen.';
+
+  @override
+  String get harYuklenemedi => 'Die Karte konnte nicht geladen werden';
+
+  @override
+  String get harOsmAtif => 'Protomaps © OpenStreetMap-Mitwirkende';
+
+  @override
+  String get harTesisKonumu => 'Standort der Anlage';
+
+  @override
+  String get harYerAdi => 'Ortsname (Bezirk, Viertel)';
+
+  @override
+  String get harAra => 'Suchen';
+
+  @override
+  String get harAramaHata =>
+      'Die Adresssuche ist gerade nicht verfügbar; bitte gleich erneut versuchen.';
+
+  @override
+  String get harSonucYok =>
+      'Kein Ort mit diesem Namen gefunden; versuchen Sie einen Bezirks- oder Provinznamen.';
+
+  @override
+  String get harIgneIpucu =>
+      'Karte verschieben oder antippen, bis die Nadel auf dem Gebäude steht, dann Speichern.';
+
+  @override
+  String harSecili(String ad, String lat, String lon) {
+    return 'Ausgewählt: $ad ($lat, $lon)';
+  }
+
+  @override
+  String get brcPartiGeriAl => 'Sammelbelastung rückgängig machen';
+
+  @override
+  String get brcPartiGeriAlSonuc =>
+      'Jede Belastung wird per Gegenbuchung geschlossen; nichts wird gelöscht. Bereits bezahlte werden nicht rückgängig gemacht und aufgelistet.';
+
+  @override
+  String brcPartiGeriAlindi(int n) {
+    return '$n Belastungen storniert';
+  }
+
+  @override
+  String get brcAtlamaOdenmis => 'bereits bezahlt, einzeln korrigieren';
+
+  @override
+  String get brcAtlamaZatenTersKayitli => 'bereits korrigiert';
+
+  @override
+  String get rprKesildi =>
+      'Die Anzahl der Datensätze hat das Limit erreicht — der Bericht kann unvollständig sein. Grenzen Sie den Zeitraum ein.';
 }

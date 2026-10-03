@@ -157,6 +157,10 @@ class FinansHareketi {
     this.belgeNo,
     this.aciklama,
     this.iptalEdildi = false,
+    this.kasaId,
+    this.unitId,
+    this.userId,
+    this.virmanGrupId,
   });
 
   final String id;
@@ -174,8 +178,23 @@ class FinansHareketi {
   final String? belgeNo;
   final String? aciklama;
   final bool iptalEdildi;
+  final String? kasaId;
+  final String? unitId;
+  final String? userId;
+
+  /// Virmanin iki bacagi ayni grubu tasir (iptal ikisini birlikte ters kayitlar).
+  final String? virmanGrupId;
 
   bool get giris => yon == 'giris';
+
+  /// (P253 A2) Ters kayitla IPTAL edilebilir mi — sunucu kurallariyla ayni:
+  /// gerceklesmis (`odendi`), kendisi iptal satiri degil, daha once iptal
+  /// edilmemis. (Iadesi olan hareket sunucuda 409 alir; liste bunu bilmez.)
+  bool get iptalEdilebilir =>
+      durum == 'odendi' && tip != 'iptal' && !iptalEdildi;
+
+  /// IADE edilebilir mi — yalniz tahsilat ve gelir (sunucu `_IADE_EDILEBILIR`).
+  bool get iadeEdilebilir => iptalEdilebilir && (tip == 'tahsilat' || tip == 'gelir');
   bool get onayBekliyor => durum == 'onay_bekliyor';
 
   /// (P253 §C-1) Onay diyalogundaki HEDEF: daire · kisi · belge.
@@ -198,6 +217,10 @@ class FinansHareketi {
         belgeNo: j['belge_no'] as String?,
         aciklama: j['aciklama'] as String?,
         iptalEdildi: (j['iptal_edildi'] as bool?) ?? false,
+        kasaId: j['kasa_id'] as String?,
+        unitId: j['unit_id'] as String?,
+        userId: j['user_id'] as String?,
+        virmanGrupId: j['virman_grup_id'] as String?,
       );
 }
 

@@ -654,3 +654,137 @@ vermiyor.
 **Karar gereken:** B mi, A mı (ikisi de vekille), yoksa D mi. Onaya kadar
 mobile harita bağımlılığı eklenmez; tesis konumu ekranı bekler (`/konum/ara`
 satırı `planli:2` kalır).
+
+**Karar (kullanıcı):** kendi karo dosyamız (D). Uygulandı; ayrıntı
+`docs/harita-karo.md`.
+
+## Aşama 2 — Haftalık işler, finans düzeltmeleri, tanımlar, denetçi (mobil 1.12.0)
+
+### Kararlar (kullanıcı)
+
+* **`file_picker`:** onaylandı; eklendi (arm64 APK +23,5 KB, ölçüldü).
+  Doküman yükleme PDF alıyor; Aşama 3'teki içe aktarım ve banka ekstresi
+  aynı ortak seçiciyi (`core/dosya/dosya_secici.dart`) kullanacak.
+* **Hareket araması ve durum süzgeci:** sunucuya eklendi (`q`, `durum`).
+  * `q` açıklama, belge no, kişi, daire, firma ve personel adında arar;
+    Türkçe harf katlamalı, joker karakterler literal.
+  * Web ve mobil aynı parametreleri gönderiyor.
+* **Serbest döngü tanımı:** eylem tablosuna yeni satır türü `YETENEK`.
+  * Uçlar aynı, eksik olan ekran yeteneğiydi; kilitler kaynakta
+    `yetenek:<ad>` işaretini ölçer.
+  * Mobilde yapıldı, satır `ayni`.
+* **Rezervasyon süzgeçleri:** cihazda kaldı.
+  `docs/acik-is-rezervasyon-suzgecleri.md`: sunucu parametreleri zaten
+  var, taşımak yalnız mobil işi.
+* **Harita:** kendi Türkiye PMTiles dosyamız (yukarıda).
+
+### Kararsız test — kök neden
+
+`test_notifications::test_mark_read_and_isolation` tam takımda düşüyordu.
+* **Kök neden:** testin "geçmiş" penceresi 2029 tarihliydi, yani gerçek
+  saate göre gelecekte. Saat başı çalışan `materialize_windows` aktif
+  planın takvim dışı gelecek `bekliyor` pencerelerini siliyor (doğru ürün
+  davranışı). Üretici araya girerse pencere siliniyor, bildirim hiç
+  yazılmıyordu.
+  * Yeniden üretildi: 0 bildirim. Düzeltmeden sonra: 1.
+* **Kapsam:** P248'de yalnız `test_dashboard` düzeltilmişti; aynı kalıp
+  `test_notifications`, `test_scans`, `test_scheduler_db` ve
+  `test_tur_butunlugu`'nda da vardı. Hepsi gerçek geçmişe bağlandı.
+* **Prod karşılığı:** yok; hata testin tarihindeydi.
+* **Kilitler:**
+  * üretici araya girse de bildirim yazılır (regresyon testi);
+  * pencere testlerinde sabit gelecek yıl yasak (kaynak taraması).
+  * Kırma denemesi: taban 2029'a döndürülünce ikisi de düştü.
+
+### Bu aşamada bulunan ve düzeltilen gerçek hatalar
+
+* **Prod'da api'ye ulaşmayan ayarlar** (compose `environment` beyaz liste,
+  `env_file` yok):
+  * `DUKKAN_MOBIL_ACIK`: belgedeki "true yap" tarifi hiçbir şey yapmazdı.
+  * `RESEND_WEBHOOK_SIRRI`: Resend webhook'u her istekte 401 dönüyordu,
+    e-posta teslim durumları prod'da hiç güncellenmiyordu.
+  * `PLAY_STORE_URL`, `APP_STORE_URL`.
+  * Kilit: `test_compose_ortam`. `.env.prod.example`'da tarif edilen her
+    `Settings` alanı prod api ortamında olmalı.
+* **Web'den PDF yükleme 422 alıyordu:** doküman sayfası presign isteğine
+  `amac: "belge"` göndermiyordu. Seçici, sunucunun reddettiği Word, Excel
+  ve zip türlerini de sunuyordu.
+  * Kilit: `p253-belge-yukleme-amaci`.
+* **Web "faizi affet" onaysız çalışıyordu:** artık §C onay diyaloğu var.
+
+### §C — bu aşamada
+
+* **Sebep zorunlu:** borçlandırma ters kaydında da. Ortak modül
+  `app/sebep.py`; web ve mobil diyalog.
+* **Toplu tahakkuk geri al:**
+  * Toplu tahakkuk bir `parti_id` döner (göç
+    `0169_p253_parti_rapor_hazir`).
+  * `POST /borclandirma/parti/{parti_id}/geri-al` partiyi tek istekte
+    ters kayıtla kapatır; sebep zorunlu.
+  * Ödeme almış satır geri alınmaz, `odenmis` nedeniyle döner.
+  * Web: sayfada "Son toplu borçlandırma — Geri al" şeridi. Mobil:
+    sihirbazın sonuç ekranında.
+* **Geri alma diğer finans eylemlerinde:** iptal, iade, virman, açılış ve
+  toplu tahsilat sonrası mobilde "Geri al" var; o da sebep istiyor.
+* **Önceden yazılan geri alınamazlık:** faiz affı ve ödeme planı geri
+  alınamaz; diyalog bunu önceden yazıyor.
+
+### "Rapor hazır" bildirimi (yeni)
+
+* Kuyruktaki rapor bitince yalnız isteyene kalıcı bildirim ve push
+  (`rapor_hazir`) gider.
+* Eskiden hiç haber gitmiyordu; yalnız "İşlerim" ekranı açıkken yoklama
+  vardı.
+* Bildirim, rapor kaydının güncellemesiyle aynı işlemde yazılmıyor.
+  P252'deki kilitlenmenin kökü "aynı işlemde ikinci yazma + FK
+  denetimi"ydi.
+* Web `/raporlar`, mobil rapor merkezi "İşlerim" sekmesi.
+
+### Mobil — kapatılan işler
+
+| Alan | İçerik |
+|---|---|
+| Borçlandırma | Liste, tekil, toplu tahakkuk sihirbazı (5 adım), ters kayıt, gecikme faizi, daire borç durumu, ödeme kaydı |
+| Finans düzeltmeleri | İptal, iade (kısmi), virman, toplu tahsilat, faiz affı, ödeme planı, açılış fişi; hareket arama + durum |
+| Raporlar | Katalog, parametre formu, göster, Excel/PDF paylaş, kuyruk + İşlerim + "hazır" bildirimi; borçlu ve görev CSV karşılıkları |
+| Tanımlar | Tek genel defter ekranı (7 defter + muhasebe ayarları + görev kategorisi), web `DEFTERLER` ile birebir |
+| Tesis ayarları | 16 operasyon ayarı (web tablosuyla aynı anahtarlar), **tesis konumu** (adres arama + kendi karolarımızla harita, iğne) |
+| Bütçe hedefleri | Liste, yaz, sil, karşılaştırma |
+| Denetçi | Salt okuma yüzeyi: raporlar, şeffaflık, icra, bakım. Menü kilidine `denetci` kapsamı eklendi |
+| Serbest döngü | Dilim ve blok düzenleyici (`YETENEK` satırı) |
+| Belge yükleme | PDF (`file_picker`) |
+
+### Eylem tablosu sonrası
+
+**671 satır:**
+
+| Durum | Satır |
+|---|---:|
+| `ayni` | 378 |
+| `planli:2` | **0** |
+| `planli:3` | 76 |
+| `yalniz_web` | 0 |
+| `platform` | 44 |
+| `yalniz_mobil` | 83 |
+| `yapisal` | 31 |
+| `ic` | 59 |
+
+Mobil sürüm **1.12.0+22**.
+
+### Kısmi kalanlar (açık)
+
+* **Adres arama ve hava durumu: Open-Meteo'nun ücretsiz API'si ticari
+  kullanıma kapalı.** Prod öncesi karar gerekiyor (`docs/harita-karo.md`
+  "Adres arama — açık konu").
+* **Doküman türleri:** sunucu belge olarak yalnız PDF (+ görsel) kabul
+  ediyor. Word ve Excel istenirse sunucu değişikliği gerekir; şimdilik iki
+  yüzeyde de seçici yalnız PDF ve görsel sunuyor.
+* **Mobil rapor grafiği yok:** sonuç kart listesi olarak çiziliyor.
+* **Mobil açılış fişi yalnız kasa bazlı:** kişi bazlı açılış (sunucu ve
+  web destekliyor) mobilde yok.
+* **Mobil toplu tahsilat** yalnız borçlular ekranındaki seçimden yapılıyor;
+  web'deki serbest satır girişi yok.
+* **Görev geçmişi CSV'si** mobilde 5000 satırda kesiliyor; artık ekranda "rapor eksik olabilir" uyarısı çıkıyor (web ile aynı).
+* **Seçim kutuları** en çok 200 kayıt alıyor (kişi ve daire 500).
+* **Web `banka` alan türü** (banka listesinden seçim) mobil tanımlarda düz
+  metin.

@@ -4064,4 +4064,11 @@ export const es: Sozluk = {
   haritaKaroDili: "es",
   haritaKapali: "El mapa no está disponible ahora; puede elegir la ubicación con la búsqueda de direcciones.",
   konumIgneIpucu: "Arrastre el pin o toque el mapa para situar la ubicación sobre el edificio.",
+  bildirimTipRaporHazir: "Informe listo",
+  finansSonPartiOzet: "Último cargo masivo: {adet} viviendas · {donem}",
+  finansPartiGeriAl: "Deshacer cargo masivo",
+  finansPartiGeriAlOnay: "Cada uno de los {adet} cargos de {donem} se cerrará con un asiento inverso. No se borra nada; los cargos ya pagados no se deshacen y se le informan.",
+  finansPartiGeriAlindi: "{adet} cargos revertidos",
+  finansAtlamaOdenmis: "ya pagado, corrija individualmente",
+  finansAtlamaZatenTersKayitli: "ya corregido",
 };
