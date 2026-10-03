@@ -35,11 +35,23 @@ MASKE = [
     (re.compile(r"/[A-Za-z0-9_~.-]{24,}"), "/:jeton"),
     (re.compile(r"/[0-9]+(/|$)"), r"/:id\1"),
 ]
+# (P253 A2) YALNIZ SAYFA ROTALARI sayilir. Dosyalar (font, gorsel, js, css,
+# robots.txt...) ve /api/ istekleri sayfa acilisi DEGILDIR — ilk prod
+# olcumunde 81 "acilisin" yarisi bunlardi. Caddy artik onlari HIC yazmiyor
+# (`@erisimDosya`, `@erisimStatik`); bu suzgec eski satirlar ve gozden
+# kacan bir uzanti icin. Uzanti listesi Caddyfile'daki `erisimDosya` ile
+# AYNI (kilit: admin-web/tests/p253-erisim-gunlugu.test.ts).
+DOSYA = re.compile(r"\.(?:woff2?|ttf|otf|eot|png|jpe?g|gif|svg|ico|webp|avif|css|js|mjs|map|txt|xml|json|webmanifest|pdf|mp4|webm)$", re.I)
+STATIK_ONEK = ("/_next/", "/api/", "/fonts/", "/favicon", "/icon", "/apple-icon", "/.well-known/")
+def sayfa_mi(yol):
+    return not (DOSYA.search(yol) or yol.startswith(STATIK_ONEK))
+
 def maskele(yol):
     for desen, yerine in MASKE:
         yol = desen.sub(yerine, yol)
     return yol
 sayac, ilk, son, toplam = Counter(), None, None, 0
+api, dosya = 0, 0
 for satir in sys.stdin:
     try:
         k = json.loads(satir)
@@ -51,7 +63,14 @@ for satir in sys.stdin:
     r = k.get("request", {})
     if r.get("method") != "GET" or k.get("status") not in (200, 304):
         continue
-    yol = maskele((r.get("uri") or "/").split("?")[0]) or "/"
+    ham = (r.get("uri") or "/").split("?")[0] or "/"
+    if not sayfa_mi(ham):
+        if ham.startswith("/api/"):
+            api += 1
+        else:
+            dosya += 1
+        continue
+    yol = maskele(ham)
     sayac[yol] += 1
     toplam += 1
     ilk = ts if ilk is None or ts < ilk else ilk
@@ -60,6 +79,8 @@ if not toplam:
     print("Kayit yok (son %s gun)." % os.environ["GUN"]); sys.exit(0)
 fmt = lambda t: time.strftime("%Y-%m-%d", time.localtime(t))
 print("Donem: %s .. %s  ·  toplam sayfa acilisi: %d" % (fmt(ilk), fmt(son), toplam))
+if api or dosya:
+    print("(Sayilmayan: %d dosya istegi, %d /api istegi — eski satirlar; Caddy artik yazmiyor)" % (dosya, api))
 print("%8s  %6s  %s" % ("ACILIS", "%", "ROTA"))
 for yol, n in sayac.most_common():
     print("%8d  %5.1f%%  %s" % (n, 100.0 * n / toplam, yol))

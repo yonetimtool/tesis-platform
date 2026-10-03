@@ -277,9 +277,14 @@
 	@erisimGurultu {
 		header Next-Router-Prefetch *
 	}
-	@erisimStatik path /_next/* /api/* /favicon* /icon* /apple-icon* /robots.txt /sitemap.xml /.well-known/*
+	@erisimStatik path /_next/* /api/* /fonts/* /favicon* /icon* /apple-icon* /robots.txt /sitemap.xml /.well-known/*
+	# (P253 A2) UZANTILI her istek bir DOSYADIR, sayfa degil: prod'daki ilk
+	# olcumde 81 "acilisin" yarisi /fonts/*.woff2, *.png gibi dosyalardi.
+	# Disk icin hic yazilmaz; olcum betigi ayni kurali ayrica uygular.
+	@erisimDosya path_regexp erisimDosya \.(?:woff2?|ttf|otf|eot|png|jpe?g|gif|svg|ico|webp|avif|css|js|mjs|map|txt|xml|json|webmanifest|pdf|mp4|webm)$
 	log_skip @erisimGurultu
 	log_skip @erisimStatik
+	log_skip @erisimDosya
 	@kanonikDisi not host {$APP_DOMAIN}
 	redir @kanonikDisi https://{$APP_DOMAIN}{uri} permanent
 	import security_headers

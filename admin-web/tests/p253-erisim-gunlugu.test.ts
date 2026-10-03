@@ -57,6 +57,26 @@ describe("(P253 A1) erisim gunlugu maskesi", () => {
     expect(maskele("/tenants/3bdf2a8a-7278-491f-a5fb-e689c54061cb")).toBe("/tenants/:id");
     expect(maskele("/x/12345/y")).toBe("/x/:id/y");
     expect(maskele("/x/abcDEF1234567890_xyzQWERTYuiop")).toBe("/x/:jeton");
+    // Gercek davet jetonu bicimi (token_urlsafe: harf, rakam, "-" ve "_") —
+    // prod diskinde /davet/:jeton olarak dogrulandi; kilit de kapsasin.
+    expect(maskele("/davet/aB1-cD2_eF3-gH4_iJ5-kL6_mN7-oP8_qR9")).toBe("/davet/:jeton");
+    expect(maskele("/davet/Ab3_dE-f9xYz")).toBe("/davet/:jeton");
+    expect(maskele("/davet/-_-_")).toBe("/davet/:jeton");
+  });
+
+  it("dosya uzantilari Caddy ve olcum betiginde AYNI (sayfa olarak sayilmaz)", () => {
+    const caddy = CADDY.match(/@erisimDosya path_regexp erisimDosya \\\.\(\?:([^)]+)\)\$/);
+    const betik = readFileSync(join(KOK, "..", "docs", "P253-kullanim-olcumu.sh"), "utf8")
+      .match(/DOSYA = re\.compile\(r"\\\.\(\?:([^)]+)\)\$"/);
+    expect(caddy, "Caddyfile @erisimDosya bulunamadi").not.toBeNull();
+    expect(betik, "olcum betigi DOSYA bulunamadi").not.toBeNull();
+    expect(betik![1]).toBe(caddy![1]);
+    const dosya = new RegExp(`\\.(?:${caddy![1]})$`, "i");
+    for (const y of ["/fonts/inter.woff2", "/yonetio-logo.png", "/robots.txt", "/favicon.ico"]) {
+      expect(dosya.test(y), y).toBe(true);
+    }
+    // Hicbir gercek SAYFA yolu dosya sanilmaz.
+    expect(sayfalar().filter((s) => dosya.test(s.yol)).map((s) => s.yol)).toEqual([]);
   });
 
   it("herkese acik her DINAMIK sayfanin Caddy maskesi var", () => {
