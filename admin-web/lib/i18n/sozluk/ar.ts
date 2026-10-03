@@ -4071,4 +4071,5 @@ export const ar: Sozluk = {
   finansPartiGeriAlindi: "تم عكس {adet} من التحميلات",
   finansAtlamaOdenmis: "مدفوع بالفعل، صحّحه بشكل منفرد",
   finansAtlamaZatenTersKayitli: "مصحّح بالفعل",
+  epostaHataBuyukHarf: "يجب كتابة عنوان البريد الإلكتروني بأحرف صغيرة.",
 };

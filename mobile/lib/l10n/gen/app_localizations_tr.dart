@@ -10981,4 +10981,7 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get rprKesildi =>
       'Kayıt sayısı üst sınıra takıldı — rapor eksik olabilir. Tarih aralığını daraltın.';
+
+  @override
+  String get epostaHataBuyukHarf => 'E-posta adresi küçük harfle yazılmalıdır.';
 }

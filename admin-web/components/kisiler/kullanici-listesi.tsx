@@ -36,7 +36,7 @@ import {
   type CalismaDegeri,
 } from "@/components/kisiler/calisma-bilgileri";
 import { OdemeKodlariPenceresi } from "@/components/OdemeKodlariPenceresi";
-import { EpostaAlani } from "@/components/EpostaAlani";
+import { EpostaAlani, epostaGonderilemez } from "@/components/EpostaAlani";
 import { adAyir, adBicimle, soyadBicimle } from "@/lib/kisi-adi";
 import { TelefonAlani } from "@/components/TelefonAlani";
 import { useT } from "@/lib/i18n/kullan";
@@ -405,6 +405,11 @@ export default function KullaniciListesi({
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
+    // (P253 acil) Buyuk harfli e-posta GONDERILMEZ; alan nedenini yazar.
+    if (epostaGonderilemez(form.email)) {
+      setFormErr(t("epostaHataBuyukHarf"));
+      return;
+    }
     setSaving(true);
     setFormErr(null);
     // (P250 §1) Ad ve soyad zorunlu; son bicim (kirpma + tek bosluk).

@@ -21,7 +21,7 @@ import { jsonFetcher } from "@/lib/fetcher";
 import type { TenantSilmeOzeti } from "@/lib/types";
 import { TelefonAlani } from "@/components/TelefonAlani";
 import { AdSoyadAlanlari } from "@/components/AdSoyadAlanlari";
-import { EpostaAlani } from "@/components/EpostaAlani";
+import { EpostaAlani, epostaGonderilemez } from "@/components/EpostaAlani";
 import { adAyir, adBicimle, soyadBicimle } from "@/lib/kisi-adi";
 import { useT } from "@/lib/i18n/kullan";
 import { tarihSaatUzun } from "@/lib/tarih";
@@ -131,6 +131,11 @@ export default function TenantDetailPage() {
 
   async function yoneticiEkle(e: React.FormEvent) {
     e.preventDefault();
+    // (P253 acil) Buyuk harfli e-posta GONDERILMEZ.
+    if (epostaGonderilemez(yeniEposta)) {
+      setYeniHata(t("epostaHataBuyukHarf"));
+      return;
+    }
     setEkliyor(true);
     setYeniHata(null);
     try {

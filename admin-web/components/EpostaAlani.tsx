@@ -13,6 +13,10 @@
  * =========================================================================
  * YAZARKEN DEGIL, ALANDAN CIKINCA. `a@` yazan kullaniciya daha ikinci
  * harfte "bicim gecersiz" demek, adresini yazmasini bitirmeden azarlamaktir.
+ *
+ * ISTISNA — BUYUK HARF (P253 acil): ANINDA gorunur. Yazmayi bitirince
+ * duzelecek bir eksik degil, duzeltilmesi gereken bir harftir.
+ * Formlar gonderimi `epostaGonderilemez` ile ENGELLER.
  */
 import { useState } from "react";
 
@@ -28,6 +32,7 @@ import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 /** Hata KIMLIGI -> sozluk anahtari. Cumle cizim katmaninda kalir. */
 const HATA_ANAHTARI: Record<EpostaHatasi, SozlukAnahtari> = {
   bos: "epostaHataBos",
+  buyukHarf: "epostaHataBuyukHarf",
   bicim: "epostaHataBicim",
   yerelUzun: "epostaHataYerelUzun",
   cokUzun: "epostaHataCokUzun",
@@ -40,6 +45,12 @@ export function epostaHataMetni(
 ): string | null {
   const h = epostaHatasi(ham, zorunlu);
   return h ? t(HATA_ANAHTARI[h]) : null;
+}
+
+/** (P253 acil) Form gonderimi ENGELLENSIN mi? Bugun yalniz buyuk harf:
+ * bicim/uzunluk kesin karari sunucuda (bkz. `lib/eposta.ts` basligi). */
+export function epostaGonderilemez(ham: string): boolean {
+  return epostaHatasi(ham, false) === "buyukHarf";
 }
 
 export function EpostaAlani({
@@ -71,14 +82,18 @@ export function EpostaAlani({
 }) {
   const t = useT();
   const [dokunuldu, setDokunuldu] = useState(false);
-  const kendiHatasi = dokunuldu ? epostaHataMetni(deger, zorunlu, t) : null;
+  const anlik = epostaHatasi(deger, zorunlu) === "buyukHarf";
+  const kendiHatasi =
+    dokunuldu || anlik ? epostaHataMetni(deger, zorunlu, t) : null;
 
   return (
     <AlanSarmal
       etiket={etiket}
       zorunlu={zorunlu}
       id={id}
-      hata={hata ?? kendiHatasi}
+      // Kendi BUYUK HARF hatasi disaridan gelen (sunucu) hatanin ONUNDE:
+      // kullanicinin duzeltecegi sey o.
+      hata={anlik ? kendiHatasi : (hata ?? kendiHatasi)}
       ipucu={ipucu}
     >
       {(b) => (

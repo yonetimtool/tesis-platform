@@ -11177,4 +11177,8 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get rprKesildi =>
       'The record count hit the limit — the report may be incomplete. Narrow the date range.';
+
+  @override
+  String get epostaHataBuyukHarf =>
+      'The email address must be written in lowercase.';
 }

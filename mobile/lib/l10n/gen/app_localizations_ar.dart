@@ -11207,4 +11207,8 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get rprKesildi =>
       'بلغ عدد السجلات الحد الأقصى — قد يكون التقرير ناقصاً. ضيّق النطاق الزمني.';
+
+  @override
+  String get epostaHataBuyukHarf =>
+      'يجب كتابة عنوان البريد الإلكتروني بأحرف صغيرة.';
 }

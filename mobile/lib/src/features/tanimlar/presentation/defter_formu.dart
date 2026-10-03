@@ -7,6 +7,7 @@ import '../../../core/i18n/l10n.dart';
 import '../../../core/para.dart';
 import '../../../core/sayi.dart';
 import '../../../core/ui/eposta_alani_widget.dart';
+import '../../../core/ui/eposta_hata_metni.dart';
 import '../../../core/ui/telefon_alani.dart';
 import '../../../core/ui/telefon_alani_widget.dart';
 import '../data/defter_api.dart';
@@ -108,6 +109,11 @@ class _DefterFormuState extends ConsumerState<DefterFormu> {
         case AlanTuru.telefon:
           final e164 = telefonNormalle(metin);
           govde[a.ad] = e164.isEmpty ? metin : e164;
+        case AlanTuru.eposta:
+          // (P253 acil) Büyük harfli e-posta GÖNDERİLMEZ (alan da söyler).
+          final h = epostaHataMetni(l10n, metin, zorunlu: false);
+          if (h != null) return h;
+          govde[a.ad] = metin;
         case AlanTuru.iban:
           govde[a.ad] = metin.replaceAll(RegExp(r'\s'), '').toUpperCase();
         default:

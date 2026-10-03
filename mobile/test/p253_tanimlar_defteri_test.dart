@@ -139,6 +139,22 @@ void main() {
     expect(a.yazanlar(), isEmpty);
   });
 
+  testWidgets('(P253 acil) FIRMA E-POSTASI BUYUK HARFLE GONDERILMEZ', (t) async {
+    final a = _Adaptor({'/firmalar': []});
+    await _ac(t, a, GenelDefterScreen(defter: _d('firmalar')));
+    await t.tap(find.byKey(const Key('defter-yeni')));
+    await t.pumpAndSettle();
+    await _yaz(t, 'ad', 'Asansör A.Ş.');
+    await _yaz(t, 'email', 'Servis@Asansor.com');
+    // Alan ANINDA soyler (blur beklemeden).
+    expect(find.text('E-posta adresi küçük harfle yazılmalıdır.'), findsWidgets);
+    await _kaydet(t);
+    expect(a.yazanlar(), isEmpty);
+    await _yaz(t, 'email', 'servis@asansor.com');
+    await _kaydet(t);
+    expect((a.yazanlar().single.govde as Map)['email'], 'servis@asansor.com');
+  });
+
   testWidgets('DUZENLE: PATCH {id} + secim degeri; SIL onayi adi yazar, 409 anlasilir', (t) async {
     final a = _Adaptor({
       '/gelir-gider-tanimlari': [

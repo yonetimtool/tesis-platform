@@ -4071,4 +4071,5 @@ export const fr: Sozluk = {
   finansPartiGeriAlindi: "{adet} charges annulées",
   finansAtlamaOdenmis: "déjà payée, corriger individuellement",
   finansAtlamaZatenTersKayitli: "déjà corrigée",
+  epostaHataBuyukHarf: "L’adresse e-mail doit être écrite en minuscules.",
 };

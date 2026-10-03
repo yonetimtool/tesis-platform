@@ -3669,5 +3669,6 @@
   "brcPartiGeriAlindi": "{n} charges reversed",
   "brcAtlamaOdenmis": "already paid, correct individually",
   "brcAtlamaZatenTersKayitli": "already corrected",
-  "rprKesildi": "The record count hit the limit — the report may be incomplete. Narrow the date range."
+  "rprKesildi": "The record count hit the limit — the report may be incomplete. Narrow the date range.",
+  "epostaHataBuyukHarf": "The email address must be written in lowercase."
 }

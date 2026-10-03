@@ -26,6 +26,7 @@ from ..deps import (
     gorev_penceresi_disinda,
     require_role,
 )
+from ..eposta import eposta_normalle
 from ..errors import APIError
 from ..gunlukleme import maskele_kimlik
 from ..oturum_iptal import tum_oturumlari_kapat
@@ -398,7 +399,7 @@ async def eposta_dogrulama_kodu_iste(
     gider. KİLİTLEME YOK — oturum sürer, bu yalnız "beklemede" durumu açar.
     Hız sınırı e-posta başına (kaba kuvvete karşı).
     """
-    eposta = str(body.eposta).strip().lower()
+    eposta = eposta_normalle(str(body.eposta))
     if "@" not in eposta or "." not in eposta.split("@")[-1]:
         raise APIError(422, "validation_error", "eposta_gecersiz")
     await kod_istegi_say(redis, eposta, kapsam="eposta_ekle")
@@ -446,7 +447,7 @@ async def eposta_dogrulama_kodu_iste(
     if (
         user.email
         and user.eposta_dogrulandi
-        and user.email.strip().lower() != eposta
+        and eposta_normalle(user.email) != eposta
     ):
         await _eposta_degistirme_bildirimi(db, user.tenant_id, user.email)
     await _kod_gonder_ve_dogrula(
@@ -584,7 +585,7 @@ async def eposta_dogrula_ekle(
 
     Bundan sonra parola sıfırlama (Bölüm 2) ve OTP giriş (Bölüm 4) çalışır.
     """
-    eposta = str(body.eposta).strip().lower()
+    eposta = eposta_normalle(str(body.eposta))
     kayit = await eposta_kodunu_dogrula(
         db, tenant_id=user.tenant_id, eposta=eposta, kod=body.kod, amac="eposta_ekle"
     )
@@ -592,7 +593,7 @@ async def eposta_dogrula_ekle(
     # unique kısıt (uq_app_user_tenant_email) commit'te 500 verirdi; net 409 döndür.
     baska = (
         await db.execute(
-            select(AppUser.id).where(AppUser.email == eposta, AppUser.id != user.id)
+            select(AppUser.id).where(func.lower(AppUser.email) == eposta, AppUser.id != user.id)
         )
     ).scalar_one_or_none()
     if baska is not None:

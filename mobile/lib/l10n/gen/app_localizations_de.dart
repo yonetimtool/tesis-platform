@@ -11200,4 +11200,8 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get rprKesildi =>
       'Die Anzahl der Datensätze hat das Limit erreicht — der Bericht kann unvollständig sein. Grenzen Sie den Zeitraum ein.';
+
+  @override
+  String get epostaHataBuyukHarf =>
+      'Die E-Mail-Adresse muss in Kleinbuchstaben geschrieben werden.';
 }

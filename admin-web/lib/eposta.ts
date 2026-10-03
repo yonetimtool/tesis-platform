@@ -33,7 +33,7 @@ export const EPOSTA_YEREL_SINIR = 64;
  * sunucuyla ortak tek kaynaktan (`SINIR.EPOSTA`, kilit: girdi-siniri.test). */
 export const EPOSTA_SINIR = SINIR.EPOSTA;
 
-export type EpostaHatasi = "bos" | "bicim" | "yerelUzun" | "cokUzun";
+export type EpostaHatasi = "bos" | "buyukHarf" | "bicim" | "yerelUzun" | "cokUzun";
 
 /** [ham] icin hata kimligi; `null` = gecerli. Cumle CIZIM katmaninda. */
 export function epostaHatasi(
@@ -42,6 +42,10 @@ export function epostaHatasi(
 ): EpostaHatasi | null {
   const s = (ham ?? "").trim();
   if (!s) return zorunlu ? "bos" : null;
+  // (P253 acil) BUYUK HARF EKRANDA REDDEDILIR (kullanici karari): prod'da
+  // ayni kisi harf farkiyla iki kez kaydolmustu. Sunucu ayrica kucultur
+  // (SSO/Excel icin); ekran kullaniciya NEDENINI yazarken soyler.
+  if (EPOSTA_BUYUK_HARF.test(s)) return "buyukHarf";
   // UZUNLUK ONCE: bicim denetimi uzun bir adreste de gecebilir ve
   // kullanici asil engeli (uzunluk) hic gormezdi.
   if (s.length > EPOSTA_SINIR) return "cokUzun";
@@ -58,7 +62,12 @@ export function epostaHatasi(
   return null;
 }
 
-/** Saklanacak deger: kirpilmis + kucuk harf. */
+/** Herhangi bir buyuk harf (Turkce `İ`, `Ş` dahil). */
+const EPOSTA_BUYUK_HARF = /\p{Lu}/u;
+
+/** Saklanacak deger: kirpilmis + YALNIZ ASCII A-Z kucuk (sunucudaki
+ * `app/eposta.py` ile ayni). `toLocaleLowerCase("tr")` DEGIL: `I` -> `ı`
+ * e-postayi bozar. */
 export function epostaNormalle(ham: string): string {
-  return (ham ?? "").trim().toLowerCase();
+  return (ham ?? "").trim().replace(/[A-Z]/g, (c) => c.toLowerCase());
 }

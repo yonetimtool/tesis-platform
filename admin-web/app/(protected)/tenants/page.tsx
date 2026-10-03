@@ -34,7 +34,7 @@ import { jsonFetcher } from "@/lib/fetcher";
 import { useGecikmeli } from "@/lib/gecikmeli";
 import type { TenantAdminCreate, TenantAdminCreatedOut } from "@/lib/types";
 import { ParolaAlani } from "@/components/ParolaAlani";
-import { EpostaAlani } from "@/components/EpostaAlani";
+import { EpostaAlani, epostaGonderilemez } from "@/components/EpostaAlani";
 import { TelefonAlani, telefonHataMetni } from "@/components/TelefonAlani";
 import { useT } from "@/lib/i18n/kullan";
 import { adBicimle, soyadBicimle } from "@/lib/kisi-adi";
@@ -220,6 +220,14 @@ export default function TenantsPage() {
     // ("Önce ülke kodunu seçin") yalniz GOSTERIMDI; gonderim yine sunucuya
     // gidiyor ve formun altinda ham "İstek gövdesi geçersiz." (422)
     // beliriyordu. Ayni kural, ayni metin: `telefonHataMetni`.
+    // (P253 acil) Buyuk harfli e-posta GONDERILMEZ; alan nedenini yazar.
+    if (
+      epostaGonderilemez(form.yonetim_email) ||
+      form.yoneticiler.some((y) => epostaGonderilemez(y.email))
+    ) {
+      setFormErr(t("epostaHataBuyukHarf"));
+      return;
+    }
     for (const y of form.yoneticiler) {
       const hata = telefonHataMetni(y.phone, true, t);
       if (hata) {

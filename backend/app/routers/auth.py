@@ -18,6 +18,7 @@ from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import func, or_, select, text
 
+from ..eposta import eposta_normalle
 from ..telefon_maskesi import telefon_maskele
 from ..hata_metinleri import istek_dili
 from .. import hosgeldin
@@ -968,7 +969,7 @@ async def eposta_giris_kodu_iste(
     HIZ SINIRI KIMLIGE BAGLI: anahtar `tesis:eposta`. Yalniz e-posta
     kullanmak, ayni adresi tasiyan iki tesisin sayacini birlestirirdi.
     """
-    eposta = str(body.eposta).lower()
+    eposta = eposta_normalle(str(body.eposta))
     # (P205 §1) HIZ SINIRI ARTIK KIMLIGE BAGLI, tesise degil: slug
     # opsiyonel oldugu icin "tesis:eposta" anahtari her zaman
     # kurulamaz. Adres basina saymak, ayni adresi tasiyan iki tesisin
@@ -1025,7 +1026,7 @@ async def eposta_giris_kodu_dogrula(
         davranisin AYNISI; rastgele birini secmek, kullaniciyi
         bilmedigi bir tesise sokmak olurdu.
     """
-    eposta = str(body.eposta).lower()
+    eposta = eposta_normalle(str(body.eposta))
     async with SessionLocal() as session:
         satirlar = await _uyelikler(session, eposta)
     adaylar = [
@@ -1123,7 +1124,7 @@ async def sifre_sifirlama_kodu_iste(
     kullanıcıya gider (Bölüm 1 ön koşulu) — doğrulanmamış adrese parola
     bağlantısı gönderilmez. Süre/deneme/hız sınırı `telefon_kodu`dan gelir.
     """
-    kimlik = f"{body.tenant_slug}:{str(body.eposta).lower()}"
+    kimlik = f"{body.tenant_slug}:{eposta_normalle(str(body.eposta))}"
     await kod_istegi_say(redis, kimlik, kapsam="sifre_sifirla")
 
     async with SessionLocal() as session:
@@ -1137,7 +1138,7 @@ async def sifre_sifirlama_kodu_iste(
             if tenant_id is None:
                 return KayitDurumResponse(durum="onay_bekliyor")
             await set_tenant(session, tenant_id)
-            eposta = str(body.eposta).lower()
+            eposta = eposta_normalle(str(body.eposta))
             user = (
                 await session.execute(
                     select(AppUser).where(func.lower(AppUser.email) == eposta)
@@ -1180,7 +1181,7 @@ async def sifre_sifirla(
             ).scalar_one_or_none()
             if tenant_id is None:
                 raise TK_GECERSIZ
-            eposta = str(body.eposta).lower()
+            eposta = eposta_normalle(str(body.eposta))
             kayit = await eposta_kodunu_dogrula(
                 session, tenant_id=tenant_id, eposta=eposta,
                 kod=body.kod, amac="sifre_sifirla",

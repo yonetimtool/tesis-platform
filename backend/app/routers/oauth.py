@@ -74,6 +74,7 @@ from fastapi import APIRouter, Depends, Form, Header, Query, Request, Response
 from fastapi.responses import RedirectResponse
 from sqlalchemy import func, select, text
 
+from ..eposta import eposta_normalle
 from ..telefon_maskesi import telefon_maskele
 from ..hata_metinleri import istek_dili
 from .. import girdi_siniri as _G
@@ -1078,7 +1079,7 @@ async def rol_tamamla(
         raise _BASVURU_GECERSIZ
 
     kimlik = _baglama_coz(body.baglama_jetonu)
-    eposta = (kimlik.get("eposta") or "").lower()
+    eposta = eposta_normalle(kimlik.get("eposta") or "")
     email_verified = bool(kimlik.get("email_verified"))
     if not eposta:
         # Saglayici e-posta paylasmadi -> eslesme yapilamaz. Generic yanit.
@@ -1175,7 +1176,7 @@ async def rol_tamamla_dogrula(
         raise _BASVURU_GECERSIZ
 
     kimlik = _baglama_coz(body.baglama_jetonu)
-    eposta = (kimlik.get("eposta") or "").lower()
+    eposta = eposta_normalle(kimlik.get("eposta") or "")
     if not eposta:
         return OauthRolTamamlaResponse(durum="onay_bekliyor")
 

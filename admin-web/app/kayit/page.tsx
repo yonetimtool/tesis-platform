@@ -14,7 +14,8 @@ import {
 } from "@/components/SosyalGiris";
 import { YonetioLogo } from "@/components/YonetioLogo";
 import { ParolaAlani } from "@/components/ParolaAlani";
-import { EpostaAlani } from "@/components/EpostaAlani";
+import { EpostaAlani, epostaGonderilemez } from "@/components/EpostaAlani";
+import { epostaNormalle } from "@/lib/eposta";
 import { TelefonAlani, telefonHataMetni } from "@/components/TelefonAlani";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
@@ -319,7 +320,8 @@ export default function KayitSayfasi() {
       setSoyad(soyadBicimle(parca.soyad));
     }
     // (P222 §2) E-POSTA DA DOLAR — ve SALT OKUNUR olur (asagida).
-    if (s.eposta) setEposta(s.eposta);
+    // Saglayici buyuk harf gonderebilir; salt okunur alan hata gostermesin.
+    if (s.eposta) setEposta(epostaNormalle(s.eposta));
     setSosyalRelay(Boolean(s.relay));
     // (P211-ek3) ROL BOSSA GIRISTEN GELINDI: hangi rolde kaydolacagini
     // kullanici SECER. Kayit akisindan gelenlerde rol zaten secilmisti,
@@ -371,6 +373,12 @@ export default function KayitSayfasi() {
     const telHata = telefonHataMetni(telefon, true, t);
     if (telHata) {
       setHata(telHata);
+      return;
+    }
+    // (P253 acil) Buyuk harfli e-posta GONDERILMEZ. Sosyal yolda alan salt
+    // okunur ve saglayicidan gelir: orada engellemek cikissiz olurdu.
+    if (yol !== "sosyal" && epostaGonderilemez(eposta)) {
+      setHata(t("epostaHataBuyukHarf"));
       return;
     }
     if (yol === "parola" && parola !== parola2) {

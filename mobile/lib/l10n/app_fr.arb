@@ -3669,5 +3669,6 @@
   "brcPartiGeriAlindi": "{n} charges annulées",
   "brcAtlamaOdenmis": "déjà payée, corriger individuellement",
   "brcAtlamaZatenTersKayitli": "déjà corrigée",
-  "rprKesildi": "Le nombre d'enregistrements a atteint la limite — le rapport peut être incomplet. Réduisez la plage de dates."
+  "rprKesildi": "Le nombre d'enregistrements a atteint la limite — le rapport peut être incomplet. Réduisez la plage de dates.",
+  "epostaHataBuyukHarf": "L’adresse e-mail doit être écrite en minuscules."
 }

@@ -11,7 +11,6 @@ import 'package:mobile/src/core/ui/eposta.dart';
 const _gecerli = [
   'ayse@ornek.com',
   'a.b+etiket@alt.ornek.co.uk',
-  'AYSE@ORNEK.COM',
   '  bosluklu@ornek.com  ',
 ];
 
@@ -66,6 +65,18 @@ void main() {
     // "bicim gecersiz" deyip uzunlugu gizlemek, adresi duzeltip yine
     // reddedilmesine yol acardi.
     expect(epostaHatasi('a' * 300), EpostaHatasi.cokUzun);
+  });
+
+  test('(P253) BUYUK HARF -> buyukHarf (zorunlu olmasa da; Turkce dahil)', () {
+    for (final e in ['AYSE@ORNEK.COM', 'Frknkymkc1996@gmail.com', 'ali@Ornek.com', 'İpek@ornek.com']) {
+      expect(epostaHatasi(e), EpostaHatasi.buyukHarf, reason: e);
+      expect(epostaHatasi(e, zorunlu: false), EpostaHatasi.buyukHarf, reason: e);
+    }
+  });
+
+  test('(P253) epostaNormalle YALNIZ ASCII: I -> i (ı DEGIL), İ dokunulmaz', () {
+    expect(epostaNormalle('ISIK@X.COM'), 'isik@x.com');
+    expect(epostaNormalle('İŞ@x.com'), 'İŞ@x.com');
   });
 
   test('epostaNormalle kirpar ve KUCUK HARFE indirir', () {

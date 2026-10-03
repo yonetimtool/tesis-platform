@@ -361,6 +361,8 @@ services:
       OAUTH_APPLE_TEAM_ID: ${OAUTH_APPLE_TEAM_ID:-}
       OAUTH_APPLE_KEY_ID: ${OAUTH_APPLE_KEY_ID:-}
       OAUTH_APPLE_PRIVATE_KEY: ${OAUTH_APPLE_PRIVATE_KEY:-}
+      # (P253) Ya da .p8 DOSYASI (icerige yegdir); prod: /secrets/apple-auth.p8
+      OAUTH_APPLE_PRIVATE_KEY_FILE: ${OAUTH_APPLE_PRIVATE_KEY_FILE:-}
       OAUTH_CALLBACK_TABAN: ${OAUTH_CALLBACK_TABAN:-}
       OAUTH_WEB_DONUS: ${OAUTH_WEB_DONUS:-}
       # (P180) niyet=kayit donusu — yonetici kayit tamamlama sayfasi.

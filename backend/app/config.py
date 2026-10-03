@@ -451,6 +451,11 @@ class Settings(BaseSettings):
     # .p8 dosyasinin ICERIGI. Env'de tek satira sigmasi icin `\n`
     # kacislari kabul edilir (`oauth._apple_istemci_sirri` cozer).
     oauth_apple_private_key: str = ""
+    # (P253 acil) .p8 DOSYASININ YOLU (ornek prod: `/secrets/apple-auth.p8`,
+    # `./secrets` api'ye salt-okunur bagli). Verilirse ICERIGE yegdir:
+    # cok satirli anahtari env'e tek satira sikistirmak, prod'daki 500'un
+    # nedeniydi (`-----END PRIVATE KEY-----` satiri kopmustu).
+    oauth_apple_private_key_file: str = ""
     # Sosyal giris oturumunun (state) omru. Kisa: kullanici saglayiciya
     # gidip donene kadar yeter, calinan bir `state`in kullanim
     # penceresini dar tutar.

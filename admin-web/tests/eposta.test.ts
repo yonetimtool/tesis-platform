@@ -15,9 +15,11 @@ import {
 const GECERLI = [
   "ayse@ornek.com",
   "a.b+etiket@alt.ornek.co.uk",
-  "AYSE@ORNEK.COM",
   "  bosluklu@ornek.com  ",
 ];
+
+// (P253 acil) BUYUK HARF EKRANDA REDDEDILIR — Turkce harfler dahil.
+const BUYUK = ["AYSE@ORNEK.COM", "Frknkymkc1996@gmail.com", "ali@Ornek.com", "İpek@ornek.com"];
 
 const BOZUK = [
   "ayse",
@@ -39,6 +41,13 @@ describe("epostaHatasi", () => {
 
   it("BOZUK bicim -> 'bicim'", () => {
     for (const e of BOZUK) expect(epostaHatasi(e), e).toBe("bicim");
+  });
+
+  it("BUYUK HARF -> 'buyukHarf' (zorunlu olmasa da)", () => {
+    for (const e of BUYUK) {
+      expect(epostaHatasi(e), e).toBe("buyukHarf");
+      expect(epostaHatasi(e, false), e).toBe("buyukHarf");
+    }
   });
 
   it("BOS: zorunluysa hata, degilse gecerli", () => {
@@ -74,5 +83,11 @@ describe("epostaHatasi", () => {
 describe("epostaNormalle", () => {
   it("kirpar ve KUCUK HARFE indirir", () => {
     expect(epostaNormalle("  Ayse@Ornek.COM ")).toBe("ayse@ornek.com");
+  });
+
+  it("YALNIZ ASCII: Turkce kural yok (I -> i, ı DEGIL; İ'ye dokunulmaz)", () => {
+    // Sunucudaki `app/eposta.py` ile ayni sonuc.
+    expect(epostaNormalle("ISIK@X.COM")).toBe("isik@x.com");
+    expect(epostaNormalle("İŞ@x.com")).toBe("İŞ@x.com");
   });
 });

@@ -36,9 +36,9 @@ import { Avatar } from "@/components/Avatar";
 import { YasalMetinler } from "@/components/profil/yasal-metinler";
 import { GirisYontemlerim } from "@/components/GirisYontemlerim";
 import { ParolaAlani } from "@/components/ParolaAlani";
-import { epostaHataMetni } from "@/components/EpostaAlani";
+import { epostaGonderilemez, epostaHataMetni } from "@/components/EpostaAlani";
 import { TelefonAlani, telefonHataMetni } from "@/components/TelefonAlani";
-import { EPOSTA_SINIR } from "@/lib/eposta";
+import { EPOSTA_SINIR, epostaNormalle } from "@/lib/eposta";
 import { useToast } from "@/components/Toast";
 import {
   Alan,
@@ -237,7 +237,13 @@ function HesapBilgileri({
       return;
     }
     // (P184-ek duzeltme §1) E-posta bicimi — degistiyse dogrula.
-    const yeniEposta = eposta.trim().toLowerCase();
+    // (P253 acil) Buyuk harf SESSIZCE kucultulmez: alan hata verir ve
+    // kayit GONDERILMEZ (kullanici karari; web ve mobil ayni).
+    if (epostaGonderilemez(eposta)) {
+      setEpostaHatasi(t("epostaHataBuyukHarf"));
+      return;
+    }
+    const yeniEposta = epostaNormalle(eposta);
     if (yeniEposta !== "" && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(yeniEposta)) {
       setEpostaHatasi(t("profilEpostaGecersiz"));
       return;
@@ -456,7 +462,12 @@ function HesapBilgileri({
                       maxLength={EPOSTA_SINIR}
                       onChange={(e) => {
                         setEposta(e.target.value);
-                        setEpostaHatasi(null);
+                        // Buyuk harf ANINDA soylenir (EpostaAlani ile ayni).
+                        setEpostaHatasi(
+                          epostaGonderilemez(e.target.value)
+                            ? t("epostaHataBuyukHarf")
+                            : null,
+                        );
                       }}
                       onBlur={() =>
                         setEpostaHatasi(epostaHataMetni(eposta, false, t))

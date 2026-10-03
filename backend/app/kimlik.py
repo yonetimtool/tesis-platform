@@ -30,6 +30,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .eposta import eposta_normalle
 from .security import normalize_phone
 
 
@@ -58,7 +59,7 @@ def kimligi_coz(ham: str | None) -> Kimlik | None:
         # E-POSTA: bicim dogrulamasi BURADA YAPILMAZ. Uc zaten
         # bulamazsa jenerik hata donecek; ayrica dogrulamak, gecersiz
         # bicimi FARKLI bir hataya ayirmak (yani sizdirmak) olurdu.
-        return Kimlik(tur="eposta", deger=s.lower())
+        return Kimlik(tur="eposta", deger=eposta_normalle(s))
     try:
         return Kimlik(tur="telefon", deger=normalize_phone(_ulke_kodunu_duzelt(s)))
     except ValueError:

@@ -19582,6 +19582,12 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Kayıt sayısı üst sınıra takıldı — rapor eksik olabilir. Tarih aralığını daraltın.'**
   String get rprKesildi;
+
+  /// No description provided for @epostaHataBuyukHarf.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta adresi küçük harfle yazılmalıdır.'**
+  String get epostaHataBuyukHarf;
 }
 
 class _AppLocalizationsDelegate

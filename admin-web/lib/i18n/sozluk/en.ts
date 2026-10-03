@@ -4071,4 +4071,5 @@ export const en: Sozluk = {
   finansPartiGeriAlindi: "{adet} charges reversed",
   finansAtlamaOdenmis: "already paid, correct individually",
   finansAtlamaZatenTersKayitli: "already corrected",
+  epostaHataBuyukHarf: "The email address must be written in lowercase.",
 };

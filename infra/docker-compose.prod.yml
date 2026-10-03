@@ -493,6 +493,8 @@ services:
       # `.p8` ICERIGI tek satirda; satir sonlari `\n` kacisi olarak yazilir
       # ve uygulama onlari cozer (`oauth._apple_istemci_sirri`).
       OAUTH_APPLE_PRIVATE_KEY: ${OAUTH_APPLE_PRIVATE_KEY:-}
+      # (P253) Ya da .p8 DOSYASI (icerige yegdir); prod: /secrets/apple-auth.p8
+      OAUTH_APPLE_PRIVATE_KEY_FILE: ${OAUTH_APPLE_PRIVATE_KEY_FILE:-}
       # Saglayiciya bildirilen `redirect_uri`nin tabani. TERS VEKIL
       # ARKASINDA ZORUNLU: istekten turetilen adres (ic konak, http,
       # farkli port) kayitli adresle tutmaz ve giris "redirect_uri

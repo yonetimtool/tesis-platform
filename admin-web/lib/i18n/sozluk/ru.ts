@@ -4071,4 +4071,5 @@ export const ru: Sozluk = {
   finansPartiGeriAlindi: "Отменено начислений: {adet}",
   finansAtlamaOdenmis: "уже оплачено, исправьте по отдельности",
   finansAtlamaZatenTersKayitli: "уже исправлено",
+  epostaHataBuyukHarf: "Адрес электронной почты нужно писать строчными буквами.",
 };

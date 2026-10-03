@@ -11188,4 +11188,8 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get rprKesildi =>
       'El número de registros alcanzó el límite: el informe puede estar incompleto. Reduce el intervalo de fechas.';
+
+  @override
+  String get epostaHataBuyukHarf =>
+      'La dirección de correo debe escribirse en minúsculas.';
 }

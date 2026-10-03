@@ -44,6 +44,7 @@ yurutur. Gerekce goc 0048'in basliginda.
 from __future__ import annotations
 
 import base64
+import functools
 import hashlib
 import secrets
 import time
@@ -53,6 +54,7 @@ import httpx
 import jwt
 
 from .config import settings
+from .eposta import eposta_normalle
 from .errors import APIError
 
 #: Yapilandirilmamis saglayici. CEVRILIR (duz metin degil): arayuz kapali
@@ -86,7 +88,10 @@ class Saglayici:
     @property
     def hazir(self) -> bool:
         """Kod takasi + jeton dogrulamasi icin gereken her sey var mi?"""
-        return bool(self.istemci_id and self.izinli_aud)
+        if not (self.istemci_id and self.izinli_aud):
+            return False
+        # (P253 acil) Apple'da gecersiz ozel anahtar = kod takasi kesin 500.
+        return not self.apple or apple_anahtar_sorunu() is None
 
 
 def _liste(ham: str) -> tuple[str, ...]:
@@ -334,7 +339,7 @@ async def kimlik_dogrula(kod: str, id_token: str, *, nonce: str | None = None) -
     return Kimlik(
         saglayici=sag.kod,
         subject=subject,
-        eposta=str(eposta) if eposta else None,
+        eposta=eposta_normalle(str(eposta)) if eposta else None,
         email_verified=email_verified,
         relay=relay,
         ad=str(ad).strip() or None if ad else None,
@@ -357,6 +362,60 @@ def pkce_uret() -> tuple[str, str]:
     return dogrulayici, meydan
 
 
+def apple_ozel_anahtar() -> str:
+    """Apple `.p8` icerigi: DOSYA verilmisse dosyadan, yoksa env icerigi.
+
+    Env bicimi tek satir + `\\n` kacisi; cevresindeki tirnaklar ve bosluk
+    atilir (`.env`e tirnakla yapistirilmis anahtar da calissin).
+    """
+    yol = settings.oauth_apple_private_key_file.strip()
+    if yol:
+        with open(yol, encoding="utf-8") as f:
+            return f.read().strip()
+    return settings.oauth_apple_private_key.strip().strip("\"'").replace("\\n", "\n").strip()
+
+
+@functools.lru_cache(maxsize=8)
+def _pem_sorunu(icerik: str) -> str | None:
+    if "-----BEGIN PRIVATE KEY-----" not in icerik:
+        return "'-----BEGIN PRIVATE KEY-----' satiri yok"
+    if "-----END PRIVATE KEY-----" not in icerik:
+        return "'-----END PRIVATE KEY-----' satiri yok (anahtar KESIK)"
+    from cryptography.hazmat.primitives.asymmetric import ec
+    from cryptography.hazmat.primitives.serialization import load_pem_private_key
+
+    try:
+        anahtar = load_pem_private_key(icerik.encode(), password=None)
+    except (ValueError, TypeError) as e:
+        return f"PEM cozulemedi ({type(e).__name__})"
+    if not isinstance(anahtar, ec.EllipticCurvePrivateKey) or anahtar.curve.name != "secp256r1":
+        return "anahtar P-256 (ES256) EC anahtari degil"
+    return None
+
+
+def apple_anahtar_sorunu() -> str | None:
+    """(P253 acil) ACILIS DENETIMI: Apple yapilandirilmissa ozel anahtar
+    gecerli bir P-256 PEM mi? `None` = sorun yok (ya da Apple kapali).
+
+    OLCULEN KUSUR (prod): env'deki anahtarin son satiri eksikti; sorun ilk
+    Apple girisinde 500 olarak ortaya cikiyordu. Artik acilista
+    gunluge HATA yazilir ve Apple dugmesi GIZLENIR (`hazir` false) —
+    kesin basarisiz bir yola kimse gonderilmez. ICERIK ASLA YAZILMAZ.
+    """
+    if not settings.oauth_apple_client_id:
+        return None
+    try:
+        icerik = apple_ozel_anahtar()
+    except OSError as e:
+        return f"anahtar dosyasi okunamadi ({type(e).__name__}: {settings.oauth_apple_private_key_file})"
+    if not icerik:
+        return "ozel anahtar BOS (OAUTH_APPLE_PRIVATE_KEY ya da _FILE)"
+    sorun = _pem_sorunu(icerik)
+    if not settings.oauth_apple_team_id or not settings.oauth_apple_key_id:
+        sorun = sorun or "OAUTH_APPLE_TEAM_ID / OAUTH_APPLE_KEY_ID bos"
+    return sorun
+
+
 def _apple_istemci_sirri(sag: Saglayici) -> str:
     """Apple `client_secret`i SABIT DEGIL, ES256 ile imzalanmis bir JWT'dir.
 
@@ -373,7 +432,7 @@ def _apple_istemci_sirri(sag: Saglayici) -> str:
             "aud": "https://appleid.apple.com",
             "sub": sag.istemci_id,
         },
-        settings.oauth_apple_private_key.replace("\\n", "\n"),
+        apple_ozel_anahtar(),
         algorithm="ES256",
         headers={"kid": settings.oauth_apple_key_id},
     )

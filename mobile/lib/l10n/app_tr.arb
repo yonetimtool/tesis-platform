@@ -5676,5 +5676,6 @@
   },
   "brcAtlamaOdenmis": "ödeme almış, tek tek düzeltin",
   "brcAtlamaZatenTersKayitli": "zaten düzeltilmiş",
-  "rprKesildi": "Kayıt sayısı üst sınıra takıldı — rapor eksik olabilir. Tarih aralığını daraltın."
+  "rprKesildi": "Kayıt sayısı üst sınıra takıldı — rapor eksik olabilir. Tarih aralığını daraltın.",
+  "epostaHataBuyukHarf": "E-posta adresi küçük harfle yazılmalıdır."
 }

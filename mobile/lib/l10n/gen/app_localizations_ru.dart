@@ -11260,4 +11260,8 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get rprKesildi =>
       'Число записей достигло предела — отчёт может быть неполным. Сузьте диапазон дат.';
+
+  @override
+  String get epostaHataBuyukHarf =>
+      'Адрес электронной почты нужно писать строчными буквами.';
 }

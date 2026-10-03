@@ -10,8 +10,9 @@ from pydantic import (
     AfterValidator,
     AliasChoices,
     BaseModel as _PydanticBaseModel,
+    BeforeValidator,
     ConfigDict,
-    EmailStr,
+    EmailStr as _EmailStr,
     Field,
     StringConstraints,
     computed_field,
@@ -20,6 +21,7 @@ from pydantic import (
 )
 
 from . import girdi_siniri as _G  # (P248 §3a) alan siniri sabitleri
+from .eposta import eposta_normalle
 from .security import normalize_phone
 from .temizleme import zengin_temizle
 
@@ -138,6 +140,20 @@ KURUS_UST_SINIR = 10**13
 #: 2000-2099, ay 01-12. Yalniz uzunluk denetleniyordu: "2026-13", "abc",
 #: "1900-01" tahakkuk olarak yazilabiliyordu.
 DONEM_DESENI = r"^20\d{2}-(0[1-9]|1[0-2])$"
+
+#: (P253 acil) E-POSTA HER GIRISTE KIRPILIR VE KUCUK HARFE CEVRILIR.
+#:
+#: Ad bilerek `EmailStr`: bu modulde `EmailStr` yazan HER alan (40+)
+#: normallestirilmis olur — yeni alan da kendiliginden. Buyuk harf
+#: REDDEDILMEZ (SSO ve Excel buyuk harf gonderir); reddetmek ekranin isi.
+#: Turkce kural YOK: yalniz ASCII A-Z (bkz. `app/eposta.py`).
+EmailStr = Annotated[
+    _EmailStr,
+    BeforeValidator(lambda v: v.strip() if isinstance(v, str) else v),
+    AfterValidator(eposta_normalle),
+]
+#: Bicim denetimi `EmailStr`den gevsek tutulan (duz metin) e-posta girdileri.
+EpostaMetni = Annotated[str, AfterValidator(eposta_normalle)]
 
 #: (P250 §5) Giris ailesindeki e-posta alanlarinin AÇIK siniri: 254 (RFC 5321).
 #: `EmailStr` (email-validator) toplam uzunlugu zaten 254'te keser; sinir
@@ -412,12 +428,12 @@ class MeGorunumRequest(BaseModel):
 
 class MeEpostaEkleRequest(BaseModel):
     """(P181 Bölüm 1) Mevcut kullanıcının e-posta ekleme/doğrulama isteği."""
-    eposta: str = Field(min_length=3, max_length=254, examples=["ayse@ornek.com"])
+    eposta: EpostaMetni = Field(min_length=3, max_length=254, examples=["ayse@ornek.com"])
     model_config = ConfigDict(extra="forbid")
 
 
 class MeEpostaDogrulaRequest(BaseModel):
-    eposta: str = Field(min_length=3, max_length=254)
+    eposta: EpostaMetni = Field(min_length=3, max_length=254)
     kod: str = Field(min_length=4, max_length=8)
     model_config = ConfigDict(extra="forbid")
 
@@ -4404,7 +4420,7 @@ class TenantSettingsUpdate(BaseModel):
     #: (P248 §3a) BASLIK (200): tesis olusturma 160'a, kayit 120'ye izin
     #: veriyor; ayarda daha dar sinir eski tesisi kilitlerdi.
     ad: str | None = Field(None, max_length=_G.BASLIK)
-    yonetim_email: str | None = Field(None, max_length=_G.EPOSTA)
+    yonetim_email: EpostaMetni | None = Field(None, max_length=_G.EPOSTA)
     #: (P193 §4) Adres alanlari. Bos dizge `None`a cevrilir (asagidaki
     #: dogrulayici): `" "` TRUTHY oldugu icin "adres var" sayilir ve
     #: makbuzda bos bir satir birakirdi.
@@ -4551,7 +4567,7 @@ class TenantAdminCreate(BaseModel):
     durumda kurulum_tamamlandi=false — birincil adi ONAYLAR."""
 
     ad: str | None = Field(None, min_length=2, max_length=160, examples=["Acme Plaza"])
-    yonetim_email: str | None = Field(None, max_length=_G.EPOSTA,
+    yonetim_email: EpostaMetni | None = Field(None, max_length=_G.EPOSTA,
                                       examples=["yonetim@acme.com"])
     yoneticiler: list[YoneticiCreate] = Field(..., min_length=1)
 
@@ -9066,7 +9082,7 @@ class TanitimIletisimIstek(BaseModel):
     """
 
     ad: str = Field(..., min_length=2, max_length=150)
-    email: str | None = Field(None, max_length=_G.EPOSTA)
+    email: EpostaMetni | None = Field(None, max_length=_G.EPOSTA)
     telefon: str | None = Field(None, max_length=40)
     mesaj: str = Field(..., min_length=5, max_length=5000)
     dil: str | None = Field(None, max_length=5)

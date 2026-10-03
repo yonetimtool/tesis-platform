@@ -48,6 +48,10 @@ class _EpostaAlaniState extends State<EpostaAlani> {
   /// HATA YAZARKEN DEĞİL, ALANDAN ÇIKINCA görünür: `a@` yazan kullanıcıya
   /// ikinci harfte "biçim geçersiz" demek, adresini yazmasını bitirmeden
   /// azarlamaktır.
+  ///
+  /// İSTİSNA — BÜYÜK HARF (P253 acil): ANINDA görünür. Yazmayı bitirince
+  /// düzelecek bir eksik değil, düzeltilmesi gereken bir harftir. Form
+  /// `validate()` aynı kuralı okur, yani gönderim ENGELLENİR.
   bool _dokunuldu = false;
 
   @override
@@ -64,6 +68,11 @@ class _EpostaAlaniState extends State<EpostaAlani> {
         enabled: widget.etkin,
         keyboardType: TextInputType.emailAddress,
         autocorrect: false,
+        // (P253 acil) Klavye cümle başını BÜYÜTMESİN: büyük harf alanı
+        // hataya düşürür. `enableSuggestions` kapalı: öneri çubuğu da
+        // büyük harfli kelime önerir.
+        textCapitalization: TextCapitalization.none,
+        enableSuggestions: false,
         textInputAction:
             widget.otomatikSonraki ? TextInputAction.next : TextInputAction.done,
         // SINIR SESSİZ DEĞİL: `maxLength` fazlasını yutar ama kullanıcı
@@ -81,7 +90,9 @@ class _EpostaAlaniState extends State<EpostaAlani> {
           hintText: widget.ipucu,
           prefixIcon: const Icon(Icons.mail_outline),
           border: const OutlineInputBorder(),
-          errorText: _dokunuldu
+          errorText: _dokunuldu ||
+                  epostaHatasi(widget.ktrl.text, zorunlu: widget.zorunlu) ==
+                      EpostaHatasi.buyukHarf
               ? epostaHataMetni(l10n, widget.ktrl.text, zorunlu: widget.zorunlu)
               : null,
         ),

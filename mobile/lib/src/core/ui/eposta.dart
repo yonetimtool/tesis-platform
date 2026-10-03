@@ -26,12 +26,16 @@ const kEpostaYerelSinir = 64;
 const kEpostaSinir = 254;
 
 /// Doğrulama sonucu — METİN DEĞİL KİMLİK (README §15).
-enum EpostaHatasi { bos, bicim, yerelUzun, cokUzun }
+enum EpostaHatasi { bos, buyukHarf, bicim, yerelUzun, cokUzun }
 
 /// [ham] için hata kimliği; `null` = geçerli.
 EpostaHatasi? epostaHatasi(String ham, {bool zorunlu = true}) {
   final s = ham.trim();
   if (s.isEmpty) return zorunlu ? EpostaHatasi.bos : null;
+  // (P253 acil) BÜYÜK HARF EKRANDA REDDEDİLİR (kullanıcı kararı): prod'da
+  // aynı kişi harf farkıyla iki kez kaydolmuştu. Sunucu ayrıca küçültür
+  // (SSO/Excel için); ekran kullanıcıya NEDENİNİ yazarken söyler.
+  if (_buyukHarf.hasMatch(s)) return EpostaHatasi.buyukHarf;
   // UZUNLUK ÖNCE: biçim denetimi uzun bir adreste de geçebilir ve kullanıcı
   // asıl engeli (uzunluk) hiç görmezdi.
   if (s.length > kEpostaSinir) return EpostaHatasi.cokUzun;
@@ -50,4 +54,11 @@ EpostaHatasi? epostaHatasi(String ham, {bool zorunlu = true}) {
 }
 
 /// Saklanacak değer: kırpılmış + küçük harf.
-String epostaNormalle(String ham) => ham.trim().toLowerCase();
+/// Herhangi bir büyük harf (Türkçe `İ`, `Ş` dahil).
+final _buyukHarf = RegExp(r'\p{Lu}', unicode: true);
+
+/// Saklanacak değer: kırpılmış + YALNIZ ASCII A-Z küçük (sunucudaki
+/// `app/eposta.py` ile aynı). Türkçe kural YOK: `I` -> `ı` e-postayı bozar.
+String epostaNormalle(String ham) => ham
+    .trim()
+    .replaceAllMapped(RegExp('[A-Z]'), (m) => m[0]!.toLowerCase());

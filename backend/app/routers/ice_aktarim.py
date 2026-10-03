@@ -68,6 +68,7 @@ from .. import girdi_siniri as _G
 from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, translate_integrity
 from ..deps import get_tenant_db, require_role
+from ..eposta import eposta_normalle
 from ..errors import APIError
 from ..hata_metinleri import hata_metni, istek_dili
 from ..davet import davet_olustur_ve_gonder
@@ -323,7 +324,7 @@ async def _daire_sakini(
     """
     ad = _metin(d, "sakin_ad")
     soyad = _metin(d, "sakin_soyad")
-    eposta = _metin(d, "sakin_eposta")
+    eposta = eposta_normalle(_metin(d, "sakin_eposta"))
     if not ad and not soyad and not eposta:
         return
     if not eposta:
@@ -406,7 +407,7 @@ async def _uygula_kisi(
         return
 
     # (P193 §1) E-POSTA ZORUNLU — gerekce tur tanimindaki notta.
-    eposta = _metin(d, "eposta") or None
+    eposta = eposta_normalle(_metin(d, "eposta")) or None
     if eposta is None:
         b.hata(satir_no, "eposta", "zorunlu_alan_eksik")
         return
@@ -430,7 +431,7 @@ async def _uygula_kisi(
     # Ikinci satir HATADIR (satir no'suyla, ilk satiri da soyleyerek):
     # sessizce atlamak, yoneticinin dosyada ayni numarayi iki kisiye
     # yazdigini hic fark etmemesi demekti.
-    eposta_k = eposta.lower()
+    eposta_k = eposta  # (P253) zaten eposta_normalle'den gecti
     if eposta_k in b.dosya_eposta:
         b.hata(satir_no, "eposta", "ice_aktarim_dosyada_yineleniyor",
                satir=b.dosya_eposta[eposta_k])
@@ -504,7 +505,7 @@ async def _uygula_kisi(
         else:
             cakisan = (
                 "eposta"
-                if (var.email or "").lower() == eposta_k
+                if eposta_normalle(var.email or "") == eposta_k
                 else "telefon"
             )
             b.hata(satir_no, cakisan, "ice_aktarim_kisi_cakisiyor")

@@ -4148,4 +4148,5 @@ export const tr = {
   finansPartiGeriAlindi: "{adet} borç ters kayıtla geri alındı",
   finansAtlamaOdenmis: "ödeme almış, tek tek düzeltin",
   finansAtlamaZatenTersKayitli: "zaten düzeltilmiş",
+  epostaHataBuyukHarf: "E-posta adresi küçük harfle yazılmalıdır.",
 } as const;

@@ -78,6 +78,7 @@ from ..audit import Action, record_audit
 from ..config import settings
 from ..db import SessionLocal, set_tenant
 from ..deps import get_redis
+from ..eposta import eposta_normalle
 from ..errors import APIError
 from ..gunlukleme import maskele_kimlik
 from ..gonderim import saglayici as kanal_saglayicisi, tenant_ayari
@@ -321,7 +322,7 @@ async def tesis_olustur(
             # saglayici DOGRULADIYSA dogrulanmis kabul edilir (reset/OTP calisir),
             # aksi halde yazilir ama beklemede kalir. Yeni tenant -> cakisma yok.
             if kimlik and kimlik.get("eposta"):
-                user.email = str(kimlik["eposta"]).strip().lower()
+                user.email = eposta_normalle(str(kimlik["eposta"]))
                 user.eposta_dogrulandi = bool(kimlik.get("email_verified"))
             # (P250 §3) Tesisi acan yoneticiye HOS GELDINIZ (bir kez).
             await session.flush()
@@ -466,7 +467,7 @@ async def yonetici_basvuru(
     """
     _kapi()
 
-    eposta = str(body.eposta).lower()
+    eposta = eposta_normalle(str(body.eposta))
     # HIZ SINIRI DOGRULAMADAN ONCE — depodaki oteki kayit uclariyla ayni
     # sira. Sonra saymak, "bu adres kayitli mi" sorusunu sinirsiz
     # sordurmaya izin verirdi.
@@ -531,7 +532,7 @@ async def yonetici_dogrula(body: YoneticiDogrulaRequest) -> YoneticiDogrulaRespo
     artirilip otekinde unutulsaydi o kanal kaba kuvvete acik kalirdi.
     """
     _kapi()
-    eposta = str(body.eposta).lower()
+    eposta = eposta_normalle(str(body.eposta))
 
     async with SessionLocal() as session:
         satir = (
@@ -780,7 +781,7 @@ async def rol_eposta_basla(
     if body.rol not in _ROLLER:
         raise _BASVURU_GECERSIZ
 
-    eposta = str(body.eposta).lower()
+    eposta = eposta_normalle(str(body.eposta))
     # HIZ SINIRI KIMLIGE BAGLI: `tesis:eposta`. Yalniz e-posta kullanmak,
     # ayni adresi tasiyan iki tesisin sayacini birlestirirdi
     # (`auth.eposta_giris_kodu_iste` ile ayni kural).
@@ -979,7 +980,7 @@ async def rol_eposta_dogrula(
     kodlari dondurmek, hangi sartin tutmadigini disariya sizdirirdi.
     """
     _kapi()
-    eposta = str(body.eposta).lower()
+    eposta = eposta_normalle(str(body.eposta))
 
     async with SessionLocal() as session:
         async with session.begin():

@@ -196,6 +196,22 @@ def test_SUB_YOKSA_reddedilir(rsa_cifti, google_hazir):
         _coz("google", _jeton(rsa_cifti, sub=""))
 
 
+def _apple_anahtari_kur(monkeypatch):
+    """(P253) Apple `hazir` icin gecerli bir P-256 anahtar gerekir."""
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import ec
+
+    from app.config import settings
+
+    pem = ec.generate_private_key(ec.SECP256R1()).private_bytes(
+        serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption()).decode()
+    monkeypatch.setattr(settings, "oauth_apple_team_id", "TEAM123456")
+    monkeypatch.setattr(settings, "oauth_apple_key_id", "KEY1234567")
+    monkeypatch.setattr(settings, "oauth_apple_private_key", pem)
+    monkeypatch.setattr(settings, "oauth_apple_private_key_file", "")
+
+
 def test_APPLE_PRIVATE_RELAY_isaretlenir(rsa_cifti, monkeypatch):
     """Relay adresi eslesmede KULLANILMAZ; yalniz kullaniciya soylenir."""
     from app import oauth as oauth_mod
@@ -203,6 +219,7 @@ def test_APPLE_PRIVATE_RELAY_isaretlenir(rsa_cifti, monkeypatch):
 
     monkeypatch.setattr(settings, "oauth_apple_client_id", "com.app.yonetiyor.web")
     monkeypatch.setattr(settings, "oauth_apple_aud", "")
+    _apple_anahtari_kur(monkeypatch)
     oauth_mod.jwks_onbellegi_temizle()
     oauth_mod.jwks_onbellege_koy(
         "https://appleid.apple.com/auth/keys", _jwks(rsa_cifti)
@@ -220,6 +237,13 @@ def test_APPLE_PRIVATE_RELAY_isaretlenir(rsa_cifti, monkeypatch):
     # (P180 guvenlik) Apple private relay Apple-kontrollu -> dogrulanmis sayilir.
     assert kimlik.email_verified is True
     oauth_mod.jwks_onbellegi_temizle()
+
+
+def test_SSO_EPOSTASI_KUCULTULUR(rsa_cifti, google_hazir):
+    """(P253 acil) Saglayici buyuk harf gonderebilir — reddedilmez, kucultulur.
+    Turkce kural yok: `I` -> `i`."""
+    kimlik = _coz("google", _jeton(rsa_cifti, email="  Frkn.ISIK@Gmail.COM "))
+    assert kimlik.eposta == "frkn.isik@gmail.com"
 
 
 def test_EMAIL_VERIFIED_saglayicidan_okunur(rsa_cifti, google_hazir):
@@ -335,6 +359,7 @@ def test_YETKI_ADRESI_zorunlu_parametreleri_tasir(monkeypatch):
 
     monkeypatch.setattr(settings, "oauth_apple_client_id", "com.app.yonetiyor.web")
     monkeypatch.setattr(settings, "oauth_apple_aud", "")
+    _apple_anahtari_kur(monkeypatch)
     sag = saglayici_al("apple")
     adres = yetki_adresi(
         sag,

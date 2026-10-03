@@ -3669,5 +3669,6 @@
   "brcPartiGeriAlindi": "{n} Belastungen storniert",
   "brcAtlamaOdenmis": "bereits bezahlt, einzeln korrigieren",
   "brcAtlamaZatenTersKayitli": "bereits korrigiert",
-  "rprKesildi": "Die Anzahl der Datensätze hat das Limit erreicht — der Bericht kann unvollständig sein. Grenzen Sie den Zeitraum ein."
+  "rprKesildi": "Die Anzahl der Datensätze hat das Limit erreicht — der Bericht kann unvollständig sein. Grenzen Sie den Zeitraum ein.",
+  "epostaHataBuyukHarf": "Die E-Mail-Adresse muss in Kleinbuchstaben geschrieben werden."
 }

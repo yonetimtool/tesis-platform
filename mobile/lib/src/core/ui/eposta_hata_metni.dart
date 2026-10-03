@@ -18,6 +18,7 @@ String? epostaHataMetni(
   return switch (epostaHatasi(ham, zorunlu: zorunlu)) {
     null => null,
     EpostaHatasi.bos => l10n.epostaHataBos,
+    EpostaHatasi.buyukHarf => l10n.epostaHataBuyukHarf,
     EpostaHatasi.bicim => l10n.epostaHataBicim,
     EpostaHatasi.yerelUzun => l10n.epostaHataYerelUzun,
     EpostaHatasi.cokUzun => l10n.epostaHataCokUzun,

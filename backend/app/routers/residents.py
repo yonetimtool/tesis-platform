@@ -23,6 +23,7 @@ from ..audit import Action, audit_user
 from ..crud_helpers import is_unique_violation, translate_integrity
 from ..davet import davet_olustur_ve_gonder
 from ..deps import get_tenant_db, require_role
+from ..eposta import eposta_normalle
 from ..errors import APIError
 from ..toplu_tahakkuk import oturuyor_coz
 from ..tr_arama import LIKE_KACIS, tr_kalip, tr_katla_sql
@@ -117,7 +118,7 @@ async def create_resident(
         await db.execute(
             select(AppUser).where(
                 or_(
-                    func.lower(AppUser.email) == str(body.email).lower(),
+                    func.lower(AppUser.email) == eposta_normalle(str(body.email)),
                     AppUser.telefon == body.telefon,
                 )
             )

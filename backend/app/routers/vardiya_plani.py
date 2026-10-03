@@ -27,6 +27,7 @@ from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..eposta import eposta_normalle
 from ..hiz_siniri import DISA_AKTARIM_SINIRI
 from ..audit import Action, audit_user
 from ..deps import get_tenant_db, require_role
@@ -2600,7 +2601,7 @@ async def ice_aktar(
     # Personel BIR KEZ okunur: satir basina sorgu, 2000 satirlik bir
     # dosyada 2000 gidis-donus demekti.
     personel = {
-        (e or "").lower(): (uid, ad, rol)
+        eposta_normalle(e or ""): (uid, ad, rol)
         for uid, ad, e, rol in (
             await db.execute(
                 select(AppUser.id, AppUser.ad, AppUser.email, AppUser.role).where(
@@ -2617,7 +2618,7 @@ async def ice_aktar(
         tarih = tarih_coz(d.get("tarih", ""))
         bas = saat_coz(d.get("baslangic_saat", ""))
         bit = saat_coz(d.get("bitis_saat", ""))
-        kisi = personel.get(d.get("eposta", "").lower())
+        kisi = personel.get(eposta_normalle(d.get("eposta", "")))
 
         def _hata(kimlik: str) -> None:
             sonuclar.append(

@@ -165,6 +165,7 @@ async def lifespan(app: FastAPI):
         settings.redis_url, encoding="utf-8", decode_responses=True
     )
     await _sema_gunlukle()
+    _apple_anahtar_gunlukle()
     try:
         yield
     finally:
@@ -433,6 +434,22 @@ async def _beat_durumu() -> dict[str, object]:
         return {"durum": durum, **veri}
     except Exception:
         return {"durum": "okunamadi"}
+
+
+def _apple_anahtar_gunlukle() -> None:
+    """(P253 acil) Apple ozel anahtari ACILISTA denetlenir.
+
+    Prod'da anahtarin `-----END PRIVATE KEY-----` satiri eksikti ve bu
+    ancak ilk Apple girisinde 500 olarak gorundu. Simdi acilista HATA
+    gunlugu dusulur ve Apple dugmesi gizlenir (`oauth.Saglayici.hazir`).
+    Uygulama DURDURULMAZ: diger girisler calismaya devam etmeli.
+    """
+    from .oauth import apple_anahtar_sorunu
+
+    sorun = apple_anahtar_sorunu()
+    if sorun:
+        logging.getLogger(__name__).error(
+            "APPLE ILE GIRIS KAPALI — ozel anahtar gecersiz: %s", sorun)
 
 
 async def _sema_gunlukle() -> None:
