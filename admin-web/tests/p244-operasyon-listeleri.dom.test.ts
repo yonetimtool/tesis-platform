@@ -22,7 +22,6 @@ import { screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import DisHizmetlerPage from "@/app/(protected)/dis-hizmetler/page";
-import KargolarPage from "@/app/(protected)/kargolar/page";
 
 import { ciz, fetchSahtele } from "./yardimci";
 
@@ -53,57 +52,6 @@ function kargoKur(rol: string, items: unknown[]) {
 }
 
 afterEach(() => vi.restoreAllMocks());
-
-describe("(P244 §8a) kargo listesi", () => {
-  it("kayitlar GERCEK TABLODA — satir/sutun iliskisi korunur", async () => {
-    kargoKur("security", [BEKLEYEN, TESLIM]);
-    ciz(KargolarPage);
-    const hucre = await screen.findByRole("cell", { name: "A-12" });
-    // `closest("table")`: `div` izgarasi gorsel olarak ayni durur ama
-    // ekran okuyucu icin tablo DEGILDIR.
-    expect(hucre.closest("table"), "kayitlar tabloda degil").not.toBeNull();
-    expect(screen.getByRole("cell", { name: "B-3" })).toBeInTheDocument();
-  });
-
-  it("SAKIN bekleyen kargoda 'Teslim aldim' GORUR", async () => {
-    kargoKur("resident", [BEKLEYEN]);
-    ciz(KargolarPage);
-    await screen.findByRole("cell", { name: "A-12" });
-    expect(
-      await screen.findByRole("button", { name: "Teslim aldım" }),
-    ).toBeInTheDocument();
-  });
-
-  it("TESLIM EDILMIS kargoda dugme YOK (damga ikinci kez basilmaz)", async () => {
-    kargoKur("resident", [TESLIM]);
-    ciz(KargolarPage);
-    await screen.findByRole("cell", { name: "B-3" });
-    expect(screen.queryByRole("button", { name: "Teslim aldım" })).toBeNull();
-  });
-
-  it("GUVENLIK dugmeyi HIC gormez (sunucu ona 404 verir)", async () => {
-    kargoKur("security", [BEKLEYEN]);
-    ciz(KargolarPage);
-    await screen.findByRole("cell", { name: "A-12" });
-    expect(screen.queryByRole("button", { name: "Teslim aldım" })).toBeNull();
-  });
-
-  it("OZET SAYILARI AYRI UCLARDAN — gorunen listeden turetilmez", async () => {
-    // Gorunen listede 2 kayit var; ama sayaclar `meta.total` okur.
-    // Ayni sahte yanit uc uca da dondugu icin burada olculen sey
-    // sayinin DEGERI degil, sayfanin sayaclari AYRI sorgularla
-    // sormasidir: `?durum=bekliyor&limit=1` ve `?durum=teslim_alindi`.
-    kargoKur("security", [BEKLEYEN, TESLIM]);
-    ciz(KargolarPage);
-    await screen.findByRole("cell", { name: "A-12" });
-    const { cagrilanUrller } = await import("./yardimci");
-    const urller = cagrilanUrller();
-    expect(urller.some((u) => u.includes("durum=bekliyor&") || u.endsWith("durum=bekliyor"))).toBe(
-      true,
-    );
-    expect(urller.some((u) => u.includes("durum=teslim_alindi"))).toBe(true);
-  });
-});
 
 describe("(P244 §8a) dis hizmet rehberi", () => {
   it("TELEFON hala ARANABILIR bir `tel:` baglantisi", async () => {

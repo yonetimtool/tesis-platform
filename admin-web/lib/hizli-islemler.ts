@@ -16,7 +16,6 @@ export const HIZLI_ISLEM_KATALOGU: Record<string, HizliIslem> = {
   personel: { rota: "/kisiler?sekme=personel", anahtar: "panoHizliPersonel", ikon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M22 11h-6" },
   sakin: { rota: "/kisiler?sekme=sakinler", anahtar: "panoHizliSakin", ikon: "M3 21V10l9-7 9 7v11M9 21v-6h6v6" },
   gorev: { rota: "/tasks", anahtar: "panoHizliGorev", ikon: "M9 11l3 3 8-8M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9" },
-  ziyaretci: { rota: "/ziyaretciler", anahtar: "panoHizliZiyaretci", ikon: "M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" },
   borclular: { rota: "/finans/borclular", anahtar: "panoHizliBorclular", ikon: "M12 8v4l3 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" },
   gider: { rota: "/finans/giderler", anahtar: "panoHizliGider", ikon: "M12 21V3M5 10l7-7 7 7" },
   rezervasyon: { rota: "/rezervasyon-yonetimi", anahtar: "panoHizliRezervasyon", ikon: "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" },

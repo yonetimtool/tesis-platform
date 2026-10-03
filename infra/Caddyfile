@@ -218,8 +218,56 @@
 # olarak turetilir; farkli bir konak kullanan kurulum degiskeni .env'de ezer.
 # DNS'te olmayan bir konagi buraya yazmayin: cozulmeyen ada sertifika istemek
 # ACME hatasi uretir ve Caddy'nin acilisini bozar.
+# --- (P253 §B) ERISIM GUNLUGU — YALNIZ ROTA VE SAYI (KVKK) ---------------- #
+#
+# NEDEN: mobil esitlik aşamalarini KULLANIM SIKLIGINA gore siralamak icin
+# hangi web sayfasinin ne kadar acildigini bilmek gerekiyor (P253 plani
+# §6). Bugune kadar Caddy'de `log` yonergesi YOKTU: erisim gunlugu kapali.
+#
+# KISISEL VERI YAZILMAZ — alanlar KAYNAKTA silinir, sonradan ayiklanmaz:
+#   * istemci IP'si (`remote_ip`, `client_ip`) ve tum istek/yanit basliklari
+#     (cerez, Authorization, User-Agent) SILINIR;
+#   * URI'nin SORGU kismi atilir (`?kisi=<id>` gibi kimlikler tasiyabilir);
+#   * yalniz yol, metot, durum kodu, sure ve zaman kalir.
+# Yalniz SAYFA ACILISLARI: on-yukleme (`Next-Router-Prefetch`), statik
+# dosya ve `/api/*` `log_skip` ile hic yazilmaz (app.* blogunda).
+# Dosya `caddy_data` biriminde, 30 gun tutulur (`roll_keep_for 720h`).
+# Okuma: `docs/P253-kullanim-olcumu.sh` (salt okuma, yalniz rota sayar).
+(erisim_gunlugu) {
+	log {
+		output file /data/erisim/app.log {
+			roll_size 50MiB
+			roll_keep 20
+			roll_keep_for 720h
+		}
+		format filter {
+			wrap json
+			fields {
+				request>remote_ip delete
+				request>client_ip delete
+				request>remote_port delete
+				request>headers delete
+				request>tls delete
+				resp_headers delete
+				user_id delete
+				request>uri regexp "\?.*$" ""
+			}
+		}
+	}
+}
+
 {$APP_DOMAIN}, {$APP_DOMAIN_IDN} {
 	{$CADDY_TLS}
+	import erisim_gunlugu
+	# (P253 §B) Sayfa ACILISI disindakiler gunluge YAZILMAZ: Next.js'in
+	# baglanti on-yuklemeleri (sayfa acilmadan gelir, sayiyi sisirirdi),
+	# statik dosyalar ve BFF cagrilari.
+	@erisimGurultu {
+		header Next-Router-Prefetch *
+	}
+	@erisimStatik path /_next/* /api/* /favicon* /icon* /apple-icon* /robots.txt /sitemap.xml /.well-known/*
+	log_skip @erisimGurultu
+	log_skip @erisimStatik
 	@kanonikDisi not host {$APP_DOMAIN}
 	redir @kanonikDisi https://{$APP_DOMAIN}{uri} permanent
 	import security_headers

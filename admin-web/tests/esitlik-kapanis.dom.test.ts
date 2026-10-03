@@ -18,8 +18,6 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import DisHizmetlerPage from "@/app/(protected)/dis-hizmetler/page";
-import KargolarPage from "@/app/(protected)/kargolar/page";
-import ZiyaretcilerPage from "@/app/(protected)/ziyaretciler/page";
 
 import { ciz } from "./yardimci";
 
@@ -86,40 +84,6 @@ const KARGO_BEKLEYEN = {
   created_at: "2026-08-15T10:00:00Z",
 };
 
-describe("(P162) 1. ziyaretci kaydi DUZENLENEBILIR", () => {
-  it("duzenle ON DOLU acilir ve PATCH eder", async () => {
-    const c = taklit({ "/api/visitors": { items: [ZIYARETCI] } });
-    ciz(ZiyaretcilerPage);
-    await waitFor(() => expect(screen.getByText("Ali Veli")).toBeInTheDocument());
-
-    await userEvent.click(screen.getByRole("button", { name: "Düzenle" }));
-    const kutu = within(await screen.findByRole("dialog"));
-    // Form ON DOLU gelmeli; bos acilsaydi "duzenleme" silip yeniden
-    // yazmaya donusurdu ve kayit kimligi korunsa da veri kaybi olurdu.
-    expect(kutu.getByDisplayValue("Ali Veli")).toBeInTheDocument();
-    // Daire artik SECILI gosterilir (serbest metin kutusu degil).
-    expect(kutu.getByText("A-3")).toBeInTheDocument();
-
-    await userEvent.click(kutu.getByRole("button", { name: "Kaydet" }));
-    await waitFor(() => {
-      const p = c.find((x) => x.yontem === "PATCH");
-      expect(p, "PATCH atilmadi").toBeTruthy();
-      expect(p!.url).toContain("/api/visitors/z1");
-      expect(p!.govde).toMatchObject({ unit_no: "A-3", target_resident_user_id: "u-1" });
-    });
-  });
-
-  it("DUZENLEME CIKISTAN BAGIMSIZ — cikmis kayitta da var", async () => {
-    taklit({ "/api/visitors": { items: [{ ...ZIYARETCI, cikis_zamani: "2026-08-15T12:00:00Z" }] } });
-    ciz(ZiyaretcilerPage);
-    await waitFor(() => expect(screen.getByText("Ali Veli")).toBeInTheDocument());
-    // Yanlis yazilan bir ad, ziyaretci ciktiktan SONRA da duzeltilebilmeli.
-    expect(screen.getByRole("button", { name: "Düzenle" })).toBeInTheDocument();
-    // Cikis dugmesi ise ARTIK YOK (ikinci kez damgalanmaz).
-    expect(screen.queryByRole("button", { name: "Çıkış" })).toBeNull();
-  });
-});
-
 describe("(P162) 2. dis hizmet DUZENLENEBILIR ve SILINEBILIR", () => {
   it("duzenle ON DOLU acilir ve PATCH eder", async () => {
     const c = taklit({ "/api/external-services": { items: [HIZMET] } });
@@ -150,43 +114,3 @@ describe("(P162) 2. dis hizmet DUZENLENEBILIR ve SILINEBILIR", () => {
   });
 });
 
-describe("(P162) 3. kargo TESLIM ALMA — SAKIN eylemi", () => {
-  it("SAKIN bekleyen kargoyu teslim alabilir", async () => {
-    const c = taklit({
-      "/api/kargo": { items: [KARGO_BEKLEYEN] },
-      "/api/me": { role: "resident" },
-    });
-    ciz(KargolarPage);
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Teslim aldım" })).toBeInTheDocument(),
-    );
-    await userEvent.click(screen.getByRole("button", { name: "Teslim aldım" }));
-
-    await waitFor(() => {
-      const p = c.find((x) => x.yontem === "PATCH");
-      expect(p, "PATCH atilmadi").toBeTruthy();
-      expect(p!.url).toContain("/api/kargo/k1");
-      // Tek gecerli hedef durum; geri donus yok.
-      expect(p!.govde).toEqual({ durum: "teslim_alindi" });
-    });
-  });
-
-  it("GUVENLIKTE dugme YOK — o bir SAKIN eylemi", async () => {
-    // Sunucu zaten 404 doner (`_RESIDENT`); dugme gostermek "yetkim var
-    // sandim" demektir.
-    taklit({ "/api/kargo": { items: [KARGO_BEKLEYEN] }, "/api/me": { role: "security" } });
-    ciz(KargolarPage);
-    await waitFor(() => expect(screen.getByText("A-3")).toBeInTheDocument());
-    expect(screen.queryByRole("button", { name: "Teslim aldım" })).toBeNull();
-  });
-
-  it("TESLIM ALINMIS kargoda dugme YOK (ikinci damga olmaz)", async () => {
-    taklit({
-      "/api/kargo": { items: [{ ...KARGO_BEKLEYEN, durum: "teslim_alindi" }] },
-      "/api/me": { role: "resident" },
-    });
-    ciz(KargolarPage);
-    await waitFor(() => expect(screen.getByText("A-3")).toBeInTheDocument());
-    expect(screen.queryByRole("button", { name: "Teslim aldım" })).toBeNull();
-  });
-});

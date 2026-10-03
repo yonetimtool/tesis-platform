@@ -50,10 +50,16 @@ ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
           accent: _amber,
           route: AppRoutes.ihlaller);
     case HomeMenuEntry.otopark:
+      // (P253 §B) YONETICININ "Otopark ve arac gecisleri" girisi ARAC GECISI
+      // ekranini acar: web'deki ayni adli sayfa (liste + doluluk) onun
+      // karsiligi. Eskiden yalniz agregat doluluk ekranini aciyordu ve
+      // arac giris/cikis listesi yalniz amirin menusundeydi — oysa sunucu
+      // yoneticiye listeyi, girisi ve cikisi zaten aciyor. Doluluk bandi
+      // arac gecisi ekraninin ustunde de var.
       return const ModuleCardSpec(
           icon: Icons.local_parking_outlined,
           accent: _purple,
-          route: AppRoutes.otopark);
+          route: AppRoutes.aracGecis);
     case HomeMenuEntry.vardiyalar:
       // (P232 §A) MENU ARTIK PLAN EKRANINA GIDIYOR.
       //

@@ -12,7 +12,8 @@ import '../domain/vehicle_pass_models.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 import 'vehicle_pass_controller.dart';
 
-/// "Araç Geçişleri" (G1) — admin + security.
+/// "Araç Geçişleri" (G1) — admin, yönetici (P253: menüdeki "Otopark ve araç
+/// geçişleri" girişi), güvenlik ve amir.
 ///
 /// Ana ekrandaki "Araç Plaka" karti buraya gelir (once "Bu bölüm yakında"
 /// diyordu). Ekranin üç isi var:

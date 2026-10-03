@@ -96,12 +96,9 @@ const SAYFALAR: { yol: string; yukle: () => Promise<{ default: React.ComponentTy
   // `SablonBolumu` uzerinden olculuyor.
   { yol: "/checkpoints", yukle: () => import("@/components/devriye/noktalar") },
   { yol: "/patrol-plans", yukle: () => import("@/components/devriye/planlar") },
-  { yol: "/ziyaretciler", yukle: () => import("@/app/(protected)/ziyaretciler/page") },
-  { yol: "/kargolar", yukle: () => import("@/app/(protected)/kargolar/page") },
   { yol: "/arac-gecisleri", yukle: () => import("@/app/(protected)/arac-gecisleri/page") },
   { yol: "/units", yukle: () => import("@/app/(protected)/units/page") },
   { yol: "/tasks", yukle: () => import("@/app/(protected)/tasks/page") },
-  { yol: "/gorevlerim", yukle: () => import("@/app/(protected)/gorevlerim/page") },
   { yol: "/assets", yukle: () => import("@/app/(protected)/assets/page") },
   { yol: "/schematic", yukle: () => import("@/app/(protected)/schematic/page") },
   { yol: "/dis-hizmetler", yukle: () => import("@/app/(protected)/dis-hizmetler/page") },

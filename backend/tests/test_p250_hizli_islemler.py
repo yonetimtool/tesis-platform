@@ -29,7 +29,10 @@ def test_varsayilan_ve_secenekler_role_gore(client, world):
     _sifirla(client, yon)
     d = client.get("/me/hizli-islemler", headers=yon).json()
     assert d["secili"] == list(VARSAYILAN) and d["ozel"] is False
-    assert d["secenekler"] == list(KATALOG)  # yonetici hepsini gorur
+    # (P253 §B) Yonetici "ziyaretci" HARIC hepsini gorur: sunucu /visitors'i
+    # yoneticiye kapatir; kisayol 403 alan bir ekran acardi.
+    assert d["secenekler"] == [k for k in KATALOG if k != "ziyaretci"]
+    assert "ziyaretci" not in d["secenekler"]
 
     gv = _h(client, world["slug_a"], world["guard_a"])
     g = client.get("/me/hizli-islemler", headers=gv).json()

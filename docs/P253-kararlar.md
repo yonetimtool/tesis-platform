@@ -108,6 +108,78 @@ biniyordu:
 * "Gönderildi" bekleyen iki eski test kusurun kendisine dayanıyordu;
   kapsama ölçecek biçimde düzeltildi.
 
+### Yönetici mobil menüsünde araç geçişi
+
+* **Ölçüm:** yöneticinin "Otopark ve araç geçişleri" girişi yalnız agrega
+  doluluk ekranını açıyordu. Araç giriş/çıkış listesi (doluluk bandı
+  dahil) yalnız amirin menüsündeydi. Sunucu ise yöneticiye listeyi,
+  girişi ve çıkışı zaten açıyor (`rol-matrisi`).
+* **Karar:** aynı giriş artık araç geçişi ekranını açar. Web'deki aynı adlı
+  sayfanın (liste + doluluk) karşılığı budur. Ayrı ikinci menü öğesi
+  açılmadı; menü tablosundaki eşleşme (`/arac-gecisleri` ↔ `otopark`)
+  aynen kalır.
+* **Kilit:** `mobile/test/p253_arac_gecisi_menusu_test.dart`.
+
+### Hiçbir role açık olmayan web sayfaları
+
+`/ziyaretciler`, `/kargolar`, `/gorevlerim` **kaldırıldı** (1.150 satır sayfa
++ testleri).
+
+* **Gerekçe:**
+  * P129'da "park" edilmişlerdi: rol listesi boştu, satırlar "rol geri
+    açılırsa" diye tutuluyordu.
+  * Saha rolleri ve sakin P129/P248'den beri mobil-yalnız.
+  * Yöneticiye açmak da doğru değil: sunucu `/visitors` ve `/kargo`'yu
+    yöneticiye **kapatıyor**. Yönetici bir dairenin kayıtlarını yalnız
+    sakinin onayıyla, Görüntüleme izni'nden görür; mobilde de aynı.
+* **Ölçümde çıkan iki yan kusur:**
+  * **Web bildirim haritası** kargo ve ziyaretçi bildirimlerini bu kapalı
+    sayfalara yolluyordu: tıklayan yönetici erişemediği bir sayfaya
+    gidiyordu. Artık Görüntüleme izni'ne gidiyor.
+  * **Hızlı işlem kataloğu** "Ziyaretçiler"i yöneticiye **seçenek olarak
+    sunuyordu** (P250). Mobilde bu kısayol 403 alan bir ekran açıyordu.
+    Katalogdan çıkarıldı; yalnız güvenlik ve amir.
+* Görüntüleme izni sayfası `/api/visitors` ve `/api/kargo` BFF rotalarını
+  kullanıyor; rotalar kaldı.
+
+### P251 menü tablosu: "Gelirler yalnız web" düzeltildi
+
+* Mobil Bütçe ekranı gelir kaydını aynı deftere yazıyor
+  (`POST /budget/entries` → `finansal_hareket`).
+* Satır `yapisal` yapıldı, gerekçesiyle. Mobil "Bilgisayardan yapılanlar"
+  listesinden çıkarıldı.
+* Kasa/kalem/belge seçimi Aşama 1'de gider ekranıyla birleşir.
+
+### Kullanım verisi (Caddy erişim günlüğü)
+
+* **Ölçüm:** Caddyfile'da `log` yönergesi **yoktu**; erişim günlüğü kapalıydı.
+* **Değişiklik** (`infra/Caddyfile`, `(erisim_gunlugu)` parçası, yalnız
+  `app.*`):
+  * **KVKK:** IP (`remote_ip`, `client_ip`), port, bütün istek ve yanıt
+    başlıkları (çerez, Authorization, User-Agent), TLS bilgisi ve URI'nin
+    **sorgu kısmı** kaynakta silinir. Kalanlar: metot, konak, yol, durum,
+    süre, zaman.
+  * **Gürültü:** Next.js bağlantı ön yüklemeleri (`Next-Router-Prefetch`),
+    statik dosyalar ve `/api/*` `log_skip` ile hiç yazılmaz. Ön yüklemeler
+    sayfa açılmadan gelir ve sayıyı şişirirdi.
+  * **Saklama:** `caddy_data` biriminde `/data/erisim/app.log`; 50 MiB'de
+    döner, 30 gün tutulur.
+* **Doğrulama:**
+  * `caddy validate` (bütün değişkenlerle): geçerli.
+  * Gerçek Caddy ile işlevsel deneme: çerezli, yetkili ve
+    `?kisi=<uuid>` sorgulu istekte günlükte yalnız
+    `{"method":"GET","uri":"/kisiler/personel",...}` kaldı. IP, başlık ve
+    kimlik yok.
+  * Ön yükleme, statik ve `/api` istekleri yazılmadı.
+* **Okuma:** `docs/P253-kullanim-olcumu.sh` (salt okuma; prod'da kullanıcı
+  koşar).
+  * Son N günde (varsayılan 30) GET 200/304 sayfa açılışlarını rota başına
+    sayar; kimlik içeren yol parçalarını `[id]` yapar.
+  * Örnek veriyle sınandı: eski kayıt ve POST sayılmadı.
+* **Sınır:** günlük ilk dağıtımdan **itibaren** birikir. Geriye dönük
+  kullanım verisi yok; bir ay sonra anlamlı olur. Aşama 1 sırası bu
+  yüzden plandaki tahminle başlar.
+
 ## §E — "Şimdi çalıştır" saat dilimi
 
 ### Ölçüm

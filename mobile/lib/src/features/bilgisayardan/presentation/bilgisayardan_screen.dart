@@ -24,7 +24,6 @@ class WebIslemi {
 final List<WebIslemi> webIslemleri = [
   WebIslemi('/dues', HomeMenuGrup.finans, (l) => l.webAidat),
   WebIslemi('/finans/borclandirmalar', HomeMenuGrup.finans, (l) => l.webBorclandirmalar),
-  WebIslemi('/finans/gelirler', HomeMenuGrup.finans, (l) => l.webGelirler),
   WebIslemi('/finans/virman', HomeMenuGrup.finans, (l) => l.webVirman),
   WebIslemi('/finans/iade', HomeMenuGrup.finans, (l) => l.webIade),
   WebIslemi('/finans/acilis', HomeMenuGrup.finans, (l) => l.webAcilis),

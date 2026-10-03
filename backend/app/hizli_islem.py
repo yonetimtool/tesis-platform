@@ -25,7 +25,10 @@ KATALOG: dict[str, frozenset[str]] = {
     "personel": _YONETIM,
     "sakin": _YONETIM,
     "gorev": _YONETIM | {"guvenlik_amiri"},
-    "ziyaretci": _YONETIM | {"security", "guvenlik_amiri"},
+    # (P253 §B) YONETIM CIKARILDI: sunucu /visitors'i yoneticiye KAPATIR
+    # (yonetici kayitlari yalniz Goruntuleme izni ile gorur). Katalogda
+    # durmasi, yoneticiye 403 alan bir ekran acan bir kisayol sunmakti.
+    "ziyaretci": frozenset({"security", "guvenlik_amiri"}),
     "borclular": _YONETIM,
     "gider": _YONETIM,
     "rezervasyon": _YONETIM,

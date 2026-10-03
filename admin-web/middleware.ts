@@ -307,12 +307,9 @@ export const config = {
     "/rezervasyonlarim/:path*",
     "/rezervasyon-yonetimi/:path*",
     "/kvkk/:path*",
-    "/ziyaretciler/:path*",
-    "/kargolar/:path*",
     "/davetler/:path*",
     "/olaylar/:path*",
     "/arac-gecisleri/:path*",
-    "/gorevlerim/:path*",
     "/kameralar/:path*",
     // (P213 §6) Gecmis kayit izleme — YENI KORUMALI SAYFA. Matcher'a
     // yazilmazsa sayfa oturum kapisi OLMADAN acilirdi (P193 dersi).

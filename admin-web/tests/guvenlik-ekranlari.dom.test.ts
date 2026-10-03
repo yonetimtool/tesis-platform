@@ -13,7 +13,6 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import AracGecisleriPage from "@/app/(protected)/arac-gecisleri/page";
-import KargolarPage from "@/app/(protected)/kargolar/page";
 import OlaylarPage from "@/app/(protected)/olaylar/page";
 
 import { ciz } from "./yardimci";
@@ -45,57 +44,6 @@ function taklit(harita: Record<string, unknown>, durum = 200) {
 }
 
 afterEach(() => vi.restoreAllMocks());
-
-describe("Kargolar", () => {
-  const KARGO = {
-    id: "k1",
-    unit_no: "A-12",
-    firma: "Yurtiçi",
-    notlar: null,
-    durum: "bekliyor",
-    created_at: "2026-08-04T09:00:00Z",
-  };
-
-  it("kayitlar listelenir, durum CEVRILMIS gosterilir", async () => {
-    taklit({ "/api/kargo": { items: [KARGO] } });
-    ciz(KargolarPage);
-    expect(await screen.findByText("A-12")).toBeInTheDocument();
-    // Ham enum ("bekliyor") DEGIL, cevrilmis etiket.
-    // (P244 §8a) SATIRDAN OKUNUR: ayni kelime artik durum SUZGECININ
-    // seceneginde de geciyor; kapsamsiz sorgu ikisini birden bulurdu ve
-    // "listede gorunuyor" iddiasini suzgec secenegiyle de KARSILARDI.
-    expect(screen.getByRole("cell", { name: "Bekliyor" })).toBeInTheDocument();
-    expect(screen.queryByText("bekliyor")).toBeNull();
-  });
-
-  it("DAIRE NO olmadan gonderilmez", async () => {
-    const c = taklit({ "/api/kargo": { items: [] } });
-    ciz(KargolarPage);
-    // (P161) Form artik MODALDA: once acilir. Kaydet dugmesi MODAL
-    // KAPSAMINDA aranir — acici dugme ("Yeni kargo teslim al") ayni
-    // ifadeyi tasiyor ve kapsamsiz sorgu ikisini birden bulur.
-    await userEvent.click(await screen.findByRole("button", { name: "Yeni kargo teslim al" }));
-    const kutu = await screen.findByRole("dialog");
-    await userEvent.click(within(kutu).getByRole("button", { name: /Teslim al/i }));
-    expect(await screen.findByText(/zorunludur/i)).toBeInTheDocument();
-    expect(c.some((x) => x.method === "POST")).toBe(false);
-  });
-
-  it("kayit DAIRE NUMARASI ile gider", async () => {
-    const c = taklit({ "/api/kargo": { items: [] } });
-    ciz(KargolarPage);
-    await userEvent.click(await screen.findByRole("button", { name: "Yeni kargo teslim al" }));
-    const kutu = await screen.findByRole("dialog");
-    await userEvent.type(within(kutu).getByLabelText(/Daire no/i), "B-3");
-    // (P247 §3) Firma sunucuda ZORUNLU; bos gonderim artik istemcide durur.
-    await userEvent.type(within(kutu).getByLabelText("Kargo firması"), "Aras");
-    await userEvent.click(within(kutu).getByRole("button", { name: /Teslim al/i }));
-    await waitFor(() => {
-      const post = c.find((x) => x.method === "POST");
-      expect(post?.body).toMatchObject({ unit_no: "B-3", firma: "Aras" });
-    });
-  });
-});
 
 describe("Olaylar", () => {
   const OLAY = {

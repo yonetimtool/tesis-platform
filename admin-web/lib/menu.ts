@@ -256,8 +256,6 @@ const OGELER: readonly MenuOgesi[] = [
   // Eski iki satir (NFC noktalari, Devriye planlari) ve menude olmayan
   // takip raporu bu sayfanin sekmeleri oldu; eski adresler yonlenir.
   { href: "/devriye", anahtar: "kabukDevriye", icon: "route", grup: "guvenlik" },
-  { href: "/ziyaretciler", anahtar: "kabukZiyaretciler", icon: "visitor", grup: "guvenlik" },
-  { href: "/kargolar", anahtar: "kabukKargolar", icon: "package", grup: "guvenlik" },
   { href: "/arac-gecisleri", anahtar: "kabukAracGecisleri", icon: "car", grup: "guvenlik" },
   // (P251 §8) GORUNTULEME IZNI — mobilde vardi, web'de yoktu.
   { href: "/goruntuleme-izni", anahtar: "kabukGoruntulemeIzni", icon: "eye", grup: "guvenlik" },

@@ -153,8 +153,6 @@ const BIRINCIL_UC: Record<string, string> = {
   // izinli kümesinin ALT KÜMESİ; yeni backend ucu YOK, kilit değişmez.
   "/rezervasyon-yonetimi": "GET /reservations",
   "/kvkk": "GET /me/pazarlama-tercihleri",
-  "/ziyaretciler": "GET /visitors",
-  "/kargolar": "GET /kargo",
   // (P155 §7) Davet gonderim durumu — yonetici/admin.
   "/davetler": "GET /davet",
   "/olaylar": "GET /violations",
@@ -165,7 +163,6 @@ const BIRINCIL_UC: Record<string, string> = {
   // (E2E 2026-09) Entegrasyon + diyafon sayfasi tesis yuzeyine tasindi.
   "/integrations": "GET /integrations",
   "/arac-gecisleri": "GET /vehicle-passes",
-  "/gorevlerim": "GET /tasks",
   "/kameralar": "GET /cameras",
   // (P213 §6) Gecmis kayit izleme — birincil uc ARAMA ucudur; oynatma
   // ondan sonra gelir ve ayni rol kapisini kullanir.
@@ -249,12 +246,12 @@ describe("MENUDEKI HER ROTA O ROLUN ACABILDIGI ROTADIR", () => {
     expect(rotaRoldeGorunur("/arac-gecisleri", "admin")).toBe(true);
   });
 
-  it("(P129) PARK EDILEN sayfalar HICBIR role gorunmez", () => {
-    // Sayfalar duruyor ama `app.*` yalniz yonetici + denetci yuzeyi.
-    // Bos liste, "sayfa yok" ile karistirilmasin diye SILINMEDI.
-    const park = ["/ziyaretciler", "/kargolar", "/gorevlerim"];
-    for (const rota of park) {
-      expect(ROTA_ROLLERI[rota], rota).toEqual([]);
+  it("(P253 §B) SAHA SAYFALARI KALDIRILDI: rota kaydi da YOK", () => {
+    // P129'da "park" edilmislerdi (bos rol listesi); hicbir role acik
+    // olmadiklari icin P253'te kaldirildilar. Rota kaydi da kalmamali —
+    // kalan bir kayit, olmayan bir sayfayi varmis gibi gosterirdi.
+    for (const rota of ["/ziyaretciler", "/kargolar", "/gorevlerim"]) {
+      expect(ROTA_ROLLERI[rota], rota).toBeUndefined();
     }
     // (P247 §2) SAKIN SAYFALARI YALNIZ YONETICININ SAKIN MODUNA acildi;
     // GERCEK rollerin hicbiri (saf sakin dahil) onlari gormez.
@@ -265,7 +262,7 @@ describe("MENUDEKI HER ROTA O ROLUN ACABILDIGI ROTADIR", () => {
     for (const rota of sakin) {
       expect(ROTA_ROLLERI[rota], rota).toEqual([SAKIN_MODU]);
     }
-    for (const rota of [...park, ...sakin]) {
+    for (const rota of sakin) {
       for (const rol of ["resident", "security", "tesis_gorevlisi", "yonetici", "denetci", "admin"]) {
         expect(rotaRoldeGorunur(rota, rol), `${rota}/${rol}`).toBe(false);
       }
@@ -305,7 +302,7 @@ describe("MENUDEKI HER ROTA O ROLUN ACABILDIGI ROTADIR", () => {
 describe("rol calisma alanlari birbirine karismaz", () => {
   const yonetimSayfalari = ["/finans", "/dues", "/users", "/sayac-okuma", "/anketler"];
   const sakinSayfalari = ["/aidatim", "/taleplerim", "/rezervasyonlarim"];
-  const kapiSayfalari = ["/ziyaretciler", "/kargolar", "/arac-gecisleri"];
+  const kapiSayfalari = ["/arac-gecisleri", "/olaylar"];
 
   it("SAKIN hicbir sayfa GORMEZ (P129: mobil-yalniz)", () => {
     for (const r of [...yonetimSayfalari, ...kapiSayfalari, ...sakinSayfalari]) {

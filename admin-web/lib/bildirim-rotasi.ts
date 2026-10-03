@@ -36,10 +36,13 @@ export const BILDIRIM_ROTALARI: Record<string, string> = {
   // YOKTU. Web'de bildirim listesi yalniz yonetimde ve yonetici de bu
   // kayitlari kendi ekranindan izliyor; hedefi olmayan bir satir
   // birakmak, ayni tipe iki yuzeyde iki farkli davranis vermekti.
-  kargo: "/kargolar",
+  // (P253 §B) Yonetici ziyaretci/kargo kayitlarini GORUNTULEME IZNI ile
+  // gorur (sunucu /visitors ve /kargo'yu ona kapatir); eski sayfalar
+  // hicbir role acik degildi ve kaldirildi.
+  kargo: "/goruntuleme-izni",
   // (P247 §3) "Kargonuz guvenlik tarafindan teslim edildi".
-  kargo_teslim: "/kargolar",
-  ziyaretci: "/ziyaretciler",
+  kargo_teslim: "/goruntuleme-izni",
+  ziyaretci: "/goruntuleme-izni",
   rezervasyon: "/rezervasyon-yonetimi",
   sikayet_cozuldu: "/complaints",
   // (P240) Panik / akilli ev / entegrasyon.
@@ -49,9 +52,9 @@ export const BILDIRIM_ROTALARI: Record<string, string> = {
   panik_tatbikat_duyuru: "/panik",
   // (P249 §3) Onay talebi/yaniti ziyaretci kaydinda. Sesli mesajin web'de
   // ekrani YOK (dinleme mobil; parite istisnasi docs §3.6) — liste sayfasi.
-  ziyaretci_onay_istegi: "/ziyaretciler",
-  ziyaretci_onay_yaniti: "/ziyaretciler",
-  sesli_mesaj: "/ziyaretciler",
+  ziyaretci_onay_istegi: "/goruntuleme-izni",
+  ziyaretci_onay_yaniti: "/goruntuleme-izni",
+  sesli_mesaj: "/goruntuleme-izni",
   panik_kapandi: "/panik",
   akilli_ev_kacak: "/akilli-ev",
   akilli_ev_yangin: "/akilli-ev",

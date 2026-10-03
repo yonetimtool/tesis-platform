@@ -177,9 +177,10 @@ export const TESIS_ROTALARI = [
   "/rezervasyonlarim",
   "/rezervasyon-yonetimi",
   "/kvkk",
-  // (P126.4) Guvenligin kapi ekranlari.
-  "/ziyaretciler",
-  "/kargolar",
+  // (P126.4) "/ziyaretciler" ve "/kargolar" P253 §B'de KALDIRILDI: hicbir
+  // role acik degildi (saha ve sakin mobil-yalniz; yonetici bu kayitlari
+  // yalniz Goruntuleme izni ile gorur — sunucu /visitors ve /kargo'yu
+  // yoneticiye kapatir).
   "/olaylar",
   // (P240 §1) Panik takip ekrani — tesis yuzeyi.
   "/panik",
@@ -188,8 +189,7 @@ export const TESIS_ROTALARI = [
   // (P241 §1) Periyodik bakim takibi — tesis yuzeyi.
   "/bakim",
   "/arac-gecisleri",
-  // (P126.6) Saha rolunun kendi gorevleri.
-  "/gorevlerim",
+  // (P126.6) "/gorevlerim" P253 §B'de KALDIRILDI (saha rolu mobil-yalniz).
   // (P126.5) Yoneticinin eksik ekranlari.
   "/kameralar",
   // (P213 §6) Gecmis kayit izleme — kamera YONETIMINDEN AYRI sayfa.
@@ -290,10 +290,8 @@ const KOK_ADAYLARI = [
   "/dashboard",
   // (P129) Denetcinin gunu raporlarda gecer; panoyu goremez.
   "/raporlar",
-  // Park edilen roller (P129) buraya artik DUSMEZ — satirlar duruyor ki
-  // rol geri acilirsa kok rotasi da kendiliginden dogru olsun.
-  "/ziyaretciler",
-  "/gorevlerim",
+  // (P253 §B) Saha rollerinin web sayfalari kaldirildi (mobil-yalniz);
+  // onlar icin kok adayi da yok.
   "/aidatim",
   "/profil",
 ];
@@ -604,9 +602,6 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   "/kurallar": [SAKIN_MODU],
   "/etkinlikler": [SAKIN_MODU],
   "/rezervasyonlarim": [SAKIN_MODU],
-  "/ziyaretciler": [],
-  "/kargolar": [],
-  "/gorevlerim": [],
   "/duyurular": [SAKIN_MODU],
   "/yonetim-iletisim": [SAKIN_MODU],
   // `yonetici` BU SAYFAYI GOREMEZ ve bu bir tercih degil OLCUM:

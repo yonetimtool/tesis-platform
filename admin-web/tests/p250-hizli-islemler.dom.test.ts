@@ -43,13 +43,13 @@ it("secili islemler SIRAYLA cizilir", async () => {
 
 it("secenekler ROLE gore: sunucunun vermedigi islem listede YOK", async () => {
   const k = userEvent.setup();
-  taklit({ secenekler: ["ziyaretci"], secili: [], varsayilan: [], ozel: false });
+  taklit({ secenekler: ["anket"], secili: [], varsayilan: [], ozel: false });
   ac();
   await waitFor(() => expect(screen.getByText(tr.panoHizliBos)).toBeTruthy());
   await k.click(kanca("hizli-ozellestir")!);
   const liste = within(kanca("hizli-secenekler")!);
   expect(liste.getAllByRole("checkbox")).toHaveLength(1);
-  expect(liste.getByText(tr.panoHizliZiyaretci)).toBeTruthy();
+  expect(liste.getByText(tr.panoHizliAnket)).toBeTruthy();
 });
 
 it("sec, sirala, kaydet: govdede SIRALI secim; varsayilana don = null", async () => {

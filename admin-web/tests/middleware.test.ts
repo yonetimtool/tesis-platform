@@ -171,7 +171,7 @@ describe("rol kapisi (P126.7)", () => {
     // bir access cerezi kalmis biri icin ikinci savunma burasi. Hedef
     // rolun KENDI baslangicidir — o da yoksa yuzeyin varsayilani.
     for (const rol of ["resident", "security", "tesis_gorevlisi"]) {
-      for (const yol of ["/finans", "/aidatim", "/ziyaretciler", "/profil"]) {
+      for (const yol of ["/finans", "/aidatim", "/arac-gecisleri", "/profil"]) {
         const res = middleware(rolIstegi(APP, yol, rol));
         expect(res.status, `${rol} ${yol}`).toBe(307);
       }

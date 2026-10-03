@@ -47,7 +47,7 @@ yonetici	finans	/raporlar	reports	Raporlar	ayni	-
 yonetici	finans	/transparency	transparency	Şeffaflık	ayni	-
 yonetici	finans	/dues	-	Aidat	yalniz_web	Toplu aidat tahakkuku daire başına önizleme ve dağıtım seçimi ister; geniş tablo telefonda doğrulanamaz. Mobilde aidat planı Otomasyon'dan kurulur.
 yonetici	finans	/finans/borclandirmalar	-	Borçlandırmalar	yalniz_web	Tek ve toplu borçlandırma aynı geniş önizleme tablosunu kullanır (Aidat ile aynı gerekçe).
-yonetici	finans	/finans/gelirler	-	Gelirler	yalniz_web	Aidat dışı gelir kaydı kasa, kalem ve belge seçimi ister ve seyrek yapılır; mobilde günlük iş tahsilat ve gider kaydıdır.
+yonetici	finans	/finans/gelirler	-	Gelirler	yapisal	(P253) Gelir kaydı mobilde Bütçe ekranından yapılır (aynı defter, finansal_hareket); P251'deki "yalnız web" yanlıştı. Kasa/kalem/belge seçimi P253 Aşama 1'de gider ekranıyla birleşir.
 yonetici	finans	/finans/virman	-	Hesaplar arası virman	yalniz_web	İki kasa arasında para taşır; yanlış girişin düzeltmesi ters kayıt ister. Muhasebe defteri işidir.
 yonetici	finans	/finans/iade	-	Ödeme iadesi	yalniz_web	İade bir tahsilatın ters kaydıdır; özgün kaydı defterde bulup eşleştirmek geniş ekran ister.
 yonetici	finans	/finans/acilis	-	Açılış fişleri	yalniz_web	Kurulumda bir kez girilen devir bakiyeleri; çok satırlı fiş.
