@@ -72,6 +72,18 @@ export function esle(satirlar: Satir[], metot: string, yol: string): Satir | nul
   return en?.s ?? null;
 }
 
+/** Uc karsiligi olmayan satir turleri (ISTEMCI: csv; YETENEK: ekran yetenegi). */
+const UCSUZ = new Set(["ISTEMCI", "YETENEK"]);
+
+/** `yetenek:<ad>` isaretleri (yorum) — YETENEK satirinin kaynaktaki izi. */
+function yetenekIsaretleri(): string[] {
+  const out = new Set<string>();
+  for (const f of kaynakDosyalari()) {
+    for (const m of readFileSync(join(WEB_KOK, f), "utf8").matchAll(/\byetenek:([a-z0-9-]+)/g)) out.add(m[1]);
+  }
+  return [...out].sort();
+}
+
 describe("(P253) eylem paritesi — web", () => {
   const satirlar = tablo();
   const uclar = webUclari();
@@ -106,7 +118,7 @@ describe("(P253) eylem paritesi — web", () => {
       if (s) bulunan.add(`${s.metot} ${s.uc}`);
     }
     const bayat = satirlar
-      .filter((s) => s.metot !== "ISTEMCI" && s.web === "+" && !bulunan.has(`${s.metot} ${s.uc}`))
+      .filter((s) => !UCSUZ.has(s.metot) && s.web === "+" && !bulunan.has(`${s.metot} ${s.uc}`))
       .map((s) => `${s.metot} ${s.uc}`);
     expect(bayat, "Web artik bu uca gitmiyor; tabloda web=- yapin").toEqual([]);
   });
@@ -114,6 +126,11 @@ describe("(P253) eylem paritesi — web", () => {
   it("istemci tarafi disa aktarimlar ISTEMCI satirlariyla BIREBIR", () => {
     const tablodaki = satirlar.filter((s) => s.metot === "ISTEMCI").map((s) => `istemci:${s.uc}`).sort();
     expect(istemciEylemleri()).toEqual(tablodaki);
+  });
+
+  it("YETENEK satirlari web isaretleriyle BIREBIR (web=+ <=> `yetenek:<ad>`)", () => {
+    const tablodaki = satirlar.filter((s) => s.metot === "YETENEK" && s.web === "+").map((s) => s.uc).sort();
+    expect(yetenekIsaretleri(), "web=+ YETENEK satiri kaynakta `yetenek:<ad>` isaretini tasimali").toEqual(tablodaki);
   });
 
   it("elle Blob kuran yeni bir disa aktarim YOK (yardimci disinda)", () => {

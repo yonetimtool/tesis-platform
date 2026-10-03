@@ -15,6 +15,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers/eylem_tarama.dart';
 
+/// Uc karsiligi olmayan satir turleri (ISTEMCI: csv; YETENEK: ekran yetenegi).
+const _ucsuz = {'ISTEMCI', 'YETENEK'};
+
 /// Plan §3: her asama kendi surumu.
 const asamaSurumu = {1: '1.11.0', 2: '1.12.0', 3: '1.13.0'};
 
@@ -110,9 +113,23 @@ void main() {
     };
     final bayat = [
       for (final s in satirlar)
-        if (s.metot != 'ISTEMCI' && s.mobil == '+' && !bulunan.contains(s.anahtar)) s.anahtar,
+        if (!_ucsuz.contains(s.metot) && s.mobil == '+' && !bulunan.contains(s.anahtar)) s.anahtar,
     ];
     expect(bayat, isEmpty, reason: 'Tablo mobil=+ diyor ama mobil bu ucu cagirmiyor');
+  });
+
+  test('YETENEK satirlari mobil isaretleriyle BIREBIR (mobil=+ <=> `yetenek:<ad>`)', () {
+    final isaretler = <String>{
+      for (final f in Directory('lib').listSync(recursive: true).whereType<File>())
+        if (f.path.endsWith('.dart'))
+          for (final m in RegExp(r'\byetenek:([a-z0-9-]+)').allMatches(f.readAsStringSync())) m.group(1)!,
+    }.toList()..sort();
+    final tablodaki = [
+      for (final s in satirlar)
+        if (s.metot == 'YETENEK' && s.mobil == '+') s.uc,
+    ]..sort();
+    expect(isaretler, tablodaki,
+        reason: 'mobil=+ YETENEK satiri kaynakta `yetenek:<ad>` isaretini tasimali');
   });
 
   test('asamasi yayimlanan planli satir KALMAZ', () {

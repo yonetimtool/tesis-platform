@@ -31,6 +31,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..sebep import sebep_zorunlu
 from ..tesis_saati import tesis_bugun
 from .. import girdi_siniri as _G
 from ..audit import Action, audit_user
@@ -646,7 +647,10 @@ async def tahakkuk_ters_kayit(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_TAHAKKUK),
 ) -> DuesAssessmentOut:
-    """Yanlis tahakkuku TERS KAYITLA duzelt (silme YOK)."""
+    """Yanlis tahakkuku TERS KAYITLA duzelt (silme YOK).
+
+    (P253 §C-2) Sebep ZORUNLU (`aciklama`, en az 3 karakter)."""
+    body.aciklama = sebep_zorunlu(body.aciklama)
     asil = await get_or_404(db, DuesAssessment, assessment_id)
     if asil.ters_kayit_id is not None:
         raise APIError(422, "validation_error", "ters_kayit_ters_kayitlanamaz")

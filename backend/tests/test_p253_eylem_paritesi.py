@@ -29,6 +29,10 @@ MATRIS = KOK / "yetki" / "rol-matrisi.txt"
 ROLLER = "admin yonetici security tesis_gorevlisi resident guvenlik_amiri denetci".split()
 DURUMLAR = {"ayni", "platform", "yalniz_mobil", "yapisal", "yalniz_web", "ic"}
 _norm = lambda p: re.sub(r"\{[^}]+\}", "{}", p)  # noqa: E731
+#: Uc karsiligi OLMAYAN satirlar: istemci tarafi disa aktarim (ISTEMCI) ve
+#: ayni uclarla yapilan ama bir yuzeyde EKRANI eksik yetenek (YETENEK, P253
+#: A2). Ikisi de web/mobil kilitlerinde KAYNAK isaretiyle olculur.
+_UCSUZ = ("ISTEMCI", "YETENEK")
 
 
 def _tablo() -> list[dict]:
@@ -67,7 +71,7 @@ def _matris() -> dict[tuple[str, str], str]:
 
 
 def test_SOZLESMEDEKI_HER_ISLEM_tabloda_TAM_BIR_KEZ():
-    satirlar = [s for s in _tablo() if s["metot"] != "ISTEMCI"]
+    satirlar = [s for s in _tablo() if s["metot"] not in _UCSUZ]
     anahtarlar = [(s["metot"], s["uc"]) for s in satirlar]
     cift = sorted({a for a in anahtarlar if anahtarlar.count(a) > 1})
     assert not cift, f"tabloda iki kez: {cift}"
@@ -86,7 +90,7 @@ def test_ROLLER_yetki_matrisiyle_AYNI():
     matris = _matris()
     farkli = []
     for s in _tablo():
-        if s["metot"] == "ISTEMCI":
+        if s["metot"] in _UCSUZ:
             continue
         beklenen = matris.get((s["metot"], _norm(s["uc"])))
         if beklenen is None:

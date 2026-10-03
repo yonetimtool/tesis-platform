@@ -152,12 +152,17 @@ describe("(P193 §3) tahakkuk düzeltme", () => {
     const diyalog = await screen.findByRole("dialog");
     // ONAY METNI "SILINIR" DEMEZ: kayit kalir, ters satir eklenir.
     expect(within(diyalog).getByText(/ters bir satır/)).toBeInTheDocument();
-    await userEvent.click(within(diyalog).getByRole("button", { name: "Düzelt" }));
+    // (P253 §C-2) Sebep zorunlu: bosken onay pasif; sebep govdede gider.
+    const onay = within(diyalog).getByRole("button", { name: "Düzelt" });
+    expect(onay).toBeDisabled();
+    await userEvent.type(within(diyalog).getByLabelText(/Sebep/), "Yanlış daire");
+    await userEvent.click(onay);
     await waitFor(() => expect(istekler.length).toBe(1));
     expect(istekler[0]).toEqual({
       yol: `/api/panel/dues-assessments/${TAHAKKUK.id}/ters-kayit`,
       metot: "POST",
     });
+    expect((istekler[0] as { govde?: unknown }).govde).toEqual({ aciklama: "Yanlış daire" });
   });
 
   it("ZATEN DUZELTILMIS ve DUZELTME SATIRINDA dugme CIZILMEZ", async () => {

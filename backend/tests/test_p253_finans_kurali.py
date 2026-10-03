@@ -98,3 +98,21 @@ def test_IPTAL_sebep_ve_yuzey_denetimde(client, world, owner_conn, kasa):
         "SELECT meta FROM audit_log WHERE meta->>'iptal_edilen' = %s", (hid,),
     ).fetchone()[0]
     assert meta["yuzey"] == "mobil" and meta["sebep"] == "Yanlis kasaya girildi"
+
+
+@pytest.mark.parametrize("govde", [{}, {"aciklama": " "}])
+def test_TAHAKKUK_TERS_KAYDI_sebepsiz_GECMEZ(client, world, govde):
+    """(P253 A2) Borclandirma ters kaydinda da §C-2 sebep zorunlu."""
+    h = _h(client, world["slug_a"], world["yonetici_a"])
+    unit = client.post("/units", headers=h, json={"no": f"TK-{uuid.uuid4().hex[:5]}", "blok": "A"})
+    assert unit.status_code == 201, unit.text
+    t = client.post("/dues/assessments", headers=h, json={
+        "unit_id": unit.json()["id"], "donem": "2026-09", "tutar_kurus": 50000})
+    assert t.status_code == 201, t.text
+    tid = t.json()["created"][0]["id"]
+    r = client.post(f"/dues/assessments/{tid}/ters-kayit", headers=h, json=govde)
+    assert r.status_code == 422, r.text
+    assert r.json()["error"]["message"] == METINLER["sebep_zorunlu"]["tr"]
+    ok = client.post(f"/dues/assessments/{tid}/ters-kayit", headers=h,
+                     json={"aciklama": "Yanlis daireye yazildi"})
+    assert ok.status_code == 201, ok.text

@@ -23,6 +23,7 @@
  *
  * `kuru=true` AYNI uctur (P207 K1.4): onizleme ile kaydetme ayrismaz.
  */
+// yetenek:vardiya-serbest-dongu — eylem tablosundaki YETENEK satiri (P253 A2).
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 

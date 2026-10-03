@@ -75,6 +75,8 @@ interface Tahakkuk {
 }
 
 const YOK_ISARETI = "—";
+const HEDEF_AYRAC = " · ";
+const MESAJ_AYRAC = " — ";
 
 // (P192 §3.3) Dagitim yontemleri. HAM ENUM EKRANA CIKMAZ: her deger bir
 // sozluk anahtarina eslenir.
@@ -256,7 +258,7 @@ function GecikmeFaiziKarti() {
 export default function BorclandirmalarPage() {
   const t = useT();
   const toast = useToast();
-  const { onayla, diyalog } = useOnay();
+  const { onayla, sebepleOnayla, diyalog } = useOnay();
   const [tekil, setTekil] = useState(false);
   const [toplu, setToplu] = useState(false);
   const [yenile, setYenile] = useState(0);
@@ -283,21 +285,26 @@ export default function BorclandirmalarPage() {
   // yazilir ve ikisi de defterde durur. Onay metni bunu soyler — aksi
   // hâlde kullanici listede iki satir gorunce yanlislik sanirdi.
   async function tersKayit(a: Tahakkuk) {
-    const ok = await onayla({
+    // (P253 §C) Hedef (kisi · kalem) + tutar diyalogda; SEBEP ZORUNLU
+    // (sunucu da reddeder).
+    const metin = t("finansTersKayitOnay", {
+      donem: a.donem,
+      tutar: kurusToTL(a.tutar_kurus),
+    });
+    const hedef = [a.hedef_ad, a.gelir_gider_tanim_ad].filter(Boolean).join(HEDEF_AYRAC);
+    const sebep = await sebepleOnayla({
       baslik: t("finansTersKayitBaslik"),
-      mesaj: t("finansTersKayitOnay", {
-        donem: a.donem,
-        tutar: kurusToTL(a.tutar_kurus),
-      }),
+      mesaj: hedef ? `${hedef}${MESAJ_AYRAC}${metin}` : metin,
       onayMetni: t("finansTersKayitEt"),
       tehlikeli: true,
+      sebepEtiketi: t("finansSebepEtiket"),
     });
-    if (!ok) return;
+    if (sebep === null) return;
     try {
       await apiSend(
         `/api/panel/dues-assessments/${a.id}/ters-kayit`,
         "POST",
-        {},
+        { aciklama: sebep },
       );
       toast.success(t("finansTersKayitYapildi"));
       setYenile((n) => n + 1);

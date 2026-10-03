@@ -699,3 +699,4 @@ ISTEMCI	/ice-aktarim	+	-	planli:3	-	Ice aktarim sablonu — Asama 3 ice aktarim 
 ISTEMCI	/reports/dues	+	-	planli:2	-	Borclu daireler CSV — Asama 2'de sunucu raporu + olustur-paylas
 ISTEMCI	/reports/tasks	+	-	planli:2	-	Gorev gecmisi CSV — Asama 2'de sunucu raporu + olustur-paylas
 ISTEMCI	components/devriye/takip.tsx	+	-	planli:3	-	Devriye tur gecmisi CSV — Asama 3'te sunucu raporu + olustur-paylas
+YETENEK	vardiya-serbest-dongu	+	-	planli:2	admin,yonetici,guvenlik_amiri	Serbest dongu tanimi (blok/dilim/adim editoru): uclar ayni ve mobil=+, eksik olan EKRAN yetenegi

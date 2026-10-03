@@ -13,14 +13,17 @@ RBAC: yazma admin; okuma admin + yonetici. Saha/sakin ERISEMEZ.
 from __future__ import annotations
 
 import uuid
+from typing import Literal
 from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, Depends, Header, Query, Response
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..sebep import sebep_zorunlu
 from ..tesis_saati import tesis_bugun
+from ..tr_arama import LIKE_KACIS, tr_kalip, tr_katla_sql
 from .. import girdi_siniri as _G
 from ..audit import Action, audit_user
 from ..belge_no import belge_no_ata
@@ -34,6 +37,7 @@ from ..models import (
     AppUser,
     DuesAssessment,
     FinansalHareket,
+    Firma,
     IcraDosyasi,
     Kasa,
     PersonelKayit,
@@ -520,11 +524,17 @@ async def hareket_listesi(
     tip: str | None = Query(None, max_length=_G.KOD),
     kasa_id: uuid.UUID | None = Query(None),
     user_id: uuid.UUID | None = Query(None),
+    # (P253 A2) Serbest arama + durum suzgeci — web ve mobil birlikte.
+    q: str | None = Query(None, max_length=_G.ARAMA, description=(
+        "Aciklama, belge no, kisi adi, daire no, firma ya da personel adinda "
+        "gecer (Turkce harf katlamali).")),
+    durum: Literal["odendi", "bekliyor", "onay_bekliyor", "iptal"] | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_OKUMA),
 ) -> HareketListResponse:
+    aranan = (q or "").strip()
     q = select(FinansalHareket)
     if tip is not None:
         q = q.where(FinansalHareket.tip == tip)
@@ -532,6 +542,21 @@ async def hareket_listesi(
         q = q.where(FinansalHareket.kasa_id == kasa_id)
     if user_id is not None:
         q = q.where(FinansalHareket.user_id == user_id)
+    if durum is not None:
+        q = q.where(FinansalHareket.durum == durum)
+    if aranan:
+        kalip = tr_kalip(aranan)
+        esler = lambda sutun: tr_katla_sql(sutun).like(kalip, escape=LIKE_KACIS)  # noqa: E731
+        q = q.where(or_(
+            esler(FinansalHareket.aciklama),
+            esler(FinansalHareket.belge_no),
+            select(AppUser.id).where(AppUser.id == FinansalHareket.user_id, esler(AppUser.ad)).exists(),
+            select(Unit.id).where(Unit.id == FinansalHareket.unit_id, esler(Unit.no)).exists(),
+            select(Firma.id).where(Firma.id == FinansalHareket.firma_id, esler(Firma.ad)).exists(),
+            select(PersonelKayit.id).where(
+                PersonelKayit.id == FinansalHareket.personel_kayit_id, esler(PersonelKayit.ad),
+            ).exists(),
+        ))
     total = (
         await db.execute(select(func.count()).select_from(q.subquery()))
     ).scalar_one()
@@ -769,7 +794,7 @@ async def hareket_iptal(
     """
     # (P253 §C-2) Ters kayitta SEBEP ZORUNLU — once: sebepsiz istek
     # kaydin durumunu bile ogrenmez.
-    body.aciklama = _sebep_zorunlu(body.aciklama)
+    body.aciklama = sebep_zorunlu(body.aciklama)
     orijinal = await get_or_404(db, FinansalHareket, hareket_id)
     if orijinal.tip == "iptal":
         raise APIError(422, "validation_error", "iptal_iptal_edilemez")
@@ -869,20 +894,6 @@ async def hareket_iptal(
 # denetimin konusudur ve silinirse bir daha sorulamaz.
 
 
-#: (P253 §C-2) Iptal, ters kayit ve redde SEBEP ZORUNLU — web ve mobil
-#: AYNI kural (istemci dugmeyi sebepsiz etkinlestirmez; sunucu da reddeder).
-#: Esik istemcilerde de ayni: web `onay-kullan.SEBEP_ASGARI`, mobil
-#: `finans_onay.dart sebepAsgari`.
-SEBEP_ASGARI = 3
-
-
-def _sebep_zorunlu(aciklama: str | None) -> str:
-    sebep = (aciklama or "").strip()
-    if len(sebep) < SEBEP_ASGARI:
-        raise APIError(422, "validation_error", "sebep_zorunlu")
-    return sebep
-
-
 def _onaylanabilir(hareket: FinansalHareket) -> None:
     if hareket.durum != "onay_bekliyor":
         raise APIError(409, "conflict", "hareket_onay_beklemiyor")
@@ -943,7 +954,7 @@ async def hareket_reddet(
     """Onay bekleyen hareketi REDDET — hic gerceklesmemis sayilir.
 
     (P253 §C-2) Sebep zorunlu (`aciklama`)."""
-    body.aciklama = _sebep_zorunlu(body.aciklama)
+    body.aciklama = sebep_zorunlu(body.aciklama)
     obj = await get_or_404(db, FinansalHareket, hareket_id)
     await _onay_oncesi(db, obj)
     obj.durum = "iptal"

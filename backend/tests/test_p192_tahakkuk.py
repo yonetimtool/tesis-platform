@@ -278,9 +278,9 @@ def test_iki_kez_ters_kayitlanamaz(client, adm):
     daire = _daire(client, adm)
     t = _tahakkuk(client, adm, daire["id"], "2032-01", 5000)["created"][0]
     assert client.post(f"/dues/assessments/{t['id']}/ters-kayit",
-                       headers=adm, json={}).status_code == 201
+                       headers=adm, json={"aciklama": "test sebebi"}).status_code == 201
     ikinci = client.post(f"/dues/assessments/{t['id']}/ters-kayit",
-                         headers=adm, json={})
+                         headers=adm, json={"aciklama": "test sebebi"})
     assert ikinci.status_code == 409
 
 
@@ -295,5 +295,5 @@ def test_odenmis_tahakkuk_ters_kayitlanamaz(client, adm):
         "unit_id": daire["id"], "assessment_id": t["id"]})
 
     r = client.post(f"/dues/assessments/{t['id']}/ters-kayit",
-                    headers=adm, json={})
+                    headers=adm, json={"aciklama": "test sebebi"})
     assert r.status_code == 409

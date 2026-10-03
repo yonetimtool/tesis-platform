@@ -8571,6 +8571,17 @@ paths:
         - name: user_id
           in: query
           schema: { type: string, format: uuid }
+        - name: q
+          in: query
+          description: >
+            (P253 A2) Serbest arama — aciklama, belge no, kisi adi, daire no,
+            firma ya da personel adinda gecer (Turkce harf katlamali; `%`/`_`
+            literal).
+          schema: { type: string, maxLength: 100 }
+        - name: durum
+          in: query
+          description: (P253 A2) Durum suzgeci.
+          schema: { type: string, enum: [odendi, bekliyor, onay_bekliyor, iptal] }
       responses:
         "200":
           description: Liste
