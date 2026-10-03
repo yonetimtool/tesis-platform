@@ -89,6 +89,18 @@ class _Body extends StatelessWidget {
           const SizedBox(height: 12),
         ],
         for (final unit in state.units) _UnitCard(unit: unit),
+        // (P253 A1) Makbuz arsivi + PDF paylas. Ust cubukta degil: 320 dp'de
+        // "Ode" + yenile ile birlikte tasiyordu (olculdu).
+        if (hata == null) ...[
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            key: const Key('aidat-makbuzlar'),
+            icon: const Icon(Icons.receipt_long_outlined),
+            label: Text(l10n.mkbBaslik),
+            style: OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
+            onPressed: () => context.push(AppRoutes.makbuzlar),
+          ),
+        ],
       ],
     );
   }

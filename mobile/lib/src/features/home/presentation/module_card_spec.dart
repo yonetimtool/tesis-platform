@@ -154,7 +154,9 @@ ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
       return const ModuleCardSpec(
           icon: Icons.query_stats_outlined,
           accent: _teal,
-          route: AppRoutes.financialSummary);
+          // (P253 Asama 1) Web `/finans` sayfasinin karsiligi: ozet + kasa
+          // bakiyeleri + hareketler. Donemsel rapor ekrani oradan acilir.
+          route: AppRoutes.finansDefteri);
     case HomeMenuEntry.transparency:
       return const ModuleCardSpec(
           icon: Icons.insights_outlined,
@@ -210,6 +212,11 @@ ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
           icon: Icons.folder_copy_outlined,
           accent: _amber,
           route: AppRoutes.dokumanlar);
+    case HomeMenuEntry.takvim:
+      return const ModuleCardSpec(
+          icon: Icons.event_note_outlined,
+          accent: _amber,
+          route: AppRoutes.takvim);
     case HomeMenuEntry.disHizmet:
       return const ModuleCardSpec(
           icon: Icons.handyman_outlined,

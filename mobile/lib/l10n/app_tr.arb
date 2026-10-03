@@ -4542,5 +4542,392 @@
     }
   },
   "semaSinirBilgi": "Bugün için bildirim sınırına ulaştınız; yönetim kayıtlarınızı aldı. Yarın yeniden bildirebilirsiniz.",
-  "sikayetDetayBaslik": "Şikâyet ayrıntısı"
+  "sikayetDetayBaslik": "Şikâyet ayrıntısı",
+  "vrdHaftaOnceki": "Önceki hafta",
+  "vrdHaftaSonraki": "Sonraki hafta",
+  "vrdHaftayiDoldur": "Haftayı kadrodan doldur",
+  "vrdHaftadanKopyala": "Haftadan kopyala",
+  "vrdDolduruldu": "{n} vardiya eklendi",
+  "@vrdDolduruldu": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    },
+    "description": "(P253 Asama 1) vardiya"
+  },
+  "vrdKopyaSonuc": "{eklenen} vardiya kopyalandı, {atlanan} atlandı",
+  "@vrdKopyaSonuc": {
+    "placeholders": {
+      "eklenen": {
+        "type": "int"
+      },
+      "atlanan": {
+        "type": "int"
+      }
+    },
+    "description": "(P253 Asama 1) vardiya"
+  },
+  "vrdSebepIzin": "izinli",
+  "vrdSebepCakisma": "çakışma",
+  "vrdGeriAl": "Geri al",
+  "vrdGeriAlindi": "{n} vardiya geri alındı",
+  "@vrdGeriAlindi": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    },
+    "description": "(P253 Asama 1) vardiya"
+  },
+  "vrdKopyaKaynak": "Kopyalanacak hafta",
+  "vrdKopyaHedef": "Hedef: {hafta}",
+  "@vrdKopyaHedef": {
+    "placeholders": {
+      "hafta": {
+        "type": "String"
+      }
+    },
+    "description": "(P253 Asama 1) vardiya"
+  },
+  "vrdHedefiTemizle": "Hedef haftadaki mevcut vardiyaları kaldır",
+  "vrdHedefiTemizleUyari": "Kaldırılan vardiyalar \"Geri al\" ile geri gelmez; yalnız kopyalananlar geri alınır.",
+  "vrdKopyala": "Kopyala",
+  "vrdBlokDuzenle": "Vardiyayı düzenle",
+  "vrdTarih": "Tarih",
+  "vrdGuncellendi": "Vardiya güncellendi",
+  "vrdTopluCikar": "Seçilenleri çıkar",
+  "vrdTopluCikarOnay": "{n} vardiya çıkarılacak. Bu işlem geri alınamaz; gerekirse vardiyalar yeniden eklenir.",
+  "@vrdTopluCikarOnay": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    },
+    "description": "(P253 Asama 1) vardiya"
+  },
+  "vrdTopluCikarildi": "{n} vardiya çıkarıldı",
+  "@vrdTopluCikarildi": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    },
+    "description": "(P253 Asama 1) vardiya"
+  },
+  "vrdSablonEkle": "Şablon ekle",
+  "vrdSablonDuzenle": "Şablonu düzenle",
+  "vrdSablonAd": "Şablon adı",
+  "vrdGunTipi": "Geçerli günler",
+  "vrdSablonSil": "Şablonu sil",
+  "vrdSablonSilOnay": "\"{ad}\" şablonu silinsin mi?",
+  "@vrdSablonSilOnay": {
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    },
+    "description": "(P253 Asama 1) vardiya"
+  },
+  "vrdSablonKaydedildi": "Şablon kaydedildi",
+  "vrdSablonSilindi": "Şablon silindi",
+  "vrdIzinTalepleri": "İzin talepleri",
+  "vrdIzinBekleyen": "Bekleyen",
+  "vrdIzinOnaylanan": "Onaylanan",
+  "vrdIzinReddedilen": "Reddedilen",
+  "vrdIzinTumu": "Tümü",
+  "vrdIzinOnayla": "Onayla",
+  "vrdIzinReddet": "Reddet",
+  "vrdIzinSilOnay": "Bu izin kaydı silinsin mi?",
+  "vrdIzinYok": "Kayıt yok",
+  "vrdIzinOnaylandi": "İzin onaylandı",
+  "vrdIzinReddedildi": "İzin reddedildi",
+  "vrdIzinSilindi": "İzin silindi",
+  "vrdDonguSonlandir": "Sonlandır",
+  "vrdDonguSonlandirTarih": "Bu tarihten itibaren döngü yok",
+  "vrdDonguSonlandirildi": "Döngü sonlandırıldı, {n} vardiya iptal edildi",
+  "@vrdDonguSonlandirildi": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    },
+    "description": "(P253 Asama 1) vardiya"
+  },
+  "vrdKalipSil": "Kalıbı sil",
+  "vrdKalipSilOnay": "\"{ad}\" kalıbı silinsin mi? Oluşmuş vardiyalar planda kalır.",
+  "@vrdKalipSilOnay": {
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    },
+    "description": "(P253 Asama 1) vardiya"
+  },
+  "vrdKalipSilindi": "Kalıp silindi",
+  "finOzetBorclandirilan": "Bu ay borçlandırılan",
+  "finOzetTahsil": "Bu ay tahsil edilen",
+  "finOzetAcikBorc": "Açık borç",
+  "finOzetKasa": "Kasa toplamı",
+  "finOzetPersonel": "Personel giderleri (bu ay)",
+  "finOzetIcra": "Açık icra dosyası",
+  "finKasalar": "Kasa bakiyeleri",
+  "finKasaYok": "Kasa tanımlanmamış",
+  "finTipTahsilat": "Tahsilat",
+  "finTipGider": "Gider",
+  "finTipGelir": "Gelir",
+  "finTipVirman": "Virman",
+  "finTipIade": "İade",
+  "finTipAcilis": "Açılış",
+  "finOtoGunlukBaslik": "Otomasyon günlüğü",
+  "finOtoGunlukAciklama": "Hangi otomasyon ne zaman çalıştı, ne üretti.",
+  "finOtoKayitYok": "Henüz kayıt yok",
+  "finOtoTurMaas": "Maaş gideri",
+  "finOtoTurAidatTahakkuk": "Otomatik tahakkuk",
+  "finOtoTurAidatOnizleme": "Tahakkuk önizlemesi",
+  "finOtoTurBorcHatirlatma": "Borç hatırlatma",
+  "finOtoTurDuzenliGider": "Düzenli gider",
+  "finOtoTurGecikmeFaizi": "Gecikme faizi",
+  "finOtoTurAylikOzet": "Aylık özet",
+  "finOnayla": "Onayla",
+  "finReddet": "Reddet",
+  "finBelgeNo": "Belge no",
+  "finFirma": "Firma",
+  "finGenelToplam": "Genel toplam",
+  "finHatirlatmaGecmisiSekme": "Gönderilen hatırlatmalar",
+  "finSebepEtiket": "Sebep (zorunlu)",
+  "finTipIptal": "İptal (ters kayıt)",
+  "finTarihDegeri": "Tarih: {tarih}",
+  "@finTarihDegeri": {
+    "description": "(P253 A1) islem tarihi",
+    "placeholders": {
+      "tarih": {
+        "type": "String"
+      }
+    }
+  },
+  "finBelgeNoIpucu": "Boş bırakırsanız sistem numara verir.",
+  "finGelirKaydedildi": "Gelir kaydedildi.",
+  "finFirmaYok": "Firma yok",
+  "finGelirTuru": "Gelir türü",
+  "finGiderGelirBaslik": "Gider / gelir",
+  "finDonemselRapor": "Dönemsel rapor",
+  "finSekmeOzet": "Özet",
+  "finSekmeHareketler": "Hareketler",
+  "finOzetOnayBekleyen": "Onay bekleyen",
+  "finKasaBekleyen": "Bekleyen çıkış: {tutar}",
+  "@finKasaBekleyen": {
+    "description": "(P253 A1) onay bekleyen cikis",
+    "placeholders": {
+      "tutar": {
+        "type": "String"
+      }
+    }
+  },
+  "finSuzgecTip": "Tür",
+  "finHareketYok": "Bu süzgeçle hareket yok.",
+  "finDurumOnayBekliyor": "Onay bekliyor",
+  "finDurumReddedildi": "Reddedildi",
+  "finDurumIptalEdildi": "Ters kayıtla iptal edildi",
+  "finTarih": "Tarih",
+  "finHedef": "Kime",
+  "finOnayBaslik": "Hareketi onayla",
+  "finOnaySonuc": "Onaylanınca kasa bakiyesinden düşer. Sonradan yalnız ters kayıtla düzeltilebilir.",
+  "finOnaylandi": "Hareket onaylandı.",
+  "finRedBaslik": "Hareketi reddet",
+  "finRedSonuc": "Ret GERİ ALINAMAZ: kayıt silinmez, reddedilmiş olarak kalır ve kasaya hiç girmez.",
+  "finReddedildi": "Hareket reddedildi.",
+  "finOtoGunlukSekme": "Günlük",
+  "finOtoAdet": "{n} kayıt",
+  "@finOtoAdet": {
+    "description": "(P253 A1) otomasyon adet",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "finHatirlatmaOzet": "{gonderilen} gönderildi · {okunan} okundu",
+  "@finHatirlatmaOzet": {
+    "description": "(P253 A1) hatirlatma ozet",
+    "placeholders": {
+      "gonderilen": {
+        "type": "int"
+      },
+      "okunan": {
+        "type": "int"
+      }
+    }
+  },
+  "finOkundu": "Okundu",
+  "finOkunmadi": "Okunmadı",
+  "dokAciklama": "Açıklama (isteğe bağlı)",
+  "dokAd": "Doküman adı",
+  "dokCokBuyuk": "Dosya 25 MB'tan büyük; daha küçük bir dosya seçin.",
+  "dokGaleri": "Galeriden seç",
+  "dokKamera": "Fotoğraf çek",
+  "dokPaylas": "İndir / paylaş",
+  "dokSakineAc": "Sakinlere aç",
+  "dokSakineAcik": "Sakinlere açık",
+  "dokSakineAcikIpucu": "Kapalıysa yalnız yönetim görür.",
+  "dokSakineAcildi": "Doküman sakinlere açıldı.",
+  "dokSakineKapat": "Sakinlerden gizle",
+  "dokSakineKapatildi": "Doküman sakinlerden gizlendi.",
+  "dokSecilen": "Seçilen: {ad} ({kb} KB)",
+  "@dokSecilen": {
+    "description": "(P253 A1) secilen dosya",
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      },
+      "kb": {
+        "type": "int"
+      }
+    }
+  },
+  "dokSilBaslik": "Dokümanı sil",
+  "dokSilOnay": "“{ad}” silinsin mi? Sakinler de artık göremez.",
+  "@dokSilOnay": {
+    "description": "(P253 A1) silme onayi — hedef ad",
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    }
+  },
+  "dokSilindi": "Doküman silindi.",
+  "dokYalnizYonetim": "Yalnız yönetim",
+  "dokYonetimBos": "Arşivde doküman yok. Yüklemek için Yükle'ye dokunun.",
+  "dokYukle": "Yükle",
+  "dokYuklendi": "Doküman yüklendi.",
+  "dokYukleNot": "Telefondan fotoğraf yükleyebilirsiniz. PDF ve diğer dosyalar için şimdilik web panelini kullanın.",
+  "hatAciklama": "Not (isteğe bağlı)",
+  "hatAyBos": "Bu ay takvimde bir şey yok.",
+  "hatBaslik": "Başlık",
+  "hatBos": "Henüz hatırlatmanız yok.",
+  "hatDuzenle": "Hatırlatmayı düzenle",
+  "hatEkle": "Hatırlatma ekle",
+  "hatOncekiAy": "Önceki ay",
+  "hatRenk": "Renk",
+  "hatRenkKirmizi": "Kırmızı",
+  "hatRenkMavi": "Mavi",
+  "hatRenkMor": "Mor",
+  "hatRenkTuruncu": "Turuncu",
+  "hatRenkYesil": "Yeşil",
+  "hatSekmeHatirlatmalarim": "Hatırlatmalarım",
+  "hatSekmeTakvim": "Takvim",
+  "hatSilBaslik": "Hatırlatmayı sil",
+  "hatSilOnay": "“{baslik}” silinsin mi?",
+  "@hatSilOnay": {
+    "description": "(P253 A1) hatirlatma silme onayi",
+    "placeholders": {
+      "baslik": {
+        "type": "String"
+      }
+    }
+  },
+  "hatSonrakiAy": "Sonraki ay",
+  "hatTakvimBaslik": "Takvim",
+  "hatTekrar": "Tekrar",
+  "hatTekrarAylik": "Her ay",
+  "hatTekrarGunluk": "Her gün",
+  "hatTekrarHaftalik": "Her hafta",
+  "hatTekrarYok": "Tekrar yok",
+  "hatTipAidat": "Aidat son ödeme",
+  "hatTipDevriye": "Devriye",
+  "hatTipEtkinlik": "Etkinlik",
+  "hatTipGorev": "Görev",
+  "hatTipHatirlatma": "Hatırlatma",
+  "hatTipRezervasyon": "Rezervasyon",
+  "hatZaman": "Tarih ve saat",
+  "mkbBaslik": "Makbuzlarım",
+  "mkbBelge": "Makbuz {no}",
+  "@mkbBelge": {
+    "description": "(P253 A1) makbuz belge no",
+    "placeholders": {
+      "no": {
+        "type": "String"
+      }
+    }
+  },
+  "mkbBos": "Henüz makbuzunuz yok.",
+  "mkbPaylas": "PDF'i paylaş",
+  "mkbPdfYok": "PDF henüz hazır değil",
+  "kisTanilama": "Bildirim tanılama",
+  "kisTanilamaEposta": "E-posta bildirimi",
+  "kisTanilamaSms": "SMS bildirimi",
+  "kisTanilamaMobil": "Mobil bildirim",
+  "kisTanilamaDogrulandi": "E-posta doğrulandı",
+  "kisTanilamaCihaz": "Kayıtlı cihaz",
+  "kisTanilamaCihazYok": "Mobil bildirim açık ama kayıtlı cihaz yok: kişi uygulamaya hiç giriş yapmamış, bu yüzden bildirim gitmez.",
+  "kisOdemeKodu": "Ödeme kodu",
+  "kisAranabilir": "Telefonla aranmaya izin ver",
+  "kisAranabilirIpucu": "Kişi telefonla aranmaya izin verdiyse açın; yönetim ve güvenlik numarayı buradan arayabilir.",
+  "kisAcik": "Açık",
+  "kisKapali": "Kapalı",
+  "kisEposta": "E-posta",
+  "kisKayitTamamlandi": "Kayıt tamamlandı",
+  "kisPasifBaslik": "Pasifleştir",
+  "kisPasifOnay": "{ad} pasifleştirilsin mi? Kişi uygulamaya giremez; geçmiş kayıtları korunur ve yeniden aktifleştirilebilir.",
+  "@kisPasifOnay": {
+    "description": "(P253 Asama 1)",
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    }
+  },
+  "kisSilBaslik": "Kişiyi sil",
+  "kisSilOnay": "{ad} silinsin mi? Geçmiş kaydı yoksa hesap tamamen silinir; varsa kimliği anonimleştirilir, kayıtlar korunur. Geri alınamaz — erişimi geçici kapatmak için Pasifleştir'i kullanın.",
+  "@kisSilOnay": {
+    "description": "(P253 Asama 1)",
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    }
+  },
+  "kisSilindi": "{ad} silindi.",
+  "@kisSilindi": {
+    "description": "(P253 Asama 1)",
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    }
+  },
+  "kisAnonimlestirildi": "{ad} geçmiş kayıtları olduğu için anonimleştirildi; kayıtlar korundu.",
+  "@kisAnonimlestirildi": {
+    "description": "(P253 Asama 1)",
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    }
+  },
+  "kisEkBaslik": "Notlar ve ekler",
+  "kisEkYok": "Henüz not ya da ek yok.",
+  "kisEkNotYer": "Not ekle",
+  "kisEkSilBaslik": "Eki sil",
+  "kisEkSilOnay": "“{ad}” silinsin mi? Bu işlem geri alınamaz.",
+  "@kisEkSilOnay": {
+    "description": "(P253 Asama 1)",
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    }
+  },
+  "kisEkSilindi": "Ek silindi.",
+  "kisAdimDuzenle": "Adımı düzenle",
+  "kisAdimAdi": "Adım adı",
+  "kisTumu": "Tümü",
+  "kisPanikKapanisNotu": "Kapanış notu (isteğe bağlı)",
+  "kisYalnizIceride": "Yalnız içeridekiler",
+  "kisDisHizmetAra": "Ad, tür ya da telefon ara",
+  "kisRezTumAlanlar": "Tüm alanlar",
+  "kisSuzgecTemizle": "Süzgeci temizle",
+  "kisSuzgecSonucYok": "Süzgece uyan kayıt yok.",
+  "kisTarihAraligi": "Tarih aralığı",
+  "hatBosRehber": "Kendinize not ya da hatırlatma eklemek için \"+\" düğmesine dokunun."
 }

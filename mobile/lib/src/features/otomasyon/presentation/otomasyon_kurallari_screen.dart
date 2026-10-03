@@ -10,12 +10,15 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/ui/finans_onay.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/girdi_siniri.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../core/para.dart';
+import '../../../routing/app_router.dart';
 import '../data/hatirlatma_api.dart';
 import '../data/otomasyon_api.dart';
 import 'hatirlatma_cumlesi.dart';
@@ -267,7 +270,19 @@ class OtomasyonKurallariScreen extends ConsumerWidget {
         (giderler.value?.isEmpty ?? false);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.otoKurallarEkranBaslik)),
+      appBar: AppBar(
+        title: Text(l10n.otoKurallarEkranBaslik),
+        actions: [
+          // (P253 Asama 1) Web otomasyon sayfasinin gunluk + hatirlatma
+          // gecmisi kartlari.
+          TextButton.icon(
+            key: const Key('oto-gunluk'),
+            icon: const Icon(Icons.history),
+            label: Text(l10n.finOtoGunlukBaslik),
+            onPressed: () => context.push(AppRoutes.otomasyonGunlugu),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         key: const Key('kural-yeni'),
         icon: const Icon(Icons.add),
@@ -432,10 +447,36 @@ class _MaasOnayKartiState extends ConsumerState<_MaasOnayKarti> {
       );
       return;
     }
+    // (P253 §C-1) Tutar ve hedef acik onay; genel "emin misiniz" yok.
+    final satir = widget.maas.onayBekleyenler.firstWhere((b) => b.id == id);
+    final onay = await finansOnayla(
+      context,
+      baslik: l10n.finOnayBaslik,
+      hedef: satir.aciklama,
+      tutar: tlTutar(kurus),
+      sonuc: l10n.finOnaySonuc,
+      onayMetni: l10n.finOnayla,
+    );
+    if (onay == null || !mounted) return;
     await _calis((a) async {
       await a.hareketOnayla(id, tutarKurus: kurus == varsayilan ? null : kurus);
       return 1;
     });
+  }
+
+  Future<void> _topluOnay() async {
+    final l10n = context.l10n;
+    final satirlar = widget.maas.onayBekleyenler;
+    final onay = await finansOnayla(
+      context,
+      baslik: l10n.finOnayBaslik,
+      hedef: l10n.otoMaasTumunuOnayla('${satirlar.length}'),
+      tutar: tlTutar(satirlar.fold<int>(0, (t, b) => t + b.tutarKurus)),
+      sonuc: l10n.finOnaySonuc,
+      onayMetni: l10n.finOnayla,
+    );
+    if (onay == null || !mounted) return;
+    await _calis((a) => a.maaslariOnayla([for (final b in satirlar) b.id]));
   }
 
   @override
@@ -489,10 +530,7 @@ class _MaasOnayKartiState extends ConsumerState<_MaasOnayKarti> {
             const SizedBox(height: 8),
             FilledButton(
               key: const Key('maas-toplu-onay'),
-              onPressed: _mesgul
-                  ? null
-                  : () => _calis(
-                      (a) => a.maaslariOnayla([for (final b in satirlar) b.id])),
+              onPressed: _mesgul ? null : _topluOnay,
               child: Text(l10n.otoMaasTumunuOnayla('${satirlar.length}')),
             ),
           ],

@@ -216,6 +216,23 @@ class _TipFilterBar extends ConsumerWidget {
             selected: state.kategoriFilter == 'diger',
             onSelected: (_) => controller.setKategoriFilter('diger'),
           ),
+          // (P253 Asama 1) DURUM SUZGECI — web gorev listesiyle ayni dort
+          // durum; secili olana tekrar dokunmak kaldirir.
+          const SizedBox(width: 16),
+          for (final (d, ad) in [
+            ('atandi', l10n.gorevDurumAtandi),
+            ('baslandi', l10n.gorevDurumBaslandi),
+            ('tamamlandi', l10n.gorevDurumTamamlandi),
+            ('gecikti', l10n.gorevDurumGecikti),
+          ]) ...[
+            FilterChip(
+              key: Key('gorev-durum-$d'),
+              label: Text(ad),
+              selected: state.durumFilter == d,
+              onSelected: (sec) => controller.setDurumFilter(sec ? d : null),
+            ),
+            const SizedBox(width: 8),
+          ],
         ],
       ),
     );

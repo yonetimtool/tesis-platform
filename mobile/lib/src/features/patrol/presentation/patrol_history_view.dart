@@ -28,6 +28,39 @@ class PatrolHistoryView extends ConsumerWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
         children: [
+          // (P253 Asama 1) TARIH ARALIGI — web devriye takibi ile ayni.
+          Wrap(
+            spacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              ActionChip(
+                key: const Key('devriye-tarih-araligi'),
+                avatar: const Icon(Icons.date_range, size: 18),
+                label: Text(state.aralik == null
+                    ? l10n.kisTarihAraligi
+                    : '${tarihBicimi(state.aralik!.start, context.dilKodu)} – '
+                        '${tarihBicimi(state.aralik!.end, context.dilKodu)}'),
+                onPressed: () async {
+                  final simdi = DateTime.now();
+                  final dun = DateTime(simdi.year, simdi.month, simdi.day - 1);
+                  final secilen = await showDateRangePicker(
+                    context: context,
+                    firstDate: DateTime(simdi.year - 2),
+                    lastDate: dun,
+                    initialDateRange: state.aralik,
+                  );
+                  if (secilen != null) await controller.aralikSec(secilen);
+                },
+              ),
+              if (state.aralik != null)
+                TextButton(
+                  key: const Key('devriye-tarih-temizle'),
+                  onPressed: () => controller.aralikSec(null),
+                  child: Text(l10n.kisSuzgecTemizle),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
           if (state.errorMessage != null || state.hataKimligi != null)
             PatrolErrorBanner(
               message: state.forbidden

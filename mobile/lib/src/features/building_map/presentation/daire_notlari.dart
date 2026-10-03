@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../ekler/presentation/ek_sil.dart';
 import '../data/daire_notu_api.dart';
 
 /// (P247-bekleyen 1.2) Daire detayindaki NOTLAR bolumu.
@@ -99,14 +100,38 @@ class _DaireNotlariState extends ConsumerState<DaireNotlari> {
                         ? Text(n.sahaGorebilir ? l10n.ekSahaAcik : l10n.ekSahaKapali)
                         : null,
                     trailing: widget.yonetim
-                        ? TextButton(
-                            key: Key('daire-notu-saha-${n.id}'),
-                            onPressed: _mesgul
-                                ? null
-                                : () => _calistir(() => ref
-                                    .read(daireNotuApiProvider)
-                                    .sahaGorunurlugu(n.id, sahaGorebilir: !n.sahaGorebilir)),
-                            child: Text(n.sahaGorebilir ? l10n.ekSahaKapat : l10n.ekSahaAc),
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TextButton(
+                                key: Key('daire-notu-saha-${n.id}'),
+                                onPressed: _mesgul
+                                    ? null
+                                    : () => _calistir(() => ref
+                                        .read(daireNotuApiProvider)
+                                        .sahaGorunurlugu(n.id, sahaGorebilir: !n.sahaGorebilir)),
+                                child: Text(n.sahaGorebilir ? l10n.ekSahaKapat : l10n.ekSahaAc),
+                              ),
+                              // (P253 Asama 1) Ek sil — her ek yuzeyinde.
+                              IconButton(
+                                key: Key('daire-notu-sil-${n.id}'),
+                                icon: const Icon(Icons.delete_outline),
+                                tooltip: l10n.ortakSil,
+                                onPressed: _mesgul
+                                    ? null
+                                    : () async {
+                                        final silindi = await ekSilOnayli(
+                                          context,
+                                          ref,
+                                          ekId: n.id,
+                                          ad: n.metin ?? n.dosyaAdi ?? '',
+                                        );
+                                        if (silindi && mounted) {
+                                          setState(() => _notlar = _yukle());
+                                        }
+                                      },
+                              ),
+                            ],
                           )
                         : null,
                   ),

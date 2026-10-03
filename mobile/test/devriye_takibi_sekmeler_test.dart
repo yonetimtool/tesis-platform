@@ -107,6 +107,7 @@ class _SahtePatrolApi extends PatrolApi {
     int offset = 0,
     PatrolWindowDurum? durum,
     DateTime? bitisBefore,
+    DateTime? baslangicAfter,
   }) async => const PatrolWindowHistoryPage(items: [], ozet: PatrolWindowOzet());
 }
 

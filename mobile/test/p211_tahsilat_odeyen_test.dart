@@ -125,6 +125,11 @@ Future<_Tel> _sur(
   Map<String, List<Map<String, dynamic>>> sakinler = const {},
   int sakinDurumu = 200,
 }) async {
+  // (P253 Asama 1) Tahsilat formu uzadi (tarih, belge no): kaydet dugmesi
+  // kaydirmadan gorunsun.
+  tester.view.physicalSize = const Size(1080, 3200);
+  tester.view.devicePixelRatio = 2.0;
+  addTearDown(tester.view.reset);
   final tel = _Tel(sakinler: sakinler, sakinDurumu: sakinDurumu);
   final dio = Dio(BaseOptions(baseUrl: 'http://api.test'))..httpClientAdapter = tel;
   final depo = BellekDepo({

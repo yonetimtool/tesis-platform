@@ -109,6 +109,9 @@ enum HomeMenuEntry {
   /// tek tek isaretler, suzgec SUNUCUDA (`GET /me/dokumanlar`).
   dokumanlar,
 
+  /// (P253 A1) Takvim + kisisel hatirlatmalar (web Ozet'teki takvim karti).
+  takvim,
+
   /// Dis Hizmetler — guvenilir esnaf/hizmet kisileri (cilingir/elektrik...) +
   /// yonetici notu. Yonetici ekler/duzenler/siler; yonetici+guvenlik+sakin okur.
   disHizmet,
@@ -488,6 +491,8 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.tesisAyarlari,
         HomeMenuEntry.kurulum,
         HomeMenuEntry.dokumanlar,
+        // (P253 A1) Takvim — web'de Ozet karti; mobilde Ozet ana ekran.
+        HomeMenuEntry.takvim,
         HomeMenuEntry.bilgisayardan,
         HomeMenuEntry.otopark,
         HomeMenuEntry.ihlaller,
@@ -595,6 +600,7 @@ String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
       HomeMenuEntry.etkinlik => l10n.modulEtkinlikler,
       HomeMenuEntry.siteKurallari => l10n.modulSiteKurallari,
       HomeMenuEntry.dokumanlar => l10n.modulDokumanlar,
+      HomeMenuEntry.takvim => l10n.hatTakvimBaslik,
       HomeMenuEntry.disHizmet => l10n.modulDisHizmetler,
       HomeMenuEntry.yerelIsletmeler => l10n.dukkanBaslik,
       HomeMenuEntry.integrations => l10n.modulEntegrasyonlar,
@@ -733,6 +739,7 @@ HomeMenuGrup homeMenuGrubu(HomeMenuEntry e) => switch (e) {
   HomeMenuEntry.diyafon ||
   HomeMenuEntry.kurulum ||
   HomeMenuEntry.dokumanlar ||
+  HomeMenuEntry.takvim ||
   HomeMenuEntry.bilgisayardan => HomeMenuGrup.yonetim,
 };
 

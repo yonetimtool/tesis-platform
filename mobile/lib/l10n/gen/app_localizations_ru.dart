@@ -9168,4 +9168,662 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get sikayetDetayBaslik => 'Подробности жалобы';
+
+  @override
+  String get vrdHaftaOnceki => 'Предыдущая неделя';
+
+  @override
+  String get vrdHaftaSonraki => 'Следующая неделя';
+
+  @override
+  String get vrdHaftayiDoldur => 'Заполнить неделю из состава';
+
+  @override
+  String get vrdHaftadanKopyala => 'Копировать из недели';
+
+  @override
+  String vrdDolduruldu(int n) {
+    return 'Добавлено смен: $n';
+  }
+
+  @override
+  String vrdKopyaSonuc(int eklenen, int atlanan) {
+    return 'Скопировано смен: $eklenen, пропущено: $atlanan';
+  }
+
+  @override
+  String get vrdSebepIzin => 'в отпуске';
+
+  @override
+  String get vrdSebepCakisma => 'пересечение';
+
+  @override
+  String get vrdGeriAl => 'Отменить';
+
+  @override
+  String vrdGeriAlindi(int n) {
+    return 'Отменено смен: $n';
+  }
+
+  @override
+  String get vrdKopyaKaynak => 'Неделя для копирования';
+
+  @override
+  String vrdKopyaHedef(String hafta) {
+    return 'Цель: $hafta';
+  }
+
+  @override
+  String get vrdHedefiTemizle => 'Убрать существующие смены целевой недели';
+
+  @override
+  String get vrdHedefiTemizleUyari =>
+      'Удалённые смены не вернутся через «Отменить»; отменяются только скопированные.';
+
+  @override
+  String get vrdKopyala => 'Копировать';
+
+  @override
+  String get vrdBlokDuzenle => 'Изменить смену';
+
+  @override
+  String get vrdTarih => 'Дата';
+
+  @override
+  String get vrdGuncellendi => 'Смена обновлена';
+
+  @override
+  String get vrdTopluCikar => 'Убрать выбранные';
+
+  @override
+  String vrdTopluCikarOnay(int n) {
+    return 'Будет убрано смен: $n. Это нельзя отменить; при необходимости добавьте их снова.';
+  }
+
+  @override
+  String vrdTopluCikarildi(int n) {
+    return 'Убрано смен: $n';
+  }
+
+  @override
+  String get vrdSablonEkle => 'Добавить шаблон';
+
+  @override
+  String get vrdSablonDuzenle => 'Изменить шаблон';
+
+  @override
+  String get vrdSablonAd => 'Название шаблона';
+
+  @override
+  String get vrdGunTipi => 'Действующие дни';
+
+  @override
+  String get vrdSablonSil => 'Удалить шаблон';
+
+  @override
+  String vrdSablonSilOnay(String ad) {
+    return 'Удалить шаблон «$ad»?';
+  }
+
+  @override
+  String get vrdSablonKaydedildi => 'Шаблон сохранён';
+
+  @override
+  String get vrdSablonSilindi => 'Шаблон удалён';
+
+  @override
+  String get vrdIzinTalepleri => 'Заявки на отпуск';
+
+  @override
+  String get vrdIzinBekleyen => 'Ожидают';
+
+  @override
+  String get vrdIzinOnaylanan => 'Одобренные';
+
+  @override
+  String get vrdIzinReddedilen => 'Отклонённые';
+
+  @override
+  String get vrdIzinTumu => 'Все';
+
+  @override
+  String get vrdIzinOnayla => 'Одобрить';
+
+  @override
+  String get vrdIzinReddet => 'Отклонить';
+
+  @override
+  String get vrdIzinSilOnay => 'Удалить эту запись об отпуске?';
+
+  @override
+  String get vrdIzinYok => 'Записей нет';
+
+  @override
+  String get vrdIzinOnaylandi => 'Отпуск одобрен';
+
+  @override
+  String get vrdIzinReddedildi => 'Отпуск отклонён';
+
+  @override
+  String get vrdIzinSilindi => 'Отпуск удалён';
+
+  @override
+  String get vrdDonguSonlandir => 'Завершить';
+
+  @override
+  String get vrdDonguSonlandirTarih => 'Без ротации с этой даты';
+
+  @override
+  String vrdDonguSonlandirildi(int n) {
+    return 'Ротация завершена, отменено смен: $n';
+  }
+
+  @override
+  String get vrdKalipSil => 'Удалить шаблон ротации';
+
+  @override
+  String vrdKalipSilOnay(String ad) {
+    return 'Удалить шаблон «$ad»? Уже созданные смены останутся в плане.';
+  }
+
+  @override
+  String get vrdKalipSilindi => 'Шаблон удалён';
+
+  @override
+  String get finOzetBorclandirilan => 'Начислено за месяц';
+
+  @override
+  String get finOzetTahsil => 'Собрано за месяц';
+
+  @override
+  String get finOzetAcikBorc => 'Непогашенный долг';
+
+  @override
+  String get finOzetKasa => 'Итого по кассам';
+
+  @override
+  String get finOzetPersonel => 'Расходы на персонал (этот месяц)';
+
+  @override
+  String get finOzetIcra => 'Открытые исполнительные дела';
+
+  @override
+  String get finKasalar => 'Остатки касс';
+
+  @override
+  String get finKasaYok => 'Кассы не заданы';
+
+  @override
+  String get finTipTahsilat => 'Поступление';
+
+  @override
+  String get finTipGider => 'Расход';
+
+  @override
+  String get finTipGelir => 'Доход';
+
+  @override
+  String get finTipVirman => 'Перевод';
+
+  @override
+  String get finTipIade => 'Возврат';
+
+  @override
+  String get finTipAcilis => 'Начальный остаток';
+
+  @override
+  String get finOtoGunlukBaslik => 'Журнал автоматизации';
+
+  @override
+  String get finOtoGunlukAciklama =>
+      'Какая автоматизация когда запускалась и что создала.';
+
+  @override
+  String get finOtoKayitYok => 'Записей пока нет';
+
+  @override
+  String get finOtoTurMaas => 'Расход на зарплату';
+
+  @override
+  String get finOtoTurAidatTahakkuk => 'Автоначисление';
+
+  @override
+  String get finOtoTurAidatOnizleme => 'Предпросмотр начисления';
+
+  @override
+  String get finOtoTurBorcHatirlatma => 'Напоминание о долге';
+
+  @override
+  String get finOtoTurDuzenliGider => 'Регулярный расход';
+
+  @override
+  String get finOtoTurGecikmeFaizi => 'Пени';
+
+  @override
+  String get finOtoTurAylikOzet => 'Месячная сводка';
+
+  @override
+  String get finOnayla => 'Утвердить';
+
+  @override
+  String get finReddet => 'Отклонить';
+
+  @override
+  String get finBelgeNo => '№ документа';
+
+  @override
+  String get finFirma => 'Компания';
+
+  @override
+  String get finGenelToplam => 'Общий итог';
+
+  @override
+  String get finHatirlatmaGecmisiSekme => 'Отправленные напоминания';
+
+  @override
+  String get finSebepEtiket => 'Причина (обязательно)';
+
+  @override
+  String get finTipIptal => 'Отмена (сторно)';
+
+  @override
+  String finTarihDegeri(String tarih) {
+    return 'Дата: $tarih';
+  }
+
+  @override
+  String get finBelgeNoIpucu => 'Оставьте пустым — система присвоит номер.';
+
+  @override
+  String get finGelirKaydedildi => 'Доход записан.';
+
+  @override
+  String get finFirmaYok => 'Без компании';
+
+  @override
+  String get finGelirTuru => 'Вид дохода';
+
+  @override
+  String get finGiderGelirBaslik => 'Расход / доход';
+
+  @override
+  String get finDonemselRapor => 'Отчёт за период';
+
+  @override
+  String get finSekmeOzet => 'Сводка';
+
+  @override
+  String get finSekmeHareketler => 'Операции';
+
+  @override
+  String get finOzetOnayBekleyen => 'Ожидают утверждения';
+
+  @override
+  String finKasaBekleyen(String tutar) {
+    return 'Ожидаемый расход: $tutar';
+  }
+
+  @override
+  String get finSuzgecTip => 'Тип';
+
+  @override
+  String get finHareketYok => 'Нет операций по этому фильтру.';
+
+  @override
+  String get finDurumOnayBekliyor => 'Ожидает утверждения';
+
+  @override
+  String get finDurumReddedildi => 'Отклонено';
+
+  @override
+  String get finDurumIptalEdildi => 'Отменено сторно';
+
+  @override
+  String get finTarih => 'Дата';
+
+  @override
+  String get finHedef => 'Кому';
+
+  @override
+  String get finOnayBaslik => 'Утвердить операцию';
+
+  @override
+  String get finOnaySonuc =>
+      'После утверждения сумма списывается с кассы. Исправить потом можно только сторно.';
+
+  @override
+  String get finOnaylandi => 'Операция утверждена.';
+
+  @override
+  String get finRedBaslik => 'Отклонить операцию';
+
+  @override
+  String get finRedSonuc =>
+      'Отклонение НЕЛЬЗЯ отменить: запись остаётся отклонённой и не попадает в кассу.';
+
+  @override
+  String get finReddedildi => 'Операция отклонена.';
+
+  @override
+  String get finOtoGunlukSekme => 'Журнал';
+
+  @override
+  String finOtoAdet(int n) {
+    return '$n записей';
+  }
+
+  @override
+  String finHatirlatmaOzet(int gonderilen, int okunan) {
+    return 'Отправлено: $gonderilen · прочитано: $okunan';
+  }
+
+  @override
+  String get finOkundu => 'Прочитано';
+
+  @override
+  String get finOkunmadi => 'Не прочитано';
+
+  @override
+  String get dokAciklama => 'Описание (необязательно)';
+
+  @override
+  String get dokAd => 'Название документа';
+
+  @override
+  String get dokCokBuyuk => 'Файл больше 25 МБ; выберите файл меньше.';
+
+  @override
+  String get dokGaleri => 'Выбрать из галереи';
+
+  @override
+  String get dokKamera => 'Сделать фото';
+
+  @override
+  String get dokPaylas => 'Скачать / поделиться';
+
+  @override
+  String get dokSakineAc => 'Открыть жильцам';
+
+  @override
+  String get dokSakineAcik => 'Видно жильцам';
+
+  @override
+  String get dokSakineAcikIpucu => 'Если выключено, видит только управление.';
+
+  @override
+  String get dokSakineAcildi => 'Документ открыт жильцам.';
+
+  @override
+  String get dokSakineKapat => 'Скрыть от жильцов';
+
+  @override
+  String get dokSakineKapatildi => 'Документ скрыт от жильцов.';
+
+  @override
+  String dokSecilen(String ad, int kb) {
+    return 'Выбрано: $ad ($kb КБ)';
+  }
+
+  @override
+  String get dokSilBaslik => 'Удалить документ';
+
+  @override
+  String dokSilOnay(String ad) {
+    return 'Удалить «$ad»? Жильцы тоже больше не увидят его.';
+  }
+
+  @override
+  String get dokSilindi => 'Документ удалён.';
+
+  @override
+  String get dokYalnizYonetim => 'Только управление';
+
+  @override
+  String get dokYonetimBos => 'Документов пока нет. Нажмите «Загрузить».';
+
+  @override
+  String get dokYukle => 'Загрузить';
+
+  @override
+  String get dokYuklendi => 'Документ загружен.';
+
+  @override
+  String get dokYukleNot =>
+      'С телефона можно загружать фото. Для PDF и других файлов пока используйте веб-панель.';
+
+  @override
+  String get hatAciklama => 'Заметка (необязательно)';
+
+  @override
+  String get hatAyBos => 'В этом месяце в календаре ничего нет.';
+
+  @override
+  String get hatBaslik => 'Заголовок';
+
+  @override
+  String get hatBos => 'У вас пока нет напоминаний.';
+
+  @override
+  String get hatDuzenle => 'Изменить напоминание';
+
+  @override
+  String get hatEkle => 'Добавить напоминание';
+
+  @override
+  String get hatOncekiAy => 'Предыдущий месяц';
+
+  @override
+  String get hatRenk => 'Цвет';
+
+  @override
+  String get hatRenkKirmizi => 'Красный';
+
+  @override
+  String get hatRenkMavi => 'Синий';
+
+  @override
+  String get hatRenkMor => 'Фиолетовый';
+
+  @override
+  String get hatRenkTuruncu => 'Оранжевый';
+
+  @override
+  String get hatRenkYesil => 'Зелёный';
+
+  @override
+  String get hatSekmeHatirlatmalarim => 'Мои напоминания';
+
+  @override
+  String get hatSekmeTakvim => 'Календарь';
+
+  @override
+  String get hatSilBaslik => 'Удалить напоминание';
+
+  @override
+  String hatSilOnay(String baslik) {
+    return 'Удалить «$baslik»?';
+  }
+
+  @override
+  String get hatSonrakiAy => 'Следующий месяц';
+
+  @override
+  String get hatTakvimBaslik => 'Календарь';
+
+  @override
+  String get hatTekrar => 'Повтор';
+
+  @override
+  String get hatTekrarAylik => 'Ежемесячно';
+
+  @override
+  String get hatTekrarGunluk => 'Ежедневно';
+
+  @override
+  String get hatTekrarHaftalik => 'Еженедельно';
+
+  @override
+  String get hatTekrarYok => 'Без повтора';
+
+  @override
+  String get hatTipAidat => 'Срок оплаты взноса';
+
+  @override
+  String get hatTipDevriye => 'Обход';
+
+  @override
+  String get hatTipEtkinlik => 'Мероприятие';
+
+  @override
+  String get hatTipGorev => 'Задача';
+
+  @override
+  String get hatTipHatirlatma => 'Напоминание';
+
+  @override
+  String get hatTipRezervasyon => 'Бронирование';
+
+  @override
+  String get hatZaman => 'Дата и время';
+
+  @override
+  String get mkbBaslik => 'Мои квитанции';
+
+  @override
+  String mkbBelge(String no) {
+    return 'Квитанция $no';
+  }
+
+  @override
+  String get mkbBos => 'У вас пока нет квитанций.';
+
+  @override
+  String get mkbPaylas => 'Поделиться PDF';
+
+  @override
+  String get mkbPdfYok => 'PDF ещё не готов';
+
+  @override
+  String get kisTanilama => 'Диагностика уведомлений';
+
+  @override
+  String get kisTanilamaEposta => 'Уведомления по почте';
+
+  @override
+  String get kisTanilamaSms => 'SMS-уведомления';
+
+  @override
+  String get kisTanilamaMobil => 'Мобильные уведомления';
+
+  @override
+  String get kisTanilamaDogrulandi => 'Почта подтверждена';
+
+  @override
+  String get kisTanilamaCihaz => 'Зарегистрированные устройства';
+
+  @override
+  String get kisTanilamaCihazYok =>
+      'Мобильные уведомления включены, но устройство не зарегистрировано: человек ни разу не входил в приложение, поэтому уведомления не доходят.';
+
+  @override
+  String get kisOdemeKodu => 'Код платежа';
+
+  @override
+  String get kisAranabilir => 'Разрешить поиск по телефону';
+
+  @override
+  String get kisAranabilirIpucu =>
+      'Включите, если человек согласился на звонки; управление и охрана смогут звонить на этот номер.';
+
+  @override
+  String get kisAcik => 'Вкл.';
+
+  @override
+  String get kisKapali => 'Выкл.';
+
+  @override
+  String get kisEposta => 'Эл. почта';
+
+  @override
+  String get kisKayitTamamlandi => 'Регистрация завершена';
+
+  @override
+  String get kisPasifBaslik => 'Деактивировать';
+
+  @override
+  String kisPasifOnay(String ad) {
+    return 'Деактивировать $ad? Вход будет закрыт; записи сохранятся, можно активировать снова.';
+  }
+
+  @override
+  String get kisSilBaslik => 'Удалить человека';
+
+  @override
+  String kisSilOnay(String ad) {
+    return 'Удалить $ad? Без истории учётная запись удаляется полностью; при наличии истории личность анонимизируется, записи сохраняются. Отменить нельзя — для временного закрытия доступа используйте «Деактивировать».';
+  }
+
+  @override
+  String kisSilindi(String ad) {
+    return '$ad удалён.';
+  }
+
+  @override
+  String kisAnonimlestirildi(String ad) {
+    return 'У $ad была история: личность анонимизирована, записи сохранены.';
+  }
+
+  @override
+  String get kisEkBaslik => 'Заметки и вложения';
+
+  @override
+  String get kisEkYok => 'Пока нет заметок и вложений.';
+
+  @override
+  String get kisEkNotYer => 'Добавить заметку';
+
+  @override
+  String get kisEkSilBaslik => 'Удалить вложение';
+
+  @override
+  String kisEkSilOnay(String ad) {
+    return 'Удалить «$ad»? Действие необратимо.';
+  }
+
+  @override
+  String get kisEkSilindi => 'Вложение удалено.';
+
+  @override
+  String get kisAdimDuzenle => 'Изменить шаг';
+
+  @override
+  String get kisAdimAdi => 'Название шага';
+
+  @override
+  String get kisTumu => 'Все';
+
+  @override
+  String get kisPanikKapanisNotu => 'Заметка о закрытии (необязательно)';
+
+  @override
+  String get kisYalnizIceride => 'Только находящиеся внутри';
+
+  @override
+  String get kisDisHizmetAra => 'Поиск по имени, типу или телефону';
+
+  @override
+  String get kisRezTumAlanlar => 'Все зоны';
+
+  @override
+  String get kisSuzgecTemizle => 'Сбросить фильтр';
+
+  @override
+  String get kisSuzgecSonucYok => 'Нет записей, подходящих под фильтр.';
+
+  @override
+  String get kisTarihAraligi => 'Период';
+
+  @override
+  String get hatBosRehber =>
+      'Нажмите «+», чтобы добавить заметку или напоминание.';
 }

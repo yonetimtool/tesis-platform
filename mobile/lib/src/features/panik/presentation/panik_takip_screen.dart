@@ -155,8 +155,18 @@ class _PanikTakipState extends ConsumerState<PanikTakipScreen> {
                   trailing: a.acik
                       ? TextButton(
                           key: Key('panik-kapat-${a.id}'),
+                          // (P253 Asama 1) NOTLA KAPAT — web gibi kapanis
+                          // notu (opsiyonel): "ne oldu, kim gitti".
                           onPressed: () async {
-                            await ref.read(panikApiProvider).kapat(a.id);
+                            final not = await showDialog<String>(
+                              context: context,
+                              builder: (_) => const _KapanisNotuDiyalogu(),
+                            );
+                            if (not == null) return;
+                            await ref.read(panikApiProvider).kapat(
+                                  a.id,
+                                  not: not.isEmpty ? null : not,
+                                );
                             ref.invalidate(panikTakipProvider(_suzgec));
                           },
                           child: Text(l10n.panikKapat),
@@ -279,6 +289,53 @@ class _Suzgecler extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+
+/// (P253 Asama 1) Kapanis notu — opsiyonel; bos birakilip kapatilabilir.
+/// Vazgec `null` doner (alarm acik kalir).
+class _KapanisNotuDiyalogu extends StatefulWidget {
+  const _KapanisNotuDiyalogu();
+
+  @override
+  State<_KapanisNotuDiyalogu> createState() => _KapanisNotuDiyaloguState();
+}
+
+class _KapanisNotuDiyaloguState extends State<_KapanisNotuDiyalogu> {
+  final _not = TextEditingController();
+
+  @override
+  void dispose() {
+    _not.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AlertDialog(
+      title: Text(l10n.panikKapat),
+      content: TextField(
+        key: const Key('panik-kapanis-notu'),
+        controller: _not,
+        maxLength: 2000,
+        minLines: 2,
+        maxLines: 5,
+        decoration: InputDecoration(labelText: l10n.kisPanikKapanisNotu),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.ortakVazgec),
+        ),
+        FilledButton(
+          key: const Key('panik-kapat-onay'),
+          onPressed: () => Navigator.of(context).pop(_not.text.trim()),
+          child: Text(l10n.panikKapat),
+        ),
+      ],
     );
   }
 }

@@ -30,6 +30,16 @@ class VardiyalarScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(baslikBuyuk(l10n.vardiyaBaslik, context.dilKodu)),
       ),
+      // (P253 Asama 1) Sablon ekle/duzenle/sil — web `SablonBolumu` ile
+      // AYNI uclar (`/shifts`), yalniz admin+yonetici (sunucu `_ADMIN`).
+      floatingActionButton: atayabilir
+          ? FloatingActionButton.extended(
+              key: const Key('vardiya-sablon-ekle'),
+              icon: const Icon(Icons.add),
+              label: Text(l10n.vrdSablonEkle),
+              onPressed: () => _sablonFormu(context, ref, null),
+            )
+          : null,
       body: shiftsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
@@ -58,6 +68,8 @@ class VardiyalarScreen extends ConsumerWidget {
               final personelAdlari = v.personel.map((p) => p.ad).join(', ');
               return Card(
                 child: ListTile(
+                  key: Key('vardiya-sablon-${v.id}'),
+                  onTap: atayabilir ? () => _sablonFormu(context, ref, v) : null,
                   title: Text(v.ad),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,6 +117,18 @@ class VardiyalarScreen extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  Future<void> _sablonFormu(
+      BuildContext context, WidgetRef ref, Shift? vardiya) async {
+    final mesaj = await showDialog<String>(
+      context: context,
+      builder: (_) => SablonFormu(vardiya: vardiya),
+    );
+    if (mesaj == null) return;
+    ref.invalidate(shiftsProvider);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mesaj)));
   }
 
   void _atamaSheet(BuildContext context, WidgetRef ref, Shift vardiya) {
@@ -234,6 +258,176 @@ class _AtamaSheetState extends ConsumerState<_AtamaSheet> {
           ],
         ),
       ),
+    );
+  }
+}
+
+
+/// (P253 Asama 1) Sablon ekle / duzenle / sil. Donus: sonuc metni (degismediyse null).
+const gunTipleri = <String>['her_gun', 'hafta_ici', 'hafta_sonu', 'resmi_tatil'];
+
+class SablonFormu extends ConsumerStatefulWidget {
+  const SablonFormu({super.key, this.vardiya});
+
+  /// null = yeni sablon.
+  final Shift? vardiya;
+
+  @override
+  ConsumerState<SablonFormu> createState() => _SablonFormuState();
+}
+
+class _SablonFormuState extends ConsumerState<SablonFormu> {
+  late final _adCtrl = TextEditingController(text: widget.vardiya?.ad ?? '');
+  late TimeOfDay _bas = _saat(widget.vardiya?.baslangicSaat, 8);
+  late TimeOfDay _son = _saat(widget.vardiya?.bitisSaat, 16);
+  late String _gunTipi = widget.vardiya?.gunTipi ?? gunTipleri.first;
+  String? _hata;
+  bool _bekliyor = false;
+
+  @override
+  void dispose() {
+    _adCtrl.dispose();
+    super.dispose();
+  }
+
+  static TimeOfDay _saat(String? hhmm, int varsayilan) {
+    final p = (hhmm ?? '').split(':');
+    final h = p.isNotEmpty ? int.tryParse(p[0]) : null;
+    final m = p.length > 1 ? int.tryParse(p[1]) : null;
+    return TimeOfDay(hour: h ?? varsayilan, minute: m ?? 0);
+  }
+
+  String _s(TimeOfDay t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+  Future<void> _calistir(
+      Future<void> Function(ShiftsApi api) is_, String basari) async {
+    setState(() {
+      _bekliyor = true;
+      _hata = null;
+    });
+    try {
+      await is_(ref.read(shiftsApiProvider));
+      if (mounted) Navigator.of(context).pop(basari);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _bekliyor = false;
+        _hata = apiHataMetni(context.l10n, e);
+      });
+    }
+  }
+
+  Future<void> _kaydet() {
+    final ad = _adCtrl.text.trim();
+    final v = widget.vardiya;
+    final basari = context.l10n.vrdSablonKaydedildi;
+    return _calistir((api) async {
+      if (v == null) {
+        await api.olustur(
+            ad: ad, baslangicSaat: _s(_bas), bitisSaat: _s(_son), gunTipi: _gunTipi);
+      } else {
+        await api.guncelle(v.id,
+            ad: ad, baslangicSaat: _s(_bas), bitisSaat: _s(_son), gunTipi: _gunTipi);
+      }
+    }, basari);
+  }
+
+  Future<void> _sil() async {
+    final v = widget.vardiya!;
+    final l10n = context.l10n;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (d) => AlertDialog(
+        content: Text(l10n.vrdSablonSilOnay(v.ad)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(d).pop(false),
+            child: Text(l10n.ortakVazgec),
+          ),
+          FilledButton(
+            key: const Key('vardiya-sablon-sil-onayla'),
+            onPressed: () => Navigator.of(d).pop(true),
+            child: Text(l10n.ortakSil),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) await _calistir((api) => api.sil(v.id), l10n.vrdSablonSilindi);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AlertDialog(
+      title: Text(widget.vardiya == null ? l10n.vrdSablonEkle : l10n.vrdSablonDuzenle),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_hata != null)
+              Text(_hata!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            TextField(
+              key: const Key('vardiya-sablon-ad'),
+              controller: _adCtrl,
+              maxLength: 100, // sunucu: ShiftCreate.ad (_G.AD)
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(labelText: l10n.vrdSablonAd),
+            ),
+            ListTile(
+              key: const Key('vardiya-sablon-bas'),
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.vardiyaBaslangicSaati),
+              trailing: Text(_s(_bas)),
+              onTap: () async {
+                final t = await showTimePicker(context: context, initialTime: _bas);
+                if (t != null) setState(() => _bas = t);
+              },
+            ),
+            ListTile(
+              key: const Key('vardiya-sablon-son'),
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.vardiyaBitisSaati),
+              trailing: Text(_s(_son)),
+              onTap: () async {
+                final t = await showTimePicker(context: context, initialTime: _son);
+                if (t != null) setState(() => _son = t);
+              },
+            ),
+            DropdownButtonFormField<String>(
+              key: const Key('vardiya-sablon-gun-tipi'),
+              isExpanded: true,
+              initialValue: _gunTipi,
+              decoration: InputDecoration(labelText: l10n.vrdGunTipi),
+              items: [
+                for (final g in gunTipleri)
+                  DropdownMenuItem(value: g, child: Text(gunTipiAdi(l10n, g))),
+              ],
+              onChanged: (v) => setState(() => _gunTipi = v ?? _gunTipi),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        if (widget.vardiya != null)
+          TextButton(
+            key: const Key('vardiya-sablon-sil'),
+            style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error),
+            onPressed: _bekliyor ? null : _sil,
+            child: Text(l10n.vrdSablonSil),
+          ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.ortakVazgec),
+        ),
+        FilledButton(
+          key: const Key('vardiya-sablon-kaydet'),
+          onPressed: _bekliyor || _adCtrl.text.trim().isEmpty ? null : _kaydet,
+          child: Text(l10n.ortakKaydet),
+        ),
+      ],
     );
   }
 }

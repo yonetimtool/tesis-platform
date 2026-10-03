@@ -129,6 +129,11 @@ Future<_Tel> _sur(
   Widget ekran, {
   Map<String, dynamic>? borclular,
 }) async {
+  // (P253 Asama 1) Gider formu uzadi (tip, firma, tarih, belge no): uzun
+  // ekran — kaydet dugmesi ve dugmenin ustundeki hata kaydirmadan gorunsun.
+  tester.view.physicalSize = const Size(1080, 3200);
+  tester.view.devicePixelRatio = 2.0;
+  addTearDown(tester.view.reset);
   final tel = _Tel(borclular: borclular);
   final dio = Dio(BaseOptions(baseUrl: 'http://api.test'))..httpClientAdapter = tel;
   final depo = BellekDepo({

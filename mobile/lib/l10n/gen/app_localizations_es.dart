@@ -9083,4 +9083,668 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get sikayetDetayBaslik => 'Detalles de la queja';
+
+  @override
+  String get vrdHaftaOnceki => 'Semana anterior';
+
+  @override
+  String get vrdHaftaSonraki => 'Semana siguiente';
+
+  @override
+  String get vrdHaftayiDoldur => 'Rellenar la semana desde la plantilla';
+
+  @override
+  String get vrdHaftadanKopyala => 'Copiar desde una semana';
+
+  @override
+  String vrdDolduruldu(int n) {
+    return '$n turnos añadidos';
+  }
+
+  @override
+  String vrdKopyaSonuc(int eklenen, int atlanan) {
+    return '$eklenen turnos copiados, $atlanan omitidos';
+  }
+
+  @override
+  String get vrdSebepIzin => 'de permiso';
+
+  @override
+  String get vrdSebepCakisma => 'solapamiento';
+
+  @override
+  String get vrdGeriAl => 'Deshacer';
+
+  @override
+  String vrdGeriAlindi(int n) {
+    return '$n turnos deshechos';
+  }
+
+  @override
+  String get vrdKopyaKaynak => 'Semana a copiar';
+
+  @override
+  String vrdKopyaHedef(String hafta) {
+    return 'Destino: $hafta';
+  }
+
+  @override
+  String get vrdHedefiTemizle =>
+      'Quitar los turnos existentes de la semana destino';
+
+  @override
+  String get vrdHedefiTemizleUyari =>
+      'Los turnos quitados no vuelven con «Deshacer»; solo se deshacen los copiados.';
+
+  @override
+  String get vrdKopyala => 'Copiar';
+
+  @override
+  String get vrdBlokDuzenle => 'Editar turno';
+
+  @override
+  String get vrdTarih => 'Fecha';
+
+  @override
+  String get vrdGuncellendi => 'Turno actualizado';
+
+  @override
+  String get vrdTopluCikar => 'Quitar seleccionados';
+
+  @override
+  String vrdTopluCikarOnay(int n) {
+    return 'Se quitarán $n turnos. No se puede deshacer; vuelva a añadirlos si es necesario.';
+  }
+
+  @override
+  String vrdTopluCikarildi(int n) {
+    return '$n turnos quitados';
+  }
+
+  @override
+  String get vrdSablonEkle => 'Añadir plantilla';
+
+  @override
+  String get vrdSablonDuzenle => 'Editar plantilla';
+
+  @override
+  String get vrdSablonAd => 'Nombre de la plantilla';
+
+  @override
+  String get vrdGunTipi => 'Días válidos';
+
+  @override
+  String get vrdSablonSil => 'Eliminar plantilla';
+
+  @override
+  String vrdSablonSilOnay(String ad) {
+    return '¿Eliminar la plantilla «$ad»?';
+  }
+
+  @override
+  String get vrdSablonKaydedildi => 'Plantilla guardada';
+
+  @override
+  String get vrdSablonSilindi => 'Plantilla eliminada';
+
+  @override
+  String get vrdIzinTalepleri => 'Solicitudes de permiso';
+
+  @override
+  String get vrdIzinBekleyen => 'Pendientes';
+
+  @override
+  String get vrdIzinOnaylanan => 'Aprobadas';
+
+  @override
+  String get vrdIzinReddedilen => 'Rechazadas';
+
+  @override
+  String get vrdIzinTumu => 'Todas';
+
+  @override
+  String get vrdIzinOnayla => 'Aprobar';
+
+  @override
+  String get vrdIzinReddet => 'Rechazar';
+
+  @override
+  String get vrdIzinSilOnay => '¿Eliminar este permiso?';
+
+  @override
+  String get vrdIzinYok => 'Sin registros';
+
+  @override
+  String get vrdIzinOnaylandi => 'Permiso aprobado';
+
+  @override
+  String get vrdIzinReddedildi => 'Permiso rechazado';
+
+  @override
+  String get vrdIzinSilindi => 'Permiso eliminado';
+
+  @override
+  String get vrdDonguSonlandir => 'Finalizar';
+
+  @override
+  String get vrdDonguSonlandirTarih => 'Sin rotación desde esta fecha';
+
+  @override
+  String vrdDonguSonlandirildi(int n) {
+    return 'Rotación finalizada, $n turnos cancelados';
+  }
+
+  @override
+  String get vrdKalipSil => 'Eliminar patrón';
+
+  @override
+  String vrdKalipSilOnay(String ad) {
+    return '¿Eliminar el patrón «$ad»? Los turnos ya creados se mantienen.';
+  }
+
+  @override
+  String get vrdKalipSilindi => 'Patrón eliminado';
+
+  @override
+  String get finOzetBorclandirilan => 'Cargado este mes';
+
+  @override
+  String get finOzetTahsil => 'Cobrado este mes';
+
+  @override
+  String get finOzetAcikBorc => 'Deuda pendiente';
+
+  @override
+  String get finOzetKasa => 'Total de cajas';
+
+  @override
+  String get finOzetPersonel => 'Gastos de personal (este mes)';
+
+  @override
+  String get finOzetIcra => 'Expedientes de ejecución abiertos';
+
+  @override
+  String get finKasalar => 'Saldos de caja';
+
+  @override
+  String get finKasaYok => 'No hay caja definida';
+
+  @override
+  String get finTipTahsilat => 'Cobro';
+
+  @override
+  String get finTipGider => 'Gasto';
+
+  @override
+  String get finTipGelir => 'Ingreso';
+
+  @override
+  String get finTipVirman => 'Traspaso';
+
+  @override
+  String get finTipIade => 'Devolución';
+
+  @override
+  String get finTipAcilis => 'Apertura';
+
+  @override
+  String get finOtoGunlukBaslik => 'Registro de automatización';
+
+  @override
+  String get finOtoGunlukAciklama =>
+      'Qué automatización se ejecutó, cuándo y qué produjo.';
+
+  @override
+  String get finOtoKayitYok => 'Aún no hay registros';
+
+  @override
+  String get finOtoTurMaas => 'Gasto de salario';
+
+  @override
+  String get finOtoTurAidatTahakkuk => 'Cargo automático';
+
+  @override
+  String get finOtoTurAidatOnizleme => 'Vista previa de cargo';
+
+  @override
+  String get finOtoTurBorcHatirlatma => 'Recordatorio de deuda';
+
+  @override
+  String get finOtoTurDuzenliGider => 'Gasto recurrente';
+
+  @override
+  String get finOtoTurGecikmeFaizi => 'Intereses de demora';
+
+  @override
+  String get finOtoTurAylikOzet => 'Resumen mensual';
+
+  @override
+  String get finOnayla => 'Aprobar';
+
+  @override
+  String get finReddet => 'Rechazar';
+
+  @override
+  String get finBelgeNo => 'N.º de documento';
+
+  @override
+  String get finFirma => 'Empresa';
+
+  @override
+  String get finGenelToplam => 'Total general';
+
+  @override
+  String get finHatirlatmaGecmisiSekme => 'Recordatorios enviados';
+
+  @override
+  String get finSebepEtiket => 'Motivo (obligatorio)';
+
+  @override
+  String get finTipIptal => 'Anulación (asiento inverso)';
+
+  @override
+  String finTarihDegeri(String tarih) {
+    return 'Fecha: $tarih';
+  }
+
+  @override
+  String get finBelgeNoIpucu => 'Déjelo vacío y el sistema asignará un número.';
+
+  @override
+  String get finGelirKaydedildi => 'Ingreso registrado.';
+
+  @override
+  String get finFirmaYok => 'Sin empresa';
+
+  @override
+  String get finGelirTuru => 'Tipo de ingreso';
+
+  @override
+  String get finGiderGelirBaslik => 'Gasto / ingreso';
+
+  @override
+  String get finDonemselRapor => 'Informe del periodo';
+
+  @override
+  String get finSekmeOzet => 'Resumen';
+
+  @override
+  String get finSekmeHareketler => 'Movimientos';
+
+  @override
+  String get finOzetOnayBekleyen => 'Pendiente de aprobación';
+
+  @override
+  String finKasaBekleyen(String tutar) {
+    return 'Salida pendiente: $tutar';
+  }
+
+  @override
+  String get finSuzgecTip => 'Tipo';
+
+  @override
+  String get finHareketYok => 'No hay movimientos con este filtro.';
+
+  @override
+  String get finDurumOnayBekliyor => 'Pendiente de aprobación';
+
+  @override
+  String get finDurumReddedildi => 'Rechazado';
+
+  @override
+  String get finDurumIptalEdildi => 'Anulado con asiento inverso';
+
+  @override
+  String get finTarih => 'Fecha';
+
+  @override
+  String get finHedef => 'Para';
+
+  @override
+  String get finOnayBaslik => 'Aprobar el movimiento';
+
+  @override
+  String get finOnaySonuc =>
+      'Al aprobarse se descuenta del saldo de caja. Después solo puede corregirse con un asiento inverso.';
+
+  @override
+  String get finOnaylandi => 'Movimiento aprobado.';
+
+  @override
+  String get finRedBaslik => 'Rechazar el movimiento';
+
+  @override
+  String get finRedSonuc =>
+      'El rechazo NO se puede deshacer: el registro queda rechazado y nunca entra en caja.';
+
+  @override
+  String get finReddedildi => 'Movimiento rechazado.';
+
+  @override
+  String get finOtoGunlukSekme => 'Registro';
+
+  @override
+  String finOtoAdet(int n) {
+    return '$n registros';
+  }
+
+  @override
+  String finHatirlatmaOzet(int gonderilen, int okunan) {
+    return '$gonderilen enviados · $okunan leídos';
+  }
+
+  @override
+  String get finOkundu => 'Leído';
+
+  @override
+  String get finOkunmadi => 'No leído';
+
+  @override
+  String get dokAciklama => 'Descripción (opcional)';
+
+  @override
+  String get dokAd => 'Nombre del documento';
+
+  @override
+  String get dokCokBuyuk =>
+      'El archivo supera los 25 MB; elija uno más pequeño.';
+
+  @override
+  String get dokGaleri => 'Elegir de la galería';
+
+  @override
+  String get dokKamera => 'Hacer foto';
+
+  @override
+  String get dokPaylas => 'Descargar / compartir';
+
+  @override
+  String get dokSakineAc => 'Mostrar a residentes';
+
+  @override
+  String get dokSakineAcik => 'Visible para residentes';
+
+  @override
+  String get dokSakineAcikIpucu =>
+      'Si está desactivado, solo lo ve la administración.';
+
+  @override
+  String get dokSakineAcildi =>
+      'El documento ahora es visible para residentes.';
+
+  @override
+  String get dokSakineKapat => 'Ocultar a residentes';
+
+  @override
+  String get dokSakineKapatildi =>
+      'El documento ahora está oculto para residentes.';
+
+  @override
+  String dokSecilen(String ad, int kb) {
+    return 'Seleccionado: $ad ($kb KB)';
+  }
+
+  @override
+  String get dokSilBaslik => 'Eliminar documento';
+
+  @override
+  String dokSilOnay(String ad) {
+    return '¿Eliminar «$ad»? Los residentes tampoco podrán verlo.';
+  }
+
+  @override
+  String get dokSilindi => 'Documento eliminado.';
+
+  @override
+  String get dokYalnizYonetim => 'Solo administración';
+
+  @override
+  String get dokYonetimBos =>
+      'Aún no hay documentos. Toque Subir para añadir uno.';
+
+  @override
+  String get dokYukle => 'Subir';
+
+  @override
+  String get dokYuklendi => 'Documento subido.';
+
+  @override
+  String get dokYukleNot =>
+      'Puede subir fotos desde el teléfono. Para PDF y otros archivos, use por ahora el panel web.';
+
+  @override
+  String get hatAciklama => 'Nota (opcional)';
+
+  @override
+  String get hatAyBos => 'No hay nada en el calendario este mes.';
+
+  @override
+  String get hatBaslik => 'Título';
+
+  @override
+  String get hatBos => 'Aún no tiene recordatorios.';
+
+  @override
+  String get hatDuzenle => 'Editar recordatorio';
+
+  @override
+  String get hatEkle => 'Añadir recordatorio';
+
+  @override
+  String get hatOncekiAy => 'Mes anterior';
+
+  @override
+  String get hatRenk => 'Color';
+
+  @override
+  String get hatRenkKirmizi => 'Rojo';
+
+  @override
+  String get hatRenkMavi => 'Azul';
+
+  @override
+  String get hatRenkMor => 'Morado';
+
+  @override
+  String get hatRenkTuruncu => 'Naranja';
+
+  @override
+  String get hatRenkYesil => 'Verde';
+
+  @override
+  String get hatSekmeHatirlatmalarim => 'Mis recordatorios';
+
+  @override
+  String get hatSekmeTakvim => 'Calendario';
+
+  @override
+  String get hatSilBaslik => 'Eliminar recordatorio';
+
+  @override
+  String hatSilOnay(String baslik) {
+    return '¿Eliminar «$baslik»?';
+  }
+
+  @override
+  String get hatSonrakiAy => 'Mes siguiente';
+
+  @override
+  String get hatTakvimBaslik => 'Calendario';
+
+  @override
+  String get hatTekrar => 'Repetir';
+
+  @override
+  String get hatTekrarAylik => 'Cada mes';
+
+  @override
+  String get hatTekrarGunluk => 'Cada día';
+
+  @override
+  String get hatTekrarHaftalik => 'Cada semana';
+
+  @override
+  String get hatTekrarYok => 'No se repite';
+
+  @override
+  String get hatTipAidat => 'Vencimiento de cuota';
+
+  @override
+  String get hatTipDevriye => 'Ronda';
+
+  @override
+  String get hatTipEtkinlik => 'Evento';
+
+  @override
+  String get hatTipGorev => 'Tarea';
+
+  @override
+  String get hatTipHatirlatma => 'Recordatorio';
+
+  @override
+  String get hatTipRezervasyon => 'Reserva';
+
+  @override
+  String get hatZaman => 'Fecha y hora';
+
+  @override
+  String get mkbBaslik => 'Mis recibos';
+
+  @override
+  String mkbBelge(String no) {
+    return 'Recibo $no';
+  }
+
+  @override
+  String get mkbBos => 'Aún no tiene recibos.';
+
+  @override
+  String get mkbPaylas => 'Compartir PDF';
+
+  @override
+  String get mkbPdfYok => 'PDF aún no disponible';
+
+  @override
+  String get kisTanilama => 'Diagnóstico de notificaciones';
+
+  @override
+  String get kisTanilamaEposta => 'Avisos por correo';
+
+  @override
+  String get kisTanilamaSms => 'Avisos por SMS';
+
+  @override
+  String get kisTanilamaMobil => 'Avisos móviles';
+
+  @override
+  String get kisTanilamaDogrulandi => 'Correo verificado';
+
+  @override
+  String get kisTanilamaCihaz => 'Dispositivos registrados';
+
+  @override
+  String get kisTanilamaCihazYok =>
+      'Los avisos móviles están activados pero no hay ningún dispositivo registrado: la persona nunca ha entrado en la aplicación, así que no se entrega nada.';
+
+  @override
+  String get kisOdemeKodu => 'Código de pago';
+
+  @override
+  String get kisAranabilir => 'Permitir búsqueda por teléfono';
+
+  @override
+  String get kisAranabilirIpucu =>
+      'Actívelo si la persona aceptó recibir llamadas; la administración y seguridad podrán llamar a este número.';
+
+  @override
+  String get kisAcik => 'Activado';
+
+  @override
+  String get kisKapali => 'Desactivado';
+
+  @override
+  String get kisEposta => 'Correo';
+
+  @override
+  String get kisKayitTamamlandi => 'Registro completado';
+
+  @override
+  String get kisPasifBaslik => 'Desactivar';
+
+  @override
+  String kisPasifOnay(String ad) {
+    return '¿Desactivar a $ad? No podrá iniciar sesión; sus registros se conservan y puede reactivarse.';
+  }
+
+  @override
+  String get kisSilBaslik => 'Eliminar persona';
+
+  @override
+  String kisSilOnay(String ad) {
+    return '¿Eliminar a $ad? Sin historial, la cuenta se borra por completo; con historial, su identidad se anonimiza y los registros se conservan. No se puede deshacer: use Desactivar para cerrar el acceso temporalmente.';
+  }
+
+  @override
+  String kisSilindi(String ad) {
+    return '$ad eliminado.';
+  }
+
+  @override
+  String kisAnonimlestirildi(String ad) {
+    return '$ad tenía historial: se anonimizó su identidad y se conservaron los registros.';
+  }
+
+  @override
+  String get kisEkBaslik => 'Notas y adjuntos';
+
+  @override
+  String get kisEkYok => 'Aún no hay notas ni adjuntos.';
+
+  @override
+  String get kisEkNotYer => 'Añadir una nota';
+
+  @override
+  String get kisEkSilBaslik => 'Eliminar adjunto';
+
+  @override
+  String kisEkSilOnay(String ad) {
+    return '¿Eliminar «$ad»? No se puede deshacer.';
+  }
+
+  @override
+  String get kisEkSilindi => 'Adjunto eliminado.';
+
+  @override
+  String get kisAdimDuzenle => 'Editar paso';
+
+  @override
+  String get kisAdimAdi => 'Nombre del paso';
+
+  @override
+  String get kisTumu => 'Todos';
+
+  @override
+  String get kisPanikKapanisNotu => 'Nota de cierre (opcional)';
+
+  @override
+  String get kisYalnizIceride => 'Solo los que están dentro';
+
+  @override
+  String get kisDisHizmetAra => 'Buscar nombre, tipo o teléfono';
+
+  @override
+  String get kisRezTumAlanlar => 'Todas las zonas';
+
+  @override
+  String get kisSuzgecTemizle => 'Quitar filtro';
+
+  @override
+  String get kisSuzgecSonucYok => 'Ningún registro coincide con el filtro.';
+
+  @override
+  String get kisTarihAraligi => 'Rango de fechas';
+
+  @override
+  String get hatBosRehber =>
+      'Toque \"+\" para añadir una nota o un recordatorio.';
 }

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/error/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
 import '../domain/shift_models.dart';
 
@@ -19,6 +20,62 @@ class ShiftsApi {
       for (final item in (res.data?['items'] as List?) ?? const [])
         if (item is Map) Shift.fromJson(Map<String, dynamic>.from(item)),
     ];
+  }
+
+  /// (P253 Asama 1) Sablon ekle — admin+yonetici. Saatler "HH:MM";
+  /// baslangic > bitis gece sarkmasidir (gecerli).
+  Future<Shift> olustur({
+    required String ad,
+    required String baslangicSaat,
+    required String bitisSaat,
+    String? gunTipi,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/shifts',
+        data: {
+          'ad': ad,
+          'baslangic_saat': baslangicSaat,
+          'bitis_saat': bitisSaat,
+          'gun_tipi': ?gunTipi,
+        },
+      );
+      return Shift.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// Sablonu duzenle — yalniz verilen alanlar gonderilir.
+  Future<Shift> guncelle(
+    String shiftId, {
+    String? ad,
+    String? baslangicSaat,
+    String? bitisSaat,
+    String? gunTipi,
+  }) async {
+    try {
+      final res = await _dio.patch<Map<String, dynamic>>(
+        '/shifts/$shiftId',
+        data: {
+          'ad': ?ad,
+          'baslangic_saat': ?baslangicSaat,
+          'bitis_saat': ?bitisSaat,
+          'gun_tipi': ?gunTipi,
+        },
+      );
+      return Shift.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  Future<void> sil(String shiftId) async {
+    try {
+      await _dio.delete<void>('/shifts/$shiftId');
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
   }
 
   /// Vardiya personelini TAM LISTE olarak degistirir (admin+yonetici).

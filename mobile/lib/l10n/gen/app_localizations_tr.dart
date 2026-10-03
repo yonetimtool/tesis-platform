@@ -8886,4 +8886,664 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get sikayetDetayBaslik => 'Şikâyet ayrıntısı';
+
+  @override
+  String get vrdHaftaOnceki => 'Önceki hafta';
+
+  @override
+  String get vrdHaftaSonraki => 'Sonraki hafta';
+
+  @override
+  String get vrdHaftayiDoldur => 'Haftayı kadrodan doldur';
+
+  @override
+  String get vrdHaftadanKopyala => 'Haftadan kopyala';
+
+  @override
+  String vrdDolduruldu(int n) {
+    return '$n vardiya eklendi';
+  }
+
+  @override
+  String vrdKopyaSonuc(int eklenen, int atlanan) {
+    return '$eklenen vardiya kopyalandı, $atlanan atlandı';
+  }
+
+  @override
+  String get vrdSebepIzin => 'izinli';
+
+  @override
+  String get vrdSebepCakisma => 'çakışma';
+
+  @override
+  String get vrdGeriAl => 'Geri al';
+
+  @override
+  String vrdGeriAlindi(int n) {
+    return '$n vardiya geri alındı';
+  }
+
+  @override
+  String get vrdKopyaKaynak => 'Kopyalanacak hafta';
+
+  @override
+  String vrdKopyaHedef(String hafta) {
+    return 'Hedef: $hafta';
+  }
+
+  @override
+  String get vrdHedefiTemizle => 'Hedef haftadaki mevcut vardiyaları kaldır';
+
+  @override
+  String get vrdHedefiTemizleUyari =>
+      'Kaldırılan vardiyalar \"Geri al\" ile geri gelmez; yalnız kopyalananlar geri alınır.';
+
+  @override
+  String get vrdKopyala => 'Kopyala';
+
+  @override
+  String get vrdBlokDuzenle => 'Vardiyayı düzenle';
+
+  @override
+  String get vrdTarih => 'Tarih';
+
+  @override
+  String get vrdGuncellendi => 'Vardiya güncellendi';
+
+  @override
+  String get vrdTopluCikar => 'Seçilenleri çıkar';
+
+  @override
+  String vrdTopluCikarOnay(int n) {
+    return '$n vardiya çıkarılacak. Bu işlem geri alınamaz; gerekirse vardiyalar yeniden eklenir.';
+  }
+
+  @override
+  String vrdTopluCikarildi(int n) {
+    return '$n vardiya çıkarıldı';
+  }
+
+  @override
+  String get vrdSablonEkle => 'Şablon ekle';
+
+  @override
+  String get vrdSablonDuzenle => 'Şablonu düzenle';
+
+  @override
+  String get vrdSablonAd => 'Şablon adı';
+
+  @override
+  String get vrdGunTipi => 'Geçerli günler';
+
+  @override
+  String get vrdSablonSil => 'Şablonu sil';
+
+  @override
+  String vrdSablonSilOnay(String ad) {
+    return '\"$ad\" şablonu silinsin mi?';
+  }
+
+  @override
+  String get vrdSablonKaydedildi => 'Şablon kaydedildi';
+
+  @override
+  String get vrdSablonSilindi => 'Şablon silindi';
+
+  @override
+  String get vrdIzinTalepleri => 'İzin talepleri';
+
+  @override
+  String get vrdIzinBekleyen => 'Bekleyen';
+
+  @override
+  String get vrdIzinOnaylanan => 'Onaylanan';
+
+  @override
+  String get vrdIzinReddedilen => 'Reddedilen';
+
+  @override
+  String get vrdIzinTumu => 'Tümü';
+
+  @override
+  String get vrdIzinOnayla => 'Onayla';
+
+  @override
+  String get vrdIzinReddet => 'Reddet';
+
+  @override
+  String get vrdIzinSilOnay => 'Bu izin kaydı silinsin mi?';
+
+  @override
+  String get vrdIzinYok => 'Kayıt yok';
+
+  @override
+  String get vrdIzinOnaylandi => 'İzin onaylandı';
+
+  @override
+  String get vrdIzinReddedildi => 'İzin reddedildi';
+
+  @override
+  String get vrdIzinSilindi => 'İzin silindi';
+
+  @override
+  String get vrdDonguSonlandir => 'Sonlandır';
+
+  @override
+  String get vrdDonguSonlandirTarih => 'Bu tarihten itibaren döngü yok';
+
+  @override
+  String vrdDonguSonlandirildi(int n) {
+    return 'Döngü sonlandırıldı, $n vardiya iptal edildi';
+  }
+
+  @override
+  String get vrdKalipSil => 'Kalıbı sil';
+
+  @override
+  String vrdKalipSilOnay(String ad) {
+    return '\"$ad\" kalıbı silinsin mi? Oluşmuş vardiyalar planda kalır.';
+  }
+
+  @override
+  String get vrdKalipSilindi => 'Kalıp silindi';
+
+  @override
+  String get finOzetBorclandirilan => 'Bu ay borçlandırılan';
+
+  @override
+  String get finOzetTahsil => 'Bu ay tahsil edilen';
+
+  @override
+  String get finOzetAcikBorc => 'Açık borç';
+
+  @override
+  String get finOzetKasa => 'Kasa toplamı';
+
+  @override
+  String get finOzetPersonel => 'Personel giderleri (bu ay)';
+
+  @override
+  String get finOzetIcra => 'Açık icra dosyası';
+
+  @override
+  String get finKasalar => 'Kasa bakiyeleri';
+
+  @override
+  String get finKasaYok => 'Kasa tanımlanmamış';
+
+  @override
+  String get finTipTahsilat => 'Tahsilat';
+
+  @override
+  String get finTipGider => 'Gider';
+
+  @override
+  String get finTipGelir => 'Gelir';
+
+  @override
+  String get finTipVirman => 'Virman';
+
+  @override
+  String get finTipIade => 'İade';
+
+  @override
+  String get finTipAcilis => 'Açılış';
+
+  @override
+  String get finOtoGunlukBaslik => 'Otomasyon günlüğü';
+
+  @override
+  String get finOtoGunlukAciklama =>
+      'Hangi otomasyon ne zaman çalıştı, ne üretti.';
+
+  @override
+  String get finOtoKayitYok => 'Henüz kayıt yok';
+
+  @override
+  String get finOtoTurMaas => 'Maaş gideri';
+
+  @override
+  String get finOtoTurAidatTahakkuk => 'Otomatik tahakkuk';
+
+  @override
+  String get finOtoTurAidatOnizleme => 'Tahakkuk önizlemesi';
+
+  @override
+  String get finOtoTurBorcHatirlatma => 'Borç hatırlatma';
+
+  @override
+  String get finOtoTurDuzenliGider => 'Düzenli gider';
+
+  @override
+  String get finOtoTurGecikmeFaizi => 'Gecikme faizi';
+
+  @override
+  String get finOtoTurAylikOzet => 'Aylık özet';
+
+  @override
+  String get finOnayla => 'Onayla';
+
+  @override
+  String get finReddet => 'Reddet';
+
+  @override
+  String get finBelgeNo => 'Belge no';
+
+  @override
+  String get finFirma => 'Firma';
+
+  @override
+  String get finGenelToplam => 'Genel toplam';
+
+  @override
+  String get finHatirlatmaGecmisiSekme => 'Gönderilen hatırlatmalar';
+
+  @override
+  String get finSebepEtiket => 'Sebep (zorunlu)';
+
+  @override
+  String get finTipIptal => 'İptal (ters kayıt)';
+
+  @override
+  String finTarihDegeri(String tarih) {
+    return 'Tarih: $tarih';
+  }
+
+  @override
+  String get finBelgeNoIpucu => 'Boş bırakırsanız sistem numara verir.';
+
+  @override
+  String get finGelirKaydedildi => 'Gelir kaydedildi.';
+
+  @override
+  String get finFirmaYok => 'Firma yok';
+
+  @override
+  String get finGelirTuru => 'Gelir türü';
+
+  @override
+  String get finGiderGelirBaslik => 'Gider / gelir';
+
+  @override
+  String get finDonemselRapor => 'Dönemsel rapor';
+
+  @override
+  String get finSekmeOzet => 'Özet';
+
+  @override
+  String get finSekmeHareketler => 'Hareketler';
+
+  @override
+  String get finOzetOnayBekleyen => 'Onay bekleyen';
+
+  @override
+  String finKasaBekleyen(String tutar) {
+    return 'Bekleyen çıkış: $tutar';
+  }
+
+  @override
+  String get finSuzgecTip => 'Tür';
+
+  @override
+  String get finHareketYok => 'Bu süzgeçle hareket yok.';
+
+  @override
+  String get finDurumOnayBekliyor => 'Onay bekliyor';
+
+  @override
+  String get finDurumReddedildi => 'Reddedildi';
+
+  @override
+  String get finDurumIptalEdildi => 'Ters kayıtla iptal edildi';
+
+  @override
+  String get finTarih => 'Tarih';
+
+  @override
+  String get finHedef => 'Kime';
+
+  @override
+  String get finOnayBaslik => 'Hareketi onayla';
+
+  @override
+  String get finOnaySonuc =>
+      'Onaylanınca kasa bakiyesinden düşer. Sonradan yalnız ters kayıtla düzeltilebilir.';
+
+  @override
+  String get finOnaylandi => 'Hareket onaylandı.';
+
+  @override
+  String get finRedBaslik => 'Hareketi reddet';
+
+  @override
+  String get finRedSonuc =>
+      'Ret GERİ ALINAMAZ: kayıt silinmez, reddedilmiş olarak kalır ve kasaya hiç girmez.';
+
+  @override
+  String get finReddedildi => 'Hareket reddedildi.';
+
+  @override
+  String get finOtoGunlukSekme => 'Günlük';
+
+  @override
+  String finOtoAdet(int n) {
+    return '$n kayıt';
+  }
+
+  @override
+  String finHatirlatmaOzet(int gonderilen, int okunan) {
+    return '$gonderilen gönderildi · $okunan okundu';
+  }
+
+  @override
+  String get finOkundu => 'Okundu';
+
+  @override
+  String get finOkunmadi => 'Okunmadı';
+
+  @override
+  String get dokAciklama => 'Açıklama (isteğe bağlı)';
+
+  @override
+  String get dokAd => 'Doküman adı';
+
+  @override
+  String get dokCokBuyuk =>
+      'Dosya 25 MB\'tan büyük; daha küçük bir dosya seçin.';
+
+  @override
+  String get dokGaleri => 'Galeriden seç';
+
+  @override
+  String get dokKamera => 'Fotoğraf çek';
+
+  @override
+  String get dokPaylas => 'İndir / paylaş';
+
+  @override
+  String get dokSakineAc => 'Sakinlere aç';
+
+  @override
+  String get dokSakineAcik => 'Sakinlere açık';
+
+  @override
+  String get dokSakineAcikIpucu => 'Kapalıysa yalnız yönetim görür.';
+
+  @override
+  String get dokSakineAcildi => 'Doküman sakinlere açıldı.';
+
+  @override
+  String get dokSakineKapat => 'Sakinlerden gizle';
+
+  @override
+  String get dokSakineKapatildi => 'Doküman sakinlerden gizlendi.';
+
+  @override
+  String dokSecilen(String ad, int kb) {
+    return 'Seçilen: $ad ($kb KB)';
+  }
+
+  @override
+  String get dokSilBaslik => 'Dokümanı sil';
+
+  @override
+  String dokSilOnay(String ad) {
+    return '“$ad” silinsin mi? Sakinler de artık göremez.';
+  }
+
+  @override
+  String get dokSilindi => 'Doküman silindi.';
+
+  @override
+  String get dokYalnizYonetim => 'Yalnız yönetim';
+
+  @override
+  String get dokYonetimBos =>
+      'Arşivde doküman yok. Yüklemek için Yükle\'ye dokunun.';
+
+  @override
+  String get dokYukle => 'Yükle';
+
+  @override
+  String get dokYuklendi => 'Doküman yüklendi.';
+
+  @override
+  String get dokYukleNot =>
+      'Telefondan fotoğraf yükleyebilirsiniz. PDF ve diğer dosyalar için şimdilik web panelini kullanın.';
+
+  @override
+  String get hatAciklama => 'Not (isteğe bağlı)';
+
+  @override
+  String get hatAyBos => 'Bu ay takvimde bir şey yok.';
+
+  @override
+  String get hatBaslik => 'Başlık';
+
+  @override
+  String get hatBos => 'Henüz hatırlatmanız yok.';
+
+  @override
+  String get hatDuzenle => 'Hatırlatmayı düzenle';
+
+  @override
+  String get hatEkle => 'Hatırlatma ekle';
+
+  @override
+  String get hatOncekiAy => 'Önceki ay';
+
+  @override
+  String get hatRenk => 'Renk';
+
+  @override
+  String get hatRenkKirmizi => 'Kırmızı';
+
+  @override
+  String get hatRenkMavi => 'Mavi';
+
+  @override
+  String get hatRenkMor => 'Mor';
+
+  @override
+  String get hatRenkTuruncu => 'Turuncu';
+
+  @override
+  String get hatRenkYesil => 'Yeşil';
+
+  @override
+  String get hatSekmeHatirlatmalarim => 'Hatırlatmalarım';
+
+  @override
+  String get hatSekmeTakvim => 'Takvim';
+
+  @override
+  String get hatSilBaslik => 'Hatırlatmayı sil';
+
+  @override
+  String hatSilOnay(String baslik) {
+    return '“$baslik” silinsin mi?';
+  }
+
+  @override
+  String get hatSonrakiAy => 'Sonraki ay';
+
+  @override
+  String get hatTakvimBaslik => 'Takvim';
+
+  @override
+  String get hatTekrar => 'Tekrar';
+
+  @override
+  String get hatTekrarAylik => 'Her ay';
+
+  @override
+  String get hatTekrarGunluk => 'Her gün';
+
+  @override
+  String get hatTekrarHaftalik => 'Her hafta';
+
+  @override
+  String get hatTekrarYok => 'Tekrar yok';
+
+  @override
+  String get hatTipAidat => 'Aidat son ödeme';
+
+  @override
+  String get hatTipDevriye => 'Devriye';
+
+  @override
+  String get hatTipEtkinlik => 'Etkinlik';
+
+  @override
+  String get hatTipGorev => 'Görev';
+
+  @override
+  String get hatTipHatirlatma => 'Hatırlatma';
+
+  @override
+  String get hatTipRezervasyon => 'Rezervasyon';
+
+  @override
+  String get hatZaman => 'Tarih ve saat';
+
+  @override
+  String get mkbBaslik => 'Makbuzlarım';
+
+  @override
+  String mkbBelge(String no) {
+    return 'Makbuz $no';
+  }
+
+  @override
+  String get mkbBos => 'Henüz makbuzunuz yok.';
+
+  @override
+  String get mkbPaylas => 'PDF\'i paylaş';
+
+  @override
+  String get mkbPdfYok => 'PDF henüz hazır değil';
+
+  @override
+  String get kisTanilama => 'Bildirim tanılama';
+
+  @override
+  String get kisTanilamaEposta => 'E-posta bildirimi';
+
+  @override
+  String get kisTanilamaSms => 'SMS bildirimi';
+
+  @override
+  String get kisTanilamaMobil => 'Mobil bildirim';
+
+  @override
+  String get kisTanilamaDogrulandi => 'E-posta doğrulandı';
+
+  @override
+  String get kisTanilamaCihaz => 'Kayıtlı cihaz';
+
+  @override
+  String get kisTanilamaCihazYok =>
+      'Mobil bildirim açık ama kayıtlı cihaz yok: kişi uygulamaya hiç giriş yapmamış, bu yüzden bildirim gitmez.';
+
+  @override
+  String get kisOdemeKodu => 'Ödeme kodu';
+
+  @override
+  String get kisAranabilir => 'Telefonla aranmaya izin ver';
+
+  @override
+  String get kisAranabilirIpucu =>
+      'Kişi telefonla aranmaya izin verdiyse açın; yönetim ve güvenlik numarayı buradan arayabilir.';
+
+  @override
+  String get kisAcik => 'Açık';
+
+  @override
+  String get kisKapali => 'Kapalı';
+
+  @override
+  String get kisEposta => 'E-posta';
+
+  @override
+  String get kisKayitTamamlandi => 'Kayıt tamamlandı';
+
+  @override
+  String get kisPasifBaslik => 'Pasifleştir';
+
+  @override
+  String kisPasifOnay(String ad) {
+    return '$ad pasifleştirilsin mi? Kişi uygulamaya giremez; geçmiş kayıtları korunur ve yeniden aktifleştirilebilir.';
+  }
+
+  @override
+  String get kisSilBaslik => 'Kişiyi sil';
+
+  @override
+  String kisSilOnay(String ad) {
+    return '$ad silinsin mi? Geçmiş kaydı yoksa hesap tamamen silinir; varsa kimliği anonimleştirilir, kayıtlar korunur. Geri alınamaz — erişimi geçici kapatmak için Pasifleştir\'i kullanın.';
+  }
+
+  @override
+  String kisSilindi(String ad) {
+    return '$ad silindi.';
+  }
+
+  @override
+  String kisAnonimlestirildi(String ad) {
+    return '$ad geçmiş kayıtları olduğu için anonimleştirildi; kayıtlar korundu.';
+  }
+
+  @override
+  String get kisEkBaslik => 'Notlar ve ekler';
+
+  @override
+  String get kisEkYok => 'Henüz not ya da ek yok.';
+
+  @override
+  String get kisEkNotYer => 'Not ekle';
+
+  @override
+  String get kisEkSilBaslik => 'Eki sil';
+
+  @override
+  String kisEkSilOnay(String ad) {
+    return '“$ad” silinsin mi? Bu işlem geri alınamaz.';
+  }
+
+  @override
+  String get kisEkSilindi => 'Ek silindi.';
+
+  @override
+  String get kisAdimDuzenle => 'Adımı düzenle';
+
+  @override
+  String get kisAdimAdi => 'Adım adı';
+
+  @override
+  String get kisTumu => 'Tümü';
+
+  @override
+  String get kisPanikKapanisNotu => 'Kapanış notu (isteğe bağlı)';
+
+  @override
+  String get kisYalnizIceride => 'Yalnız içeridekiler';
+
+  @override
+  String get kisDisHizmetAra => 'Ad, tür ya da telefon ara';
+
+  @override
+  String get kisRezTumAlanlar => 'Tüm alanlar';
+
+  @override
+  String get kisSuzgecTemizle => 'Süzgeci temizle';
+
+  @override
+  String get kisSuzgecSonucYok => 'Süzgece uyan kayıt yok.';
+
+  @override
+  String get kisTarihAraligi => 'Tarih aralığı';
+
+  @override
+  String get hatBosRehber =>
+      'Kendinize not ya da hatırlatma eklemek için \"+\" düğmesine dokunun.';
 }

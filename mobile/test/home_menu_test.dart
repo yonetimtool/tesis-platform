@@ -189,6 +189,7 @@ void main() {
           // (P166 §8.2) Kurulum sihirbazi — mobilde ilk kez.
           HomeMenuEntry.kurulum,
           HomeMenuEntry.dokumanlar,
+          HomeMenuEntry.takvim,
           HomeMenuEntry.bilgisayardan,
           // (P139.3) Yuzeye cikarildi (rotalari zaten vardi); gorunurluk
           // kartlarinin cizildigi rolden turedi — bkz. admin blogu.

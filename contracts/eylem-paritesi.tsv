@@ -199,11 +199,11 @@ POST	/diyafon/{id}/anons	+	-	planli:3	admin,yonetici	Diyafon anons
 POST	/diyafon/{id}/kapi-ac	+	+	ayni	admin,yonetici	-
 POST	/diyafon/{id}/saglik	+	+	ayni	admin,yonetici	-
 POST	/diyafon/{id}/zil	+	+	ayni	admin,yonetici	-
-GET	/dokumanlar	+	-	planli:1	admin,yonetici	Dokuman yukle/duzenle/sil + yonetim listesi
-POST	/dokumanlar	+	-	planli:1	admin,yonetici	Dokuman yukle/duzenle/sil + yonetim listesi
-DELETE	/dokumanlar/{dokuman_id}	+	-	planli:1	admin,yonetici	Dokuman yukle/duzenle/sil + yonetim listesi
-PATCH	/dokumanlar/{dokuman_id}	+	-	planli:1	admin,yonetici	Dokuman yukle/duzenle/sil + yonetim listesi
-GET	/dokumanlar/{dokuman_id}/indir	+	-	planli:1	admin,yonetici	Dokuman indir (yonetim listesinden)
+GET	/dokumanlar	+	+	ayni	admin,yonetici	-
+POST	/dokumanlar	+	+	ayni	admin,yonetici	-
+DELETE	/dokumanlar/{dokuman_id}	+	+	ayni	admin,yonetici	-
+PATCH	/dokumanlar/{dokuman_id}	+	+	ayni	admin,yonetici	-
+GET	/dokumanlar/{dokuman_id}/indir	+	+	ayni	admin,yonetici	-
 GET	/dues/assessments	+	+	ayni	admin,yonetici,denetci	-
 POST	/dues/assessments	+	-	planli:2	admin,yonetici	Borclandirma/aidat listesi, tekil, sihirbaz
 POST	/dues/assessments/{assessment_id}/ters-kayit	+	-	planli:2	admin,yonetici	Borclandirma/aidat listesi, tekil, sihirbaz
@@ -286,7 +286,7 @@ PUT	/egitim-videolari/yonetim/{adim_kodu}	+	-	platform	admin	Platform paneli (pa
 POST	/egitim-videolari/{adim_kodu}/izlendi	+	+	ayni	admin,yonetici	-
 GET	/ekler	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,resident,guvenlik_amiri,denetci	-
 POST	/ekler	+	+	ayni	admin,yonetici,guvenlik_amiri	-
-DELETE	/ekler/{ek_id}	+	-	planli:1	admin,yonetici,guvenlik_amiri	Ek sil (her yerde)
+DELETE	/ekler/{ek_id}	+	+	ayni	admin,yonetici,guvenlik_amiri	-
 PATCH	/ekler/{ek_id}	+	+	ayni	admin,yonetici	-
 GET	/events	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,resident,guvenlik_amiri	-
 POST	/events	+	+	ayni	admin,yonetici	-
@@ -304,26 +304,26 @@ POST	/finans/banka-eslestir	+	-	planli:3	admin,yonetici	Banka eslestirme (§2.4)
 POST	/finans/borclulara/faiz-affi	+	-	planli:2	admin,yonetici	Faiz affi, odeme plani
 POST	/finans/borclulara/hatirlat	+	+	ayni	admin,yonetici	-
 POST	/finans/borclulara/odeme-plani	+	-	planli:2	admin,yonetici	Faiz affi, odeme plani
-GET	/finans/hareketler	+	-	planli:1	admin,yonetici,denetci	Hareket listesi (tahsilat/gider/gelir gecmisi)
+GET	/finans/hareketler	+	+	ayni	admin,yonetici,denetci	-
 POST	/finans/hareketler	+	+	ayni	admin,yonetici	-
 POST	/finans/hareketler/{hareket_id}/iptal	+	-	planli:2	admin,yonetici	Iptal (ters kayit, §C)
 POST	/finans/hareketler/{hareket_id}/onayla	+	+	ayni	admin,yonetici	-
-POST	/finans/hareketler/{hareket_id}/reddet	+	-	planli:1	admin,yonetici	Onayla/Reddet her onay bekleyen (§C kurali)
+POST	/finans/hareketler/{hareket_id}/reddet	+	+	ayni	admin,yonetici	-
 GET	/finans/hatirlatma-epostalari	+	+	ayni	admin,yonetici,denetci	-
-GET	/finans/hatirlatma-gecmisi	+	-	planli:1	admin,yonetici,denetci	Otomasyon gunlugu / hatirlatma gecmisi
+GET	/finans/hatirlatma-gecmisi	+	+	ayni	admin,yonetici,denetci	-
 POST	/finans/iade	+	-	planli:2	admin,yonetici	Virman, iade, toplu tahsilat
 GET	/finans/icra-dosyalari	+	-	planli:2	admin,yonetici,denetci	Denetci salt okuma
 POST	/finans/icra-dosyalari	+	-	planli:3	admin,yonetici	Icra dosyalari
 DELETE	/finans/icra-dosyalari/{id}	+	-	planli:3	admin,yonetici	Icra dosyalari
 PATCH	/finans/icra-dosyalari/{id}	+	-	planli:3	admin,yonetici	Icra dosyalari
-GET	/finans/kasa-bakiyeleri	+	-	planli:1	admin,yonetici,denetci	Kasa bazinda bakiye
-GET	/finans/ozet	+	-	planli:1	admin,yonetici,denetci	Finans ozeti (kasa kirilimi)
+GET	/finans/kasa-bakiyeleri	+	+	ayni	admin,yonetici,denetci	-
+GET	/finans/ozet	+	+	ayni	admin,yonetici,denetci	-
 POST	/finans/tahsilat	+	+	ayni	admin,yonetici	-
 GET	/finans/tahsilat-gostergesi	+	+	ayni	admin,yonetici,denetci	-
 POST	/finans/tahsilat/toplu	+	-	planli:2	admin,yonetici	Virman, iade, toplu tahsilat
 POST	/finans/virman	+	-	planli:2	admin,yonetici	Virman, iade, toplu tahsilat
 GET	/finans/yaslandirma	+	+	ayni	admin,yonetici,denetci	-
-GET	/firmalar	+	-	planli:2	admin,yonetici	Tanimlar (tek genel defter ekrani)
+GET	/firmalar	+	+	ayni	admin,yonetici	-
 POST	/firmalar	+	-	planli:2	admin,yonetici	Tanimlar (tek genel defter ekrani)
 DELETE	/firmalar/{id}	+	-	planli:2	admin,yonetici	Tanimlar (tek genel defter ekrani)
 PATCH	/firmalar/{id}	+	-	planli:2	admin,yonetici	Tanimlar (tek genel defter ekrani)
@@ -338,10 +338,10 @@ PATCH	/gelir-gider-tanimlari/{id}	+	-	planli:2	admin,yonetici	Tanimlar (tek gene
 GET	/hatirlatma-ayari	+	+	ayni	admin,yonetici,denetci	-
 PATCH	/hatirlatma-ayari	+	+	ayni	admin,yonetici	-
 GET	/hatirlatma-ayari/onizleme	+	+	ayni	admin,yonetici,denetci	-
-GET	/hatirlatmalar	+	-	planli:1	admin,yonetici	Hatirlatmalar
-POST	/hatirlatmalar	+	-	planli:1	admin,yonetici	Hatirlatmalar
-DELETE	/hatirlatmalar/{hatirlatma_id}	+	-	planli:1	admin,yonetici	Hatirlatmalar
-PATCH	/hatirlatmalar/{hatirlatma_id}	+	-	planli:1	admin,yonetici	Hatirlatmalar
+GET	/hatirlatmalar	+	+	ayni	admin,yonetici	-
+POST	/hatirlatmalar	+	+	ayni	admin,yonetici	-
+DELETE	/hatirlatmalar/{hatirlatma_id}	+	+	ayni	admin,yonetici	-
+PATCH	/hatirlatmalar/{hatirlatma_id}	+	+	ayni	admin,yonetici	-
 GET	/health	-	-	yapisal	admin,yonetici,security,tesis_gorevlisi,resident,guvenlik_amiri,denetci	Saglik kontrolu
 GET	/ice-aktarim	+	-	planli:3	admin,yonetici	Excel ice aktarim (§2.4)
 GET	/ice-aktarim/turler	+	-	planli:3	admin,yonetici	Excel ice aktarim (§2.4)
@@ -404,7 +404,7 @@ POST	/me/hesap-sil	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,resident,guv
 POST	/me/hesap-sil/eposta-kod-iste	-	+	yalniz_mobil	admin,yonetici,security,tesis_gorevlisi,resident,guvenlik_amiri,denetci	Mobil akis (saha/sakin ya da cihaz) — web karsiligi aranmaz
 GET	/me/hizli-islemler	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,resident,guvenlik_amiri,denetci	-
 PUT	/me/hizli-islemler	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,resident,guvenlik_amiri,denetci	-
-GET	/me/makbuzlar	+	-	planli:1	resident	Sakin makbuz listesi + PDF
+GET	/me/makbuzlar	+	+	ayni	resident	-
 GET	/me/odeme-bilgileri	+	+	ayni	resident	-
 POST	/me/odeme/kart	-	+	yalniz_mobil	resident	Mobil akis (saha/sakin ya da cihaz) — web karsiligi aranmaz
 GET	/me/pano-tercihi	+	-	yapisal	admin,yonetici,security,tesis_gorevlisi,resident,guvenlik_amiri,denetci	Web pano duzeni; mobilde ayri kavram: ana ekran izgarasi (/me/ana-ekran-izgarasi)
@@ -443,7 +443,7 @@ POST	/notifications/toplu-okundu	+	+	ayni	admin,yonetici,security,tesis_gorevlis
 POST	/notifications/toplu-sil	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,resident,guvenlik_amiri	-
 POST	/notifications/tumunu-okundu	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,resident,guvenlik_amiri	-
 PATCH	/notifications/{id}	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,resident,guvenlik_amiri	-
-GET	/otomasyon-gunlugu	+	-	planli:1	admin,yonetici,denetci	Otomasyon gunlugu / hatirlatma gecmisi
+GET	/otomasyon-gunlugu	+	+	ayni	admin,yonetici,denetci	-
 GET	/otomasyon/maas-ayari	+	+	ayni	admin,yonetici	-
 PATCH	/otomasyon/maas-ayari	+	+	ayni	admin,yonetici	-
 POST	/otomasyon/maaslar/calistir	+	+	ayni	admin,yonetici	-
@@ -511,10 +511,10 @@ GET	/sesli-mesaj	-	+	yalniz_mobil	admin,yonetici,security,resident,guvenlik_amir
 DELETE	/sesli-mesaj/{id}	-	+	yalniz_mobil	admin,yonetici,security,resident,guvenlik_amiri	Mobil akis (saha/sakin ya da cihaz) — web karsiligi aranmaz
 GET	/sesli-mesaj/{id}/dinle	-	+	yalniz_mobil	admin,yonetici,security,resident,guvenlik_amiri	Mobil akis (saha/sakin ya da cihaz) — web karsiligi aranmaz
 GET	/shifts	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,guvenlik_amiri	-
-POST	/shifts	+	-	planli:1	admin,yonetici	Vardiya sablonu ekle/duzenle/sil
-DELETE	/shifts/{id}	+	-	planli:1	admin,yonetici	Vardiya sablonu ekle/duzenle/sil
+POST	/shifts	+	+	ayni	admin,yonetici	-
+DELETE	/shifts/{id}	+	+	ayni	admin,yonetici	-
 GET	/shifts/{id}	+	-	yapisal	admin,yonetici,security,tesis_gorevlisi,guvenlik_amiri	Web detay penceresi kaydi ayrica ceker; mobil listedeki kaydi kullanir (ayni veri)
-PATCH	/shifts/{id}	+	-	planli:1	admin,yonetici	Vardiya sablonu ekle/duzenle/sil
+PATCH	/shifts/{id}	+	+	ayni	admin,yonetici	-
 PUT	/shifts/{shift_id}/assignments	+	+	ayni	admin,yonetici	-
 GET	/site-rules	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,resident,guvenlik_amiri	-
 POST	/site-rules	+	+	ayni	admin,yonetici	-
@@ -528,7 +528,7 @@ PATCH	/support/{ticket_id}	+	-	platform	admin	Platform paneli (panel.yonetiyor.c
 GET	/surum-politikasi	+	-	platform	admin	Platform paneli (panel.yonetiyor.com) — kapsam disi
 PUT	/surum-politikasi/{platform}	+	-	platform	admin	Platform paneli (panel.yonetiyor.com) — kapsam disi
 POST	/surum/kontrol	-	+	yapisal	admin,yonetici,security,tesis_gorevlisi,resident,guvenlik_amiri,denetci	Surum kontrolu (yalniz mobil uygulama)
-GET	/takvim	+	-	planli:1	admin,yonetici	Takvim
+GET	/takvim	+	+	ayni	admin,yonetici	-
 GET	/tanitim-iletisim	-	-	platform	admin	Platform paneli (panel.yonetiyor.com) — kapsam disi
 PATCH	/tanitim-iletisim/{id}	-	-	platform	admin	Platform paneli (panel.yonetiyor.com) — kapsam disi
 GET	/task-categories	+	+	ayni	admin,yonetici,security,tesis_gorevlisi	-
@@ -539,12 +539,12 @@ GET	/task-completions	+	+	ayni	admin,yonetici,security,tesis_gorevlisi	-
 GET	/tasks	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,guvenlik_amiri	-
 POST	/tasks	+	+	ayni	admin,yonetici,guvenlik_amiri	-
 DELETE	/tasks/{id}	+	+	ayni	admin,yonetici,guvenlik_amiri	-
-GET	/tasks/{id}	+	-	planli:1	admin,yonetici,security,tesis_gorevlisi,guvenlik_amiri	Liste suzgecleri
+GET	/tasks/{id}	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,guvenlik_amiri	-
 PATCH	/tasks/{id}	+	+	ayni	admin,yonetici,guvenlik_amiri	-
 GET	/tasks/{id}/adimlar	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,guvenlik_amiri	-
 POST	/tasks/{id}/adimlar	+	+	ayni	admin,yonetici,guvenlik_amiri	-
 DELETE	/tasks/{id}/adimlar/{step_id}	+	+	ayni	admin,yonetici,guvenlik_amiri	-
-PATCH	/tasks/{id}/adimlar/{step_id}	+	-	planli:1	admin,yonetici,guvenlik_amiri	Gorev adimi duzenle
+PATCH	/tasks/{id}/adimlar/{step_id}	+	+	ayni	admin,yonetici,guvenlik_amiri	-
 POST	/tasks/{id}/adimlar/{step_id}/geri-al	+	+	ayni	admin,yonetici,guvenlik_amiri	-
 POST	/tasks/{id}/adimlar/{step_id}/tamamla	+	+	ayni	admin,yonetici,security,tesis_gorevlisi	-
 POST	/tasks/{id}/basla	-	+	yalniz_mobil	admin,yonetici,security,tesis_gorevlisi	Mobil akis (saha/sakin ya da cihaz) — web karsiligi aranmaz
@@ -637,35 +637,35 @@ POST	/units/{id}/ulas/telefon	-	+	yalniz_mobil	admin,yonetici,security,guvenlik_
 POST	/uploads/presign	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,resident	-
 GET	/users	+	+	ayni	admin,yonetici,guvenlik_amiri	-
 POST	/users	+	+	ayni	admin,yonetici,guvenlik_amiri	-
-GET	/users/acilabilir-roller	+	-	planli:1	admin,yonetici,guvenlik_amiri	Acilabilir roller sunucudan
+GET	/users/acilabilir-roller	+	+	ayni	admin,yonetici,guvenlik_amiri	-
 POST	/users/odeme-kodlari	+	+	ayni	admin,yonetici	-
 POST	/users/odeme-kodlari/eposta	+	+	ayni	admin,yonetici	-
-GET	/users/{id}	+	-	planli:1	admin,yonetici,guvenlik_amiri	Kisi tanilama karti
+GET	/users/{id}	+	+	ayni	admin,yonetici,guvenlik_amiri	-
 PATCH	/users/{id}	+	+	ayni	admin,yonetici,guvenlik_amiri	-
 PATCH	/users/{id}/contact	-	-	ic	admin,yonetici	Hicbir yuzey cagirmiyor (otomasyon, webhook, eski ya da yalniz API)
 DELETE	/users/{id}/panik-aski	-	-	ic	admin,yonetici	Hicbir yuzey cagirmiyor (otomasyon, webhook, eski ya da yalniz API)
 PATCH	/users/{id}/panik-aski	-	-	ic	admin,yonetici	Hicbir yuzey cagirmiyor (otomasyon, webhook, eski ya da yalniz API)
-DELETE	/users/{user_id}	+	-	planli:1	admin,yonetici,guvenlik_amiri	Kisi duzenle / aktif-pasif / sil
+DELETE	/users/{user_id}	+	+	ayni	admin,yonetici,guvenlik_amiri	-
 PATCH	/users/{user_id}/avatar	-	+	yalniz_mobil	yonetici	Mobil akis (saha/sakin ya da cihaz) — web karsiligi aranmaz
-GET	/vardiya-izin	+	-	planli:1	admin,yonetici,security,tesis_gorevlisi,guvenlik_amiri	Izin talebi listesi, onayla/reddet, sil
+GET	/vardiya-izin	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,guvenlik_amiri	-
 POST	/vardiya-izin	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,guvenlik_amiri	-
-DELETE	/vardiya-izin/{id}	+	-	planli:1	admin,yonetici,security,tesis_gorevlisi,guvenlik_amiri	Izin talebi listesi, onayla/reddet, sil
-POST	/vardiya-izin/{id}/onayla	+	-	planli:1	admin,yonetici,guvenlik_amiri	Izin talebi listesi, onayla/reddet, sil
-POST	/vardiya-izin/{id}/reddet	+	-	planli:1	admin,yonetici,guvenlik_amiri	Izin talebi listesi, onayla/reddet, sil
+DELETE	/vardiya-izin/{id}	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,guvenlik_amiri	-
+POST	/vardiya-izin/{id}/onayla	+	+	ayni	admin,yonetici,guvenlik_amiri	-
+POST	/vardiya-izin/{id}/reddet	+	+	ayni	admin,yonetici,guvenlik_amiri	-
 GET	/vardiya-plani	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,guvenlik_amiri	-
 POST	/vardiya-plani	+	-	yapisal	admin,yonetici,guvenlik_amiri	Mobil tekil vardiyayi toplu ucla (/vardiya-plani/toplu) ekler
 GET	/vardiya-plani/cizelge	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,guvenlik_amiri	-
 GET	/vardiya-plani/disa-aktar	+	-	planli:3	admin,yonetici,security,tesis_gorevlisi,guvenlik_amiri	Vardiya Excel ice/disa
 GET	/vardiya-plani/dongu-atamalari	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,guvenlik_amiri	-
-POST	/vardiya-plani/dongu-atamalari/{atama_id}/sonlandir	+	-	planli:1	admin,yonetici,guvenlik_amiri	Dongu atamasini sonlandir
+POST	/vardiya-plani/dongu-atamalari/{atama_id}/sonlandir	+	+	ayni	admin,yonetici,guvenlik_amiri	-
 POST	/vardiya-plani/dongu-uygula	+	+	ayni	admin,yonetici,guvenlik_amiri	-
-POST	/vardiya-plani/haftadan-kopyala	+	-	planli:1	admin,yonetici,guvenlik_amiri	Haftayi doldur / haftadan kopyala
-POST	/vardiya-plani/haftayi-doldur	+	-	planli:1	admin,yonetici,guvenlik_amiri	Haftayi doldur / haftadan kopyala
+POST	/vardiya-plani/haftadan-kopyala	+	+	ayni	admin,yonetici,guvenlik_amiri	-
+POST	/vardiya-plani/haftayi-doldur	+	+	ayni	admin,yonetici,guvenlik_amiri	-
 POST	/vardiya-plani/ice-aktar	+	-	planli:3	admin,yonetici,guvenlik_amiri	Vardiya Excel ice/disa
 POST	/vardiya-plani/kalip-uygula	+	+	ayni	admin,yonetici,guvenlik_amiri	-
 GET	/vardiya-plani/kaliplar	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,guvenlik_amiri	-
 POST	/vardiya-plani/kaliplar	+	+	ayni	admin,yonetici,guvenlik_amiri	-
-DELETE	/vardiya-plani/kaliplar/{kalip_id}	+	-	planli:1	admin,yonetici,guvenlik_amiri	Vardiya kalibi sil
+DELETE	/vardiya-plani/kaliplar/{kalip_id}	+	+	ayni	admin,yonetici,guvenlik_amiri	-
 GET	/vardiya-plani/mola-onerisi	+	+	ayni	admin,yonetici,security,tesis_gorevlisi,guvenlik_amiri	-
 GET	/vardiya-plani/ornek-sablon	+	-	planli:3	admin,yonetici,guvenlik_amiri	Vardiya Excel ice/disa
 POST	/vardiya-plani/parti/{parti_id}/geri-al	+	+	ayni	admin,yonetici,guvenlik_amiri	-
@@ -674,7 +674,7 @@ POST	/vardiya-plani/toplu	+	+	ayni	admin,yonetici,guvenlik_amiri	-
 GET	/vardiya-plani/yayin-ozeti	+	+	ayni	admin,yonetici,guvenlik_amiri	-
 POST	/vardiya-plani/yayinla	+	+	ayni	admin,yonetici,guvenlik_amiri	-
 DELETE	/vardiya-plani/{plan_id}	+	+	ayni	admin,yonetici,guvenlik_amiri	-
-PATCH	/vardiya-plani/{plan_id}	+	-	planli:1	admin,yonetici,guvenlik_amiri	Vardiya blogu duzenle / toplu sil
+PATCH	/vardiya-plani/{plan_id}	+	+	ayni	admin,yonetici,guvenlik_amiri	-
 GET	/vehicle-passes	+	+	ayni	admin,yonetici,security,guvenlik_amiri	-
 POST	/vehicle-passes	-	+	yalniz_mobil	admin,yonetici,security	Mobil akis (saha/sakin ya da cihaz) — web karsiligi aranmaz
 GET	/vehicle-passes/{id}	-	-	ic	admin,yonetici,security,guvenlik_amiri	Hicbir yuzey cagirmiyor (otomasyon, webhook, eski ya da yalniz API)

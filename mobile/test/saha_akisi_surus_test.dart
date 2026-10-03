@@ -104,6 +104,7 @@ class _FakePatrolApi extends PatrolApi {
     int offset = 0,
     PatrolWindowDurum? durum,
     DateTime? bitisBefore,
+    DateTime? baslangicAfter,
   }) async => gecmis;
 }
 

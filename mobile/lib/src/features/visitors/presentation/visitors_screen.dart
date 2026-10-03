@@ -123,9 +123,29 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen> {
               onPressed: () => _openForm(context),
             )
           : null,
-      body: RefreshIndicator(
-        onRefresh: controller.refresh,
-        child: _Body(state: state),
+      body: Column(
+        children: [
+          // (P253 Asama 1) "Yalniz iceridekiler" — kapida en cok sorulan
+          // soru "su an iceride kim var".
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: FilterChip(
+                key: const Key('ziyaret-iceride-suzgec'),
+                label: Text(context.l10n.kisYalnizIceride),
+                selected: state.yalnizIceride,
+                onSelected: state.loading ? null : controller.yalnizIceride,
+              ),
+            ),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: controller.refresh,
+              child: _Body(state: state),
+            ),
+          ),
+        ],
       ),
     );
   }

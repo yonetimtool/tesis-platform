@@ -490,3 +490,120 @@ ve aşamalarda kapatılır.
   diye yazılıydı. Artık tesisin gün başı (`tesis_gun_basi`): İstanbul'da
   00:00–03:00 arası gönderimler dünün kotasına yazılmıyor.
 * Diğer elle tetiklenen uçlar yukarıdaki listede.
+
+## Aşama 1 — Günlük ve kolay işler (mobil 1.11.0)
+
+### Prod ölçümleri (kullanıcı ölçtü)
+
+* **Mesaj:** gitmediği hâlde "gönderildi" denen yalnız 2 SMS var (Oltu,
+  28–29 Ağustos, SMS kanalı kapalıyken, test). Gerçek kayıp yok.
+* **Kullanım günlüğü:** dağıtımda Caddy yeniden oluşturulmamıştı; açıldı,
+  yazıyor, satırlarda IP ve kullanıcı yok. Aşama 2 önceliği veri birikince
+  düzeltilecek.
+
+### Erişim günlüğü düzeltmeleri
+
+* **Sorgu dizesi:** zaten kaynakta siliniyordu; şimdi `multi_regexp` ile
+  `?` ve `#` sonrası siliniyor.
+  * Kanıt: gerçek Caddy 2.11.4'te `/kisiler?q=Ahmet%20Yilmaz` günlükte
+    `/kisiler` olarak yazıldı.
+* **Jetonlu yollar maskelendi.** Tarama sonucu, web'de yolda jeton taşıyan
+  tek sayfa `/davet/[jeton]`. Diğerleri:
+  * şifre sıfırlama: e-postayla gelen kod, yolda jeton yok;
+  * OAuth dönüşü: sorgu dizesi kullanıyor, zaten siliniyor;
+  * paylaşım bağlantısı: web'de yok.
+* **Kurallar** (Caddy'de sırayla):
+  1. `/davet/:jeton`;
+  2. UUID → `/:id`;
+  3. 24 karakterden uzun jeton benzeri parça → `/:jeton`;
+  4. sayı → `/:id`.
+  * 24 eşiği bilinçli: en uzun sayfa adı (`rezervasyon-yonetimi`) 20
+    karakter.
+* **Kilit:** `admin-web/tests/p253-erisim-gunlugu.test.ts`. Caddyfile'daki
+  kuralları okur ve uygular; şunları ölçer:
+  * sorgu silinir;
+  * herkese açık her dinamik sayfanın maskesi var;
+  * hiçbir gerçek sayfa yolu maskeye takılmaz.
+  * Kırma denemesi: eşiği 18'e indirmek ya da davet kuralını silmek testi
+    düşürdü.
+* **Döndürme:** zaten ayarlıydı. 50 MiB'de döner, en çok 20 dosya, 30 gün
+  (`roll_keep_for 720h`); disk payı en çok ~1 GB.
+* **Ölçüm betiği:** Caddy'nin maskeleriyle aynı sırayı uygular. Maskeden
+  önceki ham satırlar ile sonraki maskeli satırlar aynı rotada toplanır
+  (örnek veriyle sınandı).
+* **Dağıtım belgesi** (`docs/DAGITIM-SABLONU.md`): Caddyfile ya da `caddy`
+  servisi değişince `up -d --force-recreate caddy` gerekiyor. Yalnız
+  Caddyfile değiştiyse kesintisiz `caddy reload` yeterli.
+
+### §C finans kuralı — uygulandı
+
+1. **Onay diyaloğu, tutar ve hedefle:**
+   * web `hareket-sayfasi` onayla, reddet ve iptal;
+   * mobil `core/ui/finans_onay.dart`: finans defteri onayla ve reddet,
+     otomasyon ekranındaki maaş onayı (tekil ve toplu).
+   * Hedef: daire · kişi · belge no.
+2. **Sebep zorunlu** (red ve iptal/ters kayıt):
+   * Sunucu `SEBEP_ASGARI = 3`; altında 422 `sebep_zorunlu`, kayıt
+     dokunulmadan kalır.
+   * Web ortak onay kancasına zorunlu sebep alanı eklendi
+     (`sebepleOnayla`).
+   * Mobil diyalog da aynı eşikle çalışır.
+   * Sebep iptal denetim kaydına da yazılıyor; önceden yazılmıyordu.
+3. **Aynı uçlar:** mobil için ayrı uç yok.
+4. **Geri al:**
+   * **Vardiya:** "haftayı doldur" ve "haftadan kopyala" sonrası geri al.
+     Sunucu yeni satır kimliği döndürmediği için mobil önce/sonra farkıyla
+     yalnız yeni satırları siler.
+   * **Geri alınamayanlar** diyalogda önceden yazılı: ret, toplu çıkarma,
+     kopyada "hedefi temizle".
+   * **Onay** geri alınamaz; diyalog ancak iptalle (ters kayıt)
+     düzeltilebileceğini söyler.
+5. **Denetimde yüzey:**
+   * `X-Istemci-Yuzey` başlığını web BFF ve mobil Dio gönderir.
+   * `IstemciYuzeyi` ASGI katmanı bunu okur; `record_audit` her satıra
+     `meta.yuzey` yazar.
+   * Başlıksız ya da geçersiz başlıklı istek `bilinmiyor` olur. İstek dışı
+     işlerde (Celery) alan yazılmaz.
+   * Yetki bu başlığa bağlanmaz.
+   * Kilit: `backend/tests/test_p253_finans_kurali.py`. Sebep kontrolü ve
+     yüzey yazımı kaldırılınca 11 testin tamamı düştü.
+
+### Mobil — kapatılan işler (35 `planli:1` satırı → `ayni`)
+
+| Alan | Uçlar | Notlar |
+|---|---|---|
+| Finans | hareketler, kasa bakiyeleri, özet, reddet, hatırlatma geçmişi, otomasyon günlüğü (+ `GET /firmalar`, `planli:2`'den) | Yeni "Finans defteri" (özet + hareketler sekmesi); gider ve tahsilatta tarih, belge no, firma; gelir girişi gider ekranında |
+| Vardiya | şablon CRUD, blok düzenle, haftayı doldur, haftadan kopyala, kalıp sil, döngü sonlandır, izin listesi/onay/red/sil | Hafta gezinmesi, toplu seçim, geri al |
+| Kişiler, görev, ek | kişi kartı, kişi sil, açılabilir roller, görev ayrıntısı, adım düzenle, ek sil | Arama + aktif/pasif süzgeci; "Aranabilir" anahtarı; ek sil her yerde |
+| Günlük küçükler | (var olan uçlar) | Panik kapanış notu, ziyaretçi "içeride", görev durum süzgeci, dış hizmet arama, rezervasyon süzgeçleri, devriye tarih aralığı |
+| Dokümanlar | liste, yükle, düzenle, sil, indir | Rol ayrımlı giriş |
+| Hatırlatma ve takvim | hatırlatma CRUD, takvim | Yeni "Takvim" menü girişi (`menu-paritesi.tsv`: `yalniz_mobil` — web'de Özet kartı) |
+| Sakin | makbuzlar + PDF paylaş | Aidat ekranından |
+
+**Tablo sonrası:** `planli:1` **0**.
+
+| Durum | Satır |
+|---|---:|
+| `ayni` | 322 |
+| `planli:2` | 54 |
+| `planli:3` | 76 |
+| `yalniz_web` | 0 |
+
+Mobil sürüm **1.11.0+21**. Sürüm kilidi artık `planli:1` satırına izin
+vermiyor.
+
+### Kısmi kalanlar (açık)
+
+* **Doküman yükleme:**
+  * Mobil yalnız fotoğraf (kamera/galeri) yükleyebiliyor. PDF ve diğer
+    dosyalar için `file_picker` bağımlılığı gerekir; onaysız eklenmedi.
+  * Form kullanıcıya "PDF için web paneli" diyor.
+  * Bağımlılık kararı kullanıcıda.
+* **Hareket listesinde serbest arama ve durum süzgeci yok:** sunucu ucu `q`
+  ve `durum` almıyor, web'de de yok. Tür ve kasa süzgeci var.
+* **Serbest döngü tanımı** (dilim/adım editörü): mobilde yok, tabloda ayrı
+  satırı da yok. Önceden de yalnız web'deydi.
+* **Rezervasyon süzgeçleri** cihazda uygulanıyor, sunucu parametresiyle
+  değil.
+* **Borçlandırma ters kaydında §C sebebi:** Aşama 2'de, borçlandırma
+  mobile geldiğinde (`planli:2`).

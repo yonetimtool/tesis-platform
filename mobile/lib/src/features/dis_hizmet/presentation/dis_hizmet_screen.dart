@@ -17,11 +17,35 @@ import '../../../core/ui/telefon_alani_widget.dart';
 /// Dis Hizmetler — guvenilir esnaf/hizmet kisileri (cilingir/elektrik/tesisat)
 /// + yonetici notu. Yonetici/admin ekler/duzenler/siler + notu yazar; guvenlik
 /// ve sakin salt-okuma gorur (arayabilir).
-class DisHizmetScreen extends ConsumerWidget {
+class DisHizmetScreen extends ConsumerStatefulWidget {
   const DisHizmetScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DisHizmetScreen> createState() => _DisHizmetScreenState();
+}
+
+class _DisHizmetScreenState extends ConsumerState<DisHizmetScreen> {
+  // (P253 Asama 1) ARAMA — web rehberi gibi AD, SOYAD, TUR ve TELEFON:
+  // kullanici "kimdi" diye de "hangi numaraydi" diye de arar. Liste tek
+  // seferde geliyor (uc sayfalamaz); suzme istemcide.
+  final _ara = TextEditingController();
+
+  @override
+  void dispose() {
+    _ara.dispose();
+    super.dispose();
+  }
+
+  bool _eslesir(DisHizmet h) {
+    final q = _ara.text.trim().toLowerCase();
+    if (q.isEmpty) return true;
+    final telQ = q.replaceAll(RegExp(r'\D'), '');
+    return [h.ad, h.soyad, h.tur].any((v) => v.toLowerCase().contains(q)) ||
+        (telQ.isNotEmpty && h.telefon.replaceAll(RegExp(r'\D'), '').contains(telQ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final role =
         ref.watch(currentUserRoleProvider).value ?? UserRole.unknown;
     final canWrite = role == UserRole.admin || role == UserRole.yonetici;
@@ -60,6 +84,23 @@ class DisHizmetScreen extends ConsumerWidget {
             children: [
               _NoteCard(note: data.note, canWrite: canWrite),
               const SizedBox(height: 8),
+              if (data.items.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: TextField(
+                    key: const Key('dis-hizmet-ara'),
+                    controller: _ara,
+                    maxLength: GirdiSiniri.arama,
+                    onChanged: (_) => setState(() {}),
+                    decoration: InputDecoration(
+                      hintText: context.l10n.kisDisHizmetAra,
+                      prefixIcon: const Icon(Icons.search),
+                      isDense: true,
+                      counterText: '',
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                ),
               if (data.items.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 32),
@@ -75,7 +116,7 @@ class DisHizmetScreen extends ConsumerWidget {
                   ),
                 )
               else
-                for (final h in data.items)
+                for (final h in data.items.where(_eslesir))
                   _HizmetTile(hizmet: h, canWrite: canWrite),
             ],
           ),

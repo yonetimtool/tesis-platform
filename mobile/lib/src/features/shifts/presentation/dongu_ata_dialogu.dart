@@ -9,8 +9,10 @@
 /// Sahadaki iki standart dongu (2-2-2 ve 12/36 iki hafta) HAZIR sablon
 /// olarak buradan da kaydedilebilir.
 ///
-/// YOK (yalniz web): SERBEST dongu tanimi (dilim saatleri + adim bloklari
-/// editoru) ve kisi bazinda "sonlandir". Tanim bir kez yapilir ve 6 dilim
+/// (P253 Asama 1) kisi bazinda "sonlandir" ve kalip silme de burada.
+///
+/// YOK (yalniz web, plan §5 `yapisal`): SERBEST dongu tanimi (dilim
+/// saatleri + adim bloklari editoru). Tanim bir kez yapilir ve 6 dilim
 /// x 84 gunluk bir blok editoru telefonda hata uretir; atama ise sahada
 /// tekrar tekrar yapilan istir. Sunucu kurallari (cakisma, izin, taslak,
 /// parti) iki yuzeyde de AYNI uctan gecer.
@@ -206,6 +208,63 @@ class _DonguAtaDialoguState extends ConsumerState<DonguAtaDialogu> {
     await _yukle();
   });
 
+  /// (P253 Asama 1) Bir kisinin dongusunu secilen gunden itibaren bitir.
+  Future<void> _sonlandir(VardiyaDonguAtama a) async {
+    final bugun = widget.bugun ?? DateTime.now();
+    final tarih = await showDatePicker(
+      context: context,
+      helpText: context.l10n.vrdDonguSonlandirTarih,
+      initialDate: bugun,
+      firstDate: bugun.subtract(const Duration(days: 31)),
+      lastDate: bugun.add(const Duration(days: 365)),
+    );
+    if (tarih == null || !mounted) return;
+    await _calistir(() async {
+      final n = await _api.donguSonlandir(a.id, tarih);
+      _degisti = true;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.vrdDonguSonlandirildi(n))),
+      );
+      await _yukle();
+    });
+  }
+
+  /// (P253 Asama 1) Secili kalibi sil. Etkin atamasi varsa sunucu 409 doner
+  /// ve metni gosterilir (once sonlandir / geri al).
+  Future<void> _kalipSil(VardiyaKalibi k) async {
+    final l10n = context.l10n;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (d) => AlertDialog(
+        content: Text(l10n.vrdKalipSilOnay(k.ad)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(d).pop(false),
+            child: Text(l10n.ortakVazgec),
+          ),
+          FilledButton(
+            key: const Key('dongu-kalip-sil-onayla'),
+            onPressed: () => Navigator.of(d).pop(true),
+            child: Text(l10n.ortakSil),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    await _calistir(() async {
+      await _api.kalipSil(k.id);
+      if (!mounted) return;
+      setState(() {
+        _kalipId = null;
+        _sonuc = null;
+      });
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.vrdKalipSilindi)));
+      await _yukle();
+    });
+  }
+
   String _t(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
@@ -262,6 +321,16 @@ class _DonguAtaDialoguState extends ConsumerState<DonguAtaDialogu> {
               Wrap(
                 spacing: 8,
                 children: [
+                  if (_kalipId != null)
+                    TextButton(
+                      key: const Key('dongu-kalip-sil'),
+                      style: TextButton.styleFrom(foregroundColor: hata),
+                      onPressed: _bekliyor
+                          ? null
+                          : () => _kalipSil(
+                              _kaliplar.firstWhere((x) => x.id == _kalipId)),
+                      child: Text(l10n.vrdKalipSil),
+                    ),
                   TextButton(
                     key: const Key('dongu-hazir-222'),
                     onPressed: _bekliyor
@@ -370,6 +439,20 @@ class _DonguAtaDialoguState extends ConsumerState<DonguAtaDialogu> {
                     key: Key('dongu-geri-al-$parti'),
                     onPressed: _bekliyor ? null : () => _geriAl(parti),
                     child: Text(l10n.donguGeriAl),
+                  ),
+                ),
+              // (P253 Asama 1) KISI BAZINDA SONLANDIR: kisi ayrildi/baska
+              // ekibe gecti, otekilerin dongusu surer.
+              for (final a in _atamalar)
+                ListTile(
+                  key: Key('dongu-atama-${a.id}'),
+                  dense: true,
+                  contentPadding: const EdgeInsetsDirectional.only(start: 16),
+                  title: Text(a.ad),
+                  trailing: TextButton(
+                    key: Key('dongu-sonlandir-${a.id}'),
+                    onPressed: _bekliyor ? null : () => _sonlandir(a),
+                    child: Text(l10n.vrdDonguSonlandir),
                   ),
                 ),
             ],

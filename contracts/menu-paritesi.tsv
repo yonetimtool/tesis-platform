@@ -70,6 +70,7 @@ yonetici	yonetim	/tesis-ayarlari	tesisAyarlari	Tesis ayarları	ayni	-
 yonetici	yonetim	/integrations	integrations	Entegrasyonlar	ayni	-
 yonetici	yonetim	/kurulum	kurulum	Kurulum sihirbazı	ayni	-
 yonetici	yonetim	/dokumanlar	dokumanlar	Dokümanlar	ayni	-
+yonetici	yonetim	-	takvim	Takvim	yalniz_mobil	Web'de takvim ve hatırlatmalar Özet sayfasındaki karttadır; mobilde Özet ana ekranın kendisi olduğu için ayrı menü girişi.
 yonetici	yonetim	/karar-defteri	-	Karar Defteri	yalniz_web	Resmî karar kaydı: madde metni, oy dağılımı ve ek belge düzenlemesi; yayımlanan karar sakine Dokümanlar'dan ulaşır.
 yonetici	yonetim	/kvkk	-	KVKK tercihlerim	yapisal	Kişisel izin tercihi; mobilde Profil › Ayarlar'da durur (hesaba ait, siteye ait değil).
 yonetici	yonetim	-	bilgisayardan	Bilgisayardan yapılanlar	yalniz_mobil	Yalnız web'de kalan işlemlerin listesi ve app.yonetiyor.com bağlantısı; web'de karşılığı o sayfaların kendisi.

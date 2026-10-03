@@ -325,6 +325,126 @@ class VardiyaPlaniApi {
     }
   }
 
+  // ===================== (P253 Asama 1) WEB ESITLIGI ===================== //
+
+  /// Blogun tarihini/saatini degistir (web `BlokAyrinti` ile AYNI alanlar).
+  /// Verilmeyen alan DEGISMEZ (sunucu kurali).
+  Future<void> guncelle(
+    String planId, {
+    DateTime? tarih,
+    String? baslangicSaat,
+    String? bitisSaat,
+  }) async {
+    try {
+      await _dio.patch<Map<String, dynamic>>(
+        '/vardiya-plani/$planId',
+        data: {
+          if (tarih != null) 'tarih': _tarih(tarih),
+          'baslangic_saat': ?baslangicSaat,
+          'bitis_saat': ?bitisSaat,
+        },
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// Haftayi VARSAYILAN KADRODAN doldur. Yanit eklenen satirlarin kimligini
+  /// TASIMAZ; geri alma cagiran tarafta once/sonra farkiyla yapilir.
+  Future<void> haftayiDoldur(DateTime baslangic, {int gun = 7}) async {
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        '/vardiya-plani/haftayi-doldur',
+        queryParameters: {'baslangic': _tarih(baslangic), 'gun': gun},
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// Bir haftanin planini baska haftaya kopyala. Atlananlarin SEBEBI doner.
+  Future<VardiyaKopyaSonuc> haftadanKopyala({
+    required DateTime kaynak,
+    required DateTime hedef,
+    bool hedefiTemizle = false,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/vardiya-plani/haftadan-kopyala',
+        data: {
+          'kaynak_baslangic': _tarih(kaynak),
+          'hedef_baslangic': _tarih(hedef),
+          'hedefi_temizle': hedefiTemizle,
+        },
+      );
+      return VardiyaKopyaSonuc.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// Kalip sil. Etkin dongu atamasi varsa sunucu 409 doner (once sonlandir).
+  Future<void> kalipSil(String kalipId) async {
+    try {
+      await _dio.delete<void>('/vardiya-plani/kaliplar/$kalipId');
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// Bir kisinin dongusunu [tarih]ten itibaren bitir; iptal edilen satir sayisi.
+  Future<int> donguSonlandir(String atamaId, DateTime tarih) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/vardiya-plani/dongu-atamalari/$atamaId/sonlandir',
+        data: {'tarih': _tarih(tarih)},
+      );
+      return (res.data?['iptal_edilen'] as num?)?.toInt() ?? 0;
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// Izin kayitlari/talepleri. Amir yalniz kendi ekibini gorur (sunucu suzer).
+  Future<List<VardiyaIzin>> izinler({String? durum}) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/vardiya-izin',
+        queryParameters: {'durum': ?durum, 'limit': 200},
+      );
+      return (res.data?['items'] as List? ?? const [])
+          .map((m) => VardiyaIzin.fromJson(Map<String, dynamic>.from(m as Map)))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  Future<void> izinOnayla(String izinId) async {
+    try {
+      await _dio.post<Map<String, dynamic>>('/vardiya-izin/$izinId/onayla');
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  Future<void> izinReddet(String izinId) async {
+    try {
+      await _dio.post<Map<String, dynamic>>('/vardiya-izin/$izinId/reddet');
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// Yonetim her izni siler; personel yalniz kendi BEKLEYEN talebini.
+  Future<void> izinSil(String izinId) async {
+    try {
+      await _dio.delete<void>('/vardiya-izin/$izinId');
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   /// Toplu islemi (dongu partisi dahil: satirlar + atamalar) geri al.
   Future<int> partiGeriAl(String partiId) async {
     try {

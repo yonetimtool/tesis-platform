@@ -15,6 +15,9 @@ import '../../auth/presentation/rol_adi.dart';
 import '../../tasks/presentation/task_complete_controller.dart'
     show imagePickerProvider;
 import '../data/staff_api.dart';
+import '../../kisiler/data/kisi_api.dart';
+import '../../kisiler/presentation/kisi_islemleri.dart';
+import '../../kisiler/presentation/kisi_suzgec.dart';
 import 'calisma_bilgileri.dart';
 import 'personel_detay_screen.dart';
 import '../../../core/error/akis_hatasi.dart';
@@ -27,7 +30,7 @@ import '../../../core/ui/telefon_alani_widget.dart';
 /// Saha Personeli (Ozellik 3) — yonetici/admin: guvenlik + tesis gorevlisi
 /// hesaplarini listeler ve ekler. yonetici backend'de YALNIZ saha personeli
 /// acabilir; parola bossa hesap PAROLASIZ acilir ve otomatik davet gonderilir.
-class StaffScreen extends ConsumerWidget {
+class StaffScreen extends ConsumerStatefulWidget {
   const StaffScreen({super.key, this.gomulu = false});
 
   /// (P251 §8) Kisiler ekraninin SEKMESI olarak cizilir: ust cubugu
@@ -35,7 +38,26 @@ class StaffScreen extends ConsumerWidget {
   final bool gomulu;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<StaffScreen> createState() => _StaffScreenState();
+}
+
+class _StaffScreenState extends ConsumerState<StaffScreen> {
+  // (P253 Asama 1) ARAMA VE DURUM SUZGECI (web Kisiler listesi ikizi).
+  // Liste tek sayfa (200) geliyor; suzme istemcide — sunucuya her harfte
+  // istek atmak dar hatlarda listeyi titretirdi.
+  final _ara = TextEditingController();
+  KisiDurumSuzgeci _durum = KisiDurumSuzgeci.tumu;
+
+  bool get gomulu => widget.gomulu;
+
+  @override
+  void dispose() {
+    _ara.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final staffAsync = ref.watch(fieldStaffProvider);
     final l10n = context.l10n;
     return Scaffold(
@@ -56,7 +78,7 @@ class StaffScreen extends ConsumerWidget {
           message: e is ApiException ? apiHataMetni(l10n, e) : l10n.personelListelenemedi,
           onRetry: () => ref.invalidate(fieldStaffProvider),
         ),
-        data: (list) => list.isEmpty
+        data: (tumListe) => tumListe.isEmpty
             // (P166 §10) Bos durumda cagri dugmesi: liste yokken goz
             // ekranin ortasindadir, ekranin dibindeki FAB'de degil.
                 // (P239 §6) BOS DURUMDA CAGRI DUGMESI KALDIRILDI.
@@ -71,20 +93,37 @@ class StaffScreen extends ConsumerWidget {
                 baslik: l10n.personelYok,
                 aciklama: l10n.personelYokAlt,
               )
-            : RefreshIndicator(
-                onRefresh: () async => ref.invalidate(fieldStaffProvider),
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
-                  itemCount: list.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, i) => _StaffTile(member: list[i]),
-                ),
+            : Column(
+                children: [
+                  KisiSuzgecSeridi(
+                    ara: _ara,
+                    durum: _durum,
+                    onDegisti: (d) => setState(() => _durum = d),
+                    onAra: () => setState(() {}),
+                  ),
+                  Expanded(
+                    child: Builder(builder: (context) {
+                      final list = kisiSuz(tumListe, _ara.text, _durum,
+                          ad: (s) => s.ad, aktif: (s) => s.isActive);
+                      return RefreshIndicator(
+                        onRefresh: () async => ref.invalidate(fieldStaffProvider),
+                        child: ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
+                          itemCount: list.length,
+                          separatorBuilder: (_, _) => const SizedBox(height: 8),
+                          itemBuilder: (context, i) => _StaffTile(member: list[i]),
+                        ),
+                      );
+                    }),
+                  ),
+                ],
               ),
       ),
     );
   }
 
   Future<void> _openAddSheet(BuildContext context, WidgetRef ref) async {
+
     final created = await merkezSayfaAc<String?>(
       context,
       builder: (_) => const _AddStaffSheet(),
@@ -145,13 +184,27 @@ class _StaffTile extends ConsumerWidget {
                     Theme.of(context).colorScheme.surfaceContainerHighest,
               ),
             PopupMenuButton<String>(
-              onSelected: (v) {
+              key: Key('personel-islemler-${member.id}'),
+              onSelected: (v) async {
                 if (v == 'edit') _edit(context, ref);
                 if (v == 'toggle') _toggle(context, ref);
                 if (v == 'calisma') _calisma(context);
+                // (P253 Asama 1) Tanilama karti ve sil (web ile ayni uclar).
+                if (v == 'kart') {
+                  await kisiKartiAc(context, id: member.id);
+                  ref.invalidate(fieldStaffProvider);
+                } else if (v == 'sil' &&
+                    await kisiSilOnayli(context, ref, id: member.id, ad: member.ad)) {
+                  ref.invalidate(fieldStaffProvider);
+                }
               },
               itemBuilder: (_) => [
                 PopupMenuItem(value: 'edit', child: Text(l10n.ortakDuzenle)),
+                PopupMenuItem(
+                  key: Key('personel-kart-${member.id}'),
+                  value: 'kart',
+                  child: Text(l10n.kisTanilama),
+                ),
                 if (yonetim)
                   PopupMenuItem(
                     key: Key('calisma-${member.id}'),
@@ -163,6 +216,11 @@ class _StaffTile extends ConsumerWidget {
                   child: Text(member.isActive
                       ? l10n.personelPasiflestir
                       : l10n.personelAktiflestir),
+                ),
+                PopupMenuItem(
+                  key: Key('personel-sil-${member.id}'),
+                  value: 'sil',
+                  child: Text(l10n.ortakSil),
                 ),
               ],
             ),
@@ -187,19 +245,11 @@ class _StaffTile extends ConsumerWidget {
     );
   }
 
+  /// (P253 Asama 1) Pasiflestirme KISI ADIYLA onay ister (ortak yardimci).
   Future<void> _toggle(BuildContext context, WidgetRef ref) async {
-    final next = !member.isActive;
-    final messenger = ScaffoldMessenger.of(context);
-    final l10n = context.l10n;
-    try {
-      await ref.read(staffApiProvider).setActive(member.id, next);
+    if (await kisiAktiflikDegistir(context, ref,
+        id: member.id, ad: member.ad, aktif: !member.isActive)) {
       ref.invalidate(fieldStaffProvider);
-      messenger.showSnackBar(SnackBar(
-          content: Text(next
-              ? l10n.personelAktiflestirildi
-              : l10n.personelPasiflestirildi)));
-    } on ApiException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     }
   }
 }
@@ -244,10 +294,21 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
 
   bool get _isEdit => widget.existing != null;
 
-  bool get _amirSecilebilir =>
-      (ref.watch(currentUserRoleProvider).value?.amirAtayabilir ??
-          false) ||
-      widget.existing?.role == 'guvenlik_amiri';
+  /// (P253 Asama 1) ROL SECENEKLERI SUNUCUDAN (`GET /users/acilabilir-roller`,
+  /// web ile ayni). Sunucu cevabi gelene kadar (ya da hata) eski yerel kural.
+  /// Duzenlenen kaydin MEVCUT rolu her zaman cizilir — aksi halde secili
+  /// deger segmentlerde bulunmazdi.
+  bool _rolSecilebilir(String rol) {
+    if (widget.existing?.role == rol) return true;
+    final sunucu = ref.watch(acilabilirRollerProvider).value;
+    // BOS kume "hicbir rol" demektir ve o kullanici bu formu zaten acamaz;
+    // bos/eksik yanitta yerel kurala dusulur (formu kilitlemek yerine).
+    if (sunucu != null && sunucu.isNotEmpty) return sunucu.contains(rol);
+    return rol != 'guvenlik_amiri' ||
+        (ref.watch(currentUserRoleProvider).value?.amirAtayabilir ?? false);
+  }
+
+  bool get _amirSecilebilir => _rolSecilebilir('guvenlik_amiri');
 
   @override
   void initState() {
@@ -454,6 +515,7 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
             SegmentedButton<String>(
               // Rol adlari TEK KAYNAKTAN (rolAdi) — segment etiketi de.
               segments: [
+                if (_rolSecilebilir('security') || !_rolSecilebilir('tesis_gorevlisi'))
                 ButtonSegment(
                     value: 'security',
                     label: Text(rolAdi(l10n, UserRole.security)),
@@ -468,6 +530,7 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
                       value: 'guvenlik_amiri',
                       label: Text(rolAdi(l10n, UserRole.guvenlikAmiri)),
                       icon: const Icon(Icons.local_police_outlined)),
+                if (_rolSecilebilir('tesis_gorevlisi'))
                 ButtonSegment(
                     value: 'tesis_gorevlisi',
                     label: Text(rolAdi(l10n, UserRole.tesisGorevlisi)),

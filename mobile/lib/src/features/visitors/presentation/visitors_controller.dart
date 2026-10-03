@@ -16,7 +16,11 @@ class VisitorsState {
     this.canRegister = false,
     this.canCheckout = false,
     this.refreshedAt,
+    this.yalnizIceride = false,
   });
+
+  /// (P253 Asama 1) "Yalniz iceridekiler" suzgeci (sunucu `?icerde=true`).
+  final bool yalnizIceride;
 
   final bool loading;
   /// Hata KANALI ikilidir (README §15): sunucu metni + yerellestirilebilir
@@ -46,6 +50,7 @@ class VisitorsState {
     bool? canRegister,
     bool? canCheckout,
     DateTime? refreshedAt,
+    bool? yalnizIceride,
   }) {
     return VisitorsState(
       loading: loading ?? this.loading,
@@ -59,6 +64,7 @@ class VisitorsState {
       canRegister: canRegister ?? this.canRegister,
       canCheckout: canCheckout ?? this.canCheckout,
       refreshedAt: refreshedAt ?? this.refreshedAt,
+      yalnizIceride: yalnizIceride ?? this.yalnizIceride,
     );
   }
 
@@ -86,7 +92,9 @@ class VisitorsController extends Notifier<VisitorsState> {
     );
     try {
       final role = await ref.read(currentUserRoleProvider.future);
-      final items = await ref.read(visitorApiProvider).fetchAll();
+      final items = await ref
+          .read(visitorApiProvider)
+          .fetchAll(icerde: state.yalnizIceride ? true : null);
       if (!ref.mounted) return;
       state = state.copyWith(
         loading: false,
@@ -114,6 +122,12 @@ class VisitorsController extends Notifier<VisitorsState> {
     } finally {
       _refreshing = false;
     }
+  }
+
+  /// (P253 Asama 1) "Yalniz iceridekiler" suzgecini ac/kapat ve tazele.
+  Future<void> yalnizIceride(bool deger) async {
+    state = state.copyWith(yalnizIceride: deger);
+    await refresh();
   }
 
   /// (P247 §3) Guvenlik ziyaretci CIKISINI damgalar. 409'da (baska cihazdan

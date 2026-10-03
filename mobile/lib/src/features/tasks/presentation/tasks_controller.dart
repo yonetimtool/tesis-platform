@@ -18,6 +18,7 @@ class TasksState {
     this.forbidden = false,
     this.tasks = const [],
     this.kategoriFilter,
+    this.durumFilter,
     this.sadeceBenim = true,
     this.currentUserId,
     this.canManage = false,
@@ -44,6 +45,10 @@ class TasksState {
   /// kategorisiz/"Diğer"). Sunucuya `kategori_id` parametresi gider.
   final String? kategoriFilter;
 
+  /// (P253 Asama 1) Durum suzgeci (null → tumu): atandi | baslandi |
+  /// tamamlandi | gecikti. Sunucuya `durum` parametresi gider.
+  final String? durumFilter;
+
   /// true (varsayilan) → yalniz bana atananlar (`atanan_user_id=me`);
   /// false → tum aktif gorevler (havuz/atanmamislar dahil, eski gorunum).
   final bool sadeceBenim;
@@ -69,6 +74,7 @@ class TasksState {
     bool? forbidden,
     List<Task>? tasks,
     Object? kategoriFilter = _sentinel,
+    Object? durumFilter = _sentinel,
     bool? sadeceBenim,
     Object? currentUserId = _sentinel,
     bool? canManage,
@@ -88,6 +94,9 @@ class TasksState {
       kategoriFilter: kategoriFilter == _sentinel
           ? this.kategoriFilter
           : kategoriFilter as String?,
+      durumFilter: durumFilter == _sentinel
+          ? this.durumFilter
+          : durumFilter as String?,
       sadeceBenim: sadeceBenim ?? this.sadeceBenim,
       currentUserId: currentUserId == _sentinel
           ? this.currentUserId
@@ -148,6 +157,7 @@ class TasksController extends Notifier<TasksState> {
           .fetchTasks(
             kategoriFilter: state.kategoriFilter,
             assignedToMe: state.sadeceBenim,
+            durum: state.durumFilter,
           );
       if (!ref.mounted) return;
       state = state.copyWith(
@@ -186,6 +196,13 @@ class TasksController extends Notifier<TasksState> {
   Future<void> setKategoriFilter(String? kategoriFilter) async {
     if (kategoriFilter == state.kategoriFilter) return;
     state = state.copyWith(kategoriFilter: kategoriFilter);
+    await refresh();
+  }
+
+  /// (P253 Asama 1) Durum suzgeci (null → tumu).
+  Future<void> setDurumFilter(String? durum) async {
+    if (durum == state.durumFilter) return;
+    state = state.copyWith(durumFilter: durum);
     await refresh();
   }
 

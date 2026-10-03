@@ -20,6 +20,8 @@ import '../features/cameras/presentation/camera_player_screen.dart';
 import '../features/cameras/presentation/kameralar_screen.dart';
 import '../features/cameras/presentation/kamera_kayitlari_screen.dart';
 import '../features/finans/presentation/borclular_screen.dart';
+import '../features/finans/presentation/finans_defteri_screen.dart';
+import '../features/finans/presentation/otomasyon_gunlugu_screen.dart';
 import '../features/finans/presentation/gider_screen.dart';
 import '../features/finans/presentation/sayac_okuma_screen.dart';
 import '../features/finans/presentation/tahsilat_screen.dart';
@@ -84,6 +86,7 @@ import '../features/dukkan/presentation/dukkan_taleplerim_screen.dart';
 import '../features/site_kurali/presentation/site_kurali_screen.dart';
 import '../features/tasks/domain/task_models.dart';
 import '../features/tasks/presentation/task_categories_screen.dart';
+import '../features/tasks/presentation/gorev_yukleyici.dart';
 import '../features/tasks/presentation/task_detail_screen.dart';
 import '../features/tasks/presentation/tasks_screen.dart';
 import '../features/unit_access/presentation/unit_access_records_screen.dart';
@@ -94,7 +97,9 @@ import '../features/vehicle_pass/presentation/parking_screen.dart';
 import '../features/vehicle_pass/presentation/vehicle_pass_screen.dart';
 import '../features/violations/presentation/violations_screen.dart';
 import '../features/visitors/presentation/visitors_screen.dart';
-import '../features/dokumanlar/presentation/dokuman_screen.dart';
+import '../features/dokumanlar/presentation/dokuman_yonetim_screen.dart';
+import '../features/dues/presentation/makbuzlar_screen.dart';
+import '../features/takvim/presentation/takvim_screen.dart';
 import '../features/kvkk/presentation/yasal_metinler_screen.dart';
 import 'splash_screen.dart';
 import '../features/arama/presentation/arama_screen.dart';
@@ -136,9 +141,16 @@ class AppRoutes {
   static const reports = '/reports';
   static const budget = '/budget';
   static const financialSummary = '/financial-summary';
+  // (P253 Asama 1) Web `/finans`: ozet + kasa bakiyeleri + hareketler.
+  static const finansDefteri = '/finans-defteri';
+  static const otomasyonGunlugu = '/otomasyon-gunlugu';
   static const siteBudget = '/site-budget';
   static const transparency = '/transparency';
   static const myDues = '/my-dues';
+  /// (P253 A1) Sakinin makbuz arsivi (Aidatim'dan acilir).
+  static const makbuzlar = '/my-dues/makbuzlar';
+  /// (P253 A1) Yoneticinin takvimi + kisisel hatirlatmalari.
+  static const takvim = '/takvim';
   static const ode = '/ode';
   static const complaints = '/complaints';
   static const visitors = '/visitors';
@@ -460,6 +472,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const FinancialSummaryScreen(),
       ),
       GoRoute(
+        path: AppRoutes.finansDefteri,
+        builder: (context, state) => const FinansDefteriScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.otomasyonGunlugu,
+        builder: (context, state) => const OtomasyonGunluguScreen(),
+      ),
+      GoRoute(
         path: AppRoutes.siteBudget,
         builder: (context, state) => const SiteBudgetScreen(),
       ),
@@ -470,6 +490,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.myDues,
         builder: (context, state) => const MyDuesScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.makbuzlar,
+        builder: (context, state) => const MakbuzlarScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.takvim,
+        builder: (context, state) => const TakvimScreen(),
       ),
       GoRoute(
         path: AppRoutes.complaints,
@@ -558,7 +586,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.dokumanlar,
-        builder: (context, state) => const DokumanScreen(),
+        // (P253 A1) Rol ayrimi: yonetim arsivi yonetir, sakin acilanlari gorur.
+        builder: (context, state) => const DokumanlarGirisi(),
       ),
       GoRoute(
         path: AppRoutes.yasalMetinler,
@@ -656,12 +685,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.taskDetail,
-        // Detay, listeden secilen Task nesnesiyle acilir (extra). Dogrudan
-        // URL ile gelinirse (extra yok) listeye yonlendirilir.
-        redirect: (context, state) =>
-            state.extra is Task ? null : AppRoutes.tasks,
-        builder: (context, state) =>
-            TaskDetailScreen(task: state.extra! as Task),
+        // Detay, listeden secilen Task nesnesiyle acilir (extra).
+        // (P253 Asama 1) `?id=` ile DERIN BAGLANTI: kayit sunucudan tek
+        // olarak cekilir (`GET /tasks/{id}`). Ikisi de yoksa listeye.
+        redirect: (context, state) => state.extra is Task ||
+                (state.uri.queryParameters['id'] ?? '').isNotEmpty
+            ? null
+            : AppRoutes.tasks,
+        builder: (context, state) => state.extra is Task
+            ? TaskDetailScreen(task: state.extra! as Task)
+            : GorevYukleyici(id: state.uri.queryParameters['id']!),
       ),
       GoRoute(
         // Gorev kategorisi yonetimi (A6) — yonetici; giris "Gorev yonetimi"

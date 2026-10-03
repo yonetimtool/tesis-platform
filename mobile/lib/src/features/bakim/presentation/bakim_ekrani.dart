@@ -12,6 +12,7 @@ import '../../auth/data/current_user_provider.dart';
 import '../../auth/domain/user_role.dart';
 import '../../tasks/presentation/task_complete_controller.dart'
     show imagePickerProvider;
+import '../../ekler/presentation/ek_sil.dart';
 import '../data/bakim_api.dart';
 import '../domain/bakim_models.dart';
 
@@ -433,9 +434,28 @@ class _KayitEkleri extends ConsumerWidget {
                     title: Text(
                       ek.tur == 'not' ? (ek.metin ?? '') : (ek.dosyaAdi ?? ''),
                     ),
-                    trailing: ek.dosyaUrl == null
-                        ? null
-                        : const Icon(Icons.open_in_new),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (ek.dosyaUrl != null) const Icon(Icons.open_in_new),
+                        // (P253 Asama 1) Ek sil — her ek yuzeyinde.
+                        if (ekSilebilir(ref.watch(currentUserRoleProvider).value))
+                          IconButton(
+                            key: ValueKey('bakim-ek-sil-${ek.id}'),
+                            icon: const Icon(Icons.delete_outline),
+                            tooltip: l10n.ortakSil,
+                            onPressed: () async {
+                              final silindi = await ekSilOnayli(
+                                context,
+                                ref,
+                                ekId: ek.id,
+                                ad: (ek.tur == 'not' ? ek.metin : ek.dosyaAdi) ?? '',
+                              );
+                              if (silindi) ref.invalidate(bakimEkleriProvider(kayitId));
+                            },
+                          ),
+                      ],
+                    ),
                     onTap: ek.dosyaUrl == null
                         ? null
                         : () => launchUrl(

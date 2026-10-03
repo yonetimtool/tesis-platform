@@ -64,7 +64,10 @@ Future<bool> olusturVePaylas(
   final messenger = ScaffoldMessenger.of(context);
   final navigator = Navigator.of(context, rootNavigator: true);
   // iPad paylas menusu bir CIKIS NOKTASI ister; yoksa cokuyor.
-  final kutu = context.findRenderObject() as RenderBox?;
+  // Liste ogesinin baglami bir sliver'a cozulebilir (RenderBox degil):
+  // kalip cokmesin, cikis noktasi olmadan devam etsin.
+  final ro = context.findRenderObject();
+  final kutu = ro is RenderBox ? ro : null;
   final konum = kutu == null ? null : kutu.localToGlobal(Offset.zero) & kutu.size;
 
   showDialog<void>(

@@ -562,3 +562,71 @@ class VardiyaDonguAtama {
         atlanan: (j['atlanan'] as List? ?? const []).length,
       );
 }
+
+/// (P253 Asama 1) `POST /vardiya-plani/haftadan-kopyala` sonucu.
+/// Atlama SEBEPLERI de doner — sessiz atlama yok (P205 kurali).
+class VardiyaKopyaSonuc {
+  const VardiyaKopyaSonuc({
+    required this.eklenen,
+    required this.atlanan,
+    this.sebepler = const [],
+  });
+
+  final int eklenen;
+  final int atlanan;
+  final List<String> sebepler;
+
+  factory VardiyaKopyaSonuc.fromJson(Map<String, dynamic> j) => VardiyaKopyaSonuc(
+        eklenen: (j['eklenen'] as num?)?.toInt() ?? 0,
+        atlanan: (j['atlanan'] as num?)?.toInt() ?? 0,
+        sebepler: [for (final s in (j['sebepler'] as List?) ?? const []) '$s'],
+      );
+}
+
+/// (P253 Asama 1) `GET /vardiya-izin` satiri. `notMetni` yalniz izni
+/// alana, amirine ve yonetime doner (KVKK; sunucu alani hic yazmaz).
+class VardiyaIzin {
+  const VardiyaIzin({
+    required this.id,
+    required this.userId,
+    required this.tur,
+    required this.baslangic,
+    required this.bitis,
+    required this.durum,
+    this.kisiAd,
+    this.tumGun = true,
+    this.baslangicSaat,
+    this.bitisSaat,
+    this.notMetni,
+  });
+
+  final String id;
+  final String userId;
+  final String? kisiAd;
+  final String tur;
+  final String baslangic;
+  final String bitis;
+  final bool tumGun;
+  final String? baslangicSaat;
+  final String? bitisSaat;
+
+  /// onay_bekliyor | onaylandi | reddedildi
+  final String durum;
+  final String? notMetni;
+
+  bool get bekliyor => durum == 'onay_bekliyor';
+
+  factory VardiyaIzin.fromJson(Map<String, dynamic> j) => VardiyaIzin(
+        id: j['id'] as String,
+        userId: (j['user_id'] as String?) ?? '',
+        kisiAd: j['kisi_ad'] as String?,
+        tur: (j['tur'] as String?) ?? 'yillik',
+        baslangic: (j['baslangic'] as String?) ?? '',
+        bitis: (j['bitis'] as String?) ?? '',
+        tumGun: (j['tum_gun'] as bool?) ?? true,
+        baslangicSaat: j['baslangic_saat'] as String?,
+        bitisSaat: j['bitis_saat'] as String?,
+        durum: (j['durum'] as String?) ?? 'onay_bekliyor',
+        notMetni: j['not_metni'] as String?,
+      );
+}

@@ -55,7 +55,7 @@ class _FakeVisitorApi extends VisitorApi {
   final List<Visitor> _items;
 
   @override
-  Future<List<Visitor>> fetchAll({String? unitId}) async => _items;
+  Future<List<Visitor>> fetchAll({String? unitId, bool? icerde}) async => _items;
 }
 
 Visitor _v({String id = 'v-1'}) => Visitor(

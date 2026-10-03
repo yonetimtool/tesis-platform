@@ -34,6 +34,7 @@ class TaskApi {
     String? kategoriFilter,
     bool aktif = true,
     bool assignedToMe = false,
+    String? durum,
   }) async {
     final tasks = <Task>[];
     var offset = 0;
@@ -49,6 +50,10 @@ class TaskApi {
             // kategori UUID veya 'diger' (kategorisiz/Diğer).
             'kategori_id': ?kategoriFilter,
             if (assignedToMe) 'atanan_user_id': 'me',
+            // (P253 Asama 1) atandi | baslandi | tamamlandi | gecikti —
+            // SUNUCUDA suzulur (web ile ayni; istemcide suzmek sayfalamayi
+            // yaniltirdi).
+            'durum': ?durum,
           },
         );
         final items = res.data?['items'];
@@ -153,6 +158,37 @@ class TaskApi {
       final res = await _dio.post<Map<String, dynamic>>(
         '/tasks/$taskId/adimlar',
         data: {'ad': ad, 'sira': sira},
+      );
+      return TaskStep.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (P253 Asama 1) `GET /tasks/{id}` — TEK gorev. Derin baglanti
+  /// (bildirimdeki `task_id`) ve adim islemlerinden sonra tazeleme icin;
+  /// liste sayfalanmis oldugu icin kayit listede olmayabilir.
+  Future<Task> getTask(String id) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>('/tasks/$id');
+      return Task.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (P253 Asama 1) `PATCH /tasks/{id}/adimlar/{step_id}` — adimin adi ve
+  /// "foto zorunlu" isareti (yalniz yonetim; sunucu zorlar). En az bir alan.
+  Future<TaskStep> updateStep(
+    String taskId,
+    String stepId, {
+    String? ad,
+    bool? fotoZorunlu,
+  }) async {
+    try {
+      final res = await _dio.patch<Map<String, dynamic>>(
+        '/tasks/$taskId/adimlar/$stepId',
+        data: {'ad': ?ad, 'foto_zorunlu': ?fotoZorunlu},
       );
       return TaskStep.fromJson(res.data!);
     } on DioException catch (e) {

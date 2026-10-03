@@ -146,6 +146,7 @@ class PatrolApi {
     int offset = 0,
     PatrolWindowDurum? durum,
     DateTime? bitisBefore,
+    DateTime? baslangicAfter,
   }) async {
     try {
       final res = await _dio.get<Map<String, dynamic>>(
@@ -158,6 +159,9 @@ class PatrolApi {
           // Gecmis = YALNIZ gecmis: pencere_baslangic < bu an (bugun haric;
           // bugunun turlari "Aktif"/"Bugun" sekmesinde).
           if (bitisBefore != null) 'bitis': bitisBefore.toUtc().toIso8601String(),
+          // (P253 Asama 1) Tarih araligi (web devriye takibi ile ayni).
+          if (baslangicAfter != null)
+            'baslangic': baslangicAfter.toUtc().toIso8601String(),
         },
       );
       final data = res.data ?? const <String, dynamic>{};

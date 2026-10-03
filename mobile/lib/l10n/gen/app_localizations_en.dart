@@ -9083,4 +9083,663 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sikayetDetayBaslik => 'Complaint details';
+
+  @override
+  String get vrdHaftaOnceki => 'Previous week';
+
+  @override
+  String get vrdHaftaSonraki => 'Next week';
+
+  @override
+  String get vrdHaftayiDoldur => 'Fill week from roster';
+
+  @override
+  String get vrdHaftadanKopyala => 'Copy from week';
+
+  @override
+  String vrdDolduruldu(int n) {
+    return '$n shifts added';
+  }
+
+  @override
+  String vrdKopyaSonuc(int eklenen, int atlanan) {
+    return '$eklenen shifts copied, $atlanan skipped';
+  }
+
+  @override
+  String get vrdSebepIzin => 'on leave';
+
+  @override
+  String get vrdSebepCakisma => 'overlap';
+
+  @override
+  String get vrdGeriAl => 'Undo';
+
+  @override
+  String vrdGeriAlindi(int n) {
+    return '$n shifts undone';
+  }
+
+  @override
+  String get vrdKopyaKaynak => 'Week to copy';
+
+  @override
+  String vrdKopyaHedef(String hafta) {
+    return 'Target: $hafta';
+  }
+
+  @override
+  String get vrdHedefiTemizle => 'Remove existing shifts in the target week';
+
+  @override
+  String get vrdHedefiTemizleUyari =>
+      'Removed shifts do not come back with \"Undo\"; only the copied ones are undone.';
+
+  @override
+  String get vrdKopyala => 'Copy';
+
+  @override
+  String get vrdBlokDuzenle => 'Edit shift';
+
+  @override
+  String get vrdTarih => 'Date';
+
+  @override
+  String get vrdGuncellendi => 'Shift updated';
+
+  @override
+  String get vrdTopluCikar => 'Remove selected';
+
+  @override
+  String vrdTopluCikarOnay(int n) {
+    return '$n shifts will be removed. This cannot be undone; add them again if needed.';
+  }
+
+  @override
+  String vrdTopluCikarildi(int n) {
+    return '$n shifts removed';
+  }
+
+  @override
+  String get vrdSablonEkle => 'Add template';
+
+  @override
+  String get vrdSablonDuzenle => 'Edit template';
+
+  @override
+  String get vrdSablonAd => 'Template name';
+
+  @override
+  String get vrdGunTipi => 'Valid days';
+
+  @override
+  String get vrdSablonSil => 'Delete template';
+
+  @override
+  String vrdSablonSilOnay(String ad) {
+    return 'Delete the \"$ad\" template?';
+  }
+
+  @override
+  String get vrdSablonKaydedildi => 'Template saved';
+
+  @override
+  String get vrdSablonSilindi => 'Template deleted';
+
+  @override
+  String get vrdIzinTalepleri => 'Leave requests';
+
+  @override
+  String get vrdIzinBekleyen => 'Pending';
+
+  @override
+  String get vrdIzinOnaylanan => 'Approved';
+
+  @override
+  String get vrdIzinReddedilen => 'Rejected';
+
+  @override
+  String get vrdIzinTumu => 'All';
+
+  @override
+  String get vrdIzinOnayla => 'Approve';
+
+  @override
+  String get vrdIzinReddet => 'Reject';
+
+  @override
+  String get vrdIzinSilOnay => 'Delete this leave record?';
+
+  @override
+  String get vrdIzinYok => 'No records';
+
+  @override
+  String get vrdIzinOnaylandi => 'Leave approved';
+
+  @override
+  String get vrdIzinReddedildi => 'Leave rejected';
+
+  @override
+  String get vrdIzinSilindi => 'Leave deleted';
+
+  @override
+  String get vrdDonguSonlandir => 'End';
+
+  @override
+  String get vrdDonguSonlandirTarih => 'No rotation from this date';
+
+  @override
+  String vrdDonguSonlandirildi(int n) {
+    return 'Rotation ended, $n shifts cancelled';
+  }
+
+  @override
+  String get vrdKalipSil => 'Delete pattern';
+
+  @override
+  String vrdKalipSilOnay(String ad) {
+    return 'Delete the \"$ad\" pattern? Shifts already created stay in the plan.';
+  }
+
+  @override
+  String get vrdKalipSilindi => 'Pattern deleted';
+
+  @override
+  String get finOzetBorclandirilan => 'Charged this month';
+
+  @override
+  String get finOzetTahsil => 'Collected this month';
+
+  @override
+  String get finOzetAcikBorc => 'Outstanding debt';
+
+  @override
+  String get finOzetKasa => 'Cash total';
+
+  @override
+  String get finOzetPersonel => 'Staff costs (this month)';
+
+  @override
+  String get finOzetIcra => 'Open enforcement files';
+
+  @override
+  String get finKasalar => 'Cash balances';
+
+  @override
+  String get finKasaYok => 'No cash account defined';
+
+  @override
+  String get finTipTahsilat => 'Collection';
+
+  @override
+  String get finTipGider => 'Expense';
+
+  @override
+  String get finTipGelir => 'Income';
+
+  @override
+  String get finTipVirman => 'Transfer';
+
+  @override
+  String get finTipIade => 'Refund';
+
+  @override
+  String get finTipAcilis => 'Opening';
+
+  @override
+  String get finOtoGunlukBaslik => 'Automation log';
+
+  @override
+  String get finOtoGunlukAciklama =>
+      'Which automation ran when, and what it produced.';
+
+  @override
+  String get finOtoKayitYok => 'No records yet';
+
+  @override
+  String get finOtoTurMaas => 'Salary expense';
+
+  @override
+  String get finOtoTurAidatTahakkuk => 'Automatic charge';
+
+  @override
+  String get finOtoTurAidatOnizleme => 'Charge preview';
+
+  @override
+  String get finOtoTurBorcHatirlatma => 'Debt reminder';
+
+  @override
+  String get finOtoTurDuzenliGider => 'Recurring expense';
+
+  @override
+  String get finOtoTurGecikmeFaizi => 'Late interest';
+
+  @override
+  String get finOtoTurAylikOzet => 'Monthly summary';
+
+  @override
+  String get finOnayla => 'Approve';
+
+  @override
+  String get finReddet => 'Reject';
+
+  @override
+  String get finBelgeNo => 'Document no';
+
+  @override
+  String get finFirma => 'Company';
+
+  @override
+  String get finGenelToplam => 'Grand total';
+
+  @override
+  String get finHatirlatmaGecmisiSekme => 'Reminders sent';
+
+  @override
+  String get finSebepEtiket => 'Reason (required)';
+
+  @override
+  String get finTipIptal => 'Cancellation (reversal)';
+
+  @override
+  String finTarihDegeri(String tarih) {
+    return 'Date: $tarih';
+  }
+
+  @override
+  String get finBelgeNoIpucu => 'Leave empty and the system assigns a number.';
+
+  @override
+  String get finGelirKaydedildi => 'Income recorded.';
+
+  @override
+  String get finFirmaYok => 'No company';
+
+  @override
+  String get finGelirTuru => 'Income type';
+
+  @override
+  String get finGiderGelirBaslik => 'Expense / income';
+
+  @override
+  String get finDonemselRapor => 'Period report';
+
+  @override
+  String get finSekmeOzet => 'Summary';
+
+  @override
+  String get finSekmeHareketler => 'Transactions';
+
+  @override
+  String get finOzetOnayBekleyen => 'Awaiting approval';
+
+  @override
+  String finKasaBekleyen(String tutar) {
+    return 'Pending outflow: $tutar';
+  }
+
+  @override
+  String get finSuzgecTip => 'Type';
+
+  @override
+  String get finHareketYok => 'No transactions for this filter.';
+
+  @override
+  String get finDurumOnayBekliyor => 'Awaiting approval';
+
+  @override
+  String get finDurumReddedildi => 'Rejected';
+
+  @override
+  String get finDurumIptalEdildi => 'Cancelled by reversal';
+
+  @override
+  String get finTarih => 'Date';
+
+  @override
+  String get finHedef => 'For';
+
+  @override
+  String get finOnayBaslik => 'Approve transaction';
+
+  @override
+  String get finOnaySonuc =>
+      'Once approved it is deducted from the cash balance. It can later be corrected only by a reversal.';
+
+  @override
+  String get finOnaylandi => 'Transaction approved.';
+
+  @override
+  String get finRedBaslik => 'Reject transaction';
+
+  @override
+  String get finRedSonuc =>
+      'Rejection CANNOT be undone: the record is not deleted, it stays rejected and never reaches the cash balance.';
+
+  @override
+  String get finReddedildi => 'Transaction rejected.';
+
+  @override
+  String get finOtoGunlukSekme => 'Log';
+
+  @override
+  String finOtoAdet(int n) {
+    return '$n records';
+  }
+
+  @override
+  String finHatirlatmaOzet(int gonderilen, int okunan) {
+    return '$gonderilen sent · $okunan read';
+  }
+
+  @override
+  String get finOkundu => 'Read';
+
+  @override
+  String get finOkunmadi => 'Unread';
+
+  @override
+  String get dokAciklama => 'Description (optional)';
+
+  @override
+  String get dokAd => 'Document name';
+
+  @override
+  String get dokCokBuyuk =>
+      'The file is larger than 25 MB; choose a smaller one.';
+
+  @override
+  String get dokGaleri => 'Choose from gallery';
+
+  @override
+  String get dokKamera => 'Take photo';
+
+  @override
+  String get dokPaylas => 'Download / share';
+
+  @override
+  String get dokSakineAc => 'Show to residents';
+
+  @override
+  String get dokSakineAcik => 'Visible to residents';
+
+  @override
+  String get dokSakineAcikIpucu => 'If off, only management sees it.';
+
+  @override
+  String get dokSakineAcildi => 'Document is now visible to residents.';
+
+  @override
+  String get dokSakineKapat => 'Hide from residents';
+
+  @override
+  String get dokSakineKapatildi => 'Document is now hidden from residents.';
+
+  @override
+  String dokSecilen(String ad, int kb) {
+    return 'Selected: $ad ($kb KB)';
+  }
+
+  @override
+  String get dokSilBaslik => 'Delete document';
+
+  @override
+  String dokSilOnay(String ad) {
+    return 'Delete “$ad”? Residents will no longer see it either.';
+  }
+
+  @override
+  String get dokSilindi => 'Document deleted.';
+
+  @override
+  String get dokYalnizYonetim => 'Management only';
+
+  @override
+  String get dokYonetimBos => 'No documents yet. Tap Upload to add one.';
+
+  @override
+  String get dokYukle => 'Upload';
+
+  @override
+  String get dokYuklendi => 'Document uploaded.';
+
+  @override
+  String get dokYukleNot =>
+      'You can upload photos from your phone. For PDFs and other files, use the web panel for now.';
+
+  @override
+  String get hatAciklama => 'Note (optional)';
+
+  @override
+  String get hatAyBos => 'Nothing on the calendar this month.';
+
+  @override
+  String get hatBaslik => 'Title';
+
+  @override
+  String get hatBos => 'You have no reminders yet.';
+
+  @override
+  String get hatDuzenle => 'Edit reminder';
+
+  @override
+  String get hatEkle => 'Add reminder';
+
+  @override
+  String get hatOncekiAy => 'Previous month';
+
+  @override
+  String get hatRenk => 'Colour';
+
+  @override
+  String get hatRenkKirmizi => 'Red';
+
+  @override
+  String get hatRenkMavi => 'Blue';
+
+  @override
+  String get hatRenkMor => 'Purple';
+
+  @override
+  String get hatRenkTuruncu => 'Orange';
+
+  @override
+  String get hatRenkYesil => 'Green';
+
+  @override
+  String get hatSekmeHatirlatmalarim => 'My reminders';
+
+  @override
+  String get hatSekmeTakvim => 'Calendar';
+
+  @override
+  String get hatSilBaslik => 'Delete reminder';
+
+  @override
+  String hatSilOnay(String baslik) {
+    return 'Delete “$baslik”?';
+  }
+
+  @override
+  String get hatSonrakiAy => 'Next month';
+
+  @override
+  String get hatTakvimBaslik => 'Calendar';
+
+  @override
+  String get hatTekrar => 'Repeat';
+
+  @override
+  String get hatTekrarAylik => 'Monthly';
+
+  @override
+  String get hatTekrarGunluk => 'Daily';
+
+  @override
+  String get hatTekrarHaftalik => 'Weekly';
+
+  @override
+  String get hatTekrarYok => 'Does not repeat';
+
+  @override
+  String get hatTipAidat => 'Dues deadline';
+
+  @override
+  String get hatTipDevriye => 'Patrol';
+
+  @override
+  String get hatTipEtkinlik => 'Event';
+
+  @override
+  String get hatTipGorev => 'Task';
+
+  @override
+  String get hatTipHatirlatma => 'Reminder';
+
+  @override
+  String get hatTipRezervasyon => 'Reservation';
+
+  @override
+  String get hatZaman => 'Date and time';
+
+  @override
+  String get mkbBaslik => 'My receipts';
+
+  @override
+  String mkbBelge(String no) {
+    return 'Receipt $no';
+  }
+
+  @override
+  String get mkbBos => 'You have no receipts yet.';
+
+  @override
+  String get mkbPaylas => 'Share PDF';
+
+  @override
+  String get mkbPdfYok => 'PDF not ready yet';
+
+  @override
+  String get kisTanilama => 'Notification diagnostics';
+
+  @override
+  String get kisTanilamaEposta => 'E-mail notifications';
+
+  @override
+  String get kisTanilamaSms => 'SMS notifications';
+
+  @override
+  String get kisTanilamaMobil => 'Mobile notifications';
+
+  @override
+  String get kisTanilamaDogrulandi => 'E-mail verified';
+
+  @override
+  String get kisTanilamaCihaz => 'Registered devices';
+
+  @override
+  String get kisTanilamaCihazYok =>
+      'Mobile notifications are on but no device is registered: the person has never signed in to the app, so nothing is delivered.';
+
+  @override
+  String get kisOdemeKodu => 'Payment code';
+
+  @override
+  String get kisAranabilir => 'Allow phone lookup';
+
+  @override
+  String get kisAranabilirIpucu =>
+      'Turn on if the person agreed to be called; management and security can then call this number.';
+
+  @override
+  String get kisAcik => 'On';
+
+  @override
+  String get kisKapali => 'Off';
+
+  @override
+  String get kisEposta => 'Email';
+
+  @override
+  String get kisKayitTamamlandi => 'Registration completed';
+
+  @override
+  String get kisPasifBaslik => 'Deactivate';
+
+  @override
+  String kisPasifOnay(String ad) {
+    return 'Deactivate $ad? They can no longer sign in; their records are kept and they can be reactivated.';
+  }
+
+  @override
+  String get kisSilBaslik => 'Delete person';
+
+  @override
+  String kisSilOnay(String ad) {
+    return 'Delete $ad? Without history the account is removed entirely; with history their identity is anonymised and records are kept. This cannot be undone — use Deactivate to close access temporarily.';
+  }
+
+  @override
+  String kisSilindi(String ad) {
+    return '$ad deleted.';
+  }
+
+  @override
+  String kisAnonimlestirildi(String ad) {
+    return '$ad had history, so their identity was anonymised; records were kept.';
+  }
+
+  @override
+  String get kisEkBaslik => 'Notes and attachments';
+
+  @override
+  String get kisEkYok => 'No notes or attachments yet.';
+
+  @override
+  String get kisEkNotYer => 'Add a note';
+
+  @override
+  String get kisEkSilBaslik => 'Delete attachment';
+
+  @override
+  String kisEkSilOnay(String ad) {
+    return 'Delete “$ad”? This cannot be undone.';
+  }
+
+  @override
+  String get kisEkSilindi => 'Attachment deleted.';
+
+  @override
+  String get kisAdimDuzenle => 'Edit step';
+
+  @override
+  String get kisAdimAdi => 'Step name';
+
+  @override
+  String get kisTumu => 'All';
+
+  @override
+  String get kisPanikKapanisNotu => 'Closing note (optional)';
+
+  @override
+  String get kisYalnizIceride => 'Only those inside';
+
+  @override
+  String get kisDisHizmetAra => 'Search name, type or phone';
+
+  @override
+  String get kisRezTumAlanlar => 'All areas';
+
+  @override
+  String get kisSuzgecTemizle => 'Clear filter';
+
+  @override
+  String get kisSuzgecSonucYok => 'No records match the filter.';
+
+  @override
+  String get kisTarihAraligi => 'Date range';
+
+  @override
+  String get hatBosRehber =>
+      'Tap \"+\" to add a note or reminder for yourself.';
 }

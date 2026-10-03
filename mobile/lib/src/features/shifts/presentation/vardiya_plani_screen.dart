@@ -33,6 +33,9 @@ import 'package:mobile/src/core/girdi_siniri.dart';
 import 'widgets/gun_takvimi.dart';
 import 'izin_formu.dart';
 import 'dongu_ata_dialogu.dart';
+import 'izin_talepleri_screen.dart';
+import 'vardiya_hafta_islemleri.dart';
+import '../../../core/ui/coklu_secim.dart';
 import '../../../routing/app_router.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 
@@ -45,12 +48,12 @@ import '../../staff/data/staff_api.dart';
 import '../data/vardiya_plani_api.dart';
 import '../domain/vardiya_plani_models.dart';
 
-/// Bu haftanin PAZARTESISI (TR takvimi).
-DateTime _haftaBasi(DateTime t) =>
-    DateTime(t.year, t.month, t.day).subtract(Duration(days: t.weekday - 1));
-
+/// (P253 Asama 1) Gosterilen hafta `vardiyaHaftaProvider`dan — hafta
+/// gezinmesi. Varsayilan bu hafta (eski davranis).
 final vardiyaCizelgeProvider = FutureProvider<VardiyaCizelge>((ref) async {
-  return ref.read(vardiyaPlaniApiProvider).cizelge(_haftaBasi(DateTime.now()));
+  return ref
+      .read(vardiyaPlaniApiProvider)
+      .cizelge(ref.watch(vardiyaHaftaProvider));
 });
 
 /// Gun -> o gune ait bloklar (kisisiyle birlikte). Cizelge KISI bazli
@@ -95,26 +98,76 @@ final vardiyaYayinOzetiProvider =
   (ref) async {
     return ref
         .read(vardiyaPlaniApiProvider)
-        .yayinOzeti(_haftaBasi(DateTime.now()));
+        .yayinOzeti(ref.watch(vardiyaHaftaProvider));
   },
 );
 
-class VardiyaPlaniScreen extends ConsumerWidget {
+class VardiyaPlaniScreen extends ConsumerStatefulWidget {
   const VardiyaPlaniScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<VardiyaPlaniScreen> createState() => _VardiyaPlaniScreenState();
+}
+
+class _VardiyaPlaniScreenState extends ConsumerState<VardiyaPlaniScreen> {
+  /// (P253 Asama 1) Toplu cikarma icin secim (uzun bas).
+  final _secim = CokluSecim<String>();
+
+  @override
+  void dispose() {
+    _secim.dispose();
+    super.dispose();
+  }
+
+  void _tazele() {
+    ref.invalidate(vardiyaCizelgeProvider);
+    ref.invalidate(vardiyaSimdiProvider);
+    ref.invalidate(vardiyaYayinOzetiProvider);
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      ListenableBuilder(listenable: _secim, builder: (context, _) => _ciz(context));
+
+  Widget _ciz(BuildContext context) {
     final l10n = context.l10n;
     final cizelge = ref.watch(vardiyaCizelgeProvider);
     final simdi = ref.watch(vardiyaSimdiProvider);
+    final hafta = ref.watch(vardiyaHaftaProvider);
     final rol = ref.watch(currentUserRoleProvider).value ?? UserRole.unknown;
     final yonetici = rol == UserRole.admin || rol == UserRole.yonetici;
+    // (P253 Asama 1) Plan YAZMA uclari amire de acik (sunucu `_YAZAR`):
+    // blok duzenle, toplu cikar, haftayi doldur/kopyala.
+    final yazar = yonetici || rol == UserRole.guvenlikAmiri;
 
     final yayin = yonetici ? ref.watch(vardiyaYayinOzetiProvider) : null;
     final bekleyen = yayin?.asData?.value.bekleyen ?? 0;
 
     return Scaffold(
-      appBar: AppBar(
+      bottomNavigationBar: _secim.acik
+          ? CokluSecimAltCubugu<String>(
+              secili: _secim.secili.toList(),
+              onBitti: _secim.bitir,
+              eylemler: [
+                TopluEylem<String>(
+                  etiket: (l) => l.vrdTopluCikar,
+                  ikon: Icons.person_remove_outlined,
+                  tehlikeli: true,
+                  calistir: _topluCikar,
+                ),
+              ],
+            )
+          : null,
+      appBar: _secim.acik
+          ? CokluSecimUstCubugu(
+              sayi: _secim.sayi,
+              onBitir: _secim.bitir,
+              onTumunu: () => _secim.tumunu([
+                for (final k in cizelge.asData?.value.personel ?? const <VardiyaCizelgeKisi>[])
+                  for (final b in k.bloklar) b.planId,
+              ]),
+            )
+          : AppBar(
         title: Text(l10n.vardiyaPlaniBaslik),
         actions: [
           if (yonetici)
@@ -158,6 +211,66 @@ class VardiyaPlaniScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // ---------------- (P253 Asama 1) HAFTA GEZINMESI ----------------
+            Row(
+              children: [
+                IconButton(
+                  key: const Key('vardiya-hafta-onceki'),
+                  tooltip: l10n.vrdHaftaOnceki,
+                  icon: const Icon(Icons.chevron_left),
+                  onPressed: () =>
+                      ref.read(vardiyaHaftaProvider.notifier).onceki(),
+                ),
+                Expanded(
+                  child: Text(
+                    haftaEtiketi(hafta),
+                    key: const Key('vardiya-hafta'),
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+                IconButton(
+                  key: const Key('vardiya-hafta-sonraki'),
+                  tooltip: l10n.vrdHaftaSonraki,
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: () =>
+                      ref.read(vardiyaHaftaProvider.notifier).sonraki(),
+                ),
+              ],
+            ),
+            Wrap(
+              alignment: WrapAlignment.end,
+              spacing: 8,
+              children: [
+                // Izin talepleri HER ROLE: personel kendi talebini gorur ve
+                // bekleyeni geri ceker; onay/ret yonetim + amir (sunucu).
+                OutlinedButton.icon(
+                  key: const Key('vardiya-izin-talepleri'),
+                  icon: const Icon(Icons.event_busy_outlined),
+                  label: Text(l10n.vrdIzinTalepleri),
+                  onPressed: () => merkezSayfaAc<void>(
+                    context,
+                    builder: (_) => const IzinTalepleriSayfasi(),
+                  ).then((_) => _tazele()),
+                ),
+                if (yazar)
+                  OutlinedButton.icon(
+                    key: const Key('vardiya-haftayi-doldur'),
+                    icon: const Icon(Icons.group_add_outlined),
+                    label: Text(l10n.vrdHaftayiDoldur),
+                    onPressed: () =>
+                        haftayiDoldur(context, ref, tazele: _tazele),
+                  ),
+                if (yazar)
+                  OutlinedButton.icon(
+                    key: const Key('vardiya-haftadan-kopyala'),
+                    icon: const Icon(Icons.copy_all_outlined),
+                    label: Text(l10n.vrdHaftadanKopyala),
+                    onPressed: () =>
+                        haftadanKopyala(context, ref, tazele: _tazele),
+                  ),
+              ],
+            ),
             // (P247 §1) DONGU GIRISI GOVDEDE, APPBAR'DA DEGIL: 360 dp'de
             // AppBar eylemleri zaten tasiyor (olculdu, P247 §1 raporu);
             // dorduncu bir eylem tasmayi buyutecekti. Adi gorunur (P237).
@@ -257,7 +370,24 @@ class VardiyaPlaniScreen extends ConsumerWidget {
                               ListTile(
                                 key: Key('vardiya-blok-${s.blok.planId}'),
                                 dense: true,
-                                leading: Icon(
+                                // (P253 Asama 1) Dokun: duzenle (secim
+                                // kipinde: sec). Uzun bas: toplu secim.
+                                selected: _secim.seciliMi(s.blok.planId),
+                                onTap: !yazar
+                                    ? null
+                                    : _secim.acik
+                                        ? () => _secim.degistir(s.blok.planId)
+                                        : () => _duzenle(s.kisi.ad, s.blok),
+                                onLongPress: yazar
+                                    ? () => _secim.baslat(s.blok.planId)
+                                    : null,
+                                leading: _secim.acik
+                                    ? Checkbox(
+                                        value: _secim.seciliMi(s.blok.planId),
+                                        onChanged: (_) =>
+                                            _secim.degistir(s.blok.planId),
+                                      )
+                                    : Icon(
                                   // GECE ASIRI vardiya AYRI IKON: saat
                                   // araligi tek basina ("22:00–05:00")
                                   // "bitis baslangictan kucuk" diye
@@ -265,7 +395,7 @@ class VardiyaPlaniScreen extends ConsumerWidget {
                                   s.blok.geceAsiyor
                                       ? Icons.nightlight_outlined
                                       : Icons.schedule_outlined,
-                                ),
+                                      ),
                                 title: Row(
                                   children: [
                                     Flexible(child: Text(s.kisi.ad)),
@@ -303,7 +433,7 @@ class VardiyaPlaniScreen extends ConsumerWidget {
                                 // yalniz CIKARMA. Cikarma acil durumun
                                 // ta kendisi (hastalik/izin) ve sahada
                                 // gerekir.
-                                trailing: yonetici
+                                trailing: yonetici && !_secim.acik
                                     ? IconButton(
                                         key: Key(
                                             'vardiya-cikar-${s.blok.planId}'),
@@ -353,6 +483,43 @@ class VardiyaPlaniScreen extends ConsumerWidget {
     );
   }
 
+  /// (P253 Asama 1) Blok duzenle (tarih + saat) — web ile ayni uc.
+  Future<void> _duzenle(String ad, VardiyaBlok blok) async {
+    final degisti = await showDialog<bool>(
+      context: context,
+      builder: (_) => BlokDuzenleDialogu(ad: ad, blok: blok),
+    );
+    if (degisti != true) return;
+    _tazele();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(context.l10n.vrdGuncellendi)));
+  }
+
+  /// (P253 Asama 1) Toplu cikar — web toplu sil ile AYNI uc (tek tek DELETE).
+  Future<void> _topluCikar(BuildContext context, List<String> idler) async {
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    final sebep = await showDialog<String>(
+      context: context,
+      builder: (_) => TopluCikarDialogu(sayi: idler.length),
+    );
+    if (sebep == null) return;
+    final api = ref.read(vardiyaPlaniApiProvider);
+    var n = 0;
+    try {
+      for (final id in idler) {
+        await api.cikar(id, sebep: sebep);
+        n++;
+      }
+      messenger.showSnackBar(SnackBar(content: Text(l10n.vrdTopluCikarildi(n))));
+    } on ApiException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
+    } finally {
+      _tazele();
+    }
+  }
+
   /// (§2.4) MOBILDE HIZLI EKLEME — tek kisi, tarih araligi, saatler.
   Future<void> _hizliEkle(BuildContext context, WidgetRef ref) async {
     final eklendi = await showDialog<bool>(
@@ -383,7 +550,7 @@ class VardiyaPlaniScreen extends ConsumerWidget {
     try {
       final n = await ref
           .read(vardiyaPlaniApiProvider)
-          .yayinla(_haftaBasi(DateTime.now()));
+          .yayinla(ref.read(vardiyaHaftaProvider));
       ref.invalidate(vardiyaYayinOzetiProvider);
       ref.invalidate(vardiyaCizelgeProvider);
       if (!context.mounted) return;

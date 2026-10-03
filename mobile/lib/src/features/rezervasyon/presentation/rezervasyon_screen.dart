@@ -176,7 +176,7 @@ Future<void> _showAreaForm(BuildContext context, {OrtakAlan? alan}) async {
 }
 
 // --------------------------- rezervasyon listesi --------------------------- //
-class _ReservationList extends ConsumerWidget {
+class _ReservationList extends ConsumerStatefulWidget {
   const _ReservationList({
     required this.state,
     required this.items,
@@ -197,15 +197,114 @@ class _ReservationList extends ConsumerWidget {
   final bool? loading;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ReservationList> createState() => _ReservationListState();
+}
+
+/// (P253 Asama 1) YONETIM SUZGECLERI — web rezervasyon yonetimiyle ayni
+/// uc boyut: ortak alan, durum, tarih. Liste zaten tum sayfalariyla
+/// cekiliyor (aktif ya da gecmis); suzme istemcide, sunucu kapsami
+/// (yonetim tumu / sakin kendi) DEGISMEZ.
+class _ReservationListState extends ConsumerState<_ReservationList> {
+  String? _alanId;
+  RezervasyonDurum? _durum;
+  String? _tarih; // YYYY-MM-DD
+
+  RezervasyonState get state => widget.state;
+  bool? get loading => widget.loading;
+  String get emptyText => widget.emptyText;
+
+  List<Rezervasyon> get items => [
+        for (final r in widget.items)
+          if ((_alanId == null || r.alanId == _alanId) &&
+              (_durum == null || r.durum == _durum) &&
+              (_tarih == null || r.tarih == _tarih))
+            r,
+      ];
+
+  bool get _suzgecVar => _alanId != null || _durum != null || _tarih != null;
+
+  Future<void> _tarihSec() async {
+    final simdi = DateTime.now();
+    final secilen = await showDatePicker(
+      context: context,
+      initialDate: _tarih == null ? simdi : DateTime.parse(_tarih!),
+      firstDate: DateTime(simdi.year - 2),
+      lastDate: DateTime(simdi.year + 2),
+    );
+    if (secilen == null) return;
+    setState(() => _tarih =
+        '${secilen.year.toString().padLeft(4, '0')}-${secilen.month.toString().padLeft(2, '0')}-${secilen.day.toString().padLeft(2, '0')}');
+  }
+
+  Widget _suzgecSeridi(BuildContext context) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          DropdownButton<String?>(
+            key: const Key('rez-suzgec-alan'),
+            value: _alanId,
+            hint: Text(l10n.kisRezTumAlanlar),
+            items: [
+              DropdownMenuItem<String?>(value: null, child: Text(l10n.kisRezTumAlanlar)),
+              for (final a in state.alanlar)
+                DropdownMenuItem<String?>(value: a.id, child: Text(a.ad)),
+            ],
+            onChanged: (v) => setState(() => _alanId = v),
+          ),
+          for (final d in const [RezervasyonDurum.onaylandi, RezervasyonDurum.iptal])
+            FilterChip(
+              key: Key('rez-suzgec-durum-${d.wire}'),
+              label: Text(rezDurumAdi(l10n, d)),
+              selected: _durum == d,
+              onSelected: (sec) => setState(() => _durum = sec ? d : null),
+            ),
+          ActionChip(
+            key: const Key('rez-suzgec-tarih'),
+            avatar: const Icon(Icons.event, size: 18),
+            label: Text(_tarih ?? l10n.ortakTarihSec),
+            onPressed: _tarihSec,
+          ),
+          if (_suzgecVar)
+            TextButton(
+              key: const Key('rez-suzgec-temizle'),
+              onPressed: () => setState(() {
+                _alanId = null;
+                _durum = null;
+                _tarih = null;
+              }),
+              child: Text(l10n.kisSuzgecTemizle),
+            ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final govde = _liste(context);
+    if (!state.canManageAreas || widget.items.isEmpty) return govde;
+    return Column(
+      children: [
+        _suzgecSeridi(context),
+        Expanded(child: govde),
+      ],
+    );
+  }
+
+  Widget _liste(BuildContext context) {
     final yukleniyor = loading ?? state.loading;
     // HATA TEK KANALDAN: gecmis istegi de `state.errorMessage`e yazar
     // (bkz. `gecmisTazele`); ayrilan sey KAPININ OLCUSU — cizilen liste.
     final hata = state.errorMessage;
-    if (yukleniyor && items.isEmpty) {
+    if (yukleniyor && widget.items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (hata != null && items.isEmpty) {
+    if (hata != null && widget.items.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(24),
         children: [
@@ -217,20 +316,26 @@ class _ReservationList extends ConsumerWidget {
         ],
       );
     }
-    if (items.isEmpty) {
+    final gorunen = items;
+    if (gorunen.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          Center(child: Text(emptyText, textAlign: TextAlign.center)),
+          Center(
+            child: Text(
+              _suzgecVar ? context.l10n.kisSuzgecSonucYok : emptyText,
+              textAlign: TextAlign.center,
+            ),
+          ),
         ],
       );
     }
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
-      itemCount: items.length,
+      itemCount: gorunen.length,
       itemBuilder: (context, i) => _ReservationCard(
-        rezervasyon: items[i],
-        canCancel: state.canCancel(items[i]),
+        rezervasyon: gorunen[i],
+        canCancel: state.canCancel(gorunen[i]),
       ),
     );
   }

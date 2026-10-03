@@ -21,7 +21,10 @@ class VisitorApi {
   /// [unitId] verilirse yalniz o dairenin kayitlari cekilir — admin/yonetici
   /// tek-seferlik izin gorunumu (?unit_id). Izin YOKSA/tukendiyse sunucu 403
   /// doner (ApiException statusCode=403).
-  Future<List<Visitor>> fetchAll({String? unitId}) async {
+  ///
+  /// (P253 Asama 1) [icerde] true -> yalniz CIKIS YAPMAMIS ziyaretciler
+  /// (web ziyaretci listesinin "Iceride" suzgeci; sunucu `?icerde=true`).
+  Future<List<Visitor>> fetchAll({String? unitId, bool? icerde}) async {
     final out = <Visitor>[];
     var offset = 0;
     const limit = 200;
@@ -33,6 +36,7 @@ class VisitorApi {
             'limit': limit,
             'offset': offset,
             'unit_id': ?unitId,
+            'icerde': ?icerde,
           },
         );
         final items = res.data?['items'];

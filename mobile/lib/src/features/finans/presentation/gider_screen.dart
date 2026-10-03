@@ -34,7 +34,19 @@ import '../../tasks/presentation/task_complete_controller.dart'
     show imagePickerProvider;
 import '../data/finans_api.dart';
 import '../domain/finans_models.dart';
+import 'belge_alanlari.dart';
 import 'tahsilat_screen.dart' show kasalarProvider;
+
+/// (P253 Asama 1) Firma secici — web hareket formuyla AYNI liste.
+final firmalarProvider = FutureProvider.autoDispose<List<Firma>>((ref) async {
+  return ref.watch(finansApiProvider).firmalar();
+});
+
+/// (P253 Asama 1) GELIR GIRISI GIDER EKRANINDA: ayni defter, ayni uc
+/// (`POST /finans/hareketler`, `tip`). Web'de ayri sayfalar; mobilde tek
+/// form ve tip secimi.
+const tipGider = 'gider';
+const tipGelir = 'gelir';
 
 final giderTurleriProvider =
     FutureProvider.autoDispose<List<GiderTuru>>((ref) async {
@@ -51,6 +63,10 @@ class GiderScreen extends ConsumerStatefulWidget {
 class _GiderScreenState extends ConsumerState<GiderScreen> {
   String? _kasaId;
   String? _turId;
+  String? _firmaId;
+  String _tip = tipGider;
+  DateTime _tarih = DateTime.now();
+  final _belgeCtrl = TextEditingController();
   bool _onayBekliyor = false;
   XFile? _fis;
   final _tutarCtrl = TextEditingController();
@@ -66,6 +82,7 @@ class _GiderScreenState extends ConsumerState<GiderScreen> {
   void dispose() {
     _tutarCtrl.dispose();
     _aciklamaCtrl.dispose();
+    _belgeCtrl.dispose();
     super.dispose();
   }
 
@@ -114,7 +131,12 @@ class _GiderScreenState extends ConsumerState<GiderScreen> {
       final hareketId = await api.gider(
         kasaId: kasaId,
         tutarKurus: kurus,
-        durum: _onayBekliyor ? 'onay_bekliyor' : 'odendi',
+        // Onay akisi GIDERE ozgudur; gelir gerceklesmis yazilir.
+        durum: _tip == tipGider && _onayBekliyor ? 'onay_bekliyor' : 'odendi',
+        tip: _tip,
+        tarih: _tarih,
+        belgeNo: bosIseNull(_belgeCtrl.text),
+        firmaId: _firmaId,
         idempotencyKey: _anahtar,
         giderTuruId: _turId,
         aciklama: _aciklamaCtrl.text.trim().isEmpty
@@ -144,11 +166,16 @@ class _GiderScreenState extends ConsumerState<GiderScreen> {
         _anahtar = _yeniAnahtar();
         _tutarCtrl.clear();
         _aciklamaCtrl.clear();
+        _belgeCtrl.clear();
         _fis = null;
         _kaydediyor = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.finansGiderKaydedildi)),
+        SnackBar(
+          content: Text(
+            _tip == tipGelir ? l10n.finGelirKaydedildi : l10n.finansGiderKaydedildi,
+          ),
+        ),
       );
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -164,21 +191,23 @@ class _GiderScreenState extends ConsumerState<GiderScreen> {
     final l10n = context.l10n;
     final kasalar = ref.watch(kasalarProvider);
     final turler = ref.watch(giderTurleriProvider);
+    final firmalar = ref.watch(firmalarProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.finansGiderBaslik)),
+      appBar: AppBar(title: Text(l10n.finGiderGelirBaslik)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          if (_hata != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text(
-                _hata!,
-                key: const Key('gider-hata'),
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-            ),
+          SegmentedButton<String>(
+            key: const Key('gider-tip'),
+            segments: [
+              ButtonSegment(value: tipGider, label: Text(l10n.finTipGider)),
+              ButtonSegment(value: tipGelir, label: Text(l10n.finTipGelir)),
+            ],
+            selected: {_tip},
+            onSelectionChanged: (s) => setState(() => _tip = s.first),
+          ),
+          const SizedBox(height: 12),
           TextField(
             key: const Key('gider-tutar'),
             controller: _tutarCtrl,
@@ -191,7 +220,9 @@ class _GiderScreenState extends ConsumerState<GiderScreen> {
             data: (ts) => DropdownButtonFormField<String>(
               key: const Key('gider-tur'),
               initialValue: _turId,
-              decoration: InputDecoration(labelText: l10n.finansGiderTuru),
+              decoration: InputDecoration(
+                labelText: _tip == tipGelir ? l10n.finGelirTuru : l10n.finansGiderTuru,
+              ),
               items: [
                 for (final t in ts)
                   DropdownMenuItem(value: t.id, child: Text(t.ad)),
@@ -227,7 +258,35 @@ class _GiderScreenState extends ConsumerState<GiderScreen> {
             decoration: InputDecoration(labelText: l10n.finansAlanAciklama),
           ),
           const SizedBox(height: 12),
+          firmalar.when(
+            data: (fs) => fs.isEmpty
+                ? const SizedBox.shrink()
+                : DropdownButtonFormField<String?>(
+                    key: const Key('gider-firma'),
+                    isExpanded: true,
+                    initialValue: _firmaId,
+                    decoration: InputDecoration(labelText: l10n.finFirma),
+                    items: [
+                      DropdownMenuItem<String?>(value: null, child: Text(l10n.finFirmaYok)),
+                      for (final f in fs)
+                        DropdownMenuItem<String?>(value: f.id, child: Text(f.ad)),
+                    ],
+                    onChanged: (v) => setState(() => _firmaId = v),
+                  ),
+            loading: () => const LinearProgressIndicator(),
+            // Firma listesi bir KOLAYLIK: okunamazsa form yine kaydeder.
+            error: (_, _) => const SizedBox.shrink(),
+          ),
+          const SizedBox(height: 12),
+          TarihBelgeAlanlari(
+            anahtarOnEki: 'gider',
+            tarih: _tarih,
+            onTarih: (t) => setState(() => _tarih = t),
+            belgeNo: _belgeCtrl,
+          ),
+          const SizedBox(height: 12),
           // (P192) ONAY BEKLEYEN GIDER BAKIYEYI DUSURMEZ — ekranda YAZAR.
+          if (_tip == tipGider)
           SwitchListTile(
             key: const Key('gider-onay-bekliyor'),
             value: _onayBekliyor,
@@ -243,6 +302,17 @@ class _GiderScreenState extends ConsumerState<GiderScreen> {
             label: Text(_fis == null ? l10n.finansFisEkle : l10n.finansFisEklendi),
           ),
           const SizedBox(height: 20),
+          // (P253 Asama 1) HATA DUGMENIN USTUNDE: form uzadi; listenin
+          // basindaki hata, kaydet'e basan kullanicinin ekraninda degildi.
+          if (_hata != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                _hata!,
+                key: const Key('gider-hata'),
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
           FilledButton(
             key: const Key('gider-kaydet'),
             onPressed: _kaydediyor ? null : _kaydet,

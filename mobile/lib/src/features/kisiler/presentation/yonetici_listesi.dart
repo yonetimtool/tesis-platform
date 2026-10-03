@@ -14,6 +14,8 @@ import '../../../core/ui/telefon_alani_widget.dart';
 import '../../auth/domain/user_role.dart';
 import '../../auth/presentation/rol_adi.dart';
 import '../../staff/data/staff_api.dart';
+import 'kisi_islemleri.dart';
+import 'kisi_suzgec.dart';
 
 /// (P251 §8) KISILER › YONETICILER VE DENETCILER — mobilde yoktu.
 ///
@@ -21,11 +23,38 @@ import '../../staff/data/staff_api.dart';
 /// (yalniz web). Ayni `POST /users` ucu; hesap PAROLASIZ acilir ve davet
 /// e-postasi gider (P186). Sunucu cagiranin acabilecegi rolleri zorlar
 /// (`/users/acilabilir-roller`); yetkisiz rol 403 ile anlasilir doner.
-class YoneticiListesi extends ConsumerWidget {
+class YoneticiListesi extends ConsumerStatefulWidget {
   const YoneticiListesi({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<YoneticiListesi> createState() => _YoneticiListesiState();
+}
+
+class _YoneticiListesiState extends ConsumerState<YoneticiListesi> {
+  // (P253 Asama 1) Arama + durum suzgeci ve satir eylemleri (tanilama,
+  // aktif/pasif, sil) — web Kisiler listesiyle ayni uclar.
+  final _ara = TextEditingController();
+  KisiDurumSuzgeci _durum = KisiDurumSuzgeci.tumu;
+
+  @override
+  void dispose() {
+    _ara.dispose();
+    super.dispose();
+  }
+
+  Future<void> _eylem(String v, StaffMember k) async {
+    final Future<bool> is_ = switch (v) {
+      'kart' => kisiKartiAc(context, id: k.id).then((_) => true),
+      'aktiflik' => kisiAktiflikDegistir(context, ref,
+          id: k.id, ad: k.ad, aktif: !k.isActive),
+      'sil' => kisiSilOnayli(context, ref, id: k.id, ad: k.ad),
+      _ => Future.value(false),
+    };
+    if (await is_) ref.invalidate(yonetimListesiProvider);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
     final async = ref.watch(yonetimListesiProvider);
     return Scaffold(
@@ -52,13 +81,23 @@ class YoneticiListesi extends ConsumerWidget {
             ),
           ),
         ),
-        data: (list) => list.isEmpty
+        data: (tumListe) => tumListe.isEmpty
             ? BosDurum(
                 ikon: Icons.admin_panel_settings_outlined,
                 baslik: l10n.yoneticiListeBos,
                 aciklama: l10n.yoneticiListeBosAlt,
               )
-            : RefreshIndicator(
+            : Column(children: [
+                KisiSuzgecSeridi(
+                  ara: _ara,
+                  durum: _durum,
+                  onDegisti: (d) => setState(() => _durum = d),
+                  onAra: () => setState(() {}),
+                ),
+                Expanded(child: Builder(builder: (context) {
+              final list = kisiSuz(tumListe, _ara.text, _durum,
+                  ad: (s) => s.ad, aktif: (s) => s.isActive);
+              return RefreshIndicator(
                 onRefresh: () async => ref.invalidate(yonetimListesiProvider),
                 child: ListView.separated(
                   padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
@@ -72,16 +111,41 @@ class YoneticiListesi extends ConsumerWidget {
                         leading: const Icon(Icons.badge_outlined),
                         title: Text(k.ad),
                         subtitle: Text(rolAdi(l10n, UserRole.fromClaim(k.role))),
-                        trailing: k.isActive
-                            ? null
-                            : Text(l10n.ortakPasif,
-                                style: TextStyle(
-                                    color: Theme.of(context).colorScheme.outline)),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (!k.isActive)
+                              Text(l10n.ortakPasif,
+                                  style: TextStyle(
+                                      color: Theme.of(context).colorScheme.outline)),
+                            PopupMenuButton<String>(
+                              key: Key('yonetici-islemler-${k.id}'),
+                              tooltip: l10n.ortakIslemler,
+                              onSelected: (v) => _eylem(v, k),
+                              itemBuilder: (_) => [
+                                PopupMenuItem(value: 'kart', child: Text(l10n.kisTanilama)),
+                                PopupMenuItem(
+                                  value: 'aktiflik',
+                                  child: Text(k.isActive
+                                      ? l10n.personelPasiflestir
+                                      : l10n.personelAktiflestir),
+                                ),
+                                PopupMenuItem(
+                                  key: Key('yonetici-sil-${k.id}'),
+                                  value: 'sil',
+                                  child: Text(l10n.ortakSil),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   },
                 ),
-              ),
+              );
+                })),
+              ]),
       ),
     );
   }

@@ -318,7 +318,10 @@ String? _hamHedef(Map<String, String> data, UserRole? role) {
       return AppRoutes.anketler;
     case 'aidat_onizleme':
     case 'aylik_ozet':
-      return AppRoutes.financialSummary;
+      // (P253 A1) Yonetici menusundeki "Finansal ozet" artik FINANS
+      // DEFTERINE acilir (web `/finans`in karsiligi); eski donemsel ekran
+      // menuden dustu ve rol suzgeci onu hedef saymaz.
+      return AppRoutes.finansDefteri;
     case 'gider_onay':
     // (P252 §2) "Ekim maaslari gidere yazildi" — gider listesi.
     case 'maas_yazildi':

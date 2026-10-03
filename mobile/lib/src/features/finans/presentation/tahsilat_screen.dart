@@ -36,6 +36,7 @@ import '../../../core/i18n/l10n.dart';
 import '../../../core/para.dart';
 import '../data/finans_api.dart';
 import '../domain/finans_models.dart';
+import 'belge_alanlari.dart';
 
 final kasalarProvider =
     FutureProvider.autoDispose<List<Kasa>>((ref) async {
@@ -77,6 +78,8 @@ class _TahsilatScreenState extends ConsumerState<TahsilatScreen> {
   String? _kasaId;
   final _tutarCtrl = TextEditingController();
   final _aciklamaCtrl = TextEditingController();
+  final _belgeCtrl = TextEditingController();
+  DateTime _tarih = DateTime.now();
   String _anahtar = _yeniAnahtar();
   String? _hata;
   bool _kaydediyor = false;
@@ -88,6 +91,7 @@ class _TahsilatScreenState extends ConsumerState<TahsilatScreen> {
   void dispose() {
     _tutarCtrl.dispose();
     _aciklamaCtrl.dispose();
+    _belgeCtrl.dispose();
     super.dispose();
   }
 
@@ -122,6 +126,8 @@ class _TahsilatScreenState extends ConsumerState<TahsilatScreen> {
             aciklama: _aciklamaCtrl.text.trim().isEmpty
                 ? null
                 : _aciklamaCtrl.text.trim(),
+            tarih: _tarih,
+            belgeNo: bosIseNull(_belgeCtrl.text),
           );
       if (!mounted) return;
       // ANAHTAR YENILENIR: bir sonraki tahsilat AYRI bir islemdir.
@@ -131,6 +137,7 @@ class _TahsilatScreenState extends ConsumerState<TahsilatScreen> {
         _odeyenUserId = null;
         _tutarCtrl.clear();
         _aciklamaCtrl.clear();
+        _belgeCtrl.clear();
         _kaydediyor = false;
       });
       ref.invalidate(borclularProvider);
@@ -273,6 +280,13 @@ class _TahsilatScreenState extends ConsumerState<TahsilatScreen> {
                 controller: _aciklamaCtrl,
                 inputFormatters: GirdiSiniri.sinir(500), // sunucu: TahsilatCreate.aciklama
                 decoration: InputDecoration(labelText: l10n.finansAlanAciklama),
+              ),
+              const SizedBox(height: 12),
+              TarihBelgeAlanlari(
+                anahtarOnEki: 'tahsilat',
+                tarih: _tarih,
+                onTarih: (t) => setState(() => _tarih = t),
+                belgeNo: _belgeCtrl,
               ),
               const SizedBox(height: 20),
               FilledButton(

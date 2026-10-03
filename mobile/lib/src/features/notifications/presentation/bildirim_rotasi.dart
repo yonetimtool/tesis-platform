@@ -117,7 +117,11 @@ String? bildirimRotasi(AppNotification b, {UserRole? role}) {
 /// Tip bilinmiyor (eski/yeni bir deger) ama kayit bir REFERANS tasiyorsa
 /// ondan turet — tip listesi bayatlasa bile dokunma olu kalmasin.
 String? _referanstan(AppNotification b) {
-  if (b.taskId != null && b.taskId!.isNotEmpty) return AppRoutes.tasks;
+  // (P253 Asama 1) Gorev referansi -> o GOREVIN detayi (tek kayit,
+  // `GET /tasks/{id}`); liste sayfalanmis ve gorev listede olmayabilir.
+  if (b.taskId != null && b.taskId!.isNotEmpty) {
+    return '${AppRoutes.taskDetail}?id=${b.taskId}';
+  }
   if (b.patrolWindowId != null && b.patrolWindowId!.isNotEmpty) {
     return AppRoutes.patrolTracking;
   }

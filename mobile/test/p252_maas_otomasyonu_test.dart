@@ -125,9 +125,17 @@ void main() {
     expect(find.byKey(const Key('maas-onay-bekleyenler')), findsOneWidget);
     await tester.enterText(find.byKey(const Key('maas-tutar-$_b1')), '10.000');
     await _dokun(tester, find.byKey(const Key('maas-onayla-$_b1')));
+    // (P253 §C-1) Onay diyalogu: duzeltilmis TUTAR yazili, onaylanmadan istek YOK.
+    expect(find.byKey(const Key('finans-onay')), findsOneWidget);
+    expect(tester.widget<Text>(find.byKey(const Key('finans-onay-tutar'))).data,
+        contains('10.000,00'));
+    expect(tel.cagrilar.where((c) => c.yol.endsWith('/onayla')), isEmpty);
+    await _dokun(tester, find.byKey(const Key('finans-onay-dugme')));
     final tek = tel.cagrilar.singleWhere((c) => c.yol == '/finans/hareketler/$_b1/onayla');
     expect(tek.govde, {'tutar_kurus': 1000000});
     await _dokun(tester, find.byKey(const Key('maas-toplu-onay')));
+    expect(find.byKey(const Key('finans-onay')), findsOneWidget);
+    await _dokun(tester, find.byKey(const Key('finans-onay-dugme')));
     final toplu = tel.cagrilar.singleWhere((c) => c.yol == '/otomasyon/maaslar/onayla');
     expect(toplu.govde, {'ids': [_b1, _b2]});
   });

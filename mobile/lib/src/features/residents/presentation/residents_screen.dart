@@ -10,6 +10,7 @@ import '../../../core/kisi_adi.dart';
 import '../../../core/ui/ad_soyad_alanlari.dart';
 import '../../../core/ui/bos_durum.dart';
 import '../../odeme_kodlari/presentation/odeme_kodlari_screen.dart';
+import '../../kisiler/presentation/kisi_islemleri.dart';
 import '../data/residents_api.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/ui/merkez_diyalog.dart';
@@ -314,12 +315,35 @@ class _ResidentTile extends StatelessWidget {
               ),
             PopupMenuButton<String>(
               tooltip: l10n.sakinIslemleri,
-              onSelected: (v) {
+              key: Key('sakin-islemler-${member.userId}'),
+              onSelected: (v) async {
                 if (v == 'edit') _edit(context);
                 if (v == 'delete') _confirmRemove(context);
+                // (P253 Asama 1) Tanilama karti + aktif/pasif (web ile ayni).
+                if (v == 'kart') {
+                  await kisiKartiAc(context, id: member.userId);
+                  ref.invalidate(residentsProvider);
+                }
+                if (v == 'aktiflik' &&
+                    context.mounted &&
+                    await kisiAktiflikDegistir(context, ref,
+                        id: member.userId, ad: member.ad, aktif: !member.isActive)) {
+                  ref.invalidate(residentsProvider);
+                }
               },
               itemBuilder: (_) => [
                 PopupMenuItem(value: 'edit', child: Text(l10n.ortakDuzenle)),
+                PopupMenuItem(
+                  key: Key('sakin-kart-${member.userId}'),
+                  value: 'kart',
+                  child: Text(l10n.kisTanilama),
+                ),
+                PopupMenuItem(
+                  value: 'aktiflik',
+                  child: Text(member.isActive
+                      ? l10n.personelPasiflestir
+                      : l10n.personelAktiflestir),
+                ),
                 PopupMenuItem(value: 'delete', child: Text(l10n.ortakSil)),
               ],
             ),

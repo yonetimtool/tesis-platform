@@ -61,7 +61,8 @@ void main() {
       // Tip listesi bayatlasa bile dokunma olu kalmasin.
       expect(
         bildirimRotasi(_b(tip: 'gelecekte_eklenen', taskId: 't1')),
-        '/tasks',
+        // (P253 Asama 1) Gorev referansi o gorevin DETAYINA (tek kayit).
+        '/tasks/detail?id=t1',
       );
       expect(
         bildirimRotasi(_b(tip: 'gelecekte_eklenen', windowId: 'w1')),

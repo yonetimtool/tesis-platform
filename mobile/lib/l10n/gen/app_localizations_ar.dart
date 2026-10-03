@@ -9124,4 +9124,660 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get sikayetDetayBaslik => 'تفاصيل الشكوى';
+
+  @override
+  String get vrdHaftaOnceki => 'الأسبوع السابق';
+
+  @override
+  String get vrdHaftaSonraki => 'الأسبوع التالي';
+
+  @override
+  String get vrdHaftayiDoldur => 'املأ الأسبوع من الطاقم';
+
+  @override
+  String get vrdHaftadanKopyala => 'نسخ من أسبوع';
+
+  @override
+  String vrdDolduruldu(int n) {
+    return 'أُضيفت $n مناوبات';
+  }
+
+  @override
+  String vrdKopyaSonuc(int eklenen, int atlanan) {
+    return 'نُسخت $eklenen مناوبات، وتم تخطي $atlanan';
+  }
+
+  @override
+  String get vrdSebepIzin => 'في إجازة';
+
+  @override
+  String get vrdSebepCakisma => 'تعارض';
+
+  @override
+  String get vrdGeriAl => 'تراجع';
+
+  @override
+  String vrdGeriAlindi(int n) {
+    return 'تم التراجع عن $n مناوبات';
+  }
+
+  @override
+  String get vrdKopyaKaynak => 'الأسبوع المراد نسخه';
+
+  @override
+  String vrdKopyaHedef(String hafta) {
+    return 'الهدف: $hafta';
+  }
+
+  @override
+  String get vrdHedefiTemizle => 'إزالة المناوبات الحالية في الأسبوع الهدف';
+
+  @override
+  String get vrdHedefiTemizleUyari =>
+      'المناوبات المُزالة لا تعود عبر \"تراجع\"؛ يُتراجع فقط عن المنسوخة.';
+
+  @override
+  String get vrdKopyala => 'نسخ';
+
+  @override
+  String get vrdBlokDuzenle => 'تعديل المناوبة';
+
+  @override
+  String get vrdTarih => 'التاريخ';
+
+  @override
+  String get vrdGuncellendi => 'تم تحديث المناوبة';
+
+  @override
+  String get vrdTopluCikar => 'إزالة المحدد';
+
+  @override
+  String vrdTopluCikarOnay(int n) {
+    return 'ستُزال $n مناوبات. لا يمكن التراجع؛ أضفها مجددًا عند الحاجة.';
+  }
+
+  @override
+  String vrdTopluCikarildi(int n) {
+    return 'أُزيلت $n مناوبات';
+  }
+
+  @override
+  String get vrdSablonEkle => 'إضافة قالب';
+
+  @override
+  String get vrdSablonDuzenle => 'تعديل القالب';
+
+  @override
+  String get vrdSablonAd => 'اسم القالب';
+
+  @override
+  String get vrdGunTipi => 'الأيام السارية';
+
+  @override
+  String get vrdSablonSil => 'حذف القالب';
+
+  @override
+  String vrdSablonSilOnay(String ad) {
+    return 'هل تريد حذف القالب \"$ad\"؟';
+  }
+
+  @override
+  String get vrdSablonKaydedildi => 'تم حفظ القالب';
+
+  @override
+  String get vrdSablonSilindi => 'تم حذف القالب';
+
+  @override
+  String get vrdIzinTalepleri => 'طلبات الإجازة';
+
+  @override
+  String get vrdIzinBekleyen => 'قيد الانتظار';
+
+  @override
+  String get vrdIzinOnaylanan => 'المعتمدة';
+
+  @override
+  String get vrdIzinReddedilen => 'المرفوضة';
+
+  @override
+  String get vrdIzinTumu => 'الكل';
+
+  @override
+  String get vrdIzinOnayla => 'اعتماد';
+
+  @override
+  String get vrdIzinReddet => 'رفض';
+
+  @override
+  String get vrdIzinSilOnay => 'هل تريد حذف سجل الإجازة هذا؟';
+
+  @override
+  String get vrdIzinYok => 'لا توجد سجلات';
+
+  @override
+  String get vrdIzinOnaylandi => 'تم اعتماد الإجازة';
+
+  @override
+  String get vrdIzinReddedildi => 'تم رفض الإجازة';
+
+  @override
+  String get vrdIzinSilindi => 'تم حذف الإجازة';
+
+  @override
+  String get vrdDonguSonlandir => 'إنهاء';
+
+  @override
+  String get vrdDonguSonlandirTarih => 'لا تناوب اعتبارًا من هذا التاريخ';
+
+  @override
+  String vrdDonguSonlandirildi(int n) {
+    return 'انتهى التناوب، وأُلغيت $n مناوبات';
+  }
+
+  @override
+  String get vrdKalipSil => 'حذف النمط';
+
+  @override
+  String vrdKalipSilOnay(String ad) {
+    return 'هل تريد حذف النمط \"$ad\"؟ تبقى المناوبات المنشأة في الخطة.';
+  }
+
+  @override
+  String get vrdKalipSilindi => 'تم حذف النمط';
+
+  @override
+  String get finOzetBorclandirilan => 'المستحق هذا الشهر';
+
+  @override
+  String get finOzetTahsil => 'المحصّل هذا الشهر';
+
+  @override
+  String get finOzetAcikBorc => 'الدين المستحق';
+
+  @override
+  String get finOzetKasa => 'إجمالي الصناديق';
+
+  @override
+  String get finOzetPersonel => 'نفقات الموظفين (هذا الشهر)';
+
+  @override
+  String get finOzetIcra => 'ملفات تنفيذ مفتوحة';
+
+  @override
+  String get finKasalar => 'أرصدة الصناديق';
+
+  @override
+  String get finKasaYok => 'لا يوجد صندوق معرّف';
+
+  @override
+  String get finTipTahsilat => 'تحصيل';
+
+  @override
+  String get finTipGider => 'مصروف';
+
+  @override
+  String get finTipGelir => 'إيراد';
+
+  @override
+  String get finTipVirman => 'تحويل';
+
+  @override
+  String get finTipIade => 'استرداد';
+
+  @override
+  String get finTipAcilis => 'افتتاحي';
+
+  @override
+  String get finOtoGunlukBaslik => 'سجل الأتمتة';
+
+  @override
+  String get finOtoGunlukAciklama => 'أي أتمتة عملت ومتى وماذا أنتجت.';
+
+  @override
+  String get finOtoKayitYok => 'لا توجد سجلات بعد';
+
+  @override
+  String get finOtoTurMaas => 'مصروف الرواتب';
+
+  @override
+  String get finOtoTurAidatTahakkuk => 'احتساب تلقائي';
+
+  @override
+  String get finOtoTurAidatOnizleme => 'معاينة الاحتساب';
+
+  @override
+  String get finOtoTurBorcHatirlatma => 'تذكير بالدين';
+
+  @override
+  String get finOtoTurDuzenliGider => 'مصروف متكرر';
+
+  @override
+  String get finOtoTurGecikmeFaizi => 'فائدة التأخير';
+
+  @override
+  String get finOtoTurAylikOzet => 'الملخص الشهري';
+
+  @override
+  String get finOnayla => 'اعتماد';
+
+  @override
+  String get finReddet => 'رفض';
+
+  @override
+  String get finBelgeNo => 'رقم المستند';
+
+  @override
+  String get finFirma => 'الشركة';
+
+  @override
+  String get finGenelToplam => 'الإجمالي العام';
+
+  @override
+  String get finHatirlatmaGecmisiSekme => 'التذكيرات المُرسلة';
+
+  @override
+  String get finSebepEtiket => 'السبب (إلزامي)';
+
+  @override
+  String get finTipIptal => 'إلغاء (قيد عكسي)';
+
+  @override
+  String finTarihDegeri(String tarih) {
+    return 'التاريخ: $tarih';
+  }
+
+  @override
+  String get finBelgeNoIpucu => 'اتركه فارغًا وسيعيّن النظام رقمًا.';
+
+  @override
+  String get finGelirKaydedildi => 'تم تسجيل الإيراد.';
+
+  @override
+  String get finFirmaYok => 'بلا شركة';
+
+  @override
+  String get finGelirTuru => 'نوع الإيراد';
+
+  @override
+  String get finGiderGelirBaslik => 'مصروف / إيراد';
+
+  @override
+  String get finDonemselRapor => 'تقرير الفترة';
+
+  @override
+  String get finSekmeOzet => 'الملخص';
+
+  @override
+  String get finSekmeHareketler => 'الحركات';
+
+  @override
+  String get finOzetOnayBekleyen => 'بانتظار الموافقة';
+
+  @override
+  String finKasaBekleyen(String tutar) {
+    return 'صرف معلّق: $tutar';
+  }
+
+  @override
+  String get finSuzgecTip => 'النوع';
+
+  @override
+  String get finHareketYok => 'لا توجد حركات لهذا التصفية.';
+
+  @override
+  String get finDurumOnayBekliyor => 'بانتظار الموافقة';
+
+  @override
+  String get finDurumReddedildi => 'مرفوض';
+
+  @override
+  String get finDurumIptalEdildi => 'أُلغي بقيد عكسي';
+
+  @override
+  String get finTarih => 'التاريخ';
+
+  @override
+  String get finHedef => 'لصالح';
+
+  @override
+  String get finOnayBaslik => 'اعتماد الحركة';
+
+  @override
+  String get finOnaySonuc =>
+      'بعد الاعتماد يُخصم من رصيد الصندوق. لا يمكن تصحيحه لاحقًا إلا بقيد عكسي.';
+
+  @override
+  String get finOnaylandi => 'تم اعتماد الحركة.';
+
+  @override
+  String get finRedBaslik => 'رفض الحركة';
+
+  @override
+  String get finRedSonuc =>
+      'لا يمكن التراجع عن الرفض: يبقى السجل مرفوضًا ولا يدخل الصندوق أبدًا.';
+
+  @override
+  String get finReddedildi => 'تم رفض الحركة.';
+
+  @override
+  String get finOtoGunlukSekme => 'السجل';
+
+  @override
+  String finOtoAdet(int n) {
+    return '$n سجلات';
+  }
+
+  @override
+  String finHatirlatmaOzet(int gonderilen, int okunan) {
+    return 'أُرسل $gonderilen · قُرئ $okunan';
+  }
+
+  @override
+  String get finOkundu => 'مقروء';
+
+  @override
+  String get finOkunmadi => 'غير مقروء';
+
+  @override
+  String get dokAciklama => 'الوصف (اختياري)';
+
+  @override
+  String get dokAd => 'اسم المستند';
+
+  @override
+  String get dokCokBuyuk => 'حجم الملف أكبر من 25 ميغابايت؛ اختر ملفًا أصغر.';
+
+  @override
+  String get dokGaleri => 'اختر من المعرض';
+
+  @override
+  String get dokKamera => 'التقط صورة';
+
+  @override
+  String get dokPaylas => 'تنزيل / مشاركة';
+
+  @override
+  String get dokSakineAc => 'إظهار للسكان';
+
+  @override
+  String get dokSakineAcik => 'مرئي للسكان';
+
+  @override
+  String get dokSakineAcikIpucu => 'إذا كان مغلقًا، تراه الإدارة فقط.';
+
+  @override
+  String get dokSakineAcildi => 'أصبح المستند مرئيًا للسكان.';
+
+  @override
+  String get dokSakineKapat => 'إخفاء عن السكان';
+
+  @override
+  String get dokSakineKapatildi => 'تم إخفاء المستند عن السكان.';
+
+  @override
+  String dokSecilen(String ad, int kb) {
+    return 'المحدد: $ad ($kb كيلوبايت)';
+  }
+
+  @override
+  String get dokSilBaslik => 'حذف المستند';
+
+  @override
+  String dokSilOnay(String ad) {
+    return 'حذف «$ad»؟ لن يتمكن السكان من رؤيته أيضًا.';
+  }
+
+  @override
+  String get dokSilindi => 'تم حذف المستند.';
+
+  @override
+  String get dokYalnizYonetim => 'الإدارة فقط';
+
+  @override
+  String get dokYonetimBos => 'لا توجد مستندات بعد. اضغط رفع لإضافة مستند.';
+
+  @override
+  String get dokYukle => 'رفع';
+
+  @override
+  String get dokYuklendi => 'تم رفع المستند.';
+
+  @override
+  String get dokYukleNot =>
+      'يمكنك رفع الصور من الهاتف. لملفات PDF وغيرها استخدم لوحة الويب حاليًا.';
+
+  @override
+  String get hatAciklama => 'ملاحظة (اختياري)';
+
+  @override
+  String get hatAyBos => 'لا شيء في التقويم هذا الشهر.';
+
+  @override
+  String get hatBaslik => 'العنوان';
+
+  @override
+  String get hatBos => 'ليس لديك تذكيرات بعد.';
+
+  @override
+  String get hatDuzenle => 'تعديل التذكير';
+
+  @override
+  String get hatEkle => 'إضافة تذكير';
+
+  @override
+  String get hatOncekiAy => 'الشهر السابق';
+
+  @override
+  String get hatRenk => 'اللون';
+
+  @override
+  String get hatRenkKirmizi => 'أحمر';
+
+  @override
+  String get hatRenkMavi => 'أزرق';
+
+  @override
+  String get hatRenkMor => 'بنفسجي';
+
+  @override
+  String get hatRenkTuruncu => 'برتقالي';
+
+  @override
+  String get hatRenkYesil => 'أخضر';
+
+  @override
+  String get hatSekmeHatirlatmalarim => 'تذكيراتي';
+
+  @override
+  String get hatSekmeTakvim => 'التقويم';
+
+  @override
+  String get hatSilBaslik => 'حذف التذكير';
+
+  @override
+  String hatSilOnay(String baslik) {
+    return 'حذف «$baslik»؟';
+  }
+
+  @override
+  String get hatSonrakiAy => 'الشهر التالي';
+
+  @override
+  String get hatTakvimBaslik => 'التقويم';
+
+  @override
+  String get hatTekrar => 'التكرار';
+
+  @override
+  String get hatTekrarAylik => 'شهريًا';
+
+  @override
+  String get hatTekrarGunluk => 'يوميًا';
+
+  @override
+  String get hatTekrarHaftalik => 'أسبوعيًا';
+
+  @override
+  String get hatTekrarYok => 'بدون تكرار';
+
+  @override
+  String get hatTipAidat => 'موعد سداد الرسوم';
+
+  @override
+  String get hatTipDevriye => 'دورية';
+
+  @override
+  String get hatTipEtkinlik => 'فعالية';
+
+  @override
+  String get hatTipGorev => 'مهمة';
+
+  @override
+  String get hatTipHatirlatma => 'تذكير';
+
+  @override
+  String get hatTipRezervasyon => 'حجز';
+
+  @override
+  String get hatZaman => 'التاريخ والوقت';
+
+  @override
+  String get mkbBaslik => 'إيصالاتي';
+
+  @override
+  String mkbBelge(String no) {
+    return 'إيصال $no';
+  }
+
+  @override
+  String get mkbBos => 'ليس لديك إيصالات بعد.';
+
+  @override
+  String get mkbPaylas => 'مشاركة PDF';
+
+  @override
+  String get mkbPdfYok => 'ملف PDF غير جاهز بعد';
+
+  @override
+  String get kisTanilama => 'تشخيص الإشعارات';
+
+  @override
+  String get kisTanilamaEposta => 'إشعارات البريد';
+
+  @override
+  String get kisTanilamaSms => 'إشعارات الرسائل';
+
+  @override
+  String get kisTanilamaMobil => 'إشعارات الجوال';
+
+  @override
+  String get kisTanilamaDogrulandi => 'البريد مُوثَّق';
+
+  @override
+  String get kisTanilamaCihaz => 'الأجهزة المسجّلة';
+
+  @override
+  String get kisTanilamaCihazYok =>
+      'إشعارات الجوال مفعّلة لكن لا يوجد جهاز مسجّل: لم يسجّل الشخص الدخول إلى التطبيق قط، لذا لا يصله شيء.';
+
+  @override
+  String get kisOdemeKodu => 'رمز الدفع';
+
+  @override
+  String get kisAranabilir => 'السماح بالبحث بالهاتف';
+
+  @override
+  String get kisAranabilirIpucu =>
+      'فعّله إذا وافق الشخص على الاتصال به؛ يمكن للإدارة والأمن الاتصال بهذا الرقم.';
+
+  @override
+  String get kisAcik => 'مفعّل';
+
+  @override
+  String get kisKapali => 'معطّل';
+
+  @override
+  String get kisEposta => 'البريد الإلكتروني';
+
+  @override
+  String get kisKayitTamamlandi => 'اكتمل التسجيل';
+
+  @override
+  String get kisPasifBaslik => 'إلغاء التنشيط';
+
+  @override
+  String kisPasifOnay(String ad) {
+    return 'هل تريد إلغاء تنشيط $ad؟ لن يتمكن من تسجيل الدخول؛ تُحفظ سجلاته ويمكن إعادة تنشيطه.';
+  }
+
+  @override
+  String get kisSilBaslik => 'حذف الشخص';
+
+  @override
+  String kisSilOnay(String ad) {
+    return 'هل تريد حذف $ad؟ بدون سجل يُحذف الحساب بالكامل؛ ومع وجود سجل تُخفى هويته وتُحفظ السجلات. لا يمكن التراجع — استخدم إلغاء التنشيط لإغلاق الوصول مؤقتًا.';
+  }
+
+  @override
+  String kisSilindi(String ad) {
+    return 'تم حذف $ad.';
+  }
+
+  @override
+  String kisAnonimlestirildi(String ad) {
+    return 'لدى $ad سجلات سابقة، لذا أُخفيت هويته مع الحفاظ على السجلات.';
+  }
+
+  @override
+  String get kisEkBaslik => 'الملاحظات والمرفقات';
+
+  @override
+  String get kisEkYok => 'لا توجد ملاحظات أو مرفقات بعد.';
+
+  @override
+  String get kisEkNotYer => 'أضف ملاحظة';
+
+  @override
+  String get kisEkSilBaslik => 'حذف المرفق';
+
+  @override
+  String kisEkSilOnay(String ad) {
+    return 'هل تريد حذف «$ad»؟ لا يمكن التراجع عن ذلك.';
+  }
+
+  @override
+  String get kisEkSilindi => 'تم حذف المرفق.';
+
+  @override
+  String get kisAdimDuzenle => 'تعديل الخطوة';
+
+  @override
+  String get kisAdimAdi => 'اسم الخطوة';
+
+  @override
+  String get kisTumu => 'الكل';
+
+  @override
+  String get kisPanikKapanisNotu => 'ملاحظة الإغلاق (اختياري)';
+
+  @override
+  String get kisYalnizIceride => 'الموجودون بالداخل فقط';
+
+  @override
+  String get kisDisHizmetAra => 'ابحث بالاسم أو النوع أو الهاتف';
+
+  @override
+  String get kisRezTumAlanlar => 'جميع المرافق';
+
+  @override
+  String get kisSuzgecTemizle => 'مسح عامل التصفية';
+
+  @override
+  String get kisSuzgecSonucYok => 'لا توجد سجلات مطابقة لعامل التصفية.';
+
+  @override
+  String get kisTarihAraligi => 'نطاق التاريخ';
+
+  @override
+  String get hatBosRehber => 'اضغط \"+\" لإضافة ملاحظة أو تذكير لنفسك.';
 }

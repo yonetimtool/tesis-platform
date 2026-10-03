@@ -313,7 +313,12 @@ void main() {
       _personelEkrani(const Locale('en'), items: [_personel(aktif: false)]),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Inactive'), findsOneWidget);
+    // (P253 Asama 1) Ustteki durum suzgecinde de "Inactive" var: rozet
+    // KARTIN icinde aranir.
+    expect(
+      find.descendant(of: find.byType(Card), matching: find.text('Inactive')),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byType(PopupMenuButton<String>));
     await tester.pumpAndSettle();

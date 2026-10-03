@@ -23,6 +23,7 @@ import '../../nfc/presentation/nfc_hata_metni.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/izin/belirgin_aciklama.dart';
 import 'durum_rozeti.dart';
+import '../../ekler/presentation/ek_listesi.dart';
 
 /// Gorev detayi + tamamlama akisi: NFC (gorevde etiket tanimliysa) → foto
 /// kaniti (opsiyonel; cek → presign → PUT) → not → "Tamamla".
@@ -150,6 +151,10 @@ class TaskDetailScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           _TamamlamaGecmisi(taskId: task.id, yonetebilir: canManage),
+          // (P253 Asama 1) NOTLAR VE EKLER — web gorev detayindaki
+          // `Ekler` ile ayni ortak uc; ek silme her yuzeyde.
+          const SizedBox(height: 16),
+          EkListesi(varlikTipi: 'task', varlikId: task.id),
         ],
       ),
     );
@@ -777,6 +782,24 @@ class _AdimlarKartiState extends ConsumerState<_AdimlarKarti> {
     }
   }
 
+  Future<void> _adimDuzenle(TaskStep adim) async {
+    final sonuc = await showDialog<(String, bool)>(
+      context: context,
+      builder: (_) => _AdimDuzenleDiyalogu(adim: adim),
+    );
+    if (sonuc == null) return;
+    final (ad, foto) = sonuc;
+    await _sar(
+      adimId: adim.id,
+      () => ref.read(taskApiProvider).updateStep(
+            widget.task.id,
+            adim.id,
+            ad: ad == adim.ad ? null : ad,
+            fotoZorunlu: foto == adim.fotoZorunlu ? null : foto,
+          ),
+    );
+  }
+
   /// FOTOGRAFLI TAMAMLAMA: presign -> PUT -> foto_key (tamamlama akisiyla
   /// AYNI desen; kopyalanan sey yalnizca uc adi).
   Future<void> _fotoylaTamamla(TaskStep adim) async {
@@ -896,6 +919,12 @@ class _AdimlarKartiState extends ConsumerState<_AdimlarKarti> {
               for (final a in liste)
                 ListTile(
                   key: Key('gorev-adim-${a.id}'),
+                  // (P253 Asama 1) ADIM DUZENLE — yonetim, acik adimda.
+                  // Satira dokunma: sagdaki dugme seridi zaten dolu
+                  // (yerlesim kilidi `gorev_detay`).
+                  onTap: widget.yonetebilir && !a.tamamlandi && _mesgulAdim == null
+                      ? () => _adimDuzenle(a)
+                      : null,
                   leading: Icon(
                     a.tamamlandi
                         ? Icons.check_circle
@@ -1128,6 +1157,73 @@ class _TakipKartiState extends ConsumerState<_TakipKarti> {
           ],
         ),
       ),
+    );
+  }
+}
+
+
+/// (P253 Asama 1) Adim duzenle: ad + "foto zorunlu". Degisiklik yoksa
+/// Kaydet pasif (sunucu bos govdeyi 422 ile reddeder).
+class _AdimDuzenleDiyalogu extends StatefulWidget {
+  const _AdimDuzenleDiyalogu({required this.adim});
+
+  final TaskStep adim;
+
+  @override
+  State<_AdimDuzenleDiyalogu> createState() => _AdimDuzenleDiyaloguState();
+}
+
+class _AdimDuzenleDiyaloguState extends State<_AdimDuzenleDiyalogu> {
+  late final _ad = TextEditingController(text: widget.adim.ad);
+  late bool _foto = widget.adim.fotoZorunlu;
+
+  @override
+  void dispose() {
+    _ad.dispose();
+    super.dispose();
+  }
+
+  bool get _degisti =>
+      _ad.text.trim().isNotEmpty &&
+      (_ad.text.trim() != widget.adim.ad || _foto != widget.adim.fotoZorunlu);
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AlertDialog(
+      title: Text(l10n.kisAdimDuzenle),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            key: const Key('gorev-adim-duzenle-ad'),
+            controller: _ad,
+            maxLength: 200,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(labelText: l10n.kisAdimAdi),
+          ),
+          SwitchListTile(
+            key: const Key('gorev-adim-duzenle-foto'),
+            contentPadding: EdgeInsets.zero,
+            value: _foto,
+            onChanged: (v) => setState(() => _foto = v),
+            title: Text(l10n.gorevAdimFotoZorunlu),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.ortakVazgec),
+        ),
+        FilledButton(
+          key: const Key('gorev-adim-duzenle-kaydet'),
+          onPressed: _degisti
+              ? () => Navigator.of(context).pop((_ad.text.trim(), _foto))
+              : null,
+          child: Text(l10n.ortakKaydet),
+        ),
+      ],
     );
   }
 }

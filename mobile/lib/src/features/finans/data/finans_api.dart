@@ -140,6 +140,8 @@ class FinansApi {
     String? unitId,
     String? aciklama,
     String yontem = 'elden',
+    DateTime? tarih,
+    String? belgeNo,
   }) async {
     try {
       await _dio.post<Map<String, dynamic>>(
@@ -151,6 +153,10 @@ class FinansApi {
           'unit_id': ?unitId,
           'aciklama': ?aciklama,
           'yontem': yontem,
+          // (P253 Asama 1) Web formuyla AYNI alanlar. Bos belge no
+          // GONDERILMEZ: sunucu merkezi seriyi kendisi uretir.
+          'tarih': ?_gun(tarih),
+          'belge_no': ?belgeNo,
         },
         options: Options(headers: {'Idempotency-Key': idempotencyKey}),
       );
@@ -239,6 +245,10 @@ class FinansApi {
     required String idempotencyKey,
     String? giderTuruId,
     String? aciklama,
+    String tip = 'gider',
+    DateTime? tarih,
+    String? belgeNo,
+    String? firmaId,
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
@@ -246,7 +256,11 @@ class FinansApi {
         data: {
           'satirlar': [
             {
-              'tip': 'gider',
+              // (P253 Asama 1) gider | gelir — gelir girisi gider ekraninda.
+              'tip': tip,
+              'tarih': ?_gun(tarih),
+              'belge_no': ?belgeNo,
+              'firma_id': ?firmaId,
               'kasa_id': kasaId,
               'tutar_kurus': tutarKurus,
               'durum': durum,
@@ -259,6 +273,126 @@ class FinansApi {
       );
       final ilk = ((res.data?['items'] as List?) ?? const []).firstOrNull;
       return ilk is Map ? ilk['id'] as String? : null;
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  // ------------------- (P253 Asama 1) finans defteri ------------------------ #
+
+  static String? _gun(DateTime? t) => t == null
+      ? null
+      : '${t.year.toString().padLeft(4, '0')}-${t.month.toString().padLeft(2, '0')}-'
+          '${t.day.toString().padLeft(2, '0')}';
+
+  /// Hareket listesi — web `/finans` ile AYNI uc ve suzgecler (`tip`,
+  /// `kasa_id`). Sunucu siralar (tarih azalan).
+  Future<({List<FinansHareketi> items, int toplam})> hareketler({
+    String? tip,
+    String? kasaId,
+    int limit = 30,
+    int offset = 0,
+  }) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/finans/hareketler',
+        queryParameters: {
+          'tip': ?tip,
+          'kasa_id': ?kasaId,
+          'limit': limit,
+          'offset': offset,
+        },
+      );
+      final data = res.data ?? const {};
+      return (
+        items: ((data['items'] as List?) ?? const [])
+            .whereType<Map>()
+            .map((m) => FinansHareketi.fromJson(Map<String, dynamic>.from(m)))
+            .toList(),
+        toplam: ((data['meta'] as Map?)?['total'] as num?)?.toInt() ?? 0,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  Future<KasaBakiyeleri> kasaBakiyeleri() async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>('/finans/kasa-bakiyeleri');
+      return KasaBakiyeleri.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  Future<FinansOzeti> ozet() async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>('/finans/ozet');
+      return FinansOzeti.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (P253 §C) Onay bekleyen hareketi ONAYLA — o an gerceklesmis sayilir.
+  Future<void> hareketOnayla(String id) async {
+    try {
+      await _dio.post<Map<String, dynamic>>('/finans/hareketler/$id/onayla', data: const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (P253 §C-2) REDDET — sebep ZORUNLU (`aciklama`); sunucu da denetler.
+  Future<void> hareketReddet(String id, String sebep) async {
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        '/finans/hareketler/$id/reddet',
+        data: {'aciklama': sebep},
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  Future<List<OtomasyonGunlukSatiri>> otomasyonGunlugu({int limit = 50}) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/otomasyon-gunlugu',
+        queryParameters: {'limit': limit},
+      );
+      return ((res.data?['items'] as List?) ?? const [])
+          .whereType<Map>()
+          .map((m) => OtomasyonGunlukSatiri.fromJson(Map<String, dynamic>.from(m)))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  Future<HatirlatmaGecmisi> hatirlatmaGecmisi({int limit = 50}) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/finans/hatirlatma-gecmisi',
+        queryParameters: {'limit': limit},
+      );
+      return HatirlatmaGecmisi.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// Gider/gelir satirinin firmasi — web hareket formuyla AYNI liste.
+  Future<List<Firma>> firmalar() async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/firmalar',
+        queryParameters: {'limit': 200},
+      );
+      return ((res.data?['items'] as List?) ?? const [])
+          .whereType<Map>()
+          .map((m) => Firma.fromJson(Map<String, dynamic>.from(m)))
+          .toList();
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

@@ -14,6 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile/src/features/auth/data/current_user_provider.dart';
 import 'package:mobile/src/features/auth/domain/user_role.dart';
+import 'package:mobile/src/features/ekler/data/ek_api.dart';
 import 'package:mobile/src/features/tasks/data/task_api.dart';
 import 'package:mobile/src/features/tasks/data/task_category_api.dart';
 import 'package:mobile/src/features/tasks/domain/task_models.dart';
@@ -91,6 +92,13 @@ class _SahteListe extends TasksController {
   Future<void> refresh({bool silent = false}) async {}
 }
 
+class _BosEkApi extends EkApi {
+  _BosEkApi() : super(Dio());
+
+  @override
+  Future<List<Ek>> listele(String varlikTipi, String varlikId) async => const [];
+}
+
 void main() {
   testWidgets('MOBIL-7: kamera izni reddi YAKALANIR ve metin gosterilir',
       (tester) async {
@@ -103,6 +111,8 @@ void main() {
           currentUserRoleProvider.overrideWith((ref) async => UserRole.security),
           taskCategoriesProvider.overrideWith((ref) async => const []),
           tasksControllerProvider.overrideWith(_SahteListe.new),
+          // (P253 Asama 1) Gorev detayindaki "Notlar ve ekler" karti.
+          ekApiProvider.overrideWithValue(_BosEkApi()),
         ],
         child: l10nApp(
           const TaskDetailScreen(
