@@ -160,7 +160,7 @@ def test_empty_range_is_empty_not_error(client, world, owner_conn):
     plan = _plan(client, admin, [cp["id"]])
     _ins_window(owner_conn, world["a"], plan["id"], T1, T1 + HOUR)
 
-    far = datetime(2099, 1, 1, tzinfo=UTC)
+    far = datetime(2099, 1, 1, tzinfo=UTC)  # gelecek-bilerek: pencere degil, bos aralik sorgusu
     r = client.get("/patrol-windows", headers=admin, params={"baslangic": far.isoformat()})
     assert r.status_code == 200
     assert r.json()["items"] == []

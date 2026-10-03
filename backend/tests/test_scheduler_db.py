@@ -7,7 +7,7 @@ Veri owner (psycopg, RLS bypass) ile kurulur; service fonksiyonlari OWNER_DSN
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, time, timezone
+from datetime import datetime, time, timedelta, timezone
 from types import SimpleNamespace
 
 import pytest
@@ -18,9 +18,17 @@ from app.scheduler.service import detect_missed, materialize_windows
 UTC = timezone.utc
 
 # Bitmis pencere senaryolari icin sabit gecmis aralik + gelecekteki "now".
-W_START = datetime(2029, 12, 31, 0, 0, tzinfo=UTC)
-W_END = datetime(2029, 12, 31, 1, 0, tzinfo=UTC)
-NOW_AFTER = datetime(2030, 1, 1, 0, 0, tzinfo=UTC)
+# (P253 A2) PENCERELER GERCEK GECMISTE — `test_dashboard` (P248) ile ayni
+# kok neden: saat basi calisan `generate_patrol_windows`, aktif planin
+# GELECEKTEKI ve takvime uymayan 'bekliyor' pencerelerini siler (dogru urun
+# davranisi). 2029 tarihli "gecmis" pencere gercek saate gore GELECEKTIR;
+# uretec test ile `detect_missed` arasina girerse pencere silinir ve
+# bildirim hic yazilmaz (tam takimda `test_mark_read_and_isolation`
+# StopIteration — olculdu). Gercek gecmise uretec dokunmaz.
+_TABAN = (datetime.now(UTC) - timedelta(days=2)).replace(hour=0, minute=0, second=0, microsecond=0)
+W_START = _TABAN.replace(hour=0, minute=0)
+W_END = _TABAN.replace(hour=1, minute=0)
+NOW_AFTER = _TABAN + timedelta(days=1)
 
 
 # ------------------------------- yardimcilar ------------------------------- #
@@ -239,8 +247,8 @@ def test_completed_marks_tamamlandi_no_notify(sched, notify_spy):
     _assign(sched.conn, sched.tid, pid, c2, 1)
     wid = _window(sched.conn, sched.tid, pid)
     # her iki checkpoint pencere araliginda okutuldu
-    _scan(sched.conn, sched.tid, sched.gid, c1, datetime(2029, 12, 31, 0, 30, tzinfo=UTC))
-    _scan(sched.conn, sched.tid, sched.gid, c2, datetime(2029, 12, 31, 0, 40, tzinfo=UTC))
+    _scan(sched.conn, sched.tid, sched.gid, c1, _TABAN.replace(hour=0, minute=30))
+    _scan(sched.conn, sched.tid, sched.gid, c2, _TABAN.replace(hour=0, minute=40))
 
     detect_missed(now=NOW_AFTER)
 
@@ -262,7 +270,7 @@ def test_tenant_isolation_in_detection(owner_conn, notify_spy):
         wid_a = _window(owner_conn, a, pid_a)  # A: scan yok -> kacirildi
         wid_b = _window(owner_conn, b, pid_b)  # B: scan var -> tamamlandi
         gid_b = _guard(owner_conn, b)
-        _scan(owner_conn, b, gid_b, cp_b, datetime(2029, 12, 31, 0, 30, tzinfo=UTC))
+        _scan(owner_conn, b, gid_b, cp_b, _TABAN.replace(hour=0, minute=30))
 
         detect_missed(now=NOW_AFTER)
 

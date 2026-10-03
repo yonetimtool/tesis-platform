@@ -12,8 +12,12 @@ from app.scheduler.service import detect_gecikmis
 from app.tur_alarm import alarm_gecikmeleri, gecen_dakika, vadesi_gelen_adim
 
 UTC = timezone.utc
-W_START = datetime(2029, 12, 31, 0, 0, tzinfo=UTC)
-W_END = datetime(2029, 12, 31, 1, 0, tzinfo=UTC)
+# (P253 A2) Pencere GERCEK GECMISTE (bkz. test_notifications): 2029 tarihli
+# pencere gercek saate gore gelecektir ve saat basi uretec onu takvim disi
+# diye silebilir.
+_TABAN = (datetime.now(UTC) - timedelta(days=2)).replace(hour=0, minute=0, second=0, microsecond=0)
+W_START = _TABAN
+W_END = _TABAN + timedelta(hours=1)
 
 
 # ============================ SAF CEKIRDEK ================================== #

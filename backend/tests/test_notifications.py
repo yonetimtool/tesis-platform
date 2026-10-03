@@ -2,14 +2,22 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from app.scheduler.service import detect_missed
 
 UTC = timezone.utc
-PAST_START = datetime(2029, 12, 31, 0, 0, tzinfo=UTC)
-PAST_END = datetime(2029, 12, 31, 1, 0, tzinfo=UTC)
-NOW_AFTER = datetime(2030, 1, 1, 0, 0, tzinfo=UTC)
+# (P253 A2) PENCERELER GERCEK GECMISTE — `test_dashboard` (P248) ile ayni
+# kok neden: saat basi calisan `generate_patrol_windows`, aktif planin
+# GELECEKTEKI ve takvime uymayan 'bekliyor' pencerelerini siler (dogru urun
+# davranisi). 2029 tarihli "gecmis" pencere gercek saate gore GELECEKTIR;
+# uretec test ile `detect_missed` arasina girerse pencere silinir ve
+# bildirim hic yazilmaz (tam takimda `test_mark_read_and_isolation`
+# StopIteration — olculdu). Gercek gecmise uretec dokunmaz.
+_TABAN = (datetime.now(UTC) - timedelta(days=2)).replace(hour=0, minute=0, second=0, microsecond=0)
+PAST_START = _TABAN.replace(hour=0, minute=0)
+PAST_END = _TABAN.replace(hour=1, minute=0)
+NOW_AFTER = _TABAN + timedelta(days=1)
 
 
 def _headers(client, slug, cred):
@@ -100,7 +108,7 @@ def test_list_notifications_and_okundu_filter(client, world, owner_conn):
     assert r.status_code == 200, r.text
     body = r.json()
     assert {"meta", "items"} <= set(body)
-    # (P251) TUM SAYFALAR taranir: `detect_missed(2030)` tesisteki BUTUN
+    # (P251) TUM SAYFALAR taranir: `detect_missed(taban+1g)` tesisteki BUTUN
     # bekleyen pencereler icin ayni anda bildirim uretir; tam takimda 50'yi
     # asar ve ayni zaman damgasinda sira `id`ye kalir — ilk sayfa yetmez.
     item = next((n for n in _tum_bildirimler(client, admin)
@@ -162,3 +170,42 @@ def test_mark_read_and_isolation(client, world, owner_conn):
         n["id"] == nid
         for n in client.get("/notifications", headers=admin_a, params={"okundu": True}).json()["items"]
     )
+
+
+# ------------------- (P253 A2) uretec araya girerse ------------------------- #
+def test_URETEC_ARAYA_GIRSE_DE_bildirim_yazilir(client, world, owner_conn):
+    """Kararsizligin KOK NEDENI: saat basi `materialize_windows` test ile
+    `detect_missed` arasina girince 2029 tarihli (gercekte GELECEK) pencere
+    takvim disi sayilip siliniyordu. Taban gercek gecmiste: uretec dokunmaz."""
+    from app.scheduler.service import materialize_windows
+
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    cp = _checkpoint(client, admin)
+    plan = _plan(client, admin, [cp["id"]])
+    wid = _past_window(owner_conn, world["a"], plan["id"])
+    materialize_windows()
+    detect_missed(now=NOW_AFTER)
+    assert _notif_count(owner_conn, wid) == 1
+
+
+def test_PENCERE_TESTLERINDE_SABIT_GELECEK_TARIH_YOK():
+    """Ayni sinif uc kez dondu (P248 dashboard, P253 notifications/scans/
+    scheduler_db). Pencere ya da okutma kuran bir test SABIT bir gelecek
+    tarihi "gecmis" diye kullanamaz (2029 ve sonrasi sabit yil). Bilerek
+    gelecek olan satir `gelecek-bilerek` isaretini tasir."""
+    import pathlib
+    import re
+
+    desen = re.compile(r"datetime\(20[3-9]\d|datetime\(2029|[\"']20(29|[3-9]\d)-\d\d-\d\d")
+    suclu = []
+    for f in sorted(pathlib.Path(__file__).parent.glob("test_*.py")):
+        metin = f.read_text(encoding="utf-8")
+        if "patrol_window" not in metin and "detect_missed" not in metin:
+            continue
+        for i, satir in enumerate(metin.splitlines(), 1):
+            if (satir.lstrip().startswith("#") or "desen = re.compile" in satir
+                    or "gelecek-bilerek" in satir):
+                continue
+            if desen.search(satir):
+                suclu.append(f"{f.name}:{i}: {satir.strip()}")
+    assert not suclu, "Gercek gecmise bagli taban kullanin (_TABAN):\n" + "\n".join(suclu)

@@ -6,17 +6,25 @@ scan + scheduler.detect_missed birlikte calisir.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from app.scheduler.service import detect_missed
 
 UTC = timezone.utc
 # Gecmis pencere araligi + sonrasinda "now" (detect icin).
-W1_START = datetime(2029, 12, 31, 0, 0, tzinfo=UTC)
-W1_END = datetime(2029, 12, 31, 1, 0, tzinfo=UTC)
-W2_START = datetime(2029, 12, 31, 1, 0, tzinfo=UTC)
-W2_END = datetime(2029, 12, 31, 2, 0, tzinfo=UTC)
-NOW_AFTER = datetime(2030, 1, 1, 0, 0, tzinfo=UTC)
+# (P253 A2) PENCERELER GERCEK GECMISTE — `test_dashboard` (P248) ile ayni
+# kok neden: saat basi calisan `generate_patrol_windows`, aktif planin
+# GELECEKTEKI ve takvime uymayan 'bekliyor' pencerelerini siler (dogru urun
+# davranisi). 2029 tarihli "gecmis" pencere gercek saate gore GELECEKTIR;
+# uretec test ile `detect_missed` arasina girerse pencere silinir ve
+# bildirim hic yazilmaz (tam takimda `test_mark_read_and_isolation`
+# StopIteration — olculdu). Gercek gecmise uretec dokunmaz.
+_TABAN = (datetime.now(UTC) - timedelta(days=2)).replace(hour=0, minute=0, second=0, microsecond=0)
+W1_START = _TABAN.replace(hour=0, minute=0)
+W1_END = _TABAN.replace(hour=1, minute=0)
+W2_START = _TABAN.replace(hour=1, minute=0)
+W2_END = _TABAN.replace(hour=2, minute=0)
+NOW_AFTER = _TABAN + timedelta(days=1)
 
 
 def _headers(client, slug, cred):
@@ -160,7 +168,7 @@ def test_e2e_scan_completes_window_and_missing_is_missed(client, world, owner_co
         )
 
     # W1: her iki checkpoint pencere araliginda okutuldu (scan API ile)
-    for cp, t in [(cp1, "2029-12-31T00:20:00Z"), (cp2, "2029-12-31T00:40:00Z")]:
+    for cp, t in [(cp1, _TABAN.replace(minute=20).isoformat()), (cp2, _TABAN.replace(minute=40).isoformat())]:
         r = client.post(
             "/scans",
             headers={**guard, "Idempotency-Key": uuid.uuid4().hex},
@@ -205,7 +213,7 @@ def test_scans_report_yonetici_sees_who_what_when(client, world):
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
     guard = _headers(client, world["slug_a"], world["guard_a"])
     cp = _new_checkpoint(client, yon)  # yonetici tanimlar
-    when = datetime(2029, 12, 31, 9, 30, tzinfo=UTC)  # 12:30 Istanbul, 2029-12-31
+    when = _TABAN.replace(hour=9, minute=30)  # 12:30 Istanbul, taban gunu
     r = client.post(
         "/scans", headers={**guard, "Idempotency-Key": uuid.uuid4().hex},
         json=_scan_body(cp["nfc_tag_uid"], when=when),
@@ -213,19 +221,19 @@ def test_scans_report_yonetici_sees_who_what_when(client, world):
     assert r.status_code == 201, r.text
     guard_id = client.get("/me", headers=guard).json()["id"]
 
-    rep = client.get("/scans", headers=yon, params={"tarih": "2029-12-31"})
+    rep = client.get("/scans", headers=yon, params={"tarih": _TABAN.date().isoformat()})
     assert rep.status_code == 200, rep.text
     body = rep.json()
-    assert body["tarih"] == "2029-12-31"
+    assert body["tarih"] == _TABAN.date().isoformat()
     match = [it for it in body["items"] if it["checkpoint_id"] == cp["id"]]
     assert len(match) == 1, body
     it = match[0]
     assert it["checkpoint_ad"] == "CP"               # hangi nokta
     assert it["guard_id"] == guard_id and it["guard_ad"]  # kim
-    assert it["okutma_zamani"].startswith("2029-12-31T09:30")  # ne zaman
+    assert it["okutma_zamani"].startswith(f"{_TABAN.date().isoformat()}T09:30")  # ne zaman
 
     # baska gun -> o kayit yok
-    empty = client.get("/scans", headers=yon, params={"tarih": "2029-12-30"}).json()
+    empty = client.get("/scans", headers=yon, params={"tarih": (_TABAN - timedelta(days=1)).date().isoformat()}).json()
     assert all(it["checkpoint_id"] != cp["id"] for it in empty["items"])
 
 
@@ -234,7 +242,7 @@ def test_scans_report_rbac(client, world):
     for role in ("guard_a", "gorevli_a", "resident_a"):
         h = _headers(client, world["slug_a"], world[role])
         assert client.get(
-            "/scans", headers=h, params={"tarih": "2029-12-31"}
+            "/scans", headers=h, params={"tarih": _TABAN.date().isoformat()}
         ).status_code == 403, role
     # admin + yonetici -> 200
     for role in ("admin_a", "yonetici_a"):
