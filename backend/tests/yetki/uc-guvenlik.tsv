@@ -402,6 +402,7 @@ POST	/mesaj-sablonlari	zorunlu	tesis	-	-	ozel	-	-		dar
 GET	/mesaj-sablonlari/hazir	zorunlu	tesis	-	-	-	-	-		dar
 DELETE	/mesaj-sablonlari/{sablon_id}	zorunlu	tesis	rol	-	ozel	-	-		-
 PATCH	/mesaj-sablonlari/{sablon_id}	zorunlu	tesis	rol	-	ozel	-	-		dar
+POST	/mesajlar/alicilar	zorunlu	tesis	-	-	genel	-	-		dar
 GET	/mesajlar/gecmis	zorunlu	tesis	-	-	-	-	-		dar
 POST	/mesajlar/gonder	zorunlu	tesis	-	-	ozel	-	-		dar
 POST	/mesajlar/onizleme	zorunlu	tesis	-	-	genel	-	-		dar

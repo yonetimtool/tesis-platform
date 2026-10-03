@@ -8551,8 +8551,30 @@ class MesajTestSonuc(BaseModel):
     hata: str | None = None
 
 
+class MesajAliciOzeti(BaseModel):
+    """(P253 §B) Gonderim ONCESI ozet — onay ekrani icin."""
+
+    kanal: str
+    amac: str
+    #: Suzgece uyan kisi sayisi.
+    toplam: int
+    #: Gercekten gonderilecek (riza ve adres tamam).
+    gonderilecek: int
+    riza_yok: int
+    adres_yok: int
+    #: Kanal yapilandirilmis mi; degilse gonderim "gonderilemedi" doner.
+    kanal_hazir: bool
+    #: Gunluk kotadan kalan (sinirsizsa null).
+    kota_kalan: int | None = None
+
+
 class MesajGonderSonuc(BaseModel):
     gonderildi: int
+    #: (P253 §B) Ilk deneme basarisiz, KUYRUKTA yeniden denenecek.
+    kuyrukta: int = 0
+    #: (P253 §B) Kanal yapilandirilmamis — mesaj GITMEDI.
+    gonderilemedi: int = 0
+    #: Geriye uyumluluk: kuyrukta + gonderilemedi.
     basarisiz: int
     #: Riza YOKLUGU nedeniyle atlananlar — sessizce dusurulmez, SAYILIR.
     riza_yok: int

@@ -83,10 +83,12 @@ describe("Mesaj sayfasi", () => {
     fetchSahtele({
       "/api/panel/mesaj-sablonlari": SABLONLAR,
       "/api/panel/mesaj-gecmis": GECMIS,
+      // (P253 §B) GERCEK SUNUCU BICIMI: sayac `sms` altinda. Eski sahte
+      // yanit sayaci ust duzeyde veriyordu ve web'in yanlis bicimi
+      // OKUDUGU gizleniyordu (gercek sunucu 422 donuyordu).
       "/api/panel/mesaj-onizleme": {
-        konu: null, govde: "Sayın Ali",
-        karakter: 9, unicode_mi: true, parca: 1, kalan: 61,
-        zorlayan: ["ı", "ş"],
+        konu: null, govde: "Sayın Ali", etiketler: [], bilinmeyen_etiketler: [],
+        sms: { karakter: 9, unicode_mi: true, parca: 1, kalan: 61, zorlayan: ["ı", "ş"] },
       },
     });
     ciz(MesajlarPage);
@@ -95,6 +97,12 @@ describe("Mesaj sayfasi", () => {
     );
 
     await userEvent.selectOptions(screen.getByLabelText("Şablon"), "s1");
+    const istekler: { url: string; govde: unknown }[] = [];
+    const eski = globalThis.fetch;
+    globalThis.fetch = (async (g: RequestInfo | URL, init?: RequestInit) => {
+      istekler.push({ url: String(g), govde: init?.body ? JSON.parse(String(init.body)) : null });
+      return eski(g, init);
+    }) as typeof fetch;
     await userEvent.click(screen.getByRole("button", { name: "Önizle" }));
 
     await waitFor(() => expect(screen.getByText("Sayın Ali")).toBeInTheDocument());
@@ -107,6 +115,10 @@ describe("Mesaj sayfasi", () => {
     // kullanicinin metne bakip tahmin etmesine birakmak sayaci yarim
     // gostermek olurdu.
     expect(screen.getByText("ı ş")).toBeInTheDocument();
+    // Sunucu sozlesmesi: onizleme GOVDEYI tasir (yalniz sablon kimligi 422).
+    const on = istekler.find((x) => x.url.startsWith("/api/panel/mesaj-onizleme"));
+    expect(on?.url).toContain("kanal=sms");
+    expect(on?.govde).toEqual({ govde: "Sayın {adi_soyadi}", konu: null });
   });
 
   it("AD ve GOVDE bos ise istek ATILMAZ", async () => {

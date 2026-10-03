@@ -282,4 +282,8 @@ def test_OPERASYONEL_mesaj_riza_ISTEMEZ(client, rol):
     sakin_id = client.get("/me", headers=rol["sakin"]).json()["id"]
     r = client.post("/mesajlar/gonder", headers=rol["yonetici"], json={
         "sablon_id": sid, "user_ids": [sakin_id]})
-    assert r.json()["gonderildi"] == 1 and r.json()["riza_yok"] == 0
+    # (P253 §B) Riza ISTENMEDI = alici atlanmadi; dev'de kanal yok ->
+    # `gonderilemedi` (eskiden yanlislikla "gonderildi" sayiliyordu).
+    j = r.json()
+    assert j["riza_yok"] == 0
+    assert j["gonderildi"] + j["kuyrukta"] + j["gonderilemedi"] == 1

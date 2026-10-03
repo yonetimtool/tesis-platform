@@ -11548,6 +11548,26 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "422": { $ref: "#/components/responses/ValidationError" }
+  /mesajlar/alicilar:
+    post:
+      tags: [mesajlar]
+      summary: (P253 §B) Gonderim oncesi alici ozeti — hicbir sey gondermez
+      description: Onay ekrani icin "N kisiye gidecek" + atlananlar + kanal hazir mi + kota. Gonderimle ayni siniflandirma.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MesajGonderIstek" }
+      responses:
+        "200":
+          description: Ozet
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MesajAliciOzeti" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /mesajlar/gonder:
     post:
       tags: [mesajlar]
@@ -23473,11 +23493,26 @@ components:
       required: [gonderildi, basarisiz, riza_yok, adres_yok]
       properties:
         gonderildi: { type: integer }
-        basarisiz: { type: integer }
+        kuyrukta: { type: integer, description: "(P253) Ilk deneme basarisiz; kuyrukta yeniden denenecek" }
+        gonderilemedi: { type: integer, description: "(P253) Kanal yapilandirilmamis — mesaj GITMEDI (eskiden gonderildi sayiliyordu)" }
+        basarisiz: { type: integer, description: "Geriye uyumluluk: kuyrukta + gonderilemedi" }
         riza_yok:
           type: integer
           description: Pazarlama rizasi olmadigi icin ATLANANLAR (sessizce dusurulmez)
         adres_yok: { type: integer, description: Telefonu/e-postasi olmayanlar }
+    MesajAliciOzeti:
+      type: object
+      description: (P253 §B) Gonderim ONCESI ozet — onay ekrani. Gonderimle AYNI kural.
+      required: [kanal, amac, toplam, gonderilecek, riza_yok, adres_yok, kanal_hazir]
+      properties:
+        kanal: { type: string }
+        amac: { type: string }
+        toplam: { type: integer }
+        gonderilecek: { type: integer }
+        riza_yok: { type: integer }
+        adres_yok: { type: integer }
+        kanal_hazir: { type: boolean }
+        kota_kalan: { type: integer, nullable: true }
     MesajGonderim:
       type: object
       required: [id, kanal, amac, hedef, govde, durum, created_at]

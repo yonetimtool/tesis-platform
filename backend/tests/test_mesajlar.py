@@ -181,11 +181,14 @@ def test_gonderim_GECMISE_COZULMUS_metni_yazar(client, adm, world):
     r = client.post("/mesajlar/gonder", headers=adm, json={
         "sablon_id": sablon["id"], "user_ids": hedef})
     assert r.status_code == 201, r.text
-    assert r.json()["gonderildi"] + r.json()["adres_yok"] == len(hedef)
+    j = r.json()
+    # (P253 §B) Her alici TAM BIR sayacta: gonderildi / kuyrukta /
+    # gonderilemedi (kanal yapilandirilmamis) / adres_yok.
+    assert j["gonderildi"] + j["kuyrukta"] + j["gonderilemedi"] + j["adres_yok"] == len(hedef)
 
     gecmis = client.get("/mesajlar/gecmis", headers=adm,
                         params={"kanal": "eposta", "limit": 50}).json()["items"]
-    if r.json()["gonderildi"]:
+    if j["gonderildi"] + j["gonderilemedi"]:
         kayit = gecmis[0]
         assert "{adi_soyadi}" not in kayit["govde"], "etiket cozulmemis"
         # (P168 §4) `yapilandirilmadi` EKLENDI ve testte de olmali:

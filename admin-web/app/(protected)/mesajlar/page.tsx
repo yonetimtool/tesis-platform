@@ -17,6 +17,7 @@ import {
   Secim,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
+import { GonderimKarti } from "@/components/mesajlar/gonderim-karti";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { BagimlilikUyarisi } from "@/components/BagimlilikUyarisi";
@@ -74,15 +75,6 @@ interface Sablon {
   amac: string;
   aktif: boolean;
 }
-interface Onizleme {
-  konu: string | null;
-  govde: string;
-  karakter: number;
-  unicode_mi: boolean;
-  parca: number;
-  kalan: number;
-  zorlayan: string[];
-}
 
 export default function MesajlarPage() {
   const t = useT();
@@ -117,10 +109,6 @@ export default function MesajlarPage() {
   /** (P250 §8) Hazir sablon secicisi hangi kanal icin acik. */
   const [hazirKanal, setHazirKanal] = useState<Kanal | null>(null);
 
-  // --- onizleme + gonderim ---
-  const [seciliId, setSeciliId] = useState("");
-  const [onizleme, setOnizleme] = useState<Onizleme | null>(null);
-  const [sonuc, setSonuc] = useState<Record<string, number> | null>(null);
 
   /** (P250 §8) Hazir sablon -> yeni sablon formu (duzenlenip kaydedilir). */
   function hazirSablonuKullan(s: HazirSablon): void {
@@ -176,24 +164,6 @@ export default function MesajlarPage() {
       await sablonTazele();
     } catch (e) {
       setHata(e instanceof Error ? e.message : String(e));
-    }
-  }
-
-  async function onizle(): Promise<void> {
-    setHata(null);
-    setSonuc(null);
-    if (!seciliId) return;
-    setMesgul(true);
-    try {
-      const veri = (await apiSend("/api/panel/mesaj-onizleme", "POST", {
-        sablon_id: seciliId,
-      })) as Onizleme;
-      setOnizleme(veri);
-    } catch (e) {
-      setOnizleme(null);
-      setHata(e instanceof Error ? e.message : String(e));
-    } finally {
-      setMesgul(false);
     }
   }
 
@@ -281,81 +251,10 @@ export default function MesajlarPage() {
   // saniyede on istek atmak olurdu.
   const olcum = smsOlc(govde);
 
-  /** (P168 §4.3) GONDERIM sekmesinin icerigi — onizleme + gecmis. */
+  /** (P168 §4.3 · P253 §B) GONDERIM sekmesi — onizle, kime, ONAY, gonder. */
   const gonderimIcerigi = (
     <div className="space-y-4">
-      {/* --------------------------- onizleme ------------------------------ */}
-      <Kart>
-        <h2 className="mb-3 text-sm font-semibold">{t("mesajOnizleme")}</h2>
-        <div className="flex flex-wrap items-end gap-3">
-          <AlanSarmal etiket={t("mesajSablon")}>
-  {(b) => (
-    <Secim {...b} value={seciliId}
-              onChange={(e) => {
-                setSeciliId(e.target.value);
-                setOnizleme(null);
-              }}
-            >
-              <option value="">—</option>
-              {(sablonlar?.items ?? []).map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.ad}
-                </option>
-              ))}</Secim>
-  )}
-</AlanSarmal>
-          <Dugme boy="kucuk" disabled={mesgul || !seciliId} onClick={onizle}>
-            {t("mesajOnizle")}
-          </Dugme>
-        </div>
-        {onizleme ? (
-          <div className="mt-3 space-y-2">
-            {/* (P244 §8d) Eski dilin renk katmanindan token'a: sinif
-                adlari ayri bir `dark:` eslemesi tasiyordu; token zaten
-                iki modda da dogru degeri veriyor. */}
-            <pre
-              className="whitespace-pre-wrap rounded p-3 text-xs"
-              style={{ background: "var(--yz-surface-sunken)", color: "var(--yz-text)" }}
-            >
-              {onizleme.govde}
-            </pre>
-            <div className="text-xs" style={{ color: "var(--yz-text-2)" }}>
-              {t("mesajSayacKarakter")}: <b className="tabular-nums">{onizleme.karakter}</b> ·{" "}
-              {t("mesajSayacParca")}: <b className="tabular-nums">{onizleme.parca}</b> ·{" "}
-              {t("mesajSayacKalan")}: <b className="tabular-nums">{onizleme.kalan}</b>
-            </div>
-            {onizleme.unicode_mi ? (
-              // ZORLAYAN KARAKTERLER GOSTERILIR: "neden 3 SMS oldu" sorusunu
-              // kullanicinin metne bakip tahmin etmesine birakmak, sayaci
-              // yarim gostermek olurdu.
-              <div
-                className="rounded border p-2 text-xs"
-                // TASARIM SISTEMINDE "YUMUSAK TON" YOK ve bu bilincli
-                // bir bosluk degil, bilincli bir SECIM: `Rozet` de
-                // dolgu kullanmiyor, yalniz kenar + metin. Uyari
-                // isareti kenardan (`-edge`, >=3.0) ve metin renginden
-                // (`-ink`, AA) gelir; uydurma bir pastel ton eklemek
-                // koyu modda ikinci bir esleme borcu acardi.
-                style={{
-                  background: "var(--yz-surface-sunken)",
-                  borderColor: "var(--yz-warning-edge)",
-                  color: "var(--yz-warning-ink)",
-                }}
-              >
-                {t("mesajUnicodeUyari")} <b>{onizleme.zorlayan.join(" ")}</b>
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-        {sonuc ? (
-          <div className="mt-3 text-xs" style={{ color: "var(--yz-text-2)" }}>
-            {t("mesajSonucGonderildi")}: {sonuc.gonderildi} · {t("mesajSonucRizaYok")}:{" "}
-            {sonuc.riza_yok} · {t("mesajSonucAdresYok")}: {sonuc.adres_yok} ·{" "}
-            {t("mesajSonucBasarisiz")}: {sonuc.basarisiz}
-          </div>
-        ) : null}
-      </Kart>
-
+      <GonderimKarti sablonlar={(sablonlar?.items ?? []).filter((x) => x.aktif)} />
     </div>
   );
 

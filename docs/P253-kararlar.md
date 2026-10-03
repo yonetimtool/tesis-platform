@@ -47,6 +47,67 @@ hepsi bu kurala uyar:
    * Başlıksız istek `bilinmiyor` olarak yazılır.
    * Aşama 1'in ilk işi; ortak `audit_user` yardımcısında tek yerden.
 
+## §B — Aşama 0
+
+### Web toplu mesaj gönderimi
+
+**Ölçüm: web'den toplu mesaj hiç gönderilemiyordu.** Üç kusur üst üste
+biniyordu:
+
+1. "Gönderim" sekmesinde **gönder düğmesi yoktu**. `mesaj-gonder` BFF beyaz
+   listesinde duruyordu ama hiçbir ekran çağırmıyordu.
+2. Sekmedeki **önizleme de çalışmıyordu**.
+   * Web sunucuya yalnız `sablon_id` gönderiyordu; sunucu `govde`
+     istediği için **her önizleme 422 dönüyordu**.
+   * Yanıt biçimi de uyuşmuyordu: web sayacı üst düzeyde, sunucu `sms`
+     altında veriyor.
+   * DOM testi sahte yanıtla geçtiği için kimse görmedi.
+3. Sunucuda sağlayıcı **yapılandırılmamışken** dönen `yapilandirilmadi`
+   sonucu **"gönderildi" sayacına** ekleniyordu. API'den gönderen, gitmeyen
+   mesajı gitti sanırdı. Kayıt satırı doğru yazılıyordu, sayaç yanlıştı.
+
+**Düzeltme:**
+
+* **Yeni uç `POST /mesajlar/alicilar`:** gönderim **öncesi** özet; hiçbir
+  şey göndermez. Döndürdükleri: toplam, gönderilecek, rıza yok, adres yok,
+  kanal hazır mı, kalan kota.
+  * Gönderimle **aynı** sınıflandırma (`_hedefler`): onay ekranındaki sayı
+    gerçek olmalı.
+* **Web akışı:** şablon → kime (tüm sakinler / blok / borçlular / rol) →
+  önizle → "Gönder…" → **onay penceresi**.
+  * Pencere: "247 kişiye E-posta gidecek. Onaylıyor musunuz?", atlananlar,
+    önizleme.
+  * Kanal hazır değilse ya da kota aşılıyorsa onay düğmesi kapalı.
+  * Gönderince sonuç: gönderildi / kuyrukta (yeniden denenecek) /
+    gönderilemedi (kanal yapılandırılmamış) / rıza yok / adres yok.
+* **Sonuç sayaçları:** `kuyrukta` ve `gonderilemedi` ayrıldı. `basarisiz`
+  geriye uyumluluk için ikisinin toplamı.
+* **Kota** artık **gönderilecek** sayısıyla ölçülür: rızası ya da adresi
+  olmayanlar kotadan yemez.
+
+**"Gönderdim sanılıp gitmeyen gönderim olmuş mu?"**
+
+* **Web'den:** hayır. Web'de gönder düğmesi yoktu, önizleme de hata
+  veriyordu; kullanıcı "gönderildi" diyen bir ekran görmedi. Ama beklenen
+  duyuruların **hiç gitmemiş** olması mümkün.
+* **API'den:** olmuş olabilir. Kanal yapılandırılmamış bir tesiste gönderen
+  "gönderildi: N" görüyordu.
+* Geliştirme veritabanında elle gönderimlerin 765 satırı `yapilandirilmadi`,
+  1'i gerçekten gönderilmiş; bunlar test koşularından.
+* **Prod ölçümü kullanıcıda:** `docs/P253-mesaj-olcumu.sql` (salt okuma;
+  kişi ya da adres seçmez).
+
+**Kilit:**
+
+* `tests/p253-mesaj-gonderim.dom.test.ts`: onay ekranı, aynı süzgeç, sonuç
+  sayıları, kanal yok ya da kota aşılıyorsa düğme kapalı.
+* Eski `mesaj.dom.test.ts` artık **gerçek sunucu biçimiyle** sahteliyor ve
+  önizleme isteğinin `govde` taşıdığını doğruluyor.
+* Backend `test_p253_mesaj_gonderim.py`: özet hiçbir şey göndermez ve
+  gönderimle aynı sayıyı verir; kanal yoksa `gonderildi == 0`.
+* "Gönderildi" bekleyen iki eski test kusurun kendisine dayanıyordu;
+  kapsama ölçecek biçimde düzeltildi.
+
 ## §E — "Şimdi çalıştır" saat dilimi
 
 ### Ölçüm
@@ -95,3 +156,10 @@ hepsi bu kurala uyar:
 * **Kaynak taraması:** istek yolunda UTC "bugün" yasak; yalnız gerekçeli
   istisnalar geçer. Kırılarak doğrulandı: bir yönlendiriciye `date.today()`
   eklenince test düşüyor.
+
+### Aynı hatanın başka yerleri (tarandı)
+
+* **SMS/e-posta günlük kotası:** gün sınırı UTC'ydi ve kodda "bilinen sınır"
+  diye yazılıydı. Artık tesisin gün başı (`tesis_gun_basi`): İstanbul'da
+  00:00–03:00 arası gönderimler dünün kotasına yazılmıyor.
+* Diğer elle tetiklenen uçlar yukarıdaki listede.

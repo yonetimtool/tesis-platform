@@ -18,6 +18,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..tesis_saati import tesis_gun_basi
 from .. import girdi_siniri as _G
 from ..audit import Action, audit_user
 from ..config import settings
@@ -57,6 +58,7 @@ from ..schemas import (
     HazirSablon,
     HazirSablonListesi,
     MesajGonderIstek,
+    MesajAliciOzeti,
     MesajGonderSonuc,
     MesajGonderimListResponse,
     MesajGonderimOut,
@@ -360,6 +362,81 @@ async def _alicilar(
     return idler[:_TOPLU_UST_SINIR]
 
 
+async def _hedefler(
+    db: AsyncSession, sablon: MesajSablonu, idler: list[uuid.UUID]
+) -> tuple[list[tuple[uuid.UUID, AppUser, str]], int, int]:
+    """Alicilari SINIFLANDIR: (gonderilecekler, riza_yok, adres_yok).
+
+    (P253 §B) Gonderim ve gonderim ONCESI ozet (`/mesajlar/alicilar`) AYNI
+    kurali kullanir: onay ekraninda "247 kisiye gidecek" denip 230'una
+    gitmesi, onay ekranini anlamsiz kilardi.
+    """
+    kisiler = {
+        k.id: k for k in (
+            await db.execute(select(AppUser).where(AppUser.id.in_(idler)))
+        ).scalars().all()
+    } if idler else {}
+    uygun: list[tuple[uuid.UUID, AppUser, str]] = []
+    riza_yok = adres_yok = 0
+    for kid in idler:
+        kisi = kisiler.get(kid)
+        if kisi is None:
+            continue
+        # (P177 §4) TICARI ILETI KANALI KAPALIYSA RIZA BILE YETMEZ.
+        #
+        # `TICARI_ILETI_AKTIF=false` (varsayilan) iken pazarlama amacli
+        # hicbir gonderim yapilmaz — kisinin rizasi OLSA BILE. Sebep
+        # teknik degil hukuki: sirket ve IYS (Ileti Yonetim Sistemi)
+        # kaydi yok ve IYS'ye islenmemis bir rizayla ticari ileti
+        # gondermek idari para cezasi sebebidir. `riza_yok` SAYACINA
+        # yazilir: yoneticiye gorunen ozet "gonderilmedi" demeli.
+        if sablon.amac == "pazarlama" and not settings.ticari_ileti_aktif:
+            riza_yok += 1
+            continue
+        # PAZARLAMA -> RIZA ZORUNLU (P36). Riza KANAL BAZLIDIR.
+        if sablon.amac == "pazarlama":
+            izinli = (
+                kisi.pazarlama_sms if sablon.kanal == "sms"
+                else kisi.pazarlama_eposta
+            )
+            if not izinli:
+                riza_yok += 1
+                continue
+        hedef = kisi.telefon if sablon.kanal == "sms" else kisi.email
+        if not hedef:
+            adres_yok += 1
+            continue
+        uygun.append((kid, kisi, hedef))
+    return uygun, riza_yok, adres_yok
+
+
+@router.post("/mesajlar/alicilar", response_model=MesajAliciOzeti)
+async def alici_ozeti(
+    body: MesajGonderIstek,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YONETIM),
+) -> MesajAliciOzeti:
+    """(P253 §B) GONDERIM ONCESI ozet — HICBIR SEY GONDERMEZ.
+
+    Onay ekrani bunu gosterir: "247 kisiye e-posta gidecek; 12 kisinin
+    adresi yok". Toplu SMS/e-posta ucretli ve geri alinamaz; sayi
+    gonderimden ONCE bilinmeli. Sayim gonderimle AYNI kuraldan (`_hedefler`).
+    """
+    sablon = await get_or_404(db, MesajSablonu, body.sablon_id)
+    if not sablon.aktif:
+        raise APIError(422, "validation_error", "sablon_pasif")
+    idler = await _alicilar(db, body)
+    uygun, riza_yok, adres_yok = await _hedefler(db, sablon, idler)
+    a = await _ayar_cikti(db, user.tenant_id)
+    hazir = a.sms_hazir if sablon.kanal == "sms" else a.eposta_hazir
+    kalan = None if a.gunluk_kota is None else max(0, a.gunluk_kota - a.bugun_gonderilen)
+    return MesajAliciOzeti(
+        kanal=sablon.kanal, amac=sablon.amac, toplam=len(idler),
+        gonderilecek=len(uygun), riza_yok=riza_yok, adres_yok=adres_yok,
+        kanal_hazir=hazir, kota_kalan=kalan,
+    )
+
+
 @router.post("/mesajlar/gonder", response_model=MesajGonderSonuc, status_code=201)
 async def gonder(
     body: MesajGonderIstek,
@@ -382,63 +459,19 @@ async def gonder(
         await db.execute(select(Tenant).where(Tenant.id == user.tenant_id))
     ).scalar_one()
     idler = await _alicilar(db, body)
-    kisiler = {
-        k.id: k for k in (
-            await db.execute(select(AppUser).where(AppUser.id.in_(idler)))
-        ).scalars().all()
-    } if idler else {}
+    uygun, riza_yok, adres_yok = await _hedefler(db, sablon, idler)
 
     # (P154 / Asama 9) GUNLUK KOTA — gonderim BASLAMADAN kontrol edilir.
-    # YARIM GONDERIM YERINE HIC: 300 kisilik bir listede 50. alicida
-    # kotaya takilmak, kime gidip kime gitmedigini kullaniciya aciklamasi
-    # zor bir durum birakirdi.
-    await kota_kontrol(db, user.tenant_id, len(idler))
+    # YARIM GONDERIM YERINE HIC. (P253) Kota GONDERILECEK sayisiyla olculur:
+    # rizasi/adresi olmayanlar kotadan yemez.
+    await kota_kontrol(db, user.tenant_id, len(uygun))
 
-    # (P168 §4) GONDERIM YOLU DA TESIS AYARINI KULLANIR. ENV'e sabitli
-    # kalsaydi, "Ayarlar" sekmesine girilen saglayici hicbir sey
-    # degistirmez ve kullanici kaydettigi ayarin ise yaramadigini ancak
-    # mesaj gitmeyince anlardi.
+    # (P168 §4) GONDERIM YOLU DA TESIS AYARINI KULLANIR.
     ayar = await tenant_ayari(db, user.tenant_id)
     saglayici = kanal_saglayicisi(sablon.kanal, ayar)
-    gonderildi = basarisiz = riza_yok = adres_yok = 0
+    gonderildi = kuyrukta_sayi = gonderilemedi = 0
 
-    for kid in idler:
-        kisi = kisiler.get(kid)
-        if kisi is None:
-            continue
-        # (P177 §4) TICARI ILETI KANALI KAPALIYSA RIZA BILE YETMEZ.
-        #
-        # `TICARI_ILETI_AKTIF=false` (varsayilan) iken pazarlama amacli
-        # hicbir gonderim yapilmaz — kisinin rizasi OLSA BILE. Sebep
-        # teknik degil hukuki: sirket ve IYS (Ileti Yonetim Sistemi)
-        # kaydi yok ve IYS'ye islenmemis bir rizayla ticari ileti
-        # gondermek idari para cezasi sebebidir.
-        #
-        # `riza_yok` SAYACINA YAZILIYOR ve bu bilincli: yoneticiye
-        # gorunen ozet "gonderilmedi" demeli. Ayri bir sayac eklemek
-        # ozeti ve arayuzu degistirmek olurdu; onemli olan mesajin
-        # GITMEDIGINI dogru raporlamak.
-        if sablon.amac == "pazarlama" and not settings.ticari_ileti_aktif:
-            riza_yok += 1
-            continue
-        # PAZARLAMA -> RIZA ZORUNLU (P36 ile GERCEK riza kaydi baglandi).
-        # Riza KANAL BAZLIDIR: e-postaya izin veren kisi SMS'e izin vermis
-        # sayilmaz — tek bir "pazarlama" bayragi bunu kaybederdi.
-        if sablon.amac == "pazarlama":
-            izinli = (
-                kisi.pazarlama_sms if sablon.kanal == "sms"
-                else kisi.pazarlama_eposta
-            )
-            if not izinli:
-                riza_yok += 1
-                continue
-        hedef = (
-            kisi.telefon if sablon.kanal == "sms" else kisi.email
-        )
-        if not hedef:
-            adres_yok += 1
-            continue
-
+    for kid, kisi, hedef in uygun:
         degerler = await _degerler(db, tenant, kid)
         govde = etiketleri_coz(sablon.govde, degerler)
         konu = etiketleri_coz(sablon.konu, degerler) if sablon.konu else None
@@ -465,7 +498,12 @@ async def gonder(
             deneme=1, son_deneme_at=func.now(),
         ))
         if kuyrukta:
-            basarisiz += 1
+            kuyrukta_sayi += 1
+        elif sonuc.durum == "yapilandirilmadi":
+            # (P253 §B) KANAL YAPILANDIRILMAMIS: mesaj GITMEDI. Eskiden
+            # "gonderildi" sayacina yaziliyordu — yonetici gitmeyen mesaji
+            # gitti sanirdi.
+            gonderilemedi += 1
         else:
             gonderildi += 1
 
@@ -475,10 +513,12 @@ async def gonder(
         resource_id=sablon.id,
         meta={"kanal": sablon.kanal, "amac": sablon.amac,
               "gonderildi": gonderildi, "riza_yok": riza_yok,
-              "adres_yok": adres_yok, "basarisiz": basarisiz},
+              "adres_yok": adres_yok, "kuyrukta": kuyrukta_sayi,
+              "gonderilemedi": gonderilemedi},
     )
     return MesajGonderSonuc(
-        gonderildi=gonderildi, basarisiz=basarisiz,
+        gonderildi=gonderildi, kuyrukta=kuyrukta_sayi, gonderilemedi=gonderilemedi,
+        basarisiz=kuyrukta_sayi + gonderilemedi,
         riza_yok=riza_yok, adres_yok=adres_yok,
     )
 
@@ -495,7 +535,8 @@ async def _bugun_gonderilen(db: AsyncSession) -> int:
         await db.execute(
             select(func.count()).select_from(MesajGonderim).where(
                 MesajGonderim.durum.in_(["gonderildi", "iletildi", "okundu"]),
-                MesajGonderim.created_at >= func.current_date(),
+                # (P253 §E) Tesisin gun basi (UTC degil).
+                MesajGonderim.created_at >= await tesis_gun_basi(db),
             )
         )
     ).scalar_one()

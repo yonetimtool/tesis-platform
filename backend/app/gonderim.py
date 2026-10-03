@@ -276,7 +276,11 @@ async def gunluk_kalan(session: AsyncSession, tenant_id: uuid.UUID) -> int:
     ).scalar_one_or_none()
     sinir = ayarli or GUNLUK_KOTA
 
-    gun_basi = datetime.combine(date.today(), time.min, tzinfo=timezone.utc)
+    # (P253 §E) Gun siniri TESISIN gunu (eskiden UTC gun basi: Istanbul'da
+    # 00:00-03:00 arasi gonderimler dunun kotasina yaziliyordu).
+    from .tesis_saati import tesis_gun_basi
+
+    gun_basi = await tesis_gun_basi(session, tenant_id)
     # `yapilandirilmadi` SAYILMAZ: hicbir sey gonderilmediyse kotadan da
     # dusmemeli — yoksa ayarlari doldurmamis bir tesis, hic mesaj
     # gondermeden kotasini tuketirdi.
@@ -312,10 +316,8 @@ async def kota_kontrol(
 # ---------------------------------------------------------------------------
 # BILINEN SINIRLAR (bilerek acik birakildi, gizlenmedi)
 #
-# 1. Kota gunu UTC gun basindan sayiyor; `tenant.timezone` dikkate
-#    alinmiyor. Turkiye icin fark UTC+3'tur, yani gece 00:00-03:00 arasi
-#    gonderimler "dunun" kotasina yazilir. Duzeltmek tenant saat dilimini
-#    bu katmana tasimayi gerektirir.
+# 1. (P253 §E'de KAPANDI) Kota gunu artik tesisin saat dilimiyle
+#    sayiliyor (`tesis_saati.tesis_gun_basi`).
 # 2. KUYRUK + YENIDEN DENEME YOK. `mesaj_durum` enum'unda `kuyrukta`
 #    degeri VAR ama bugun hicbir yol onu yazmiyor: gonderim ISTEK ICINDE
 #    senkron yapiliyor. Kuyruga gecmek Celery isi ekler ve gonderim

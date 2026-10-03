@@ -400,6 +400,7 @@ POST   /mesaj-sablonlari                                    IZIN   IZIN   RED   
 GET    /mesaj-sablonlari/hazir                              IZIN   IZIN   RED    RED    RED    RED    RED   
 DELETE /mesaj-sablonlari/{id}                               IZIN   IZIN   RED    RED    RED    RED    RED   
 PATCH  /mesaj-sablonlari/{id}                               IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /mesajlar/alicilar                                   IZIN   IZIN   RED    RED    RED    RED    RED   
 GET    /mesajlar/gecmis                                     IZIN   RED    RED    RED    RED    RED    RED   
 POST   /mesajlar/gonder                                     IZIN   IZIN   RED    RED    RED    RED    RED   
 POST   /mesajlar/onizleme                                   IZIN   IZIN   RED    RED    RED    RED    RED   

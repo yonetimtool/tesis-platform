@@ -56,3 +56,15 @@ async def tesis_saat_dilimi(db: AsyncSession, tenant_id: uuid.UUID | None = None
 async def tesis_bugun(db: AsyncSession, tenant_id: uuid.UUID | None = None) -> date:
     """Oturumun (ya da verilen) tesisinin bugunku takvim gunu."""
     return yerel_bugun(await tesis_saat_dilimi(db, tenant_id))
+
+
+def yerel_gun_basi(saat_dilimi: str | None, simdi: datetime | None = None) -> datetime:
+    """Tesisin bugununun 00:00'i, UTC olarak (sorgu siniri icin)."""
+    from datetime import time
+
+    gun = yerel_bugun(saat_dilimi, simdi)
+    return datetime.combine(gun, time.min, tzinfo=bolge(saat_dilimi)).astimezone(timezone.utc)
+
+
+async def tesis_gun_basi(db: AsyncSession, tenant_id: uuid.UUID | None = None) -> datetime:
+    return yerel_gun_basi(await tesis_saat_dilimi(db, tenant_id))

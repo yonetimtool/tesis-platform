@@ -103,6 +103,8 @@ export const YAZMA: Record<string, string> = {
   "mesaj-sablonlari": "/mesaj-sablonlari",
   "mesaj-onizleme": "/mesajlar/onizleme",
   "mesaj-gonder": "/mesajlar/gonder",
+  // (P253 §B) Gonderim ONCESI alici ozeti (onay ekrani) — hicbir sey gondermez.
+  "mesaj-alicilar": "/mesajlar/alicilar",
   "karar-defteri": "/karar-defteri",
   dokumanlar: "/dokumanlar",
   anketler: "/anketler",

@@ -184,4 +184,7 @@ def test_rol_segmenti_PERSONELI_de_kapsar(client, world):
     # `world` fixture'i A tesisinde bir `security` hesabi aciyor; segment
     # onu BULMALI. Sifir cikarsa sorgu sakin listesine dusmus demektir.
     ozet = g.json()
-    assert ozet["gonderildi"] + ozet["adres_yok"] >= 1, ozet
+    # (P253 §B) Alici KAPSANDI mi: her kisi tam bir sayacta. Dev'de kanal
+    # yapilandirilmamis -> `gonderilemedi` (eskiden yanlislikla gonderildi).
+    assert (ozet["gonderildi"] + ozet["kuyrukta"] + ozet["gonderilemedi"]
+            + ozet["adres_yok"]) >= 1, ozet
