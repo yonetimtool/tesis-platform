@@ -607,3 +607,50 @@ vermiyor.
   değil.
 * **Borçlandırma ters kaydında §C sebebi:** Aşama 2'de, borçlandırma
   mobile geldiğinde (`planli:2`).
+
+## Aşama 2 — Harita karo kaynağı önerisi (karar 8) — **KARAR BEKLİYOR**
+
+### Ölçüm
+
+* **Web bugün:** Leaflet + OSM'nin genel karoları
+  (`tile.openstreetmap.org`). Adres `NEXT_PUBLIC_KARO_URL` ile tek satırda
+  değişebiliyor. Adres arama sunucuda (`/konum/ara`, open-meteo geocoding);
+  haritaya bağlı değil.
+* **Mobil bugün:** harita yok.
+* **Mobil paket boyutu** (gerçek derleme, arm64 sürüm APK, taban 29,37 MB):
+  * `flutter_map` 8.3.2 + `latlong2` 0.10.1: **+324 KB** (331.588 bayt);
+  * `file_picker` 13.1.0 (onaylandı, eklendi): **+23,5 KB**.
+* **Hacim tahmini:** harita yalnız yönetici ekranlarında var (tesis konumu
+  kurulumda bir kez, devriye haritası ara sıra). 300 tesis × ayda ~20
+  harita görünümü × ~15 raster karo ≈ **90.000 karo/ay**. Kendi
+  önbelleğimizle bunun belirgin bir kısmı tekrar istekten düşer.
+
+### Seçenekler (fiyatlar 2026-10, sağlayıcı sayfalarından)
+
+| Seçenek | Maliyet | Lisans / kural | Artı | Eksi |
+|---|---|---|---|---|
+| **A. OSM genel karoları** (bugünkü web) | 0 | Karo politikası: yoğun kullanan bir uygulamayı önceden izin almadan dağıtmak yasak; benzersiz User-Agent zorunlu; uyarısız engellenebilir | Sıfır maliyet, değişiklik yok | Mobil uygulamada dağıtmak politikayla çatışır; engellenme riski. Kullanıcı IP'si OSM'ye gider |
+| **B. Stadia Maps Starter** | $20/ay; 1M kredi (1 raster karo = 1 kredi) | Ticari kullanım serbest (ücretsiz planda yasak) | Raster: Leaflet ve `flutter_map` aynı URL şablonuyla; tahmini hacmin ~11 katı pay | Aylık ücret; anahtarın istemcide görünmemesi için vekil gerekir |
+| **C. MapTiler Flex** | $30/ay; 25.000 oturum + 500.000 istek | Ticari serbest (ücretsiz planda yasak) | Oturum fiyatlaması | B'den pahalı; raster karo 10–16 istek/görünüm |
+| **D. Kendi karo sunucumuz** (Protomaps PMTiles, Türkiye kesiti) | Disk + işletim (dünya ~120 GB; Türkiye kesiti çok daha küçük, **ölçmedim**) | ODbL, OSM atfı zorunlu | Üçüncü taraf yok, IP kimseye gitmez | **Vektör** karo: web'de `protomaps-leaflet`/MapLibre, mobilde `vector_map_tiles` gibi ek ve daha ağır bağımlılık; kurulum ve güncelleme işi |
+
+### Önerim: **B (Stadia Starter) + kendi karo vekilimiz**
+
+* **Vekil:** istemciler karoyu bizden ister (`/karo/{z}/{x}/{y}.png`, API
+  ya da Caddy). Sunucu sağlayıcıdan alır ve önbelleğe koyar.
+  * API anahtarı sunucuda kalır, uygulamaya gömülmez.
+  * Kullanıcının IP'si üçüncü tarafa gitmez (KVKK).
+  * Önbellek kredi harcamasını düşürür.
+  * İleride sağlayıcı değişirse (D'ye geçiş dahil) **mobil güncelleme
+    gerekmez**.
+* **Web:** Leaflet aynı kalır; `NEXT_PUBLIC_KARO_URL` vekile döner.
+* **Mobil:** `flutter_map` + `latlong2` (+324 KB). Tesis konumu (iğne
+  sürükle) ve Aşama 3'teki devriye haritası bunu kullanır.
+* **Sıfır maliyet isterseniz:** A + aynı vekil + önbellek. Önbellekli
+  düşük hacimde politikanın "yoğun kullanım" eşiğine yaklaşmak
+  olası değil, ama izin alınmadan dağıtılan bir uygulama için engellenme
+  riski sürer. Vekil sayesinde sonradan B'ye geçiş tek ayar olur.
+
+**Karar gereken:** B mi, A mı (ikisi de vekille), yoksa D mi. Onaya kadar
+mobile harita bağımlılığı eklenmez; tesis konumu ekranı bekler (`/konum/ara`
+satırı `planli:2` kalır).
