@@ -180,6 +180,75 @@ biniyordu:
   kullanım verisi yok; bir ay sonra anlamlı olur. Aşama 1 sırası bu
   yüzden plandaki tahminle başlar.
 
+### Mobil ortak bileşenler
+
+Hepsi `mobile/lib/src/core/ui/` altında; testi
+`test/p253_ortak_bilesenler_test.dart` (8 test).
+
+**`liste_ekrani.dart` — `ListeEkrani<T>`** (plan §2.1):
+
+* Kart listesi, dokununca detay.
+* Arama: 350 ms bekler, her tuşa istek atmaz.
+* **"Sırala / Süz"** tek pencerede. Seçili süzgeç liste başında **çip**;
+  çipin silme düğmesinin erişilebilir adı "Durum süzgecini kaldır".
+* **Sonsuz kaydırma:** sunucunun `limit/offset`i korunur; `toplam` gelince
+  durur. Aşağı çekip yenileme.
+* Boş ve hata durumları; hatada "Tekrar dene".
+* Eski isteğin yanıtı yeni listeyi bozmaz (nesil sayacı).
+* Sütun gizleme ve sayfa boyu **yok** (§A-5, `yapisal`).
+
+**`coklu_secim.dart` — `CokluSecim`, `TopluEylem`, üst/alt çubuk** (plan §2.5):
+
+* Uzun bas seçim kipini açar. Üstte "N seçili · Tümünü seç", altta işe özel
+  eylemler.
+* Son seçim kalkınca kip kapanır.
+* **Geri tuşu önce seçimi kapatır, ekranı değil.**
+* `ListeEkrani` kullanıyor; seçimi kendi yöneten ekranlar (bildirimler) da
+  kullanabilir.
+
+**`olustur_paylas.dart` — `olusturVePaylas`** (plan §2.3):
+
+* İlerleme penceresi → baytlar → geçici dizine yazılır → **sistem paylaş
+  menüsü** (WhatsApp, e-posta, Drive, Dosyalar).
+* Dosya adı temizlenir (dizin ayıracı ve `..` atılır); dosya geçici dizin
+  dışına yazılamaz.
+* Oluşturma ya da paylaşım düşerse cümleyle söylenir ("Dosya
+  oluşturulamadı."), sessiz düşme yok.
+* iPad için paylaş menüsünün çıkış noktası verilir; verilmezse iPad'de
+  çöker.
+
+**Bağımlılık: `share_plus` 13.3.1** (+ `share_plus_platform_interface`;
+`cross_file` ve `mime` zaten vardı). Lisans BSD-3.
+
+* **Boyut ölçümü** (sürüm APK'sı, 1.10.0+20 ile karşılaştırma):
+  * APK **+720 bayt**; `classes.dex` sıkıştırmasız +9,3 KB; `libapp.so`
+    değişmedi.
+  * Bileşen henüz hiçbir ekranda kullanılmadığı için Dart tarafı ağaç
+    budamasıyla çıkıyor. Kullanılınca birkaç KB daha beklenir.
+* iOS: sistem `UIActivityViewController`ini çağırır, ek varlık yok. iOS
+  yapımında `pod install` yeni pod'u alır.
+* Ölçüm yapımı 1.10.0+20 paketlerinin üzerine yazdı. Paketler yedekten geri
+  kondu; SHA-256'lar kayıttakiyle aynı.
+
+### İstemci tarafı eylemler (`data-eylem`) — denendi, VAZGEÇİLDİ
+
+Plan §4.5'te, uç üretmeyen web eylemleri (CSV indir, sütun gizle) için
+kaynakta `data-eylem="..."` işareti önerilmişti. Örnekle denendi
+(`/reports/dues` "Borçlu daireler CSV" ve `/devriye` CSV düğmeleri):
+
+* **Kırılgan:** işaret, eylemin **varlığını** değil, geliştiricinin onu
+  işaretlemeyi **hatırlamasını** ölçüyor. İşaretsiz yeni bir CSV düğmesi
+  kilitten sessizce geçer. Kilidin bütün değeri "unutulamaz" olması.
+* **Yanlış pozitif:** tablo bileşeninin kendi araçları (sütun gizleme, sayfa
+  boyu) her tabloda var. Bunlar karar gereği `yapisal`; işaretlemek her
+  tabloda gürültü satırı üretir.
+* **Daha iyi yol:** istemci tarafı dışa aktarımlar Aşama 2'de **sunucu
+  raporuna** taşınır ("Oluştur ve paylaş" zaten sunucu dosyası bekliyor).
+  O zaman uç üretirler ve uç kilidi onları kendiliğinden yakalar.
+  * Bugünkü istemci tarafı dışa aktarımlar eylem tablosunda **elle** üç
+    satır olarak durur (`istemci:` önekli, `planli:2`).
+  * Web taraması bunları uçla eşleştirmez, yalnız tabloda kalırlar.
+
 ## §E — "Şimdi çalıştır" saat dilimi
 
 ### Ölçüm

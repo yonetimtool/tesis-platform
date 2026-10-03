@@ -9022,4 +9022,53 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get pdCikis => 'تاريخ المغادرة';
+
+  @override
+  String get listeAra => 'بحث';
+
+  @override
+  String get listeSiralaSuz => 'ترتيب / تصفية';
+
+  @override
+  String get listeSiralama => 'الترتيب';
+
+  @override
+  String get listeSuzgecler => 'عوامل التصفية';
+
+  @override
+  String get listeHepsi => 'الكل';
+
+  @override
+  String get listeUygula => 'تطبيق';
+
+  @override
+  String get listeTemizle => 'مسح';
+
+  @override
+  String listeSuzgecKaldir(String ad) {
+    return 'إزالة عامل التصفية $ad';
+  }
+
+  @override
+  String get listeBos => 'لا توجد سجلات.';
+
+  @override
+  String listeSecili(int sayi) {
+    return '$sayi محدد';
+  }
+
+  @override
+  String get listeTumunuSec => 'تحديد الكل';
+
+  @override
+  String get listeSecimiBitir => 'إنهاء التحديد';
+
+  @override
+  String get paylasHazirlaniyor => 'جارٍ تجهيز الملف…';
+
+  @override
+  String get paylasHata => 'تعذر إنشاء الملف.';
+
+  @override
+  String get paylasDugme => 'مشاركة';
 }

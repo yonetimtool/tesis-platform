@@ -3003,5 +3003,20 @@
   "pdYilOdenen": "Dieses Jahr gezahlt",
   "pdOdemeGecmisi": "Zahlungsverlauf",
   "pdKartYok": "Keine Beschäftigungsdaten (ohne Gehalt: Vertrag oder Fremdfirma).",
-  "pdCikis": "Austritt"
+  "pdCikis": "Austritt",
+  "listeAra": "Suchen",
+  "listeSiralaSuz": "Sortieren / Filtern",
+  "listeSiralama": "Sortierung",
+  "listeSuzgecler": "Filter",
+  "listeHepsi": "Alle",
+  "listeUygula": "Anwenden",
+  "listeTemizle": "Zurücksetzen",
+  "listeSuzgecKaldir": "Filter {ad} entfernen",
+  "listeBos": "Keine Einträge.",
+  "listeSecili": "{sayi} ausgewählt",
+  "listeTumunuSec": "Alle auswählen",
+  "listeSecimiBitir": "Auswahl beenden",
+  "paylasHazirlaniyor": "Datei wird erstellt…",
+  "paylasHata": "Datei konnte nicht erstellt werden.",
+  "paylasDugme": "Teilen"
 }

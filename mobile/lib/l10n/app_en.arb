@@ -3003,5 +3003,20 @@
   "pdYilOdenen": "Paid this year",
   "pdOdemeGecmisi": "Payment history",
   "pdKartYok": "No employment details (unsalaried: contractor or outsourced).",
-  "pdCikis": "Leaving date"
+  "pdCikis": "Leaving date",
+  "listeAra": "Search",
+  "listeSiralaSuz": "Sort / Filter",
+  "listeSiralama": "Sort by",
+  "listeSuzgecler": "Filters",
+  "listeHepsi": "All",
+  "listeUygula": "Apply",
+  "listeTemizle": "Clear",
+  "listeSuzgecKaldir": "Remove filter {ad}",
+  "listeBos": "No records.",
+  "listeSecili": "{sayi} selected",
+  "listeTumunuSec": "Select all",
+  "listeSecimiBitir": "Done selecting",
+  "paylasHazirlaniyor": "Preparing file…",
+  "paylasHata": "Couldn't create the file.",
+  "paylasDugme": "Share"
 }

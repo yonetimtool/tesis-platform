@@ -4461,5 +4461,34 @@
   "pdYilOdenen": "Bu yıl ödenen",
   "pdOdemeGecmisi": "Ödeme geçmişi",
   "pdKartYok": "Çalışma bilgisi girilmemiş (maaşsız: sözleşmeli ya da dış firma).",
-  "pdCikis": "İşten çıkış"
+  "pdCikis": "İşten çıkış",
+  "listeAra": "Ara",
+  "listeSiralaSuz": "Sırala / Süz",
+  "listeSiralama": "Sıralama",
+  "listeSuzgecler": "Süzgeçler",
+  "listeHepsi": "Hepsi",
+  "listeUygula": "Uygula",
+  "listeTemizle": "Temizle",
+  "listeSuzgecKaldir": "{ad} süzgecini kaldır",
+  "@listeSuzgecKaldir": {
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    }
+  },
+  "listeBos": "Kayıt yok.",
+  "listeSecili": "{sayi} seçili",
+  "@listeSecili": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "listeTumunuSec": "Tümünü seç",
+  "listeSecimiBitir": "Seçimi bitir",
+  "paylasHazirlaniyor": "Dosya hazırlanıyor…",
+  "paylasHata": "Dosya oluşturulamadı.",
+  "paylasDugme": "Paylaş"
 }

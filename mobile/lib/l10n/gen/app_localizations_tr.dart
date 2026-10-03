@@ -8784,4 +8784,53 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get pdCikis => 'İşten çıkış';
+
+  @override
+  String get listeAra => 'Ara';
+
+  @override
+  String get listeSiralaSuz => 'Sırala / Süz';
+
+  @override
+  String get listeSiralama => 'Sıralama';
+
+  @override
+  String get listeSuzgecler => 'Süzgeçler';
+
+  @override
+  String get listeHepsi => 'Hepsi';
+
+  @override
+  String get listeUygula => 'Uygula';
+
+  @override
+  String get listeTemizle => 'Temizle';
+
+  @override
+  String listeSuzgecKaldir(String ad) {
+    return '$ad süzgecini kaldır';
+  }
+
+  @override
+  String get listeBos => 'Kayıt yok.';
+
+  @override
+  String listeSecili(int sayi) {
+    return '$sayi seçili';
+  }
+
+  @override
+  String get listeTumunuSec => 'Tümünü seç';
+
+  @override
+  String get listeSecimiBitir => 'Seçimi bitir';
+
+  @override
+  String get paylasHazirlaniyor => 'Dosya hazırlanıyor…';
+
+  @override
+  String get paylasHata => 'Dosya oluşturulamadı.';
+
+  @override
+  String get paylasDugme => 'Paylaş';
 }

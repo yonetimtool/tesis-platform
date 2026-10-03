@@ -3003,5 +3003,20 @@
   "pdYilOdenen": "Payé cette année",
   "pdOdemeGecmisi": "Historique des paiements",
   "pdKartYok": "Aucune donnée d'emploi (sans salaire : contractuel ou sous-traitant).",
-  "pdCikis": "Date de sortie"
+  "pdCikis": "Date de sortie",
+  "listeAra": "Rechercher",
+  "listeSiralaSuz": "Trier / Filtrer",
+  "listeSiralama": "Tri",
+  "listeSuzgecler": "Filtres",
+  "listeHepsi": "Tous",
+  "listeUygula": "Appliquer",
+  "listeTemizle": "Effacer",
+  "listeSuzgecKaldir": "Retirer le filtre {ad}",
+  "listeBos": "Aucun enregistrement.",
+  "listeSecili": "{sayi} sélectionné(s)",
+  "listeTumunuSec": "Tout sélectionner",
+  "listeSecimiBitir": "Terminer la sélection",
+  "paylasHazirlaniyor": "Préparation du fichier…",
+  "paylasHata": "Impossible de créer le fichier.",
+  "paylasDugme": "Partager"
 }

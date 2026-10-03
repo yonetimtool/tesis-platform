@@ -3003,5 +3003,20 @@
   "pdYilOdenen": "المدفوع هذا العام",
   "pdOdemeGecmisi": "سجل المدفوعات",
   "pdKartYok": "لا بيانات عمل (بلا راتب: متعاقد أو شركة خارجية).",
-  "pdCikis": "تاريخ المغادرة"
+  "pdCikis": "تاريخ المغادرة",
+  "listeAra": "بحث",
+  "listeSiralaSuz": "ترتيب / تصفية",
+  "listeSiralama": "الترتيب",
+  "listeSuzgecler": "عوامل التصفية",
+  "listeHepsi": "الكل",
+  "listeUygula": "تطبيق",
+  "listeTemizle": "مسح",
+  "listeSuzgecKaldir": "إزالة عامل التصفية {ad}",
+  "listeBos": "لا توجد سجلات.",
+  "listeSecili": "{sayi} محدد",
+  "listeTumunuSec": "تحديد الكل",
+  "listeSecimiBitir": "إنهاء التحديد",
+  "paylasHazirlaniyor": "جارٍ تجهيز الملف…",
+  "paylasHata": "تعذر إنشاء الملف.",
+  "paylasDugme": "مشاركة"
 }

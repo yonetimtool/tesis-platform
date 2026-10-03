@@ -8981,4 +8981,53 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pdCikis => 'Leaving date';
+
+  @override
+  String get listeAra => 'Search';
+
+  @override
+  String get listeSiralaSuz => 'Sort / Filter';
+
+  @override
+  String get listeSiralama => 'Sort by';
+
+  @override
+  String get listeSuzgecler => 'Filters';
+
+  @override
+  String get listeHepsi => 'All';
+
+  @override
+  String get listeUygula => 'Apply';
+
+  @override
+  String get listeTemizle => 'Clear';
+
+  @override
+  String listeSuzgecKaldir(String ad) {
+    return 'Remove filter $ad';
+  }
+
+  @override
+  String get listeBos => 'No records.';
+
+  @override
+  String listeSecili(int sayi) {
+    return '$sayi selected';
+  }
+
+  @override
+  String get listeTumunuSec => 'Select all';
+
+  @override
+  String get listeSecimiBitir => 'Done selecting';
+
+  @override
+  String get paylasHazirlaniyor => 'Preparing file…';
+
+  @override
+  String get paylasHata => 'Couldn\'t create the file.';
+
+  @override
+  String get paylasDugme => 'Share';
 }

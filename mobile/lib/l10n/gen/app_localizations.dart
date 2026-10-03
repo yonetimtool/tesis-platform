@@ -15586,6 +15586,96 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'İşten çıkış'**
   String get pdCikis;
+
+  /// No description provided for @listeAra.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ara'**
+  String get listeAra;
+
+  /// No description provided for @listeSiralaSuz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sırala / Süz'**
+  String get listeSiralaSuz;
+
+  /// No description provided for @listeSiralama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sıralama'**
+  String get listeSiralama;
+
+  /// No description provided for @listeSuzgecler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Süzgeçler'**
+  String get listeSuzgecler;
+
+  /// No description provided for @listeHepsi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hepsi'**
+  String get listeHepsi;
+
+  /// No description provided for @listeUygula.
+  ///
+  /// In tr, this message translates to:
+  /// **'Uygula'**
+  String get listeUygula;
+
+  /// No description provided for @listeTemizle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Temizle'**
+  String get listeTemizle;
+
+  /// No description provided for @listeSuzgecKaldir.
+  ///
+  /// In tr, this message translates to:
+  /// **'{ad} süzgecini kaldır'**
+  String listeSuzgecKaldir(String ad);
+
+  /// No description provided for @listeBos.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıt yok.'**
+  String get listeBos;
+
+  /// No description provided for @listeSecili.
+  ///
+  /// In tr, this message translates to:
+  /// **'{sayi} seçili'**
+  String listeSecili(int sayi);
+
+  /// No description provided for @listeTumunuSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tümünü seç'**
+  String get listeTumunuSec;
+
+  /// No description provided for @listeSecimiBitir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçimi bitir'**
+  String get listeSecimiBitir;
+
+  /// No description provided for @paylasHazirlaniyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dosya hazırlanıyor…'**
+  String get paylasHazirlaniyor;
+
+  /// No description provided for @paylasHata.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dosya oluşturulamadı.'**
+  String get paylasHata;
+
+  /// No description provided for @paylasDugme.
+  ///
+  /// In tr, this message translates to:
+  /// **'Paylaş'**
+  String get paylasDugme;
 }
 
 class _AppLocalizationsDelegate

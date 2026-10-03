@@ -9066,4 +9066,53 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get pdCikis => 'Дата увольнения';
+
+  @override
+  String get listeAra => 'Поиск';
+
+  @override
+  String get listeSiralaSuz => 'Сортировка / Фильтр';
+
+  @override
+  String get listeSiralama => 'Сортировка';
+
+  @override
+  String get listeSuzgecler => 'Фильтры';
+
+  @override
+  String get listeHepsi => 'Все';
+
+  @override
+  String get listeUygula => 'Применить';
+
+  @override
+  String get listeTemizle => 'Сбросить';
+
+  @override
+  String listeSuzgecKaldir(String ad) {
+    return 'Убрать фильтр $ad';
+  }
+
+  @override
+  String get listeBos => 'Нет записей.';
+
+  @override
+  String listeSecili(int sayi) {
+    return 'Выбрано: $sayi';
+  }
+
+  @override
+  String get listeTumunuSec => 'Выбрать все';
+
+  @override
+  String get listeSecimiBitir => 'Завершить выбор';
+
+  @override
+  String get paylasHazirlaniyor => 'Подготовка файла…';
+
+  @override
+  String get paylasHata => 'Не удалось создать файл.';
+
+  @override
+  String get paylasDugme => 'Поделиться';
 }

@@ -3003,5 +3003,20 @@
   "pdYilOdenen": "Выплачено в этом году",
   "pdOdemeGecmisi": "История выплат",
   "pdKartYok": "Нет данных о работе (без зарплаты: договор или подрядчик).",
-  "pdCikis": "Дата увольнения"
+  "pdCikis": "Дата увольнения",
+  "listeAra": "Поиск",
+  "listeSiralaSuz": "Сортировка / Фильтр",
+  "listeSiralama": "Сортировка",
+  "listeSuzgecler": "Фильтры",
+  "listeHepsi": "Все",
+  "listeUygula": "Применить",
+  "listeTemizle": "Сбросить",
+  "listeSuzgecKaldir": "Убрать фильтр {ad}",
+  "listeBos": "Нет записей.",
+  "listeSecili": "Выбрано: {sayi}",
+  "listeTumunuSec": "Выбрать все",
+  "listeSecimiBitir": "Завершить выбор",
+  "paylasHazirlaniyor": "Подготовка файла…",
+  "paylasHata": "Не удалось создать файл.",
+  "paylasDugme": "Поделиться"
 }
