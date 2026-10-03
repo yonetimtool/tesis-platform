@@ -245,3 +245,59 @@
   * Prod'da da var (tesis silme, saklama). Ayrıca üretim boyunca açık kalan
     işlem 60 sn idle sınırına takılabiliyordu.
   * İşçi üç kısa işleme bölündü; yetim iş kurtarılıyor. Testle kilitlendi.
+
+## Doğrulama (2026-10-03)
+
+**Tam takımlar**
+
+* **Backend:** 3979 geçti, 0 hata, `EXITCODE=0`. P250'den beri her tam
+  koşuda düşen kilitlenme ilk kez yok; koşu boyunca db günlüğünde de
+  `deadlock detected` yok.
+  * Not: ilk tam koşu, düzeltmeden önceki işçi imajıyla koştu. `worker` ve
+    `beat` ayrı imaj; `build api` onları güncellemiyor.
+  * Aynı koşuda çıkan üç kırmızı kapatıldı:
+    * tarama kapsamına maaş ayarı eklendi;
+    * SQL beyaz listesine gerekçe yazıldı;
+    * kararlı sıralama eklendi.
+  * Bir test-çakışması da kapatıldı: p217 rastgele dönemi 2026'ya
+    düşüyordu.
+* **Web** `npm run dogrula`: 301 dosya, 2395 test geçti; lint
+  `--max-warnings 0`; derleme uyarısız.
+* **Mobil** `flutter test`: 2598 geçti. Bir denetleyici-atma kilidi düzeltildi.
+
+**Gerçek akış** (üretim derlemesi, `app.localhost`, demo tesis `p252`, Playwright)
+
+1. Kişiler › Personel › Yeni kullanıcı: güvenlik personeli eklendi; ücret
+   25.000 ₺, ödeme günü bugün (Türkiye tarihi), kasa Merkez Kasa. Hesap ve
+   kart birlikte oluştu.
+2. Otomasyon kuralı şöyle görünüyor: "Her ayın 3. günü 1 personelin maaşı
+   (toplam 25.000,00 ₺) gidere yazılır."
+3. "Şimdi çalıştır": "1 maaş gideri yazıldı (toplam 25.000,00 ₺)". Merkez
+   Kasa bakiyesi 0 → −25.000,00 ₺ oldu.
+4. İkinci tetik: "Yazılacak maaş yok…" yanıtı geldi, bakiye değişmedi.
+5. Giderler listesinde "Ahmet YILMAZ — Ekim 2026 maaşı" satırı kişi
+   detayını açıyor.
+6. Detayda ücret 25.000 ₺, ödeme günü "Her ayın 3. günü", kasa Merkez
+   Kasa, ödeme geçmişi 1 satır, bu yıl ödenen 25.000 ₺.
+7. **Amir (API):** üç ücret ucu 403 dönüyor (`/personel/detay`,
+   `/personel-kayitlari`, `/otomasyon/maas-ayari`). Amir personeli
+   `/users` listesinde görüyor ama yanıtta ücret alanı yok. Amirin web
+   girişi zaten kapalı (mobil-yalnız rol); mobil ekran testle kilitli.
+
+**Akışta bulunan ve düzeltilenler**
+
+* Detay başlığında soyad iki kez yazılıyordu ("Ahmet YILMAZ YILMAZ").
+  `app_user.ad` zaten tam ad; artık testli.
+* Ödeme geçmişi sütun başlığı "Dönem (YYYY-AA)" form etiketiydi; artık
+  "Dönem".
+
+**Saat dilimi notu (hata değil)**
+
+* İlk denemede ödeme günü yanlışlıkla ana makine tarihinden seçildi
+  (EDT, 2 Ekim). Sunucu ve Türkiye 3 Ekim'deydi.
+* Kural gereği ödeme günü geçmiş sayıldı ve ilk dönem Kasım oldu
+  (geriye yazmaz).
+* Günlük görev 06:00 İstanbul'da (03:00 UTC) koşuyor; o saatte UTC ve
+  Türkiye tarihi aynı.
+* "Şimdi çalıştır" UTC tarihini kullanıyor. Türkiye saatiyle 00:00–03:00
+  arasında bir önceki günü görür. Bu, diğer otomasyonlarla aynı davranış.

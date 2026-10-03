@@ -274,9 +274,9 @@ async def personel_detayi(
             kasa_ad=kasalar.get(kart.kasa_id), iban=kart.iban, notlar=kart.notlar,
             aktif=kart.aktif,
         )
-    from ..kisi_adi import tam_ad
-
-    ad = tam_ad(hesap.ad, hesap.soyad) if hesap is not None else kart.ad
+    # `app_user.ad` ZATEN tam gorunen addir (P250: `tam_ad` kayitta
+    # uygulanir); yeniden birlestirmek soyadi iki kez yazardi.
+    ad = hesap.ad if hesap is not None else kart.ad
     return PersonelDetay(
         kart_id=kart.id if kart else None,
         user_id=uid,

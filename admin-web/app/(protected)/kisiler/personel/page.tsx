@@ -68,7 +68,7 @@ export default function PersonelDetayPage() {
   const tarih = (iso: string | null) => (iso ? saltTarihBicimi(iso, dil) : YOK);
 
   const kolonlar: Kolon<Odeme>[] = [
-    { id: "donem", baslik: t("finansAlanDonem"), hucre: (o) => o.donem ?? YOK },
+    { id: "donem", baslik: t("ortakDonem"), hucre: (o) => o.donem ?? YOK },
     { id: "tarih", baslik: t("finansSutunTarih"), hucre: (o) => tarih(o.tarih) },
     { id: "tur", baslik: t("finansSutunTur"), hucre: (o) => t(TUR_ANAHTARI[o.tur] ?? TUR_ANAHTARI.diger) },
     { id: "kasa", baslik: t("finansSutunKasa"), hucre: (o) => o.kasa_ad ?? YOK },

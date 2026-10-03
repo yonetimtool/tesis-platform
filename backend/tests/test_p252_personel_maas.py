@@ -311,6 +311,7 @@ def test_personel_DETAYI_yonetime_acik_amire_KAPALI(client, world, owner_conn):
     assert d.status_code == 200, d.text
     d = d.json()
     assert d["kart_id"] == kart["id"] and d["user_id"] == u["id"]
+    assert d["ad"] == kart["ad"], "detay adi hesap/kart adiyla ayni olmali (soyad iki kez yazilmaz)"
     assert d["calisma"]["maas_kurus"] == 2_500_000 and d["calisma"]["kasa_ad"] == "Merkez Kasa P252"
     (o,) = d["odemeler"]
     assert o["tur"] == "maas" and o["kasa_ad"] == "Merkez Kasa P252" and o["durum"] == "odendi"
