@@ -12,7 +12,11 @@ BaseOptions _baseOptions() => BaseOptions(
       baseUrl: AppConfig.apiBaseUrl,
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 15),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        // (P253 §C-5) Denetim kaydinda islemin YUZEYI; yetkiye baglanmaz.
+        'X-Istemci-Yuzey': 'mobil',
+      },
       // 4xx/5xx'i exception olarak ele almak istiyoruz (varsayilan davranis).
     );
 

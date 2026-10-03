@@ -40,6 +40,7 @@ import { useCallback, useEffect, useId, useRef, type ReactNode } from "react";
 import { useT } from "@/lib/i18n/kullan";
 import { useKaydirmaKilidi } from "@/lib/kaydirma-kilidi";
 
+import { AlanSarmal, CokSatir } from "./alan";
 import { Dugme } from "./dugme";
 
 const ODAKLANABILIR =
@@ -61,6 +62,8 @@ export interface ModalProps {
 }
 
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`) — CSS degerleri de dize.
+/** (P253 §C-2) Sebep alt siniri — sunucu ve `onay-kullan.SEBEP_ASGARI` ile AYNI. */
+const SEBEP_ASGARI_MODAL = 3;
 const ORTU_RENGI = "rgba(0,0,0,.55)";
 const ORTU_BULANIK = "blur(6px)";
 const SURE_ORTU = 0.2;
@@ -301,6 +304,9 @@ export function OnayDiyalogu({
   onIptal,
   tehlikeli = false,
   yukleniyor = false,
+  sebepEtiketi,
+  sebep = "",
+  onSebep,
 }: {
   acik: boolean;
   baslik: string;
@@ -310,8 +316,13 @@ export function OnayDiyalogu({
   onIptal: () => void;
   tehlikeli?: boolean;
   yukleniyor?: boolean;
+  /** (P253 §C-2) Zorunlu sebep alani — verilirse onay sebepsiz gecmez. */
+  sebepEtiketi?: string;
+  sebep?: string;
+  onSebep?: (s: string) => void;
 }) {
   const t = useT();
+  const sebepEksik = sebepEtiketi !== undefined && sebep.trim().length < SEBEP_ASGARI_MODAL;
   return (
     <Modal
       acik={acik}
@@ -327,6 +338,7 @@ export function OnayDiyalogu({
             tur={tehlikeli ? TUR_TEHLIKE : TUR_BIRINCIL}
             onClick={onOnay}
             yukleniyor={yukleniyor}
+            disabled={sebepEksik}
           >
             {onayMetni}
           </Dugme>
@@ -336,6 +348,23 @@ export function OnayDiyalogu({
       <p style={{ fontSize: "var(--yz-fs-body)", color: "var(--yz-text-2)" }}>
         {mesaj}
       </p>
+      {sebepEtiketi !== undefined && (
+        <div className="mt-3">
+          <AlanSarmal etiket={sebepEtiketi} zorunlu>
+            {(b) => (
+              <CokSatir
+                {...b}
+                required
+                rows={2}
+                maxLength={500}
+                value={sebep}
+                onChange={(e) => onSebep?.(e.target.value)}
+                data-test="onay-sebep"
+              />
+            )}
+          </AlanSarmal>
+        </div>
+      )}
     </Modal>
   );
 }

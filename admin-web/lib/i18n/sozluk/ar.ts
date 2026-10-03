@@ -4055,4 +4055,5 @@ export const ar: Sozluk = {
   sikayetKimlikGecersizId: "أدخل معرّفًا صالحًا",
   bildirimTipSikayetAsilsiz: "اعتُبرت الشكوى غير مبررة",
   bildirimTipSikayetSinirlama: "تقديم الشكاوى متوقف مؤقتًا",
+  finansSebepEtiket: "السبب (إلزامي)",
 };

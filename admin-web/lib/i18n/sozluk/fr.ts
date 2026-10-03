@@ -4055,4 +4055,5 @@ export const fr: Sozluk = {
   sikayetKimlikGecersizId: "Saisissez un ID valide",
   bildirimTipSikayetAsilsiz: "Plainte jugée infondée",
   bildirimTipSikayetSinirlama: "Dépôt de plaintes temporairement suspendu",
+  finansSebepEtiket: "Motif (obligatoire)",
 };

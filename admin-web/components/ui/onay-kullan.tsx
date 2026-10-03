@@ -40,38 +40,55 @@ export interface OnayIstegi {
   onayMetni: string;
   /** Yikici mi? Onay dugmesi tehlike rengine gecer. */
   tehlikeli?: boolean;
+  /** (P253 §C-2) Verilirse diyalog ZORUNLU bir sebep alani gosterir
+   *  (en az `SEBEP_ASGARI` karakter; bossa onay dugmesi pasif). */
+  sebepEtiketi?: string;
 }
+
+/** Sunucuyla AYNI esik (`backend/app/schemas.py` SEBEP_ASGARI). */
+export const SEBEP_ASGARI = 3;
 
 /** Kancanin sozlesmesi. Metot bicimi bilincli: `=> Promise<...>` yazimi
  *  `sabit-metin` tarayicisinin `>metin<` kalibina takiliyor (`=>` ile
  *  `<boolean>` arasinda kalan " Promise" JSX metni sanilir). */
 export interface OnayKancasi {
   onayla(istek: OnayIstegi): Promise<boolean>;
+  /** Sebep alanli onay: vazgecilirse null, onaylanirsa kirpilmis sebep. */
+  sebepleOnayla(istek: OnayIstegi): Promise<string | null>;
   diyalog: ReactNode;
 }
 
 export function useOnay(): OnayKancasi {
   const [istek, setIstek] = useState<OnayIstegi | null>(null);
-  const cozucuRef = useRef<((sonuc: boolean) => void) | null>(null);
+  const [sebep, setSebep] = useState("");
+  // Cozucu SEBEBI (ya da vazgecildiyse null) alir; `onayla` bunu bool'a cevirir.
+  const cozucuRef = useRef<((sonuc: string | null) => void) | null>(null);
 
-  const kapat = useCallback((sonuc: boolean) => {
+  const kapat = useCallback((sonuc: string | null) => {
     // ONCE COZ, SONRA KAPAT: cozucuyu temizlemeden state'i degistirirsek
     // yeniden cizim sirasinda bekleyen soz kaybolabilirdi.
     const coz = cozucuRef.current;
     cozucuRef.current = null;
     setIstek(null);
+    setSebep("");
     coz?.(sonuc);
   }, []);
 
-  const onayla = useCallback((yeni: OnayIstegi) => {
-    return new Promise<boolean>((coz) => {
+  const sebepleOnayla = useCallback((yeni: OnayIstegi) => {
+    return new Promise<string | null>((coz) => {
       // ONCEKI ISTEK ACIKSA REDDEDILIR: iki diyalog ust uste binemez ve
       // eski cagiran bekletilemez.
-      cozucuRef.current?.(false);
+      cozucuRef.current?.(null);
       cozucuRef.current = coz;
+      setSebep("");
       setIstek(yeni);
     });
   }, []);
+
+  const onayla = useCallback(
+    (yeni: OnayIstegi) => sebepleOnayla(yeni).then((s) => s !== null),
+    [sebepleOnayla],
+  );
 
   const diyalog = (
     <OnayDiyalogu
@@ -80,10 +97,13 @@ export function useOnay(): OnayKancasi {
       mesaj={istek?.mesaj ?? ""}
       onayMetni={istek?.onayMetni ?? ""}
       tehlikeli={istek?.tehlikeli ?? false}
-      onOnay={() => kapat(true)}
-      onIptal={() => kapat(false)}
+      sebepEtiketi={istek?.sebepEtiketi}
+      sebep={sebep}
+      onSebep={setSebep}
+      onOnay={() => kapat(sebep.trim())}
+      onIptal={() => kapat(null)}
     />
   );
 
-  return { onayla, diyalog };
+  return { onayla, sebepleOnayla, diyalog };
 }

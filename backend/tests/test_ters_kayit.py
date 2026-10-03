@@ -98,7 +98,7 @@ def test_IPTAL_IADEDEN_AYRI_tiptir(client, adm):
     kasa_id = _kasa(client, adm)
     h = _gelir(client, adm, kasa_id)
     iptal = client.post(
-        f"/finans/hareketler/{h['id']}/iptal", headers=adm, json={}
+        f"/finans/hareketler/{h['id']}/iptal", headers=adm, json={"aciklama": "test sebebi"}
     ).json()
     assert iptal["tip"] == "iptal" and iptal["tip"] != "iade"
 
@@ -111,10 +111,10 @@ def test_IKI_KEZ_iptal_edilemez(client, adm):
     kasa_id = _kasa(client, adm)
     h = _gelir(client, adm, kasa_id)
     assert client.post(
-        f"/finans/hareketler/{h['id']}/iptal", headers=adm, json={}
+        f"/finans/hareketler/{h['id']}/iptal", headers=adm, json={"aciklama": "test sebebi"}
     ).status_code == 201
     assert client.post(
-        f"/finans/hareketler/{h['id']}/iptal", headers=adm, json={}
+        f"/finans/hareketler/{h['id']}/iptal", headers=adm, json={"aciklama": "test sebebi"}
     ).status_code == 409
 
 
@@ -122,10 +122,10 @@ def test_IPTALIN_IPTALI_edilemez(client, adm):
     kasa_id = _kasa(client, adm)
     h = _gelir(client, adm, kasa_id)
     iptal = client.post(
-        f"/finans/hareketler/{h['id']}/iptal", headers=adm, json={}
+        f"/finans/hareketler/{h['id']}/iptal", headers=adm, json={"aciklama": "test sebebi"}
     ).json()
     assert client.post(
-        f"/finans/hareketler/{iptal['id']}/iptal", headers=adm, json={}
+        f"/finans/hareketler/{iptal['id']}/iptal", headers=adm, json={"aciklama": "test sebebi"}
     ).status_code == 422
 
 
@@ -144,13 +144,13 @@ def test_YONETICI_DE_iptal_edebilir_SAHA_EDEMEZ(client, world, adm):
     h = _gelir(client, adm, kasa_id)
     yon = _giris(client, world["slug_a"], world["yonetici_a"])
     assert client.post(
-        f"/finans/hareketler/{h['id']}/iptal", headers=yon, json={}
+        f"/finans/hareketler/{h['id']}/iptal", headers=yon, json={"aciklama": "test sebebi"}
     ).status_code == 201
 
     h2 = _gelir(client, adm, kasa_id)
     saha = _giris(client, world["slug_a"], world["guard_a"])
     assert client.post(
-        f"/finans/hareketler/{h2['id']}/iptal", headers=saha, json={}
+        f"/finans/hareketler/{h2['id']}/iptal", headers=saha, json={"aciklama": "test sebebi"}
     ).status_code == 403
 
 

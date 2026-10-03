@@ -4055,4 +4055,5 @@ export const ru: Sozluk = {
   sikayetKimlikGecersizId: "Введите корректный ID",
   bildirimTipSikayetAsilsiz: "Жалоба признана необоснованной",
   bildirimTipSikayetSinirlama: "Подача жалоб временно приостановлена",
+  finansSebepEtiket: "Причина (обязательно)",
 };

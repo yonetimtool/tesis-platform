@@ -4055,4 +4055,5 @@ export const en: Sozluk = {
   sikayetKimlikGecersizId: "Enter a valid ID",
   bildirimTipSikayetAsilsiz: "Complaint found unfounded",
   bildirimTipSikayetSinirlama: "Filing complaints temporarily paused",
+  finansSebepEtiket: "Reason (required)",
 };

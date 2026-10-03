@@ -169,10 +169,10 @@ def test_FINANS03_onay_bekleyen_ve_reddedilen_gider_IPTAL_EDILEMEZ(client, adm, 
          "durum": "onay_bekliyor"},
     ]}).json()["items"]
     bekleyen, reddedilecek = satirlar
-    r = client.post(f"/finans/hareketler/{bekleyen['id']}/iptal", headers=adm, json={})
+    r = client.post(f"/finans/hareketler/{bekleyen['id']}/iptal", headers=adm, json={"aciklama": "test sebebi"})
     assert r.status_code == 409, r.text
-    client.post(f"/finans/hareketler/{reddedilecek['id']}/reddet", headers=adm, json={})
-    r = client.post(f"/finans/hareketler/{reddedilecek['id']}/iptal", headers=adm, json={})
+    client.post(f"/finans/hareketler/{reddedilecek['id']}/reddet", headers=adm, json={"aciklama": "test sebebi"})
+    r = client.post(f"/finans/hareketler/{reddedilecek['id']}/iptal", headers=adm, json={"aciklama": "test sebebi"})
     assert r.status_code == 409, r.text
     assert _bakiye(client, adm, kasa["id"]) == once, "kasaya hayali para girdi"
 
@@ -258,7 +258,7 @@ def test_FINANS08_mesai_gideri_KASALI_ve_ikinci_yazma_409(
     ikinci = client.post("/mesai/gidere-yaz", headers=h, json=govde)
     assert ikinci.status_code == 409, ikinci.text
     # Reddedilen gider "yazilmis" sayilmaz; yeniden yazilabilir.
-    client.post(f"/finans/hareketler/{r.json()[0]}/reddet", headers=h, json={})
+    client.post(f"/finans/hareketler/{r.json()[0]}/reddet", headers=h, json={"aciklama": "test sebebi"})
     k = next(k for k in _ozet(client, h)["kisiler"]
              if k["user_id"] == mesai_duzeni["user_id"])
     assert k["gidere_yazildi"] is False
@@ -272,12 +272,12 @@ def test_FINANS09_iadeli_tahsilat_IPTAL_edilemez_iptalli_IADE_edilemez(
     t1 = _tahsilat(client, adm, kasa["id"], 80000, unit_id=d["id"]).json()
     assert client.post("/finans/iade", headers=adm, json={
         "hareket_id": t1["id"], "tutar_kurus": 30000}).status_code == 201
-    r = client.post(f"/finans/hareketler/{t1['id']}/iptal", headers=adm, json={})
+    r = client.post(f"/finans/hareketler/{t1['id']}/iptal", headers=adm, json={"aciklama": "test sebebi"})
     assert r.status_code == 409, r.text
 
     t2 = _tahsilat(client, adm, kasa["id"], 5000, unit_id=d["id"]).json()
     assert client.post(f"/finans/hareketler/{t2['id']}/iptal", headers=adm,
-                       json={}).status_code == 201
+                       json={"aciklama": "test sebebi"}).status_code == 201
     r = client.post("/finans/iade", headers=adm, json={"hareket_id": t2["id"]})
     assert r.status_code == 409, r.text
 
@@ -292,12 +292,12 @@ def test_FINANS09_virman_bacagi_IADE_edilemez_IPTAL_iki_bacagi_birden_geri_alir(
         "tutar_kurus": 2500}).json()["items"]
     r = client.post("/finans/iade", headers=adm, json={"hareket_id": bacaklar[0]["id"]})
     assert r.status_code == 422, r.text
-    r = client.post(f"/finans/hareketler/{bacaklar[0]['id']}/iptal", headers=adm, json={})
+    r = client.post(f"/finans/hareketler/{bacaklar[0]['id']}/iptal", headers=adm, json={"aciklama": "test sebebi"})
     assert r.status_code == 201, r.text
     assert _bakiye(client, adm, kasa["id"]) == k_once
     assert _bakiye(client, adm, hedef["id"]) == h_once
     # Karsi bacak da iptal edilmis sayilir.
-    r = client.post(f"/finans/hareketler/{bacaklar[1]['id']}/iptal", headers=adm, json={})
+    r = client.post(f"/finans/hareketler/{bacaklar[1]['id']}/iptal", headers=adm, json={"aciklama": "test sebebi"})
     assert r.status_code == 409, r.text
 
 
@@ -326,7 +326,7 @@ def test_FINANS11_12_gider_KIRILIMI_toplami_TUTAR_ve_liste_neti_AYRINTIYLA_ayni(
     ]}).json()["items"]
     # Bir gider SONRAKI ay iptal ediliyor (FINANS-11'in olculen durumu).
     client.post(f"/finans/hareketler/{satirlar[1]['id']}/iptal", headers=adm,
-                json={"tarih": "2044-03-02"})
+                json={"tarih": "2044-03-02", "aciklama": "test sebebi"})
     for m in (ay, "2044-03"):
         b = client.get(f"/transparency/{m}", headers=adm).json()
         assert sum(k["toplam_kurus"] for k in b["gider_dagilimi"]) == b["toplam_gider_kurus"], m
@@ -409,7 +409,7 @@ def test_ARAYUZ4_tahakkuk_2_uzeri_31_kurus_500_VERMEZ(client, adm):
 def test_FINANS21_hareket_listesi_IPTAL_ISARETI_ve_DAIRE(client, adm, kasa):
     d = _daire(client, adm)
     t = _tahsilat(client, adm, kasa["id"], 4321, unit_id=d["id"]).json()
-    client.post(f"/finans/hareketler/{t['id']}/iptal", headers=adm, json={})
+    client.post(f"/finans/hareketler/{t['id']}/iptal", headers=adm, json={"aciklama": "test sebebi"})
     liste = client.get("/finans/hareketler", headers=adm, params={
         "kasa_id": kasa["id"], "limit": 50}).json()["items"]
     satir = next(x for x in liste if x["id"] == t["id"])

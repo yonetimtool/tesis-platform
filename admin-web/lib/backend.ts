@@ -100,6 +100,9 @@ async function callBackend(
     "Accept-Language": dil === "tr" ? "tr" : `${dil}, tr;q=0.8`,
     // (P248 §4) Jeton verilirken sunucu bunu jetona yazar; yalniz KISALTIR.
     "X-Oturum-Yuzeyi": oturumYuzeyi(),
+    // (P253 §C-5) Denetim kaydinda islemin YUZEYI (web/mobil). Yetkiye
+    // baglanmaz; yalniz "bu iptal hangi ekrandan yapildi" sorusu icin.
+    "X-Istemci-Yuzey": "web",
     ...(extraHeaders ?? {}),
   };
   if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;

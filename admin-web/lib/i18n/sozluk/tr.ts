@@ -2449,7 +2449,7 @@ export const tr = {
   finansDurumOnayBekliyor: "Onay bekliyor",
   finansIptalBaslik: "Hareketi iptal et",
   finansIptalEt: "İptal et",
-  finansIptalOnay: "{belge} numaralı {tutar} tutarındaki hareket iptal edilsin mi? Kayıt SİLİNMEZ; defterе ters bir satır eklenir.",
+  finansIptalOnay: "{belge} numaralı {tutar} tutarındaki hareket iptal edilsin mi? Kayıt SİLİNMEZ; deftere ters bir satır eklenir.",
   finansIptalEdildi: "Hareket iptal edildi (ters kayıt eklendi).",
   finansYeni: "+ Yeni",
   finansTopluBorclandirma: "Toplu borçlandırma",
@@ -4132,4 +4132,5 @@ export const tr = {
   sikayetKimlikGecersizId: "Geçerli bir kimlik (ID) girin",
   bildirimTipSikayetAsilsiz: "Şikâyet asılsız bulundu",
   bildirimTipSikayetSinirlama: "Şikâyet oluşturma geçici olarak kapalı",
+  finansSebepEtiket: "Sebep (zorunlu)",
 } as const;

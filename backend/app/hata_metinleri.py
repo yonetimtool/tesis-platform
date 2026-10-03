@@ -4281,4 +4281,13 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Le dépôt de nouvelles plaintes est temporairement suspendu jusqu'au {tarih}. En cas d'urgence, contactez directement la sécurité ou la gestion.",
         "es": "La presentación de nuevas quejas está pausada temporalmente hasta el {tarih}. En caso de emergencia, contacte directamente con seguridad o la administración.",
     },
+    "sebep_zorunlu": {
+        "tr": "Bu işlem için bir sebep yazın (en az 3 karakter).",
+        "en": "Please enter a reason for this action (at least 3 characters).",
+        "ar": "يرجى كتابة سبب لهذا الإجراء (3 أحرف على الأقل).",
+        "ru": "Укажите причину этого действия (не менее 3 символов).",
+        "de": "Bitte geben Sie einen Grund für diese Aktion an (mindestens 3 Zeichen).",
+        "fr": "Indiquez un motif pour cette action (au moins 3 caractères).",
+        "es": "Indique un motivo para esta acción (al menos 3 caracteres).",
+    },
 }

@@ -22,6 +22,7 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .istemci_yuzeyi import istemci_yuzeyi
 from .models import AppUser, AuditLog
 
 
@@ -284,7 +285,15 @@ async def record_audit(
     resource_id: uuid.UUID | str | None = None,
     meta: dict[str, Any] | None = None,
 ) -> None:
-    """Denetim satirini AYNI transaction'a ekler (commit ile yazilir)."""
+    """Denetim satirini AYNI transaction'a ekler (commit ile yazilir).
+
+    (P253 §C-5) Istek icindeyse `meta.yuzey` (web/mobil/bilinmiyor) TEK
+    YERDEN eklenir; cagiranin koydugu deger ezilmez. Istek disinda (Celery)
+    alan yazilmaz.
+    """
+    yuzey = istemci_yuzeyi()
+    if yuzey is not None:
+        meta = {"yuzey": yuzey, **(meta or {})}
     session.add(
         AuditLog(
             tenant_id=tenant_id,

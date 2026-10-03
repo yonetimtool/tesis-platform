@@ -24,12 +24,18 @@ import GiderlerPage from "@/app/(protected)/finans/giderler/page";
 import { ciz, fetchSahtele } from "./yardimci";
 
 /** Yazma isteklerini yakalar: hangi YOLA hangi metotla gidildi. */
-function istekleriYakala(): { yol: string; metot: string }[] {
-  const kayit: { yol: string; metot: string }[] = [];
+function istekleriYakala(): { yol: string; metot: string; govde?: unknown }[] {
+  const kayit: { yol: string; metot: string; govde?: unknown }[] = [];
   const onceki = globalThis.fetch;
   globalThis.fetch = (async (girdi: RequestInfo | URL, init?: RequestInit) => {
     if (init?.method && init.method !== "GET") {
-      kayit.push({ yol: String(girdi), metot: init.method });
+      const istek = { yol: String(girdi), metot: init.method };
+      // Govde SAYILMAYAN alan: diger testler `{yol, metot}` ile toEqual yapar.
+      Object.defineProperty(istek, "govde", {
+        value: typeof init.body === "string" ? JSON.parse(init.body) : undefined,
+        enumerable: false,
+      });
+      kayit.push(istek);
     }
     return onceki(girdi, init);
   }) as typeof fetch;
@@ -88,18 +94,28 @@ describe("(P193 §3) onay bekleyen gider", () => {
     });
   });
 
-  it("REDDET -> POST .../reddet", async () => {
+  it("REDDET -> sebep ZORUNLU (P253 §C-2) -> POST .../reddet {aciklama}", async () => {
     kur();
     const istekler = istekleriYakala();
     ciz(GiderlerPage);
     const satir = (await screen.findByText("Asansör bakımı")).closest("tr")!;
     await userEvent.click(within(satir).getByRole("button", { name: "Reddet" }));
     const diyalog = await screen.findByRole("dialog");
-    await userEvent.click(within(diyalog).getByRole("button", { name: "Reddet" }));
+    // §C-1: hedef (belge no) ve tutar diyalogda yazili.
+    expect(diyalog.textContent).toContain("GDR-1");
+    expect(diyalog.textContent).toMatch(/2\.500,00/);
+    const onay = within(diyalog).getByRole("button", { name: "Reddet" });
+    expect(onay).toBeDisabled();
+    await userEvent.type(within(diyalog).getByLabelText(/Sebep/), "ab");
+    expect(onay).toBeDisabled();
+    await userEvent.type(within(diyalog).getByLabelText(/Sebep/), "c fatura yok");
+    expect(onay).toBeEnabled();
+    await userEvent.click(onay);
     await waitFor(() => expect(istekler.length).toBe(1));
     expect(istekler[0].yol).toBe(
       `/api/panel/finans-hareketler/${BEKLEYEN.id}/reddet`,
     );
+    expect(istekler[0].govde).toEqual({ aciklama: "abc fatura yok" });
   });
 });
 

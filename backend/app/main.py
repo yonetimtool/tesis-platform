@@ -200,6 +200,12 @@ from .oturum_yuzeyi import OturumYuzeyi  # noqa: E402
 app.add_middleware(GenelDenetim)
 # (P248 §4) Oturum yuzeyi (web/platform) — jeton verilirken okunur.
 app.add_middleware(OturumYuzeyi)
+# (P253 §C-5) Istemci yuzeyi (web/mobil) — her denetim satirina yazilir.
+# GenelDenetim'in DISINDA olmali (sonra eklenen dista): onun yazdigi
+# satirlar da yuzeyi tasir.
+from .istemci_yuzeyi import IstemciYuzeyi  # noqa: E402
+
+app.add_middleware(IstemciYuzeyi)
 
 # CORS — YALNIZ prod'da (CORS_ORIGINS set edilince) eklenir. Dev'de liste bos =>
 # middleware yok => mevcut davranis (ve testler) degismez.

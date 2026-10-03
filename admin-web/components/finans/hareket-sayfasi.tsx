@@ -82,6 +82,19 @@ const UZANTI_PDF = "pdf";
 const TUR_BIRINCIL = "birincil" as const;
 const TUR_IKINCIL = "ikincil" as const;
 const YOK_ISARETI = "—";
+const HEDEF_AYRAC = " · ";
+const MESAJ_AYRAC = " — ";
+
+/** (P253 §C-1) Onay diyaloglarinda HEDEF: daire, kisi, belge. Genel
+ *  "Emin misiniz?" yerine kullanici neye dokundugunu gorur. */
+export function hareketHedefi(h: Hareket): string {
+  return [h.unit_no, h.user_ad ?? h.personel_ad, h.belge_no].filter(Boolean).join(HEDEF_AYRAC);
+}
+
+function hedefli(h: Hareket, metin: string): string {
+  const hedef = hareketHedefi(h);
+  return hedef ? `${hedef}${MESAJ_AYRAC}${metin}` : metin;
+}
 
 function ExcelIkonu() {
   return (
@@ -235,7 +248,7 @@ export function HareketSayfasi({
 }) {
   const t = useT();
   const toast = useToast();
-  const { onayla, diyalog } = useOnay();
+  const { onayla, sebepleOnayla, diyalog } = useOnay();
   const [durum, setDurum] = useState<TabloDurumu>({
     sayfa: 1, boy: 25, siraKolon: null, siraYonu: "artan",
   });
@@ -271,16 +284,20 @@ export function HareketSayfasi({
   async function onayDurumu(h: Hareket, eylem: "onayla" | "reddet") {
     // RET GERI ALINAMAZ (kayit `iptal` olur), onay ise defteri hemen
     // etkiler: ikisi de onay ister. Metin NE OLACAGINI soyler.
-    const ok = await onayla({
+    // (P253 §C-2) Redde SEBEP ZORUNLU (sunucu da reddeder).
+    const sebep = await sebepleOnayla({
       baslik: eylem === "onayla" ? t("finansOnaylaBaslik") : t("finansReddetBaslik"),
-      mesaj:
+      mesaj: hedefli(
+        h,
         eylem === "onayla"
           ? t("finansOnaylaOnay", { tutar: kurusToTL(h.tutar_kurus) })
           : t("finansReddetOnay", { tutar: kurusToTL(h.tutar_kurus) }),
+      ),
       onayMetni: eylem === "onayla" ? t("finansOnayla") : t("finansReddet"),
       tehlikeli: eylem === "reddet",
+      ...(eylem === "reddet" ? { sebepEtiketi: t("finansSebepEtiket") } : {}),
     });
-    if (!ok) return;
+    if (sebep === null) return;
     try {
       // YOL ICINDE DEGISKEN EYLEM YOK: `uc-sozlesme-kapisi` testi
       // `${eylem}` gordugunde yolu cozemez ve "backend bu metodu
@@ -289,7 +306,7 @@ export function HareketSayfasi({
       if (eylem === "onayla") {
         await apiSend(`/api/panel/finans-hareketler/${h.id}/onayla`, "POST", {});
       } else {
-        await apiSend(`/api/panel/finans-hareketler/${h.id}/reddet`, "POST", {});
+        await apiSend(`/api/panel/finans-hareketler/${h.id}/reddet`, "POST", { aciklama: sebep });
       }
       toast.success(eylem === "onayla" ? t("finansOnaylandi") : t("finansReddedildi"));
       void mutate();
@@ -302,18 +319,23 @@ export function HareketSayfasi({
     // ONAY METNI NE OLACAGINI SOYLER: "sil" demek yanlis olurdu, kayit
     // kalir ve TERS bir satir eklenir. Kullanici defterde iki satir
     // gorecegini bilerek onaylamali.
-    const ok = await onayla({
+    // (P253 §C-2) Iptalde (ters kayit) SEBEP ZORUNLU.
+    const sebep = await sebepleOnayla({
       baslik: t("finansIptalBaslik"),
-      mesaj: t("finansIptalOnay", {
-        belge: h.belge_no ?? YOK_ISARETI,
-        tutar: kurusToTL(h.tutar_kurus),
-      }),
+      mesaj: hedefli(
+        h,
+        t("finansIptalOnay", {
+          belge: h.belge_no ?? YOK_ISARETI,
+          tutar: kurusToTL(h.tutar_kurus),
+        }),
+      ),
       onayMetni: t("finansIptalEt"),
       tehlikeli: true,
+      sebepEtiketi: t("finansSebepEtiket"),
     });
-    if (!ok) return;
+    if (sebep === null) return;
     try {
-      await apiSend(`/api/panel/finans-hareketler/${h.id}/iptal`, "POST", {});
+      await apiSend(`/api/panel/finans-hareketler/${h.id}/iptal`, "POST", { aciklama: sebep });
       toast.success(t("finansIptalEdildi"));
       void mutate();
     } catch (e) {

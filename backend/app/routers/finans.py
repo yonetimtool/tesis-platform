@@ -767,6 +767,9 @@ async def hareket_iptal(
     IKINCI KEZ IPTAL EDILEMEZ (409): iki ters kayit, orijinali geri
     getirmis gibi gorunen bir bakiye uretirdi.
     """
+    # (P253 §C-2) Ters kayitta SEBEP ZORUNLU — once: sebepsiz istek
+    # kaydin durumunu bile ogrenmez.
+    body.aciklama = _sebep_zorunlu(body.aciklama)
     orijinal = await get_or_404(db, FinansalHareket, hareket_id)
     if orijinal.tip == "iptal":
         raise APIError(422, "validation_error", "iptal_iptal_edilemez")
@@ -829,6 +832,8 @@ async def hareket_iptal(
             meta={
                 "tip": "iptal",
                 "iptal_edilen": str(orijinal.id),
+                # (P253 §C-2) Sebep denetimde de durur.
+                "sebep": body.aciklama,
                 "eski": {"tip": orijinal.tip, "yon": orijinal.yon,
                          "tutar_kurus": orijinal.tutar_kurus},
                 "yeni": {"tip": "iptal", "yon": satirlar[0].yon,
@@ -862,6 +867,20 @@ async def hareket_iptal(
 # ================================================================
 # Reddedilen satir SILINMEZ: "bu harcama talebi reddedildi" bilgisi
 # denetimin konusudur ve silinirse bir daha sorulamaz.
+
+
+#: (P253 §C-2) Iptal, ters kayit ve redde SEBEP ZORUNLU — web ve mobil
+#: AYNI kural (istemci dugmeyi sebepsiz etkinlestirmez; sunucu da reddeder).
+#: Esik istemcilerde de ayni: web `onay-kullan.SEBEP_ASGARI`, mobil
+#: `finans_onay.dart sebepAsgari`.
+SEBEP_ASGARI = 3
+
+
+def _sebep_zorunlu(aciklama: str | None) -> str:
+    sebep = (aciklama or "").strip()
+    if len(sebep) < SEBEP_ASGARI:
+        raise APIError(422, "validation_error", "sebep_zorunlu")
+    return sebep
 
 
 def _onaylanabilir(hareket: FinansalHareket) -> None:
@@ -921,7 +940,10 @@ async def hareket_reddet(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_YAZMA),
 ) -> HareketOut:
-    """Onay bekleyen hareketi REDDET — hic gerceklesmemis sayilir."""
+    """Onay bekleyen hareketi REDDET — hic gerceklesmemis sayilir.
+
+    (P253 §C-2) Sebep zorunlu (`aciklama`)."""
+    body.aciklama = _sebep_zorunlu(body.aciklama)
     obj = await get_or_404(db, FinansalHareket, hareket_id)
     await _onay_oncesi(db, obj)
     obj.durum = "iptal"

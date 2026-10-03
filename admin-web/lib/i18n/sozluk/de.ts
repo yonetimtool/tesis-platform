@@ -4055,4 +4055,5 @@ export const de: Sozluk = {
   sikayetKimlikGecersizId: "Geben Sie eine gültige ID ein",
   bildirimTipSikayetAsilsiz: "Beschwerde als unbegründet eingestuft",
   bildirimTipSikayetSinirlama: "Beschwerden vorübergehend pausiert",
+  finansSebepEtiket: "Grund (Pflicht)",
 };

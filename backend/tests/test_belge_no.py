@@ -244,7 +244,7 @@ def test_IPTAL_KENDI_SERISINI_kullanir(client, world):
     hid = r.json()["items"][0]["id"]
     asil_no = r.json()["items"][0]["belge_no"]
 
-    r = client.post(f"/finans/hareketler/{hid}/iptal", headers=admin, json={})
+    r = client.post(f"/finans/hareketler/{hid}/iptal", headers=admin, json={"aciklama": "test sebebi"})
     assert r.status_code in (200, 201), r.text
     iptal_no = r.json()["belge_no"]
     assert iptal_no.startswith("IPT-"), iptal_no

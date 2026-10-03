@@ -4055,4 +4055,5 @@ export const es: Sozluk = {
   sikayetKimlikGecersizId: "Introduzca un ID válido",
   bildirimTipSikayetAsilsiz: "Queja considerada infundada",
   bildirimTipSikayetSinirlama: "Presentación de quejas pausada temporalmente",
+  finansSebepEtiket: "Motivo (obligatorio)",
 };
