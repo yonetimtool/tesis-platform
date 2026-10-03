@@ -32,7 +32,6 @@ final benimCalismamProvider = FutureProvider.autoDispose<Map<String, dynamic>?>(
 
 /// Formun durumu. Denetleyiciler cagiranin omrune bagli (dispose eder).
 class CalismaDegeri {
-  final girisKtrl = TextEditingController();
   final gorevKtrl = TextEditingController();
   final ucretKtrl = TextEditingController();
   final ibanKtrl = TextEditingController();
@@ -88,9 +87,10 @@ class CalismaDegeri {
   }
 
   void dispose() {
-    for (final c in [girisKtrl, gorevKtrl, ucretKtrl, ibanKtrl, notKtrl]) {
-      c.dispose();
-    }
+    gorevKtrl.dispose();
+    ucretKtrl.dispose();
+    ibanKtrl.dispose();
+    notKtrl.dispose();
   }
 }
 
