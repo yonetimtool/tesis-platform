@@ -37,6 +37,8 @@ from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..hata_metinleri import hata_metni, istek_dili
 from ..sakin_bildirimi import aidat_bildir
+from ..sebep import sebep_zorunlu
+from .dues import ters_kaydi_yaz
 from ..models import (
     AppUser,
     DuesAssessment,
@@ -58,7 +60,9 @@ from ..schemas import (
     GecikmeFaizOnizleme,
     GecikmeFaizSatiri,
     GecikmeFaizSonuc,
+    PartiGeriAlSonuc,
     TahakkukAtlanan,
+    TahakkukTersKayitIstek,
 )
 
 router = APIRouter(tags=["aidat"])
@@ -127,6 +131,9 @@ async def toplu_borclandir(
     satirlar = await _toplu_plan(db, body, tanim)
     olusan = 0
     atlananlar: list[TahakkukAtlanan] = []
+    # (P253 A2) PARTI: bu cagrinin yazdigi satirlar tek kimlikte toplanir;
+    # yanlis toplu tahakkuk tek istekte geri alinir (§C-4 "geri al").
+    parti = uuid.uuid4()
     # (P191 §2) Bildirim kalemleri: YAZILAN satirlar (atlananlar degil).
     kalemler: list[tuple[uuid.UUID, uuid.UUID | None, str, int]] = []
     for s in satirlar:
@@ -142,7 +149,7 @@ async def toplu_borclandir(
             tanim_id=tanim.id, hedef_user_id=s.hedef_user_id,
             son_odeme_tarihi=body.son_odeme_tarihi, tarih=body.tarih,
             aciklama=body.aciklama, gecikme_uygula=body.gecikme_uygula,
-            kaynak="toplu", kalem_tipi=body.kalem_tipi,
+            kaynak="toplu", kalem_tipi=body.kalem_tipi, parti_id=parti,
         )
         if yazildi:
             olusan += 1
@@ -157,7 +164,7 @@ async def toplu_borclandir(
             db, user, Action.DUES_ASSESSMENT_CREATE,
             resource_type="dues_assessment",
             meta={"kaynak": "toplu", "count": olusan, "skipped": atlanan,
-                  "tanim": str(tanim.id)},
+                  "tanim": str(tanim.id), "parti_id": str(parti)},
         )
     # (P191 §2) Sakine bildirim — KISI BASINA TEK (tutarlar toplanir).
     await aidat_bildir(db, tenant_id=user.tenant_id, kalemler=kalemler)
@@ -170,8 +177,56 @@ async def toplu_borclandir(
     # 15 satirin hepsi atlaniyor, hicbir sey yazilmiyor ve ekranda yine
     # "Kaydedildi" cikiyordu — olculdu.
     return DuesAssessmentResult(
-        created=[], olusan=olusan, atlanan=atlanan, atlananlar=atlananlar
+        created=[], olusan=olusan, atlanan=atlanan, atlananlar=atlananlar,
+        parti_id=parti if olusan else None,
     )
+
+
+@router.post("/borclandirma/parti/{parti_id}/geri-al", response_model=PartiGeriAlSonuc)
+async def toplu_tahakkuk_geri_al(
+    parti_id: uuid.UUID,
+    body: TahakkukTersKayitIstek,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YONETIM),
+) -> PartiGeriAlSonuc:
+    """(P253 §C-4) TOPLU TAHAKKUKU GERI AL — partinin her satiri TERS
+    KAYITLA kapatilir (silme yok). Sebep ZORUNLU.
+
+    Tekil ters kayitla AYNI kurallar (`ters_kaydi_yaz`): ODEME ALMIS satir
+    geri alinmaz (para karsiliksiz kalirdi) ve zaten duzeltilmis satir
+    atlanir. Atlananlar nedeniyle doner — yonetici kalanlari gorur.
+    Her satir kendi kayit noktasinda: biri reddedilse de digerleri islenir.
+    """
+    sebep = sebep_zorunlu(body.aciklama)
+    asillar = (
+        await db.execute(
+            select(DuesAssessment, Unit.no)
+            .join(Unit, Unit.id == DuesAssessment.unit_id)
+            .where(
+                DuesAssessment.parti_id == parti_id,
+                DuesAssessment.ters_kayit_id.is_(None),
+            )
+            .order_by(Unit.no, DuesAssessment.id)
+        )
+    ).all()
+    if not asillar:
+        raise APIError(404, "not_found", "kayit_bulunamadi")
+    geri_alinan = 0
+    atlananlar: list[TahakkukAtlanan] = []
+    for asil, unit_no in asillar:
+        if asil.iptal_edildi:
+            atlananlar.append(TahakkukAtlanan(
+                unit_id=asil.unit_id, unit_no=unit_no, neden="zaten_ters_kayitli"))
+            continue
+        try:
+            async with db.begin_nested():
+                await ters_kaydi_yaz(db, user, asil, sebep, parti_id=parti_id)
+            geri_alinan += 1
+        except APIError as e:
+            # SABIT KOD, ham metin degil: istemci kendi dilinde yazar.
+            neden = "odenmis" if e.mesaj == "tahakkuk_odenmis_ters_kayitlanamaz" else "zaten_ters_kayitli"
+            atlananlar.append(TahakkukAtlanan(unit_id=asil.unit_id, unit_no=unit_no, neden=neden))
+    return PartiGeriAlSonuc(geri_alinan=geri_alinan, atlananlar=atlananlar)
 
 
 # ========================= SAYAC ILE BORCLANDIRMA =========================== #

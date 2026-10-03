@@ -636,22 +636,17 @@ async def list_assessments(
 # edilir/iptal edilir, sonra borc duzeltilir. 409 ile reddedilir.
 
 
-@router.post(
-    "/dues/assessments/{assessment_id}/ters-kayit",
-    response_model=DuesAssessmentOut,
-    status_code=201,
-)
-async def tahakkuk_ters_kayit(
-    assessment_id: uuid.UUID,
-    body: TahakkukTersKayitIstek,
-    db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_TAHAKKUK),
-) -> DuesAssessmentOut:
-    """Yanlis tahakkuku TERS KAYITLA duzelt (silme YOK).
-
-    (P253 §C-2) Sebep ZORUNLU (`aciklama`, en az 3 karakter)."""
-    body.aciklama = sebep_zorunlu(body.aciklama)
-    asil = await get_or_404(db, DuesAssessment, assessment_id)
+async def ters_kaydi_yaz(
+    db: AsyncSession,
+    user: AppUser,
+    asil: DuesAssessment,
+    sebep: str,
+    *,
+    parti_id: uuid.UUID | None = None,
+) -> DuesAssessment:
+    """(P253 A2) Tek tahakkukun TERS KAYDI — tekil uc ve parti geri alma
+    AYNI kurallardan gecer: ters kayit ters kayitlanmaz, ikinci kez
+    ters kayit yok, ODENMIS kalem ters kayitlanmaz (APIError)."""
     if asil.ters_kayit_id is not None:
         raise APIError(422, "validation_error", "ters_kayit_ters_kayitlanamaz")
     zaten = (
@@ -682,7 +677,7 @@ async def tahakkuk_ters_kayit(
         ters_kayit_id=asil.id,
         # Ters kayda FAIZ ISLEMEZ: bir duzeltme gecikmez.
         gecikme_uygula=False,
-        aciklama=body.aciklama or f"Duzeltme: {asil.donem}",
+        aciklama=sebep or f"Duzeltme: {asil.donem}",
         kaynak=asil.kaynak,
     )
     db.add(ters)
@@ -701,8 +696,29 @@ async def tahakkuk_ters_kayit(
         db, user, Action.DUES_ASSESSMENT_CREATE, resource_type="dues_assessment",
         resource_id=ters.id,
         meta={"islem": "ters_kayit", "duzeltilen": str(asil.id),
-              "tutar_kurus": asil.tutar_kurus, "sebep": body.aciklama},
+              "tutar_kurus": asil.tutar_kurus, "sebep": sebep,
+              **({"parti_id": str(parti_id)} if parti_id else {})},
     )
+    return ters
+
+
+@router.post(
+    "/dues/assessments/{assessment_id}/ters-kayit",
+    response_model=DuesAssessmentOut,
+    status_code=201,
+)
+async def tahakkuk_ters_kayit(
+    assessment_id: uuid.UUID,
+    body: TahakkukTersKayitIstek,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_TAHAKKUK),
+) -> DuesAssessmentOut:
+    """Yanlis tahakkuku TERS KAYITLA duzelt (silme YOK).
+
+    (P253 §C-2) Sebep ZORUNLU (`aciklama`, en az 3 karakter)."""
+    body.aciklama = sebep_zorunlu(body.aciklama)
+    asil = await get_or_404(db, DuesAssessment, assessment_id)
+    ters = await ters_kaydi_yaz(db, user, asil, body.aciklama)
     return (await _zenginlestir(db, [ters]))[0]
 
 

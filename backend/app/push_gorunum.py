@@ -97,6 +97,8 @@ _GRUP_ONEKLERI: tuple[tuple[str, str], ...] = (
     ("etkinlik", "duyuru"),
     ("rezervasyon", "rezervasyon"),
     ("bakim_", "bakim"),
+    # (P253 A2) Kuyruktaki rapor bitti — rapor isleri.
+    ("rapor_", "rapor"),
     ("akilli_ev_", "akilli_ev"),
     ("entegrasyon_", "akilli_ev"),
     ("erisim_", "erisim"),

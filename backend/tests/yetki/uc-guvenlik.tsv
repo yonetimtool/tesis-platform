@@ -106,6 +106,7 @@ PATCH	/borclandirma/gecikme-ayari	zorunlu	tesis	-	-	ozel	-	-		-
 POST	/borclandirma/gecikme-faizi/isle	zorunlu	tesis	-	-	ozel	-	-		-
 GET	/borclandirma/gecikme-faizi/onizleme	zorunlu	tesis	-	-	-	-	-		-
 POST	/borclandirma/ice-aktarim	zorunlu	tesis	-	-	ozel	-	-		dar
+POST	/borclandirma/parti/{parti_id}/geri-al	zorunlu	tesis	rol	-	ozel	-	-		dar
 POST	/borclandirma/sayac	zorunlu	tesis	-	-	ozel	-	-		dar
 POST	/borclandirma/toplu	zorunlu	tesis	-	-	ozel	-	-		dar
 POST	/borclandirma/toplu/onizleme	zorunlu	tesis	-	-	genel	-	-		dar

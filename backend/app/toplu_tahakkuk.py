@@ -218,6 +218,7 @@ async def tahakkuk_yaz(
     kaynak: str,
     kalem_tipi: str = "aidat",
     tenant_id: uuid.UUID | None = None,
+    parti_id: uuid.UUID | None = None,
 ) -> bool:
     """Tek satir yaz; benzersizlik carpismasinda ATLA (False doner).
 
@@ -244,6 +245,7 @@ async def tahakkuk_yaz(
         gecikme_uygula=gecikme_uygula,
         kaynak=kaynak,
         kalem_tipi=kalem_tipi,
+        parti_id=parti_id,
         **({"tarih": tarih} if tarih is not None else {}),
     )
     try:

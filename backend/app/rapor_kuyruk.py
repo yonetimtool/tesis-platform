@@ -241,4 +241,35 @@ async def isi_uret(is_id: uuid.UUID) -> dict:
     if not guncellenen:
         # Is (ya da tesis) uretim sirasinda silindi: yazacak satir yok.
         return {"durum": "bulunamadi"}
+    if donus.get("durum") == "hazir":
+        await _hazir_bildir(tenant_id, is_id, user_id, sonuc_alanlari["dosya_adi"])
     return donus
+
+
+async def _hazir_bildir(tenant_id, is_id: uuid.UUID, user_id, dosya_adi: str) -> None:
+    """(P253 A2) "RAPOR HAZIR" — isteyen kisiye kalici bildirim + push.
+
+    Eskiden kuyruk isi bitince HICBIR haber gitmiyordu; kullanici ancak
+    "Islerim" ekranini acik tutarsa (yoklama) goruyordu.
+
+    AYRI ISLEMDE yazilir, `rapor_isi` guncellemesiyle AYNI islemde DEGIL:
+    P252'de bu modulun kilitlenme koku "ayni islemde ikinci yazma + FK
+    denetimi"ydi (tenant silinirken). Bildirim basarisiz olursa rapor
+    YINE HAZIRDIR — bildirim yan etkidir, isin sonucu degil.
+    """
+    from .sakin_bildirimi import sakin_bildirimi_yaz
+    from .scheduler.notify import dispatch_external
+
+    veri = {"rapor": dosya_adi, "is_id": str(is_id)}
+    try:
+        async with tenant_session(tenant_id) as db:
+            sakin_bildirimi_yaz(
+                db, tenant_id=tenant_id, tip="rapor_hazir",
+                user_ids=(user_id,), veri=veri,
+            )
+        dispatch_external(
+            "rapor_hazir", tenant_id=tenant_id, target_user_ids=(user_id,),
+            params={"rapor": dosya_adi}, data={"tip": "rapor_hazir", "is_id": str(is_id)},
+        )
+    except Exception:  # noqa: BLE001 — rapor hazir; bildirim yan etki
+        log.exception("rapor hazir bildirimi yazilamadi: %s", is_id)

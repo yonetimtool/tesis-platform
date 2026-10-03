@@ -158,6 +158,8 @@ NOTIFICATION_TIP = ENUM(
     # (P253 §D, göç 0168) Şikâyet eden sakine: "asılsız" kararı ve geçici
     # sınırlama. Yönetim KİMİN olduğunu öğrenmez; bildirim yalnız ona gider.
     "sikayet_asilsiz", "sikayet_sinirlama",
+    # (P253 A2, göç 0169) Kuyruktaki rapor bitti — isteyen kisiye.
+    "rapor_hazir",
     name="notification_tip", create_type=False,
 )
 ASSET_KATEGORI = ENUM(
@@ -1833,6 +1835,9 @@ class DuesAssessment(Base):
     kaynak_assessment_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), nullable=True
     )
+    #: (P253 A2, goc 0169) Toplu tahakkuk PARTISI — ayni cagrinin yazdigi
+    #: satirlar; parti tek istekte ters kayitla geri alinir (§C-4).
+    parti_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     #: (§6.3) Bu satir ters kayitla DUZELTILDI mi. DENORMALIZE ve olmak
     #: zorunda: kismi indeks predikatinda alt sorgu kullanilamaz ve
     #: duzeltilmis cift tekillik indeksinin DISINDA olmali. Ters kayit ucu

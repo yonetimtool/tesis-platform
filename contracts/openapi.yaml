@@ -12077,6 +12077,32 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "422": { $ref: "#/components/responses/ValidationError" }
+  /borclandirma/parti/{parti_id}/geri-al:
+    post:
+      tags: [borclandirma]
+      summary: Toplu tahakkuk partisini ters kayitla geri al (admin+yonetici)
+      description: |
+        **(P253 §C-4)** Partinin her satiri tekil ters kayitla AYNI kurallarla
+        kapatilir (silme yok). Sebep ZORUNLU (`aciklama`, en az 3 karakter;
+        aksi 422 `sebep_zorunlu`). Odeme almis satir geri alinmaz ve
+        `atlananlar`da `odenmis` nedeniyle doner. Parti yoksa 404.
+      parameters:
+        - { name: parti_id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TahakkukTersKayitIstek" }
+      responses:
+        "200":
+          description: Sonuc
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PartiGeriAlSonuc" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /borclandirma/sayac:
     post:
       tags: [aidat]
@@ -25658,6 +25684,23 @@ components:
             (P192 §3.2) Atlananlarin DOKUMU — hangi daire, NIYE atlandi.
             Sadece bir SAYI dondurmek, eksik tahakkukun fark edilmemesine
             yol aciyordu.
+          items: { $ref: "#/components/schemas/TahakkukAtlanan" }
+        parti_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            (P253 A2) Toplu tahakkukun PARTI kimligi — geri alma icin
+            (`POST /borclandirma/parti/{parti_id}/geri-al`). Satir yazilmadiysa null.
+
+    PartiGeriAlSonuc:
+      type: object
+      required: [geri_alinan, atlananlar]
+      properties:
+        geri_alinan: { type: integer }
+        atlananlar:
+          type: array
+          description: Geri alinamayanlar; neden `odenmis` | `zaten_ters_kayitli`.
           items: { $ref: "#/components/schemas/TahakkukAtlanan" }
 
     DuesPayment:

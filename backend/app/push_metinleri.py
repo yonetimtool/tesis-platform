@@ -674,6 +674,28 @@ METINLER: dict[str, PushMetni] = {
         },
         params=('daire',),
     ),
+    # (P253 A2) Kuyruktaki rapor bitti — YALNIZ isteyen kisiye.
+    "rapor_hazir": PushMetni(
+        baslik={
+            "tr": "Rapor hazır",
+            "en": "Report ready",
+            "ar": "التقرير جاهز",
+            "ru": "Отчёт готов",
+            "de": "Bericht fertig",
+            "fr": "Rapport prêt",
+            "es": "Informe listo",
+        },
+        govde={
+            "tr": "{rapor} indirilmeye hazır.",
+            "en": "{rapor} is ready to download.",
+            "ar": "{rapor} جاهز للتنزيل.",
+            "ru": "{rapor} готов к загрузке.",
+            "de": "{rapor} ist zum Herunterladen bereit.",
+            "fr": "{rapor} est prêt à être téléchargé.",
+            "es": "{rapor} está listo para descargar.",
+        },
+        params=('rapor',),
+    ),
     # (P253 §D) Yalniz SIKAYET EDENE gider; yonetim kimin oldugunu ogrenmez.
     "sikayet_asilsiz": PushMetni(
         baslik={

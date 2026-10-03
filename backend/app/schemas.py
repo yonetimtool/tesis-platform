@@ -5354,6 +5354,18 @@ class DuesAssessmentResult(BaseModel):
     atlanan: int
     #: Atlananlarin DOKUMU. Bos liste, atlanan olmadigi anlamina gelir.
     atlananlar: list[TahakkukAtlanan] = []
+    #: (P253 A2) Toplu tahakkukun PARTI kimligi — geri alma icin
+    #: (`POST /borclandirma/parti/{parti_id}/geri-al`). Hic satir
+    #: yazilmadiysa ya da toplu degilse None.
+    parti_id: uuid.UUID | None = None
+
+
+class PartiGeriAlSonuc(BaseModel):
+    """(P253 §C-4) Toplu tahakkuk geri alma sonucu."""
+
+    geri_alinan: int
+    #: Geri alinamayanlar ve NEDENI (orn. odeme almis kalem).
+    atlananlar: list["TahakkukAtlanan"]
 
 
 class DuesAssessmentListResponse(BaseModel):

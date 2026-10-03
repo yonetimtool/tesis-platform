@@ -104,6 +104,7 @@ PATCH  /borclandirma/gecikme-ayari                          IZIN   IZIN   RED   
 POST   /borclandirma/gecikme-faizi/isle                     IZIN   IZIN   RED    RED    RED    RED    RED   
 GET    /borclandirma/gecikme-faizi/onizleme                 IZIN   IZIN   RED    RED    RED    RED    IZIN  
 POST   /borclandirma/ice-aktarim                            IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /borclandirma/parti/{parti_id}/geri-al               IZIN   IZIN   RED    RED    RED    RED    RED   
 POST   /borclandirma/sayac                                  IZIN   IZIN   RED    RED    RED    RED    RED   
 POST   /borclandirma/toplu                                  IZIN   IZIN   RED    RED    RED    RED    RED   
 POST   /borclandirma/toplu/onizleme                         IZIN   IZIN   RED    RED    RED    RED    RED   
