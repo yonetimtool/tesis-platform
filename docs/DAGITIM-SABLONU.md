@@ -27,6 +27,23 @@ birkaç saniye sürer (katman önbelleği); listeden çıkarmanın bedeli ise
 > kurulup `--force-recreate` ile ayağa kalkan konteynerde yenilenir.
 > `restart` env'i de yenilemez.
 
+### `infra/Caddyfile` ya da `caddy` servisi değiştiyse — **ayrı adım**
+
+Caddy kanonik listede **yok**: imajı hazır (`caddy:2-alpine`), kendi kodumuz
+gömülü değil. Ama `Caddyfile` ya da compose'daki `caddy` tanımı (ortam
+değişkeni, birim) değiştiyse yukarıdaki komut onu **yenilemez** — P253'te
+erişim günlüğü bu yüzden dağıtımdan sonra bir süre yazılmadı.
+
+```bash
+git diff --name-only HEAD@{1} -- infra/Caddyfile infra/docker-compose.prod.yml  # boş değilse:
+docker compose -f docker-compose.prod.yml up -d --force-recreate caddy
+docker compose -f docker-compose.prod.yml logs --tail 20 caddy   # "error" yoksa tamam
+```
+
+`--force-recreate` kısa bir kesinti (birkaç saniye) yapar; trafiğin az olduğu
+bir anda uygula. Yalnız `Caddyfile` değiştiyse kesintisiz yol:
+`docker compose -f docker-compose.prod.yml exec caddy caddy reload --config /etc/caddy/Caddyfile`.
+
 ### `dukkan-web` yayındaysa
 
 ```bash

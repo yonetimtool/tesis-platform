@@ -4,8 +4,10 @@
 #
 # KVKK: girdi zaten kisisel veri tasimaz — Caddy `erisim_gunlugu`
 # (infra/Caddyfile) IP'yi, basliklari ve URI sorgusunu KAYNAKTA siler;
-# on-yuklemeler, statik dosyalar ve /api/* hic yazilmaz. Bu betik yalniz
-# YOL ve SAYI cikarir; kimlik iceren yol parcalari ([id]) maskelenir.
+# on-yuklemeler, statik dosyalar ve /api/* hic yazilmaz. (P253 A1) Caddy
+# kimlik ve jeton parcalarini KAYNAKTA maskeler (`/:id`, `/:jeton`,
+# `/davet/:jeton`); bu betik eski (maskesiz) satirlari da AYNI bicime
+# cevirir, boylece maske oncesi ve sonrasi tek satirda toplanir.
 #
 # KULLANIM (prod sunucusunda, depo kokunde):
 #   bash docs/P253-kullanim-olcumu.sh            # son 30 gun
@@ -26,7 +28,17 @@ COMPOSE=(docker compose -f infra/docker-compose.prod.yml --env-file infra/.env.p
 import json, os, re, sys, time
 from collections import Counter
 sinir = time.time() - int(os.environ["GUN"]) * 86400
-KIMLIK = re.compile(r"/(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|\d+)(?=/|$)", re.I)
+# Caddy filtresiyle AYNI sira ve AYNI ciktilar (infra/Caddyfile erisim_gunlugu).
+MASKE = [
+    (re.compile(r"^/davet/[^/]+"), "/davet/:jeton"),
+    (re.compile(r"/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", re.I), "/:id"),
+    (re.compile(r"/[A-Za-z0-9_~.-]{24,}"), "/:jeton"),
+    (re.compile(r"/[0-9]+(/|$)"), r"/:id\1"),
+]
+def maskele(yol):
+    for desen, yerine in MASKE:
+        yol = desen.sub(yerine, yol)
+    return yol
 sayac, ilk, son, toplam = Counter(), None, None, 0
 for satir in sys.stdin:
     try:
@@ -39,7 +51,7 @@ for satir in sys.stdin:
     r = k.get("request", {})
     if r.get("method") != "GET" or k.get("status") not in (200, 304):
         continue
-    yol = KIMLIK.sub("/[id]", (r.get("uri") or "/").split("?")[0]) or "/"
+    yol = maskele((r.get("uri") or "/").split("?")[0]) or "/"
     sayac[yol] += 1
     toplam += 1
     ilk = ts if ilk is None or ts < ilk else ilk

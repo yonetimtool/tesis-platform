@@ -250,7 +250,19 @@
 				request>tls delete
 				resp_headers delete
 				user_id delete
-				request>uri regexp "\?.*$" ""
+				# (P253 A1) SORGU DIZESI YAZILMAZ (arama kutusunda kisi adi
+				# olabilir: `?q=Ahmet`); kimlik ve JETON parcalari maskelenir.
+				# Sira onemli: once sorgu, sonra bilinen jetonlu yollar, sonra
+				# UUID / sayi, en son uzun jeton benzeri parca (>=24 karakter;
+				# hicbir sayfa adi bu kadar uzun degil — kilit:
+				# admin-web/tests/p253-erisim-gunlugu.test.ts).
+				request>uri multi_regexp {
+					regexp "[?#].*$" ""
+					regexp "^/davet/[^/]+" "/davet/:jeton"
+					regexp "/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}" "/:id"
+					regexp "/[A-Za-z0-9_~.-]{24,}" "/:jeton"
+					regexp "/[0-9]+(/|$)" "/:id$1"
+				}
 			}
 		}
 	}
