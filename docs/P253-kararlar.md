@@ -230,24 +230,105 @@ Hepsi `mobile/lib/src/core/ui/` altında; testi
 * Ölçüm yapımı 1.10.0+20 paketlerinin üzerine yazdı. Paketler yedekten geri
   kondu; SHA-256'lar kayıttakiyle aynı.
 
-### İstemci tarafı eylemler (`data-eylem`) — denendi, VAZGEÇİLDİ
+### İstemci tarafı eylemler — `data-eylem` yerine yardımcı çağrısı taraması
 
-Plan §4.5'te, uç üretmeyen web eylemleri (CSV indir, sütun gizle) için
-kaynakta `data-eylem="..."` işareti önerilmişti. Örnekle denendi
-(`/reports/dues` "Borçlu daireler CSV" ve `/devriye` CSV düğmeleri):
+Plan §4.5'te, uç üretmeyen web eylemleri (CSV indir gibi) için kaynakta
+`data-eylem="..."` işareti önerilmişti.
 
-* **Kırılgan:** işaret, eylemin **varlığını** değil, geliştiricinin onu
-  işaretlemeyi **hatırlamasını** ölçüyor. İşaretsiz yeni bir CSV düğmesi
-  kilitten sessizce geçer. Kilidin bütün değeri "unutulamaz" olması.
-* **Yanlış pozitif:** tablo bileşeninin kendi araçları (sütun gizleme, sayfa
-  boyu) her tabloda var. Bunlar karar gereği `yapisal`; işaretlemek her
-  tabloda gürültü satırı üretir.
-* **Daha iyi yol:** istemci tarafı dışa aktarımlar Aşama 2'de **sunucu
-  raporuna** taşınır ("Oluştur ve paylaş" zaten sunucu dosyası bekliyor).
-  O zaman uç üretirler ve uç kilidi onları kendiliğinden yakalar.
-  * Bugünkü istemci tarafı dışa aktarımlar eylem tablosunda **elle** üç
-    satır olarak durur (`istemci:` önekli, `planli:2`).
-  * Web taraması bunları uçla eşleştirmez, yalnız tabloda kalırlar.
+* **Önce bir düzeltme:** bu bölümün ilk yazımında "örnekle denendi"
+  yazmıştım. İşareti koda koyup denemedim; yalnız akıl yürütmüştüm.
+  Aşağıdaki karar gerçek bir ölçüme dayanıyor.
+* **Ölçüm:** web'deki istemci tarafı dışa aktarımların hepsi iki ortak
+  yardımcıdan geçiyor (`lib/csv.ts`: `csvIndir`, `csvMetniIndir`). Beş
+  çağrı yeri var:
+  * `/reports/tasks`, `/reports/dues`, `/bakim`, devriye takibi: CSV
+    dışa aktarım;
+  * `/ice-aktarim`: şablon indirme.
+* `URL.createObjectURL` kullanan yerler ya **sunucudan gelen** dosya (rapor,
+  ekstre, vardiya Excel'i; bunlar zaten uç üretir) ya da görsel önizlemesi
+  (eylem değil).
+* **Karar:** `data-eylem` işareti **kullanılmadı**. İşaret, eylemin
+  varlığını değil, geliştiricinin onu işaretlemeyi **hatırlamasını** ölçer;
+  işaretsiz yeni bir düğme kilitten sessizce geçer. Yardımcının **çağrı
+  yeri** ise kendiliğinden bulunur. Web kilidi bu iki yardımcının her çağrı
+  yerini tarar ve her biri için tabloda `istemci:<rota>` satırı ister.
+* **Kalan risk:** biri bir dışa aktarımı yardımcıyı kullanmadan, elle
+  `Blob` kurarak yazarsa yakalanmaz. Tarayıcı `new Blob(` görürse de uyarır.
+  Bugün bunu yapan tek yer `lib/csv.ts`'nin kendisi.
+* Tablo bileşeninin kendi araçları (sütun gizleme, sayfa boyu) karar gereği
+  tabloda tek `yapisal` satırdır (§A-5).
+
+### Eylem paritesi tablosu ve üç kilit
+
+**Tablo** (`contracts/eylem-paritesi.tsv`): sözleşmedeki **her** işlem
+(660) + 5 istemci tarafı dışa aktarım = **665 satır**.
+
+| Durum | Satır | Anlamı |
+|---|---:|---|
+| `ayni` | 283 | Web ve mobil aynı ucu çağırıyor |
+| `planli:1` | 35 | Aşama 1 |
+| `planli:2` | 55 | Aşama 2 (2'si istemci CSV) |
+| `planli:3` | 76 | Aşama 3 (3'ü istemci CSV) |
+| `yalniz_web` | **0** | Hedef sıfır; gerekçesiz kalan yok |
+| `platform` | 43 | Yalnız platform admini (kapsam dışı) |
+| `yalniz_mobil` | 83 | Saha, sakin ya da cihaz akışı |
+| `yapisal` | 31 | İş iki yüzeyde, uç farklı ya da bilinçli (gerekçeli) |
+| `ic` | 59 | Hiçbir yüzey çağırmıyor (Dükkan, webhook, eski uç) |
+
+**Nasıl üretildi** — elle değil, iki kaynak taramasıyla; ardından plan
+aşamalarına göre önek kuralları:
+
+* **Web taraması** (`admin-web/tests/eylem-tarama.ts`):
+  * 286 BFF rotasının ilettiği metot ve yol.
+  * Genel vekiller (`panel/[kaynak]`, `tanimlar/[kaynak]`, eylem rotası)
+    beyaz liste modüllerinden açılır.
+  * 365 **açık** yolun **hepsi** sözleşmeyle eşleşti; web 492 işleme
+    gidebiliyor.
+* **Mobil taraması** (`mobile/test/helpers/eylem_tarama.dart`):
+  * Kapsananlar: Dio çağrıları, sabit yollar, sarmalayıcılar
+    (`_liste('/x')`).
+  * Son parçası değişken eylem olan yollar (`/panik/$id/$eylem`) çağrı
+    yerlerindeki dizelerle açılır, üç katmana kadar
+    (`_eylem(context, ref, 'baslat')` → `api.eylem(id, eylem)` →
+    `/tatbikat/{x}/baslat`).
+  * Özel adlar dosya içinde aranır (panik ve diyafon ikisi de `_eylem`).
+  * 374 işlem, hepsi eşleşti.
+* **Ortak eşleme kuralı** (üreteç, web ve mobil kilidi aynı):
+  * sabit parça 2 puan;
+  * değişken↔parametre 1 puan;
+  * değişken↔sabit 0 puan.
+  * Kilit, bu kuralı koymadan önce bir tutarsızlık yakaladı:
+    `/integrations/${id}` hem `{id}` hem `presets` ile eşleşiyordu.
+* Kurala uymayan 23 satır **elle** sınıflandırıldı, gerekçeleri tabloda.
+  Örnekler:
+  * detay kaydını web ayrıca çekiyor, mobil listedeki kaydı kullanıyor;
+  * kamera HLS parçalarını oynatıcı doğrudan istiyor.
+
+**Kilitler** (her biri kırılarak doğrulandı):
+
+| Kilit | Ne ölçer | Kırma denemesi → sonuç |
+|---|---|---|
+| `backend/tests/test_p253_eylem_paritesi.py` | Sözleşmedeki her işlem tabloda **tam bir kez**; bayat satır yok; `roller` yetki matrisiyle aynı; durum ↔ +/- tutarlı; `ayni` dışında gerekçe | `DELETE /kasalar/{id}` satırı silindi → düştü · `/me/calisma` rolü değiştirildi → düştü · planlı satırın gerekçesi silindi → düştü |
+| `admin-web/tests/p253-eylem-paritesi.test.ts` | Web'in her açık çağrısı sözleşmede; web'in yapabildiği her işlem `web=+`; `web=+` satır taramada var; istemci dışa aktarımlar `ISTEMCI` satırlarıyla bire bir; yardımcı dışında `new Blob(` yok | `GET /finans/hareketler` `web=-` yapıldı → düştü · yeni `csvIndir` çağrısı → düştü · olmayan uca giden yeni BFF rotası → düştü |
+| `mobile/test/p253_eylem_paritesi_test.dart` | Mobilin her çağrısı sözleşmede ve `mobil=+`; `mobil=+` satır mobilde **gerçekten** çağrılıyor; **aşama sürümü çıkınca `planli:N` kalamaz** (1→1.11.0, 2→1.12.0, 3→1.13.0) | `GET /me` `mobil=-` yapıldı → düştü · sürüm 1.11.0 yapıldı → 35 `planli:1` satırı için düştü |
+
+**Rol sütunu — sınırını yazıyorum.**
+
+* Rol sütunu planda "web `ROTA_ROLLERI` ile mobil menü rolü karşılaştırılır"
+  diye geçiyordu. Uygulanan: **backend yetki matrisi** (ucu kim
+  çağırabilir).
+* Gerekçe: rol tutarsızlığının kaynağı sunucudur. Bir ucun yetkisi değişince
+  tablo kırmızı olur ve parite kararı yeniden okunur.
+* **Görmediği:** sunucu izin verip mobil menünün o role ekranı **çizmemesi**.
+  Bu turdaki iki örnek: yöneticinin araç geçişi, denetçinin mobil yüzeyi.
+  * Bunlar menü kilidinin (`menu-paritesi.tsv`) işi.
+  * Denetçi Aşama 2'de mobil yüzey kazanınca menü kilidine `denetci`
+    kapsamı eklenecek.
+
+**İşlem düzeyinde olmayan fark — sınır:** aynı ucu çağıran iki ekranın aynı
+**alanları** gönderip göndermediği ölçülmüyor. Örnek: mobil tahsilatta
+tarih ve belge no yok. Bunlar planın §1 tablosunda `KISMEN` olarak duruyor
+ve aşamalarda kapatılır.
 
 ## §E — "Şimdi çalıştır" saat dilimi
 
