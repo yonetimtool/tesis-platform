@@ -18,6 +18,7 @@ from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import func, or_, select, text
 
+from ..telefon_maskesi import telefon_maskele
 from ..hata_metinleri import istek_dili
 from .. import hosgeldin
 from ..audit import Action, record_audit
@@ -736,13 +737,6 @@ _KAYIT_GECERSIZ = APIError(422, "invalid_registration", "kayit_bilgileri_gecersi
 # artik kalan bir enum degeri o kapiyi kirardi.
 
 
-def _maskele(telefon: str) -> str:
-    """Kullanicinin YAZDIGI numarayi maskeler (kayitli bir numarayi degil)."""
-    if len(telefon) <= 6:
-        return "*" * len(telefon)
-    return f"{telefon[:5]}***{telefon[-3:]}"
-
-
 @router.post("/kayit/rol-basla", response_model=RolKayitBaslaResponse)
 async def rol_kayit_basla(
     body: RolKayitBaslaRequest,
@@ -814,7 +808,7 @@ async def rol_kayit_basla(
                 )
 
     return RolKayitBaslaResponse(
-        tesis_ad=tenant_ad, telefon_maskeli=_maskele(phone)
+        tesis_ad=tenant_ad, telefon_maskeli=telefon_maskele(phone)
     )
 
 

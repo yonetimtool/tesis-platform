@@ -74,6 +74,7 @@ from fastapi import APIRouter, Depends, Form, Header, Query, Request, Response
 from fastapi.responses import RedirectResponse
 from sqlalchemy import func, select, text
 
+from ..telefon_maskesi import telefon_maskele
 from ..hata_metinleri import istek_dili
 from .. import girdi_siniri as _G
 from ..audit import Action, record_audit
@@ -832,14 +833,8 @@ async def baglan_basla(
                 )
 
     return OauthKayitBaslaResponse(
-        tesis_ad=tenant_ad, telefon_maskeli=_telefon_maskele(phone)
+        tesis_ad=tenant_ad, telefon_maskeli=telefon_maskele(phone)
     )
-
-
-def _telefon_maskele(t: str) -> str:
-    if len(t) <= 6:
-        return "*" * len(t)
-    return f"{t[:5]}***{t[-3:]}"
 
 
 async def _kimligi_bagla(

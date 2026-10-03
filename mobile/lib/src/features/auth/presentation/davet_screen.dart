@@ -186,7 +186,9 @@ class _DavetScreenState extends ConsumerState<DavetScreen> {
       children: [
         Text(l10n.davetOzet(cozum.tesisAd, _rolEtiketi(l10n, cozum.rol))),
         const SizedBox(height: 8),
-        _bilgiSatiri(l10n.ortakCepTelefonu, cozum.telefonMaskeli),
+        // (P253 acil) Telefonsuz davetlide sunucu BOS doner: satir cizilmez.
+        if (cozum.telefonMaskeli.isNotEmpty)
+          _bilgiSatiri(l10n.ortakCepTelefonu, cozum.telefonMaskeli),
         if (cozum.daireNo != null) _bilgiSatiri(l10n.kayitDaireNo, cozum.daireNo!),
         const SizedBox(height: 20),
         if (_hata != null) ...[

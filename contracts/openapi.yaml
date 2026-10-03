@@ -17669,7 +17669,12 @@ components:
         rol:             { type: string, example: "resident" }
         ad:              { type: string }
         soyad: { type: string, nullable: true, description: "(P250 §1) Soyad (P250 oncesi kayitta null). `ad` TAM gorunen addir." }
-        telefon_maskeli: { type: string, example: "+9053***203" }
+        telefon_maskeli:
+          type: string
+          example: "+9053***203"
+          description: >-
+            Maskeli telefon. (P253) Telefonsuz davetlide BOS dize ("") —
+            null degil: yayindaki eski mobil surumler alani zorunlu okur.
         daire_no:        { type: string, nullable: true }
     DavetParolaRequest:
       type: object

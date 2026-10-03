@@ -649,7 +649,8 @@ class AuthApi {
         rol: d['rol'] as String,
         ad: d['ad'] as String,
         soyad: d['soyad'] as String?,
-        telefonMaskeli: d['telefon_maskeli'] as String,
+        // (P253 acil) Telefonsuz davetlide bos; eski sunucu da bos donmez.
+        telefonMaskeli: d['telefon_maskeli'] as String? ?? '',
         daireNo: d['daire_no'] as String?,
       );
     } on DioException catch (e) {

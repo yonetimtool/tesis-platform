@@ -203,10 +203,13 @@ export default function DavetSayfasi() {
               })}
             </p>
             <dl className="mt-3 space-y-1 text-sm">
-              <div className="flex justify-between gap-4">
-                <dt className="text-[color:var(--yz-text-2)]">{t("davetTelefon")}</dt>
-                <dd className="font-mono">{cozum.telefon_maskeli}</dd>
-              </div>
+              {/* (P253 acil) Telefonsuz davetlide sunucu BOS doner: satir yok. */}
+              {cozum.telefon_maskeli ? (
+                <div className="flex justify-between gap-4">
+                  <dt className="text-[color:var(--yz-text-2)]">{t("davetTelefon")}</dt>
+                  <dd className="font-mono">{cozum.telefon_maskeli}</dd>
+                </div>
+              ) : null}
               {cozum.daire_no ? (
                 <div className="flex justify-between gap-4">
                   <dt className="text-[color:var(--yz-text-2)]">{t("binaDaireNo")}</dt>

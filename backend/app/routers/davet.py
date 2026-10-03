@@ -23,6 +23,7 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..telefon_maskesi import telefon_maskele
 from ..config import settings
 from ..audit import Action, audit_user, record_audit
 from ..davet import (
@@ -74,7 +75,6 @@ _VAZGEC_SAYFA = (
 )
 
 
-
 def _ad_govdesi(body) -> dict:
     """Davet tamamlamada gelen ad/soyad: soyad yoksa (eski istemci) ad tam ad."""
     govde = {"ad": body.ad}
@@ -114,12 +114,6 @@ async def davet_eposta_vazgec(jeton: str) -> HTMLResponse:
         ),
         status_code=200,
     )
-
-
-def _maskele(telefon: str) -> str:
-    if len(telefon) <= 6:
-        return "*" * len(telefon)
-    return f"{telefon[:5]}***{telefon[-3:]}"
 
 
 async def _coz_ve_dogrula(session: AsyncSession, jeton: str):
@@ -167,7 +161,7 @@ async def davet_coz(body: DavetCozRequest) -> DavetCozResponse:
                 tesis_ad=row.tenant_ad,
                 rol=row.rol,
                 ad=row.ad,
-                telefon_maskeli=_maskele(row.telefon),
+                telefon_maskeli=telefon_maskele(row.telefon),
                 daire_no=row.daire_no,
             )
 
