@@ -91,23 +91,15 @@ describe("calisma ani dis kaynaklar", () => {
     // "kodda gecen adres" ile "kullanicidan cikan istek" ayni sey degil.
     const izinli = new Map<string, string>([
       [
-        "tile.openstreetmap.org",
-        "ISTEK GIDER (NFC/plan haritalari). Kullanicinin tarayicisindan; " +
-          "IP + bakilan koordinat OSM'e ulasir. `NEXT_PUBLIC_KARO_URL` ile " +
-          "kendi karo sunucumuza cevrilebilir — KVKK icin onerilen yol.",
-      ],
-      [
-        "www.google.com",
-        "ISTEK GITMIYOR: `SiteHarita` bugun HICBIR ekranda cizilmiyor " +
-          "(P167'de Ozet'ten kaldirildi, bilesen bilerek korundu). " +
-          "Cizildigi gun Google Maps iframe'i kullanicinin tarayicisindan " +
-          "yuklenir ve IP ucuncu tarafa gider — O GUN karar gozden " +
-          "gecirilmeli. Bugun ise yalniz olu bir kod yolu.",
-      ],
-      [
         "www.openstreetmap.org",
-        "ISTEK GITMIYOR: ayni bilesenin anahtarsiz gomulu harita yolu. " +
-          "Yukaridakiyle ayni kosul gecerli.",
+        "ISTEK GITMIYOR: harita ATIF BAGLANTISI (ODbL telif sayfasi, P253 A2). " +
+          "Yalniz kullanici tiklarsa acilir; karolar artik KENDI PMTiles " +
+          "dosyamizdan (`karo` kovasi) gelir.",
+      ],
+      [
+        "protomaps.com",
+        "ISTEK GITMIYOR: harita atif baglantisi (karo bicimi Protomaps). " +
+          "Karo dosyasi kendi depomuzda; Protomaps'e calisma aninda istek yok.",
       ],
       [
         "youtube.com",

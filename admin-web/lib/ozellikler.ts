@@ -19,6 +19,14 @@ import { jsonFetcher } from "@/lib/fetcher";
  */
 export interface OzellikBayraklari {
   dukkan: boolean;
+  /** (P253 A2) Kendi karo dosyamiz (PMTiles); null = harita kapali. */
+  harita_karo_url?: string | null;
+}
+
+/** (P253 A2) Harita karo adresi — sunucudan; yoksa null (harita cizilmez). */
+export function useKaroUrl(): string | null {
+  const { data } = useSWR<OzellikBayraklari>("/api/ozellikler", jsonFetcher);
+  return typeof data?.harita_karo_url === "string" && data.harita_karo_url ? data.harita_karo_url : null;
 }
 
 export function useDukkanAcik(): boolean {

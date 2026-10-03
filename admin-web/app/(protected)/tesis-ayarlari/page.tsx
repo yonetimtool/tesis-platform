@@ -186,16 +186,21 @@ export default function TesisAyarlariPage() {
             {/* (P233 §1) KONUM — ENLEM/BOYLAM YAZDIRMIYORUZ.
                 Yonetici yer adini yazar, sunucu aday listesi doner
                 (`/konum/ara`), secilen adayin koordinati forma gecer.
-                Harita eklenmedi: mobilde harita paketi HIC YOK ve
-                yalniz web'e yapmak parite kuralini bozardi; ustelik
-                hava durumu ILCE duzeyinde dogruluk ister, sokak
-                degil. */}
+                (P253 A2) Secilen aday haritada igneyle gosterilir ve
+                igne surklenerek binanin uzerine tasinir — kendi karo
+                dosyamiz, mobilde ayni. */}
             <KonumSecici
               mevcutAd={String(form.konum_ad ?? "")}
               onSec={(a: { ad: string; lat: number; lon: number }) => {
                 yaz("konum_ad", a.ad);
                 yaz("konum_lat", a.lat);
                 yaz("konum_lon", a.lon);
+              }}
+              lat={typeof form.konum_lat === "number" ? form.konum_lat : form.konum_lat != null ? Number(form.konum_lat) : null}
+              lon={typeof form.konum_lon === "number" ? form.konum_lon : form.konum_lon != null ? Number(form.konum_lon) : null}
+              onTasi={(enlem, boylam) => {
+                yaz("konum_lat", Number(enlem.toFixed(6)));
+                yaz("konum_lon", Number(boylam.toFixed(6)));
               }}
             />
           </Kart>

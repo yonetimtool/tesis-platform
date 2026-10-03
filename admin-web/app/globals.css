@@ -453,3 +453,16 @@ textarea:focus-visible,
   box-shadow: 0 0 0 3px rgba(20,200,190,0.12);
   background: rgba(255,255,255,0.09) !important;
 }
+
+/* (P253 A2) Tesis konumu ignesi — Leaflet DivIcon (PNG yok). Renk tasarim
+   tokenlarindan; disi beyaz hale ile karo uzerinde ayirt edilir. */
+.yz-harita-igne span {
+  display: block;
+  width: 28px;
+  height: 28px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: var(--yz-accent);
+  border: 3px solid var(--yz-on-fill);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}

@@ -17,6 +17,7 @@ import { DokunmaKapisi } from "../ui/dokunma-kapisi";
 import { Iskelet } from "../ui/durumlar";
 import type { PlanHaritasiProps } from "./plan-haritasi";
 import type { KonumHaritasiProps } from "./konum-haritasi";
+import type { TekNoktaHaritasiProps } from "./tek-nokta-haritasi";
 
 const Plan = dynamic(() => import("./plan-haritasi"), {
   ssr: false,
@@ -43,7 +44,21 @@ export function PlanHaritasiYukleyici(props: PlanHaritasiProps) {
   );
 }
 
-/** COGRAFI harita (OSM karolari) — bkz. `konum-haritasi.tsx` dosya basi. */
+const TekNokta = dynamic(() => import("./tek-nokta-haritasi"), {
+  ssr: false,
+  loading: () => <Iskelet className="h-full w-full" />,
+});
+
+/** (P253 A2) Tek nokta (tesis konumu) — surukenebilir igne. */
+export function TekNoktaHaritasiYukleyici(props: TekNoktaHaritasiProps) {
+  return (
+    <DokunmaKapisi>
+      <TekNokta {...props} />
+    </DokunmaKapisi>
+  );
+}
+
+/** COGRAFI harita (kendi PMTiles karolarimiz) — bkz. `konum-haritasi.tsx` dosya basi. */
 export function KonumHaritasiYukleyici(props: KonumHaritasiProps) {
   return (
     <DokunmaKapisi>

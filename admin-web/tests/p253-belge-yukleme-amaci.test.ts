@@ -5,35 +5,25 @@
 // Dokumanlar (P253 A2 — web'den PDF yukleme 422). Kilit KAYNAKTAN olcer:
 // dosya secicisi PDF kabul eden bir dosyada presign istegi belge amacini
 // tasimali.
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
+
+import { taranacakDosyalar } from "./tarama";
 
 const KOK = join(__dirname, "..");
 
 /** Yorumlar atilir: aciklama metninde gecen `amac: "belge"` kodu temsil etmez. */
 function kod(f: string): string {
-  return readFileSync(join(KOK, f), "utf8")
+  return readFileSync(f, "utf8")
     .replace(/\/\*[\s\S]*?\*\//g, "")
     .replace(/(^|\s)\/\/.*$/gm, "$1");
 }
 
-function dosyalar(d: string): string[] {
-  const out: string[] = [];
-  for (const ad of readdirSync(join(KOK, d))) {
-    const g = `${d}/${ad}`;
-    if (statSync(join(KOK, g)).isDirectory()) {
-      if (ad === "api") continue;
-      out.push(...dosyalar(g));
-    } else if (/\.tsx?$/.test(ad)) out.push(g);
-  }
-  return out;
-}
-
 describe("(P253 A2) belge yukleme amaci", () => {
   it("PDF kabul eden ve presign isteyen her dosya amac: \"belge\" gonderir", () => {
-    const eksik = [...dosyalar("app"), ...dosyalar("components")].filter((f) => {
+    const eksik = taranacakDosyalar([join(KOK, "app"), join(KOK, "components")], [".ts", ".tsx"]).filter((f) => !f.includes("/app/api/")).filter((f) => {
       const s = kod(f);
       return /application\/pdf|\.pdf\b/.test(s) && /uploads\/presign/.test(s) && !/amac:\s*"belge"/.test(s);
     });
@@ -41,7 +31,7 @@ describe("(P253 A2) belge yukleme amaci", () => {
   });
 
   it("olcum bos degil: en az iki belge yukleyicisi taraniyor", () => {
-    const belge = [...dosyalar("app"), ...dosyalar("components")].filter((f) => {
+    const belge = taranacakDosyalar([join(KOK, "app"), join(KOK, "components")], [".ts", ".tsx"]).filter((f) => !f.includes("/app/api/")).filter((f) => {
       const s = kod(f);
       return /application\/pdf|\.pdf\b/.test(s) && /uploads\/presign/.test(s);
     });

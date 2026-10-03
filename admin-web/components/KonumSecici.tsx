@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { TekNoktaHaritasiYukleyici } from "@/components/harita/harita-yukleyici";
 import { Alan, AlanSarmal, Dugme, HataDurumu } from "@/components/ui";
 import { useT } from "@/lib/i18n/kullan";
 import { SINIR } from "@/lib/girdi-siniri";
@@ -19,11 +20,11 @@ import { SINIR } from "@/lib/girdi-siniri";
  * Istanbul koordinatini tasidi (olculdu).
  *
  * =========================================================================
- * NEDEN HARITA DEGIL
+ * (P253 A2) HARITA EKLENDI — IKI YUZEYDE, KENDI KARO DOSYAMIZLA
  * =========================================================================
- * Web'de Leaflet bileseni var (`konum-haritasi.tsx`) ama MOBILDE hic
- * harita paketi YOK; yalniz web'e yapmak kalici parite kuralini bozardi.
- * Ustelik hava durumu ILCE duzeyinde dogruluk ister, sokak degil.
+ * Eskiden harita yoktu (mobilde paket yoktu, parite kurali). Artik web ve
+ * mobil AYNI PMTiles dosyasini okuyor: aday ILCE duzeyinde secilir, igne
+ * surklenerek binanin uzerine tasinir.
  *
  * =========================================================================
  * ADAY LISTESI, TEK SONUC DEGIL
@@ -39,9 +40,17 @@ type Aday = { ad: string; aciklama: string; lat: number; lon: number };
 export function KonumSecici({
   mevcutAd,
   onSec,
+  lat,
+  lon,
+  onTasi,
 }: {
   mevcutAd: string;
   onSec: (a: Aday) => void;
+  /** (P253 A2) Mevcut/secilen konum — verilirse haritada igne gosterilir. */
+  lat?: number | null;
+  lon?: number | null;
+  /** Igne surklenince (bina duzeyi duzeltme). */
+  onTasi?: (lat: number, lon: number) => void;
 }) {
   const t = useT();
   const [q, setQ] = useState("");
@@ -123,6 +132,17 @@ export function KonumSecici({
             </li>
           ))}
         </ul>
+      )}
+
+      {lat != null && lon != null && (
+        <div className="space-y-1">
+          <TekNoktaHaritasiYukleyici lat={lat} lon={lon} onTasi={onTasi} />
+          {onTasi && (
+            <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+              {t("konumIgneIpucu")}
+            </p>
+          )}
+        </div>
       )}
 
       {mevcutAd && (

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * (P160) KONUM HARITASI — Leaflet + OpenStreetMap karolari.
+ * (P160) KONUM HARITASI — Leaflet + kendi PMTiles karolarimiz (P253 A2).
  *
  * =========================================================================
  * NEDEN BURADA COGRAFI HARITA MESRU
@@ -13,21 +13,13 @@
  * ve bir plan semasi onu yanitlayamaz.
  *
  * =========================================================================
- * KARO SUNUCUSU: PUBLIC OSM — KERem'IN KARARI
+ * KARO KAYNAGI: KENDI PMTiles DOSYAMIZ (P253 A2, kullanici karari)
  * =========================================================================
- * `docs/3d-yol-haritasi.md` §5'te uc secenek vardi; secim (a) public OSM.
- * Bunun getirdigi iki YUKUMLULUK kodda karsilaniyor:
- *
- *   1. ATTRIBUTION ZORUNLUDUR. OSM karolarini kullanan her harita
- *      "© OpenStreetMap katkida bulunanlar" ibaresini GORUNUR sekilde
- *      tasimak zorunda (ODbL + karo kullanim politikasi). Bu yuzden
- *      `attributionControl` ACIK ve metin sozlukten geliyor.
- *   2. KARO SUNUCUSU DEGISTIRILEBILIR OLMALI. OSM'nin public karolari bir
- *      NEZAKET hizmetidir; yogun/toplu kullanim politikaya aykiridir.
- *      Panel kullanimi dusuk hacimli (yalniz yonetici) ama bir gun kendi
- *      sunucumuza gecilirse bu TEK SATIRLIK bir ayar olmali —
- *      `NEXT_PUBLIC_KARO_URL` tanimliysa o kullanilir. Kodu yeniden
- *      yazmak gerekmesin diye bastan boyle kuruldu.
+ * Eskiden public OSM karolari (`tile.openstreetmap.org`) kullaniliyordu:
+ * kullanicinin IP'si ve baktigi koordinat ucuncu tarafa gidiyordu. Artik
+ * karolar kendi depomuzdaki Turkiye kesitinden (`KaroKatmani`, adres
+ * `/ozellikler`ten); mobil ayni dosyayi okur. Atif ("© OpenStreetMap
+ * katkicilari", ODbL) katmanin icindedir ve kaldirilamaz.
  *
  * =========================================================================
  * ISARETCI OLARAK `CircleMarker` — bilincli
@@ -43,12 +35,14 @@ import {
   CircleMarker,
   MapContainer,
   Polyline,
-  TileLayer,
   Tooltip,
   useMap,
 } from "react-leaflet";
 
 import { useT } from "@/lib/i18n/kullan";
+import { useKaroUrl } from "@/lib/ozellikler";
+
+import { KaroKatmani } from "./karo-katmani";
 
 import "leaflet/dist/leaflet.css";
 
@@ -85,12 +79,6 @@ export interface KonumNoktasi {
   ipucu: string;
 }
 
-/** OSM public karo adresi — UCLUDE DIZE YAZILMAZ (depo kurali
- *  `sabit-metin`), sabit modul duzeyinde durur. Cevrilecek bir metin
- *  degil, bir UC ADRESI. */
-const OSM_KARO = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
-/** Karo sunucusu — ayarla degistirilebilir (bkz. dosya basi). */
-const KARO_URL = process.env.NEXT_PUBLIC_KARO_URL ?? OSM_KARO;
 /** OSM karolarinin azami yakinlastirmasi. */
 const AZAMI_ZOOM = 19;
 /** Tek nokta varken kullanilan olcek — site olcegi. */
@@ -126,6 +114,7 @@ export default function KonumHaritasi({
   yukseklik = "420px",
 }: KonumHaritasiProps) {
   const t = useT();
+  const karoUrl = useKaroUrl();
 
   // SINIR HER IKI KATMANI DA KAPSAR: okutma noktanin disindaysa
   // cerceve disinda kalmamali — gosterilmek istenen sey tam da o sapma.
@@ -188,8 +177,8 @@ export default function KonumHaritasi({
         style={{ width: "100%", height: "100%" }}
         aria-label={t("haritaKonumEtiketi")}
       >
-        {/* ATTRIBUTION KALDIRILAMAZ — OSM karolarini kullanmanin sarti. */}
-        <TileLayer url={KARO_URL} maxZoom={AZAMI_ZOOM} attribution={t("haritaOsmKatki")} />
+        {/* (P253 A2) KENDI KARO DOSYAMIZ — atif katmanin icinde, kaldirilamaz. */}
+        {karoUrl && <KaroKatmani url={karoUrl} />}
         <NoktalaraSigdir sinir={sinir} />
 
         {/* OKUTMA KATMANI ONCE cizilir: noktalar USTTE kalsin, cunku

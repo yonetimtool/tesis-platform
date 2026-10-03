@@ -14,7 +14,6 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import DashboardPage from "@/app/(protected)/dashboard/page";
-import { haritaAdresi } from "@/components/SiteHarita";
 
 import { ciz } from "./yardimci";
 
@@ -218,28 +217,6 @@ describe("(P133.3) alarmlar GRUPLU cizilir", () => {
     await screen.findByText("Gece turu kaçırıldı");
     expect(screen.getByRole("button", { name: /olayları göster/i })).toBeDisabled();
   });
-});
-
-describe("(P132.4a) tesis konumu haritasi", () => {
-  it("ANAHTAR YOKKEN OSM adresine duser", () => {
-    const u = haritaAdresi(41.01, 28.97, null);
-    expect(u).toContain("openstreetmap.org");
-    expect(u).toContain("marker=41.01");
-  });
-
-  it("anahtar VARSA Google gomulusu", () => {
-    const u = haritaAdresi(41.01, 28.97, "AIza-test");
-    expect(u).toContain("google.com/maps/embed");
-    expect(u).toContain("key=AIza-test");
-  });
-
-  // (P167 §2.4) "KONUM YOKSA harita cizilmez" TESTI KALDIRILDI cunku
-  // HARITANIN KENDISI panodan kalkti; olculecek bir cizim yok. Yerine
-  // yukaridaki "HARITA ARTIK CIZILMIYOR" testi kondu.
-  //
-  // `haritaAdresi` BIRIM TESTLERI KALDI ve bilerek: bilesen SILINMEDI
-  // (tesis konumu bir gun kendi ekranini bulacak) ve adres kurma mantigi
-  // — anahtarsiz OSM'e dusme, marker parametresi — hala dogru olmali.
 });
 
 describe("(P132.4b) kamera seridi", () => {
